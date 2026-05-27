@@ -1,4 +1,4 @@
-7# 图吧工具箱 TubaWinUi3
+# 图吧工具箱 TubaWinUi3
 
 官网：[https://tubawinui3.cn](https://tubawinui3.cn)
 
