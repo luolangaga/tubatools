@@ -5,8 +5,8 @@ namespace TubaWinUi3.Pages;
 
 public sealed class FavGlyphConverter : IValueConverter
 {
-    private const string StarGlyph = "\uE734";
-    private const string StarOutlineGlyph = "\uE735";
+    private const string StarGlyph = "\uE735";
+    private const string StarOutlineGlyph = "\uE734";
 
     public object Convert(object value, Type targetType, object parameter, string language)
     {

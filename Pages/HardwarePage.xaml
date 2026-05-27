@@ -259,7 +259,7 @@
                                 Height="44"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE7F4;" />
+                                <FontIcon FontSize="22" Glyph="&#xE772;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
                                 <TextBlock Opacity="0.68" Text="型号信息" />
@@ -283,7 +283,7 @@
                                 Height="44"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE782;" />
+                                <FontIcon FontSize="22" Glyph="&#xE770;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
                                 <TextBlock Opacity="0.68" Text="系统信息" />
@@ -307,7 +307,7 @@
                                 Height="44"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE9D9;" />
+                                <FontIcon FontSize="22" Glyph="&#xE917;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
                                 <TextBlock Opacity="0.68" Text="运行时间" />

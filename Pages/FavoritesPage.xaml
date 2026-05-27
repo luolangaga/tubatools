@@ -60,7 +60,7 @@
                     <FontIcon
                         FontSize="22"
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE734;" />
+                        Glyph="&#xE735;" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="2">
@@ -221,7 +221,7 @@
                 <FontIcon
                     HorizontalAlignment="Center"
                     FontSize="48"
-                    Glyph="&#xE734;"
+                    Glyph="&#xE735;"
                     Opacity="0.3" />
                 <TextBlock
                     HorizontalAlignment="Center"

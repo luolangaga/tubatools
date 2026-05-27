@@ -124,7 +124,7 @@ public sealed partial class MainWindow : Window
 
         if (category.Contains("内存", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uE8B9";
+            return "\uE965";
         }
 
         if (category.Contains("游戏", StringComparison.CurrentCultureIgnoreCase))
@@ -139,7 +139,12 @@ public sealed partial class MainWindow : Window
 
         if (category.Contains("声卡", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uEA69";
+            return "\uE7F5";
+        }
+
+        if (category.Contains("网卡", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return "\uE968";
         }
 
         return "\uE8B7";

@@ -23,9 +23,9 @@ public static class HardwareInfoService
     {
         return
         [
-            new HardwareInfoSection { Title = "型号信息", Glyph = "\uE7F4" },
-            new HardwareInfoSection { Title = "系统信息", Glyph = "\uE782" },
-            new HardwareInfoSection { Title = "详细信息", Glyph = "\uE9D9" }
+            new HardwareInfoSection { Title = "型号信息", Glyph = "\uE772" },
+            new HardwareInfoSection { Title = "系统信息", Glyph = "\uE770" },
+            new HardwareInfoSection { Title = "详细信息", Glyph = "\uE917" }
         ];
     }
 

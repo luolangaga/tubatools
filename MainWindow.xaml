@@ -47,12 +47,12 @@
                 </NavigationViewItem>
                 <NavigationViewItem Content="常用工具" Tag="favorites">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE734;" />
+                        <FontIcon Glyph="&#xE735;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="硬件信息" Tag="hardware">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE950;" />
+                        <FontIcon Glyph="&#xE772;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="内置工具" Tag="builtin">
