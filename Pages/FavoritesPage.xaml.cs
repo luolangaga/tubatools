@@ -11,6 +11,7 @@ namespace TubaWinUi3.Pages;
 public sealed partial class FavoritesPage : Page
 {
     private readonly ObservableCollection<ToolItem> _tools = [];
+    private CancellationTokenSource? _iconLoadCts;
 
     public FavoritesPage()
     {
@@ -26,6 +27,7 @@ public sealed partial class FavoritesPage : Page
 
     private void LoadTools()
     {
+        _iconLoadCts?.Cancel();
         _tools.Clear();
 
         var favPaths = FavoritesService.GetFavorites();
@@ -43,6 +45,12 @@ public sealed partial class FavoritesPage : Page
         ClearAllButton.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         EmptyState.Visibility = _tools.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ToolsGrid.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        if (favTools.Count > 0)
+        {
+            _iconLoadCts = new CancellationTokenSource();
+            _ = ToolIconService.LoadIconsAsync(favTools, DispatcherQueue);
+        }
     }
 
     private void ToolsGrid_ItemClick(object sender, ItemClickEventArgs e)

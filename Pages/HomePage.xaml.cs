@@ -17,6 +17,7 @@ public sealed partial class HomePage : Page
     private const int PageSize = 40;
     private bool _isLoadingMore;
     private bool _allLoaded;
+    private CancellationTokenSource? _iconLoadCts;
 
     public HomePage()
     {
@@ -216,6 +217,7 @@ public sealed partial class HomePage : Page
         _loadedCount = 0;
         _allLoaded = false;
         _isLoadingMore = false;
+        _iconLoadCts?.Cancel();
         LoadMore();
 
         var query = SearchBox.Text.Trim();
@@ -244,6 +246,7 @@ public sealed partial class HomePage : Page
             ToolsGrid.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             EmptyStateText.Text = $"未找到与\u201C{query}\u201D相关的工具。";
             _isLoadingMore = false;
+            StartIconLoading(results);
             return;
         }
 
@@ -255,6 +258,7 @@ public sealed partial class HomePage : Page
                 foreach (var tool in tools)
                     _tools.Add(tool);
                 _allLoaded = true;
+                StartIconLoading(tools);
             }
             ToolCountText.Text = $"{_tools.Count} 个工具";
             EmptyState.Visibility = _tools.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -280,6 +284,16 @@ public sealed partial class HomePage : Page
         EmptyStateText.Text = "没有找到任何工具，请检查 Tools 目录。";
 
         _isLoadingMore = false;
+        StartIconLoading(batch);
+    }
+
+    private void StartIconLoading(IReadOnlyList<ToolItem> tools)
+    {
+        if (tools.Count == 0) return;
+        _iconLoadCts?.Cancel();
+        _iconLoadCts = new CancellationTokenSource();
+        var ct = _iconLoadCts.Token;
+        _ = ToolIconService.LoadIconsAsync(tools, DispatcherQueue);
     }
 
     private void ShowToolDetail(ToolItem tool)
