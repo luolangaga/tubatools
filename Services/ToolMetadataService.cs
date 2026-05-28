@@ -54,9 +54,12 @@ public static class ToolMetadataService
             jsonMetadata?.DownloadFilter);
     }
 
-    public static IReadOnlyList<JsonArchVariantResult> GetArchVariants(string toolPath)
+    public static IReadOnlyList<JsonArchVariantResult> GetArchVariants(string toolPath, string? toolDir = null)
     {
         var jsonMetadata = FindJsonMetadata(toolPath);
+        if (jsonMetadata is null && toolDir is not null)
+            jsonMetadata = FindJsonMetadataByDir(toolDir);
+
         if (jsonMetadata?.ArchVariants is null || jsonMetadata.ArchVariants.Count == 0)
             return [];
 
@@ -70,11 +73,43 @@ public static class ToolMetadataService
         var metadata = LoadMetadata();
         var fileName = Path.GetFileNameWithoutExtension(toolPath);
         var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolPath);
+        var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
 
         return metadata.FirstOrDefault(item =>
             !string.IsNullOrWhiteSpace(item.Match) &&
             (fileName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-             relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase)));
+             relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
+             MatchesFlexible(dirName, item.Match)));
+    }
+
+    private static JsonToolMetadata? FindJsonMetadataByDir(string toolDir)
+    {
+        var metadata = LoadMetadata();
+        var dirName = Path.GetFileName(toolDir);
+        var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolDir);
+
+        return metadata.FirstOrDefault(item =>
+            !string.IsNullOrWhiteSpace(item.Match) &&
+            (relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
+             MatchesFlexible(dirName, item.Match)));
+    }
+
+    private static bool MatchesFlexible(string? source, string match)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+            return false;
+
+        if (source.Contains(match, StringComparison.CurrentCultureIgnoreCase))
+            return true;
+
+        var normalizedSource = source.Replace(" ", "", StringComparison.Ordinal)
+                                      .Replace("-", "", StringComparison.Ordinal)
+                                      .Replace("_", "", StringComparison.Ordinal);
+        var normalizedMatch = match.Replace(" ", "", StringComparison.Ordinal)
+                                   .Replace("-", "", StringComparison.Ordinal)
+                                   .Replace("_", "", StringComparison.Ordinal);
+
+        return normalizedSource.Contains(normalizedMatch, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private static IReadOnlyList<JsonToolMetadata> LoadMetadata()

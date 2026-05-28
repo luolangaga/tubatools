@@ -174,7 +174,7 @@ public static class ToolCatalog
             }
         }
 
-        var jsonVariants = ToolMetadataService.GetArchVariants(path);
+        var jsonVariants = ToolMetadataService.GetArchVariants(path, toolDir);
         foreach (var jv in jsonVariants)
         {
             string? variantPath = null;
@@ -197,16 +197,22 @@ public static class ToolCatalog
                 }
             }
 
-            if (variantPath is not null && !alternates.Any(a => a.Path.Equals(variantPath, StringComparison.OrdinalIgnoreCase)))
+            if (variantPath is null)
+                continue;
+
+            if (variantPath.Equals(path, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (alternates.Any(a => a.Path.Equals(variantPath, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            var vName = System.IO.Path.GetFileNameWithoutExtension(variantPath);
+            alternates.Add(new ArchVariant
             {
-                var vName = System.IO.Path.GetFileNameWithoutExtension(variantPath);
-                alternates.Add(new ArchVariant
-                {
-                    Name = CleanupName(vName),
-                    Path = variantPath,
-                    Arch = jv.Arch ?? FormatArchDisplay(DetectArch(vName)) ?? "x86"
-                });
-            }
+                Name = CleanupName(vName),
+                Path = variantPath,
+                Arch = jv.Arch ?? FormatArchDisplay(DetectArch(vName)) ?? "x86"
+            });
         }
 
         var cleanName = CleanupName(StripArchSuffix(name));
