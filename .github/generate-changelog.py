@@ -1,4 +1,6 @@
-import json, subprocess, os, urllib.request, urllib.error
+import json, subprocess, os, sys, urllib.request, urllib.error
+
+tmpdir = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CHANGELOG_TMPDIR", ".")
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(script_dir, "changelog-prompt.txt")
@@ -6,9 +8,16 @@ template_path = os.path.join(script_dir, "changelog-prompt.txt")
 with open(template_path, "r", encoding="utf-8") as f:
     prompt = f.read()
 
-prompt = prompt.replace("{{COMMIT_LOG}}", os.environ.get("COMMIT_LOG", ""))
-prompt = prompt.replace("{{CODE_DIFF}}", os.environ.get("CODE_DIFF", ""))
-prompt = prompt.replace("{{CODE_DIFF_DETAIL}}", os.environ.get("CODE_DIFF_DETAIL", ""))
+def read_file(name):
+    path = os.path.join(tmpdir, name)
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    return ""
+
+prompt = prompt.replace("{{COMMIT_LOG}}", read_file("commit_log.txt"))
+prompt = prompt.replace("{{CODE_DIFF}}", read_file("code_diff.txt"))
+prompt = prompt.replace("{{CODE_DIFF_DETAIL}}", read_file("code_diff_detail.txt"))
 
 api_key = os.environ["DEEPSEEK_API_KEY"]
 

@@ -202,9 +202,12 @@ jobs:
             COMMIT_LOG="- 首次发布"
           fi
 
-          export COMMIT_LOG CODE_DIFF CODE_DIFF_DETAIL
+          TMPDIR=$(mktemp -d)
+          printf '%s' "$COMMIT_LOG" > "$TMPDIR/commit_log.txt"
+          printf '%s' "$CODE_DIFF" > "$TMPDIR/code_diff.txt"
+          printf '%s' "$CODE_DIFF_DETAIL" > "$TMPDIR/code_diff_detail.txt"
 
-          python3 .github/generate-changelog.py
+          python3 .github/generate-changelog.py "$TMPDIR"
 
   release:
     needs: [build, generate-changelog]
