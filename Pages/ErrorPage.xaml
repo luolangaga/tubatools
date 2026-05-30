@@ -21,14 +21,11 @@
             Spacing="24">
 
             <Image
+                x:Name="ErrorGifImage"
                 HorizontalAlignment="Center"
                 Width="180"
                 Height="180"
-                Stretch="UniformToFill">
-                <Image.Source>
-                    <BitmapImage UriSource="ms-appx:///Assets/error.gif" AutoPlay="True" />
-                </Image.Source>
-            </Image>
+                Stretch="UniformToFill" />
 
             <StackPanel HorizontalAlignment="Center" Spacing="6">
                 <TextBlock

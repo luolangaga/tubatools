@@ -64,10 +64,27 @@ public sealed partial class SettingsPage : Page
             ? $"版本 {version.Major}.{version.Minor}.{version.Build}"
             : "版本 1.0.0";
 
+        LoadSettingsGif();
         LoadGitHubAvatar();
         InitThemeComboBox();
         InitCompactModeToggle();
         LoadBackgroundSettings();
+    }
+
+    private void LoadSettingsGif()
+    {
+        try
+        {
+            var gifPath = Path.Combine(AppContext.BaseDirectory, "Assets", "settings.gif");
+            if (File.Exists(gifPath))
+            {
+                var bitmap = new BitmapImage(new Uri(gifPath)) { AutoPlay = true };
+                SettingsGifImage.Source = bitmap;
+            }
+        }
+        catch
+        {
+        }
     }
 
     private void LoadBackgroundSettings()

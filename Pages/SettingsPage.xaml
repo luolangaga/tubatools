@@ -109,13 +109,10 @@
                         </Grid.ColumnDefinitions>
 
                         <Image
+                            x:Name="SettingsGifImage"
                             Width="56"
                             Height="56"
-                            Stretch="UniformToFill">
-                            <Image.Source>
-                                <BitmapImage UriSource="ms-appx:///Assets/settings.gif" AutoPlay="True" />
-                            </Image.Source>
-                        </Image>
+                            Stretch="UniformToFill" />
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock

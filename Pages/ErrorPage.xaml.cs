@@ -3,6 +3,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace TubaWinUi3.Pages;
 
@@ -15,9 +16,27 @@ public sealed partial class ErrorPage : Page
     {
         InitializeComponent();
 
+        LoadErrorGif();
+
         var ex = App.ConsumePendingException();
         if (ex is not null)
             SetError(ex);
+    }
+
+    private void LoadErrorGif()
+    {
+        try
+        {
+            var gifPath = Path.Combine(AppContext.BaseDirectory, "Assets", "error.gif");
+            if (File.Exists(gifPath))
+            {
+                var bitmap = new BitmapImage(new Uri(gifPath)) { AutoPlay = true };
+                ErrorGifImage.Source = bitmap;
+            }
+        }
+        catch
+        {
+        }
     }
 
     public void SetError(Exception ex)
