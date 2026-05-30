@@ -31,23 +31,32 @@
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <ScrollViewer>
-            <StackPanel
-                MaxWidth="820"
-                Padding="28,18,28,36"
-                Spacing="2">
-
+        <ScrollViewer
+            HorizontalScrollMode="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <RelativePanel HorizontalAlignment="Stretch">
                 <StackPanel
-                    x:Name="HeaderPanel"
-                    Spacing="4">
+                    x:Name="ContentPanel"
+                    RelativePanel.AlignHorizontalCenterWithPanel="True"
+                    RelativePanel.AlignLeftWithPanel="True"
+                    RelativePanel.AlignRightWithPanel="True"
+                    MaxWidth="1000"
+                    Spacing="2"
+                    Padding="40,28,40,48">
+                    <StackPanel.Transitions>
+                        <TransitionCollection>
+                            <RepositionThemeTransition />
+                        </TransitionCollection>
+                    </StackPanel.Transitions>
+
                     <TextBlock
-                        FontSize="30"
+                        FontSize="28"
                         FontWeight="SemiBold"
                         Text="设置" />
                     <TextBlock
                         Opacity="0.72"
+                        Margin="0,0,0,16"
                         Text="管理应用外观、更新及查看关于信息。" />
-                </StackPanel>
 
                 <TextBlock
                     Style="{StaticResource SectionHeaderStyle}"
@@ -61,16 +70,11 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Border
+                        <Image
                             Width="56"
                             Height="56"
-                            Background="{ThemeResource AccentFillColorDefaultBrush}"
-                            CornerRadius="12">
-                            <FontIcon
-                                FontSize="28"
-                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE8B7;" />
-                        </Border>
+                            Source="ms-appx:///Assets/Square150x150Logo.png"
+                            Stretch="UniformToFill" />
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock
@@ -569,6 +573,7 @@
                 </Border>
 
             </StackPanel>
-        </ScrollViewer>
+        </RelativePanel>
+    </ScrollViewer>
     </Grid>
 </Page>
