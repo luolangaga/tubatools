@@ -15,6 +15,25 @@ public static class ToolCatalog
         ".vbs"
     ];
 
+    public static string AppDirectory
+    {
+        get
+        {
+            try
+            {
+                var path = Environment.ProcessPath;
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                        return dir;
+                }
+            }
+            catch { }
+            return AppContext.BaseDirectory;
+        }
+    }
+
     public static string ToolsRoot => FindToolsRoot();
 
     public static IReadOnlyList<string> GetCategories()
@@ -108,24 +127,68 @@ public static class ToolCatalog
             .Sum(c => GetTools(c).Count);
     }
 
-    public static IReadOnlyList<ToolItem> Search(string query)
+    private static IReadOnlyList<string>? _cachedTags;
+    private static IReadOnlyList<ToolItem>? _cachedAllTools;
+
+    private static IReadOnlyList<ToolItem> GetAllToolsCached()
+    {
+        if (_cachedAllTools is not null)
+            return _cachedAllTools;
+
+        if (!Directory.Exists(ToolsRoot))
+            return _cachedAllTools = [];
+
+        _cachedAllTools = GetCategories()
+            .SelectMany(GetTools)
+            .ToList();
+        return _cachedAllTools;
+    }
+
+    public static IReadOnlyList<string> GetAllTags()
+    {
+        if (_cachedTags is not null)
+            return _cachedTags;
+
+        var allTools = GetAllToolsCached();
+        _cachedTags = allTools
+            .SelectMany(t => t.Tags)
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .DistinctBy(t => t, StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(t => t, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        return _cachedTags;
+    }
+
+    public static void InvalidateTagsCache()
+    {
+        _cachedTags = null;
+        _cachedAllTools = null;
+    }
+
+    public static IReadOnlyList<ToolItem> Search(string query, string? tag = null)
     {
         if (!Directory.Exists(ToolsRoot))
-        {
             return [];
-        }
 
         var normalizedQuery = query.Trim();
-        if (normalizedQuery.Length == 0)
-        {
+        if (normalizedQuery.Length == 0 && string.IsNullOrEmpty(tag))
             return [];
-        }
 
-        return GetCategories()
-            .SelectMany(GetTools)
+        var allTools = GetAllToolsCached();
+
+        return allTools
             .Where(item =>
-                item.Name.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase) ||
-                item.RelativePath.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase))
+            {
+                var matchesQuery = normalizedQuery.Length == 0 ||
+                    item.Name.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase) ||
+                    item.RelativePath.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase) ||
+                    (item.Tags?.Any(t => t.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase)) ?? false);
+
+                var matchesTag = string.IsNullOrEmpty(tag) ||
+                    (item.Tags?.Any(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false);
+
+                return matchesQuery && matchesTag;
+            })
             .ToList();
     }
 
@@ -135,7 +198,7 @@ public static class ToolCatalog
         var name = GetDisplayName(path);
         var relativePath = Path.GetRelativePath(categoryRoot, path);
         var metadata = ToolMetadataService.GetMetadata(category, path);
-        var isPlaceholder = !File.Exists(path) && !string.IsNullOrWhiteSpace(metadata.DownloadUrl);
+        var isPlaceholder = !File.Exists(path) && (!string.IsNullOrWhiteSpace(metadata.DownloadUrl) || !string.IsNullOrWhiteSpace(metadata.WingetId));
 
         var primaryArch = DetectArch(Path.GetFileNameWithoutExtension(path));
         var archDisplay = FormatArchDisplay(primaryArch);
@@ -234,6 +297,8 @@ public static class ToolCatalog
             DatabaseSource = metadata.DatabaseSource,
             DownloadUrl = metadata.DownloadUrl,
             DownloadFilter = metadata.DownloadFilter,
+            WingetId = metadata.WingetId,
+            Tags = metadata.Tags ?? [],
             IsFavorite = isPlaceholder ? false : FavoritesService.IsFavorite(path),
             PrimaryArch = archDisplay.Length > 0 ? archDisplay : null,
             AlternateVersions = alternates
@@ -248,7 +313,7 @@ public static class ToolCatalog
         var name = GetDisplayName(path);
         var relativePath = Path.GetRelativePath(categoryRoot, path);
         var metadata = ToolMetadataService.GetMetadata(category, path);
-        var isPlaceholder = !File.Exists(path) && !string.IsNullOrWhiteSpace(metadata.DownloadUrl);
+        var isPlaceholder = !File.Exists(path) && (!string.IsNullOrWhiteSpace(metadata.DownloadUrl) || !string.IsNullOrWhiteSpace(metadata.WingetId));
 
         var item = new ToolItem
         {
@@ -265,6 +330,8 @@ public static class ToolCatalog
             DatabaseSource = metadata.DatabaseSource,
             DownloadUrl = metadata.DownloadUrl,
             DownloadFilter = metadata.DownloadFilter,
+            WingetId = metadata.WingetId,
+            Tags = metadata.Tags ?? [],
             IsFavorite = isPlaceholder ? false : FavoritesService.IsFavorite(path)
         };
         item.InitArchOptions();
@@ -324,6 +391,7 @@ public static class ToolCatalog
     {
         var variants = new List<ArchVariant>();
         var dirName = Path.GetFileName(toolDir);
+        var primaryExt = primaryPath is not null ? Path.GetExtension(primaryPath) : null;
 
         var allLaunchables = Directory.EnumerateFiles(toolDir, "*", SearchOption.AllDirectories)
             .Where(IsLaunchable)
@@ -332,6 +400,9 @@ public static class ToolCatalog
         foreach (var filePath in allLaunchables)
         {
             if (filePath.Equals(primaryPath, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (primaryExt is not null && !Path.GetExtension(filePath).Equals(primaryExt, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -475,13 +546,13 @@ public static class ToolCatalog
 
     private static string FindToolsRoot()
     {
-        var outputTools = Path.Combine(AppContext.BaseDirectory, "Tools");
+        var outputTools = Path.Combine(AppDirectory, "Tools");
         if (Directory.Exists(outputTools))
         {
             return outputTools;
         }
 
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        var directory = new DirectoryInfo(AppDirectory);
         while (directory is not null)
         {
             var candidate = Path.Combine(directory.FullName, "Tools");

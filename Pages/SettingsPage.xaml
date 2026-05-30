@@ -153,6 +153,35 @@
                     </Grid>
                 </Border>
 
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE8FD;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="简洁列表模式" />
+                            <TextBlock
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="原版图吧工具箱的样式" />
+                        </StackPanel>
+
+                        <ToggleSwitch
+                            x:Name="CompactModeToggle"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Toggled="CompactModeToggle_Toggled" />
+                    </Grid>
+                </Border>
+
                 <TextBlock
                     Style="{StaticResource SectionHeaderStyle}"
                     Text="外观" />

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: 图吧工具箱
   text: PC 硬件检测与系统维护工具集
-  tagline: 专为 PC 硬件爱好者和系统维护人员打造 · WinUI 3 现代界面 · 94 款专业工具一键启动
+  tagline: 专为 PC 硬件爱好者和系统维护人员打造 · WinUI 3 现代界面 · 82 款专业工具一键启动
   image:
     src: /logo.png
     alt: 图吧工具箱
@@ -23,7 +23,7 @@ hero:
 </div>
 
 <div class="stat-grid">
-  <div class="stat-item"><div class="stat-number">94</div><div class="stat-label">收录工具</div></div>
+  <div class="stat-item"><div class="stat-number">82</div><div class="stat-label">收录工具</div></div>
   <div class="stat-item"><div class="stat-number">12</div><div class="stat-label">内置功能</div></div>
   <div class="stat-item"><div class="stat-number">8</div><div class="stat-label">工具分类</div></div>
   <div class="stat-item"><div class="stat-number">0</div><div class="stat-label">数据收集</div></div>
@@ -114,13 +114,8 @@ hero:
 </div>
 
 <div class="category-card">
-  <div class="category-icon"><i class="fa-solid fa-gamepad"></i></div>
-  <h4>游戏工具</h4><span class="badge">11 款</span>
-</div>
-
-<div class="category-card">
   <div class="category-icon"><i class="fa-solid fa-toolbox"></i></div>
-  <h4>其他工具</h4><span class="badge">18 款</span>
+  <h4>其他工具</h4><span class="badge">19 款</span>
 </div>
 
 </div>

@@ -101,13 +101,27 @@ public sealed partial class MainWindow : Window
 
     private void PopulateCategories()
     {
-        foreach (var category in ToolCatalog.GetCategories())
+        var categories = ToolCatalog.GetCategories();
+        var otherCategory = categories.FirstOrDefault(c => c.Contains("其他"));
+        var restCategories = categories.Where(c => !c.Contains("其他"));
+
+        foreach (var category in restCategories)
         {
             NavView.MenuItems.Add(new NavigationViewItem
             {
-                Content = category,
+                Content = category.Replace("工具", ""),
                 Tag = category,
                 Icon = new FontIcon { Glyph = GetCategoryGlyph(category) }
+            });
+        }
+
+        if (otherCategory != null)
+        {
+            NavView.MenuItems.Add(new NavigationViewItem
+            {
+                Content = otherCategory.Replace("工具", ""),
+                Tag = otherCategory,
+                Icon = new FontIcon { Glyph = GetCategoryGlyph(otherCategory) }
             });
         }
     }
@@ -116,11 +130,15 @@ public sealed partial class MainWindow : Window
     {
         if (category.Contains("处理器", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uE950";
+            return "\uEEA1";
         }
 
-        if (category.Contains("显卡", StringComparison.CurrentCultureIgnoreCase) ||
-            category.Contains("显示器", StringComparison.CurrentCultureIgnoreCase))
+        if (category.Contains("显卡", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return "\uF211";
+        }
+
+        if (category.Contains("显示器", StringComparison.CurrentCultureIgnoreCase))
         {
             return "\uE7F4";
         }
@@ -132,7 +150,12 @@ public sealed partial class MainWindow : Window
 
         if (category.Contains("内存", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uE965";
+            return "\uEEA0";
+        }
+
+        if (category.Contains("外设", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return "\uE962";
         }
 
         if (category.Contains("游戏", StringComparison.CurrentCultureIgnoreCase))
@@ -142,7 +165,7 @@ public sealed partial class MainWindow : Window
 
         if (category.Contains("烤鸡", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uE945";
+            return "\uE9D9";
         }
 
         if (category.Contains("声卡", StringComparison.CurrentCultureIgnoreCase))
@@ -152,7 +175,17 @@ public sealed partial class MainWindow : Window
 
         if (category.Contains("网卡", StringComparison.CurrentCultureIgnoreCase))
         {
-            return "\uE968";
+            return "\uEDA3";
+        }
+
+        if (category.Contains("综合", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return "\uEC4E";
+        }
+
+        if (category.Contains("其他", StringComparison.CurrentCultureIgnoreCase))
+        {
+            return "\uE712";
         }
 
         return "\uE8B7";

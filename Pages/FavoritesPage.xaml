@@ -34,7 +34,7 @@
             <TextBlock
                 FontSize="30"
                 FontWeight="SemiBold"
-                Text="常用工具" />
+                Text="常用" />
             <TextBlock
                 x:Name="SubtitleText"
                 Opacity="0.72"
@@ -249,7 +249,7 @@
                 <TextBlock
                     HorizontalAlignment="Center"
                     Opacity="0.42"
-                    Text="在全部工具页面点击星标按钮即可收藏" />
+                    Text="在全部页面点击星标按钮即可收藏" />
             </StackPanel>
 
             <TeachingTip

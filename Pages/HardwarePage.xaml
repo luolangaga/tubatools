@@ -9,7 +9,7 @@
 
     <Page.Resources>
         <Style x:Key="MetricCardStyle" TargetType="Border">
-            <Setter Property="Padding" Value="18" />
+            <Setter Property="Padding" Value="20" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -191,12 +191,19 @@
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <ScrollViewer x:Name="ContentScroll">
-            <Grid MaxWidth="1180" Padding="28,18,28,28" RowSpacing="18">
+        <Viewbox
+            x:Name="ContentScaler"
+            Stretch="Uniform"
+            StretchDirection="DownOnly">
+            <Grid
+                x:Name="LayoutRoot"
+                Width="960"
+                Padding="32,24,32,24"
+                RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <Grid
@@ -214,21 +221,22 @@
 
                     <StackPanel Spacing="4">
                         <TextBlock
-                            FontSize="30"
+                            FontSize="34"
                             FontWeight="SemiBold"
                             Text="硬件信息" />
                         <TextBlock
+                            FontSize="16"
                             Opacity="0.72"
                             Text="汇总本机型号、系统和关键硬件参数。" />
                     </StackPanel>
 
                     <Button
                         Grid.Column="1"
-                        Padding="14,7"
+                        Padding="16,8"
                         Click="RefreshButton_Click">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon x:Name="RefreshIcon" FontSize="14" Glyph="&#xE72C;" />
-                            <TextBlock Text="刷新" />
+                            <FontIcon x:Name="RefreshIcon" FontSize="16" Glyph="&#xE72C;" />
+                            <TextBlock FontSize="16" Text="刷新" />
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -251,21 +259,21 @@
                     <Border x:Name="Card1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited">
                         <Grid ColumnSpacing="14">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Border
-                                Width="44"
-                                Height="44"
+                                Width="48"
+                                Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE772;" />
+                                <FontIcon FontSize="24" Glyph="&#xE772;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Opacity="0.68" Text="型号信息" />
+                                <TextBlock FontSize="15" Opacity="0.68" Text="型号信息" />
                                 <TextBlock
                                     x:Name="ModelText"
-                                    FontSize="18"
+                                    FontSize="20"
                                     FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
@@ -275,21 +283,21 @@
                     <Border x:Name="Card2" Grid.Column="1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited">
                         <Grid ColumnSpacing="14">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Border
-                                Width="44"
-                                Height="44"
+                                Width="48"
+                                Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE770;" />
+                                <FontIcon FontSize="24" Glyph="&#xE770;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Opacity="0.68" Text="系统信息" />
+                                <TextBlock FontSize="15" Opacity="0.68" Text="系统信息" />
                                 <TextBlock
                                     x:Name="SystemText"
-                                    FontSize="18"
+                                    FontSize="20"
                                     FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
@@ -299,21 +307,21 @@
                     <Border x:Name="Card3" Grid.Column="2" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited">
                         <Grid ColumnSpacing="14">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Border
-                                Width="44"
-                                Height="44"
+                                Width="48"
+                                Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="22" Glyph="&#xE917;" />
+                                <FontIcon FontSize="24" Glyph="&#xE917;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock Opacity="0.68" Text="运行时间" />
+                                <TextBlock FontSize="15" Opacity="0.68" Text="运行时间" />
                                 <TextBlock
                                     x:Name="UptimeText"
-                                    FontSize="18"
+                                    FontSize="20"
                                     FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
@@ -324,14 +332,14 @@
                 <StackPanel
                     x:Name="DetailsPanel"
                     Grid.Row="2"
-                    Spacing="10"
+                    Spacing="8"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
                     <StackPanel.RenderTransform>
                         <TranslateTransform Y="20" />
                     </StackPanel.RenderTransform>
                     <TextBlock
-                        FontSize="20"
+                        FontSize="22"
                         FontWeight="SemiBold"
                         Text="详细信息" />
 
@@ -339,28 +347,30 @@
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate>
                                 <Border
-                                    Padding="14,10"
+                                    Padding="16,10"
                                     CornerRadius="6"
                                     Margin="0,0,0,4"
                                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                                    <Grid MinHeight="38" Padding="4,2" ColumnSpacing="16">
+                                    <Grid MinHeight="40" Padding="4,2" ColumnSpacing="16">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="110" />
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock
+                                            FontSize="16"
                                             Opacity="0.68"
                                             Text="{Binding Label}"
                                             VerticalAlignment="Center" />
                                         <Border
                                             Grid.Column="1"
                                             Width="1"
-                                            Height="16"
+                                            Height="18"
                                             Background="{ThemeResource DividerStrokeColorDefaultBrush}"
                                             VerticalAlignment="Center" />
                                         <TextBlock
                                             Grid.Column="2"
+                                            FontSize="16"
                                             FontWeight="SemiBold"
                                             Text="{Binding Value}"
                                             TextWrapping="Wrap"
@@ -372,7 +382,7 @@
                     </ItemsRepeater>
                 </StackPanel>
             </Grid>
-        </ScrollViewer>
+        </Viewbox>
 
         <ProgressRing
             x:Name="LoadingRing"

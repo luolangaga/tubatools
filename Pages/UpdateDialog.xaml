@@ -90,7 +90,7 @@
             CornerRadius="10"
             MaxHeight="180">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <TextBlock
+                <RichTextBlock
                     x:Name="ChangelogText"
                     FontSize="13"
                     TextWrapping="Wrap"

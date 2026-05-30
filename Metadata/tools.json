@@ -292,9 +292,9 @@
     },
     {
       "match": "ZenTimings",
-      "description": "AMD Zen 架构内存时序和频率查看工具。",
-      "publisher": "",
-      "tags": [ "内存", "AMD", "时序" ]
+      "description": "AMD Zen 架构内存时序和频率实时查看工具，支持 DDR4/DDR5 时序、子时序和电压监控。",
+      "publisher": "ZenTimings",
+      "tags": [ "内存", "AMD", "时序", "硬件检测" ]
     },
     {
       "match": "monitorinfo",
@@ -401,74 +401,9 @@
       "match": "LatencyMon",
       "description": "系统实时音频延迟检测工具，分析 DPC/ISR 延迟和硬页面错误，排查音频卡顿和爆音。",
       "publisher": "Resplendence Software",
-      "tags": [ "声卡", "延迟检测", "DPC" ]
+      "tags": [ "其他", "延迟检测", "DPC" ]
     },
-    {
-      "match": "Steam",
-      "description": "Steam 游戏平台下载入口。",
-      "publisher": "Valve",
-      "tags": [ "游戏", "平台" ]
-    },
-    {
-      "match": "epic",
-      "description": "Epic Games 游戏平台下载入口。",
-      "publisher": "Epic Games",
-      "tags": [ "游戏", "平台" ]
-    },
-    {
-      "match": "battle",
-      "description": "Battle.net 暴雪战网平台下载入口。",
-      "publisher": "Blizzard",
-      "tags": [ "游戏", "平台" ]
-    },
-    {
-      "match": "eaapp",
-      "description": "EA App 电子艺界游戏平台下载入口。",
-      "publisher": "Electronic Arts",
-      "tags": [ "游戏", "平台" ]
-    },
-    {
-      "match": "GameBuff",
-      "description": "游戏加加硬件监控和游戏优化工具下载入口。",
-      "publisher": "GameBuff",
-      "tags": [ "游戏", "硬件监控" ]
-    },
-    {
-      "match": "风灵月影",
-      "description": "风灵月影游戏修改器下载入口，提供单机游戏作弊修改功能。",
-      "publisher": "FLiNG",
-      "tags": [ "游戏", "修改器" ]
-    },
-    {
-      "match": "斧牛加速器",
-      "description": "斧牛游戏网络加速器下载入口，降低游戏延迟。",
-      "publisher": "斧牛",
-      "tags": [ "游戏", "网络加速" ]
-    },
-    {
-      "match": "雷神加速器",
-      "description": "雷神游戏网络加速器下载入口，支持按时计费。",
-      "publisher": "雷神",
-      "tags": [ "游戏", "网络加速" ]
-    },
-    {
-      "match": "玩家动力",
-      "description": "玩家动力游戏加速器下载入口。",
-      "publisher": "玩家动力",
-      "tags": [ "游戏", "网络加速" ]
-    },
-    {
-      "match": "迅雷加速器",
-      "description": "迅雷游戏网络加速器下载入口。",
-      "publisher": "迅雷",
-      "tags": [ "游戏", "网络加速" ]
-    },
-    {
-      "match": "迅游加速器",
-      "description": "迅游游戏网络加速器下载入口，老牌游戏加速器。",
-      "publisher": "迅游",
-      "tags": [ "游戏", "网络加速" ]
-    },
+
     {
       "match": "BatteryInfoView",
       "description": "笔记本电池容量、循环、损耗和实时状态查看工具。",
@@ -580,18 +515,7 @@
       "publisher": "",
       "tags": [ "CPU", "显卡", "性能排名" ]
     },
-    {
-      "match": "游戏加加",
-      "description": "游戏加加硬件监控和游戏优化工具下载入口。",
-      "publisher": "游戏加加",
-      "tags": [ "游戏", "硬件监控" ]
-    },
-    {
-      "match": "MorePowerTool",
-      "description": "AMD 显卡功率限制解锁和 BIOS 编辑工具，可修改 Radeon RX 5000/6000/7000 系列的功率限制、频率和电压。",
-      "publisher": "Igor's Lab (Red Bios Rebellion Team)",
-      "tags": [ "显卡", "AMD", "BIOS编辑", "功率解锁" ]
-    },
+
     {
       "match": "nvflash",
       "description": "NVIDIA 显卡 BIOS 刷写工具，支持 Blackwell/Ada/Ampere/Turing/Pascal 等全系 NVIDIA 显卡 BIOS 刷写和备份。",
@@ -604,13 +528,7 @@
       "publisher": "Intel",
       "tags": [ "主板", "BIOS刷写", "Intel" ]
     },
-    {
-      "match": "Cinebench",
-      "description": "CPU/GPU 渲染性能基准测试工具，基于 Cinema 4D 引擎，跑分圈标杆。",
-      "publisher": "Maxon",
-      "tags": [ "CPU", "显卡", "跑分", "性能测试" ],
-      "downloadUrl": "https://www.maxon.net/en/downloads/cinebench-2024-downloads"
-    },
+
     {
       "match": "BlenderBenchmark",
       "description": "Blender 渲染性能基准测试工具，评估 CPU/GPU 的 3D 渲染能力。",

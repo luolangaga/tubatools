@@ -1,9 +1,9 @@
 ---
 title: 其他工具
-description: 系统维护和实用工具合集，包括 Everything、Dism++、Rufus、Ventoy 等 18 款其他工具。
+description: 系统维护和实用工具合集，包括 Everything、Dism++、Rufus、Ventoy 等 19 款其他工具。
 ---
 
-# 其他工具 <span class="badge">18 款</span>
+# 其他工具 <span class="badge">19 款</span>
 
 | 工具 | 说明 |
 |------|------|
@@ -24,4 +24,4 @@ description: 系统维护和实用工具合集，包括 Everything、Dism++、Ru
 | MSDN I Tell You | 微软原版系统镜像下载入口 |
 | CPU/显卡天梯图 | CPU 和显卡性能天梯图，直观对比各型号性能排名 |
 | 皮肤编辑器 | 图吧工具箱皮肤在线编辑器入口 |
-| 游戏加加 | 硬件监控和游戏优化工具下载入口 |
+| LatencyMon | 系统实时音频延迟检测，分析 DPC/ISR 延迟，排查音频卡顿和爆音 |

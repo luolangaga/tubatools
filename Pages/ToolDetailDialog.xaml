@@ -55,108 +55,111 @@
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="0,0,0,1">
-                    <Grid ColumnSpacing="24">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid ColumnSpacing="24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                        <Border
-                            x:Name="HeroIconBorder"
-                            Width="80"
-                            Height="80"
-                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                            CornerRadius="16">
-                            <Grid>
-                                <Image
-                                    x:Name="HeroIconImage"
-                                    Width="52"
-                                    Height="52"
-                                    Stretch="Uniform"
-                                    Visibility="Collapsed" />
-                                <FontIcon
-                                    x:Name="HeroIconGlyph"
-                                    FontSize="36"
-                                    Visibility="Collapsed" />
-                            </Grid>
-                        </Border>
+                            <Border
+                                x:Name="HeroIconBorder"
+                                Width="80"
+                                Height="80"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                CornerRadius="16">
+                                <Grid>
+                                    <Image
+                                        x:Name="HeroIconImage"
+                                        Width="52"
+                                        Height="52"
+                                        Stretch="Uniform"
+                                        Visibility="Collapsed" />
+                                    <FontIcon
+                                        x:Name="HeroIconGlyph"
+                                        FontSize="36"
+                                        Visibility="Collapsed" />
+                                </Grid>
+                            </Border>
 
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
-                            <TextBlock
-                                x:Name="HeroTitle"
-                                FontSize="28"
-                                FontWeight="Bold"
-                                TextTrimming="CharacterEllipsis" />
-                            <StackPanel Orientation="Horizontal" Spacing="12">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
                                 <TextBlock
-                                    x:Name="HeroCategory"
-                                    FontSize="14"
-                                    Opacity="0.68" />
-                                <Border
-                                    x:Name="HeroExtBadge"
-                                    Padding="8,2"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    CornerRadius="4"
-                                    Visibility="Collapsed">
+                                    x:Name="HeroTitle"
+                                    FontSize="28"
+                                    FontWeight="Bold"
+                                    TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Spacing="12">
                                     <TextBlock
-                                        x:Name="HeroExtText"
-                                        FontSize="11"
-                                        FontWeight="SemiBold" />
-                                </Border>
+                                        x:Name="HeroCategory"
+                                        FontSize="14"
+                                        Opacity="0.68" />
+                                    <Border
+                                        x:Name="HeroExtBadge"
+                                        Padding="8,2"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="4"
+                                        Visibility="Collapsed">
+                                        <TextBlock
+                                            x:Name="HeroExtText"
+                                            FontSize="11"
+                                            FontWeight="SemiBold" />
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
 
-                        <StackPanel
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Spacing="8">
-                            <ComboBox
-                                x:Name="ArchComboBox"
-                                MinWidth="80"
-                                Padding="8,4"
-                                FontSize="13"
-                                SelectionChanged="ArchComboBox_SelectionChanged"
-                                Visibility="Collapsed">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock FontSize="13" Text="{Binding DisplayText}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                            <Button
-                                x:Name="FavoriteButton"
-                                Width="40"
-                                Height="40"
-                                Padding="0"
-                                Click="FavoriteButton_Click"
-                                ToolTipService.ToolTip="收藏">
-                                <FontIcon x:Name="FavoriteIcon" FontSize="16" />
-                            </Button>
-                            <Button
-                                x:Name="AdminButton"
-                                Height="40"
-                                Padding="14,0"
-                                Click="AdminButton_Click"
-                                ToolTipService.ToolTip="以管理员身份运行">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7EF;" />
-                                    <TextBlock Text="管理员" />
-                                </StackPanel>
-                            </Button>
-                            <Button
-                                x:Name="LaunchButton"
-                                Height="40"
-                                Padding="20,0"
-                                Click="LaunchButton_Click"
-                                Style="{ThemeResource AccentButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon FontSize="14" Glyph="&#xE768;" />
-                                    <TextBlock x:Name="LaunchButtonText" Text="打开" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                        <Grid Grid.Row="1" Margin="0,12,0,0" HorizontalAlignment="Right">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox
+                                    x:Name="ArchComboBox"
+                                    MinWidth="80"
+                                    Padding="8,4"
+                                    FontSize="13"
+                                    SelectionChanged="ArchComboBox_SelectionChanged"
+                                    Visibility="Collapsed">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock FontSize="13" Text="{Binding DisplayText}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button
+                                    x:Name="FavoriteButton"
+                                    Width="40"
+                                    Height="40"
+                                    Padding="0"
+                                    Click="FavoriteButton_Click"
+                                    ToolTipService.ToolTip="收藏">
+                                    <FontIcon x:Name="FavoriteIcon" FontSize="16" />
+                                </Button>
+                                <Button
+                                    x:Name="AdminButton"
+                                    Height="40"
+                                    Padding="14,0"
+                                    Click="AdminButton_Click"
+                                    ToolTipService.ToolTip="以管理员身份运行">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon FontSize="14" Glyph="&#xE7EF;" />
+                                        <TextBlock Text="管理员" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    x:Name="LaunchButton"
+                                    Height="40"
+                                    Padding="20,0"
+                                    Click="LaunchButton_Click"
+                                    Style="{ThemeResource AccentButtonStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                        <TextBlock x:Name="LaunchButtonText" Text="打开" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
 

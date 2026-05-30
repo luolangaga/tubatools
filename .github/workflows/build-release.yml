@@ -63,7 +63,32 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish app
+      - name: Publish app (portable, single-file)
+        run: |
+          dotnet publish TubaWinUi3.csproj `
+            -c Release `
+            -r ${{ matrix.rid }} `
+            --self-contained true `
+            -p:Platform=${{ matrix.arch }} `
+            -p:PublishTrimmed=false `
+            -p:PublishReadyToRun=false `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:WindowsAppSDKSelfContained=true `
+            -p:WindowsPackageType=None `
+            -p:WindowsAppSDKSingleFileVerifyConfiguration=false `
+            -o publish_${{ matrix.arch }}
+
+      - name: Restore .pri file for portable
+        shell: pwsh
+        run: |
+          $priFile = "bin\${{ matrix.arch }}\Release\net10.0-windows10.0.26100.0\${{ matrix.rid }}\TubaWinUi3.pri"
+          if (Test-Path -LiteralPath $priFile) {
+            Copy-Item -LiteralPath $priFile -Destination publish_${{ matrix.arch }} -Force
+            Write-Host "Restored TubaWinUi3.pri for portable"
+          }
+
+      - name: Publish app (for installer)
         run: |
           dotnet publish TubaWinUi3.csproj `
             -c Release `
@@ -74,23 +99,24 @@ jobs:
             -p:PublishReadyToRun=false `
             -p:WindowsAppSDKSelfContained=true `
             -p:WindowsPackageType=None `
-            -o publish_${{ matrix.arch }}
+            -o publish_${{ matrix.arch }}_installer
 
-      - name: Restore .pri file
+      - name: Restore .pri file for installer
         shell: pwsh
         run: |
           $priFile = "bin\${{ matrix.arch }}\Release\net10.0-windows10.0.26100.0\${{ matrix.rid }}\TubaWinUi3.pri"
           if (Test-Path -LiteralPath $priFile) {
-            Copy-Item -LiteralPath $priFile -Destination publish_${{ matrix.arch }} -Force
-            Write-Host "Restored TubaWinUi3.pri"
+            Copy-Item -LiteralPath $priFile -Destination publish_${{ matrix.arch }}_installer -Force
+            Write-Host "Restored TubaWinUi3.pri for installer"
           }
 
-      - name: Clean up publish directory
+      - name: Clean up publish directories
         shell: pwsh
         run: |
-          $root = "publish_${{ matrix.arch }}"
-          Get-ChildItem -LiteralPath $root -Filter '*.pdb' -Recurse -Force -ErrorAction SilentlyContinue |
-            Remove-Item -Force -ErrorAction SilentlyContinue
+          foreach ($root in @("publish_${{ matrix.arch }}", "publish_${{ matrix.arch }}_installer")) {
+            Get-ChildItem -LiteralPath $root -Filter '*.pdb' -Recurse -Force -ErrorAction SilentlyContinue |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Build Inno Setup installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.5

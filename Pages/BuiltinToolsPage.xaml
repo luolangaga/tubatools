@@ -29,7 +29,7 @@
             <TextBlock
                 FontSize="30"
                 FontWeight="SemiBold"
-                Text="内置工具" />
+                Text="内置" />
             <TextBlock
                 Opacity="0.72"
                 Text="无需外部文件，直接使用的系统工具集。" />
@@ -64,7 +64,7 @@
                     <TextBlock
                         FontSize="16"
                         FontWeight="SemiBold"
-                        Text="内置工具集" />
+                        Text="内置工具" />
                     <TextBlock
                         x:Name="ToolCountText"
                         Opacity="0.68" />

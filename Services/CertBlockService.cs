@@ -235,11 +235,12 @@ public static class CertBlockService
 
     private static string FindCertBlockRoot()
     {
-        foreach (var d in new[] { AppContext.BaseDirectory, Path.Combine(AppContext.BaseDirectory, "CertBlock") })
+        var appDir = ToolCatalog.AppDirectory;
+        foreach (var d in new[] { appDir, Path.Combine(appDir, "CertBlock") })
         {
             if (Directory.Exists(Path.Combine(d, "Certificates"))) return d;
         }
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        var directory = new DirectoryInfo(appDir);
         while (directory is not null)
         {
             var candidate = Path.Combine(directory.FullName, "CertBlock");
@@ -248,12 +249,13 @@ public static class CertBlockService
             if (Directory.Exists(Path.Combine(candidate, "Certificates"))) return candidate;
             directory = directory.Parent;
         }
-        return Path.Combine(AppContext.BaseDirectory, "CertBlock");
+        return Path.Combine(appDir, "CertBlock");
     }
 
     private static string? ReadAssetFile(string baseDir, string name)
     {
-        foreach (var d in new[] { Path.Combine(baseDir, "CertBlockAssets"), baseDir, Path.Combine(AppContext.BaseDirectory, "CertBlockAssets") })
+        var appDir = ToolCatalog.AppDirectory;
+        foreach (var d in new[] { Path.Combine(baseDir, "CertBlockAssets"), baseDir, Path.Combine(appDir, "CertBlockAssets") })
         {
             var p = Path.Combine(d, name);
             if (File.Exists(p)) return File.ReadAllText(p);

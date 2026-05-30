@@ -9,7 +9,9 @@ public sealed record ToolMetadata(
     string? Version,
     string? DatabaseSource,
     string? DownloadUrl,
-    string? DownloadFilter);
+    string? DownloadFilter,
+    string? WingetId,
+    IReadOnlyList<string>? Tags);
 
 public sealed record JsonArchVariantResult(string? File, string? Dir, string? Arch);
 
@@ -24,7 +26,7 @@ public static class ToolMetadataService
 
         return metadata.Any(item =>
             !string.IsNullOrWhiteSpace(item.Match) &&
-            !string.IsNullOrWhiteSpace(item.DownloadUrl) &&
+            (!string.IsNullOrWhiteSpace(item.DownloadUrl) || !string.IsNullOrWhiteSpace(item.WingetId)) &&
             dirName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase));
     }
 
@@ -51,7 +53,9 @@ public static class ToolMetadataService
             FirstUseful(versionInfo?.ProductVersion, versionInfo?.FileVersion),
             jsonMetadata is null ? null : "JSON",
             jsonMetadata?.DownloadUrl,
-            jsonMetadata?.DownloadFilter);
+            jsonMetadata?.DownloadFilter,
+            jsonMetadata?.WingetId,
+            jsonMetadata?.Tags);
     }
 
     public static IReadOnlyList<JsonArchVariantResult> GetArchVariants(string toolPath, string? toolDir = null)
@@ -75,11 +79,14 @@ public static class ToolMetadataService
         var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolPath);
         var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
 
-        return metadata.FirstOrDefault(item =>
-            !string.IsNullOrWhiteSpace(item.Match) &&
-            (fileName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-             relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-             MatchesFlexible(dirName, item.Match)));
+        return metadata
+            .Where(item =>
+                !string.IsNullOrWhiteSpace(item.Match) &&
+                (fileName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
+                 relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
+                 MatchesFlexible(dirName, item.Match)))
+            .OrderByDescending(item => item.Match!.Length)
+            .FirstOrDefault();
     }
 
     private static JsonToolMetadata? FindJsonMetadataByDir(string toolDir)
@@ -88,10 +95,13 @@ public static class ToolMetadataService
         var dirName = Path.GetFileName(toolDir);
         var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolDir);
 
-        return metadata.FirstOrDefault(item =>
-            !string.IsNullOrWhiteSpace(item.Match) &&
-            (relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-             MatchesFlexible(dirName, item.Match)));
+        return metadata
+            .Where(item =>
+                !string.IsNullOrWhiteSpace(item.Match) &&
+                (relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
+                 MatchesFlexible(dirName, item.Match)))
+            .OrderByDescending(item => item.Match!.Length)
+            .FirstOrDefault();
     }
 
     private static bool MatchesFlexible(string? source, string match)
@@ -171,13 +181,14 @@ public static class ToolMetadataService
 
     private static string FindRoot(string folderName)
     {
-        var outputRoot = Path.Combine(AppContext.BaseDirectory, folderName);
+        var appDir = ToolCatalog.AppDirectory;
+        var outputRoot = Path.Combine(appDir, folderName);
         if (Directory.Exists(outputRoot))
         {
             return outputRoot;
         }
 
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        var directory = new DirectoryInfo(appDir);
         while (directory is not null)
         {
             var candidate = Path.Combine(directory.FullName, folderName);
@@ -208,6 +219,10 @@ public static class ToolMetadataService
         public string? DownloadUrl { get; set; }
 
         public string? DownloadFilter { get; set; }
+
+        public string? WingetId { get; set; }
+
+        public List<string>? Tags { get; set; }
 
         public List<JsonArchVariant>? ArchVariants { get; set; }
     }

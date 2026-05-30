@@ -1,1 +1,0 @@
-Start https://www.tbtool.cn/links/epic.html?%random%%random%%random%

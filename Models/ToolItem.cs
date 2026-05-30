@@ -43,6 +43,10 @@ public sealed class ToolItem : INotifyPropertyChanged
 
     public string? DownloadFilter { get; init; }
 
+    public string? WingetId { get; init; }
+
+    public IReadOnlyList<string> Tags { get; init; } = [];
+
     private bool _isFavorite;
     public bool IsFavorite
     {
@@ -52,7 +56,54 @@ public sealed class ToolItem : INotifyPropertyChanged
 
     public string Folder => System.IO.Path.GetDirectoryName(RelativePath) ?? Category;
 
-    public bool NeedsDownload => !string.IsNullOrWhiteSpace(DownloadUrl);
+    public bool NeedsDownload => !string.IsNullOrWhiteSpace(DownloadUrl) || !string.IsNullOrWhiteSpace(WingetId);
+
+    public bool NeedsWingetInstall => !string.IsNullOrWhiteSpace(WingetId);
+
+    private bool _isWingetInstalled;
+    public bool IsWingetInstalled
+    {
+        get => _isWingetInstalled;
+        set
+        {
+            if (SetField(ref _isWingetInstalled, value))
+            {
+                OnPropertyChanged(nameof(LaunchButtonText));
+                OnPropertyChanged(nameof(IsWingetInstalling));
+                OnPropertyChanged(nameof(CanLaunch));
+            }
+        }
+    }
+
+    private bool _isWingetInstalling;
+    public bool IsWingetInstalling
+    {
+        get => _isWingetInstalling;
+        set
+        {
+            if (SetField(ref _isWingetInstalling, value))
+            {
+                OnPropertyChanged(nameof(LaunchButtonText));
+                OnPropertyChanged(nameof(CanLaunch));
+            }
+        }
+    }
+
+    private int _wingetInstallProgress;
+    public int WingetInstallProgress
+    {
+        get => _wingetInstallProgress;
+        set => SetField(ref _wingetInstallProgress, value);
+    }
+
+    private string _wingetInstallStatus = "";
+    public string WingetInstallStatus
+    {
+        get => _wingetInstallStatus;
+        set => SetField(ref _wingetInstallStatus, value);
+    }
+
+    public bool CanLaunch => !IsWingetInstalling;
 
     public string? PrimaryArch { get; init; }
 
@@ -86,11 +137,13 @@ public sealed class ToolItem : INotifyPropertyChanged
     {
         get
         {
-            if (NeedsDownload)
+            if (!string.IsNullOrWhiteSpace(DownloadUrl))
                 return "下载";
-            var arch = SelectedArch?.Arch ?? PrimaryArch;
-            if (!string.IsNullOrEmpty(arch))
-                return $"打开（{arch}）";
+            if (!string.IsNullOrWhiteSpace(WingetId))
+            {
+                if (IsWingetInstalling) return "安装中...";
+                return IsWingetInstalled ? "打开" : "下载";
+            }
             return "打开";
         }
     }

@@ -41,7 +41,8 @@ public sealed class LiteMonitorService : IDisposable
     private static bool s_initDone;
 
     private FpsDetector? _fpsDetector;
-    private static readonly string s_assetDir = Path.Combine(AppContext.BaseDirectory, "LiteMonitorAssets");
+    private static string? s_assetDir;
+    private static string AssetDir => s_assetDir ??= Path.Combine(ToolCatalog.AppDirectory, "LiteMonitorAssets");
 
     private static readonly string[] s_fpsUrls =
     [
@@ -331,7 +332,7 @@ public sealed class LiteMonitorService : IDisposable
     {
         if (IsDriverReady()) return true;
 
-        Directory.CreateDirectory(s_assetDir);
+        Directory.CreateDirectory(AssetDir);
         var tempZip = Path.Combine(Path.GetTempPath(), $"LiteMonitor_driver_{Guid.NewGuid()}.zip");
 
         bool ok = await DownloadWithDialogAsync(xamlRoot, "安装硬件监控驱动",
@@ -341,8 +342,8 @@ public sealed class LiteMonitorService : IDisposable
 
         try
         {
-            ZipFile.ExtractToDirectory(tempZip, s_assetDir, true);
-            var setupPath = FindFile(s_assetDir, "PawnIO_setup.exe", "pawnio.exe", "PawnIO.exe");
+            ZipFile.ExtractToDirectory(tempZip, AssetDir, true);
+            var setupPath = FindFile(AssetDir, "PawnIO_setup.exe", "pawnio.exe", "PawnIO.exe");
             if (setupPath == null) return false;
 
             var psi = new ProcessStartInfo
@@ -365,10 +366,10 @@ public sealed class LiteMonitorService : IDisposable
 
     public async Task<bool> EnsureFpsComponentAsync(XamlRoot xamlRoot)
     {
-        var exePath = Path.Combine(s_assetDir, "LiteMonitorFPS.exe");
+        var exePath = Path.Combine(AssetDir, "LiteMonitorFPS.exe");
         if (File.Exists(exePath) && IsValidExe(exePath)) return true;
 
-        Directory.CreateDirectory(s_assetDir);
+        Directory.CreateDirectory(AssetDir);
         var tempPath = Path.Combine(Path.GetTempPath(), $"LiteMonitorFPS_{Guid.NewGuid()}.exe");
 
         bool ok = await DownloadWithDialogAsync(xamlRoot, "下载 FPS 检测组件",
@@ -711,7 +712,7 @@ public sealed class LiteMonitorService : IDisposable
             try
             {
                 if (!IsAdmin()) return;
-                var exePath = Path.Combine(s_assetDir, "LiteMonitorFPS.exe");
+                var exePath = Path.Combine(AssetDir, "LiteMonitorFPS.exe");
                 if (!File.Exists(exePath)) return;
 
                 KillZombies();

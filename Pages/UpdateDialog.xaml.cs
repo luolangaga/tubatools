@@ -29,8 +29,7 @@ public sealed partial class UpdateDialog : ContentDialog
         PublishDateText.Text = updateInfo.PublishedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm");
 
         var body = updateInfo.Body ?? "暂无更新说明";
-        if (body.Length > 500) body = body[..500] + "...";
-        ChangelogText.Text = body;
+        MarkdownTextService.RenderToRichTextBlock(ChangelogText, body);
 
         _selectedAsset = UpdateService.FindBestAsset(updateInfo.Assets);
 

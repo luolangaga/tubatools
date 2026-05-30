@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Win32;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
@@ -137,6 +138,40 @@ public static class WingetService
         {
             return false;
         }
+    }
+
+    public static string? FindInstalledExePath(string packageId)
+    {
+        foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
+        {
+            foreach (var keyPath in new[]
+            {
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            })
+            {
+                using var parentKey = hive.OpenSubKey(keyPath);
+                if (parentKey is null) continue;
+
+                foreach (var subKeyName in parentKey.GetSubKeyNames())
+                {
+                    using var subKey = parentKey.OpenSubKey(subKeyName);
+                    if (subKey is null) continue;
+
+                    var displayName = subKey.GetValue("DisplayName") as string;
+                    if (displayName is null || !displayName.Contains(packageId, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var installLocation = subKey.GetValue("InstallLocation") as string;
+                    if (string.IsNullOrWhiteSpace(installLocation) || !Directory.Exists(installLocation)) continue;
+
+                    var exe = Directory.GetFiles(installLocation, "*.exe", SearchOption.TopDirectoryOnly)
+                        .FirstOrDefault(f => !Path.GetFileName(f).Equals("Uninstall.exe", StringComparison.OrdinalIgnoreCase)
+                                          && !Path.GetFileName(f).Equals("unins000.exe", StringComparison.OrdinalIgnoreCase));
+                    return exe;
+                }
+            }
+        }
+        return null;
     }
 
     private static int ParseProgressFromLine(string line)

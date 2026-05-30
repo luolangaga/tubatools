@@ -1,0 +1,210 @@
+# v1.39 May 28 2026
+ - Fixed Proc DQ Drive Stength sometimes showing as N/A on auto
+ - Fixed crash on DragonRange family
+ - Fixed a bug in smbus driver which was leading to conflict with HWInfo
+ - Updated Telemetry window
+ - Added SPD info window
+ - Added ECC indicator (PR-99 by tsg2k2)
+ - Hynix IC revision parser should not longer display incorrect 'O-die'
+
+# v1.38 Apr 16 2026
+ - Fixed Telemetry window update
+ - Update core to fix posible conflicts with other monitoring apps
+
+# v1.37 Apr 15 2026
+ - Added support for reading memory voltages from PMIC
+ - Added support for reading memory modules from SPD
+ - Added DIMM telemetry window for supported hardware
+ - Added option to switch between impedance table sources
+ - Added new themes: ROG and Black
+ - Added configurable screenshot save location
+ - Added Asus TUF logo
+ - Added MSI logos
+ - Update PawnIO driver to 2.2.0.0 and modules to 0.2.4
+ - Extended controller settings for AM5 desktop series
+ - Skip timing refresh when MCLK has not changed
+ - Displays tRDPRE and tWRPRE for 8000-series APUs
+ - Updated vendor logos
+ - About, Debug and Options dialogs no longer block main window
+ - Updated Phoenix tables to correct voltage display on 8700G
+ - Fix Proc Data Drive Strength reading on 8000 desktop series
+ - Fixed tRFC (ns) dynamic calculation based on detected BCLK and current memory frequency
+ - Automatically disable tRFCsb when FGR (Strict) mode is enabled
+ - Removed legacy encrypted settings previously used for AGESA version storage
+ - Workaround for window border not applied on Windows 11
+
+# v1.36 Feb 16 2026
+ - Display Bank Refresh Mode
+ - Fix wrong TRFC4 (DDR4) reading
+ - Improve AGESA version detection parsing 
+ - Improve power table refresh performance 
+ - Enable export as HTML
+ - Drop WMI method to get system info in favor of SMBios (faster) 
+ - Fix crash on certain systems when trying to generate a debug report 
+ - Fixed an error when only one DIMM present in the secondary channel 
+ - Replace WinRing0 kernel driver with PawnIO 
+ - Support new CPUs 
+ - Update AOD tables 
+ - Update PMT tables 
+ - Display additional channels in System Info 
+ - Add read preamble, write preamble and STAGsb 
+ - Improve dual rank memory detection 
+ - Display VDDG IOD0 and VDDG CCD0 voltages for 9000 series 
+ - Add Asus logos - ROG, AYW, ProArt 
+ - Add G.Skill logos 
+ - Add Biwin and OriginCode logos 
+ - Add Colorful iGame logo 
+ - Optimize resources 
+ - Add link to Reous' bios spreadsheet 
+ - Allow multiple instances (enable in Options) 
+
+# v1.36-beta-2 Nov 03 2025
+ - Replace WinRing0 kernel driver with PawnIO
+ - Support new CPUs
+ - Update AOD tables
+ - Update PMT tables
+ - Display additional channels in System Info
+ - Add read preamble, write preamble and STAGsb
+ - Improve dual rank memory detection
+ - Display VDDG IOD0 and VDDG CCD0 voltages for 9000 series
+ - Add Asus logos - ROG, AYW, ProArt
+ - Add G.Skill logos
+ - Add Biwin and OriginCode logos
+ - Optimize resources
+ - Add link to Reous' bios spreadsheet
+ - Allow multiple instances (enable in Options)
+
+# v1.35 Jan 10 2025
+ - Update for new 800-series chipsets
+ - Fixed blurry icons on some systems
+ - Improved 32GB dual rank modules impedance table
+
+# v1.34 Dec 30 2024
+ - Update for AGESA 1.2.0.2b
+ - Fixed Mendocino core detection
+ - Fixed issue with captured screenshot not persisting in clipboard
+ - Add ROG logo for applicable motherboards
+
+# v1.33 Nov 14 2024
+ - Update for AGESA 1.2.0.2a
+ - Fixed detection of dual rank DDR5 memory sticks
+ - Update themes
+
+# v1.32 Aug 7 2024
+ - Add support for Granite Ridge (Ryzen 9000 series)
+ - Extend Phoenix support (Ryzen 8000 series)
+ - Add experimental Nitro settings reading in System Info dialog
+ - Add setting to control screenshot mode (window or desktop)
+ - Update themes
+ - Update site url
+
+# v1.31 Dec 7 2023
+ - Add support for Dragon Range (tested on Ryzen 9 7945HX).
+ - Add CPU VDDIO reading on DDR5 systems.
+ - Fix issues with reading power table on some systems.
+
+# v1.30 Nov 23 2023
+ - Enhanced compatibility with StormPeak and Genoa, offering partial support.
+ - Introduced initial support for Mendocino and Phoenix.
+ - Optimized the refresh process for power management tables, enhancing efficiency.
+ - Improved support for Dali cores.
+ - Addressed and fixed issues with the PM table of Picasso.
+ - Fix saved window position out of bounds.
+ - Simplified the versioning scheme for better clarity.
+
+# v1.2.9 Dec 21 2022
+ - Fixed DRAM speed string syncronization with MCLK
+ - Added a workaround for false-postives, see github issue 33 (https://github.com/irusanov/ZenTimings/issues/33)
+
+# v1.2.8 Dec 17 2022
+ - Imroved support for Zen4 7000 (Raphael) CPUs
+ - Extended support for DDR5 memory
+ - Replaced tXP with tRFCsb in the interface
+ - Fixed issues with GDM and Cmd2T readings for DDR5 memory
+ - Resolved issues with the reading of power tables for Picasso/Dali CPUs
+ - Updated the Discord invite link to a permanent one
+ - Updated core DLL for enhanced functionality and stability
+
+# v1.2.7 Oct 15 2022
+ - Improve Zen4 7000 (Raphael) CPU support
+ - Improve DDR5 support
+
+# v1.2.6 Jun 04 2022
+ - Add experimental DDR5 support
+ - Add basic Rembrandt APU support
+ - Update libraries
+ - Fix corrupted config file handling
+ - Add option to save window position
+ - Add minimize to tray option
+ - Enable system info window
+ - Integrate WinRing driver
+ - Initial plugins system
+ - Update icons
+ - Improve debug report formatting
+ - Add donation links
+ 
+# v1.2.5 Jun 14 2021
+ - Hotfix for locales different than en-US (issue #21)
+
+# v1.2.4 Jun 13 2021
+ - Fix initial Power Table read for AGESA ComboPiV2 1.2.0.0+ (issue #19)
+ - Pause autorefresh when minimized
+ - Add auto update
+ - Display modules versions in About dialog
+ - Small fixes for Renoir PM tables (might still not work on every system)
+
+# v1.2.3 Mar 21 2021
+ - Add Cezanne support (5000 Zen3 series APU)
+ - Add Lucienne support (5000 Zen2 series APU)
+ - Improve Epyc Rome support
+ - Add separate DCT readings for each installed DIMM
+ - Add Asus WMI sensors reading for boards that support it
+ - Fix startup for unsupported CPUs
+ - Reduce minimum .NET framework version for legacy app to 3.5
+
+# v1.2.2 Jan 3 2021
+ - Add PHYWRD, PHYWRL, PHYRDL and PowerDown readings.
+ - Add DRAM and VTT readings (static) from BIOS on some motherboards (MSI and Gigabyte).
+ - Add support for both SMU version number variants to fix Picasso voltage readings on some systems.
+ - Add support for Dali APUs (https://en.wikichip.org/wiki/amd/cores/dali).
+ - Optimized startup, progress is reported in the splash screen.
+ - Save settings in the same directory of the app for better portability and upgrade.
+ - Small UI adjustments and fixes.
+ - Old legacy version is now EOL. Replaced by new version with stripped themes support.
+ - Remove hover state of camera icon.
+ - Attempt to filter incorrect VSOC values reported by SVI2 TFN plane.
+ - Better error reporting.
+ - Fix installed DRAM modules slot labels.
+ - Fix power table reading on 32bit OS.
+ - Fix occasional problem with reading power table on first load after boot.
+
+# v1.2.1 Nov 10 2020
+ - Full Vermeer support
+ - Add separate VDDG IOD and CCD voltages for Zen3
+ - Remove VSOC (SMU)
+ - Fix DRAM module installed detection
+ - Update system info and debug report
+
+# v1.2.0 Oct 31 2020
+ - Rework UI to use WPF, legacy version still available (includes all fixes)
+ - Add dark theme option
+ - Add advanced mode switch
+ - Add Renoir SVI2 readings, thanks @reous for debug reports
+ - Add a workaround for the case when configured clock speed is reported halved by the system
+ - Add preliminary Vermeer and Genesis support
+ - Fix SVI2 SoC voltage for Threadripper/EPYC gen 1 and 2
+ - Change FCLK reading for Zen2 to report fixed configured clock
+ - Display memory module slot in the dropdown
+ - 32bit OS support is back
+ - Improve debug report
+
+# v1.1.0 Aug 20 2020
+ - Add most of the known timings
+ - Add FCLK, MCLK and UCLK readings for supported platforms
+ - Add VDDSOC, CLDO_VDDP and CLDO_VDDG for supported platforms
+ - Add memory controller settings for desktop platforms
+ - Add auto-refresh option for frequencies and voltages
+ - Add debug functionality
+ - Add "Copy to clipboard" to screenshot save dialog
+ - Make a screenshot of the app window without shadow
+ - Redesign the layout completely

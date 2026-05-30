@@ -1,0 +1,104 @@
+;;; rspLLL
+;;;
+;;; Copyright (c) 2005-2015, Resplendence Software Projects Sp
+;;;
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = "ActivityMonitor"                         ;This is determined by the work this filter driver does
+Provider    = Resplendence Software Projects
+DriverVer   = 07/13/2015,1.0.0.0
+
+[DestinationDirs]
+DefaultDestDir         = 12
+rspLLL.DriverFiles     = 12                            ;%windir%\system32\drivers
+rspLLL.UserFiles       = 10,FltMgr                     ;%windir%\FltMgr
+
+;;
+;; Default install sections
+;;
+
+[DefaultInstall]
+OptionDesc          = %rspLLLServiceDesc%
+CopyFiles           = rspLLL.DriverFiles, rspLLL.UserFiles
+
+[DefaultInstall.Services]
+AddService          = %rspLLLServiceName%,,rspLLL.Service
+
+;;
+;; Default uninstall sections
+;;
+
+[DefaultUninstall]
+DelFiles   = rspLLL.DriverFiles, rspLLL.UserFiles
+
+
+
+[DefaultUninstall.Services]
+DelService = rspLLL,0x200      ;Ensure service is stopped before deleting
+
+;
+; Services Section
+;
+
+[rspLLL.Service]
+DisplayName      = %rspLLLServiceName%
+Description      = %rspLLLServiceDesc%
+ServiceBinary    = %12%\rspLLL64.sys        ;%windir%\system32\drivers\rspLLL64.sys
+ServiceType      = 2                        ;SERVICE_FILE_SYSTEM_DRIVER
+StartType        = 3                        ;SERVICE_DEMAND_START
+ErrorControl     = 1                        ;SERVICE_ERROR_NORMAL
+LoadOrderGroup   = "FSFilter Activity Monitor"
+AddReg           = rspLLL.AddRegistry
+Dependencies     = FltMgr
+
+;
+; Registry Modifications
+;
+
+[rspLLL.AddRegistry]
+HKR,%RegInstancesSubkeyName%,%RegDefaultInstanceValueName%,0x00000000,%DefaultInstance%
+HKR,%RegInstancesSubkeyName%"\"%Instance1.Name%,%RegAltitudeValueName%,0x00000000,%Instance1.Altitude%
+HKR,%RegInstancesSubkeyName%"\"%Instance1.Name%,%RegFlagsValueName%,0x00010001,%Instance1.Flags%
+HKR,%RegInstancesSubkeyName%"\"%Instance2.Name%,%RegAltitudeValueName%,0x00000000,%Instance2.Altitude%
+HKR,%RegInstancesSubkeyName%"\"%Instance2.Name%,%RegFlagsValueName%,0x00010001,%Instance2.Flags%
+HKR,%RegInstancesSubkeyName%"\"%Instance3.Name%,%RegAltitudeValueName%,0x00000000,%Instance3.Altitude%
+HKR,%RegInstancesSubkeyName%"\"%Instance3.Name%,%RegFlagsValueName%,0x00010001,%Instance3.Flags%
+
+;
+; Copy Files
+;
+
+[rspLLL.DriverFiles]
+rspLLL64.sys
+
+[rspLLL.UserFiles]
+;rspLLL64.inf
+
+;;
+;; String Section
+;;
+
+[Strings]
+rspLLLServiceDesc           = "rspLLL filter"
+rspLLLServiceName           = "rspLLL"
+RegInstancesSubkeyName      = "Instances"
+RegDefaultInstanceValueName = "DefaultInstance"
+RegAltitudeValueName        = "Altitude"
+RegFlagsValueName           = "Flags"
+
+;Instances specific information.
+;undelete: 340000-349999
+;monitor: 360000-389999
+
+DefaultInstance      = "rspLLL - Middle Instance"
+Instance1.Name       = "rspLLL - Middle Instance"
+Instance1.Altitude   = "366125"
+Instance1.Flags      = 0x1          ; Suppress automatic attachments
+Instance2.Name       = "rspLLL - Bottom Instance"
+Instance2.Altitude   = "366100"
+Instance2.Flags      = 0x1          ; Suppress automatic attachments
+Instance3.Name       = "rspLLL - Top Instance"
+Instance3.Altitude   = "366199"
+Instance3.Flags      = 0x1          ; Suppress automatic attachments
+

@@ -58,7 +58,11 @@ public static class HardwareInfoService
             !ContainsAny(Get(item, "Name"), "Microsoft Basic Render", "Microsoft Remote Display", "DDA Wrapper"))));
         section.Items.Add(Item("显示器", FormatDisplays()));
         section.Items.Add(Item("硬盘", FormatDisks()));
-        section.Items.Add(Item("声卡", JoinNames("Win32_SoundDevice")));
+        section.Items.Add(Item("声卡", JoinNames("Win32_SoundDevice", item =>
+        {
+            var name = Get(item, "Name");
+            return !ContainsAny(name, "Virtual", "虚拟", "Software", "Remote Audio", "Stereo Mix", "Wave", "VB-Audio", "VBAN", "Voicemeeter", "CABLE", "VAC");
+        })));
         section.Items.Add(Item("网卡", JoinNames("Win32_NetworkAdapter", item =>
             IsTrue(item, "PhysicalAdapter") &&
             !ContainsAny(Get(item, "Name"), "Virtual", "Bluetooth", "WAN Miniport"))));

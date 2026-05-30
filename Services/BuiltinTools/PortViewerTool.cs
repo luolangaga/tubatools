@@ -167,14 +167,14 @@ public sealed class PortViewerTool : IBuiltinTool
             }
             else
             {
-                var dlg = new ContentDialog
+                var state = GetState(root);
+                if (state is not null)
                 {
-                    Title = "结束进程失败",
-                    Content = $"无法结束进程 {entry.ProcessName} (PID {entry.ProcessId})：{error}",
-                    CloseButtonText = "确定",
-                    XamlRoot = root.XamlRoot
-                };
-                await dlg.ShowAsync();
+                    state.ErrorBar.Title = "结束进程失败";
+                    state.ErrorBar.Message = $"无法结束进程 {entry.ProcessName} (PID {entry.ProcessId})：{error}";
+                    state.ErrorBar.Severity = InfoBarSeverity.Error;
+                    state.ErrorBar.IsOpen = true;
+                }
             }
         };
 
@@ -345,16 +345,25 @@ public sealed class PortViewerTool : IBuiltinTool
             Children = { loadingRing, loadingText }
         };
 
+        var errorBar = new InfoBar
+        {
+            Severity = InfoBarSeverity.Error,
+            IsOpen = false,
+            IsClosable = true
+        };
+
         var contentGrid = new Grid { RowSpacing = 12 };
         contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-        contentGrid.Children.Add(actionBar); Grid.SetRow(actionBar, 0);
-        contentGrid.Children.Add(headerBorder); Grid.SetRow(headerBorder, 1);
-        contentGrid.Children.Add(listBorder); Grid.SetRow(listBorder, 2);
-        contentGrid.Children.Add(loadingPanel); Grid.SetRow(loadingPanel, 3);
+        contentGrid.Children.Add(errorBar); Grid.SetRow(errorBar, 0);
+        contentGrid.Children.Add(actionBar); Grid.SetRow(actionBar, 1);
+        contentGrid.Children.Add(headerBorder); Grid.SetRow(headerBorder, 2);
+        contentGrid.Children.Add(listBorder); Grid.SetRow(listBorder, 3);
+        contentGrid.Children.Add(loadingPanel); Grid.SetRow(loadingPanel, 4);
 
         var root = new StackPanel { Spacing = 14, MaxWidth = 860 };
         root.Children.Add(new TextBlock
@@ -376,7 +385,8 @@ public sealed class PortViewerTool : IBuiltinTool
             ListScroll = listScroll,
             LoadingRing = loadingRing,
             LoadingPanel = loadingPanel,
-            ListPanel = listBorder
+            ListPanel = listBorder,
+            ErrorBar = errorBar
         };
 
         refreshBtn.Click += async (_, _) =>
@@ -416,6 +426,7 @@ public sealed class PortViewerTool : IBuiltinTool
         public ProgressRing LoadingRing = null!;
         public StackPanel LoadingPanel = null!;
         public Border ListPanel = null!;
+        public InfoBar ErrorBar = null!;
     }
 }
 

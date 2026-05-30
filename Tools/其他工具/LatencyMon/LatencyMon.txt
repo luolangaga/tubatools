@@ -1,0 +1,15 @@
+LatencyMon - version 7.31 released July 2023
+Copyright (c) 1999-2023 Resplendence Software Projects Sp.
+
+contact: http://www.resplendence.com/support
+
+Runs on: Windows 11,Windows 10, Windows 8.1, Windows 8, Windows 7,
+Windows 2022 Server, Windows 2016 Server, Windows 2012 Server, Windows
+2008 Server
+
+
+Description:
+------------
+LatencyMon checks if your system is suitable for handling real time audio by
+measuring DPC and ISR routine execution latencies as well as hard page faults.
+

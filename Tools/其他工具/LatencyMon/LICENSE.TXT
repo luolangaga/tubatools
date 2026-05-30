@@ -1,0 +1,40 @@
+SOFTWARE LICENSE AGREEMENT AND LIMITED WARRANTY FOR HOME EDITION COPIES OF THE SOFTWARE
+
+BY USING THE SOFTWARE, YOU ACCEPT THESE TERMS. IF YOU DO NOT ACCEPT THEM, YOU MAY NOT USE, INSTALL OR RUN THIS SOFTWARE.
+
+In this agreement:
+
+"Software" means the software product "LatencyMon" that is licensed to you under this agreement, including, but not limited to, any related components purchased or provided with the Software, printed materials, online or electronic documentation, and any updates and maintenance releases thereto.
+
+"Home Edition" means a copy of the Software for which you have not paid a fee to us or one of our authorized resellers. Home Edition copies are typically described as "Home Edition" copies in the Software's main application bar and Help about box;
+
+"Resplendence", "we" or "us" means Resplendence Software Projects;
+
+"You" means the end user of the Software;
+
+
+(1) Legal Agreement.  This legal agreement allows you to use the Software under the terms and conditions below.
+
+(2) License.  The Software is licensed, not sold. This agreement only gives you certain rights to use the Software. Resplendence reserves all other rights.  You may use the Software only as expressly permitted in this agreement.
+
+(3) Ownership. Resplendence owns the Software under copyright, trade secret and all other laws that may apply. All product names, designs and logos are trademarks of Resplendence.
+
+(4) Installation and use rights of the Home Edition of the Software. You may install and run any number of copies of the Home Edition of the Software on your computer systems at home. You may not install or run the Software in any commercial, nonprofit, academic or government organization.
+
+(5) Restrictions. You may not sell, lease, license, sublicense, distribute or otherwise transfer in whole or in part the Software or the Software License Key to another party; You may not provide, disclose, divulge or make available to, or permit use of the Software in whole or in part by, any third party (except Designated Administrative Access) without the prior written consent of Resplendence. You may not modify or create derivative works based upon the Software. You may not create, develop, license, install, use, or deploy any third party software or services to circumvent, enable, modify or provide access, permissions or rights which violate the technical restrictions of the Software, any additional licensing terms provided by Resplendence via product documentation, notification, and/or policy change posted at www.resplendence.com, and the terms of this EULA. You may not disassemble, decompile, reverse engineer or otherwise attempt to derive source code from the Software, in whole or in part, except and only to the extent that applicable law expressly permits.
+
+(6) Distribution.  You may not copy the Software except for a reasonable number of machine-readable copies of the Software for backup or archival purposes. You may not make any copies of your Home Edition Copy of the Software to give to others. The program may not be included in any commercial Software or Software collection and may not be distributed without a written permission from us.
+
+(7) LIMITED WARRANTY.  We don't promise that the Software will be free of Software bugs or program errors.  If  you report an error or bug to us, we will address it as part of our normal maintenance procedures.  If we issue a maintenance release for the Software containing a correction for an error you reported, we will make a copy of that release available to you for electronic download at no charge.  We will only do this for maintenance releases, not for other new versions of the Software.
+
+(8) DISCLAIMERS, LIMITATIONS AND RESTRICTED RIGHTS.
+
+*** DISCLAIMER FOR HOME EDITION COPIES:  YOU ARE NOT PAYING FOR THE USE LICENSE FOR YOUR COPY OF THE HOME EDITION OF THE SOFTWARE. ACCORDINGLY THE HOME EDITION COPY IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND WHATSOEVER, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  YOU ASSUME FULL RESPONSIBILITY FOR THE SELECTION AND USE OF THE SOFTWARE TO ACHIEVE YOUR INTENDED RESULTS, AND ACKNOWLEDGE THAT IF YOU USE THE SOFTWARE IMPROPERLY OR AGAINST OUR INSTRUCTIONS YOU CAN CAUSE DAMAGE TO YOUR FILES, SOFTWARE AND DATA.
+
+*** HIGH RISK ACTIVITIES.  THE SOFTWARE IS NOT FAULT-TOLERANT AND IS NOT DESIGNED, MANUFACTURED OR INTENDED FOR USE AS ONLINE CONTROL EQUIPMENT IN HAZARDOUS ENVIRONMENTS REQUIRING FAIL-SAFE PERFORMANCE, SUCH AS IN THE OPERATION OF NUCLEAR FACILITIES, AIRCRAFT NAVIGATION OR COMMUNICATION SYSTEMS, AIR TRAFFIC CONTROL, DIRECT LIFE SUPPORT MACHINES, OR WEAPONS SYSTEMS, OR ANY OTHER ENVIRONMENT IN WHICH THE FAILURE OF THE SOFTWARE COULD LEAD DIRECTLY TO DEATH, PERSONAL INJURY, OR SEVERE PHYSICAL OR ENVIRONMENTAL DAMAGE ("HIGH RISK ACTIVITIES"). WE SPECIFICALLY DISCLAIM ANY EXPRESS OR IMPLIED WARRANTY OF FITNESS FOR HIGH RISK ACTIVITIES FOR THE SOFTWARE OR ANY PORTION THEREOF.
+
+*** LIMITATION OF LIABILITY:  IN NO EVENT SHALL WE BE LIABLE FOR ANY INCIDENTAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES WHATSOEVER ARISING OUT OF USE OF THE SOFTWARE OR YOUR RELATIONSHIP WITH US. SOME JURISDICTIONS DO NOT ALLOW EXCLUSION OR LIMITATION OF LIABILITY FOR INCIDENTAL OR CONSEQUENTIAL DAMAGES, THEREFORE THE ABOVE LIMITATION MAY NOT APPLY TO YOU.
+
+*** EXPORT.  YOU MAY USE THE SOFTWARE IN ANY COUNTRY, EXCEPT COUNTRIES THAT ARE SUBJECT TO EUROPEAN EXPORT RESTRICTIONS. YOU ARE SOLELY RESPONSIBLE FOR DETERMINING WHETHER ANY PLANNED EXPORT RELATING TO THE SOFTWARE IS LEGAL UNDER EUROPEAN UNION LAW AND OTHER APPLICABLE LAWS.
+
+

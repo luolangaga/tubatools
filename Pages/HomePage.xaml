@@ -15,6 +15,45 @@
         <local:HasAlternatesToVisibilityConverter x:Key="HasAlternatesToVis" />
         <local:NoAlternatesToVisibilityConverter x:Key="NoAlternatesToVis" />
         <local:ArchOptionsCountConverter x:Key="ArchOptionsCountConverter" />
+        <local:ZeroToIndeterminateConverter x:Key="ZeroIsIndeterminate" />
+        <local:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <Style x:Key="TagRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border
+                            x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CheckStates">
+                                    <VisualState x:Name="Checked">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unchecked" />
+                                    <VisualState x:Name="Indeterminate" />
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="ToolCardStyle" TargetType="GridViewItem">
             <Setter Property="MinWidth" Value="236" />
             <Setter Property="MaxWidth" Value="300" />
@@ -23,10 +62,19 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
         </Style>
+        <Style x:Key="CompactCardStyle" TargetType="GridViewItem">
+            <Setter Property="MinWidth" Value="100" />
+            <Setter Property="MaxWidth" Value="120" />
+            <Setter Property="MinHeight" Value="90" />
+            <Setter Property="Margin" Value="4,4,4,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
     </Page.Resources>
 
     <Grid Padding="28,18,28,24" RowSpacing="18">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -110,7 +158,18 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
+        <ScrollViewer
+            x:Name="TagBarScrollViewer"
+            Grid.Row="2"
+            HorizontalScrollBarVisibility="Hidden"
+            HorizontalScrollMode="Enabled"
+            VerticalScrollBarVisibility="Disabled"
+            VerticalScrollMode="Disabled"
+            Visibility="Collapsed">
+            <StackPanel x:Name="TagBarPanel" Orientation="Horizontal" Spacing="6" />
+        </ScrollViewer>
+
+        <Grid Grid.Row="3">
             <ScrollViewer
                 x:Name="ToolsScrollViewer"
                 ViewChanged="ScrollViewer_ViewChanged">
@@ -128,10 +187,11 @@
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="8">
-                                <Grid RowSpacing="12">
+                                <Grid RowSpacing="6">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
                                         <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
@@ -193,7 +253,30 @@
                                         TextTrimming="CharacterEllipsis"
                                         TextWrapping="Wrap" />
 
-                                    <Grid Grid.Row="2" ColumnSpacing="8">
+                                    <ItemsControl
+                                        Grid.Row="2"
+                                        Margin="-2,0,0,0"
+                                        ItemsSource="{Binding Tags}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border
+                                                    Padding="6,2"
+                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4">
+                                                    <TextBlock FontSize="10" Opacity="0.68" Text="{Binding}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Grid Grid.Row="3" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -250,9 +333,71 @@
                                             HorizontalAlignment="Right"
                                             Padding="10,4"
                                             Click="LaunchButton_Click"
-                                            Content="{Binding LaunchButtonText}" />
+                                            Content="{Binding LaunchButtonText}"
+                                            IsEnabled="{Binding CanLaunch}" />
                                     </Grid>
                                 </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </ScrollViewer>
+
+            <ScrollViewer x:Name="CompactScrollViewer" Visibility="Collapsed">
+                <GridView
+                    x:Name="CompactGrid"
+                    IsItemClickEnabled="True"
+                    ItemClick="CompactGrid_ItemClick"
+                    ItemContainerStyle="{StaticResource CompactCardStyle}"
+                    SelectionMode="None">
+                    <GridView.Resources>
+                        <MenuFlyout x:Key="CompactItemFlyout">
+                            <MenuFlyoutItem Text="发送到桌面快捷方式" Click="CompactMenu_SendToDesktop" Icon="Link" />
+                            <MenuFlyoutItem Text="以管理员身份运行" Click="CompactMenu_RunAsAdmin" Icon="Admin" />
+                        </MenuFlyout>
+                    </GridView.Resources>
+                    <GridView.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                Padding="8,10,8,6"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                RightTapped="CompactItem_RightTapped"
+                                ToolTipService.ToolTip="{Binding Description}">
+                                <StackPanel HorizontalAlignment="Center" Spacing="6">
+                                    <Border
+                                        Width="48"
+                                        Height="48"
+                                        HorizontalAlignment="Center"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="10">
+                                        <Grid>
+                                            <Image
+                                                Width="36"
+                                                Height="36"
+                                                Source="{Binding IconPath}"
+                                                Stretch="Uniform"
+                                                Visibility="{Binding IconPath, Converter={StaticResource NullToCollapse}}" />
+                                            <FontIcon
+                                                FontSize="24"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Glyph="{Binding IconGlyph}"
+                                                Visibility="{Binding IconGlyph, Converter={StaticResource NullToCollapse}}" />
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        FontSize="12"
+                                        MaxLines="2"
+                                        Text="{Binding Name}"
+                                        TextAlignment="Center"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="Wrap"
+                                        Width="84" />
+                                </StackPanel>
                             </Border>
                         </DataTemplate>
                     </GridView.ItemTemplate>

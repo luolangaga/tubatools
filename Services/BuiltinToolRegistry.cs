@@ -30,6 +30,8 @@ public static class BuiltinToolRegistry
         Register(new WifiPasswordTool());
         Register(new DiskSpaceAnalyzerTool());
         Register(new LiteMonitorTool());
+        Register(new WindowsActivationTool());
+        Register(new DefenderTool());
     }
 
     public static IReadOnlyList<string> GetCategories()

@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI;
 using Windows.UI;
 using TubaWinUi3.Services;
 
@@ -183,72 +184,85 @@ public sealed class SpeedTestTool : IBuiltinTool
 
         _cts = new CancellationTokenSource();
 
-        state.DownloadProgressPanel.Visibility = Visibility.Visible;
-        state.DownloadProgress.Visibility = Visibility.Visible;
-        state.DownloadProgress.IsIndeterminate = true;
-        state.DownloadStatusLabel.Text = "正在下载测试（约 30 秒）...";
-
-        var downloadProgress = new Progress<SpeedTestProgress>(p =>
+        try
         {
-            state.DownloadSpeedText.Text = SpeedTestService.FormatSpeed(p.CurrentSpeedMbps);
+            state.DownloadProgressPanel.Visibility = Visibility.Visible;
+            state.DownloadProgress.Visibility = Visibility.Visible;
+            state.DownloadProgress.IsIndeterminate = true;
+            state.DownloadStatusLabel.Text = "正在下载测试（约 30 秒）...";
+
+            var downloadProgress = new Progress<SpeedTestProgress>(p =>
+            {
+                state.DownloadSpeedText.Text = SpeedTestService.FormatSpeed(p.CurrentSpeedMbps);
+                state.DownloadProgress.IsIndeterminate = false;
+                state.DownloadProgress.Value = Math.Min(p.CurrentSpeedMbps, 1000);
+                state.DownloadStatusLabel.Text = $"已下载 {FormatBytes(p.BytesTransferred)} | {SpeedTestService.FormatSpeed(p.CurrentSpeedMbps)}";
+            });
+
+            var downloadResult = await SpeedTestService.RunDownloadTestAsync(downloadProgress, _cts.Token);
+
             state.DownloadProgress.IsIndeterminate = false;
-            state.DownloadProgress.Value = Math.Min(p.CurrentSpeedMbps, 1000);
-            state.DownloadStatusLabel.Text = $"已下载 {FormatBytes(p.BytesTransferred)} | {SpeedTestService.FormatSpeed(p.CurrentSpeedMbps)}";
-        });
+            state.DownloadProgress.Value = 100;
 
-        var downloadResult = await SpeedTestService.RunDownloadTestAsync(downloadProgress, _cts.Token);
+            if (downloadResult.Success)
+            {
+                state.DownloadSpeedText.Text = SpeedTestService.FormatSpeed(downloadResult.DownloadMbps);
+                state.DownloadStatusLabel.Text = $"平均下载速度 {SpeedTestService.FormatSpeed(downloadResult.DownloadMbps)}";
+            }
+            else
+            {
+                state.DownloadStatusLabel.Text = downloadResult.Error;
+            }
 
-        state.DownloadProgress.IsIndeterminate = false;
-        state.DownloadProgress.Value = 100;
+            if (_cts.Token.IsCancellationRequested)
+            {
+                state.ResultText.Text = "测试已取消";
+                state.ResultText.Foreground = new SolidColorBrush(Colors.Orange);
+                state.ResultText.Visibility = Visibility.Visible;
+                return;
+            }
 
-        if (downloadResult.Success)
-        {
-            state.DownloadSpeedText.Text = SpeedTestService.FormatSpeed(downloadResult.DownloadMbps);
-            state.DownloadStatusLabel.Text = $"平均下载速度 {SpeedTestService.FormatSpeed(downloadResult.DownloadMbps)}";
+            state.UploadProgressPanel.Visibility = Visibility.Visible;
+            state.UploadProgress.Visibility = Visibility.Visible;
+            state.UploadProgress.IsIndeterminate = true;
+            state.UploadStatusLabel.Text = "正在上传测试（约 30 秒）...";
+
+            var uploadProgress = new Progress<SpeedTestProgress>(p =>
+            {
+                state.UploadSpeedText.Text = SpeedTestService.FormatSpeed(p.CurrentSpeedMbps);
+                state.UploadProgress.IsIndeterminate = false;
+                state.UploadProgress.Value = Math.Min(p.CurrentSpeedMbps, 1000);
+                state.UploadStatusLabel.Text = $"已上传 {FormatBytes(p.BytesTransferred)} | {SpeedTestService.FormatSpeed(p.CurrentSpeedMbps)}";
+            });
+
+            var uploadResult = await SpeedTestService.RunUploadTestAsync(uploadProgress, _cts.Token);
+
+            state.UploadProgress.IsIndeterminate = false;
+            state.UploadProgress.Value = 100;
+
+            if (uploadResult.Success)
+            {
+                state.UploadSpeedText.Text = SpeedTestService.FormatSpeed(uploadResult.UploadMbps);
+                state.UploadStatusLabel.Text = $"平均上传速度 {SpeedTestService.FormatSpeed(uploadResult.UploadMbps)}";
+            }
+            else
+            {
+                state.UploadStatusLabel.Text = uploadResult.Error;
+            }
+
+            state.ResultText.Text = $"测试完成！下载 {SpeedTestService.FormatSpeed(downloadResult.DownloadMbps)} / 上传 {SpeedTestService.FormatSpeed(uploadResult.UploadMbps)}";
+            state.ResultText.Visibility = Visibility.Visible;
         }
-        else
+        catch (OperationCanceledException)
         {
-            state.DownloadStatusLabel.Text = downloadResult.Error;
+            state.ResultText.Text = "测试已取消";
+            state.ResultText.Foreground = new SolidColorBrush(Colors.Orange);
+            state.ResultText.Visibility = Visibility.Visible;
         }
-
-        if (_cts.Token.IsCancellationRequested)
+        finally
         {
             FinishTest(state);
-            return;
         }
-
-        state.UploadProgressPanel.Visibility = Visibility.Visible;
-        state.UploadProgress.Visibility = Visibility.Visible;
-        state.UploadProgress.IsIndeterminate = true;
-        state.UploadStatusLabel.Text = "正在上传测试（约 30 秒）...";
-
-        var uploadProgress = new Progress<SpeedTestProgress>(p =>
-        {
-            state.UploadSpeedText.Text = SpeedTestService.FormatSpeed(p.CurrentSpeedMbps);
-            state.UploadProgress.IsIndeterminate = false;
-            state.UploadProgress.Value = Math.Min(p.CurrentSpeedMbps, 1000);
-            state.UploadStatusLabel.Text = $"已上传 {FormatBytes(p.BytesTransferred)} | {SpeedTestService.FormatSpeed(p.CurrentSpeedMbps)}";
-        });
-
-        var uploadResult = await SpeedTestService.RunUploadTestAsync(uploadProgress, _cts.Token);
-
-        state.UploadProgress.IsIndeterminate = false;
-        state.UploadProgress.Value = 100;
-
-        if (uploadResult.Success)
-        {
-            state.UploadSpeedText.Text = SpeedTestService.FormatSpeed(uploadResult.UploadMbps);
-            state.UploadStatusLabel.Text = $"平均上传速度 {SpeedTestService.FormatSpeed(uploadResult.UploadMbps)}";
-        }
-        else
-        {
-            state.UploadStatusLabel.Text = uploadResult.Error;
-        }
-
-        state.ResultText.Text = $"测试完成！下载 {SpeedTestService.FormatSpeed(downloadResult.DownloadMbps)} / 上传 {SpeedTestService.FormatSpeed(uploadResult.UploadMbps)}";
-        state.ResultText.Visibility = Visibility.Visible;
-
-        FinishTest(state);
     }
 
     private void FinishTest(SpeedTestState state)

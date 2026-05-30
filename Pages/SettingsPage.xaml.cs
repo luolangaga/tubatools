@@ -58,6 +58,7 @@ public sealed partial class SettingsPage : Page
 
         LoadGitHubAvatar();
         InitThemeComboBox();
+        InitCompactModeToggle();
         LoadBackgroundSettings();
     }
 
@@ -205,26 +206,18 @@ public sealed partial class SettingsPage : Page
 
             if (update is not null)
             {
-                var skipped = UpdateService.GetSkippedVersion();
-                if (skipped == update.Version)
+                UpdateStatusText.Text = $"发现新版本 v{update.Version}";
+                var dialog = new UpdateDialog();
+                await dialog.ShowUpdateAsync(update);
+
+                if (dialog.SkipThisVersion)
                 {
-                    UpdateStatusText.Text = $"已跳过 v{update.Version}（点击重新检查）";
+                    UpdateService.SetSkippedVersion(update.Version);
+                    UpdateStatusText.Text = $"已跳过 v{update.Version}";
                 }
                 else
                 {
-                    UpdateStatusText.Text = $"发现新版本 v{update.Version}";
-                    var dialog = new UpdateDialog();
-                    await dialog.ShowUpdateAsync(update);
-
-                    if (dialog.SkipThisVersion)
-                    {
-                        UpdateService.SetSkippedVersion(update.Version);
-                        UpdateStatusText.Text = $"已跳过 v{update.Version}";
-                    }
-                    else
-                    {
-                        UpdateStatusText.Text = "点击检查是否有新版本";
-                    }
+                    UpdateStatusText.Text = "点击检查是否有新版本";
                 }
             }
             else
@@ -241,6 +234,16 @@ public sealed partial class SettingsPage : Page
             _isCheckingUpdate = false;
             CheckUpdateButton.IsEnabled = true;
         }
+    }
+
+    private void CompactModeToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        CompactModeService.SetCompactModeEnabled(CompactModeToggle.IsOn);
+    }
+
+    private void InitCompactModeToggle()
+    {
+        CompactModeToggle.IsOn = CompactModeService.IsCompactModeEnabled();
     }
 
     private void ThrowErrorButton_Click(object sender, RoutedEventArgs e)

@@ -33,36 +33,39 @@
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
+            CompactModeThresholdWidth="0"
+            ExpandedModeThresholdWidth="600"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
+            OpenPaneLength="200"
             SelectionChanged="NavView_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem
-                    Content="全部工具"
+                    Content="全部"
                     IsSelected="True"
                     Tag="all">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE80F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="常用工具" Tag="favorites">
+                <NavigationViewItem Content="常用" Tag="favorites">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE735;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="硬件信息" Tag="hardware">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE772;" />
+                        <FontIcon Glyph="&#xE977;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="内置工具" Tag="builtin">
+                <NavigationViewItem Content="内置" Tag="builtin">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE90F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="硬件监控" Tag="monitor">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE945;" />
+                        <FontIcon Glyph="&#xE9D9;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
