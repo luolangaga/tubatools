@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Drawing.Text;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using TubaWinUi3;
@@ -16,6 +17,10 @@ public sealed partial class SettingsPage : Page
     private bool _opacityChanging;
     private bool _compactModeInitializing;
     private bool _fastModeInitializing;
+    private bool _rememberWindowInitializing;
+    private bool _watermarkInitializing;
+    private bool _watermarkTextInitializing;
+    private bool _watermarkFontInitializing;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct OPENFILENAME
@@ -70,6 +75,8 @@ public sealed partial class SettingsPage : Page
         InitThemeComboBox();
         InitCompactModeToggle();
         InitFastModeToggle();
+        InitRememberWindowToggle();
+        InitWatermarkSettings();
         LoadBackgroundSettings();
     }
 
@@ -294,6 +301,98 @@ public sealed partial class SettingsPage : Page
         if (FastModeToggle.IsOn)
             ContentPanel.Transitions.Clear();
         _fastModeInitializing = false;
+    }
+
+    private void RememberWindowToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_rememberWindowInitializing) return;
+        WindowSizeService.SetRememberEnabled(RememberWindowToggle.IsOn);
+    }
+
+    private void InitRememberWindowToggle()
+    {
+        _rememberWindowInitializing = true;
+        RememberWindowToggle.IsOn = WindowSizeService.IsRememberEnabled();
+        _rememberWindowInitializing = false;
+    }
+
+    private void InitWatermarkSettings()
+    {
+        _watermarkInitializing = true;
+        var watermarkOn = AppSettings.GetBool("ScreenshotWatermark", true);
+        WatermarkToggle.IsOn = watermarkOn;
+        _watermarkInitializing = false;
+
+        UpdateWatermarkDetailVisibility(watermarkOn);
+
+        _watermarkTextInitializing = true;
+        WatermarkTextBox.Text = AppSettings.Get("ScreenshotWatermarkText") ?? "图吧工具箱";
+        _watermarkTextInitializing = false;
+
+        _watermarkFontInitializing = true;
+        InitWatermarkFontComboBox();
+        _watermarkFontInitializing = false;
+    }
+
+    private void InitWatermarkFontComboBox()
+    {
+        WatermarkFontComboBox.Items.Clear();
+        var savedFont = AppSettings.Get("ScreenshotWatermarkFont") ?? "微软雅黑";
+
+        using var fc = new InstalledFontCollection();
+        var preferredFonts = new[] { "微软雅黑", "宋体", "黑体", "楷体", "仿宋", "Arial", "Segoe UI" };
+        var allFonts = new List<string>();
+
+        foreach (var preferred in preferredFonts)
+        {
+            if (fc.Families.Any(f => f.Name == preferred) && !allFonts.Contains(preferred))
+                allFonts.Add(preferred);
+        }
+
+        foreach (var family in fc.Families.OrderBy(f => f.Name))
+        {
+            if (!allFonts.Contains(family.Name))
+                allFonts.Add(family.Name);
+        }
+
+        var selectedIndex = 0;
+        for (var i = 0; i < allFonts.Count; i++)
+        {
+            WatermarkFontComboBox.Items.Add(allFonts[i]);
+            if (allFonts[i] == savedFont)
+                selectedIndex = i;
+        }
+
+        WatermarkFontComboBox.SelectedIndex = Math.Min(selectedIndex, allFonts.Count - 1);
+    }
+
+    private void UpdateWatermarkDetailVisibility(bool watermarkOn)
+    {
+        WatermarkDivider.Visibility = watermarkOn ? Visibility.Visible : Visibility.Collapsed;
+        WatermarkDetailPanel.Visibility = watermarkOn ? Visibility.Visible : Visibility.Collapsed;
+        WatermarkFontPanel.Visibility = watermarkOn ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void WatermarkToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_watermarkInitializing) return;
+        var enabled = WatermarkToggle.IsOn;
+        AppSettings.Set("ScreenshotWatermark", enabled);
+        UpdateWatermarkDetailVisibility(enabled);
+    }
+
+    private void WatermarkTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_watermarkTextInitializing) return;
+        var text = WatermarkTextBox.Text.Trim();
+        AppSettings.Set("ScreenshotWatermarkText", string.IsNullOrEmpty(text) ? "图吧工具箱" : text);
+    }
+
+    private void WatermarkFontComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_watermarkFontInitializing) return;
+        if (WatermarkFontComboBox.SelectedItem is string font)
+            AppSettings.Set("ScreenshotWatermarkFont", font);
     }
 
     private async void ImportToolButton_Click(object sender, RoutedEventArgs e)

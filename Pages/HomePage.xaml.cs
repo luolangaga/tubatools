@@ -49,6 +49,34 @@ public sealed partial class HomePage : Page
             ToolsGrid.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             CompactGrid.Visibility = Visibility.Collapsed;
         }
+        UpdateItemWidth();
+    }
+
+    private void UpdateItemWidth()
+    {
+        var grid = _compactMode ? CompactGrid : ToolsGrid;
+        var panel = grid.ItemsPanelRoot as ItemsWrapGrid;
+        if (panel is null) return;
+
+        double minItemWidth = _compactMode ? 100 : 280;
+        double spacing = _compactMode ? 10 : 12;
+        double availableWidth = grid.ActualWidth - grid.Padding.Left - grid.Padding.Right;
+
+        if (availableWidth <= 0) return;
+
+        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
+        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
+        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+    }
+
+    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!_compactMode) UpdateItemWidth();
+    }
+
+    private void CompactGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_compactMode) UpdateItemWidth();
     }
 
     private void UpdateGridVisibility(bool hasTools)

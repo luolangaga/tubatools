@@ -31,6 +31,7 @@ public static class BuiltinToolRegistry
         Register(new LiteMonitorTool());
         Register(new WindowsActivationTool());
         Register(new DefenderTool());
+        Register(new CpuRankingTool());
     }
 
     public static IReadOnlyList<string> GetCategories()

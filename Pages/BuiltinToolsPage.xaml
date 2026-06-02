@@ -9,8 +9,6 @@
 
     <Page.Resources>
         <Style x:Key="BuiltinCardStyle" TargetType="GridViewItem">
-            <Setter Property="Width" Value="304" />
-            <Setter Property="Height" Value="220" />
             <Setter Property="Margin" Value="0,0,12,12" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -83,11 +81,13 @@
                 IsItemClickEnabled="True"
                 ItemClick="ToolsGrid_ItemClick"
                 ItemContainerStyle="{StaticResource BuiltinCardStyle}"
-                SelectionMode="None">
+                SelectionMode="None"
+                SizeChanged="ToolsGrid_SizeChanged">
                 <GridView.ItemTemplate>
                     <DataTemplate>
                         <Border
                             Padding="16"
+                            MinHeight="220"
                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"

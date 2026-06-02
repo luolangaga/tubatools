@@ -1,4 +1,6 @@
-﻿using Microsoft.UI.Xaml;
+﻿using System.Diagnostics;
+using System.Security.Principal;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Pages;
@@ -22,8 +24,40 @@ public partial class App : Application
         UnhandledException += OnWinUIUnhandledException;
     }
 
+    private static bool IsRunningAsAdmin()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    private static void ElevateAndRestart()
+    {
+        var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrEmpty(exePath)) return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(exePath)
+            {
+                Verb = "runas",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+        }
+    }
+
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        if (!IsRunningAsAdmin())
+        {
+            ElevateAndRestart();
+            Exit();
+            return;
+        }
+
         _window = new MainWindow();
         _window.Activate();
         ThemeService.ApplySavedTheme();

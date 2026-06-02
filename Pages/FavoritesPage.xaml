@@ -15,15 +15,11 @@
         <local:ArchOptionsCountConverterFav x:Key="ArchOptionsCountConverter" />
         <local:HistoryCountToVisibilityConverter x:Key="HistoryCountToVis" />
         <Style x:Key="FavCardStyle" TargetType="GridViewItem">
-            <Setter Property="Width" Value="304" />
-            <Setter Property="Height" Value="220" />
             <Setter Property="Margin" Value="0,0,12,12" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
         </Style>
         <Style x:Key="HistoryCardStyle" TargetType="GridViewItem">
-            <Setter Property="Width" Value="112" />
-            <Setter Property="Height" Value="106" />
             <Setter Property="Margin" Value="0,0,10,10" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -96,11 +92,13 @@
                 IsItemClickEnabled="True"
                 ItemClick="ToolsGrid_ItemClick"
                 ItemContainerStyle="{StaticResource FavCardStyle}"
-                SelectionMode="None">
+                SelectionMode="None"
+                SizeChanged="ToolsGrid_SizeChanged">
                 <GridView.ItemTemplate>
                     <DataTemplate>
                         <Border
                             Padding="16"
+                            MinHeight="220"
                             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
@@ -179,7 +177,8 @@
                                     <ComboBox
                                         Grid.Column="1"
                                         Width="78"
-                                        Padding="6,2"
+                                        MinHeight="24"
+                                        Padding="6,1"
                                         FontSize="12"
                                         ItemsSource="{Binding ArchOptions}"
                                         SelectedItem="{Binding SelectedArch, Mode=TwoWay}"
@@ -284,7 +283,8 @@
                     IsItemClickEnabled="True"
                     ItemClick="HistoryGrid_ItemClick"
                     ItemContainerStyle="{StaticResource HistoryCardStyle}"
-                    SelectionMode="None">
+                    SelectionMode="None"
+                    SizeChanged="HistoryGrid_SizeChanged">
                     <GridView.ItemTemplate>
                         <DataTemplate>
                             <Border

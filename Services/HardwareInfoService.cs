@@ -1,10 +1,63 @@
 using System.Management;
+using System.Runtime.InteropServices;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
 public static class HardwareInfoService
 {
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool EnumDisplaySettings(string? lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct DISPLAY_DEVICE
+    {
+        public int Size;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string DeviceName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceString;
+        public uint StateFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceID;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string DeviceKey;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct DEVMODE
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmDeviceName;
+        public ushort dmSpecVersion;
+        public ushort dmDriverVersion;
+        public ushort dmSize;
+        public ushort dmDriverExtra;
+        public uint dmFields;
+        public int dmPositionX;
+        public int dmPositionY;
+        public uint dmDisplayOrientation;
+        public uint dmDisplayFixedOutput;
+        public short dmColor;
+        public short dmDuplex;
+        public short dmYResolution;
+        public short dmTTOption;
+        public short dmCollate;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmFormName;
+        public ushort dmLogPixels;
+        public uint dmBitsPerPel;
+        public uint dmPelsWidth;
+        public uint dmPelsHeight;
+        public uint dmDisplayFlags;
+        public uint dmDisplayFrequency;
+    }
+
+    private const int ENUM_CURRENT_SETTINGS = -1;
+
     private static IReadOnlyList<HardwareInfoSection>? _cache;
     private static readonly object _lock = new();
 
@@ -206,7 +259,7 @@ public static class HardwareInfoService
             return configuredClockSpeed;
         }
 
-        if (IsDdrMemoryType(smbiosMemoryType))
+        if (UsesBaseClockForConfiguredSpeed(smbiosMemoryType))
         {
             var doubledClock = configuredClockSpeed * 2;
             if (doubledClock >= speed)
@@ -218,15 +271,19 @@ public static class HardwareInfoService
         return configuredClockSpeed;
     }
 
-    private static bool IsDdrMemoryType(int smbiosMemoryType)
+    private static bool UsesBaseClockForConfiguredSpeed(int smbiosMemoryType)
     {
-        return smbiosMemoryType is 18 or 19 or 20 or 24 or 25 or 26 or 27 or 28 or 29 or 30 or 34 or 35;
+        return smbiosMemoryType is 18 or 19 or 20 or 24 or 25 or 26 or 34;
     }
 
     private static string? CleanMemManufacturer(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         var cleaned = raw.Trim();
+
+        var jedecDecoded = DecodeJedecManufacturer(cleaned);
+        if (jedecDecoded != null) return jedecDecoded;
+
         return cleaned.ToUpperInvariant() switch
         {
             "KINGSTON" or "KINGSTON TECHNOLOGY" => "金士顿(Kingston)",
@@ -256,7 +313,163 @@ public static class HardwareInfoService
         };
     }
 
+    private static string? DecodeJedecManufacturer(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        var trimmed = raw.Trim();
 
+        if (trimmed.Length == 2 && IsHex(trimmed))
+        {
+            var code = Convert.ToByte(trimmed, 16);
+            return JedecVendorFromCode(code);
+        }
+
+        if (trimmed.Length == 4 && IsHex(trimmed))
+        {
+            var code = Convert.ToUInt16(trimmed, 16);
+            var bank = (code >> 8) & 0x7F;
+            var vendor = code & 0x7F;
+            var fullCode = bank * 128 + vendor;
+            return JedecVendorFromExtendedCode(fullCode);
+        }
+
+        if (trimmed.Length >= 4 && trimmed.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_'))
+        {
+            var upper = trimmed.ToUpperInvariant();
+            if (upper.StartsWith("0X"))
+            {
+                var hexPart = upper.Substring(2);
+                if (hexPart.Length == 2 && IsHex(hexPart))
+                {
+                    var code = Convert.ToByte(hexPart, 16);
+                    return JedecVendorFromCode(code);
+                }
+                if (hexPart.Length == 4 && IsHex(hexPart))
+                {
+                    var code = Convert.ToUInt16(hexPart, 16);
+                    var bank = (code >> 8) & 0x7F;
+                    var vendor = code & 0x7F;
+                    var fullCode = bank * 128 + vendor;
+                    return JedecVendorFromExtendedCode(fullCode);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsHex(string s)
+    {
+        return s.All(c => char.IsAsciiHexDigit(c));
+    }
+
+    private static string? JedecVendorFromCode(byte code)
+    {
+        return code switch
+        {
+            0x02 => "美光(Micron)",
+            0x04 => "Moseley",
+            0x05 => "Inmos",
+            0x06 => "富士通(Fujitsu)",
+            0x07 => "Hitachi",
+            0x08 => "松下(Panasonic)",
+            0x0A => "NEC",
+            0x0B => "东芝(Toshiba)",
+            0x0E => "三星(Samsung)",
+            0x10 => "三菱(Mitsubishi)",
+            0x11 => "Hynix",
+            0x13 => "Elpida",
+            0x15 => "英飞凌(Infineon)",
+            0x16 => "Kingston",
+            0x17 => "Fujitsu",
+            0x19 => "Winbond",
+            0x1A => "Nanya",
+            0x1C => "力晶(Powerchip)",
+            0x1E => "茂德(ProMOS)",
+            0x1F => "海力士(SK Hynix)",
+            0x20 => "Mikron",
+            0x23 => "劲永(PQI)",
+            0x25 => "宇瞻(Apacer)",
+            0x26 => "威刚(ADATA)",
+            0x27 => "Corsair",
+            0x28 => "Avant",
+            0x29 => "G.Skill",
+            0x2C => "金士顿(Kingston)",
+            0x30 => "Ramaxel",
+            0x31 => "Crucial",
+            0x34 => "芝奇(G.Skill)",
+            0x36 => "海盗船(Corsair)",
+            0x38 => "Smart",
+            0x3B => "Crucial",
+            0x3C => "Jedec",
+            0x3E => "金邦(Geil)",
+            0x40 => "Smart",
+            0x41 => "博帝(Patriot)",
+            0x42 => "十铨(TeamGroup)",
+            0x43 => "科赋(Klevv)",
+            0x44 => "影驰(Galax)",
+            0x45 => "七彩虹(Colorful)",
+            0x46 => "佰维(Biwin)",
+            0x47 => "江波龙(Longsys)",
+            0x48 => "朗科(Netac)",
+            0x49 => "广颖电通(Silicon Power)",
+            0x4A => "必恩威(PNY)",
+            0x4B => "Goodram",
+            0x4C => "长鑫存储(CXMT)",
+            0x80 => "三星(Samsung)",
+            0x81 => "海力士(SK Hynix)",
+            0x82 => "美光(Micron)",
+            0x83 => "金士顿(Kingston)",
+            0x84 => "英睿达(Crucial)",
+            0x85 => "海盗船(Corsair)",
+            0x86 => "芝奇(G.Skill)",
+            0x87 => "威刚(ADATA)",
+            0x88 => "十铨(TeamGroup)",
+            0x89 => "宇瞻(Apacer)",
+            0x8A => "金邦(Geil)",
+            0x8B => "博帝(Patriot)",
+            0x8C => "影驰(Galax)",
+            0x8D => "七彩虹(Colorful)",
+            0x8E => "科赋(Klevv)",
+            0x8F => "佰维(Biwin)",
+            0x90 => "江波龙(Longsys)",
+            0x91 => "朗科(Netac)",
+            0x92 => "广颖电通(Silicon Power)",
+            0x93 => "必恩威(PNY)",
+            0x94 => "Goodram",
+            0x95 => "长鑫存储(CXMT)",
+            0x9E => "记忆科技(Ramaxel)",
+            _ => null
+        };
+    }
+
+    private static string? JedecVendorFromExtendedCode(int fullCode)
+    {
+        return fullCode switch
+        {
+            0x02 => "美光(Micron)",
+            0x0E => "三星(Samsung)",
+            0x11 => "海力士(SK Hynix)",
+            0x13 => "尔必达(Elpida)",
+            0x15 => "英飞凌(Infineon)",
+            0x16 => "金士顿(Kingston)",
+            0x1A => "南亚(Nanya)",
+            0x1F => "海力士(SK Hynix)",
+            0x2C => "金士顿(Kingston)",
+            0x30 => "记忆科技(Ramaxel)",
+            0x80 => "三星(Samsung)",
+            0x81 => "海力士(SK Hynix)",
+            0x82 => "美光(Micron)",
+            0x83 => "金士顿(Kingston)",
+            0x84 => "英睿达(Crucial)",
+            0x85 => "海盗船(Corsair)",
+            0x86 => "芝奇(G.Skill)",
+            0x87 => "威刚(ADATA)",
+            0x88 => "十铨(TeamGroup)",
+            0x9E => "记忆科技(Ramaxel)",
+            _ => JedecVendorFromCode((byte)(fullCode & 0xFF))
+        };
+    }
 
     private static string FormatDisks()
     {
@@ -274,17 +487,19 @@ public static class HardwareInfoService
 
     private static string FormatDisplays()
     {
-        var monitors = new List<string>();
+        var monitorInfos = new List<(string Label, string? Resolution)>();
 
         try
         {
+            var wmiMonitors = new List<(string InstanceName, string Label)>();
             using var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorID");
             foreach (ManagementBaseObject item in searcher.Get())
             {
                 var mfr = DecodeWmiArray(item, "ManufacturerName");
                 var product = DecodeWmiArray(item, "ProductName");
                 var serial = DecodeWmiArray(item, "SerialNumberID");
-                var pnpId = Get(item, "InstanceName")?.Split('\\').FirstOrDefault() ?? "";
+                var instanceName = Get(item, "InstanceName") ?? "";
+                var pnpId = instanceName.Split('\\').FirstOrDefault() ?? "";
 
                 var mfrLabel = ResolveManufacturer(mfr);
                 var parts = new List<string>();
@@ -298,12 +513,30 @@ public static class HardwareInfoService
 
                 var label = string.Join(" ", parts.Distinct());
                 if (!string.IsNullOrWhiteSpace(serial) && serial != "0") label += $" (SN:{serial})";
-                if (!string.IsNullOrWhiteSpace(label)) monitors.Add(label);
+                wmiMonitors.Add((instanceName, label));
+            }
+
+            var deviceResolutions = GetDisplayDeviceResolutions();
+
+            foreach (var (instanceName, label) in wmiMonitors)
+            {
+                var pnpPart = instanceName.Split('\\').FirstOrDefault() ?? "";
+                var resolution = deviceResolutions.FirstOrDefault(kv =>
+                    kv.Key.Equals(pnpPart, StringComparison.OrdinalIgnoreCase)).Value;
+                monitorInfos.Add((label, resolution));
+            }
+
+            if (monitorInfos.Count == 0)
+            {
+                foreach (var res in deviceResolutions.Values)
+                {
+                    monitorInfos.Add(("", res));
+                }
             }
         }
         catch { }
 
-        if (monitors.Count == 0)
+        if (monitorInfos.Count == 0)
         {
             var pnpNames = Query("Win32_PnPEntity")
                 .Where(item =>
@@ -315,31 +548,119 @@ public static class HardwareInfoService
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Distinct()
                 .ToList();
-            monitors.AddRange(pnpNames!);
+
+            var fallbackRes = GetFallbackResolutions();
+            for (int i = 0; i < pnpNames.Count; i++)
+            {
+                var res = i < fallbackRes.Count ? fallbackRes[i] : null;
+                monitorInfos.Add((pnpNames[i]!, res));
+            }
         }
 
-        var resolutions = Query("Win32_VideoController")
-            .Select(item =>
-            {
-                var width = Get(item, "CurrentHorizontalResolution");
-                var height = Get(item, "CurrentVerticalResolution");
-                return string.IsNullOrWhiteSpace(width) || string.IsNullOrWhiteSpace(height)
-                    ? null
-                    : $"{width} x {height}";
-            })
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Distinct()
-            .ToList();
+        if (monitorInfos.Count == 0) return "未知";
 
-        if (monitors.Count == 0 && resolutions.Count == 0) return "未知";
-        if (monitors.Count == 0) return string.Join(" / ", resolutions);
-        if (resolutions.Count == 0) return string.Join(" / ", monitors);
-
-        return string.Join(" / ", monitors.Select((name, i) =>
+        return string.Join(" / ", monitorInfos.Select(mi =>
         {
-            var res = resolutions[Math.Min(i, resolutions.Count - 1)];
-            return $"{name} [{res}]";
-        }));
+            if (string.IsNullOrWhiteSpace(mi.Label) && string.IsNullOrWhiteSpace(mi.Resolution))
+                return "";
+            if (string.IsNullOrWhiteSpace(mi.Label)) return mi.Resolution;
+            if (string.IsNullOrWhiteSpace(mi.Resolution)) return mi.Label;
+            return $"{mi.Label} [{mi.Resolution}]";
+        }).Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
+    private static Dictionary<string, string> GetDisplayDeviceResolutions()
+    {
+        var results = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var dd = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+        for (uint i = 0; EnumDisplayDevices(null, i, ref dd, 0); i++)
+        {
+            var adapterName = dd.DeviceName;
+            var adapterDeviceId = dd.DeviceID;
+
+            var mon = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            for (uint j = 0; EnumDisplayDevices(adapterName, j, ref mon, 0); j++)
+            {
+                if ((mon.StateFlags & 1) != 0)
+                {
+                    var pnpDeviceId = ExtractPnpFromDeviceId(mon.DeviceID);
+                    if (string.IsNullOrWhiteSpace(pnpDeviceId))
+                    {
+                        mon = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+                        continue;
+                    }
+
+                    var mode = new DEVMODE();
+                    mode.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
+                    if (EnumDisplaySettings(adapterName, ENUM_CURRENT_SETTINGS, ref mode))
+                    {
+                        var res = $"{mode.dmPelsWidth} x {mode.dmPelsHeight}";
+                        if (!results.ContainsKey(pnpDeviceId))
+                        {
+                            results[pnpDeviceId] = res;
+                        }
+                    }
+                }
+                mon = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            }
+
+            dd = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+        }
+
+        return results;
+    }
+
+    private static string ExtractPnpFromDeviceId(string deviceId)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId)) return "";
+        var parts = deviceId.Split('#');
+        if (parts.Length >= 2)
+        {
+            return parts[1];
+        }
+        return deviceId;
+    }
+
+    private static List<string> GetFallbackResolutions()
+    {
+        var results = new List<string>();
+        try
+        {
+            var dd = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            for (uint i = 0; EnumDisplayDevices(null, i, ref dd, 0); i++)
+            {
+                if ((dd.StateFlags & 1) != 0 || (dd.StateFlags & 2) != 0)
+                {
+                    var mode = new DEVMODE();
+                    mode.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
+                    if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, ref mode))
+                    {
+                        results.Add($"{mode.dmPelsWidth} x {mode.dmPelsHeight}");
+                    }
+                }
+                dd = new DISPLAY_DEVICE { Size = Marshal.SizeOf<DISPLAY_DEVICE>() };
+            }
+        }
+        catch { }
+
+        if (results.Count == 0)
+        {
+            results = Query("Win32_VideoController")
+                .Select(item =>
+                {
+                    var width = Get(item, "CurrentHorizontalResolution");
+                    var height = Get(item, "CurrentVerticalResolution");
+                    return string.IsNullOrWhiteSpace(width) || string.IsNullOrWhiteSpace(height)
+                        ? null
+                        : $"{width} x {height}";
+                })
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct()
+                .ToList()!;
+        }
+
+        return results;
     }
 
     private static string? DecodeWmiArray(ManagementBaseObject item, string propName)

@@ -18,6 +18,22 @@ public sealed partial class BuiltinToolsPage : Page
         LoadTools(null);
     }
 
+    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var panel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
+        if (panel is null) return;
+
+        double minItemWidth = 280;
+        double spacing = 12;
+        double availableWidth = ToolsGrid.ActualWidth - ToolsGrid.Padding.Left - ToolsGrid.Padding.Right;
+
+        if (availableWidth <= 0) return;
+
+        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
+        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
+        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+    }
+
     private void PopulateCategoryFilter()
     {
         CategoryFilter.Items.Add("全部分类");

@@ -3,6 +3,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 using Windows.ApplicationModel.DataTransfer;
@@ -261,5 +265,174 @@ public sealed partial class HardwarePage : Page
             if (idx == lastIdx) _animatingDetails = false;
         };
         timer.Start();
+    }
+
+    private bool _isScreenshotting;
+
+    private async void ScreenshotButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isScreenshotting) return;
+        _isScreenshotting = true;
+
+        try
+        {
+            var statusWasOpen = StatusBar.IsOpen;
+            StatusBar.IsOpen = false;
+
+            var rtb = new RenderTargetBitmap();
+            await rtb.RenderAsync(LayoutRoot);
+
+            if (statusWasOpen) StatusBar.IsOpen = true;
+
+            var pixelWidth = rtb.PixelWidth;
+            var pixelHeight = rtb.PixelHeight;
+            var pixels = await GetPixelsAsync(rtb);
+
+            using var contentBmp = new Bitmap(pixelWidth, pixelHeight, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var bmpData = contentBmp.LockBits(new System.Drawing.Rectangle(0, 0, pixelWidth, pixelHeight), ImageLockMode.WriteOnly, contentBmp.PixelFormat);
+            Marshal.Copy(pixels, 0, bmpData.Scan0, pixels.Length);
+            contentBmp.UnlockBits(bmpData);
+
+            var padding = 32;
+            var cornerRadius = 16;
+            var totalW = pixelWidth + padding * 2;
+            var totalH = pixelHeight + padding * 2;
+
+            var isDark = ThemeService.CurrentTheme == AppTheme.Dark ||
+                         (ThemeService.CurrentTheme == AppTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+
+            var outerBg1 = isDark
+                ? System.Drawing.Color.FromArgb(255, 32, 32, 32)
+                : System.Drawing.Color.FromArgb(255, 243, 243, 243);
+            var outerBg2 = isDark
+                ? System.Drawing.Color.FromArgb(255, 24, 24, 40)
+                : System.Drawing.Color.FromArgb(255, 235, 238, 248);
+            var cardBg = isDark
+                ? System.Drawing.Color.FromArgb(255, 44, 44, 44)
+                : System.Drawing.Color.FromArgb(255, 249, 249, 249);
+            var borderColor = isDark
+                ? System.Drawing.Color.FromArgb(60, 255, 255, 255)
+                : System.Drawing.Color.FromArgb(60, 0, 0, 0);
+            var watermarkBarBg = isDark
+                ? System.Drawing.Color.FromArgb(40, 0, 0, 0)
+                : System.Drawing.Color.FromArgb(30, 0, 0, 0);
+            var watermarkTextColor = isDark
+                ? System.Drawing.Color.FromArgb(140, 255, 255, 255)
+                : System.Drawing.Color.FromArgb(120, 0, 0, 0);
+
+            using var finalBmp = new Bitmap(totalW, totalH, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            using var g = Graphics.FromImage(finalBmp);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+
+            using (var bgBrush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                new System.Drawing.Point(0, 0),
+                new System.Drawing.Point(totalW, totalH),
+                outerBg1, outerBg2))
+            {
+                g.FillRectangle(bgBrush, 0, 0, totalW, totalH);
+            }
+
+            using (var cardPath = CreateRoundedRectPath(padding, padding, pixelWidth, pixelHeight, cornerRadius))
+            {
+                using var cardBrush = new SolidBrush(cardBg);
+                g.FillPath(cardBrush, cardPath);
+
+                g.SetClip(cardPath);
+                g.DrawImage(contentBmp, padding, padding, pixelWidth, pixelHeight);
+                g.ResetClip();
+
+                using var borderPen = new Pen(borderColor, 1);
+                g.DrawPath(borderPen, cardPath);
+            }
+
+            var showWatermark = AppSettings.GetBool("ScreenshotWatermark", true);
+            if (showWatermark)
+            {
+                var watermarkText = AppSettings.Get("ScreenshotWatermarkText") ?? "图吧工具箱";
+                var watermarkFont = AppSettings.Get("ScreenshotWatermarkFont") ?? "微软雅黑";
+                DrawWatermark(g, totalW, totalH, watermarkText, watermarkFont, watermarkBarBg, watermarkTextColor);
+            }
+
+            var downloadsFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            var fileName = $"硬件信息_{timestamp}.png";
+            var filePath = Path.Combine(downloadsFolder, fileName);
+
+            finalBmp.Save(filePath, ImageFormat.Png);
+
+            StatusBar.Title = "截图已保存";
+            StatusBar.Message = filePath;
+            StatusBar.Severity = InfoBarSeverity.Success;
+            StatusBar.IsOpen = true;
+        }
+        catch (Exception ex)
+        {
+            StatusBar.Title = "截图失败";
+            StatusBar.Message = ex.Message;
+            StatusBar.Severity = InfoBarSeverity.Error;
+            StatusBar.IsOpen = true;
+        }
+        finally
+        {
+            _isScreenshotting = false;
+        }
+    }
+
+    private static System.Drawing.Drawing2D.GraphicsPath CreateRoundedRectPath(int x, int y, int w, int h, int r)
+    {
+        var path = new System.Drawing.Drawing2D.GraphicsPath();
+        var d = r * 2;
+        path.AddArc(x, y, d, d, 180, 90);
+        path.AddArc(x + w - d, y, d, d, 270, 90);
+        path.AddArc(x + w - d, y + h - d, d, d, 0, 90);
+        path.AddArc(x, y + h - d, d, d, 90, 90);
+        path.CloseFigure();
+        return path;
+    }
+
+    private static void DrawWatermark(Graphics g, int totalW, int totalH, string text, string fontFamilyName,
+        System.Drawing.Color barBg, System.Drawing.Color textColor)
+    {
+        float fontSize = Math.Max(13f, totalH / 40f);
+        using var font = new System.Drawing.Font(new System.Drawing.FontFamily(fontFamilyName), fontSize, System.Drawing.FontStyle.Regular);
+        var size = g.MeasureString(text, font);
+        float padH = 10;
+        float padV = 5;
+        float barW = size.Width + padH * 2;
+        float barH = size.Height + padV * 2;
+        float barX = totalW - barW - 20;
+        float barY = totalH - barH - 16;
+
+        using (var barPath = CreateRoundedRectPath((int)barX, (int)barY, (int)barW, (int)barH, 6))
+        {
+            using var barBrush = new SolidBrush(barBg);
+            g.FillPath(barBrush, barPath);
+        }
+
+        using var textBrush = new SolidBrush(textColor);
+        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+        g.DrawString(text, font, textBrush, barX + padH, barY + padV);
+    }
+
+    private static async Task<int[]> GetPixelsAsync(RenderTargetBitmap rtb)
+    {
+        var buffer = await rtb.GetPixelsAsync();
+        var bytes = new byte[buffer.Length];
+        System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.CopyTo(buffer, bytes);
+        var pixels = new int[bytes.Length / 4];
+        Buffer.BlockCopy(bytes, 0, pixels, 0, bytes.Length);
+        for (var i = 0; i < pixels.Length; i++)
+        {
+            var c = pixels[i];
+            var a = (c >> 24) & 0xFF;
+            var r = (c >> 16) & 0xFF;
+            var g = (c >> 8) & 0xFF;
+            var b = c & 0xFF;
+            pixels[i] = (a << 24) | (b << 16) | (g << 8) | r;
+        }
+        return pixels;
     }
 }

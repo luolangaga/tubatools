@@ -1,0 +1,55 @@
+﻿[header]
+★ If you find bug AMD_RC2t7
+　 If you find a bug or problem related to AMD-RAID in the CrystalDiskInfo project, there are three possible patterns, one from CrystalDiskInfo, one from AMD_RC2t7, or both.
+　 Please be sure to send these reports directly to the email address of each developer (Hiyo Hiyo [CrystalDiskInfo], 弦生ささと [AMD_RC2t7]).
+
+--------
+
+[version 0b8 Rev.2 / 2023/07/09]
+　○ Minor revision of Rev.1
+
+[version 0b8 Rev.1 / 2023/07/09]
+　○ Changed the placement rule of DLL from same folder to under same folder
+
+[version 0b8 / 2023/06/18]
+　○ Reducing file size by cleaning up unnecessary code
+　○ Added the end flag and changed it so that access does not occur after the end depending on the timing.
+　○ Application of License 20230618A
+
+[version 0b7 / 2022/12/24]
+　○ Reducing processing load and file size by updating core parts
+
+[version 0b6 Rev.1 / 2022/09/24]
+　● Minor tweaks to request methods. Fixed the cause of some system instability. Severity: Critical
+
+[version 0b6 / 2022/05/23]
+　○ Desync and rebalance I/O.
+　○ Extended SCSI and drive recognition range to 128. Acquisition size of RAID information conforms to 9.3.0.00296.
+
+[version 0b5 / 2022/05/01]
+　● Changed to refer to information derived from WMI when there is a problem in the case that the driver version derived from SetupDi is old and not updated.
+
+[version 0b4 / 2022/03/17]
+　● If the program using this library is not properly terminated due to a crash, etc., the driver may become unstable, so this problem has been reduced as much as possible.
+
+[version 0b3 / 2022/03/14]
+　○ Changed the judgment of SATA HDD, SATA SSD, NVMe in the drive whose speed is unknown (N/A) to the known range.
+　　 If the speed of the drive is unknown and it becomes Unknown, please report it.
+
+[version 0b2 / 2022/02/08]
+　● Fixed a bug that the driver version is mistakenly recognized as old due to future major updates.
+　○ Changed the driver version pre-check so that it can be completed in the DLL.
+　　 Subsequent DLLs can omit checking the driver version on the caller side.
+
+[version 0b1 Rev.3 / 2022/01/30]
+　● Fixed a bug that information cannot be obtained after resuming from sleep or hibernation.
+
+[version 0b1 Rev.2 / 2022/01/29]
+　○ Separate initialization function
+
+[version 0b1 Rev.1 / 2022/01/28]
+　○ Some adjustments
+
+[version 0b1 / 2022/01/28]
+　○ Prototype
+

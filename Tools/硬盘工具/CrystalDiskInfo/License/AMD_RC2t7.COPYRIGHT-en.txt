@@ -1,0 +1,108 @@
+﻿#ver20230618A
+
+■ AMD_RC2t7 : License ■
+-----------------------
+Copyright (c) 2021-2023 Gakuto Matsumura:弦生ささと
+
+Signature: Gakuto Matsumura
+URL(ja): https://thilmera.com/project/AMD_RC2t7/
+URL(en): https://en.thilmera.com/project/AMD_RC2t7/
+Mail: amd.rc2t7@gmail.com
+
+IMPORTANT NOTICE: 
+	This library is basically provided free of charge.
+	Please read the license terms below and use this library only if you agree.
+	By using and exploiting this library, the provider, distributor, and user agree to the terms of this license.
+
+License terms: 
+【Article 1】　Copyright and rights
+	1.	This library is an application and service developed by "Gakuto Matsumura:弦生ささと".
+		Copyright belongs to the same individual and not to any organization.
+		Do not misrepresent the name of the distributor or author.
+
+【Article 2】　Disclaimer
+	1.	THIS LIBRARY IS PROVIDED "AS IS" WITHOUT WARRANTY, EXPRESS OR IMPLIED.
+		The author assumes no responsibility for any damages or disputes arising from the use of this library.
+	2.	I will do our best to respond to bugs, defects, and requests for this library, but i am not obliged to guarantee or correct it.
+	3.	The functions of this library may be changed, deleted, or stopped to be published without prior notice.
+	4.	This library does not guarantee permanent operation.
+
+【Article 3】　Prohibited items
+	1.	You may not modify, tamper with, decompile, disassemble, decrypt, or otherwise reverse engineer this library.
+		Even when analyzing for security reasons, the analysis content itself must not be disclosed or diverted.
+	2.	If you include this library in your project's distribution package, you must not disguise its file name, make it unrecoverable by common methods, or leave it in a state where its existence cannot be verified.
+	3.	You must not propagate false information about the Library or Services, developers or otherwise.
+	4.	Any person other than the developer of this library must not register this library or any content that may be confused with this library on the store without permission.
+	5.	This library must not be used in any way or means to damage any service, country or entity, or any third party.
+
+【Article 4】　Distribution/Redistribution
+	1.	This library is distributed only with the developer's own right of reproduction under licenses older than 20230618A, and no redistribution is permitted.
+		Binaries of this library may not be included in distributions of software that uses this library.
+	2.	Under license 20230618A or later, this library is permitted to be distributed and redistributed by including it in the package of the project in which the primary source binary is included as it is.
+		Distributed packages must specify the official file name, version number, hash value (sha256), and full license of the library contained in the package.
+		What is deployed to the end user must be primary source and binary safe, and to judge whether it is correct or not, refer to the hash value of each binary posted on the official website of this library.
+	3.	Distribution and redistribution of this library as a single unit are distributed only with the developer's own right of reproduction even after 20230618A, and redistribution is not permitted.
+
+【Article 5】　Fee structure
+	1.	This library is provided free of charge as long as no compensation is requested for the functions of this library.
+		I am looking for support, but it will be at the discretion of individual users and companies.
+		If you think it's worth supporting, please do so.
+	2.	This library can be used by companies.
+		There are no additional contracts or costs for corporate use, as long as it is within the normal range of use. There is no obligation to contact us to start using it, and user registration is not required.
+		When considering introduction in a company, if you have any questions about compliance, security, etc., please contact us and i will respond as much as possible.
+	3.	All support for this library is provided free of charge.
+		If you are an individual or company with special needs, please contact us at our email address.
+
+【Article 6】　Commercial use
+	1.	An additional license agreement is required if you use the programs, data, functions, output results, etc. of this library for the purpose of selling or monetizing.
+		If you set fees outside of the Library and do not reflect your use of the Library in your fees, no additional license agreement is required.
+		For other questions and consultations, please contact us at the email address.
+	2.	Normal use of this library within a corporation or company is permitted.
+		Use within a corporation or company is defined as commercial use (commercial purpose) regardless of the content of use, but the conditions differ depending on the purpose of use.
+		Free case: Utilize the contents of information acquisition in the terminal etc.
+		For a fee: Selling the library, data and outputs. Claiming compensation for the use of this library. (requires additional license agreement)
+		For other questions and consultations, please contact us at the email address.
+
+【Article 7】　Maintenance, modification, and response to requests
+	1.	Corrections to this library and correspondence to requests shall be made only on the official email address.
+	2.	If you have a security or safety question that is not answered in the online help, please contact the developer by email.
+	3.	Document display language. Or if there is a language you would like us to support in the display language of the site, please contact us.
+
+【Article 8】　Definitions
+
+Formal name: 
+	Library name: 
+		AMD_RC2t7
+			AMD = Advanced Micro Devices
+			RC = Raid Core
+			t7 = thilmera 7
+	
+	Author/Developer: 
+		Gakuto Matsumura:弦生ささと
+		Gakuto Matsumura
+		弦生ささと
+			Pronunciation: Sasato Tsuruki (en), Sasato Tsuruki (en)
+		
+		The copyright name is "Gakuto Matsumura" or "Gakuto Matsumura:弦生ささと".
+		"Gakuto Matsumura" is the developer's real name, common name in all languages. It is the same as the code signing certificate.
+		"弦生ささと" is the developer's handle, used only in Japanese. It remains for compatibility with past developer names.
+
+【Final Article】　Final Provision
+	1.	This License Terms shall be governed by the laws of Japan.
+	2.	If the developer violates or determines that this license or prohibited matters have been violated, all licenses and distribution licenses will be destroyed, and distribution packages, terminals, data related to this software on the server, and copies thereof will be permanently retained. must be removed explicitly.
+	3.	This License is subject to change without notice and shall be governed by the latest officially announced effective date.
+	4.	The contents of this License Terms are effective for all official releases including past versions, and will be effective after the following application date and time.
+	5.	As a general rule, this license terms shall be based on the content of the original version in Japanese. Machine translation is used for languages ​​other than Japanese, so the content may not be accurate at this time.
+
+
+License Identification: 20230618A
+Applicable date: 2023/06/18 22:00 JPT
+Applies to: Version 0b8 and later
+
+License identification: 1.0.2
+Applicable date: 2022/01/29 22:00 JPT
+Applies to: All
+
+License Identification: 1.0
+Applicable date: 2022/01/28 18:00 JPT
+Applies to: All

@@ -8,7 +8,8 @@
       "tags": [ "CPU", "主板", "硬件检测" ],
       "archVariants": [
         { "file": "cpuz_x32.exe", "arch": "x86" },
-        { "file": "cpuz_x64.exe", "arch": "x64" }
+        { "file": "cpuz_x64.exe", "arch": "x64" },
+        { "file": "cpuz_arm64.exe", "arch": "ARM64" }
       ]
     },
     {
@@ -122,10 +123,13 @@
       "match": "FurMark",
       "description": "GPU 压力测试和烤机工具（OpenGL），俗称显卡杀手，用于检测显卡稳定性。",
       "publisher": "Geeks3D",
-      "tags": [ "烤机", "显卡", "稳定性测试" ],
-      "archVariants": [
-        { "dir": "FurMark_win64", "arch": "x64" }
-      ]
+      "tags": [ "烤机", "显卡", "稳定性测试" ]
+    },
+    {
+      "match": "FurMark_win64",
+      "description": "FurMark 2（64 位）GPU 压力测试和烤机工具，支持 Vulkan 和 OpenGL，用于检测显卡稳定性。",
+      "publisher": "Geeks3D",
+      "tags": [ "烤机", "显卡", "稳定性测试", "x64" ]
     },
     {
       "match": "CrystalDiskInfo",
@@ -133,15 +137,21 @@
       "publisher": "Crystal Dew World",
       "tags": [ "硬盘", "SMART", "健康检测" ],
       "archVariants": [
-        { "file": "DiskInfo32S.exe", "arch": "x86" },
-        { "file": "DiskInfo64S.exe", "arch": "x64" }
+        { "file": "DiskInfo32.exe", "arch": "x86" },
+        { "file": "DiskInfo64.exe", "arch": "x64" },
+        { "file": "DiskInfoA64.exe", "arch": "ARM64" }
       ]
     },
     {
       "match": "CrystalDiskMark",
       "description": "硬盘读写速度基准测试工具，测量顺序和随机读写性能。",
       "publisher": "Crystal Dew World",
-      "tags": [ "硬盘", "速度测试" ]
+      "tags": [ "硬盘", "速度测试" ],
+      "archVariants": [
+        { "file": "DiskMark32.exe", "arch": "x86" },
+        { "file": "DiskMark64.exe", "arch": "x64" },
+        { "file": "DiskMarkA64.exe", "arch": "ARM64" }
+      ]
     },
     {
       "match": "AS SSD",
@@ -369,7 +379,8 @@
       "tags": [ "综合检测", "传感器" ],
       "archVariants": [
         { "file": "HWiNFO32.exe", "arch": "x86" },
-        { "file": "HWiNFO64.exe", "arch": "x64" }
+        { "file": "HWiNFO64.exe", "arch": "x64" },
+        { "file": "HWiNFO_ARM64.exe", "arch": "ARM64" }
       ]
     },
     {

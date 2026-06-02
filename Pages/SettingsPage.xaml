@@ -253,6 +253,135 @@
                     </Grid>
                 </Border>
 
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid RowSpacing="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource IconBorderStyle}">
+                                <FontIcon FontSize="18" Glyph="&#xE8B9;" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="截图水印" />
+                                <TextBlock
+                                    Opacity="0.68"
+                                    FontSize="13"
+                                    TextWrapping="Wrap"
+                                    Text="硬件信息截图时在右下角添加水印" />
+                            </StackPanel>
+
+                            <ToggleSwitch
+                                x:Name="WatermarkToggle"
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                Toggled="WatermarkToggle_Toggled" />
+                        </Grid>
+
+                        <Border
+                            Grid.Row="1"
+                            x:Name="WatermarkDivider"
+                            Padding="0,1"
+                            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                        <Grid Grid.Row="2" ColumnSpacing="16" x:Name="WatermarkDetailPanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource IconBorderStyle}">
+                                <FontIcon FontSize="18" Glyph="&#xE8D2;" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="水印文字" />
+                                <TextBlock
+                                    Opacity="0.68"
+                                    FontSize="13"
+                                    TextWrapping="Wrap"
+                                    Text="自定义截图水印显示的文字" />
+                            </StackPanel>
+
+                            <TextBox
+                                x:Name="WatermarkTextBox"
+                                Grid.Column="2"
+                                MinWidth="160"
+                                MaxWidth="240"
+                                PlaceholderText="图吧工具箱"
+                                TextChanged="WatermarkTextBox_TextChanged" />
+                        </Grid>
+
+                        <Grid Grid.Row="3" ColumnSpacing="16" x:Name="WatermarkFontPanel">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource IconBorderStyle}">
+                                <FontIcon FontSize="18" Glyph="&#xE9F5;" />
+                            </Border>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="水印字体" />
+                                <TextBlock
+                                    Opacity="0.68"
+                                    FontSize="13"
+                                    TextWrapping="Wrap"
+                                    Text="自定义截图水印使用的字体" />
+                            </StackPanel>
+
+                            <ComboBox
+                                x:Name="WatermarkFontComboBox"
+                                Grid.Column="2"
+                                MinWidth="160"
+                                SelectionChanged="WatermarkFontComboBox_SelectionChanged" />
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE784;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="记住窗口位置和大小" />
+                            <TextBlock
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="关闭后下次启动将居中显示，避免多显示器断开后窗口位置异常" />
+                        </StackPanel>
+
+                        <ToggleSwitch
+                            x:Name="RememberWindowToggle"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Toggled="RememberWindowToggle_Toggled" />
+                    </Grid>
+                </Border>
+
                 <TextBlock
                     Style="{StaticResource SectionHeaderStyle}"
                     Text="外观" />

@@ -21,6 +21,38 @@ public sealed partial class FavoritesPage : Page
         HistoryGrid.ItemsSource = _historyTools;
     }
 
+    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var panel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
+        if (panel is null) return;
+
+        double minItemWidth = 280;
+        double spacing = 12;
+        double availableWidth = ToolsGrid.ActualWidth - ToolsGrid.Padding.Left - ToolsGrid.Padding.Right;
+
+        if (availableWidth <= 0) return;
+
+        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
+        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
+        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+    }
+
+    private void HistoryGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var panel = HistoryGrid.ItemsPanelRoot as ItemsWrapGrid;
+        if (panel is null) return;
+
+        double minItemWidth = 100;
+        double spacing = 10;
+        double availableWidth = HistoryGrid.ActualWidth - HistoryGrid.Padding.Left - HistoryGrid.Padding.Right;
+
+        if (availableWidth <= 0) return;
+
+        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
+        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
+        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+    }
+
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);

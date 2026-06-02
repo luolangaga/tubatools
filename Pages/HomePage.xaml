@@ -61,15 +61,11 @@
             <Setter Property="FontSize" Value="13" />
         </Style>
         <Style x:Key="ToolCardStyle" TargetType="GridViewItem">
-            <Setter Property="Width" Value="304" />
-            <Setter Property="Height" Value="220" />
             <Setter Property="Margin" Value="0,0,12,12" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
         </Style>
         <Style x:Key="CompactCardStyle" TargetType="GridViewItem">
-            <Setter Property="Width" Value="112" />
-            <Setter Property="Height" Value="106" />
             <Setter Property="Margin" Value="0,0,10,10" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -92,11 +88,11 @@
             VerticalAlignment="Stretch"
             IsHitTestVisible="False" />
 
-        <Grid RowSpacing="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
             <StackPanel Spacing="4">
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -118,10 +114,9 @@
 
             <AutoSuggestBox
                 x:Name="SearchBox"
-                Grid.Row="1"
-                MinWidth="260"
-                MaxWidth="520"
-                HorizontalAlignment="Stretch"
+                Grid.Column="1"
+                Width="280"
+                VerticalAlignment="Center"
                 Style="{StaticResource CompactSearchBoxStyle}"
                 PlaceholderText="搜索工具"
                 QueryIcon="Find"
@@ -147,25 +142,27 @@
                 DoubleTapped="ToolsGrid_DoubleTapped"
                 ItemContainerStyle="{StaticResource ToolCardStyle}"
                 SelectionMode="None"
+                SizeChanged="ToolsGrid_SizeChanged"
                 Visibility="Collapsed">
                     <GridView.ItemTemplate>
                         <DataTemplate>
                             <Border
                                 Padding="16"
+                                MinHeight="220"
                                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch">
-                                <Grid RowSpacing="7">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="44" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
+                                    <Grid RowSpacing="4">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="44" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
                                     <Grid ColumnSpacing="12">
                                         <Grid.ColumnDefinitions>
@@ -235,12 +232,7 @@
                                         TextTrimming="CharacterEllipsis"
                                         Visibility="{Binding TagsText, Converter={StaticResource NullToCollapse}}" />
 
-                                    <Grid Grid.Row="3" ColumnSpacing="6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="6">
                                         <Border
                                             VerticalAlignment="Center"
                                             Padding="8,3"
@@ -252,9 +244,9 @@
                                                 Text="{Binding Extension}" />
                                         </Border>
                                         <ComboBox
-                                            Grid.Column="1"
                                             Width="78"
-                                            Padding="6,2"
+                                            MinHeight="24"
+                                            Padding="6,1"
                                             FontSize="12"
                                             VerticalAlignment="Center"
                                             ItemsSource="{Binding ArchOptions}"
@@ -266,7 +258,7 @@
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                    </Grid>
+                                    </StackPanel>
 
                                     <Grid Grid.Row="4" ColumnSpacing="6">
                                         <Grid.ColumnDefinitions>
@@ -320,6 +312,7 @@
                 DoubleTapped="CompactGrid_DoubleTapped"
                 ItemContainerStyle="{StaticResource CompactCardStyle}"
                 SelectionMode="None"
+                SizeChanged="CompactGrid_SizeChanged"
                 Visibility="Collapsed">
                     <GridView.Resources>
                         <MenuFlyout x:Key="CompactItemFlyout">
