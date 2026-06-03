@@ -144,6 +144,19 @@
                 SelectionMode="None"
                 SizeChanged="ToolsGrid_SizeChanged"
                 Visibility="Collapsed">
+                    <GridView.Resources>
+                        <MenuFlyout x:Key="NormalItemFlyout">
+                            <MenuFlyoutItem Text="发送到桌面快捷方式" Click="NormalMenu_SendToDesktop" Icon="Link" />
+                            <MenuFlyoutItem Text="以管理员身份运行" Click="NormalMenu_RunAsAdmin" Icon="Admin" />
+                            <MenuFlyoutItem Text="打开工具所在目录" Click="NormalMenu_OpenDirectory" Icon="Folder" />
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Text="删除工具" Click="NormalMenu_DeleteTool" Foreground="{ThemeResource SystemFillColorCriticalBrush}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE74D;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </GridView.Resources>
                     <GridView.ItemTemplate>
                         <DataTemplate>
                             <Border
@@ -154,7 +167,8 @@
                                 BorderThickness="1"
                                 CornerRadius="8"
                                 HorizontalAlignment="Stretch"
-                                VerticalAlignment="Stretch">
+                                VerticalAlignment="Stretch"
+                                RightTapped="NormalItem_RightTapped">
                                     <Grid RowSpacing="4">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
@@ -318,6 +332,13 @@
                         <MenuFlyout x:Key="CompactItemFlyout">
                             <MenuFlyoutItem Text="发送到桌面快捷方式" Click="CompactMenu_SendToDesktop" Icon="Link" />
                             <MenuFlyoutItem Text="以管理员身份运行" Click="CompactMenu_RunAsAdmin" Icon="Admin" />
+                            <MenuFlyoutItem Text="打开工具所在目录" Click="CompactMenu_OpenDirectory" Icon="Folder" />
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Text="删除工具" Click="CompactMenu_DeleteTool" Foreground="{ThemeResource SystemFillColorCriticalBrush}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE74D;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                         </MenuFlyout>
                     </GridView.Resources>
                     <GridView.ItemTemplate>

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using TubaWinUi3;
 using TubaWinUi3.Services;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace TubaWinUi3.Pages;
 
@@ -21,6 +22,17 @@ public sealed partial class SettingsPage : Page
     private bool _watermarkInitializing;
     private bool _watermarkTextInitializing;
     private bool _watermarkFontInitializing;
+    private bool _defaultPageInitializing;
+    private bool _brandLogoInitializing;
+
+    private static readonly (string Tag, string DisplayName)[] DefaultPageOptions =
+    [
+        ("all", "全部工具"),
+        ("favorites", "常用"),
+        ("hardware", "硬件信息"),
+        ("builtin", "内置工具"),
+        ("monitor", "硬件监控"),
+    ];
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct OPENFILENAME
@@ -74,8 +86,10 @@ public sealed partial class SettingsPage : Page
         LoadGitHubAvatar();
         InitThemeComboBox();
         InitCompactModeToggle();
+        InitDefaultPageComboBox();
         InitFastModeToggle();
         InitRememberWindowToggle();
+        InitBrandLogoToggle();
         InitWatermarkSettings();
         LoadBackgroundSettings();
     }
@@ -270,6 +284,32 @@ public sealed partial class SettingsPage : Page
         }
     }
 
+    private void InitDefaultPageComboBox()
+    {
+        _defaultPageInitializing = true;
+        DefaultPageComboBox.Items.Clear();
+        var saved = AppSettings.Get("DefaultPage") ?? "all";
+
+        for (var i = 0; i < DefaultPageOptions.Length; i++)
+        {
+            DefaultPageComboBox.Items.Add(DefaultPageOptions[i].DisplayName);
+            if (DefaultPageOptions[i].Tag == saved)
+                DefaultPageComboBox.SelectedIndex = i;
+        }
+
+        if (DefaultPageComboBox.SelectedIndex < 0)
+            DefaultPageComboBox.SelectedIndex = 0;
+
+        _defaultPageInitializing = false;
+    }
+
+    private void DefaultPageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_defaultPageInitializing) return;
+        if (DefaultPageComboBox.SelectedIndex >= 0 && DefaultPageComboBox.SelectedIndex < DefaultPageOptions.Length)
+            AppSettings.Set("DefaultPage", DefaultPageOptions[DefaultPageComboBox.SelectedIndex].Tag);
+    }
+
     private void CompactModeToggle_Toggled(object sender, RoutedEventArgs e)
     {
         if (_compactModeInitializing) return;
@@ -314,6 +354,19 @@ public sealed partial class SettingsPage : Page
         _rememberWindowInitializing = true;
         RememberWindowToggle.IsOn = WindowSizeService.IsRememberEnabled();
         _rememberWindowInitializing = false;
+    }
+
+    private void BrandLogoToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_brandLogoInitializing) return;
+        AppSettings.Set("ShowBrandLogo", BrandLogoToggle.IsOn);
+    }
+
+    private void InitBrandLogoToggle()
+    {
+        _brandLogoInitializing = true;
+        BrandLogoToggle.IsOn = AppSettings.GetBool("ShowBrandLogo", true);
+        _brandLogoInitializing = false;
     }
 
     private void InitWatermarkSettings()
@@ -393,6 +446,264 @@ public sealed partial class SettingsPage : Page
         if (_watermarkFontInitializing) return;
         if (WatermarkFontComboBox.SelectedItem is string font)
             AppSettings.Set("ScreenshotWatermarkFont", font);
+    }
+
+    private async void DeleteCategoryButton_Click(object sender, RoutedEventArgs e)
+    {
+        var categories = ToolCatalog.GetCategories();
+        if (categories.Count == 0)
+        {
+            await ShowMessageAsync("没有分类", "当前没有任何工具分类可以删除。");
+            return;
+        }
+
+        var categoryComboBox = new ComboBox
+        {
+            ItemsSource = categories,
+            SelectedIndex = 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
+        var content = new StackPanel
+        {
+            Spacing = 8,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "选择要删除的分类：",
+                    Opacity = 0.72
+                },
+                categoryComboBox,
+                new Border
+                {
+                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.Colors.Transparent),
+                    BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Microsoft.UI.ColorHelper.FromArgb(255, 196, 43, 28)),
+                    BorderThickness = new Microsoft.UI.Xaml.Thickness(1),
+                    CornerRadius = new Microsoft.UI.Xaml.CornerRadius(6),
+                    Padding = new Microsoft.UI.Xaml.Thickness(12, 8, 12, 8),
+                    Child = new StackPanel
+                    {
+                        Spacing = 4,
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = "⚠ 警告",
+                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                                    Microsoft.UI.ColorHelper.FromArgb(255, 196, 43, 28))
+                            },
+                            new TextBlock
+                            {
+                                Text = "删除分类将会同时删除该分类下的所有工具及其文件！此操作不可撤销！",
+                                TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap,
+                                Opacity = 0.88
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "删除工具分类",
+            Content = content,
+            PrimaryButtonText = "删除",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            RequestedTheme = ThemeService.CurrentElementTheme
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary)
+            return;
+
+        if (categoryComboBox.SelectedItem is not string selectedCategory)
+            return;
+
+        var toolCount = ToolCatalog.GetTools(selectedCategory).Count;
+
+        var confirmDialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = $"确认删除「{selectedCategory}」",
+            Content = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = toolCount > 0
+                            ? $"分类「{selectedCategory}」下有 {toolCount} 个工具，删除后这些工具的文件将全部被移除！"
+                            : $"分类「{selectedCategory}」下没有工具。",
+                        TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap
+                    },
+                    new TextBlock
+                    {
+                        Text = "此操作不可撤销，确定要继续吗？",
+                        TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap,
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                    }
+                }
+            },
+            PrimaryButtonText = "确认删除",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            RequestedTheme = ThemeService.CurrentElementTheme
+        };
+
+        var confirmResult = await confirmDialog.ShowAsync();
+        if (confirmResult != ContentDialogResult.Primary)
+            return;
+
+        try
+        {
+            var categoryDir = Path.Combine(ToolCatalog.ToolsRoot, selectedCategory);
+            if (Directory.Exists(categoryDir))
+            {
+                await Task.Run(() => Directory.Delete(categoryDir, true));
+            }
+
+            AppSettings.Remove($"CategoryGlyph_{selectedCategory}");
+            ToolCatalog.InvalidateTagsCache();
+
+            if (App.MainWindow is MainWindow mainWindow)
+                mainWindow.RefreshToolCategories();
+
+            DeleteCategoryStatusText.Text = $"已删除分类「{selectedCategory}」";
+        }
+        catch (Exception ex)
+        {
+            DeleteCategoryStatusText.Text = $"删除失败: {ex.Message}";
+            await ShowMessageAsync("删除失败", ex.Message);
+        }
+    }
+
+    private async void CreateCategoryButton_Click(object sender, RoutedEventArgs e)
+    {
+        var nameBox = new TextBox
+        {
+            Header = "分类名称",
+            PlaceholderText = "例如 我的工具"
+        };
+
+        var iconOptions = new (string Label, string Glyph)[]
+        {
+            ("工具", "\uE8B7"),
+            ("处理器", "\uEEA1"),
+            ("显卡", "\uF211"),
+            ("显示器", "\uE7F4"),
+            ("硬盘", "\uEDA2"),
+            ("内存", "\uEEA0"),
+            ("外设", "\uE962"),
+            ("游戏", "\uE7FC"),
+            ("烤鸡", "\uE9D9"),
+            ("声卡", "\uE7F5"),
+            ("网卡", "\uEDA3"),
+            ("综合", "\uEC4E"),
+            ("其他", "\uE712"),
+            ("文件夹", "\uE8B7"),
+            ("星标", "\uE734"),
+            ("齿轮", "\uE713"),
+            ("代码", "\uE943"),
+            ("下载", "\uE896"),
+            ("上传", "\uE898"),
+            ("保存", "\uE74E"),
+            ("编辑", "\uE70F"),
+            ("搜索", "\uE721"),
+            ("终端", "\uE756"),
+            ("数据库", "\uEFC6"),
+            ("安全", "\uE730"),
+            ("网络", "\uE968"),
+            ("系统", "\uE977"),
+            ("磁盘", "\uEDA2"),
+            ("USB", "\uE88E"),
+            ("电源", "\uE83E"),
+        };
+
+        var iconGridView = new GridView
+        {
+            ItemsSource = iconOptions.Select(o => new { o.Label, o.Glyph }).ToList(),
+            SelectionMode = ListViewSelectionMode.Single,
+            MaxHeight = 200,
+            Padding = new Microsoft.UI.Xaml.Thickness(0, 8, 0, 0)
+        };
+
+        iconGridView.ItemTemplate = CreateIconItemTemplate();
+
+        var content = new StackPanel
+        {
+            Spacing = 12,
+            Children = { nameBox, new TextBlock { Text = "选择图标", Opacity = 0.68, FontSize = 12 }, iconGridView }
+        };
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "新建工具分类",
+            Content = content,
+            PrimaryButtonText = "创建",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+            RequestedTheme = ThemeService.CurrentElementTheme
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary)
+            return;
+
+        var categoryName = nameBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            await ShowMessageAsync("名称不能为空", "请输入分类名称。");
+            return;
+        }
+
+        var selectedIcon = iconGridView.SelectedItem;
+        var selectedGlyph = selectedIcon is not null
+            ? (string)selectedIcon.GetType().GetProperty("Glyph")!.GetValue(selectedIcon)!
+            : "\uE8B7";
+
+        try
+        {
+            var categoryDir = Path.Combine(ToolCatalog.ToolsRoot, categoryName);
+            if (Directory.Exists(categoryDir))
+            {
+                await ShowMessageAsync("分类已存在", $"分类「{categoryName}」已经存在。");
+                return;
+            }
+
+            Directory.CreateDirectory(categoryDir);
+            AppSettings.Set($"CategoryGlyph_{categoryName}", selectedGlyph);
+
+            if (App.MainWindow is MainWindow mainWindow)
+                mainWindow.RefreshToolCategories();
+
+            CreateCategoryStatusText.Text = $"已创建分类「{categoryName}」";
+        }
+        catch (Exception ex)
+        {
+            CreateCategoryStatusText.Text = $"创建失败: {ex.Message}";
+            await ShowMessageAsync("创建失败", ex.Message);
+        }
+    }
+
+    private static DataTemplate CreateIconItemTemplate()
+    {
+        var xaml = """
+            <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
+                <Border Width='48' Height='48' Background='{ThemeResource SubtleFillColorSecondaryBrush}' CornerRadius='8' Padding='8'>
+                    <FontIcon FontSize='22' Glyph='{Binding Glyph}' HorizontalAlignment='Center' VerticalAlignment='Center' />
+                </Border>
+            </DataTemplate>
+            """;
+        return (DataTemplate)Microsoft.UI.Xaml.Markup.XamlReader.Load(xaml);
     }
 
     private async void ImportToolButton_Click(object sender, RoutedEventArgs e)
@@ -530,6 +841,14 @@ public sealed partial class SettingsPage : Page
             PlaceholderText = "用逗号分隔，例如 CPU, 跑分, 稳定性测试"
         };
 
+        var archComboBox = new ComboBox
+        {
+            Header = "目标架构",
+            ItemsSource = new[] { "自动检测", "x64", "x86", "ARM64" },
+            SelectedIndex = 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
         var variantsList = new ListView
         {
             Header = "多架构文件",
@@ -551,6 +870,7 @@ public sealed partial class SettingsPage : Page
                     categoryBox,
                     new TextBlock { Text = "主程序", Opacity = 0.68, FontSize = 12 },
                     primaryComboBox,
+                    archComboBox,
                     variantsList,
                     descriptionBox,
                     publisherBox,
@@ -585,6 +905,19 @@ public sealed partial class SettingsPage : Page
             .Select(item => new ImportArchVariant(item.EntryPath, GuessArch(item.EntryPath)))
             .Where(item => !string.IsNullOrWhiteSpace(item.Arch))
             .ToList();
+
+        var manualArch = archComboBox.SelectedIndex switch
+        {
+            1 => "x64",
+            2 => "x86",
+            3 => "ARM64",
+            _ => null
+        };
+
+        if (manualArch is not null && !selectedVariants.Any(v => v.EntryPath.Equals(primary.EntryPath, StringComparison.OrdinalIgnoreCase)))
+        {
+            selectedVariants.Add(new ImportArchVariant(primary.EntryPath, manualArch));
+        }
 
         var tags = tagsBox.Text
             .Split(new[] { ',', '，', ';', '；' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -716,5 +1049,72 @@ public sealed partial class SettingsPage : Page
     {
         DrawerCloseStoryboard.Completed -= OnDrawerCloseCompleted;
         DrawerOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private void Page_DragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+            e.DragUIOverride.IsCaptionVisible = true;
+            e.DragUIOverride.Caption = "拖放 ZIP 文件以导入工具";
+        }
+        else
+        {
+            e.AcceptedOperation = DataPackageOperation.None;
+        }
+    }
+
+    private async void Page_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.StorageItems))
+            return;
+
+        var items = await e.DataView.GetStorageItemsAsync();
+        var zipFile = items
+            .OfType<Windows.Storage.StorageFile>()
+            .FirstOrDefault(f => f.FileType.Equals(".zip", StringComparison.OrdinalIgnoreCase));
+
+        if (zipFile is null)
+            return;
+
+        ImportToolButton.IsEnabled = false;
+        ImportToolStatusText.Text = "正在读取拖放的压缩包...";
+
+        try
+        {
+            var executables = CustomToolPackageService.GetExecutables(zipFile.Path);
+            if (executables.Count == 0)
+            {
+                ImportToolStatusText.Text = "压缩包中没有找到 exe 文件";
+                await ShowMessageAsync("未找到可导入工具", "压缩包里需要至少包含一个 .exe 文件。");
+                return;
+            }
+
+            var request = await ShowImportToolDialogAsync(zipFile.Path, executables);
+            if (request is null)
+            {
+                ImportToolStatusText.Text = "已取消导入";
+                return;
+            }
+
+            ImportToolStatusText.Text = "正在导入工具...";
+            var result = await CustomToolPackageService.ImportAsync(request);
+
+            if (App.MainWindow is MainWindow mainWindow)
+                mainWindow.RefreshToolCategories();
+
+            ImportToolStatusText.Text = $"已导入 {Path.GetFileName(result.ToolDirectory)}";
+            await ShowMessageAsync("导入完成", $"工具已导入到：\n{result.ToolDirectory}");
+        }
+        catch (Exception ex)
+        {
+            ImportToolStatusText.Text = $"导入失败: {ex.Message}";
+            await ShowMessageAsync("导入失败", ex.Message);
+        }
+        finally
+        {
+            ImportToolButton.IsEnabled = true;
+        }
     }
 }

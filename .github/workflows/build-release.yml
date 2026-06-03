@@ -142,7 +142,7 @@ jobs:
         with:
           path: installer-${{ matrix.arch }}.iss
 
-      - name: Create portable zip (src/ layout with shortcut)
+      - name: Create portable zip (src/ layout with launcher)
         shell: pwsh
         run: |
           $publishDir = "publish_${{ matrix.arch }}"
@@ -154,12 +154,8 @@ jobs:
 
           Get-ChildItem -LiteralPath $publishDir | Move-Item -Destination $srcDir -Force
 
-          $WshShell = New-Object -ComObject WScript.Shell
-          $shortcut = $WshShell.CreateShortcut((Join-Path $stagingDir '图吧工具箱WinUI3.lnk'))
-          $shortcut.TargetPath = (Join-Path $PWD.Path "src\TubaWinUi3.exe")
-          $shortcut.WorkingDirectory = (Join-Path $PWD.Path "src")
-          $shortcut.Description = '图吧工具箱WinUI3'
-          $shortcut.Save()
+          $batContent = '@start "" "%~dp0src\TubaWinUi3.exe"'
+          Set-Content -LiteralPath (Join-Path $stagingDir '图吧工具箱WinUI3.bat') -Value $batContent -Encoding ASCII
 
           Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Portable_${{ inputs.version }}_${{ matrix.arch }}.zip"

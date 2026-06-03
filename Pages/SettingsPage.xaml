@@ -6,6 +6,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:TubaWinUi3.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    AllowDrop="True"
+    DragOver="Page_DragOver"
+    Drop="Page_Drop"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -221,6 +224,64 @@
                             Grid.Column="2"
                             VerticalAlignment="Center"
                             Toggled="CompactModeToggle_Toggled" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE8F1;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="显示品牌 Logo" />
+                            <TextBlock
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="在硬件信息页面的处理器和显卡行前显示品牌图标" />
+                        </StackPanel>
+
+                        <ToggleSwitch
+                            x:Name="BrandLogoToggle"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Toggled="BrandLogoToggle_Toggled" />
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE8A5;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="默认启动页面" />
+                            <TextBlock
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="选择应用启动后默认打开的页面" />
+                        </StackPanel>
+
+                        <ComboBox
+                            x:Name="DefaultPageComboBox"
+                            Grid.Column="2"
+                            MinWidth="120"
+                            SelectionChanged="DefaultPageComboBox_SelectionChanged" />
                     </Grid>
                 </Border>
 
@@ -488,6 +549,78 @@
                 <TextBlock
                     Style="{StaticResource SectionHeaderStyle}"
                     Text="自定义工具" />
+
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE74D;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="删除工具分类" />
+                            <TextBlock
+                                x:Name="DeleteCategoryStatusText"
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="删除分类及其下所有工具，此操作不可撤销。" />
+                        </StackPanel>
+
+                        <Button
+                            x:Name="DeleteCategoryButton"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Padding="14,6"
+                            Click="DeleteCategoryButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                                <TextBlock Text="删除" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource IconBorderStyle}">
+                            <FontIcon FontSize="18" Glyph="&#xE710;" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock FontWeight="SemiBold" Text="新建工具分类" />
+                            <TextBlock
+                                x:Name="CreateCategoryStatusText"
+                                Opacity="0.68"
+                                FontSize="13"
+                                TextWrapping="Wrap"
+                                Text="自定义分类名称和图标，创建后可在导航栏中看到。" />
+                        </StackPanel>
+
+                        <Button
+                            x:Name="CreateCategoryButton"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Padding="14,6"
+                            Click="CreateCategoryButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="12" Glyph="&#xE710;" />
+                                <TextBlock Text="新建" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
 
                 <Border Style="{StaticResource SettingsCardStyle}">
                     <Grid ColumnSpacing="16">

@@ -141,12 +141,18 @@ public static class HardwareInfoService
     private static void FillDetails(HardwareInfoSection section)
     {
         section.Items.Add(Item("主板", BoardModel()));
-        section.Items.Add(Item("处理器", FirstName("Win32_Processor")));
+        var cpuName = FirstName("Win32_Processor");
+        var cpuItem = Item("处理器", cpuName);
+        cpuItem.BrandKey = DetectCpuBrand(cpuName);
+        section.Items.Add(cpuItem);
         section.Items.Add(Item("内存", FormatMemory()));
-        section.Items.Add(Item("显卡", JoinNames("Win32_VideoController", item =>
+        var gpuName = JoinNames("Win32_VideoController", item =>
             !ContainsAny(Get(item, "Name"), "Microsoft Basic Render", "Microsoft Remote Display", "DDA Wrapper",
                 "Idd Desk", "GameViewer Virtual Display", "Honor Virtual Display", "Virtual Display",
-                "Virtual GPU", "Virtual Adapter", "虚拟", "Remote Display Adapter"))));
+                "Virtual GPU", "Virtual Adapter", "虚拟", "Remote Display Adapter"));
+        var gpuItem = Item("显卡", gpuName);
+        gpuItem.BrandKey = DetectGpuBrand(gpuName);
+        section.Items.Add(gpuItem);
         section.Items.Add(Item("显示器", FormatDisplays()));
         section.Items.Add(Item("硬盘", FormatDisks()));
         section.Items.Add(Item("声卡", JoinNames("Win32_SoundDevice", item =>
@@ -157,6 +163,29 @@ public static class HardwareInfoService
         section.Items.Add(Item("网卡", JoinNames("Win32_NetworkAdapter", item =>
             IsTrue(item, "PhysicalAdapter") &&
             !ContainsAny(Get(item, "Name"), "Virtual", "Bluetooth", "WAN Miniport"))));
+    }
+
+    private static string? DetectCpuBrand(string? cpuName)
+    {
+        if (string.IsNullOrWhiteSpace(cpuName)) return null;
+        var name = cpuName.ToUpperInvariant();
+        if (name.Contains("INTEL")) return "intel";
+        if (name.Contains("AMD")) return "amd";
+        if (name.Contains("APPLE") || name.Contains("M1") || name.Contains("M2") || name.Contains("M3") || name.Contains("M4")) return "apple";
+        if (name.Contains("QUALCOMM") || name.Contains("SNAPDRAGON")) return "qualcomm";
+        return null;
+    }
+
+    private static string? DetectGpuBrand(string? gpuName)
+    {
+        if (string.IsNullOrWhiteSpace(gpuName)) return null;
+        var name = gpuName.ToUpperInvariant();
+        if (name.Contains("NVIDIA") || name.Contains("GEFORCE") || name.Contains("RTX") || name.Contains("GTX")) return "nvidia";
+        if (name.Contains("AMD") || name.Contains("RADEON")) return "amd";
+        if (name.Contains("INTEL") || name.Contains("ARC") || name.Contains("UHD") || name.Contains("IRIS")) return "intel";
+        if (name.Contains("APPLE")) return "apple";
+        if (name.Contains("QUALCOMM") || name.Contains("ADRENO")) return "qualcomm";
+        return null;
     }
 
     private static HardwareInfoItem Item(string label, string? value)
@@ -508,7 +537,7 @@ public static class HardwareInfoService
             for (int i = 0; i < pnpNames.Count; i++)
             {
                 var res = i < fallbackRes.Count ? fallbackRes[i] : null;
-                monitorInfos.Add(new DisplayInfo(pnpNames[i]!, res, false));
+                monitorInfos.Add(new DisplayInfo(pnpNames[i]!, res, false, null));
             }
         }
 
@@ -519,18 +548,24 @@ public static class HardwareInfoService
             if (string.IsNullOrWhiteSpace(mi.Label) && string.IsNullOrWhiteSpace(mi.Resolution))
                 return "";
             var label = mi.IsPrimary && !string.IsNullOrWhiteSpace(mi.Label) ? $"主屏 {mi.Label}" : mi.Label;
-            if (string.IsNullOrWhiteSpace(label)) return mi.Resolution;
-            if (string.IsNullOrWhiteSpace(mi.Resolution)) return label;
-            return $"{label} [{mi.Resolution}]";
+            var sizeStr = mi.DiagonalInches.HasValue ? $"{mi.DiagonalInches.Value:F1}\"" : null;
+            var resOrSize = new List<string>();
+            if (!string.IsNullOrWhiteSpace(sizeStr)) resOrSize.Add(sizeStr);
+            if (!string.IsNullOrWhiteSpace(mi.Resolution)) resOrSize.Add(mi.Resolution);
+            var bracketContent = resOrSize.Count > 0 ? string.Join(" ", resOrSize) : null;
+            if (string.IsNullOrWhiteSpace(label)) return bracketContent ?? "";
+            if (string.IsNullOrWhiteSpace(bracketContent)) return label;
+            return $"{label} [{bracketContent}]";
         }).Where(s => !string.IsNullOrWhiteSpace(s)));
     }
 
-    private sealed record DisplayInfo(string Label, string? Resolution, bool IsPrimary);
+    private sealed record DisplayInfo(string Label, string? Resolution, bool IsPrimary, double? DiagonalInches);
 
     private static List<DisplayInfo> GetActiveDisplayInfos()
     {
         var results = new List<DisplayInfo>();
         var wmiLabels = GetWmiMonitorLabelsByPnpCode();
+        var wmiSizes = GetWmiMonitorSizesByPnpCode();
 
         try
         {
@@ -544,10 +579,11 @@ public static class HardwareInfoService
                     var monitor = GetDisplayMonitor(adapter.DeviceName);
                     var pnpCode = ExtractMonitorPnpCode(monitor?.DeviceID);
                     var label = ChooseDisplayLabel(monitor?.DeviceString, pnpCode, adapter.DeviceString, wmiLabels);
+                    var diagonalInches = GetDiagonalInches(pnpCode, wmiSizes);
 
                     if (!string.IsNullOrWhiteSpace(label) || !string.IsNullOrWhiteSpace(resolution))
                     {
-                        results.Add(new DisplayInfo(label, resolution, isPrimary));
+                        results.Add(new DisplayInfo(label, resolution, isPrimary, diagonalInches));
                     }
                 }
 
@@ -614,7 +650,7 @@ public static class HardwareInfoService
         var pnpMfr = pnpCode?.Length >= 3 ? ResolveManufacturer(pnpCode[..3]) : null;
         if (!string.IsNullOrWhiteSpace(pnpMfr)) return pnpMfr;
 
-        return CleanDisplayLabel(adapterDeviceString);
+        return "";
     }
 
     private static string CleanDisplayLabel(string? label)
@@ -651,6 +687,58 @@ public static class HardwareInfoService
         catch { }
 
         return labels;
+    }
+
+    private static Dictionary<string, (double WidthCm, double HeightCm)> GetWmiMonitorSizesByPnpCode()
+    {
+        var sizes = new Dictionary<string, (double WidthCm, double HeightCm)>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorBasicDisplayParams");
+            foreach (ManagementBaseObject item in searcher.Get())
+            {
+                var pnpCode = ExtractMonitorPnpCode(Get(item, "InstanceName"));
+                if (string.IsNullOrWhiteSpace(pnpCode) || sizes.ContainsKey(pnpCode)) continue;
+
+                var widthCm = GetInt(item, "MaxHorizontalImageSize");
+                var heightCm = GetInt(item, "MaxVerticalImageSize");
+                if (widthCm > 0 && heightCm > 0)
+                {
+                    sizes[pnpCode] = (widthCm, heightCm);
+                }
+            }
+        }
+        catch { }
+
+        return sizes;
+    }
+
+    private static int GetInt(ManagementBaseObject item, string propertyName)
+    {
+        try
+        {
+            var value = item[propertyName];
+            if (value != null)
+            {
+                return Convert.ToInt32(value);
+            }
+        }
+        catch { }
+        return 0;
+    }
+
+    private static double? GetDiagonalInches(string? pnpCode, IReadOnlyDictionary<string, (double WidthCm, double HeightCm)> sizes)
+    {
+        if (string.IsNullOrWhiteSpace(pnpCode) || !sizes.TryGetValue(pnpCode, out var size))
+            return null;
+
+        if (size.WidthCm <= 0 || size.HeightCm <= 0)
+            return null;
+
+        var diagonalCm = Math.Sqrt(size.WidthCm * size.WidthCm + size.HeightCm * size.HeightCm);
+        var diagonalInches = diagonalCm / 2.54;
+        return diagonalInches;
     }
 
     private static string BuildWmiMonitorLabel(ManagementBaseObject item)

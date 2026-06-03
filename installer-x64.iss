@@ -29,6 +29,13 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 LanguageDetectionMethod=locale
 ShowLanguageDialog=no
+UpdateUninstallLogAppName=yes
+UsePreviousAppDir=yes
+UsePreviousGroup=yes
+UsePreviousSetupType=yes
+UsePreviousTasks=yes
+DirExistsWarning=no
+AppendDefaultDirName=yes
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"

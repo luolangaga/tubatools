@@ -319,6 +319,156 @@ public sealed partial class HomePage : Page
         }
     }
 
+    private void CompactMenu_OpenDirectory(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+            OpenToolDirectory(tool);
+    }
+
+    private void NormalItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ToolItem)
+        {
+            var flyout = (MenuFlyout)ToolsGrid.Resources["NormalItemFlyout"];
+            flyout.ShowAt(fe, e.GetPosition(fe));
+        }
+    }
+
+    private void NormalMenu_SendToDesktop(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+        {
+            try
+            {
+                CreateDesktopShortcut(tool);
+                ShowStatus("已创建", $"已将「{tool.Name}」快捷方式发送到桌面", InfoBarSeverity.Success);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus("创建失败", ex.Message, InfoBarSeverity.Error);
+            }
+        }
+    }
+
+    private void NormalMenu_RunAsAdmin(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+        {
+            if (tool.ArchOptions.Count > 1)
+                _ = ShowArchPickerAndLaunchAsync(tool, runAsAdmin: true);
+            else
+                LaunchTool(tool, runAsAdmin: true);
+        }
+    }
+
+    private void NormalMenu_OpenDirectory(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+            OpenToolDirectory(tool);
+    }
+
+    private void NormalMenu_DeleteTool(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+            _ = DeleteToolAsync(tool);
+    }
+
+    private void CompactMenu_DeleteTool(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
+            _ = DeleteToolAsync(tool);
+    }
+
+    private async Task DeleteToolAsync(ToolItem tool)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = $"删除「{tool.Name}」",
+            Content = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "确定要删除此工具吗？此操作不可撤销！",
+                        TextWrapping = TextWrapping.Wrap,
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                    },
+                    new TextBlock
+                    {
+                        Text = "将会删除工具所在目录及所有相关文件：",
+                        TextWrapping = TextWrapping.Wrap,
+                        Opacity = 0.72
+                    },
+                    new TextBlock
+                    {
+                        Text = tool.Path,
+                        TextWrapping = TextWrapping.Wrap,
+                        Opacity = 0.52,
+                        FontSize = 12,
+                        IsTextSelectionEnabled = true
+                    }
+                }
+            },
+            PrimaryButtonText = "删除",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+            RequestedTheme = ThemeService.CurrentElementTheme
+        };
+
+        var result = await dialog.ShowAsync();
+        if (result != ContentDialogResult.Primary)
+            return;
+
+        try
+        {
+            var toolDir = System.IO.Path.GetDirectoryName(tool.Path);
+            if (!string.IsNullOrWhiteSpace(toolDir) && System.IO.Directory.Exists(toolDir))
+            {
+                var categoryDir = System.IO.Path.GetDirectoryName(toolDir);
+                await Task.Run(() => System.IO.Directory.Delete(toolDir, true));
+
+                if (!string.IsNullOrWhiteSpace(categoryDir) &&
+                    System.IO.Directory.Exists(categoryDir) &&
+                    !System.IO.Directory.EnumerateFileSystemEntries(categoryDir).Any())
+                {
+                    await Task.Run(() => System.IO.Directory.Delete(categoryDir, false));
+                }
+            }
+            else if (System.IO.File.Exists(tool.Path))
+            {
+                await Task.Run(() => System.IO.File.Delete(tool.Path));
+            }
+
+            FavoritesService.RemoveFavorite(tool.Path);
+            ToolCatalog.InvalidateTagsCache();
+
+            if (App.MainWindow is MainWindow mainWindow)
+                mainWindow.RefreshToolCategories();
+
+            _tools.Remove(tool);
+            ToolCountText.Text = _tools.Count > 0 ? $"{_tools.Count} 个工具" : "";
+            ToolCountText.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            EmptyState.Visibility = _tools.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            UpdateGridVisibility(_tools.Count > 0);
+
+            ShowStatus("已删除", $"「{tool.Name}」已删除", InfoBarSeverity.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus("删除失败", ex.Message, InfoBarSeverity.Error);
+        }
+    }
+
+    private static void OpenToolDirectory(ToolItem tool)
+    {
+        var dir = tool.EffectiveWorkingDir;
+        if (System.IO.Directory.Exists(dir))
+            _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", dir) { UseShellExecute = true });
+    }
+
     private async Task ShowArchPickerAndLaunchAsync(ToolItem tool, bool runAsAdmin)
     {
         var dialog = new ContentDialog

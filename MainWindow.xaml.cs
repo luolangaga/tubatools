@@ -26,7 +26,7 @@ public sealed partial class MainWindow : Window
         Closed += MainWindow_Closed;
 
         PopulateCategories();
-        NavFrame.Navigate(typeof(HomePage), null);
+        NavigateToDefaultPage();
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
@@ -117,6 +117,30 @@ public sealed partial class MainWindow : Window
         ThemeService.ApplySavedTheme();
     }
 
+    private void NavigateToDefaultPage()
+    {
+        var defaultPage = AppSettings.Get("DefaultPage") ?? "all";
+        NavigationViewItem? targetItem = null;
+
+        foreach (var item in NavView.MenuItems)
+        {
+            if (item is NavigationViewItem navItem && navItem.Tag is string tag && tag == defaultPage)
+            {
+                targetItem = navItem;
+                break;
+            }
+        }
+
+        if (targetItem is not null)
+        {
+            NavView.SelectedItem = targetItem;
+        }
+        else
+        {
+            NavFrame.Navigate(typeof(HomePage), null);
+        }
+    }
+
     private void PopulateCategories()
     {
         while (NavView.MenuItems.Count > 5)
@@ -151,6 +175,10 @@ public sealed partial class MainWindow : Window
 
     private static string GetCategoryGlyph(string category)
     {
+        var customGlyph = AppSettings.Get($"CategoryGlyph_{category}");
+        if (!string.IsNullOrWhiteSpace(customGlyph))
+            return customGlyph;
+
         if (category.Contains("处理器", StringComparison.CurrentCultureIgnoreCase))
         {
             return "\uEEA1";

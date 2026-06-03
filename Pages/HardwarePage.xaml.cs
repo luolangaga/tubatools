@@ -19,12 +19,54 @@ public sealed partial class HardwarePage : Page
     private bool _dataLoaded;
     private bool _animatingDetails;
 
+    private static SvgImageSource? IntelLogo;
+    private static SvgImageSource? AmdLogo;
+    private static SvgImageSource? NvidiaLogo;
+    private static SvgImageSource? AppleLogo;
+    private static SvgImageSource? QualcommLogo;
+    private static bool _logosLoaded;
+
     public HardwarePage()
     {
         InitializeComponent();
         Loaded += HardwarePage_Loaded;
         Unloaded += HardwarePage_Unloaded;
+        LoadBrandLogos();
     }
+
+    private static void LoadBrandLogos()
+    {
+        if (_logosLoaded) return;
+        _logosLoaded = true;
+
+        var brandsDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Brands");
+        IntelLogo = LoadSvg(Path.Combine(brandsDir, "intel.svg"));
+        AmdLogo = LoadSvg(Path.Combine(brandsDir, "amd.svg"));
+        NvidiaLogo = LoadSvg(Path.Combine(brandsDir, "nvidia.svg"));
+        AppleLogo = LoadSvg(Path.Combine(brandsDir, "apple.svg"));
+        QualcommLogo = LoadSvg(Path.Combine(brandsDir, "qualcomm.svg"));
+    }
+
+    private static SvgImageSource? LoadSvg(string path)
+    {
+        if (!File.Exists(path)) return null;
+        try
+        {
+            var uri = new Uri($"ms-appx:///Assets/Brands/{Path.GetFileName(path)}");
+            return new SvgImageSource(uri);
+        }
+        catch { return null; }
+    }
+
+    private static SvgImageSource? GetBrandLogo(string? brandKey) => brandKey?.ToLowerInvariant() switch
+    {
+        "intel" => IntelLogo,
+        "amd" => AmdLogo,
+        "nvidia" => NvidiaLogo,
+        "apple" => AppleLogo,
+        "qualcomm" => QualcommLogo,
+        _ => null
+    };
 
     private void HardwarePage_Loaded(object sender, RoutedEventArgs e)
     {
@@ -231,6 +273,30 @@ public sealed partial class HardwarePage : Page
             if (brush is not null) el.Background = (Microsoft.UI.Xaml.Media.Brush)brush;
         }
 
+        var logoImage = FindChild<Microsoft.UI.Xaml.Controls.Image>(el);
+        if (logoImage is not null && DetailsRepeater.ItemsSource is IReadOnlyList<HardwareInfoItem> items && args.Index < items.Count)
+        {
+            var item = items[args.Index];
+            var showLogo = AppSettings.GetBool("ShowBrandLogo", true);
+            if (showLogo && !string.IsNullOrEmpty(item.BrandKey))
+            {
+                var logo = GetBrandLogo(item.BrandKey);
+                if (logo is not null)
+                {
+                    logoImage.Source = logo;
+                    logoImage.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    logoImage.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                logoImage.Visibility = Visibility.Collapsed;
+            }
+        }
+
         if (!_animatingDetails)
         {
             el.Opacity = 1;
@@ -434,5 +500,18 @@ public sealed partial class HardwarePage : Page
             pixels[i] = (a << 24) | (b << 16) | (g << 8) | r;
         }
         return pixels;
+    }
+
+    private static T? FindChild<T>(DependencyObject parent) where T : FrameworkElement
+    {
+        var count = VisualTreeHelper.GetChildrenCount(parent);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            var result = FindChild<T>(child);
+            if (result is not null) return result;
+        }
+        return null;
     }
 }

@@ -1,5 +1,6 @@
 ## .NET / Visual Studio
 [Bb]in/
+!Tools/**/[Bb]in/
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
