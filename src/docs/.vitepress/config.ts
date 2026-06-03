@@ -13,7 +13,7 @@ const jsonLd = JSON.stringify({
     "price": "0",
     "priceCurrency": "CNY"
   },
-  "softwareVersion": "1.0.2",
+
   "programmingLanguage": "C#",
   "applicationSubCategory": "Hardware Diagnostic"
 })
