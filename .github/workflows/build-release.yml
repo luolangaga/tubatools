@@ -70,7 +70,7 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish app (portable, single-file)
+      - name: Publish app (portable)
         run: |
           dotnet publish TubaWinUi3.csproj `
             -c Release `
@@ -79,11 +79,8 @@ jobs:
             -p:Platform=${{ matrix.arch }} `
             -p:PublishTrimmed=false `
             -p:PublishReadyToRun=false `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:WindowsAppSDKSelfContained=true `
             -p:WindowsPackageType=None `
-            -p:WindowsAppSDKSingleFileVerifyConfiguration=false `
             -o publish_${{ matrix.arch }}
 
       - name: Restore .pri file for portable
@@ -93,6 +90,8 @@ jobs:
           if (Test-Path -LiteralPath $priFile) {
             Copy-Item -LiteralPath $priFile -Destination publish_${{ matrix.arch }} -Force
             Write-Host "Restored TubaWinUi3.pri for portable"
+          } else {
+            Write-Host "::warning::TubaWinUi3.pri not found at $priFile"
           }
 
       - name: Publish app (for installer)
@@ -143,10 +142,26 @@ jobs:
         with:
           path: installer-${{ matrix.arch }}.iss
 
-      - name: Create portable zip
+      - name: Create portable zip (src/ layout with shortcut)
         shell: pwsh
         run: |
-          Compress-Archive -Path "publish_${{ matrix.arch }}\*" `
+          $publishDir = "publish_${{ matrix.arch }}"
+          $stagingDir = "portable_staging_${{ matrix.arch }}"
+          $srcDir = Join-Path $stagingDir 'src'
+
+          if (Test-Path -LiteralPath $stagingDir) { Remove-Item -LiteralPath $stagingDir -Recurse -Force }
+          New-Item -ItemType Directory -Path $srcDir -Force | Out-Null
+
+          Get-ChildItem -LiteralPath $publishDir | Move-Item -Destination $srcDir -Force
+
+          $WshShell = New-Object -ComObject WScript.Shell
+          $shortcut = $WshShell.CreateShortcut((Join-Path $stagingDir '图吧工具箱WinUI3.lnk'))
+          $shortcut.TargetPath = (Join-Path $PWD.Path "src\TubaWinUi3.exe")
+          $shortcut.WorkingDirectory = (Join-Path $PWD.Path "src")
+          $shortcut.Description = '图吧工具箱WinUI3'
+          $shortcut.Save()
+
+          Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Portable_${{ inputs.version }}_${{ matrix.arch }}.zip"
 
       - name: Upload installer
