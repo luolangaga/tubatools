@@ -13,6 +13,7 @@ namespace TubaWinUi3.Pages;
 public sealed partial class CustomToolManagerWindow : Window
 {
     private readonly List<CategoryViewModel> _categories = [];
+    private readonly Dictionary<string, bool> _expandedStates = new(StringComparer.CurrentCultureIgnoreCase);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct OPENFILENAME
@@ -89,8 +90,20 @@ public sealed partial class CustomToolManagerWindow : Window
         RebuildUI();
     }
 
+    private void SaveExpandedStates()
+    {
+        foreach (var child in CategoryPanel.Children)
+        {
+            if (child is Border border && border.Child is Expander expander && border.Tag is string name)
+            {
+                _expandedStates[name] = expander.IsExpanded;
+            }
+        }
+    }
+
     private void RebuildUI()
     {
+        SaveExpandedStates();
         CategoryPanel.Children.Clear();
 
         for (var i = 0; i < _categories.Count; i++)
@@ -110,7 +123,7 @@ public sealed partial class CustomToolManagerWindow : Window
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            IsExpanded = index == 0
+            IsExpanded = _expandedStates.TryGetValue(vm.Name, out var expanded) ? expanded : index == 0
         };
 
         var headerGrid = new Grid
@@ -445,10 +458,92 @@ public sealed partial class CustomToolManagerWindow : Window
 
         iconGridView.ItemTemplate = CreateIconItemTemplate();
 
+        var glyphPreview = new FontIcon
+        {
+            FontSize = 24,
+            Glyph = "\uE8B7",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var glyphPreviewBorder = new Border
+        {
+            Width = 40,
+            Height = 40,
+            Background = Application.Current.Resources["SubtleFillColorSecondaryBrush"] as Microsoft.UI.Xaml.Media.Brush,
+            CornerRadius = new CornerRadius(6),
+            Child = glyphPreview,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var customGlyphBox = new TextBox
+        {
+            Header = "自定义图标符号",
+            PlaceholderText = "例如 E700 或 ",
+            Width = 200
+        };
+
+        customGlyphBox.TextChanged += (_, _) =>
+        {
+            var text = customGlyphBox.Text.Trim();
+            if (TryParseGlyph(text, out var g))
+            {
+                glyphPreview.Glyph = g;
+                iconGridView.SelectedItem = null;
+            }
+        };
+
+        iconGridView.SelectionChanged += (_, _) =>
+        {
+            if (iconGridView.SelectedItem is not null)
+            {
+                customGlyphBox.Text = "";
+                var g = (string)iconGridView.SelectedItem.GetType().GetProperty("Glyph")!.GetValue(iconGridView.SelectedItem)!;
+                glyphPreview.Glyph = g;
+            }
+        };
+
+        var glyphInputRow = new Grid
+        {
+            ColumnSpacing = 10
+        };
+        glyphInputRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
+        glyphInputRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        Grid.SetColumn(glyphPreviewBorder, 0);
+        glyphInputRow.Children.Add(glyphPreviewBorder);
+        Grid.SetColumn(customGlyphBox, 1);
+        glyphInputRow.Children.Add(customGlyphBox);
+
+        var docsLink = new HyperlinkButton
+        {
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                Children =
+                {
+                    new FontIcon { FontSize = 12, Glyph = "\uE71B" },
+                    new TextBlock { Text = "Segoe Fluent Icons 图标列表", FontSize = 12 }
+                }
+            },
+            NavigateUri = new Uri("https://learn.microsoft.com/en-us/windows/apps/design/style/segoe-fluent-icons-font"),
+            Padding = new Thickness(0),
+            Margin = new Thickness(0, -4, 0, 0)
+        };
+
         var content = new StackPanel
         {
             Spacing = 12,
-            Children = { nameBox, new TextBlock { Text = "选择图标", Opacity = 0.68, FontSize = 12 }, iconGridView }
+            Children =
+            {
+                nameBox,
+                new TextBlock { Text = "选择图标", Opacity = 0.68, FontSize = 12 },
+                iconGridView,
+                new TextBlock { Text = "或自定义输入", Opacity = 0.68, FontSize = 12 },
+                glyphInputRow,
+                docsLink
+            }
         };
 
         var dialog = new ContentDialog
@@ -472,10 +567,20 @@ public sealed partial class CustomToolManagerWindow : Window
             return;
         }
 
-        var selectedIcon = iconGridView.SelectedItem;
-        var selectedGlyph = selectedIcon is not null
-            ? (string)selectedIcon.GetType().GetProperty("Glyph")!.GetValue(selectedIcon)!
-            : "\uE8B7";
+        var customText = customGlyphBox.Text.Trim();
+        string selectedGlyph;
+        if (!string.IsNullOrEmpty(customText) && TryParseGlyph(customText, out var customGlyph))
+        {
+            selectedGlyph = customGlyph;
+        }
+        else if (iconGridView.SelectedItem is not null)
+        {
+            selectedGlyph = (string)iconGridView.SelectedItem.GetType().GetProperty("Glyph")!.GetValue(iconGridView.SelectedItem)!;
+        }
+        else
+        {
+            selectedGlyph = "\uE8B7";
+        }
 
         try
         {
@@ -717,6 +822,39 @@ public sealed partial class CustomToolManagerWindow : Window
             name.Contains("32", StringComparison.OrdinalIgnoreCase))
             return "x86";
         return "";
+    }
+
+    private static bool TryParseGlyph(string text, out string glyph)
+    {
+        glyph = "";
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ||
+            text.StartsWith("U+", StringComparison.OrdinalIgnoreCase) ||
+            text.StartsWith("\\u", StringComparison.OrdinalIgnoreCase))
+        {
+            var hexPart = text[2..];
+            if (int.TryParse(hexPart, System.Globalization.NumberStyles.HexNumber, null, out var code) && code is > 0 and <= 0xFFFF)
+            {
+                glyph = char.ConvertFromUtf32(code);
+                return true;
+            }
+            return false;
+        }
+
+        if (int.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var directCode) && directCode is > 0 and <= 0xFFFF)
+        {
+            glyph = char.ConvertFromUtf32(directCode);
+            return true;
+        }
+
+        if (text.Length == 1)
+        {
+            glyph = text;
+            return true;
+        }
+
+        return false;
     }
 
     private static DataTemplate CreateIconItemTemplate()

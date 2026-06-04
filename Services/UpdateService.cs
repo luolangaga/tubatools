@@ -26,7 +26,7 @@ public static class UpdateService
     private static string? _cachedJson;
     private static DateTime _lastCheckTime = DateTime.MinValue;
 
-    private static readonly string[] ProxyList =
+    internal static readonly string[] ProxyList =
     [
         "https://ghfast.top",
         "https://gh-proxy.com",

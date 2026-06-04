@@ -33,6 +33,7 @@ public static class BuiltinToolRegistry
         Register(new DefenderTool());
         Register(new CpuRankingTool());
         Register(new GpuRankingTool());
+        Register(new ContextMenuMgrTool());
     }
 
     public static IReadOnlyList<string> GetCategories()
