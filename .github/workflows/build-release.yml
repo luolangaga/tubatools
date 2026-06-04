@@ -154,8 +154,7 @@ jobs:
 
           Get-ChildItem -LiteralPath $publishDir | Move-Item -Destination $srcDir -Force
 
-          $batContent = '@start "" "%~dp0src\TubaWinUi3.exe"'
-          Set-Content -LiteralPath (Join-Path $stagingDir '图吧工具箱WinUI3.bat') -Value $batContent -Encoding ASCII
+          Copy-Item -LiteralPath "Launcher\bin\图吧工具箱WinUI3_${{ matrix.arch }}.exe" -Destination (Join-Path $stagingDir '图吧工具箱WinUI3.exe') -Force
 
           Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Portable_${{ inputs.version }}_${{ matrix.arch }}.zip"

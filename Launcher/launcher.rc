@@ -1,0 +1,31 @@
+﻿#include <windows.h>
+
+IDI_APP ICON "..\\Assets\\AppIcon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"
+        BEGIN
+            VALUE "CompanyName", "TubaWinUi3"
+            VALUE "FileDescription", "\u56FE\u5427\u5DE5\u5177\u7BB1WinUI3"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "TubaWinUi3"
+            VALUE "OriginalFilename", "\u56FE\u5427\u5DE5\u5177\u7BB1WinUI3.exe"
+            VALUE "ProductName", "\u56FE\u5427\u5DE5\u5177\u7BB1WinUI3"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804, 1200
+    END
+END
