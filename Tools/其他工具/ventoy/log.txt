@@ -41,3 +41,81 @@
 [2026/06/03 19:38:56.645] sysnative_dir=<C:\WINDOWS\system32>
 [2026/06/03 19:38:56.646] LoadLibrary shell32.dll.mui SUCCESS
 [2026/06/03 19:38:56.647] SetAlertPromptHook SUCCESS
+[2026/06/04 14:20:00.720] 
+##################################################################################
+############################## Ventoy2DiskX64  #############################
+##################################################################################
+[2026/06/04 14:20:00.720] Current Directory <C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy\altexe>
+[2026/06/04 14:20:00.720] Exe file path <C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy\altexe\Ventoy2Disk_X64.exe>
+[2026/06/04 14:20:00.720] Current directory check OK.
+[2026/06/04 14:20:00.720] altexe detected, change current dir to <C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy>
+[2026/06/04 14:20:00.721] Current directory:<C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy>
+[2026/06/04 14:20:00.721] ######### Current Ventoy Version: Ventoy2DiskX64 1.1.12 ########
+[2026/06/04 14:20:00.728] id=26488/12580
+[2026/06/04 14:20:00.728] PPath:<C:\Windows\explorer.exe>
+[2026/06/04 14:20:00.728] PSize:<3327776 3249KB>
+[2026/06/04 14:20:00.729] Lunch main process 0
+[2026/06/04 14:20:00.729] Control Flag: 0 1 1
+[2026/06/04 14:20:00.730] Set Ventoy FS ClusterSize 0
+[2026/06/04 14:20:00.730] GetSystemWow64DirectoryA=<C:\Windows\SysWOW64>
+[2026/06/04 14:20:00.731] Windows Version: <<Windows 11 Home China, 64-bit (Build 26200.8457)>>
+[2026/06/04 14:20:00.731] 
+===================== Enum All PhyDrives =====================
+[2026/06/04 14:20:00.732] RegOpenKeyExA <SYSTEM\CurrentControlSet\Services\disk\Enum> Ret:0
+[2026/06/04 14:20:00.732] RegQueryValueExA <Count> ret:0  Size:4 Value:1
+[2026/06/04 14:20:00.732] GetPhysicalDriveCount: 1
+[2026/06/04 14:20:00.733] Logical Drives: 0x4
+[2026/06/04 14:20:00.733] LogicalDrive:\\.\C: PhyDrive:0 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/06/04 14:20:00.733] C --> 0
+[2026/06/04 14:20:00.734] Create file Handle:0000000000000108 \\.\PhysicalDrive0 status:0
+[2026/06/04 14:20:00.734] PHYSICALDRIVE0 size 1024209543168 bytes
+[2026/06/04 14:20:00.734] PhyDrv:0 BusType:Nvme Removable:0 Size:1024GB(1024209543168) Sector:512/4096 Name: YMTC PC41Q-1TB-B
+[2026/06/04 14:20:00.734] LogicalDrive:\\.\C: PhyDrive:0 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/06/04 14:20:00.735] Logical Drive:C  ===> PhyDrive:0
+[2026/06/04 14:20:00.735] < YMTC PC41Q-1TB-B> is filtered for not USB type.
+[2026/06/04 14:20:00.776] Load languages from json file ...
+[2026/06/04 14:20:00.777] language json file len:293123 json parse:0
+[2026/06/04 14:20:00.778] Total 53 languages ...
+[2026/06/04 14:20:00.835] Courier New font <C:\Windows\Fonts\couri.ttf> exist OK.
+[2026/06/04 14:20:00.835] system_dir=<C:\Windows\system32>
+[2026/06/04 14:20:00.836] sysnative_dir=<C:\Windows\system32>
+[2026/06/04 14:20:00.837] LoadLibrary shell32.dll.mui SUCCESS
+[2026/06/04 14:20:00.838] SetAlertPromptHook SUCCESS
+[2026/06/04 14:20:12.778] 
+##################################################################################
+############################## Ventoy2DiskX86  #############################
+##################################################################################
+[2026/06/04 14:20:12.778] Current Directory <C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy>
+[2026/06/04 14:20:12.778] Exe file path <C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy\Ventoy2Disk.exe>
+[2026/06/04 14:20:12.778] Current directory check OK.
+[2026/06/04 14:20:12.778] Current directory:<C:\Users\luolan\Desktop\tubawinui3\Tools\其他工具\ventoy>
+[2026/06/04 14:20:12.779] ######### Current Ventoy Version: Ventoy2DiskX86 1.1.12 ########
+[2026/06/04 14:20:12.785] id=26564/12580
+[2026/06/04 14:20:12.785] PPath:<C:\Windows\explorer.exe>
+[2026/06/04 14:20:12.786] PSize:<3327776 3249KB>
+[2026/06/04 14:20:12.786] Lunch main process 0
+[2026/06/04 14:20:12.786] Control Flag: 0 1 1
+[2026/06/04 14:20:12.787] Set Ventoy FS ClusterSize 0
+[2026/06/04 14:20:12.788] Windows Version: <<Windows 11 Home China, 64-bit (Build 26200.8457)>>
+[2026/06/04 14:20:12.788] 
+===================== Enum All PhyDrives =====================
+[2026/06/04 14:20:12.789] RegOpenKeyExA <SYSTEM\CurrentControlSet\Services\disk\Enum> Ret:0
+[2026/06/04 14:20:12.789] RegQueryValueExA <Count> ret:0  Size:4 Value:1
+[2026/06/04 14:20:12.789] GetPhysicalDriveCount: 1
+[2026/06/04 14:20:12.789] Logical Drives: 0x4
+[2026/06/04 14:20:12.789] LogicalDrive:\\.\C: PhyDrive:0 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/06/04 14:20:12.790] C --> 0
+[2026/06/04 14:20:12.791] Create file Handle:0000015C \\.\PhysicalDrive0 status:0
+[2026/06/04 14:20:12.791] PHYSICALDRIVE0 size 1024209543168 bytes
+[2026/06/04 14:20:12.791] PhyDrv:0 BusType:Nvme Removable:0 Size:1024GB(1024209543168) Sector:512/4096 Name: YMTC PC41Q-1TB-B
+[2026/06/04 14:20:12.792] LogicalDrive:\\.\C: PhyDrive:0 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/06/04 14:20:12.792] Logical Drive:C  ===> PhyDrive:0
+[2026/06/04 14:20:12.792] < YMTC PC41Q-1TB-B> is filtered for not USB type.
+[2026/06/04 14:20:12.827] Load languages from json file ...
+[2026/06/04 14:20:12.828] language json file len:293123 json parse:0
+[2026/06/04 14:20:12.830] Total 53 languages ...
+[2026/06/04 14:20:12.873] Courier New font <C:\Windows\Fonts\couri.ttf> exist OK.
+[2026/06/04 14:20:12.873] system_dir=<C:\Windows\system32>
+[2026/06/04 14:20:12.873] sysnative_dir=<C:\Windows\Sysnative>
+[2026/06/04 14:20:12.875] LoadLibrary shell32.dll.mui SUCCESS
+[2026/06/04 14:20:12.875] SetAlertPromptHook SUCCESS

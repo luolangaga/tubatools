@@ -42,7 +42,6 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     Content="全部"
-                    IsSelected="True"
                     Tag="all">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE80F;" />

@@ -187,7 +187,7 @@ public sealed partial class MainWindow : Window
             {
                 Content = category.Replace("工具", ""),
                 Tag = category,
-                Icon = new FontIcon { Glyph = GetCategoryGlyph(category) }
+                Icon = new FontIcon { Glyph = GetCategoryGlyphStatic(category) }
             });
         }
 
@@ -197,12 +197,12 @@ public sealed partial class MainWindow : Window
             {
                 Content = otherCategory.Replace("工具", ""),
                 Tag = otherCategory,
-                Icon = new FontIcon { Glyph = GetCategoryGlyph(otherCategory) }
+                Icon = new FontIcon { Glyph = GetCategoryGlyphStatic(otherCategory) }
             });
         }
     }
 
-    private static string GetCategoryGlyph(string category)
+    public static string GetCategoryGlyphStatic(string category)
     {
         var customGlyph = AppSettings.Get($"CategoryGlyph_{category}");
         if (!string.IsNullOrWhiteSpace(customGlyph))

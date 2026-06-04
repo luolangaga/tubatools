@@ -6,9 +6,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:TubaWinUi3.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    AllowDrop="True"
-    DragOver="Page_DragOver"
-    Drop="Page_Drop"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -684,100 +681,27 @@
                         </Grid.ColumnDefinitions>
 
                         <Border Style="{StaticResource IconBorderStyle}">
-                            <FontIcon FontSize="18" Glyph="&#xE74D;" />
+                            <FontIcon FontSize="18" Glyph="&#xE8B7;" />
                         </Border>
 
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="SemiBold" Text="删除工具分类" />
+                            <TextBlock FontWeight="SemiBold" Text="自定义工具管理" />
                             <TextBlock
-                                x:Name="DeleteCategoryStatusText"
                                 Opacity="0.68"
                                 FontSize="13"
                                 TextWrapping="Wrap"
-                                Text="删除分类及其下所有工具，此操作不可撤销。" />
+                                Text="管理工具分类、导入自定义工具，支持拖拽排序" />
                         </StackPanel>
 
                         <Button
-                            x:Name="DeleteCategoryButton"
+                            x:Name="CustomToolManagerButton"
                             Grid.Column="2"
                             VerticalAlignment="Center"
                             Padding="14,6"
-                            Click="DeleteCategoryButton_Click">
+                            Click="CustomToolManagerButton_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE74D;" />
-                                <TextBlock Text="删除" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-                </Border>
-
-                <Border Style="{StaticResource SettingsCardStyle}">
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Style="{StaticResource IconBorderStyle}">
-                            <FontIcon FontSize="18" Glyph="&#xE710;" />
-                        </Border>
-
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="SemiBold" Text="新建工具分类" />
-                            <TextBlock
-                                x:Name="CreateCategoryStatusText"
-                                Opacity="0.68"
-                                FontSize="13"
-                                TextWrapping="Wrap"
-                                Text="自定义分类名称和图标，创建后可在导航栏中看到。" />
-                        </StackPanel>
-
-                        <Button
-                            x:Name="CreateCategoryButton"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            Padding="14,6"
-                            Click="CreateCategoryButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE710;" />
-                                <TextBlock Text="新建" />
-                            </StackPanel>
-                        </Button>
-                    </Grid>
-                </Border>
-
-                <Border Style="{StaticResource SettingsCardStyle}">
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Style="{StaticResource IconBorderStyle}">
-                            <FontIcon FontSize="18" Glyph="&#xE8E5;" />
-                        </Border>
-
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="SemiBold" Text="导入自定义工具" />
-                            <TextBlock
-                                x:Name="ImportToolStatusText"
-                                Opacity="0.68"
-                                FontSize="13"
-                                TextWrapping="Wrap"
-                                Text="从压缩包导入工具，选择主程序、架构版本、简介和分类。" />
-                        </StackPanel>
-
-                        <Button
-                            x:Name="ImportToolButton"
-                            Grid.Column="2"
-                            VerticalAlignment="Center"
-                            Padding="14,6"
-                            Click="ImportToolButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE8E5;" />
-                                <TextBlock Text="导入" />
+                                <FontIcon FontSize="12" Glyph="&#xE9D9;" />
+                                <TextBlock Text="管理" />
                             </StackPanel>
                         </Button>
                     </Grid>

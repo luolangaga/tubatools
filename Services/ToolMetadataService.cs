@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace TubaWinUi3.Services;
 
@@ -22,6 +23,39 @@ public static class ToolMetadataService
 
     public static void InvalidateCache()
     {
+        _metadata = null;
+    }
+
+    public static async Task RemoveMetadataAsync(string toolPath)
+    {
+        var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
+        if (string.IsNullOrWhiteSpace(dirName)) return;
+
+        var metadataRoot = FindRoot("Metadata");
+        var metadataPath = Path.Combine(metadataRoot, "tools.json");
+        if (!File.Exists(metadataPath)) return;
+
+        JsonObject root;
+        JsonArray tools;
+
+        await using (var readStream = File.OpenRead(metadataPath))
+        {
+            root = await JsonNode.ParseAsync(readStream) as JsonObject ?? new JsonObject();
+        }
+
+        tools = root["tools"] as JsonArray ?? [];
+        var existing = tools
+            .OfType<JsonObject>()
+            .FirstOrDefault(item =>
+                string.Equals(item["match"]?.GetValue<string>(), dirName, StringComparison.CurrentCultureIgnoreCase));
+
+        if (existing is null) return;
+
+        tools.Remove(existing);
+        root["tools"] = tools;
+
+        await using var writeStream = File.Create(metadataPath);
+        await JsonSerializer.SerializeAsync(writeStream, root, new JsonSerializerOptions { WriteIndented = true });
         _metadata = null;
     }
 

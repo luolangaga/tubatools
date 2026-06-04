@@ -1,0 +1,122 @@
+14:12:32:526(0000001)	[info ]	GeeXLab Player v0.66.2.0 (Oct 26 2025@07:43:16)
+14:12:32:526(0000002)	[info ]	Scriptable Proto-Engine (Lua, Python, GLSL, OpenGL, Vulkan)
+14:12:32:526(0000003)	[info ]	(C)2009-2025 Geeks3D
+14:12:32:526(0000004)	[info ]	Homepage: https://geeks3d.com/geexlab/
+14:12:32:526(0000005)	[info ]	Discord server: https://www.geeks3d.com/discord/
+14:12:32:526(0000006)	[info ]	GeeXLab Player is starting up...
+14:12:32:526(0000007)	[info ]	[stb] STB image loader. Supported formats: *.JPEG, *.PNG, *.TGA, *.BMP, *.PSD, *.GIF, *.HDR, *.PIC
+14:12:32:526(0000008)	[info ]	[tinyexr] EXR image loader.
+14:12:32:536(0000009)	[info ]	[lib3ds] Lib3ds loader (core plugin).
+14:12:32:536(0000010)	[info ]	[ObjLoaderV1] OBJ 3D loader (core plugin).
+14:12:32:536(0000011)	[info ]	[ObjLoaderV2] OBJ loader based on Tiny OBJ Loader (core plugin).
+14:12:32:536(0000012)	[info ]	[STL] STL (StereoLithography) 3D loader (core plugin).
+14:12:32:536(0000013)	[info ]	[glTF] glTF 3D loader (core plugin).
+14:12:32:536(0000014)	[info ]	[SQLite3] SQLite3 version 3.50.4
+14:12:32:536(0000015)	[info ]	GraphX Core 0.60.1.0 (codename: Dirac) initialization ok.
+14:12:32:536(0000016)	[info ]	GeeXLab home directory: C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\
+14:12:32:536(0000017)	[info ]	Windows version: Windows 11 build 26200
+14:12:32:536(0000018)	[info ]	SW platform type: Windows 64-bit
+14:12:33:001(0000019)	[info ]	Plugins search path: C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/physx5/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/physx4/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/physx3/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/ffmpeg/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/assimp/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/imagemagick/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/fmod/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/python/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/flex/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/freeimage/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/openvr/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/leap/;C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\plugins/anttweakbar/;
+14:12:33:001(0000020)	[info ]	Current user: luolan
+14:12:33:001(0000021)	[info ]	Python 3.7 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python37/]
+14:12:33:001(0000022)	[info ]	Python 3.8 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python38/]
+14:12:33:001(0000023)	[info ]	Python 3.9 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python39/]
+14:12:33:001(0000024)	[info ]	Python 3.10 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python310/]
+14:12:33:001(0000025)	[info ]	Python 3.11 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python311/]
+14:12:33:001(0000026)	[info ]	Python 3.12 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python312/]
+14:12:33:001(0000027)	[info ]	Python 3.13 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python313/]
+14:12:33:001(0000028)	[info ]	Python 3.14 home: [C:/Users/luolan/AppData/Local/Programs/Python/Python314/]
+14:12:33:002(0000029)	[info ]	App directory: C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\
+14:12:33:002(0000030)	[info ]	Scripting libs directory: C:\Users\luolan\Desktop\tubawinui3\Tools\烤鸡工具\FurMark_win64\libs\
+14:12:33:003(0000031)	[info ]	[GpuMonitor] Operating system detected: Windows 11 build 26200
+14:12:33:012(0000032)	[info ]	[GpuMonitor] Intel - num adapters: 1 
+14:12:33:014(0000033)	[info ]	[GpuMonitor]       - driver version: 32.0.101.8361
+14:12:33:014(0000034)	[info ]	[GpuMonitor]       - firmware version: 26.0.61
+14:12:33:014(0000035)	[info ]	[GpuMonitor]       - frequency: 2500
+14:12:33:015(0000036)	[info ]	[GpuMonitor]       - GPU configuration:
+14:12:33:015(0000037)	[info ]	[GpuMonitor]       -   Intel(R) Arc(TM) B390 GPU
+14:12:33:015(0000038)	[info ]	[GpuMonitor]       -   6 Xe cores
+14:12:33:015(0000039)	[info ]	[GpuMonitor]       -   96 EUs
+14:12:33:015(0000040)	[info ]	[GpuMonitor]       -   2 slices / 6 sub slices per slice / 8 EUs per sub slice
+14:12:33:015(0000041)	[info ]	[GpuMonitor]       -   768 ALUs
+14:12:33:015(0000042)	[info ]	[GpuMonitor]       -   6 ray tracing cores
+14:12:33:079(0000043)	[info ]	[GpuMonitor]       - Resizable bar: supported: NO
+14:12:33:079(0000044)	[info ]	[GpuMonitor]       - ctlEnumMemoryModules - MemoryHandlerCount: 1
+14:12:33:441(0000045)	[info ]	[GpuMonitor]       - VRAM type: _UNKNOWN_
+14:12:33:441(0000046)	[info ]	[GpuMonitor]       - VRAM size: 18413 MB
+14:12:33:507(0000047)	[info ]	[GpuMonitor] Num GPUs detected: 3
+14:12:33:507(0000048)	[info ]	[GpuMonitor] > GPU0
+14:12:33:507(0000049)	[info ]	[GpuMonitor]   - name: Intel(R) Arc(TM) B390 GPU
+14:12:33:507(0000050)	[info ]	[GpuMonitor]   - PCI codes: 0x8086-0xB080
+14:12:33:507(0000051)	[info ]	[GpuMonitor]   - Bus ID: 0
+14:12:33:507(0000052)	[info ]	[GpuMonitor]   - VBIOS: 26.0.61
+14:12:33:507(0000053)	[info ]	[GpuMonitor]   - driver: 32.0.101.8361
+14:12:33:507(0000054)	[info ]	[GpuMonitor] > GPU1
+14:12:33:507(0000055)	[info ]	[GpuMonitor]   - name: IddDesk Device
+14:12:33:507(0000056)	[info ]	[GpuMonitor]   - PCI codes: 0xDFD4-0x110D5559
+14:12:33:507(0000057)	[info ]	[GpuMonitor]   - driver: 25.0.0.5 (10-28-2025)
+14:12:33:507(0000058)	[info ]	[GpuMonitor] > GPU2
+14:12:33:507(0000059)	[info ]	[GpuMonitor]   - name: GameViewer Virtual Display Adapter
+14:12:33:507(0000060)	[info ]	[GpuMonitor]   - PCI codes: 0x1002E-0xDEC2
+14:12:33:507(0000061)	[info ]	[GpuMonitor]   - driver: 15.6.5.199 (2-28-2026)
+14:12:33:518(0000062)	[info ]	================================================================================
+14:12:33:523(0000063)	[info ]	monitor DPI: [192, 192] - DPI scale: 2.00 - new window size: 1080 x 1440
+14:12:33:539(0000064)	[info ]	current DPI: xdpi(192), ydpi(192) - DPI scaling: 2.0
+14:12:33:628(0000065)	[info ]	Geeks3D FurMark - demo started with an OpenGL 4.6 context.
+14:12:33:628(0000066)	[info ]	Quick OpenGL information (use /glinfo for more limits):
+14:12:33:628(0000067)	[info ]	GL_RENDERER: Intel(R) Arc(TM) B390 GPU
+14:12:33:628(0000068)	[info ]	GL_VENDOR: Intel
+14:12:33:628(0000069)	[info ]	GL_VERSION: 4.6.0 - Build 32.0.101.8361
+14:12:33:628(0000070)	[info ]	GL_SHADING_LANGUAGE_VERSION: 4.60 - Build 32.0.101.8361
+14:12:33:628(0000071)	[info ]	OpenGL version detected: 4.6
+14:12:33:628(0000072)	[info ]	OpenGL extensions: 266
+14:12:33:628(0000073)	[info ]	OpenGL hardware limits:
+14:12:33:628(0000074)	[info ]	  GL_MAX_VERTEX_ATTRIBS: 16
+14:12:33:628(0000075)	[info ]	  GL_MAX_VERTEX_UNIFORM_COMPONENTS: 4096
+14:12:33:628(0000076)	[info ]	  GL_MAX_FRAGMENT_UNIFORM_COMPONENTS: 4096
+14:12:33:628(0000077)	[info ]	  GL_MAX_TEXTURE_SIZE: 16384
+14:12:33:628(0000078)	[info ]	  GL_MAX_VIEWPORT_DIMS: 16384 16384
+14:12:33:628(0000079)	[info ]	  GL_MAX_TEXTURE_IMAGE_UNITS: 32
+14:12:33:628(0000080)	[info ]	  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: 192
+14:12:33:628(0000081)	[info ]	Render window (Geeks3D FurMark) initialized (renderer type: OpenGL)
+14:12:33:693(0000082)	[info ]	[Lua] Lua version: Lua 5.4.8
+14:12:33:693(0000083)	[info ]	[Lua] LuaFileSystem initialized ok.
+14:12:33:693(0000084)	[info ]	[Lua] UTF8 initialized ok.
+14:12:33:694(0000085)	[info ]	[Lua] LuaSocket core initialized ok.
+14:12:33:694(0000086)	[info ]	[Lua] Mime core initialized ok.
+14:12:33:694(0000087)	[info ]	[Lua] LuaSQL SQLite3 driver initialized ok.
+14:12:33:694(0000088)	[info ]	[Lua] LuaGL initialized ok.
+14:12:33:694(0000089)	[info ]	[Lua] initialization ok.
+14:12:33:698(0000090)	[info ]	Scene compilation: SUCCESS.
+14:12:33:700(0000091)	[info ]	screen size detected: 2880 x 1800
+14:12:33:700(0000092)	[info ]	FurMark 2.10.2 is starting up...
+14:12:33:700(0000093)	[info ]	DPI scale: 2.0
+14:12:33:700(0000094)	[info ]	Checking for new version...
+14:12:34:217(0000095)	[info ]	Your version is up to date
+14:12:34:280(0000096)	[info ]	[Vulkan2] Vulkan renderer plugin (Windows, Linux)
+14:12:34:287(0000097)	[info ]	[Vulkan2] instance API version: 4198400 (Vulkan 1.1)
+14:12:34:303(0000098)	[info ]	[Vulkan2] [ GPU 0 ]--------------------------------------
+14:12:34:303(0000099)	[info ]	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
+14:12:34:303(0000100)	[info ]	[Vulkan2] - PCI-ID: 8086-B080
+14:12:34:303(0000101)	[info ]	[Vulkan2] - Vulkan API version: 1.4.330
+14:12:34:303(0000102)	[info ]	[Vulkan2] - Device extensions: 161
+14:12:34:303(0000103)	[info ]	[Vulkan2] [ GPU 1 ]--------------------------------------
+14:12:34:303(0000104)	[info ]	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
+14:12:34:303(0000105)	[info ]	[Vulkan2] - PCI-ID: 8086-B080
+14:12:34:303(0000106)	[info ]	[Vulkan2] - Vulkan API version: 1.4.330
+14:12:34:303(0000107)	[info ]	[Vulkan2] - Device extensions: 161
+14:12:34:303(0000108)	[info ]	[Vulkan2] [ GPU 2 ]--------------------------------------
+14:12:34:303(0000109)	[info ]	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
+14:12:34:303(0000110)	[info ]	[Vulkan2] - PCI-ID: 8086-B080
+14:12:34:303(0000111)	[info ]	[Vulkan2] - Vulkan API version: 1.4.330
+14:12:34:303(0000112)	[info ]	[Vulkan2] - Device extensions: 161
+14:12:34:417(0000113)	[info ]	- GPU 0: Intel(R) Arc(TM) B390 GPU
+14:12:34:418(0000114)	[info ]	- GPU 1: IddDesk Device
+14:12:34:418(0000115)	[info ]	- GPU 2: GameViewer Virtual Display Adapter
+14:12:34:418(0000116)	[info ]	scripts INIT execution: OK.
+14:12:47:899(0000117)	[info ]	Scene statistics:
+14:12:47:899(0000118)	[info ]	- 393 frames rendered during 13.481 seconds
+14:12:47:899(0000119)	[info ]	- average framerate: 29.2 FPS
+14:12:47:947(0000120)	[info ]	Stopping GeeXLab Player...
+14:12:48:315(0000121)	[info ]	GraphX Core stopped ok.
+14:12:48:315(0000122)	[info ]	Exit from GeeXLab Player.

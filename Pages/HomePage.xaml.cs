@@ -443,6 +443,7 @@ public sealed partial class HomePage : Page
             }
 
             FavoritesService.RemoveFavorite(tool.Path);
+            await ToolMetadataService.RemoveMetadataAsync(tool.Path);
             ToolCatalog.InvalidateTagsCache();
 
             if (App.MainWindow is MainWindow mainWindow)

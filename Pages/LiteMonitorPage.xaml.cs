@@ -496,28 +496,37 @@ public sealed partial class LiteMonitorPage : Page
         var gpuValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(GpuAccent) };
         var fpsValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(FpsAccent) };
         var memValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(MemAccent) };
+        var diskValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(DiskAccent) };
         var netValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(NetAccent) };
         var batValue = new TextBlock { FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(BatAccent) };
 
         var cpuDetail = new TextBlock { FontSize = 10, Opacity = 0.7, Foreground = new SolidColorBrush(dimColor) };
         var gpuDetail = new TextBlock { FontSize = 10, Opacity = 0.7, Foreground = new SolidColorBrush(dimColor) };
+        var memDetail = new TextBlock { FontSize = 10, Opacity = 0.7, Foreground = new SolidColorBrush(dimColor) };
+        var diskDetail = new TextBlock { FontSize = 10, Opacity = 0.7, Foreground = new SolidColorBrush(dimColor) };
+        var netDetail = new TextBlock { FontSize = 10, Opacity = 0.7, Foreground = new SolidColorBrush(dimColor) };
 
         var chartBg = new SolidColorBrush(Color.FromArgb(12, 255, 255, 255));
         var cpuChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
         var gpuChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
         var fpsChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
+        var memChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
+        var diskChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
+        var netChartEl = new Canvas { Width = 180, Height = 28, Background = chartBg };
 
         var cpuRow = MakePopupRow("\uE950", CpuAccent, "CPU", cpuValue, cpuDetail, cpuChartEl);
         var gpuRow = MakePopupRow("\uE7F4", GpuAccent, "GPU", gpuValue, gpuDetail, gpuChartEl);
         var fpsRow = MakePopupRow("\uE7FC", FpsAccent, "FPS", fpsValue, null, fpsChartEl);
-        var memRow = MakePopupRow("\uE965", MemAccent, "MEM", memValue, null, null);
-        var netRow = MakePopupRow("\uE968", NetAccent, "NET", netValue, null, null);
+        var memRow = MakePopupRow("\uE965", MemAccent, "MEM", memValue, memDetail, memChartEl);
+        var diskRow = MakePopupRow("\uEDA2", DiskAccent, "DISK", diskValue, diskDetail, diskChartEl);
+        var netRow = MakePopupRow("\uE968", NetAccent, "NET", netValue, netDetail, netChartEl);
         var batRow = MakePopupRow("\uE85A", BatAccent, "BAT", batValue, null, null);
 
         stack.Children.Add(cpuRow);
         stack.Children.Add(gpuRow);
         stack.Children.Add(fpsRow);
         stack.Children.Add(memRow);
+        stack.Children.Add(diskRow);
         stack.Children.Add(netRow);
         stack.Children.Add(batRow);
 
@@ -572,36 +581,22 @@ public sealed partial class LiteMonitorPage : Page
         var cpuH = new List<float>();
         var gpuH = new List<float>();
         var fpsH = new List<float>();
+        var memH = new List<float>();
+        var diskReadH = new List<float>();
+        var diskWriteH = new List<float>();
+        var netUpH = new List<float>();
+        var netDownH = new List<float>();
         var isTopmost = false;
         bool ticking = false;
         PopupSettings? cachedCfg = null;
         int cfgRefreshTick = 0;
 
-void ApplyTopmost()
+        void ApplyTopmost()
         {
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
             var after = isTopmost ? new IntPtr(-1) : new IntPtr(-2);
             SetWindowPos(hwnd, after, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010);
             topmostBtn.Foreground = isTopmost ? new SolidColorBrush(CpuAccent) : new SolidColorBrush(dimColor);
-        }
-
-        void RebuildLayout()
-        {
-            var s = PopupSettings.Load();
-            if (popupHwnd != IntPtr.Zero) ApplyWindowOpacity(popupHwnd, s.Opacity);
-            var bdr = isDark ? Color.FromArgb(255, 60, 60, 60) : Color.FromArgb(255, 220, 220, 220);
-            border.BorderBrush = new SolidColorBrush(bdr);
-
-            cpuRow.Visibility = s.ShowCpu ? Visibility.Visible : Visibility.Collapsed;
-            gpuRow.Visibility = s.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
-            fpsRow.Visibility = s.ShowFps ? Visibility.Visible : Visibility.Collapsed;
-            memRow.Visibility = s.ShowMem ? Visibility.Visible : Visibility.Collapsed;
-            netRow.Visibility = s.ShowNet ? Visibility.Visible : Visibility.Collapsed;
-            batRow.Visibility = s.ShowBat ? Visibility.Visible : Visibility.Collapsed;
-
-            cpuRow.Tag = s;
-            gpuRow.Tag = s;
-            fpsRow.Tag = s;
         }
 
         async void PopupTick(object? s2, object e2)
@@ -621,43 +616,91 @@ void ApplyTopmost()
                 gpuRow.Visibility = cfg.ShowGpu ? Visibility.Visible : Visibility.Collapsed;
                 fpsRow.Visibility = cfg.ShowFps ? Visibility.Visible : Visibility.Collapsed;
                 memRow.Visibility = cfg.ShowMem ? Visibility.Visible : Visibility.Collapsed;
+                diskRow.Visibility = cfg.ShowDisk ? Visibility.Visible : Visibility.Collapsed;
                 netRow.Visibility = cfg.ShowNet ? Visibility.Visible : Visibility.Collapsed;
                 batRow.Visibility = cfg.ShowBat ? Visibility.Visible : Visibility.Collapsed;
 
                 if (cfg.ShowCpu)
                 {
-                    cpuValue.Text = $"{sample.CpuLoad:0}%";
+                    cpuValue.Text = sample.CpuLoad >= 0 ? $"{sample.CpuLoad:0}%" : "--";
                     var parts = new List<string>();
-                    if (cfg.ShowCpuTemp && sample.CpuTemp >= 0) parts.Add($"{sample.CpuTemp:0}°C");
-                    if (cfg.ShowCpuClock && sample.CpuClock > 0) parts.Add($"{sample.CpuClock / 1000f:0.0}GHz");
-                    if (cfg.ShowCpuPower && sample.CpuPower > 0) parts.Add($"{sample.CpuPower:0.0}W");
+                    if (cfg.ShowCpuTemp) parts.Add(sample.CpuTemp >= 0 ? $"{sample.CpuTemp:0}°C" : "温度 --");
+                    if (cfg.ShowCpuClock) parts.Add(sample.CpuClock > 0 ? $"{sample.CpuClock / 1000f:0.0}GHz" : "频率 --");
+                    if (cfg.ShowCpuPower) parts.Add(sample.CpuPower > 0 ? $"{sample.CpuPower:0.0}W" : "功耗 --");
                     cpuDetail.Text = string.Join("  ", parts);
-                    AddHistory(cpuH, sample.CpuLoad);
+                    if (sample.CpuLoad >= 0) AddHistory(cpuH, sample.CpuLoad);
                     if (cfg.ShowCpuChart) { DrawSparkline(cpuChartEl, cpuH, CpuAccent, 0, 100); cpuChartEl.Visibility = Visibility.Visible; }
                     else cpuChartEl.Visibility = Visibility.Collapsed;
                 }
                 if (cfg.ShowGpu)
                 {
-                    gpuValue.Text = $"{sample.GpuLoad:0}%";
+                    gpuValue.Text = sample.GpuLoad >= 0 ? $"{sample.GpuLoad:0}%" : "--";
                     var parts = new List<string>();
-                    if (cfg.ShowGpuTemp && sample.GpuTemp >= 0) parts.Add($"{sample.GpuTemp:0}°C");
-                    if (cfg.ShowGpuClock && sample.GpuClock > 0) parts.Add($"{sample.GpuClock:0}MHz");
-                    if (cfg.ShowGpuPower && sample.GpuPower > 0) parts.Add($"{sample.GpuPower:0.0}W");
+                    if (cfg.ShowGpuTemp) parts.Add(sample.GpuTemp >= 0 ? $"{sample.GpuTemp:0}°C" : "温度 --");
+                    if (cfg.ShowGpuClock) parts.Add(sample.GpuClock > 0 ? $"{sample.GpuClock:0}MHz" : "频率 --");
+                    if (cfg.ShowGpuPower) parts.Add(sample.GpuPower > 0 ? $"{sample.GpuPower:0.0}W" : "功耗 --");
                     gpuDetail.Text = string.Join("  ", parts);
-                    AddHistory(gpuH, sample.GpuLoad);
+                    if (sample.GpuLoad >= 0) AddHistory(gpuH, sample.GpuLoad);
                     if (cfg.ShowGpuChart) { DrawSparkline(gpuChartEl, gpuH, GpuAccent, 0, 100); gpuChartEl.Visibility = Visibility.Visible; }
                     else gpuChartEl.Visibility = Visibility.Collapsed;
                 }
                 if (cfg.ShowFps)
                 {
                     fpsValue.Text = sample.Fps >= 0 ? $"{(int)sample.Fps}" : "--";
-                    AddHistory(fpsH, sample.Fps);
+                    if (sample.Fps >= 0) AddHistory(fpsH, sample.Fps);
                     if (cfg.ShowFpsChart) { DrawSparkline(fpsChartEl, fpsH, FpsAccent, 0, Math.Max(144, fpsH.Count > 0 ? fpsH.Max() * 1.2f : 144)); fpsChartEl.Visibility = Visibility.Visible; }
                     else fpsChartEl.Visibility = Visibility.Collapsed;
                 }
-                if (cfg.ShowMem) memValue.Text = $"{sample.MemLoad:0}%";
-                if (cfg.ShowNet) netValue.Text = sample.NetDownMBs >= 0 ? $"↓{sample.NetDownMBs:F1}" : "--";
-                if (cfg.ShowBat) batValue.Text = sample.BatPercent >= 0 ? $"{sample.BatPercent:0}%" : "--";
+                if (cfg.ShowMem)
+                {
+                    memValue.Text = sample.MemLoad >= 0 ? $"{sample.MemLoad:0}%" : "--";
+                    var parts = new List<string>();
+                    if (cfg.ShowMemUsed) parts.Add(sample.MemUsedGB >= 0 ? $"{sample.MemUsedGB:F1}/{sample.MemTotalGB:F1}GB" : "已用 --");
+                    memDetail.Text = string.Join("  ", parts);
+                    if (sample.MemLoad >= 0) AddHistory(memH, sample.MemLoad);
+                    if (cfg.ShowMemChart) { DrawSparkline(memChartEl, memH, MemAccent, 0, 100); memChartEl.Visibility = Visibility.Visible; }
+                    else memChartEl.Visibility = Visibility.Collapsed;
+                }
+                if (cfg.ShowDisk)
+                {
+                    var readVal = sample.DiskReadMBs >= 0 ? $"{sample.DiskReadMBs:F0}" : "--";
+                    var writeVal = sample.DiskWriteMBs >= 0 ? $"{sample.DiskWriteMBs:F0}" : "--";
+                    diskValue.Text = sample.DiskReadMBs >= 0 || sample.DiskWriteMBs >= 0 ? $"R{readVal} W{writeVal}" : "--";
+                    var parts = new List<string>();
+                    if (cfg.ShowDiskRead) parts.Add(sample.DiskReadMBs >= 0 ? $"读 {sample.DiskReadMBs:F1}MB/s" : "读 --");
+                    if (cfg.ShowDiskWrite) parts.Add(sample.DiskWriteMBs >= 0 ? $"写 {sample.DiskWriteMBs:F1}MB/s" : "写 --");
+                    diskDetail.Text = string.Join("  ", parts);
+                    if (sample.DiskReadMBs >= 0) AddHistory(diskReadH, sample.DiskReadMBs);
+                    if (sample.DiskWriteMBs >= 0) AddHistory(diskWriteH, sample.DiskWriteMBs);
+                    if (cfg.ShowDiskChart)
+                    {
+                        var diskMax = Math.Max(50, diskReadH.Count > 0 ? diskReadH.Max() * 1.2f : 50);
+                        diskMax = Math.Max(diskMax, diskWriteH.Count > 0 ? diskWriteH.Max() * 1.2f : diskMax);
+                        DrawSparkline(diskChartEl, diskReadH, DiskAccent, 0, Math.Max(diskMax, 1));
+                        diskChartEl.Visibility = Visibility.Visible;
+                    }
+                    else diskChartEl.Visibility = Visibility.Collapsed;
+                }
+                if (cfg.ShowNet)
+                {
+                    netValue.Text = sample.NetDownMBs >= 0 ? $"↓{sample.NetDownMBs:F1}" : "--";
+                    var parts = new List<string>();
+                    if (cfg.ShowNetUp) parts.Add(sample.NetUpMBs >= 0 ? $"↑ {sample.NetUpMBs:F2}MB/s" : "↑ --");
+                    if (cfg.ShowNetDown) parts.Add(sample.NetDownMBs >= 0 ? $"↓ {sample.NetDownMBs:F2}MB/s" : "↓ --");
+                    netDetail.Text = string.Join("  ", parts);
+                    if (sample.NetDownMBs >= 0) AddHistory(netDownH, sample.NetDownMBs);
+                    if (cfg.ShowNetChart)
+                    {
+                        var netMax = Math.Max(1, netDownH.Count > 0 ? netDownH.Max() * 1.2f : 1);
+                        DrawSparkline(netChartEl, netDownH, NetAccent, 0, netMax);
+                        netChartEl.Visibility = Visibility.Visible;
+                    }
+                    else netChartEl.Visibility = Visibility.Collapsed;
+                }
+                if (cfg.ShowBat)
+                {
+                    batValue.Text = sample.BatPercent >= 0 ? $"{sample.BatPercent:0}%" : "--";
+                }
             }
             finally { ticking = false; }
         }

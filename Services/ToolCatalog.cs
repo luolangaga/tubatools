@@ -44,12 +44,36 @@ public static class ToolCatalog
             return [];
         }
 
-        return Directory.GetDirectories(ToolsRoot)
+        var dirs = Directory.GetDirectories(ToolsRoot)
             .Select(Path.GetFileName)
             .Where(name => !string.IsNullOrWhiteSpace(name))
-            .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase)
             .Cast<string>()
             .ToList();
+
+        var orderJson = AppSettings.Get("CategoryOrder");
+        List<string>? ordered = null;
+        if (!string.IsNullOrWhiteSpace(orderJson))
+        {
+            try
+            {
+                ordered = System.Text.Json.JsonSerializer.Deserialize<List<string>>(orderJson);
+            }
+            catch { }
+        }
+
+        if (ordered is not null && ordered.Count > 0)
+        {
+            var orderedSet = new HashSet<string>(ordered, StringComparer.CurrentCultureIgnoreCase);
+            var result = ordered.Where(name => dirs.Contains(name!)).ToList();
+            foreach (var d in dirs.OrderBy(d => d, StringComparer.CurrentCultureIgnoreCase))
+            {
+                if (!orderedSet.Contains(d))
+                    result.Add(d);
+            }
+            return result;
+        }
+
+        return dirs.OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
 
     public static IReadOnlyList<ToolItem> GetTools(string? category)
@@ -68,10 +92,39 @@ public static class ToolCatalog
         var toolDirs = Directory.GetDirectories(categoryRoot).ToList();
         var merged = MergeArchDirectories(toolDirs);
 
-        return merged
+        var items = merged
             .Select(toolDir => (toolDir, launchable: FindPrimaryLaunchable(toolDir)))
             .Where(x => x.launchable is not null || ToolMetadataService.HasDownloadUrl(category, x.toolDir))
             .Select(x => CreateToolItemWithVariants(category, categoryRoot, x.launchable ?? CreatePlaceholderPath(x.toolDir), x.toolDir))
+            .ToList();
+
+        var toolOrderJson = AppSettings.Get($"ToolOrder_{category}");
+        List<string>? toolOrder = null;
+        if (!string.IsNullOrWhiteSpace(toolOrderJson))
+        {
+            try
+            {
+                toolOrder = System.Text.Json.JsonSerializer.Deserialize<List<string>>(toolOrderJson);
+            }
+            catch { }
+        }
+
+        if (toolOrder is not null && toolOrder.Count > 0)
+        {
+            var orderedSet = new HashSet<string>(toolOrder, StringComparer.CurrentCultureIgnoreCase);
+            var result = toolOrder
+                .Where(name => items.Any(it => it.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
+                .Select(name => items.First(it => it.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
+                .ToList();
+            foreach (var item in items.OrderBy(it => it.Name, StringComparer.CurrentCultureIgnoreCase))
+            {
+                if (!orderedSet.Contains(item.Name))
+                    result.Add(item);
+            }
+            return result;
+        }
+
+        return items
             .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(item => item.RelativePath, StringComparer.CurrentCultureIgnoreCase)
             .ToList();

@@ -507,7 +507,13 @@
       "match": "Ventoy",
       "description": "多系统 U盘启动制作工具，直接拷贝 ISO 文件即可启动，无需反复格式化。",
       "publisher": "",
-      "tags": [ "系统", "U盘启动" ]
+      "tags": [ "系统", "U盘启动" ],
+      "archVariants": [
+        { "file": "Ventoy2Disk.exe", "arch": "x86" },
+        { "file": "altexe\\Ventoy2Disk_X64.exe", "arch": "x64" },
+        { "file": "altexe\\Ventoy2Disk_ARM.exe", "arch": "ARM" },
+        { "file": "altexe\\Ventoy2Disk_ARM64.exe", "arch": "ARM64" }
+      ]
     },
     {
       "match": "WinDbg",
