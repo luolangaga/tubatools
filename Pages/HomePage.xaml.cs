@@ -341,33 +341,22 @@ public sealed partial class HomePage : Page
     private void CompactGrid_ItemClick(object sender, ItemClickEventArgs e)
     {
         if (e.ClickedItem is ToolItem tool)
-        {
-            if (tool.ArchOptions.Count > 1)
-            {
-                _ = ShowArchPickerAndLaunchAsync(tool, runAsAdmin: false);
-            }
-            else
-            {
-                LaunchTool(tool, runAsAdmin: false);
-            }
-        }
+            LaunchTool(tool, runAsAdmin: false);
     }
 
     private void CompactGrid_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {
         var tool = FindAncestorDataContext<ToolItem>(e.OriginalSource as FrameworkElement);
-        if (tool is null) return;
-        if (tool.ArchOptions.Count > 1)
-            _ = ShowArchPickerAndLaunchAsync(tool, runAsAdmin: false);
-        else
+        if (tool is not null)
             LaunchTool(tool, runAsAdmin: false);
     }
 
     private void CompactItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ToolItem)
+        if (sender is FrameworkElement fe && fe.DataContext is ToolItem tool)
         {
             var flyout = (MenuFlyout)CompactGrid.Resources["CompactItemFlyout"];
+            PopulateArchSubmenu(flyout, tool);
             flyout.ShowAt(fe, e.GetPosition(fe));
         }
     }
@@ -391,16 +380,7 @@ public sealed partial class HomePage : Page
     private void CompactMenu_RunAsAdmin(object sender, RoutedEventArgs e)
     {
         if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
-        {
-            if (tool.ArchOptions.Count > 1)
-            {
-                _ = ShowArchPickerAndLaunchAsync(tool, runAsAdmin: true);
-            }
-            else
-            {
-                LaunchTool(tool, runAsAdmin: true);
-            }
-        }
+            LaunchTool(tool, runAsAdmin: true);
     }
 
     private void CompactMenu_OpenDirectory(object sender, RoutedEventArgs e)
@@ -411,9 +391,10 @@ public sealed partial class HomePage : Page
 
     private void NormalItem_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ToolItem)
+        if (sender is FrameworkElement fe && fe.DataContext is ToolItem tool)
         {
             var flyout = (MenuFlyout)ToolsGrid.Resources["NormalItemFlyout"];
+            PopulateArchSubmenu(flyout, tool);
             flyout.ShowAt(fe, e.GetPosition(fe));
         }
     }
@@ -437,12 +418,7 @@ public sealed partial class HomePage : Page
     private void NormalMenu_RunAsAdmin(object sender, RoutedEventArgs e)
     {
         if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
-        {
-            if (tool.ArchOptions.Count > 1)
-                _ = ShowArchPickerAndLaunchAsync(tool, runAsAdmin: true);
-            else
-                LaunchTool(tool, runAsAdmin: true);
-        }
+            LaunchTool(tool, runAsAdmin: true);
     }
 
     private void NormalMenu_OpenDirectory(object sender, RoutedEventArgs e)
@@ -461,6 +437,41 @@ public sealed partial class HomePage : Page
     {
         if (sender is MenuFlyoutItem { DataContext: ToolItem tool })
             _ = DeleteToolAsync(tool);
+    }
+
+    private void PopulateArchSubmenu(MenuFlyout flyout, ToolItem tool)
+    {
+        var isCompact = ReferenceEquals(flyout, CompactGrid.Resources["CompactItemFlyout"]);
+        var submenuName = isCompact ? "CompactArchSubmenu" : "NormalArchSubmenu";
+
+        var submenu = flyout.Items.OfType<MenuFlyoutSubItem>().FirstOrDefault(i => i.Name == submenuName);
+        if (submenu is null) return;
+
+        submenu.Items.Clear();
+
+        if (tool.ArchOptions.Count <= 1)
+        {
+            submenu.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        submenu.Visibility = Visibility.Visible;
+        foreach (var opt in tool.ArchOptions)
+        {
+            var label = string.IsNullOrEmpty(opt.Arch) ? "默认" : opt.Arch;
+            var item = new ToggleMenuFlyoutItem
+            {
+                Text = label,
+                IsChecked = opt == tool.SelectedArch,
+                DataContext = opt
+            };
+            item.Click += (s, e) =>
+            {
+                if (s is ToggleMenuFlyoutItem { DataContext: ArchOption selected })
+                    tool.SelectedArch = selected;
+            };
+            submenu.Items.Add(item);
+        }
     }
 
     private async Task DeleteToolAsync(ToolItem tool)
@@ -552,47 +563,6 @@ public sealed partial class HomePage : Page
         var dir = tool.EffectiveWorkingDir;
         if (System.IO.Directory.Exists(dir))
             _ = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", dir) { UseShellExecute = true });
-    }
-
-    private async Task ShowArchPickerAndLaunchAsync(ToolItem tool, bool runAsAdmin)
-    {
-        var dialog = new ContentDialog
-        {
-            Title = $"选择架构 - {tool.Name}",
-            PrimaryButtonText = "打开",
-            CloseButtonText = "取消",
-            XamlRoot = XamlRoot,
-            RequestedTheme = ThemeService.CurrentElementTheme
-        };
-
-        var panel = new StackPanel { Spacing = 8 };
-        var radioButtons = new List<RadioButton>();
-
-        foreach (var opt in tool.ArchOptions)
-        {
-            var rb = new RadioButton
-            {
-                Content = string.IsNullOrEmpty(opt.Arch) ? "默认" : opt.Arch,
-                Tag = opt,
-                IsChecked = opt == tool.SelectedArch
-            };
-            radioButtons.Add(rb);
-            panel.Children.Add(rb);
-        }
-
-        dialog.Content = panel;
-
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            var selected = radioButtons.FirstOrDefault(rb => rb.IsChecked == true)?.Tag as ArchOption
-                ?? tool.SelectedArch;
-            if (selected is not null)
-            {
-                tool.SelectedArch = selected;
-            }
-            LaunchTool(tool, runAsAdmin: false);
-        }
     }
 
     private void ToolsGrid_ItemClick(object sender, ItemClickEventArgs e)

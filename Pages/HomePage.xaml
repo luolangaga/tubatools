@@ -132,6 +132,11 @@
                             <MenuFlyoutItem Text="发送到桌面快捷方式" Click="NormalMenu_SendToDesktop" Icon="Link" />
                             <MenuFlyoutItem Text="以管理员身份运行" Click="NormalMenu_RunAsAdmin" Icon="Admin" />
                             <MenuFlyoutItem Text="打开工具所在目录" Click="NormalMenu_OpenDirectory" Icon="Folder" />
+                            <MenuFlyoutSubItem x:Name="NormalArchSubmenu" Text="选择架构" Visibility="Collapsed">
+                                <MenuFlyoutSubItem.Icon>
+                                    <FontIcon Glyph="&#xE912;" />
+                                </MenuFlyoutSubItem.Icon>
+                            </MenuFlyoutSubItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Text="删除工具" Click="NormalMenu_DeleteTool" Foreground="{ThemeResource SystemFillColorCriticalBrush}">
                                 <MenuFlyoutItem.Icon>
@@ -316,6 +321,11 @@
                             <MenuFlyoutItem Text="发送到桌面快捷方式" Click="CompactMenu_SendToDesktop" Icon="Link" />
                             <MenuFlyoutItem Text="以管理员身份运行" Click="CompactMenu_RunAsAdmin" Icon="Admin" />
                             <MenuFlyoutItem Text="打开工具所在目录" Click="CompactMenu_OpenDirectory" Icon="Folder" />
+                            <MenuFlyoutSubItem x:Name="CompactArchSubmenu" Text="选择架构" Visibility="Collapsed">
+                                <MenuFlyoutSubItem.Icon>
+                                    <FontIcon Glyph="&#xE912;" />
+                                </MenuFlyoutSubItem.Icon>
+                            </MenuFlyoutSubItem>
                             <MenuFlyoutSeparator />
                             <MenuFlyoutItem Text="删除工具" Click="CompactMenu_DeleteTool" Foreground="{ThemeResource SystemFillColorCriticalBrush}">
                                 <MenuFlyoutItem.Icon>
