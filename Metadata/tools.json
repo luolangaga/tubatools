@@ -466,7 +466,9 @@
       "match": "Geek Uninstaller",
       "description": "轻量级软件卸载工具，支持强制卸载和清理残留注册表。",
       "publisher": "Geek Uninstaller",
-      "tags": [ "系统", "软件卸载" ]
+      "tags": [ "系统", "软件卸载" ],
+      "remoteUrl": "https://geekuninstaller.com/geek.zip"
+ 
     },
     {
       "match": "GifCam",
