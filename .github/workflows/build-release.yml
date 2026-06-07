@@ -314,9 +314,9 @@ jobs:
           BODY=$(cat hash_table.md | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
 
           RELEASE_ID=$(curl -s -X POST "$API" \
+            -H "Authorization: Bearer $GITCODE_ACCESS_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{
-              \"access_token\": \"$GITCODE_ACCESS_TOKEN\",
               \"tag_name\": \"$TAG\",
               \"name\": \"图吧工具箱WinUI3 $TAG\",
               \"body\": $BODY,
@@ -331,15 +331,27 @@ jobs:
 
           echo "GitCode release created, id=$RELEASE_ID"
 
+          UPLOAD_URL=$(curl -s \
+            -H "Authorization: Bearer $GITCODE_ACCESS_TOKEN" \
+            "$API/$TAG/upload_url" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('upload_url',''))")
+
           for f in release_files/*.exe release_files/*.zip; do
             [ -f "$f" ] || continue
             FNAME=$(basename "$f")
             echo "Uploading $FNAME ..."
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -X POST "$API/$RELEASE_ID/assets" \
-              -F "access_token=$GITCODE_ACCESS_TOKEN" \
-              -F "file=@$f" \
-              -F "name=$FNAME")
+            if [ -n "$UPLOAD_URL" ]; then
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -X POST "$UPLOAD_URL" \
+                -H "Authorization: Bearer $GITCODE_ACCESS_TOKEN" \
+                -F "file=@$f" \
+                -F "name=$FNAME")
+            else
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -X POST "$API/$RELEASE_ID/assets" \
+                -H "Authorization: Bearer $GITCODE_ACCESS_TOKEN" \
+                -F "file=@$f" \
+                -F "name=$FNAME")
+            fi
             if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
               echo "  OK ($HTTP_CODE)"
             else
