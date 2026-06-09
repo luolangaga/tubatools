@@ -247,6 +247,18 @@ git push origin feature/xxx          # 然后创建 PR
 
 ---
 
+## 支持与捐赠
+
+如果 TubaWinUi3 对你有帮助，欢迎支持项目的持续开发 ❤️
+
+<div align="center">
+  <img src=".github/donate-qrcode.png" alt="捐赠二维码" width="240" />
+  <br/>
+  <sub>扫描二维码支持作者</sub>
+</div>
+
+---
+
 ## 致谢
 
 - [Windows App SDK (WinUI 3)](https://github.com/microsoft/WindowsAppSDK)
