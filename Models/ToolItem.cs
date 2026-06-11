@@ -201,7 +201,7 @@ public sealed class ArchVariant
     public required string Arch { get; init; }
 }
 
-public sealed class ArchOption : INotifyPropertyChanged
+public sealed class ArchOption
 {
     public required string Name { get; init; }
     public required string Path { get; init; }
@@ -210,6 +210,4 @@ public sealed class ArchOption : INotifyPropertyChanged
     public string DisplayText => string.IsNullOrEmpty(Arch) ? "默认" : Arch;
 
     public override string ToString() => DisplayText;
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 }

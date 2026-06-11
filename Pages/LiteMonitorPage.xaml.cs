@@ -546,8 +546,11 @@ public sealed partial class LiteMonitorPage : Page
 
         try
         {
-            var mainPos = App.MainWindow.AppWindow.Position;
-            window.AppWindow.Move(new PointInt32(mainPos.X + 10, mainPos.Y + 10));
+            if (App.MainWindow != null)
+            {
+                var mainPos = App.MainWindow.AppWindow.Position;
+                window.AppWindow.Move(new PointInt32(mainPos.X + 10, mainPos.Y + 10));
+            }
         }
         catch { }
 

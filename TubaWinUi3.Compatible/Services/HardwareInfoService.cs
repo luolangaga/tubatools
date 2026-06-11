@@ -66,6 +66,11 @@ namespace TubaWinUi3.Compatible.Services
         private static IReadOnlyList<HardwareInfoSection> _cache;
         private static readonly object _lock = new object();
 
+        private static string GetSeparator()
+        {
+            return AppSettings.GetBool("CompactModeEnabled", false) ? Environment.NewLine : " / ";
+        }
+
         public static bool HasCache
         {
             get { lock (_lock) { return _cache != null; } }
@@ -469,7 +474,7 @@ namespace TubaWinUi3.Compatible.Services
                 })
                 .Where(value => !string.IsNullOrWhiteSpace(value));
 
-            return string.Join(" / ", disks);
+            return string.Join(GetSeparator(), disks);
         }
 
         private static string FormatDisplays()
@@ -501,7 +506,7 @@ namespace TubaWinUi3.Compatible.Services
                 if (string.IsNullOrWhiteSpace(bracket)) { parts.Add(label); continue; }
                 parts.Add(label + " [" + bracket + "]");
             }
-            return string.Join(" / ", parts);
+            return string.Join(GetSeparator(), parts);
         }
 
         private sealed class DisplayInfo
@@ -858,7 +863,7 @@ namespace TubaWinUi3.Compatible.Services
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .Distinct();
 
-            return string.Join(" / ", names);
+            return string.Join(GetSeparator(), names);
         }
 
         private static ManagementBaseObject First(string className)
