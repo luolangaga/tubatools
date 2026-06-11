@@ -381,7 +381,6 @@ file sealed class AnalyzerPage : Page
         }
     }
 
-    private volatile bool _scanning;
     private volatile int _scanDirty;
 
     private async Task ScanAsync(string path, bool keepNav = false)
@@ -395,7 +394,6 @@ file sealed class AnalyzerPage : Page
         if (_cv != null) _cv.Children.Clear();
         _hoveredNode = null;
         _pBytes = 0; _pItems = 0;
-        _scanning = true;
         _scanDirty = 0;
 
         GetDiskInfo(path);
@@ -426,14 +424,12 @@ file sealed class AnalyzerPage : Page
         {
             renderTimer.Stop();
             if (_pb != null) _pb.Visibility = Visibility.Collapsed;
-            _scanning = false;
             if (_st != null) _st.Text = "扫描已取消";
             return;
         }
         catch { renderTimer.Stop(); return; }
 
         renderTimer.Stop();
-        _scanning = false;
         node.Children.Sort((a, b) => b.Size.CompareTo(a.Size));
         if (_pb != null) _pb.Visibility = Visibility.Collapsed;
         SyncUi();

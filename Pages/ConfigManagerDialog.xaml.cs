@@ -300,7 +300,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
             var exePath = Environment.ProcessPath;
             if (string.IsNullOrEmpty(exePath)) return;
             System.Diagnostics.Process.Start(exePath);
-            App.MainWindow.Close();
+            App.MainWindow?.Close();
         }
         catch { }
     }
