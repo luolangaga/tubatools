@@ -37,9 +37,12 @@ public sealed partial class HardwarePage : Page
 
     private void OnSettingChanged(string key)
     {
-        if (key == "UseCpuzDataSource")
+        if (key == "UseCpuzDataSource" || key == "CompactModeEnabled")
         {
-            _ = LoadHardwareInfoAsync();
+            // 简洁模式切换时重置布局容器缓存，确保 UpdateLayoutStructure 能强制重建
+            if (key == "CompactModeEnabled")
+                _currentLayoutIsCompact = null;
+            _ = LoadHardwareInfoAsync(forceRefresh: true);
         }
     }
 
@@ -215,6 +218,9 @@ public sealed partial class HardwarePage : Page
 
     private void ApplySections(IReadOnlyList<HardwareInfoSection> sections)
     {
+        UpdateLayoutStructure();
+
+
         var summary = sections[0].Items;
         var system = sections[1].Items;
         var details = sections[2].Items;
@@ -598,5 +604,60 @@ public sealed partial class HardwarePage : Page
             if (result is not null) return result;
         }
         return null;
+    }
+
+    private bool? _currentLayoutIsCompact;
+
+    private void UpdateLayoutStructure()
+    {
+        var isCompact = AppSettings.GetBool("CompactModeEnabled", false);
+        if (_currentLayoutIsCompact == isCompact) return;
+        _currentLayoutIsCompact = isCompact;
+
+        if (LayoutRoot.Parent is Panel parentPanel)
+        {
+            parentPanel.Children.Remove(LayoutRoot);
+        }
+        else if (LayoutRoot.Parent is Border parentBorder)
+        {
+            parentBorder.Child = null;
+        }
+        else if (LayoutRoot.Parent is ScrollViewer parentScroll)
+        {
+            parentScroll.Content = null;
+        }
+        else if (LayoutRoot.Parent is Viewbox parentViewbox)
+        {
+            parentViewbox.Child = null;
+        }
+
+        if (isCompact)
+        {
+            LayoutRoot.Width = double.NaN;
+            LayoutRoot.MaxWidth = 1100;
+            LayoutRoot.HorizontalAlignment = HorizontalAlignment.Center;
+
+            var scroll = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = LayoutRoot
+            };
+            RootHost.Child = scroll;
+        }
+        else
+        {
+            LayoutRoot.Width = 1100;
+            LayoutRoot.MaxWidth = double.PositiveInfinity;
+            LayoutRoot.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+            var viewbox = new Viewbox
+            {
+                Stretch = Stretch.Uniform,
+                StretchDirection = StretchDirection.DownOnly,
+                Child = LayoutRoot
+            };
+            RootHost.Child = viewbox;
+        }
     }
 }

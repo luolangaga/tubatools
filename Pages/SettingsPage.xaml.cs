@@ -387,6 +387,8 @@ public sealed partial class SettingsPage : Page
     {
         if (_compactModeInitializing) return;
         CompactModeService.SetCompactModeEnabled(CompactModeToggle.IsOn);
+        // 简洁模式影响硬件信息的拼接分隔符，需令缓存失效
+        HardwareInfoService.InvalidateCache();
     }
 
     private void InitCompactModeToggle()

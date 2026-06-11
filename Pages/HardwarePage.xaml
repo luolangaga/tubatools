@@ -199,10 +199,7 @@
             VerticalAlignment="Stretch"
             IsHitTestVisible="False" />
 
-        <Viewbox
-            x:Name="ContentScaler"
-            Stretch="Uniform"
-            StretchDirection="DownOnly">
+        <Border x:Name="RootHost">
             <Grid
                 x:Name="LayoutRoot"
                 Width="1100"
@@ -356,6 +353,8 @@
                                 <TextBlock FontSize="15" Opacity="0.68" Text="运行时间" />
                                 <TextBlock
                                     x:Name="UptimeText"
+                                    Width="220"
+                                    HorizontalAlignment="Left"
                                     FontSize="20"
                                     FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
@@ -450,7 +449,7 @@
                     </Border>
                 </StackPanel>
             </Grid>
-        </Viewbox>
+        </Border>
 
         <ProgressRing
             x:Name="LoadingRing"

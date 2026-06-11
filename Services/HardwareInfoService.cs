@@ -63,6 +63,11 @@ public static class HardwareInfoService
     private static IReadOnlyList<HardwareInfoSection>? _cache;
     private static readonly object _lock = new();
 
+    private static string GetSeparator()
+    {
+        return AppSettings.GetBool("CompactModeEnabled", false) ? Environment.NewLine : " / ";
+    }
+
     public static bool HasCache
     {
         get { lock (_lock) { return _cache != null; } }
@@ -180,7 +185,7 @@ public static class HardwareInfoService
             var gpuItem = details.FirstOrDefault(it => it.Label == "显卡");
             if (gpuItem != null)
             {
-                var gpuLabel = string.Join(" / ", cpuz.Gpus
+                var gpuLabel = string.Join(GetSeparator(), cpuz.Gpus
                     .Where(g => !string.IsNullOrWhiteSpace(g.Name))
                     .Select(g =>
                     {
@@ -686,7 +691,7 @@ public static class HardwareInfoService
             })
             .Where(value => !string.IsNullOrWhiteSpace(value));
 
-        return string.Join(" / ", disks);
+        return string.Join(GetSeparator(), disks);
     }
 
     private static string FormatDisplays()
@@ -716,7 +721,7 @@ public static class HardwareInfoService
 
         if (monitorInfos.Count == 0) return "未知";
 
-        return string.Join(" / ", monitorInfos.Select(mi =>
+        return string.Join(GetSeparator(), monitorInfos.Select(mi =>
         {
             if (string.IsNullOrWhiteSpace(mi.Label) && string.IsNullOrWhiteSpace(mi.Resolution))
                 return "";
@@ -1203,7 +1208,7 @@ public static class HardwareInfoService
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Distinct();
 
-        return string.Join(" / ", names);
+        return string.Join(GetSeparator(), names);
     }
 
     private static ManagementBaseObject? First(string className)
