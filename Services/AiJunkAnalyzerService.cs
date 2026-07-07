@@ -738,7 +738,7 @@ public static class AiJunkAnalyzerService
 
         try
         {
-            var items = JsonSerializer.Deserialize<List<JsonElement>>(json);
+            var items = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListJsonElement);
             if (items is null) return [];
 
             var suggestions = new List<AiJunkSuggestion>();
@@ -864,25 +864,26 @@ public static class AiJunkAnalyzerService
 
     public static string ExportReportJson(List<AiJunkSuggestion> suggestions)
     {
-        var data = suggestions.Select(s => new Dictionary<string, string>
+        var data = suggestions.Select(s => new AiJunkExportDto
         {
-            ["path"] = s.Path,
-            ["description"] = s.Description,
-            ["reason"] = s.Reason,
-            ["riskLevel"] = s.RiskLevel,
-            ["category"] = s.Category
+            Path = s.Path,
+            Description = s.Description,
+            Reason = s.Reason,
+            RiskLevel = s.RiskLevel,
+            Category = s.Category
         }).ToList();
 
         return JsonSerializer.Serialize(data, new JsonSerializerOptions
         {
             WriteIndented = true,
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            TypeInfoResolver = TubaDefaultContext.Default
         });
     }
 
     public static List<AiJunkSuggestion> ImportReportJson(string json)
     {
-        var items = JsonSerializer.Deserialize<List<JsonElement>>(json);
+        var items = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListJsonElement);
         if (items is null) return [];
 
         var suggestions = new List<AiJunkSuggestion>();

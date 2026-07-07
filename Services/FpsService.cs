@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -9,6 +10,8 @@ using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "TraceEvent session requires reflection")]
+[UnconditionalSuppressMessage("Aot", "IL3050:RequiresDynamicCode", Justification = "ETW trace session requires dynamic code generation")]
 public sealed class FpsService : IDisposable
 {
     private const string SessionName = "TubaWinUi3_FPS";

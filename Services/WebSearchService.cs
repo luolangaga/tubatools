@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 namespace TubaWinUi3.Services;
@@ -80,12 +81,9 @@ public static partial class WebSearchService
         var url = "https://uapis.cn/api/v1/search/aggregate";
 
         var apiKey = AppSettings.Get("SearchApiKey");
-        var bodyDict = new Dictionary<string, object>
-        {
-            ["query"] = query
-        };
+        var bodyDict = new JsonObject { ["query"] = query };
 
-        var json = JsonSerializer.Serialize(bodyDict);
+        var json = bodyDict.ToJsonString();
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -414,7 +412,7 @@ public static partial class WebSearchService
     private static async Task<WebPageContent?> FetchViaUapisAsync(string url, string apiKey, CancellationToken ct)
     {
         var submitUrl = "https://uapis.cn/api/v1/web/tomarkdown/async";
-        var body = JsonSerializer.Serialize(new { url });
+        var body = JsonSerializer.Serialize(new WebMarkdownBody { Url = url }, TubaNullIgnoreContext.Default.WebMarkdownBody);
 
         using var submitRequest = new HttpRequestMessage(HttpMethod.Post, submitUrl)
         {

@@ -407,36 +407,32 @@ public static class CommunityToolService
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .ToList();
 
-        var pluginObj = new Dictionary<string, object?>
+        var pluginObj = new CommunityToolPluginDto
         {
-            ["id"] = toolId,
-            ["name"] = name,
-            ["version"] = string.IsNullOrWhiteSpace(version) ? "1.0" : version,
-            ["description"] = description,
-            ["category"] = category,
-            ["publisher"] = string.IsNullOrWhiteSpace(publisher) ? null : publisher,
-            ["tags"] = tagList,
-            ["launchTarget"] = string.IsNullOrWhiteSpace(launchTarget) ? null : launchTarget,
-            ["author"] = user.Login,
-            ["submittedAt"] = DateTimeOffset.UtcNow.ToString("o"),
-            ["homepage"] = string.IsNullOrWhiteSpace(homepage) ? null : homepage
+            Id = toolId,
+            Name = name,
+            Version = string.IsNullOrWhiteSpace(version) ? "1.0" : version,
+            Description = description,
+            Category = category,
+            Publisher = string.IsNullOrWhiteSpace(publisher) ? null : publisher,
+            Tags = tagList,
+            LaunchTarget = string.IsNullOrWhiteSpace(launchTarget) ? null : launchTarget,
+            Author = user.Login,
+            SubmittedAt = DateTimeOffset.UtcNow,
+            Homepage = string.IsNullOrWhiteSpace(homepage) ? null : homepage
         };
 
         if (!string.IsNullOrWhiteSpace(zipFilePath))
         {
-            pluginObj["file"] = Path.GetFileName(zipFilePath);
+            pluginObj.File = Path.GetFileName(zipFilePath);
         }
 
         if (!string.IsNullOrWhiteSpace(iconFilePath))
         {
-            pluginObj["icon"] = Path.GetFileName(iconFilePath);
+            pluginObj.Icon = Path.GetFileName(iconFilePath);
         }
 
-        var jsonText = JsonSerializer.Serialize(pluginObj, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+        var jsonText = JsonSerializer.Serialize(pluginObj, TubaDefaultIndentedContext.Default.CommunityToolPluginDto);
 
         progress?.Report("正在 Fork 仓库...");
 
@@ -551,7 +547,7 @@ public static class CommunityToolService
         var upstreamMainSha = await GetRefShaAsync(UpstreamOwner, UpstreamRepo, "heads/main", token, ct);
         if (upstreamMainSha is null) return;
 
-        var body = JsonSerializer.Serialize(new { sha = upstreamMainSha, force = true });
+        var body = JsonSerializer.Serialize(new GitHubForcePushBody { Sha = upstreamMainSha, Force = true }, TubaNullIgnoreContext.Default.GitHubForcePushBody);
         var content = new StringContent(body, Encoding.UTF8, "application/json");
 
         try
@@ -609,12 +605,7 @@ public static class CommunityToolService
         var getDoc = JsonDocument.Parse(getJson);
         var sha = getDoc.RootElement.GetProperty("sha").GetString();
 
-        var body = JsonSerializer.Serialize(new
-        {
-            message = commitMessage,
-            sha,
-            branch
-        });
+        var body = JsonSerializer.Serialize(new GitHubDeleteFileBody { Message = commitMessage, Sha = sha, Branch = branch }, TubaNullIgnoreContext.Default.GitHubDeleteFileBody);
         var request = new HttpRequestMessage(HttpMethod.Delete,
             $"https://api.github.com/repos/{owner}/{repo}/contents/{filePath}")
         {
@@ -634,12 +625,7 @@ public static class CommunityToolService
         string category, string author, string token, CancellationToken ct)
     {
         using var client = GitHubAuthService.CreateAuthenticatedClient();
-        var body = JsonSerializer.Serialize(new
-        {
-            title = $"[删除工具] {toolName}",
-            head = $"{forkOwner}:{branch}",
-            @base = "main",
-            body = $"## 删除社区工具\n\n" +
+        var body = JsonSerializer.Serialize(new GitHubCreatePrBody { Title = $"[删除工具] {toolName}", Head = $"{forkOwner}:{branch}", BaseRef = "main", Body = $"## 删除社区工具\n\n" +
                    $"- **名称**：{toolName}\n" +
                    $"- **分类**：{category}\n" +
                    $"- **请求者**：@{author}\n\n" +
@@ -885,7 +871,7 @@ public static class CommunityToolService
     private static async Task CreateRefAsync(string owner, string repo, string refName, string sha, string token, CancellationToken ct)
     {
         using var client = GitHubAuthService.CreateAuthenticatedClient();
-        var body = JsonSerializer.Serialize(new { @ref = refName, sha });
+        var body = JsonSerializer.Serialize(new GitHubUpdateRefBody { RefName = refName, Sha = sha }, TubaNullIgnoreContext.Default.GitHubUpdateRefBody);
         var content = new StringContent(body, Encoding.UTF8, "application/json");
         var resp = await client.PostAsync(
             $"https://api.github.com/repos/{owner}/{repo}/git/refs", content, ct);
@@ -900,12 +886,7 @@ public static class CommunityToolService
     {
         using var client = GitHubAuthService.CreateAuthenticatedClient();
         var base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-        var body = JsonSerializer.Serialize(new
-        {
-            message = $"feat: add plugin - {path.Split('/')[^2]}",
-            content = base64Content,
-            branch
-        });
+        var body = JsonSerializer.Serialize(new GitHubCreateFileBody { Message = $"feat: add plugin - {path.Split('/')[^2]}", Content = base64Content, Branch = branch }, TubaNullIgnoreContext.Default.GitHubCreateFileBody);
         var httpContent = new StringContent(body, Encoding.UTF8, "application/json");
         var resp = await client.PutAsync(
             $"https://api.github.com/repos/{owner}/{repo}/contents/{path}", httpContent, ct);
@@ -922,12 +903,7 @@ public static class CommunityToolService
         var bytes = await File.ReadAllBytesAsync(localFilePath, ct);
         var base64Content = Convert.ToBase64String(bytes);
         var fileName = Path.GetFileName(localFilePath);
-        var body = JsonSerializer.Serialize(new
-        {
-            message = $"feat: upload {fileName}",
-            content = base64Content,
-            branch
-        });
+        var body = JsonSerializer.Serialize(new GitHubCreateFileBody { Message = $"feat: upload {fileName}", Content = base64Content, Branch = branch }, TubaNullIgnoreContext.Default.GitHubCreateFileBody);
         var httpContent = new StringContent(body, Encoding.UTF8, "application/json");
         var resp = await client.PutAsync(
             $"https://api.github.com/repos/{owner}/{repo}/contents/{path}", httpContent, ct);
@@ -943,12 +919,7 @@ public static class CommunityToolService
         string description, string category, string author, string token, CancellationToken ct)
     {
         using var client = GitHubAuthService.CreateAuthenticatedClient();
-        var body = JsonSerializer.Serialize(new
-        {
-            title = $"[社区工具] {toolName}",
-            head = $"{forkOwner}:{branch}",
-            @base = "main",
-            body = $"## 新增社区工具\n\n" +
+        var body = JsonSerializer.Serialize(new GitHubCreatePrBody { Title = $"[社区工具] {toolName}", Head = $"{forkOwner}:{branch}", BaseRef = "main", Body = $"## 新增社区工具\n\n" +
                    $"- **名称**：{toolName}\n" +
                    $"- **分类**：{category}\n" +
                    $"- **描述**：{description}\n" +

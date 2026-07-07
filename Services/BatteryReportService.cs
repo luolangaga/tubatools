@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Management;
 using System.Text.RegularExpressions;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "WMI requires reflection")]
 public static class BatteryReportService
 {
     public static async Task<BatteryInfo> GetBatteryInfoAsync()

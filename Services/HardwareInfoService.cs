@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Management;
 using System.Runtime.InteropServices;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "WMI System.Management requires reflection at runtime")]
+[UnconditionalSuppressMessage("Aot", "IL3050:RequiresDynamicCode", Justification = "WMI COM interop requires dynamic code")]
 public static class HardwareInfoService
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]

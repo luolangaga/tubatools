@@ -379,11 +379,13 @@ public static class HardwareSpooferService
                 catch { }
             }
 
-            var json = JsonSerializer.Serialize(new
+            var gpuBackupJson = JsonSerializer.Serialize(gpuBackup, TubaDefaultContext.Default.DictionaryStringDictionaryStringString);
+            var backupData = new HardwareSpooferBackupData
             {
-                Entries = entries.Select(e => new { e.KeyPath, e.ValueName, e.Kind, e.OriginalValue }).ToList(),
-                GpuBackup = gpuBackup
-            }, new JsonSerializerOptions { WriteIndented = true });
+                Entries = entries.Select(e => new HardwareSpooferBackupItem { KeyPath = e.KeyPath, ValueName = e.ValueName, Kind = e.Kind, OriginalValue = e.OriginalValue }).ToList(),
+                GpuBackup = gpuBackupJson
+            };
+            var json = JsonSerializer.Serialize(backupData, TubaDefaultIndentedContext.Default.HardwareSpooferBackupData);
             File.WriteAllText(BackupPath, json);
         }
         catch { }
@@ -401,7 +403,7 @@ public static class HardwareSpooferService
                 ? entriesEl
                 : doc.RootElement;
 
-            var items = JsonSerializer.Deserialize<List<BackupItem>>(entriesArray.GetRawText());
+            var items = JsonSerializer.Deserialize(entriesArray.GetRawText(), TubaDefaultContext.Default.ListHardwareSpooferBackupItem);
             if (items is null) return null;
 
             return items.Select(i => new HardwareSpooferEntry
@@ -483,11 +485,4 @@ public static class HardwareSpooferService
         return Registry.LocalMachine;
     }
 
-    private sealed class BackupItem
-    {
-        public required string KeyPath { get; init; }
-        public required string ValueName { get; init; }
-        public required RegistryValueKind Kind { get; init; }
-        public required string OriginalValue { get; init; }
-    }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -19,18 +21,13 @@ using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "WMI requires reflection")]
 public static class PerformanceBenchmarkService
 {
 	private static CancellationTokenSource? _cts;
 	private static volatile bool _running;
 	private const double CpuSingleBaseline = 728.0;
 	private const double CpuMultiBaseline = 8351.0;
-
-	private static readonly JsonSerializerOptions s_jsonOpts = new()
-	{
-		WriteIndented = false,
-		Converters = { new LatencyMatrixJsonConverter() }
-	};
 
 	public static bool IsRunning => _running;
 
@@ -889,7 +886,7 @@ public static class PerformanceBenchmarkService
 		if (!File.Exists(path)) return [];
 		try
 		{
-			return JsonSerializer.Deserialize<List<PerformanceBenchmarkResult>>(File.ReadAllText(path), s_jsonOpts) ?? [];
+			return JsonSerializer.Deserialize(File.ReadAllText(path), TubaDefaultContext.Default.ListPerformanceBenchmarkResult) ?? [];
 		}
 		catch { return []; }
 	}
@@ -905,7 +902,7 @@ public static class PerformanceBenchmarkService
 				list = list.TakeLast(20).ToList();
 			}
 			string path = Path.Combine(ConfigManager.GetDataDir(), "BenchmarkHistory.json");
-			File.WriteAllText(path, JsonSerializer.Serialize(list, s_jsonOpts));
+			File.WriteAllText(path, JsonSerializer.Serialize(list, TubaDefaultContext.Default.ListPerformanceBenchmarkResult));
 		}
 		catch { }
 	}
@@ -919,7 +916,7 @@ public static class PerformanceBenchmarkService
 			{
 				list.RemoveAt(index);
 				string path = Path.Combine(ConfigManager.GetDataDir(), "BenchmarkHistory.json");
-				File.WriteAllText(path, JsonSerializer.Serialize(list, s_jsonOpts));
+				File.WriteAllText(path, JsonSerializer.Serialize(list, TubaDefaultContext.Default.ListPerformanceBenchmarkResult));
 			}
 		}
 		catch { }
@@ -1062,78 +1059,96 @@ public static class PerformanceBenchmarkService
 				}
 			}
 		}
-		return JsonSerializer.Serialize(new
+
+		var root = new System.Text.Json.Nodes.JsonObject
 		{
-			testTime = result.TestTime.ToString("yyyy-MM-dd HH:mm:ss"),
-			durationMode = result.DurationMode,
-			totalDuration = result.TotalDuration.ToString("m\\mss\\s"),
-			cpuName = result.CpuName,
-			gpuName = result.GpuName,
-			osName = result.OsName,
-			motherboardName = result.MotherboardName,
-			memoryInfo = result.MemoryInfo,
-			diskInfo = result.DiskInfo,
-			displayInfo = result.DisplayInfo,
-			gamingScore = result.GamingScore,
-			gamingGrade = result.GamingGrade,
-			officeScore = result.OfficeScore,
-			officeGrade = result.OfficeGrade,
-			cpu = new
+			["testTime"] = result.TestTime.ToString("yyyy-MM-dd HH:mm:ss"),
+			["durationMode"] = result.DurationMode,
+			["cpuName"] = result.CpuName,
+			["gpuName"] = result.GpuName,
+			["osName"] = result.OsName,
+			["motherboardName"] = result.MotherboardName,
+			["memoryInfo"] = result.MemoryInfo,
+			["diskInfo"] = result.DiskInfo,
+			["displayInfo"] = result.DisplayInfo,
+			["gamingScore"] = result.GamingScore,
+			["gamingGrade"] = result.GamingGrade,
+			["officeScore"] = result.OfficeScore,
+			["officeGrade"] = result.OfficeGrade
+		};
+
+		var cpuObj = new System.Text.Json.Nodes.JsonObject
+		{
+			["singleCoreScore"] = result.Cpu.SingleCoreScore,
+			["singleCoreIterations"] = result.Cpu.SingleCoreIterations,
+			["multiCoreScore"] = result.Cpu.MultiCoreScore,
+			["multiCoreIterations"] = result.Cpu.MultiCoreIterations,
+			["latencyScore"] = result.Cpu.LatencyScore
+		};
+		if (lm != null)
+		{
+			var latObj = new System.Text.Json.Nodes.JsonObject
 			{
-				singleCoreScore = result.Cpu.SingleCoreScore,
-				singleCoreIterations = result.Cpu.SingleCoreIterations,
-				multiCoreScore = result.Cpu.MultiCoreScore,
-				multiCoreIterations = result.Cpu.MultiCoreIterations,
-				latencyScore = result.Cpu.LatencyScore,
-				latencyMatrix = (object?)(lm != null ? new
-				{
-					coreCount = lm.CoreCount,
-					averageNs = lm.AverageNs,
-					minNs = lm.MinNs,
-					maxNs = lm.MaxNs,
-					latencies = latArray,
-					heatmapBase64 = latencyHeatmapPath != null && File.Exists(latencyHeatmapPath) ? Convert.ToBase64String(File.ReadAllBytes(latencyHeatmapPath)) : (string?)null
-				} : null)
-			},
-			gpu = new
+				["coreCount"] = lm.CoreCount,
+				["averageNs"] = lm.AverageNs,
+				["minNs"] = lm.MinNs,
+				["maxNs"] = lm.MaxNs
+			};
+			var latArr = new System.Text.Json.Nodes.JsonArray();
+			foreach (var row in latArray!)
 			{
-				renderScore = result.Gpu.RenderScore,
-				renderFps = result.Gpu.RenderFps,
-				furMarkScore = result.Gpu.FurMarkScore,
-				avgFps = result.Gpu.AvgFps,
-				minFps = result.Gpu.MinFps,
-				maxFps = result.Gpu.MaxFps
-			},
-			memory = new
-			{
-				capacityScore = result.Memory.CapacityScore,
-				totalCapacityGB = result.Memory.TotalCapacityGB
-			},
-			disk = new
-			{
-				seqReadScore = result.Disk.SeqReadScore,
-				seqReadMBs = result.Disk.SeqReadMBs,
-				seqWriteScore = result.Disk.SeqWriteScore,
-				seqWriteMBs = result.Disk.SeqWriteMBs,
-				random4KReadScore = result.Disk.Random4KReadScore,
-				random4KReadIops = result.Disk.Random4KReadIops,
-				random4KWriteScore = result.Disk.Random4KWriteScore,
-				random4KWriteIops = result.Disk.Random4KWriteIops,
-				tempScore = result.Disk.TempScore,
-				temperature = result.Disk.Temperature
-			},
-			browser = new
-			{
-				totalScore = result.Browser.TotalScore,
-				jsScore = result.Browser.JsScore,
-				domScore = result.Browser.DomScore,
-				cardScore = result.Browser.CardScore,
-				cssScore = result.Browser.CssScore,
-				layoutScore = result.Browser.LayoutScore,
-				eventScore = result.Browser.EventScore
-			},
-			filename = "性能测试报告_" + result.TestTime.ToString("yyyyMMdd_HHmmss") + ".pdf",
-			appVersion = "1.0.2"
-		});
+				var rowArr = new System.Text.Json.Nodes.JsonArray();
+				foreach (var v in row) rowArr.Add(v);
+				latArr.Add(rowArr);
+			}
+			latObj["latencies"] = latArr;
+			if (latencyHeatmapPath != null && File.Exists(latencyHeatmapPath))
+				latObj["heatmapBase64"] = Convert.ToBase64String(File.ReadAllBytes(latencyHeatmapPath));
+			cpuObj["latencyMatrix"] = latObj;
+		}
+		root["cpu"] = cpuObj;
+
+		root["gpu"] = new System.Text.Json.Nodes.JsonObject
+		{
+			["renderScore"] = result.Gpu.RenderScore,
+			["renderFps"] = result.Gpu.RenderFps,
+			["furMarkScore"] = result.Gpu.FurMarkScore,
+			["avgFps"] = result.Gpu.AvgFps,
+			["minFps"] = result.Gpu.MinFps,
+			["maxFps"] = result.Gpu.MaxFps
+		};
+
+		root["memory"] = new System.Text.Json.Nodes.JsonObject
+		{
+			["capacityScore"] = result.Memory.CapacityScore,
+			["totalCapacityGB"] = result.Memory.TotalCapacityGB
+		};
+
+		root["disk"] = new System.Text.Json.Nodes.JsonObject
+		{
+			["seqReadScore"] = result.Disk.SeqReadScore,
+			["seqReadMBs"] = result.Disk.SeqReadMBs,
+			["seqWriteScore"] = result.Disk.SeqWriteScore,
+			["seqWriteMBs"] = result.Disk.SeqWriteMBs,
+			["random4KReadScore"] = result.Disk.Random4KReadScore,
+			["random4KReadIops"] = result.Disk.Random4KReadIops,
+			["random4KWriteScore"] = result.Disk.Random4KWriteScore,
+			["random4KWriteIops"] = result.Disk.Random4KWriteIops,
+			["tempScore"] = result.Disk.TempScore,
+			["temperature"] = result.Disk.Temperature
+		};
+
+		root["browser"] = new System.Text.Json.Nodes.JsonObject
+		{
+			["totalScore"] = result.Browser.TotalScore,
+			["jsScore"] = result.Browser.JsScore,
+			["domScore"] = result.Browser.DomScore,
+			["cardScore"] = result.Browser.CardScore,
+			["cssScore"] = result.Browser.CssScore,
+			["layoutScore"] = result.Browser.LayoutScore,
+			["eventScore"] = result.Browser.EventScore
+		};
+
+		return root.ToJsonString();
 	}
 }

@@ -32,11 +32,6 @@ public static class CustomToolPackageService
         ".exe"
     ];
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
-
     public static IReadOnlyList<ImportableExecutable> GetExecutables(string packagePath)
     {
         using var archive = ZipFile.OpenRead(packagePath);
@@ -194,7 +189,7 @@ public static class CustomToolPackageService
         tools.Add(metadata);
 
         await using var writeStream = File.Create(metadataPath);
-        await JsonSerializer.SerializeAsync(writeStream, root, JsonOptions);
+        await JsonSerializer.SerializeAsync(writeStream, root, TubaDefaultIndentedContext.Default.JsonNode);
     }
 
     private static string GetUniqueDirectory(string desiredDirectory)

@@ -590,10 +590,10 @@ public sealed partial class AiAssistantService
             };
 
             var metaPath = Path.Combine(HistoryDir, $"{id}.meta.json");
-            File.WriteAllText(metaPath, JsonSerializer.Serialize(meta, JsonOpts));
+            File.WriteAllText(metaPath, JsonSerializer.Serialize(meta, TubaDefaultIndentedContext.Default.ConversationMeta));
 
             var msgPath = Path.Combine(HistoryDir, $"{id}.messages.json");
-            File.WriteAllText(msgPath, JsonSerializer.Serialize(messages, JsonOpts));
+            File.WriteAllText(msgPath, JsonSerializer.Serialize(messages, TubaDefaultIndentedContext.Default.ListAiChatMessage));
         }
         catch { }
     }
@@ -609,7 +609,7 @@ public sealed partial class AiAssistantService
                 try
                 {
                     var json = File.ReadAllText(file);
-                    var meta = JsonSerializer.Deserialize<ConversationMeta>(json, JsonOpts);
+                    var meta = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ConversationMeta);
                     if (meta is not null) result.Add(meta);
                 }
                 catch { }
@@ -626,7 +626,7 @@ public sealed partial class AiAssistantService
             var msgPath = Path.Combine(HistoryDir, $"{id}.messages.json");
             if (!File.Exists(msgPath)) return [];
             var json = File.ReadAllText(msgPath);
-            return JsonSerializer.Deserialize<List<AiChatMessage>>(json, JsonOpts) ?? [];
+            return JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListAiChatMessage) ?? [];
         }
         catch { return []; }
     }
@@ -643,7 +643,7 @@ public sealed partial class AiAssistantService
         catch { }
     }
 
-    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
+
 
     public static bool TryLaunchTool(string toolName, out string message)
     {

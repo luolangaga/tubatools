@@ -138,8 +138,7 @@ public static class CpuRankingService
                 };
             }
 
-            var data = JsonSerializer.Deserialize<CpuRankingData>(json,
-                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var data = JsonSerializer.Deserialize(json, TubaCamelCaseContext.Default.CpuRankingData);
 
             if (data is null || (data.Desktop.Count == 0 && data.Laptop.Count == 0))
             {
@@ -207,8 +206,7 @@ public static class CpuRankingService
 
     private static void ParseAndSet(string json)
     {
-        var data = JsonSerializer.Deserialize<CpuRankingData>(json,
-            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var data = JsonSerializer.Deserialize(json, TubaCamelCaseContext.Default.CpuRankingData);
         if (data is null)
         {
             _desktop = [];
@@ -240,11 +238,7 @@ public static class CpuRankingService
                 Laptop = _laptop ?? []
             };
 
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            });
+            var json = JsonSerializer.Serialize(data, TubaCamelCaseIndentedContext.Default.CpuRankingData);
 
             File.WriteAllText(path, json);
         }
@@ -272,14 +266,6 @@ public static class CpuRankingService
         if (File.Exists(cachePath)) return cachePath;
 
         return null;
-    }
-
-    private sealed class CpuRankingData
-    {
-        public string LastUpdated { get; set; } = "";
-        public string Source { get; set; } = "";
-        public List<CpuRankingEntry> Desktop { get; set; } = [];
-        public List<CpuRankingEntry> Laptop { get; set; } = [];
     }
 }
 

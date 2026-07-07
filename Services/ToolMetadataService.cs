@@ -55,7 +55,7 @@ public static class ToolMetadataService
         root["tools"] = tools;
 
         await using var writeStream = File.Create(metadataPath);
-        await JsonSerializer.SerializeAsync(writeStream, root, new JsonSerializerOptions { WriteIndented = true });
+        await JsonSerializer.SerializeAsync(writeStream, root, TubaDefaultIndentedContext.Default.JsonNode);
         _metadata = null;
     }
 
@@ -184,10 +184,7 @@ public static class ToolMetadataService
         }
 
         using var stream = File.OpenRead(path);
-        var database = JsonSerializer.Deserialize<JsonToolDatabase>(stream, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var database = JsonSerializer.Deserialize(stream, TubaCamelCaseContext.Default.JsonToolDatabase);
 
         _metadata = database?.Tools ?? [];
         return _metadata;
@@ -248,40 +245,5 @@ public static class ToolMetadataService
         }
 
         return outputRoot;
-    }
-
-    private sealed class JsonToolDatabase
-    {
-        public List<JsonToolMetadata> Tools { get; set; } = [];
-    }
-
-    private sealed class JsonToolMetadata
-    {
-        public string? Match { get; set; }
-
-        public string? Description { get; set; }
-
-        public string? Publisher { get; set; }
-
-        public string? DownloadUrl { get; set; }
-
-        public string? DownloadFilter { get; set; }
-
-        public string? WingetId { get; set; }
-
-        public string? LaunchTarget { get; set; }
-
-        public List<string>? Tags { get; set; }
-
-        public List<JsonArchVariant>? ArchVariants { get; set; }
-    }
-
-    private sealed class JsonArchVariant
-    {
-        public string? File { get; set; }
-
-        public string? Dir { get; set; }
-
-        public string? Arch { get; set; }
     }
 }

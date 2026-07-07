@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace TubaWinUi3.Services;
@@ -103,10 +104,7 @@ public static class AiService
 
         var body = BuildRequestBody(messages, temperature, true, maxTokens, tools);
 
-        var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+        var json = body.ToJsonString();
 
         HttpRequestMessage? request = null;
         HttpResponseMessage? response = null;
@@ -218,10 +216,7 @@ public static class AiService
         var url = endpoint.TrimEnd('/') + "/chat/completions";
         var body = BuildRequestBody(messages, temperature, false, maxTokens, tools);
 
-        var json = JsonSerializer.Serialize(body, new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+        var json = body.ToJsonString();
 
         try
         {
@@ -291,52 +286,57 @@ public static class AiService
         }
     }
 
-    private static Dictionary<string, object> BuildRequestBody(
+    private static JsonObject BuildRequestBody(
         List<AiChatMessage> messages,
         double temperature,
         bool stream,
         int? maxTokens,
         List<AiToolDefinition>? tools)
     {
-        var msgList = new List<object>();
+        var msgArr = new JsonArray();
         foreach (var m in messages)
         {
-            var msg = new Dictionary<string, object> { ["role"] = m.Role };
+            var msgObj = new JsonObject { ["role"] = m.Role };
 
             if (!string.IsNullOrEmpty(m.Content))
-                msg["content"] = m.Content;
+                msgObj["content"] = m.Content;
             else if (m.Role == "assistant" && m.ToolCalls is not null)
-                msg["content"] = "";
+                msgObj["content"] = "";
             else if (m.Role == "tool")
-                msg["content"] = m.Content ?? "";
+                msgObj["content"] = m.Content ?? "";
 
             if (m.ToolCalls is not null)
             {
-                msg["tool_calls"] = m.ToolCalls.Select(tc => new Dictionary<string, object>
+                var tcArr = new JsonArray();
+                foreach (var tc in m.ToolCalls)
                 {
-                    ["id"] = tc.Id,
-                    ["type"] = "function",
-                    ["function"] = new Dictionary<string, string>
+                    tcArr.Add(new JsonObject
                     {
-                        ["name"] = tc.Name,
-                        ["arguments"] = tc.Arguments
-                    }
-                }).ToList();
+                        ["id"] = tc.Id,
+                        ["type"] = "function",
+                        ["function"] = new JsonObject
+                        {
+                            ["name"] = tc.Name,
+                            ["arguments"] = tc.Arguments
+                        }
+                    });
+                }
+                msgObj["tool_calls"] = tcArr;
             }
 
             if (!string.IsNullOrEmpty(m.ToolCallId))
-                msg["tool_call_id"] = m.ToolCallId;
+                msgObj["tool_call_id"] = m.ToolCallId;
 
             if (!string.IsNullOrEmpty(m.Name))
-                msg["name"] = m.Name;
+                msgObj["name"] = m.Name;
 
-            msgList.Add(msg);
+            msgArr.Add(msgObj);
         }
 
-        var body = new Dictionary<string, object>
+        var body = new JsonObject
         {
             ["model"] = AppSettings.Get("AiModelName") ?? "",
-            ["messages"] = msgList,
+            ["messages"] = msgArr,
             ["temperature"] = temperature,
             ["stream"] = stream
         };
@@ -346,16 +346,22 @@ public static class AiService
 
         if (tools is not null && tools.Count > 0)
         {
-            body["tools"] = tools.Select(t => new Dictionary<string, object>
+            var toolsArr = new JsonArray();
+            foreach (var t in tools)
             {
-                ["type"] = "function",
-                ["function"] = new Dictionary<string, object>
+                var paramNode = JsonNode.Parse(t.ParametersJson);
+                toolsArr.Add(new JsonObject
                 {
-                    ["name"] = t.Name,
-                    ["description"] = t.Description,
-                    ["parameters"] = JsonSerializer.Deserialize<JsonElement>(t.ParametersJson)
-                }
-            }).ToList();
+                    ["type"] = "function",
+                    ["function"] = new JsonObject
+                    {
+                        ["name"] = t.Name,
+                        ["description"] = t.Description,
+                        ["parameters"] = paramNode
+                    }
+                });
+            }
+            body["tools"] = toolsArr;
         }
 
         return body;

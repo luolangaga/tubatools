@@ -1300,7 +1300,7 @@ public sealed class PcTutorialPage : Page
             catch { }
             try
             {
-                var navFrame = typeof(MainWindow).GetField("NavFrame", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(App.MainWindow) as Frame;
+                var navFrame = (App.MainWindow as MainWindow)?.NavigationFrame;
                 if (navFrame is not null)
                     navFrame.Navigate(pageType);
             }

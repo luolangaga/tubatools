@@ -276,9 +276,9 @@ public sealed class AiAssistantTool : IBuiltinTool
                         {
                             FinalizeStreamingBubble(state, streamingBubble, fullContent.ToString());
 
-                            var actionContent = "[ACTION]\n" + System.Text.Json.JsonSerializer.Serialize(actions.Select(a => new
+                            var actionContent = "[ACTION]\n" + System.Text.Json.JsonSerializer.Serialize(actions.Select(a => new AiActionExportDto
                             {
-                                kind = a.Kind switch
+                                Kind = a.Kind switch
                                 {
                                     AiActionKind.RunCommand => "run_command",
                                     AiActionKind.ModifyConfig => "write_reg",
@@ -286,10 +286,10 @@ public sealed class AiAssistantTool : IBuiltinTool
                                     AiActionKind.ReadConfig => "read_reg",
                                     _ => "info"
                                 },
-                                description = a.Description,
-                                detail = a.Detail,
-                                reason = a.Reason
-                            }));
+                                Description = a.Description,
+                                Detail = a.Detail,
+                                Reason = a.Reason
+                            }), TubaCamelCaseContext.Default.ListAiActionExportDto);
                             var card = AiMarkdownRenderer.CreateActionCard(actionContent, onAllResolved: results =>
                             {
                                 ContinueAfterActions(state, results);
@@ -403,9 +403,9 @@ public sealed class AiAssistantTool : IBuiltinTool
                         {
                             FinalizeStreamingBubble(state, streamingBubble, fullContent.ToString());
 
-                            var actionContent = "[ACTION]\n" + System.Text.Json.JsonSerializer.Serialize(actions.Select(a => new
+                            var actionContent = "[ACTION]\n" + System.Text.Json.JsonSerializer.Serialize(actions.Select(a => new AiActionExportDto
                             {
-                                kind = a.Kind switch
+                                Kind = a.Kind switch
                                 {
                                     AiActionKind.RunCommand => "run_command",
                                     AiActionKind.ModifyConfig => "write_reg",
@@ -413,10 +413,10 @@ public sealed class AiAssistantTool : IBuiltinTool
                                     AiActionKind.ReadConfig => "read_reg",
                                     _ => "info"
                                 },
-                                description = a.Description,
-                                detail = a.Detail,
-                                reason = a.Reason
-                            }));
+                                Description = a.Description,
+                                Detail = a.Detail,
+                                Reason = a.Reason
+                            }), TubaCamelCaseContext.Default.ListAiActionExportDto);
                             var card = AiMarkdownRenderer.CreateActionCard(actionContent, onAllResolved: results =>
                             {
                                 ContinueAfterActions(state, results);

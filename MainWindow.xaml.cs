@@ -18,6 +18,8 @@ namespace TubaWinUi3;
 
 public sealed partial class MainWindow : Window
 {
+    public Frame NavigationFrame => NavFrame;
+
     private bool _syncingNavSelection;
     private bool _navFromSidebar;
     private bool _suppressSearch;

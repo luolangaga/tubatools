@@ -19,7 +19,11 @@
     <Version>1.0.2</Version>
     <DefaultItemExcludes>$(DefaultItemExcludes);artifacts\**;TubaWinUi3.Compatible\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>CA2252;CA2014</NoWarn>
+    <NoWarn>CA2252;CA2014;IL3050;IL2091</NoWarn>
+    <IsAotCompatible>true</IsAotCompatible>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <EventSourceSupport>true</EventSourceSupport>
+    <HybridGlobalization>true</HybridGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,6 +56,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization" Value="true" />
+    <RuntimeHostConfigurationOption Include="System.ComponentModel.TypeConverter.EnableUnsafeBinaryFormatterInTypeConverter" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
@@ -81,9 +90,16 @@
   <!-- Publish Properties -->
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">False</PublishReadyToRun>
-    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishAot>true</PublishAot>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Management" />
+  </ItemGroup>
 </Project>

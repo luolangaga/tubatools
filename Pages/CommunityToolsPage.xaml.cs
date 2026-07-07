@@ -1115,37 +1115,33 @@ public sealed partial class CommunityToolsPage : Page
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .ToList();
 
-        var plugin = new Dictionary<string, object?>
+        var pluginDto = new CommunityToolPluginDto
         {
-            ["id"] = toolId,
-            ["name"] = name,
-            ["version"] = string.IsNullOrWhiteSpace(version) ? "1.0" : version,
-            ["description"] = description,
-            ["category"] = category,
-            ["tags"] = tagList,
-            ["file"] = fileName,
-            ["launchTarget"] = launchTarget,
-            ["author"] = author,
-            ["submittedAt"] = DateTimeOffset.UtcNow.ToString("o")
+            Id = toolId,
+            Name = name,
+            Version = string.IsNullOrWhiteSpace(version) ? "1.0" : version,
+            Description = description,
+            Category = category,
+            Tags = tagList,
+            File = fileName,
+            LaunchTarget = launchTarget,
+            Author = author,
+            SubmittedAt = DateTimeOffset.UtcNow
         };
 
-        if (!string.IsNullOrWhiteSpace(publisher)) plugin["publisher"] = publisher;
-        if (!string.IsNullOrWhiteSpace(homepage)) plugin["homepage"] = homepage;
-        if (!string.IsNullOrWhiteSpace(iconFileName)) plugin["icon"] = iconFileName;
+        if (!string.IsNullOrWhiteSpace(publisher)) pluginDto.Publisher = publisher;
+        if (!string.IsNullOrWhiteSpace(homepage)) pluginDto.Homepage = homepage;
+        if (!string.IsNullOrWhiteSpace(iconFileName)) pluginDto.Icon = iconFileName;
 
         if (archVariants.Count > 0)
         {
-            plugin["archVariants"] = archVariants.Select(v => new Dictionary<string, object?>
+            pluginDto.ArchVariants = archVariants.Select(v => new CommunityArchVariantDto
             {
-                ["file"] = v.EntryPath.Replace('\\', '/').TrimStart('/'),
-                ["arch"] = v.Arch
+                File = v.EntryPath.Replace('\\', '/').TrimStart('/'),
+                Arch = v.Arch
             }).ToList();
         }
 
-        return JsonSerializer.Serialize(plugin, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+        return JsonSerializer.Serialize(pluginDto, TubaDefaultIndentedContext.Default.CommunityToolPluginDto);
     }
 }

@@ -18,7 +18,7 @@ public static class LaunchHistoryService
             if (File.Exists(HistoryPath))
             {
                 var json = File.ReadAllText(HistoryPath);
-                _cache = JsonSerializer.Deserialize<List<string>>(json) ?? [];
+                _cache = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListString) ?? [];
             }
             else
             {
@@ -65,7 +65,7 @@ public static class LaunchHistoryService
         {
             var dir = Path.GetDirectoryName(HistoryPath)!;
             Directory.CreateDirectory(dir);
-            var json = JsonSerializer.Serialize(history);
+            var json = JsonSerializer.Serialize(history, TubaDefaultContext.Default.ListString);
             File.WriteAllText(HistoryPath, json);
         }
         catch { }

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Management;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -7,6 +8,7 @@ using System.Xml.Linq;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "WMI requires reflection")]
 public sealed record BatteryTrendPoint(DateTime Timestamp, int ChargePercent, int CapacityMwh, bool OnAcPower, string State);
 
 public sealed record BatteryWeeklyEntry(DateTime StartDate, DateTime EndDate, double FullChargeMwh, double DesignMwh, int CycleCount, TimeSpan ActiveDcTime, double ActiveDcEnergyMwh);

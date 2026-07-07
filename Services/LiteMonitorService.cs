@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Management;
 using LibreHardwareMonitor.Hardware;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+[UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = "LibreHardwareMonitor uses reflection for sensor discovery")]
+[UnconditionalSuppressMessage("Aot", "IL3050:RequiresDynamicCode", Justification = "LibreHardwareMonitor requires dynamic code generation")]
 public sealed class LiteMonitorService : IDisposable
 {
     private static Computer? s_computer;

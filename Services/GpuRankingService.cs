@@ -136,8 +136,7 @@ public static class GpuRankingService
                 };
             }
 
-            var data = JsonSerializer.Deserialize<GpuRankingData>(json,
-                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var data = JsonSerializer.Deserialize(json, TubaCamelCaseContext.Default.GpuRankingData);
 
             if (data is null || (data.Desktop.Count == 0 && data.Laptop.Count == 0))
             {
@@ -204,8 +203,7 @@ public static class GpuRankingService
 
     private static void ParseAndSet(string json)
     {
-        var data = JsonSerializer.Deserialize<GpuRankingData>(json,
-            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var data = JsonSerializer.Deserialize(json, TubaCamelCaseContext.Default.GpuRankingData);
         if (data is null)
         {
             _desktop = [];
@@ -237,11 +235,7 @@ public static class GpuRankingService
                 Laptop = _laptop ?? []
             };
 
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = true
-            });
+            var json = JsonSerializer.Serialize(data, TubaCamelCaseIndentedContext.Default.GpuRankingData);
 
             File.WriteAllText(path, json);
         }
@@ -269,14 +263,6 @@ public static class GpuRankingService
         if (File.Exists(cachePath)) return cachePath;
 
         return null;
-    }
-
-    private sealed class GpuRankingData
-    {
-        public string LastUpdated { get; set; } = "";
-        public string Source { get; set; } = "";
-        public List<GpuRankingEntry> Desktop { get; set; } = [];
-        public List<GpuRankingEntry> Laptop { get; set; } = [];
     }
 }
 

@@ -12,8 +12,6 @@ public static class DownloadQueueService
 {
     private const int MaxConcurrentDownloads = 2;
     private const string PartialSuffix = ".tubadl";
-    private static readonly JsonSerializerOptions _jsonOpts = new() { WriteIndented = true };
-
     private static readonly HttpClient _downloadClient;
     private static readonly SemaphoreSlim _semaphore = new(MaxConcurrentDownloads);
     private static readonly ObservableCollection<DownloadItem> _queue = [];
@@ -160,7 +158,7 @@ public static class DownloadQueueService
             try
             {
                 var entries = _queue.Select(ToEntry).ToList();
-                var json = JsonSerializer.Serialize(entries, _jsonOpts);
+                var json = JsonSerializer.Serialize(entries, TubaDefaultIndentedContext.Default.ListDownloadQueueEntry);
                 var path = ConfigManager.GetDownloadQueuePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
                 File.WriteAllText(path, json);
@@ -202,7 +200,7 @@ public static class DownloadQueueService
             if (!File.Exists(path)) return;
 
             var json = File.ReadAllText(path);
-            var entries = JsonSerializer.Deserialize<List<DownloadQueueEntry>>(json);
+            var entries = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListDownloadQueueEntry);
             if (entries is null) return;
 
             foreach (var entry in entries)

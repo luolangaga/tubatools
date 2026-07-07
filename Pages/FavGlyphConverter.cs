@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Data;
 
 namespace TubaWinUi3.Pages;
 
-public sealed class FavGlyphConverter : IValueConverter
+public sealed partial class FavGlyphConverter : IValueConverter
 {
     private const string StarGlyph = "\uE735";
     private const string StarOutlineGlyph = "\uE734";
@@ -19,7 +19,7 @@ public sealed class FavGlyphConverter : IValueConverter
     }
 }
 
-public sealed class InvertBoolToVisibilityConverter : IValueConverter
+public sealed partial class InvertBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -32,7 +32,7 @@ public sealed class InvertBoolToVisibilityConverter : IValueConverter
     }
 }
 
-public sealed class NullToVisibilityConverter : IValueConverter
+public sealed partial class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -53,7 +53,7 @@ public sealed class NullToVisibilityConverter : IValueConverter
     }
 }
 
-public sealed class HasAlternatesToVisibilityConverter : IValueConverter
+public sealed partial class HasAlternatesToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

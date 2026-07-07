@@ -20,10 +20,7 @@ public static class PcSetupCatalogService
         try
         {
             var json = File.ReadAllText(path);
-            var db = JsonSerializer.Deserialize<CatalogDatabase>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var db = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.CatalogDatabase);
             _cache = db?.Categories ?? [];
             return _cache;
         }
@@ -195,11 +192,5 @@ public static class PcSetupCatalogService
             dir = parent;
         }
         return Path.Combine(AppContext.BaseDirectory, folderName);
-    }
-
-    private sealed class CatalogDatabase
-    {
-        [JsonPropertyName("categories")]
-        public List<CatalogCategory>? Categories { get; set; }
     }
 }

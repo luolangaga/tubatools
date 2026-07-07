@@ -67,7 +67,7 @@ public static class ToolCatalog
         {
             try
             {
-                ordered = System.Text.Json.JsonSerializer.Deserialize<List<string>>(orderJson);
+                ordered = System.Text.Json.JsonSerializer.Deserialize(orderJson, TubaDefaultContext.Default.ListString);
             }
             catch { }
         }
@@ -134,7 +134,7 @@ public static class ToolCatalog
         {
             try
             {
-                toolOrder = System.Text.Json.JsonSerializer.Deserialize<List<string>>(toolOrderJson);
+                toolOrder = System.Text.Json.JsonSerializer.Deserialize(toolOrderJson, TubaDefaultContext.Default.ListString);
             }
             catch { }
         }

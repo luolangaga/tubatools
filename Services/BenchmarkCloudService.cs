@@ -49,11 +49,7 @@ public static class BenchmarkCloudService
 		string token = GitHubAuthService.GetToken() ?? throw new InvalidOperationException("GitHub Token 无效");
 		var user = (await GitHubAuthService.GetCurrentUserAsync(ct)) ?? throw new InvalidOperationException("无法获取 GitHub 用户信息");
 		var entry = ToReportEntry(result, user.Login);
-		string json = JsonSerializer.Serialize(entry, new JsonSerializerOptions
-		{
-			WriteIndented = false,
-			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-		});
+		string json = JsonSerializer.Serialize(entry, TubaCamelCaseContext.Default.BenchmarkReportEntry);
 		progress?.Report("正在 Fork 仓库...");
 		string forkOwner = await EnsureForkAsync(token, ct);
 		progress?.Report("正在同步 Fork...");
@@ -179,10 +175,7 @@ public static class BenchmarkCloudService
 							string content = await DownloadBlobAsync(sha, ct);
 							if (content != null)
 							{
-								var entry = JsonSerializer.Deserialize<BenchmarkReportEntry>(content, new JsonSerializerOptions
-								{
-									PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-								});
+							var entry = JsonSerializer.Deserialize(content, TubaCamelCaseContext.Default.BenchmarkReportEntry);
 								if (entry != null)
 								{
 									entry.RepoPath = $"{ReportsPath}/{userDir}/{fileName}";
@@ -322,11 +315,7 @@ public static class BenchmarkCloudService
 			return;
 		}
 		using var client = GitHubAuthService.CreateAuthenticatedClient();
-		var content = new StringContent(JsonSerializer.Serialize(new
-		{
-			sha = upstreamMainSha,
-			force = true
-		}), Encoding.UTF8, "application/json");
+		var content = new StringContent(JsonSerializer.Serialize(new GitHubForcePushBody { Sha = upstreamMainSha, Force = true }, TubaNullIgnoreContext.Default.GitHubForcePushBody), Encoding.UTF8, "application/json");
 		await client.PatchAsync($"https://api.github.com/repos/{forkOwner}/{UpstreamRepo}/git/refs/heads/main", content, ct);
 	}
 
@@ -423,11 +412,7 @@ public static class BenchmarkCloudService
 	private static async Task CreateRefAsync(string owner, string repo, string refName, string sha, string token, CancellationToken ct)
 	{
 		using var client = GitHubAuthService.CreateAuthenticatedClient();
-		var content = new StringContent(JsonSerializer.Serialize(new
-		{
-			@ref = refName,
-			sha = sha
-		}), Encoding.UTF8, "application/json");
+		var content = new StringContent(JsonSerializer.Serialize(new GitHubUpdateRefBody { RefName = refName, Sha = sha }, TubaNullIgnoreContext.Default.GitHubUpdateRefBody), Encoding.UTF8, "application/json");
 		var resp = await client.PostAsync($"https://api.github.com/repos/{owner}/{repo}/git/refs", content, ct);
 		if (!resp.IsSuccessStatusCode)
 		{
@@ -440,12 +425,7 @@ public static class BenchmarkCloudService
 	{
 		using var client = GitHubAuthService.CreateAuthenticatedClient();
 		string base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-		var requestContent = new StringContent(JsonSerializer.Serialize(new
-		{
-			message = "benchmark: upload report - " + Path.GetFileNameWithoutExtension(path),
-			content = base64Content,
-			branch = branch
-		}), Encoding.UTF8, "application/json");
+		var requestContent = new StringContent(JsonSerializer.Serialize(new GitHubCreateFileBody { Message = "benchmark: upload report - " + Path.GetFileNameWithoutExtension(path), Content = base64Content, Branch = branch }, TubaNullIgnoreContext.Default.GitHubCreateFileBody), Encoding.UTF8, "application/json");
 		var resp = await client.PutAsync($"https://api.github.com/repos/{owner}/{repo}/contents/{path}", requestContent, ct);
 		if (!resp.IsSuccessStatusCode)
 		{
@@ -458,13 +438,7 @@ public static class BenchmarkCloudService
 	{
 		using var client = GitHubAuthService.CreateAuthenticatedClient();
 		string body = $"## 性能测试报告上传\n\n- **CPU**：{entry.CpuName}\n- **GPU**：{entry.GpuName}\n- **游戏性能**：{entry.GamingScore} ({entry.GamingGrade})\n- **办公性能**：{entry.OfficeScore} ({entry.OfficeGrade})\n- **提交者**：@{entry.Author}\n";
-		var content = new StringContent(JsonSerializer.Serialize(new
-		{
-			title = "[性能报告] " + entry.CpuName + " / " + entry.GpuName,
-			head = forkOwner + ":" + branch,
-			@base = "main",
-			body = body
-		}), Encoding.UTF8, "application/json");
+		var content = new StringContent(JsonSerializer.Serialize(new GitHubCreatePrBody { Title = "[性能报告] " + entry.CpuName + " / " + entry.GpuName, Head = forkOwner + ":" + branch, BaseRef = "main", Body = body }, TubaNullIgnoreContext.Default.GitHubCreatePrBody), Encoding.UTF8, "application/json");
 		var resp = await client.PostAsync("https://api.github.com/repos/luolangaga/tubatoolsPlugin/pulls", content, ct);
 		if (!resp.IsSuccessStatusCode)
 		{
@@ -484,12 +458,7 @@ public static class BenchmarkCloudService
 			throw new InvalidOperationException($"获取文件信息失败：{(int)getResp.StatusCode}\n{body}");
 		}
 		string fileSha = JsonDocument.Parse(await getResp.Content.ReadAsStringAsync(ct)).RootElement.GetProperty("sha").GetString() ?? "";
-		var content = new StringContent(JsonSerializer.Serialize(new
-		{
-			message = "benchmark: delete report - " + Path.GetFileNameWithoutExtension(path),
-			sha = fileSha,
-			branch = branch
-		}), Encoding.UTF8, "application/json");
+		var content = new StringContent(JsonSerializer.Serialize(new GitHubDeleteFileBody { Message = "benchmark: delete report - " + Path.GetFileNameWithoutExtension(path), Sha = fileSha, Branch = branch }, TubaNullIgnoreContext.Default.GitHubDeleteFileBody), Encoding.UTF8, "application/json");
 		var request = new HttpRequestMessage(HttpMethod.Delete, $"https://api.github.com/repos/{owner}/{repo}/contents/{path}")
 		{
 			Content = content
@@ -506,13 +475,7 @@ public static class BenchmarkCloudService
 	{
 		using var client = GitHubAuthService.CreateAuthenticatedClient();
 		string body = $"## 删除性能测试报告\n\n- **报告ID**：{entry.Id}\n- **CPU**：{entry.CpuName}\n- **GPU**：{entry.GpuName}\n- **提交者**：@{entry.Author}\n";
-		var content = new StringContent(JsonSerializer.Serialize(new
-		{
-			title = "[删除报告] " + entry.CpuName + " / " + entry.GpuName,
-			head = forkOwner + ":" + branch,
-			@base = "main",
-			body = body
-		}), Encoding.UTF8, "application/json");
+		var content = new StringContent(JsonSerializer.Serialize(new GitHubCreatePrBody { Title = "[删除报告] " + entry.CpuName + " / " + entry.GpuName, Head = forkOwner + ":" + branch, BaseRef = "main", Body = body }, TubaNullIgnoreContext.Default.GitHubCreatePrBody), Encoding.UTF8, "application/json");
 		var resp = await client.PostAsync("https://api.github.com/repos/luolangaga/tubatoolsPlugin/pulls", content, ct);
 		if (!resp.IsSuccessStatusCode)
 		{

@@ -19,7 +19,7 @@ public static class AppSettings
             if (File.Exists(SettingsPath))
             {
                 var json = File.ReadAllText(SettingsPath);
-                _cache = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? [];
+                _cache = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.DictionaryStringString) ?? [];
             }
             else
             {
@@ -40,7 +40,7 @@ public static class AppSettings
         {
             var dir = Path.GetDirectoryName(SettingsPath)!;
             Directory.CreateDirectory(dir);
-            var json = JsonSerializer.Serialize(_cache);
+            var json = JsonSerializer.Serialize(_cache, TubaDefaultContext.Default.DictionaryStringString);
             File.WriteAllText(SettingsPath, json);
             _dirty = false;
         }

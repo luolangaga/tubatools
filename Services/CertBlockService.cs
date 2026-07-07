@@ -122,9 +122,9 @@ public static class CertBlockService
         var namesJson = ReadAssetFile(baseDir, "display-names.json");
         if (mapJson is null) return;
 
-        var map = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(mapJson)!;
+        var map = JsonSerializer.Deserialize(mapJson, TubaDefaultContext.Default.DictionaryStringListString)!;
         var names = namesJson is not null
-            ? JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(namesJson)
+            ? JsonSerializer.Deserialize(namesJson, TubaDefaultContext.Default.DictionaryStringDictionaryStringString)
             : null;
 
         var vendors = new List<CertBlockVendor>();

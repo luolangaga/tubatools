@@ -403,7 +403,7 @@ public sealed partial class CustomToolManagerWindow : Window
         if (category is null) return;
 
         var newOrder = category.Tools.Select(t => t.Name).ToList();
-        var json = System.Text.Json.JsonSerializer.Serialize(newOrder);
+        var json = System.Text.Json.JsonSerializer.Serialize(newOrder, TubaDefaultContext.Default.ListString);
         AppSettings.Set($"ToolOrder_{categoryName}", json);
     }
 
@@ -451,7 +451,7 @@ public sealed partial class CustomToolManagerWindow : Window
 
         var iconGridView = new GridView
         {
-            ItemsSource = iconOptions.Select(o => new { o.Label, o.Glyph }).ToList(),
+            ItemsSource = iconOptions.Select(o => new IconOption(o.Label, o.Glyph)).ToList(),
             SelectionMode = ListViewSelectionMode.Single,
             MaxHeight = 200,
             Padding = new Thickness(0, 8, 0, 0)
@@ -499,7 +499,7 @@ public sealed partial class CustomToolManagerWindow : Window
             if (iconGridView.SelectedItem is not null)
             {
                 customGlyphBox.Text = "";
-                var g = (string)iconGridView.SelectedItem.GetType().GetProperty("Glyph")!.GetValue(iconGridView.SelectedItem)!;
+                var g = ((IconOption)iconGridView.SelectedItem).Glyph;
                 glyphPreview.Glyph = g;
             }
         };
@@ -576,7 +576,7 @@ public sealed partial class CustomToolManagerWindow : Window
         }
         else if (iconGridView.SelectedItem is not null)
         {
-            selectedGlyph = (string)iconGridView.SelectedItem.GetType().GetProperty("Glyph")!.GetValue(iconGridView.SelectedItem)!;
+            selectedGlyph = ((IconOption)iconGridView.SelectedItem).Glyph;
         }
         else
         {
@@ -873,7 +873,7 @@ public sealed partial class CustomToolManagerWindow : Window
     private void SaveCategoryOrder()
     {
         var order = _categories.Select(c => c.Name).ToList();
-        var json = System.Text.Json.JsonSerializer.Serialize(order);
+        var json = System.Text.Json.JsonSerializer.Serialize(order, TubaDefaultContext.Default.ListString);
         AppSettings.Set("CategoryOrder", json);
     }
 
@@ -882,7 +882,7 @@ public sealed partial class CustomToolManagerWindow : Window
         var cat = _categories.FirstOrDefault(c => c.Name == category);
         if (cat is null) return;
         var order = cat.Tools.Select(t => t.Name).ToList();
-        var json = System.Text.Json.JsonSerializer.Serialize(order);
+        var json = System.Text.Json.JsonSerializer.Serialize(order, TubaDefaultContext.Default.ListString);
         AppSettings.Set($"ToolOrder_{category}", json);
     }
 
@@ -933,4 +933,12 @@ public sealed class ToolViewModel
     }
 
     public override string ToString() => Name;
+}
+
+internal sealed class IconOption
+{
+    public string Label { get; }
+    public string Glyph { get; }
+    public IconOption(string label, string glyph) { Label = label; Glyph = glyph; }
+    public override string ToString() => Label;
 }

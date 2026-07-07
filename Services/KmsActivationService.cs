@@ -53,10 +53,7 @@ public static class KmsActivationService
         using var http = new HttpClient();
         http.Timeout = TimeSpan.FromSeconds(15);
         var json = await http.GetStringAsync(ApiUrl, ct);
-        var rawList = JsonSerializer.Deserialize<List<KmsRawItem>>(json, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var rawList = JsonSerializer.Deserialize(json, TubaDefaultContext.Default.ListKmsRawItem);
 
         if (rawList is null) return [];
 
@@ -166,26 +163,5 @@ slmgr /xpr
             CreateNoWindow = true
         };
         System.Diagnostics.Process.Start(psi);
-    }
-
-    private sealed class KmsRawItem
-    {
-        public string? Host { get; set; }
-        public int Port { get; set; }
-        public string? Country { get; set; }
-        public int ConnectCount { get; set; }
-        public int ActivateCount { get; set; }
-        public int FailedCount { get; set; }
-        public double AverageTime { get; set; }
-        public string? LastCheckDate { get; set; }
-        public List<KmsRawResult>? Results { get; set; }
-    }
-
-    private sealed class KmsRawResult
-    {
-        public string? Address { get; set; }
-        public string? Country { get; set; }
-        public double Time { get; set; }
-        public bool Result { get; set; }
     }
 }

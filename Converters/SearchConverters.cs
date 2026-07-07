@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Data;
 
 namespace TubaWinUi3;
 
-public sealed class IconPathToVisibilityConverter : IValueConverter
+public sealed partial class IconPathToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -16,7 +16,7 @@ public sealed class IconPathToVisibilityConverter : IValueConverter
     }
 }
 
-public sealed class InverseBoolToVisibilityConverter : IValueConverter
+public sealed partial class InverseBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
