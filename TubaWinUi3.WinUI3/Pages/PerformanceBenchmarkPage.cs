@@ -1039,8 +1039,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				_winTotalText.Text = $"{winResult.BestAvgMs:F0} ms";
 			});
 
-			// 展示结果后等待用户关闭
-			await showTask;
+			// 得分已同步到主页面，稍作停留展示结果后自动关闭弹窗
+			await Task.Delay(1500);
 		}
 		finally
 		{
