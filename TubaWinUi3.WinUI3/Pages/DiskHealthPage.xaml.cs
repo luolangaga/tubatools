@@ -39,6 +39,11 @@ public sealed class DiskCardVm
     public required SolidColorBrush WriteBarBrush { get; init; }
     public required string OperationalText { get; init; }
     public required SolidColorBrush OperationalBrush { get; init; }
+    /// <summary>该盘读取失败时的错误信息（展示在卡片上；空字符串 = 读取正常）。</summary>
+    public string ErrorDetail { get; init; } = "";
+
+    /// <summary>错误信息可见性：仅读取失败的盘展示错误行。</summary>
+    public Visibility ErrorDetailVisibility => ErrorDetail.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
 }
 
 /// <summary>小圆角提示框（标签）。</summary>
@@ -202,7 +207,9 @@ public sealed partial class DiskHealthPage : Page
 
     private DiskCardVm BuildDiskCard(DiskHealthInfo disk, ref int paletteCursor)
     {
-        var healthColor = disk.HealthStatus switch
+        // 该项读取失败：健康度不判定，卡片以「读取失败」标记并展示错误信息；其余盘不受影响
+        var hasError = disk.HasError;
+        var healthColor = hasError ? NeutralGray : disk.HealthStatus switch
         {
             "healthy" => SuccessGreen,
             "warning" => CautionAmber,
@@ -210,7 +217,17 @@ public sealed partial class DiskHealthPage : Page
             _ => NeutralGray,
         };
 
-        var tags = new List<DiskTagVm> { BuildHealthTag(disk.HealthStatus) };
+        var tags = new List<DiskTagVm>();
+        if (hasError)
+            tags.Add(new DiskTagVm
+            {
+                Text = "读取失败",
+                Glyph = "\uEA39",
+                Background = Brush(Color.FromArgb(0x1E, CriticalRed.R, CriticalRed.G, CriticalRed.B)),
+                Foreground = Brush(CriticalRed),
+            });
+        else
+            tags.Add(BuildHealthTag(disk.HealthStatus));
         tags.AddRange(BuildInfoTags(disk));
 
         // 温度环：0-100°C 满量程
@@ -256,21 +273,30 @@ public sealed partial class DiskHealthPage : Page
             ReadWriteMax = Math.Max(Math.Max(readGb, writeGb), 0.1),
             ReadBarBrush = Brush(BrandBlue),
             WriteBarBrush = Brush(BrandViolet),
-            OperationalText = disk.OperationalStatus switch
-            {
-                "OK" => "正常",
-                "Degraded" => "降级",
-                "Failure" => "故障",
-                _ => "未知",
-            },
-            OperationalBrush = Brush(disk.HealthStatus switch
+            OperationalText = hasError ? "读取失败"
+                : disk.OperationalStatus switch
+                {
+                    "OK" => "正常",
+                    "Degraded" => "降级",
+                    "Failure" => "故障",
+                    _ => "未知",
+                },
+            OperationalBrush = Brush(hasError ? CriticalRed : disk.HealthStatus switch
             {
                 "healthy" => SuccessGreen,
                 "warning" => CautionAmber,
                 "unhealthy" => CriticalRed,
                 _ => NeutralGray,
             }),
+            ErrorDetail = hasError ? TruncateError(disk.Error ?? "未知错误") : "",
         };
+    }
+
+    /// <summary>错误信息截断为单行可读长度（完整信息在悬停提示中）。</summary>
+    private static string TruncateError(string message)
+    {
+        const int max = 60;
+        return message.Length <= max ? message : message[..max] + "…";
     }
 
     private static DiskTagVm BuildHealthTag(string healthStatus)
@@ -319,7 +345,7 @@ public sealed partial class DiskHealthPage : Page
                 Background = Brush(Color.FromArgb(0x1E, CautionAmber.R, CautionAmber.G, CautionAmber.B)),
                 Foreground = Brush(CautionAmber),
             });
-        if (!disk.HasSmart)
+        if (!disk.HasSmart && !disk.HasError)
             tags.Add(GrayTag("SMART 不可读"));
         return tags;
     }

@@ -229,10 +229,15 @@
                                                             </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
+</ItemsControl>
+                                                <!-- 单项读取失败：在卡片上标记该盘错误，不拖垮整页 -->
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#F2503B"
+                                                           TextWrapping="Wrap" MaxLines="2" Text="{x:Bind ErrorDetail}"
+                                                           Visibility="{x:Bind ErrorDetailVisibility}"
+                                                           ToolTipService.ToolTip="{x:Bind ErrorDetail}" />
+                                        </StackPanel>
 
-                                            <!-- 温度环图 -->
+                                        <!-- 温度环图 -->
                                             <Grid Grid.Column="2" Width="64" Height="64" VerticalAlignment="Center">
                                                 <controls:RingGauge GaugeSize="64" StrokeThickness="7"
                                                                     Value="{x:Bind TempRingValue}" Stroke="{x:Bind TempRingBrush}"

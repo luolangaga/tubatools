@@ -13,6 +13,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
     private int _currentQuestion = -1; // -1 = welcome, 0..N-1 = questions, N = result
     private int _totalScore;
     private int[]? _selectedAnswers;
+    private int[][]? _shuffledOrders; // per question: display position → original option index
     private bool _answered;
 
     private const int TotalQuestions = 25;
@@ -128,10 +129,6 @@ public sealed partial class DigitalLiteracyTestPage : Page
         new("你用手机下载了一个 .exe 文件，提示无法打开，原因是？",
             ["手机的 ARM 处理器缺少 x86 指令集的微码支持，无法解析 PE 格式", ".exe 是 Windows PE（Portable Executable）格式，Android/iOS 系统无法运行", "文件在下载过程中因网络丢包导致二进制校验失败", "手机的 SELinux 安全策略阻止了未签名二进制文件的执行"],
             1, ".exe 是 Windows 平台的 PE（Portable Executable）可执行格式，Android 使用 ELF/APK，架构完全不同。"),
-
-        new("你不会从网盘下载别人分享的资源，正确的操作流程是？",
-            ["截图保存分享页面，下次打开图片扫码即可恢复链接", "打开分享链接 → 转存到我的网盘 → 选中文件 → 下载到本地磁盘", "使用 aria2 配合网盘的 API 接口直接离线下载到本地", "通过网盘的 RSS 订阅功能自动同步更新的文件到本地"],
-            1, "网盘下载标准流程：打开分享链接 → 转存到自己网盘 → 选中文件 → 点击下载 → 选择本地保存路径。"),
     ];
 
     public DigitalLiteracyTestPage()
@@ -275,6 +272,9 @@ public sealed partial class DigitalLiteracyTestPage : Page
             _answered = false;
             for (int i = 0; i < TotalQuestions; i++)
                 _selectedAnswers![i] = -1;
+            _shuffledOrders = new int[TotalQuestions][];
+            for (int i = 0; i < TotalQuestions; i++)
+                _shuffledOrders[i] = CreateShuffle(Questions[i].Options.Length);
             ShowQuestion();
         };
         stack.Children.Add(startBtn);
@@ -341,14 +341,16 @@ public sealed partial class DigitalLiteracyTestPage : Page
             TextWrapping = TextWrapping.Wrap
         });
 
-        // Options
+        // Options（显示顺序已按洗牌结果排列，正确项不一定在 B）
         var optionsPanel = new StackPanel { Spacing = 10 };
         string[] labels = ["A", "B", "C", "D"];
+        var order = _shuffledOrders![_currentQuestion];
 
         for (int i = 0; i < q.Options.Length; i++)
         {
-            int optionIndex = i;
-            var optionCard = BuildOptionCard(labels[i], q.Options[i], optionIndex, q);
+            int displayIndex = i;
+            int originalIndex = order[i];
+            var optionCard = BuildOptionCard(labels[displayIndex], q.Options[originalIndex], originalIndex, q);
             optionsPanel.Children.Add(optionCard);
         }
         stack.Children.Add(optionsPanel);
@@ -408,9 +410,9 @@ public sealed partial class DigitalLiteracyTestPage : Page
         PlayTransition();
     }
 
-    private Border BuildOptionCard(string label, string text, int optionIndex, QuizQuestion q)
+    private Border BuildOptionCard(string label, string text, int originalIndex, QuizQuestion q)
     {
-        bool isCorrect = optionIndex == q.CorrectIndex;
+        bool isCorrect = originalIndex == q.CorrectIndex;
 
         var card = new Border
         {
@@ -419,7 +421,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             BorderThickness = new Thickness(1.5),
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            Tag = optionIndex
+            Tag = originalIndex
         };
 
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14 };
@@ -478,7 +480,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         {
             if (_answered) return;
             _answered = true;
-            _selectedAnswers![_currentQuestion] = optionIndex;
+            _selectedAnswers![_currentQuestion] = originalIndex;
 
             if (isCorrect)
                 _totalScore += PointsPerQuestion;
@@ -491,7 +493,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
                 {
                     int idx = (int)optCard.Tag!;
                     bool thisCorrect = idx == q.CorrectIndex;
-                    bool thisSelected = idx == optionIndex;
+                    bool thisSelected = idx == originalIndex;
 
                     if (thisCorrect)
                     {
@@ -791,6 +793,18 @@ public sealed partial class DigitalLiteracyTestPage : Page
     }
 
     #endregion
+
+    // Fisher-Yates 洗牌：返回 [0..count) 的一个随机排列
+    private static int[] CreateShuffle(int count)
+    {
+        var order = Enumerable.Range(0, count).ToArray();
+        for (int i = count - 1; i > 0; i--)
+        {
+            int j = Random.Shared.Next(i + 1);
+            (order[i], order[j]) = (order[j], order[i]);
+        }
+        return order;
+    }
 
     #region Data Model
 

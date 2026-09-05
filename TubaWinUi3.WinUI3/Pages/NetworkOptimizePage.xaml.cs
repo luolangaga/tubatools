@@ -94,6 +94,17 @@ public sealed partial class NetworkOptimizePage : Page
     private static readonly Color CriticalRed = Color.FromArgb(255, 242, 80, 59);
     private static readonly Color NeutralGray = Color.FromArgb(255, 142, 142, 142);
 
+    /// <summary>各优化项开启前确认弹窗的影响说明（关闭/恢复默认无需确认）。</summary>
+    private static readonly Dictionary<string, string> EnableImpactMessages = new()
+    {
+        ["tcp-congestion"] = "将系统 TCP 拥塞控制算法从默认的 NewReno 切换为 CTCP（Compound TCP）。在大带宽、高延迟链路（如大文件下载、跨地域传输）上可提升吞吐量；普通家用网络收益很小。可随时关闭恢复默认。",
+        ["chimney-offload"] = "将关闭 TCP Chimney Offload（网卡 TCP 硬件卸载）。该功能自 Windows 8 起已被微软弃用、默认即为关闭状态，此操作主要起确认作用，对现代系统影响很小。",
+        ["nagle-algorithm"] = "将全局禁用 Nagle 算法并直接回 ACK：小包立即发送、立即确认，游戏/远程桌面等交互场景延迟更低。代价是网络包数量略增，低速连接吞吐可能受到轻微影响。该设置写入注册表、全局生效，未遇到延迟问题时可不必开启。",
+        ["adapter-power"] = "将禁用网卡节能（等效于取消勾选设备管理器「允许计算机关闭此设备以节约电源」），减少节能切换造成的延迟尖峰。代价：笔记本功耗略有增加。",
+        ["tcp-autotuning"] = "将禁用 TCP 接收窗口自动调谐（接收窗口固定）。游戏延迟抖动更小，但在千兆高速或跨地域高延迟链路上可能明显限制吞吐。微软官方建议仅在确认问题确由自动调谐引起时关闭。",
+        ["network-throttling"] = "将禁用多媒体网络节流：多媒体活动期间后台流量不再被限制到约 10 包/秒，游戏/语音时网络响应更好。仅修改当前用户的注册表设置，副作用很小，可随时恢复。",
+    };
+
     private const string SavedKeyPrefix = "NetOpt_";
     private const string SavedDnsPrimaryKey = "NetOpt_dns_primary";
     private const string SavedDnsSecondaryKey = "NetOpt_dns_secondary";
@@ -422,7 +433,6 @@ public sealed partial class NetworkOptimizePage : Page
         _busy = true;
         var enable = toggle.IsOn;
         var previous = vm.IsOn;
-        vm.IsOn = enable; // 乐观更新，让动画立即播放
 
         var item = NetworkOptimizeService.OptimizerItems.FirstOrDefault(i => i.Id == vm.Id);
         if (item is null)
@@ -430,6 +440,17 @@ public sealed partial class NetworkOptimizePage : Page
             _busy = false;
             return;
         }
+
+        // 开启前先确认，说明该选项对系统的影响；关闭（恢复默认）无需确认。
+        // 失败回滚等程序性重入时 enable 与 vm.IsOn 相同，不会二次弹窗
+        if (enable && enable != vm.IsOn && !await ShowEnableConfirmAsync(item))
+        {
+            toggle.IsOn = previous; // 取消：回弹（重入的 Toggled 被上方 _busy 守卫拦截）
+            _busy = false;
+            return;
+        }
+
+        vm.IsOn = enable; // 乐观更新，让动画立即播放
         try
         {
             var result = await Task.Run(() => ExecuteItemAction(item, enable));
@@ -477,6 +498,46 @@ public sealed partial class NetworkOptimizePage : Page
         _ => throw new InvalidOperationException("未知优化项")
     };
 
+    // ───────────────────────────── 开启前确认弹窗 ─────────────────────────────
+
+    private static string GetEnableImpact(NetworkOptimizerItem item)
+        => EnableImpactMessages.TryGetValue(item.Id, out var text) ? text : item.Description;
+
+    private async Task<bool> ShowEnableConfirmAsync(NetworkOptimizerItem item)
+        => await ShowConfirmCoreAsync($"开启「{item.Title}」？", GetEnableImpact(item));
+
+    private async Task<bool> ShowBatchEnableConfirmAsync()
+    {
+        var lines = new List<string> { "将一次性对系统应用以下 6 项修改，均为可逆操作（可随时点「全部恢复默认」还原）：" };
+        lines.AddRange(NetworkOptimizeService.OptimizerItems.Select(i => $"· {i.Title}：{i.Description}"));
+        return await ShowConfirmCoreAsync("开启全部网络优化？", string.Join("\n", lines));
+    }
+
+    /// <summary>主题化确认弹窗；无法弹出时按「未确认」处理（不执行操作）。</summary>
+    private async Task<bool> ShowConfirmCoreAsync(string title, string message)
+    {
+        try
+        {
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = title,
+                Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 },
+                PrimaryButtonText = "确认开启",
+                CloseButtonText = "取消",
+                DefaultButton = ContentDialogButton.Primary,
+                RequestedTheme = ThemeService.CurrentElementTheme
+            };
+            dialog.Resources["ContentDialogMaxWidth"] = 520;
+            dialog.Resources["ContentDialogMaxHeight"] = 560;
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     // ───────────────────────────── 批量优化 / 恢复 ─────────────────────────────
 
     private async void BatchEnableButton_Click(object sender, RoutedEventArgs e) => await RunBatchAsync(enable: true);
@@ -486,6 +547,8 @@ public sealed partial class NetworkOptimizePage : Page
     private async Task RunBatchAsync(bool enable)
     {
         if (_busy) return;
+        if (enable && !await ShowBatchEnableConfirmAsync())
+            return;
         _busy = true;
         BatchEnableButton.IsEnabled = false;
         BatchDisableButton.IsEnabled = false;

@@ -1,0 +1,206 @@
+# Update leaderboard & community index（上游仓库 tubatoolsPlugin 的 workflow 源文件）
+#
+# 干两件事，跑一次生成三个产物：
+# 1. leaderboard.json —— 排行榜。只存「一份信息」：reports 是每份报告的摘要平铺数组
+#    （每份只出现一次，按综合榜 gaming 降序），各维度排序由客户端本地算，
+#    不再由服务器预先排 6 份重复的榜单（800 份报告时约 5MB → ~0.5MB）。
+# 2. leaderboard/details/{id}.json —— 每份报告的详情清单（OS/主板/内存/硬盘/显示器等
+#    大字段），客户端点开详情才按需加载。
+# 3. plugins-index.json —— 社区工具索引：遍历 plugins/**/plugin.json 汇总每份工具的
+#    全部元信息（简介/名字/分类/标签/文件 sha 等），客户端 1 次请求拿到整个工具列表，
+#    不再 N+1 次目录遍历 + 每工具 1 次详情请求。
+#
+# 排行榜上限 2000：reports 超 2000 份时，前 200 名无条件保留，200 名外优先剔除
+# 同作者的重复提交（每人只留综合榜最高分一份），仍超出则按 author+id 的稳定哈希
+# “随机”剔除——确定性结果，同样的输入永远产生同样的输出，避免每次构建抖动。
+name: Update leaderboard & community index
+
+# 仅手动触发（workflow_dispatch）。报告/插件合入后需要刷新排行榜时，
+# 在 Actions 页手动 Run workflow 即可；产物全部确定性生成（见文件头注释），
+# 不会因为数据不变而产生 diff。
+on:
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild leaderboard.json & plugins-index.json
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execSync } = require('child_process');
+
+            // 排行榜上限：reports 最多列出 2000 份；前 200 名无条件保留
+            const MAX_LISTED = 2000;
+            const KEEP_TOP = 200;
+            const DETAILS_DIR = path.join(process.env.GITHUB_WORKSPACE, 'leaderboard', 'details');
+            const workspace = process.env.GITHUB_WORKSPACE;
+
+            // FNV-1a 32bit：稳定伪随机源。用 author+id 哈希决定 200 名后的去留，
+            // 保证每次运行结果一致（真随机会让 leaderboard.json 每次都产生 diff）。
+            function hashStr(s) {
+              let h = 0x811c9dc5;
+              for (let i = 0; i < s.length; i++) {
+                h ^= s.charCodeAt(i);
+                h = (h * 0x01000193) >>> 0;
+              }
+              return h;
+            }
+
+            const summaryEntry = (r) => ({
+              id: r.id,
+              author: r.author,
+              cpuName: r.cpuName,
+              gpuName: r.gpuName,
+              gamingScore: r.gamingScore || 0,
+              officeScore: r.officeScore || 0,
+              cpuSingleCoreScore: r.cpuSingleCoreScore || 0,
+              cpuMultiCoreScore: r.cpuMultiCoreScore || 0,
+              gpuRenderScore: r.gpuRenderScore || 0,
+              memoryCapacityScore: r.memoryCapacityScore || 0,
+              diskSeqReadScore: r.diskSeqReadScore || 0,
+              diskSeqWriteScore: r.diskSeqWriteScore || 0,
+              disk4KReadScore: r.disk4KReadScore || 0,
+              disk4KWriteScore: r.disk4KWriteScore || 0,
+              browserTotalScore: r.browserTotalScore || 0,
+              gamingGrade: r.gamingGrade || '',
+              officeGrade: r.officeGrade || '',
+              submittedAt: r.submittedAt || '',
+              detailsPath: `leaderboard/details/${encodeURIComponent(r.id)}.json`
+            });
+
+            // ================= 排行榜 =================
+
+            const reports = [];
+            const reportsDir = path.join(workspace, 'reports');
+            if (fs.existsSync(reportsDir)) {
+              (function walkDir(dir) {
+                for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                  const fullPath = path.join(dir, entry.name);
+                  if (entry.isDirectory()) {
+                    walkDir(fullPath);
+                  } else if (entry.isFile() && entry.name.endsWith('.json')) {
+                    try {
+                      const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+                      if (data.id && data.author && data.cpuName && data.gpuName) {
+                        data.repoPath = path.relative(workspace, fullPath).replace(/\\/g, '/');
+                        reports.push(data);
+                      }
+                    } catch (e) {
+                      core.warning(`Failed to parse ${fullPath}: ${e.message}`);
+                    }
+                  }
+                }
+              })(reportsDir);
+            }
+
+            // 详情清单：每份报告生成 leaderboard/details/{id}.json（全量信息）。
+            // 先全量重建，报告被删除后旧详情文件不会残留。
+            fs.rmSync(DETAILS_DIR, { recursive: true, force: true });
+            fs.mkdirSync(DETAILS_DIR, { recursive: true });
+            for (const r of reports) {
+              fs.writeFileSync(path.join(DETAILS_DIR, r.id + '.json'), JSON.stringify(r, null, 2));
+            }
+
+            // 上榜集合：综合榜（gaming）降序，一份信息只存一遍；
+            // 排序由客户端本地做，服务器只保证 gaming 序（客户端默认榜）。
+            const ranked = [...reports].sort((a, b) => (b.gamingScore || 0) - (a.gamingScore || 0));
+            let listed = ranked;
+            if (ranked.length > MAX_LISTED) {
+              const top = ranked.slice(0, KEEP_TOP);
+              const byAuthor = new Map();
+              for (const r of ranked.slice(KEEP_TOP)) {
+                const prev = byAuthor.get(r.author);
+                if (!prev || (r.gamingScore || 0) > (prev.gamingScore || 0)) {
+                  byAuthor.set(r.author, r);
+                }
+              }
+              let candidates = [...byAuthor.values()];
+              const keepCount = MAX_LISTED - KEEP_TOP;
+              if (candidates.length > keepCount) {
+                candidates.sort((a, b) => hashStr(a.author + a.id) - hashStr(b.author + b.id));
+                candidates = candidates.slice(0, keepCount);
+              }
+              listed = [...top, ...candidates].sort((a, b) => (b.gamingScore || 0) - (a.gamingScore || 0));
+            }
+
+            const leaderboard = {
+              updatedAt: new Date().toISOString(),
+              totalReports: reports.length,
+              totalListed: listed.length,
+              reports: listed.map((r) => summaryEntry(r))
+            };
+            fs.writeFileSync('leaderboard.json', JSON.stringify(leaderboard));
+            core.info(`Leaderboard: ${listed.length}/${reports.length} reports`);
+
+            // ================= 社区工具索引 =================
+
+            const pluginsDir = path.join(workspace, 'plugins');
+            if (!fs.existsSync(pluginsDir)) {
+              core.info('No plugins directory found, skip index');
+            } else {
+              // git ls-tree 拿全部文件的 blob sha。
+              // 注意：core.quotepath 默认会把中文路径转义成引号+八进制（"plugins/\345..."），
+              // 必须关掉（-c core.quotepath=false）并用 -z NUL 分隔保持原始路径。
+              const lsTree = execSync("git -c core.quotepath=false ls-tree -r -z HEAD -- plugins", {
+                encoding: 'utf8',
+                maxBuffer: 64 * 1024 * 1024
+              });
+              const shaByPath = new Map();
+              for (const line of lsTree.split('\0')) {
+                if (!line) continue;
+                // 行格式: <mode> blob <sha>\t<path>（-z 下 path 不带引号）
+                const tab = line.indexOf('\t');
+                if (tab < 0) continue;
+                const sha = line.slice(0, tab).split(' ')[2];
+                const p = line.slice(tab + 1);
+                if (sha && p) shaByPath.set(p, sha);
+              }
+
+              const tools = [];
+              for (const [repoPath, sha] of shaByPath) {
+                if (!repoPath.endsWith('/plugin.json')) continue;
+                try {
+                  const full = path.join(workspace, ...repoPath.split('/'));
+                  const plugin = JSON.parse(fs.readFileSync(full, 'utf8'));
+                  if (!plugin.id || !plugin.name) continue;
+                  plugin.repoPath = repoPath.slice(0, repoPath.length - '/plugin.json'.length);
+                  plugin.pluginJsonSha = sha;
+                  tools.push(plugin);
+                } catch (e) {
+                  core.warning(`Failed to read ${repoPath}: ${e.message}`);
+                }
+              }
+              // 条目稳定排序（按分类、再按 id），保证 diff 最小化
+              tools.sort((a, b) =>
+                (a.category || '').localeCompare(b.category || '') ||
+                a.id.localeCompare(b.id));
+
+              const index = {
+                updatedAt: new Date().toISOString(),
+                totalTools: tools.length,
+                blobs: Object.fromEntries(shaByPath),
+                tools
+              };
+              fs.writeFileSync('plugins-index.json', JSON.stringify(index));
+              core.info(`Plugin index: ${tools.length} tools, ${shaByPath.size} blobs`);
+            }
+
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add leaderboard.json leaderboard/details plugins-index.json
+          git diff --cached --quiet || git commit -m "chore: update leaderboard & plugin index [skip ci]"
+          git push
