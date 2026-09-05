@@ -27,6 +27,9 @@ public sealed class GameOverlayWindow : IDisposable
     // Cached overlay surface (DIB + memory DC), recreated only when the size changes
     private IntPtr _surfaceDib, _surfaceDc, _surfaceOld, _surfaceBits;
     private int _surfaceW, _surfaceH;
+    // Whether the surface has been filled with the background panel yet — filled once
+    // on (re)creation; later frames only erase dirty regions with the same pixel.
+    private bool _surfaceInited;
     // Last SetWindowPos position — skip the call when nothing moved
     private int _posX, _posY, _posW, _posH;
     // Chart history buffers
@@ -195,6 +198,10 @@ public sealed class GameOverlayWindow : IDisposable
         public int Layer;
         public string CurrentText = "--";
         public bool IsChart;
+        // Dirty flag — widget content/geometry changed, so it needs re-rendering and
+        // recomposition. Drives incremental rendering: an overlay with no dirty widget
+        // skips the whole frame (idle ≈ 0 CPU cost).
+        public bool Dirty;
         // Custom content
         public string CustomText = "";
         public string ImagePath = "";
@@ -210,6 +217,16 @@ public sealed class GameOverlayWindow : IDisposable
         public SKCanvas? RenderCanvas;
         public SKFont? RenderFont;
         public int RenderW, RenderH, RenderFs;
+        // Reusable chart render resources — avoids per-frame SKPaint/SKPath/SKPoint[]
+        // /SKShader allocation (GC churn) while a chart keeps updating every tick.
+        public SKPaint[]? ChartPaints;
+        public SKPoint[]? ChartPoints;
+        public SKPath? AreaPath;
+        public SKPath? GlowPath;
+        public SKPath? LinePath;
+        public SKShader? AreaShader;
+        public int AreaShaderCy, AreaShaderCh;
+        public uint AreaShaderColor;
     }
 
     public sealed class CircularBuffer
@@ -265,6 +282,8 @@ public sealed class GameOverlayWindow : IDisposable
             _height = height
         };
         overlay._widgets.AddRange(widgets);
+        // First frame renders everything
+        foreach (var w in overlay._widgets) w.Dirty = true;
         overlay.CreateOverlayWindow();
         overlay.StartTopmostTimer();
         _instance = overlay;
@@ -382,19 +401,30 @@ public sealed class GameOverlayWindow : IDisposable
                 if (chartKey != null)
                 {
                     var buf = _chartData.GetOrAdd(chartKey, _ => new CircularBuffer(60));
-                    if (value >= 0) buf.Add(value);
+                    if (value >= 0)
+                    {
+                        buf.Add(value);
+                        w.Dirty = true; // new point appended -> redraw this chart
+                    }
                 }
             }
             else if (w.Type is OverlayWidgetType.CustomText or OverlayWidgetType.CustomImage or OverlayWidgetType.ColorBlock)
             {
-                // Static content — no dynamic update needed
+                // Static content — never dirty after the first render
             }
             else
             {
                 var value = FormatWidgetValue(w.Type, sample);
-                w.CurrentText = w.ShowPrefix && !string.IsNullOrEmpty(w.Prefix)
+                var text = w.ShowPrefix && !string.IsNullOrEmpty(w.Prefix)
                     ? $"{w.Prefix}{value}"
                     : value;
+                // Mark dirty only when the text actually changed — an identical value
+                // lets RenderFrame skip the whole frame (idle overlay ≈ 0 cost).
+                if (text != w.CurrentText)
+                {
+                    w.CurrentText = text;
+                    w.Dirty = true;
+                }
             }
         }
 
@@ -450,46 +480,132 @@ public sealed class GameOverlayWindow : IDisposable
     {
         if (_hwnd == IntPtr.Zero) return;
 
+        // Incremental rendering: if no widget changed, skip the whole frame — an idle
+        // overlay costs ≈ 0 (no GetDC, no redraw, no UpdateLayeredWindow to the compositor).
+        bool anyDirty = false;
+        foreach (var w in _widgets)
+        {
+            if (w.Dirty) { anyDirty = true; break; }
+        }
+        if (!anyDirty) return;
+
         var hdcScreen = GetDC(IntPtr.Zero);
         if (hdcScreen == IntPtr.Zero) return;
         try
         {
             if (!EnsureSurface(hdcScreen)) return;
 
-            // Compose the whole frame into a premultiplied 32bpp DIB. The background panel
-            // uses _bgOpacity while widgets stay fully opaque — so the 背景透明度 slider
-            // only affects the background, not the text/charts on top of it.
+            // The background panel uses _bgOpacity while widgets stay fully opaque — so the
+            // 背景透明度 slider only affects the background, not the text/charts on top.
             byte bgA = (byte)(_bgOpacity * 255);
             uint r = (uint)(0x1E * bgA / 255), g = (uint)(0x1E * bgA / 255), b = (uint)(0x1E * bgA / 255);
             uint bgPixel = (uint)bgA << 24 | b << 16 | g << 8 | r;
-            unsafe { new Span<uint>((void*)_surfaceBits, _width * _height).Fill(bgPixel); }
 
-            // Draw each widget — sort by layer so higher layers render on top
-            foreach (var w in _widgets.OrderBy(x => x.Layer))
+            // Fill the whole surface with the background panel only when it's (re)created;
+            // later dirty frames just erase the affected region with the same pixel.
+            bool drew = false;
+            if (!_surfaceInited)
             {
-                if (w.IsChart) DrawChartGdi(_surfaceDc, w);
-                else if (w.Type == OverlayWidgetType.ColorBlock) DrawColorBlock(_surfaceDc, w);
-                else if (w.Type == OverlayWidgetType.CustomImage) DrawCustomImage(_surfaceDc, w);
-                else if (w.Type == OverlayWidgetType.CustomText) DrawTextSkia(_surfaceDc, w, w.CustomText);
-                else DrawTextSkia(_surfaceDc, w);
+                unsafe { new Span<uint>((void*)_surfaceBits, _width * _height).Fill(bgPixel); }
+                _surfaceInited = true;
+                drew = true;
             }
 
+            // Affected region = union of the dirty widgets' rects
+            int minX = _width, minY = _height, maxX = 0, maxY = 0;
+            foreach (var w in _widgets)
+            {
+                if (!w.Dirty) continue;
+                if (w.X < minX) minX = w.X;
+                if (w.Y < minY) minY = w.Y;
+                if (w.X + w.Width > maxX) maxX = w.X + w.Width;
+                if (w.Y + w.Height > maxY) maxY = w.Y + w.Height;
+            }
+
+            if (maxX > minX && maxY > minY)
+            {
+                // Erase the region, then re-blit every widget overlapping it in layer order —
+                // dirty ones re-render into their cached bitmap first, unchanged overlapping
+                // ones reuse their cached pixels so the layer stacking stays correct.
+                EraseRegion(bgPixel, minX, minY, maxX, maxY);
+                foreach (var w in _widgets.OrderBy(x => x.Layer))
+                {
+                    if (w.X >= maxX || w.Y >= maxY || w.X + w.Width <= minX || w.Y + w.Height <= minY)
+                        continue;
+                    if (w.Dirty) RenderWidget(_surfaceDc, w);
+                    BlitWidget(_surfaceDc, w);
+                }
+                drew = true;
+            }
+
+            foreach (var w in _widgets) w.Dirty = false;
+
             // Push the whole surface to the layered window with per-pixel alpha
-            GetWindowRect(_hwnd, out var rc);
-            var ptDst = new POINT { X = rc.Left, Y = rc.Top };
-            var ptSrc = new POINT { X = 0, Y = 0 };
-            var size = new SIZE { cx = _width, cy = _height };
+            if (drew)
+            {
+                GetWindowRect(_hwnd, out var rc);
+                var ptDst = new POINT { X = rc.Left, Y = rc.Top };
+                var ptSrc = new POINT { X = 0, Y = 0 };
+                var size = new SIZE { cx = _width, cy = _height };
+                var blend = new BLENDFUNCTION
+                {
+                    BlendOp = 0,
+                    SourceConstantAlpha = 255,
+                    AlphaFormat = AC_SRC_ALPHA
+                };
+                UpdateLayeredWindow(_hwnd, hdcScreen, ref ptDst, ref size, _surfaceDc, ref ptSrc, 0, ref blend, ULW_ALPHA);
+            }
+        }
+        finally
+        {
+            ReleaseDC(IntPtr.Zero, hdcScreen);
+        }
+    }
+
+    /// <summary>Fills a sub-region of the overlay surface with the background pixel.</summary>
+    private void EraseRegion(uint bgPixel, int x0, int y0, int x1, int y1)
+    {
+        x0 = Math.Clamp(x0, 0, _width);
+        y0 = Math.Clamp(y0, 0, _height);
+        x1 = Math.Clamp(x1, 0, _width);
+        y1 = Math.Clamp(y1, 0, _height);
+        if (x1 <= x0 || y1 <= y0) return;
+        unsafe
+        {
+            var span = new Span<uint>((void*)_surfaceBits, _width * _height);
+            for (int y = y0; y < y1; y++)
+                span.Slice(y * _width + x0, x1 - x0).Fill(bgPixel);
+        }
+    }
+
+    /// <summary>Re-renders a dirty widget into its cached bitmap (no blit).</summary>
+    private void RenderWidget(IntPtr hdc, WidgetInstance w)
+    {
+        if (w.Width <= 0 || w.Height <= 0) return;
+        if (w.IsChart) DrawChartToCanvas(w);
+        else if (w.Type == OverlayWidgetType.ColorBlock) FillColorBlock(hdc, w);
+        else if (w.Type == OverlayWidgetType.CustomImage) DrawImageToCanvas(w);
+        else if (w.Type == OverlayWidgetType.CustomText) DrawTextToCanvas(w, w.CustomText);
+        else DrawTextToCanvas(w);
+    }
+
+    /// <summary>Alpha-blends a widget's cached bitmap onto the surface at its position.</summary>
+    private void BlitWidget(IntPtr hdc, WidgetInstance w)
+    {
+        if (w.Type == OverlayWidgetType.ColorBlock)
+        {
+            if (w.Dib == IntPtr.Zero || w.DibDC == IntPtr.Zero) return;
             var blend = new BLENDFUNCTION
             {
                 BlendOp = 0,
                 SourceConstantAlpha = 255,
                 AlphaFormat = AC_SRC_ALPHA
             };
-            UpdateLayeredWindow(_hwnd, hdcScreen, ref ptDst, ref size, _surfaceDc, ref ptSrc, 0, ref blend, ULW_ALPHA);
+            AlphaBlend(hdc, w.X, w.Y, w.Width, w.Height, w.DibDC, 0, 0, w.Width, w.Height, blend);
         }
-        finally
+        else if (w.RenderBmp != null)
         {
-            ReleaseDC(IntPtr.Zero, hdcScreen);
+            BlitSkiaBitmap(hdc, w, w.RenderBmp);
         }
     }
 
@@ -538,6 +654,7 @@ public sealed class GameOverlayWindow : IDisposable
         if (_surfaceDc != IntPtr.Zero) DeleteDC(_surfaceDc);
         _surfaceOld = _surfaceDib = _surfaceDc = _surfaceBits = IntPtr.Zero;
         _surfaceW = _surfaceH = 0;
+        _surfaceInited = false;
     }
 
     /// <summary>Reuses a widget's DIB + DC (shared by text blit / color block / image); rebuilt on size change.</summary>
@@ -613,29 +730,40 @@ public sealed class GameOverlayWindow : IDisposable
         w.RenderCanvas = null;
         w.RenderBmp = null;
         w.RenderFont = null;
+
+        if (w.ChartPaints != null)
+        {
+            foreach (var p in w.ChartPaints) p?.Dispose();
+            w.ChartPaints = null;
+        }
+        w.AreaShader?.Dispose();
+        w.AreaShader = null;
+        w.AreaPath?.Dispose();
+        w.GlowPath?.Dispose();
+        w.LinePath?.Dispose();
+        w.AreaPath = w.GlowPath = w.LinePath = null;
+        w.ChartPoints = null;
     }
-
-    [DllImport("gdi32.dll")]
-    private static extern IntPtr CreatePen(int fnPenStyle, int nWidth, uint crColor);
-
-    [DllImport("gdi32.dll")]
-    private static extern bool MoveToEx(IntPtr hdc, int X, int Y, IntPtr lpPoint);
-
-    [DllImport("gdi32.dll")]
-    private static extern bool LineTo(IntPtr hdc, int nXEnd, int nYEnd);
 
     [DllImport("msimg32.dll")]
     private static extern bool AlphaBlend(IntPtr hdcDest, int xDest, int yDest, int wDest, int hDest,
         IntPtr hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, BLENDFUNCTION blendFunction);
 
-    private void DrawTextSkia(IntPtr hdc, WidgetInstance w, string? textOverride = null)
+    private void DrawTextToCanvas(WidgetInstance w, string? textOverride = null)
     {
         if (w.Width <= 0 || w.Height <= 0) return;
 
         string text = textOverride ?? w.CurrentText;
-        if (string.IsNullOrEmpty(text)) return;
+        var canvas = EnsureWidgetCanvas(w, out _);
+        // Clear the reused bitmap first — otherwise a shorter value (e.g. "9 FPS" right
+        // after "120 FPS") would leave ghost pixels of the old text behind (the "覆盖" bug).
+        canvas.Clear(SKColors.Transparent);
 
-        var canvas = EnsureWidgetCanvas(w, out var bmp);
+        if (string.IsNullOrEmpty(text))
+        {
+            canvas.Flush();
+            return;
+        }
 
         float fontSize = Math.Max(8, w.FontSize);
         if (w.RenderFont is null || w.RenderFont.Size != fontSize)
@@ -658,15 +786,19 @@ public sealed class GameOverlayWindow : IDisposable
         // Shadow — auto white or black depending on text luminance
         uint lum = tr * 299u + tg * 587u + tb * 114u;
         byte sa = (byte)(ta * 120 / 255);
-        using var shadowPaint = new SKPaint { Color = new SKColor(lum < 100_000 ? (byte)255 : (byte)0, lum < 100_000 ? (byte)255 : (byte)0, lum < 100_000 ? (byte)255 : (byte)0, sa), IsAntialias = true };
-        canvas.DrawText(text, 2, textY + 1, font, shadowPaint);
+
+        // Clip to the widget bounds so overflowing text can't spill onto neighboring widgets
+        canvas.Save();
+        canvas.ClipRect(new SKRect(0, 0, w.Width, w.Height));
+        using (var shadowPaint = new SKPaint { Color = new SKColor(lum < 100_000 ? (byte)255 : (byte)0, lum < 100_000 ? (byte)255 : (byte)0, lum < 100_000 ? (byte)255 : (byte)0, sa), IsAntialias = true })
+            canvas.DrawText(text, 2, textY + 1, font, shadowPaint);
 
         // Main text — premultiplied ARGB, rendered correctly by SkiaSharp
-        using var textPaint = new SKPaint { Color = new SKColor(tr, tg, tb, ta), IsAntialias = true };
-        canvas.DrawText(text, 1, textY, font, textPaint);
+        using (var textPaint = new SKPaint { Color = new SKColor(tr, tg, tb, ta), IsAntialias = true })
+            canvas.DrawText(text, 1, textY, font, textPaint);
+        canvas.Restore();
 
         canvas.Flush();
-        BlitSkiaBitmap(hdc, w, bmp);
     }
 
     /// <summary>
@@ -674,43 +806,42 @@ public sealed class GameOverlayWindow : IDisposable
     /// ARGB color (e.g. 透明黑) fades the game/desktop behind it instead of
     /// painting an opaque box.
     /// </summary>
-    private void DrawColorBlock(IntPtr hdc, WidgetInstance w)
+    private void FillColorBlock(IntPtr hdc, WidgetInstance w)
     {
         if (w.Width <= 0 || w.Height <= 0) return;
         if (!EnsureWidgetSurface(w, hdc)) return;
 
-        // Build a premultiplied BGRA DIB and alpha-blend it into the window DC
+        // Build a premultiplied BGRA DIB (cached, rendered once) — blitted by BlitWidget
         uint a = (w.ColorArgb >> 24) & 0xFF;
         uint r = (w.ColorArgb >> 16) & 0xFF;
         uint g = (w.ColorArgb >> 8) & 0xFF;
         uint b = w.ColorArgb & 0xFF;
         uint pixel = (uint)(a << 24 | (b * a / 255) << 16 | (g * a / 255) << 8 | (r * a / 255));
-        unsafe { new Span<uint>((void*)w.DibBits, w.DibW * w.DibH).Fill(pixel); }
-
-        var blend = new BLENDFUNCTION
+        unsafe
         {
-            BlendOp = 0,
-            SourceConstantAlpha = 255,
-            AlphaFormat = AC_SRC_ALPHA
-        };
-        AlphaBlend(hdc, w.X, w.Y, w.Width, w.Height, w.DibDC, 0, 0, w.Width, w.Height, blend);
-
-        // Draw a border for visibility
-        var hPen = CreatePen(0, 1, 0x00FFFFFFu);
-        var sel = SelectObject(hdc, hPen);
-        MoveToEx(hdc, w.X, w.Y, IntPtr.Zero);
-        LineTo(hdc, w.X + w.Width, w.Y);
-        LineTo(hdc, w.X + w.Width, w.Y + w.Height);
-        LineTo(hdc, w.X, w.Y + w.Height);
-        LineTo(hdc, w.X, w.Y);
-        SelectObject(hdc, sel);
-        DeleteObject(hPen);
+            var span = new Span<uint>((void*)w.DibBits, w.DibW * w.DibH);
+            span.Fill(pixel);
+            // Bake a 1px white border into the cached bitmap for visibility
+            if (w.DibW > 1 && w.DibH > 1)
+            {
+                for (int x = 0; x < w.DibW; x++)
+                {
+                    span[x] = 0xFFFFFFFF;                            // top
+                    span[(w.DibH - 1) * w.DibW + x] = 0xFFFFFFFF;    // bottom
+                }
+                for (int y = 0; y < w.DibH; y++)
+                {
+                    span[y * w.DibW] = 0xFFFFFFFF;                   // left
+                    span[y * w.DibW + w.DibW - 1] = 0xFFFFFFFF;      // right
+                }
+            }
+        }
     }
 
     /// <summary>
     /// Draws a custom image widget via SkiaSharp (scaled to widget bounds).
     /// </summary>
-    private void DrawCustomImage(IntPtr hdc, WidgetInstance w)
+    private void DrawImageToCanvas(WidgetInstance w)
     {
         if (w.Width <= 0 || w.Height <= 0) return;
 
@@ -725,14 +856,14 @@ public sealed class GameOverlayWindow : IDisposable
             catch { }
         }
 
-        if (w.CachedImage == null) return;
-
-        var canvas = EnsureWidgetCanvas(w, out var dst);
-        // Scale-to-fill (cover) with transparency
+        var canvas = EnsureWidgetCanvas(w, out _);
         canvas.Clear(SKColors.Transparent);
-        canvas.DrawBitmap(w.CachedImage, new SKRect(0, 0, w.Width, w.Height));
+        if (w.CachedImage != null)
+        {
+            // Scale-to-fill (cover) with transparency
+            canvas.DrawBitmap(w.CachedImage, new SKRect(0, 0, w.Width, w.Height));
+        }
         canvas.Flush();
-        BlitSkiaBitmap(hdc, w, dst);
     }
 
     // Cached typefaces to avoid per-frame allocation/leak
@@ -752,7 +883,7 @@ public sealed class GameOverlayWindow : IDisposable
         _fontFamily = family;
         _typefaceBold = null; // force re-creation on next access
         _typefaceNormal = null;
-        // 缓存的 SKFont 持有旧 typeface 引用，字体切换后逐个重建，下一帧生效
+        // 缓存的 SKFont / 图表画笔持有旧 typeface 引用，字体切换后逐个重建，下一帧生效
         var inst = _instance;
         if (inst != null)
         {
@@ -760,17 +891,60 @@ public sealed class GameOverlayWindow : IDisposable
             {
                 w.RenderFont?.Dispose();
                 w.RenderFont = null;
+                if (w.ChartPaints != null)
+                {
+                    foreach (var p in w.ChartPaints) p?.Dispose();
+                    w.ChartPaints = null;
+                }
+                w.Dirty = true;
             }
         }
     }
 
     public static string FontFamily => _fontFamily;
 
+    // Chart paint slots (see GetChartPaints) — indexed so frames reuse the same SKPaint objects
+    private const int P_BG = 0, P_TITLE = 1, P_GRID = 2, P_AREA = 3,
+                      P_GLOW = 4, P_LINE = 5, P_DOT = 6, P_DOTRING = 7, P_LABEL = 8;
+
+    /// <summary>Returns the widget's cached chart paints, creating them on first use.</summary>
+    private static SKPaint[] GetChartPaints(WidgetInstance w)
+    {
+        if (w.ChartPaints == null)
+        {
+            w.ChartPaints = new SKPaint[9]
+            {
+                new SKPaint { Color = new SKColor(30, 30, 30, 130), IsAntialias = true },
+                new SKPaint { Color = new SKColor(200, 200, 200, 255), IsAntialias = true, Typeface = TypefaceBold },
+                new SKPaint { Color = new SKColor(60, 60, 60, 120), StrokeWidth = 1 },
+                new SKPaint { IsAntialias = true },
+                new SKPaint { StrokeWidth = 4, IsAntialias = true, IsStroke = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round },
+                new SKPaint { StrokeWidth = 2, IsAntialias = true, IsStroke = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round },
+                new SKPaint { IsAntialias = true },
+                new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Stroke, StrokeWidth = 1.5f, IsAntialias = true },
+                new SKPaint { Color = new SKColor(150, 150, 150, 255), IsAntialias = true, Typeface = TypefaceNormal }
+            };
+        }
+        return w.ChartPaints;
+    }
+
+    /// <summary>Returns a reusable point array sized for the current point count.</summary>
+    private static SKPoint[] GetChartPoints(WidgetInstance w, int count)
+    {
+        if (w.ChartPoints == null || w.ChartPoints.Length < count)
+            w.ChartPoints = new SKPoint[count];
+        return w.ChartPoints;
+    }
+
+    /// <summary>Packs an SKColor into a uint for cheap equality (shader cache check).</summary>
+    private static uint ColorKey(SKColor c) => (uint)(c.Alpha << 24 | c.Blue << 16 | c.Green << 8 | c.Red);
+
     /// <summary>
-    /// Renders a chart widget using SkiaSharp (the component library used by LiveCharts2),
-    /// then blits the resulting bitmap into the GDI window DC.
+    /// Renders a chart widget using SkiaSharp (the component library used by LiveCharts2)
+    /// into the widget's cached bitmap; BlitWidget pushes it onto the overlay surface.
+    /// SKPaint/SKPath/SKPoint[]/SKShader are reused across frames to avoid GC churn.
     /// </summary>
-    private void DrawChartGdi(IntPtr hdc, WidgetInstance w)
+    private void DrawChartToCanvas(WidgetInstance w)
     {
         if (w.Width <= 0 || w.Height <= 0) return;
 
@@ -787,46 +961,73 @@ public sealed class GameOverlayWindow : IDisposable
         // Title font size follows the widget's FontSize (editable in the property panel),
         // auto-shrunk when the widget is too short; the chart area adapts to it.
         float titleFs = Math.Clamp(w.FontSize, 8, Math.Max(8, (w.Height - 2 * pad - 8) * 0.55f));
-        int cx = pad, cy = pad + (int)titleFs + 4, cw = w.Width - pad * 2, ch = w.Height - pad * 2 - (int)titleFs - 4;
-        if (cw < 4 || ch < 4) return;
+        int cy = pad + (int)titleFs + 4;
+        int ch = w.Height - pad * 2 - (int)titleFs - 4;
+        if (ch < 4) return;
 
-        // Build SKBitmap sized to the widget (reused across frames — the surface is
-        // recreated only when the widget size or font size changes)
-        var canvas = EnsureWidgetCanvas(w, out var bmp);
+        var lineColor = chartKey == "fps"
+            ? new SKColor(60, 230, 110)   // green
+            : new SKColor(255, 170, 40);  // orange
+
+        // Build SKBitmap sized to the widget FIRST — when (re)created it disposes the
+        // widget's cached Skia resources (incl. the chart paints below), so paints must
+        // be (re)created after this call. Otherwise we'd draw with disposed SKPaints
+        // and crash the overlay on the first chart frame.
+        var canvas = EnsureWidgetCanvas(w, out _);
         canvas.Clear(SKColors.Transparent);
 
-        // --- Dark rounded background (semi-transparent panel; corners stay transparent) ---
-        var bgPaint = new SKPaint { Color = new SKColor(30, 30, 30, 130), IsAntialias = true };
-        canvas.DrawRoundRect(new SKRect(0, 0, w.Width, w.Height), 6, 6, bgPaint);
-        bgPaint.Dispose();
+        // --- Reusable paints (created once per widget, no per-frame allocation) ---
+        var paints = GetChartPaints(w);
+        var bgPaint = paints[P_BG];
+        var titlePaint = paints[P_TITLE];
+        titlePaint.TextSize = titleFs;
+        var gridPaint = paints[P_GRID];
+        var areaPaint = paints[P_AREA];
+        var glowPaint = paints[P_GLOW];
+        glowPaint.Color = lineColor.WithAlpha(55);
+        var linePaint = paints[P_LINE];
+        linePaint.Color = lineColor;
+        var dotPaint = paints[P_DOT];
+        dotPaint.Color = lineColor;
+        var dotRingPaint = paints[P_DOTRING];
+        var labelPaint = paints[P_LABEL];
+        labelPaint.TextSize = Math.Max(8, titleFs * 0.8f);
 
-        // --- Title ---
+        // --- Labels: measure text so numbers never overlap the title / line / dot ---
+        string title = chartKey == "fps" ? "FPS" : "CPU °C";
+        float titleW = titlePaint.MeasureText(title);
+        string valStr = $"{buf.Get(buf.Count - 1):F0}";
+        string maxStr = $"{max:F0}", minStr = $"{min:F0}";
+        float maxW = labelPaint.MeasureText(maxStr), minW = labelPaint.MeasureText(minStr);
+
+        // Right gutter for the min/max labels; narrow widgets drop the labels instead
+        float rightPad = Math.Max(maxW, minW) + 8;
+        int cx = pad, cw = w.Width - pad * 2 - (int)rightPad;
+        bool showMinMax = true;
+        if (cw < 24) { rightPad = 0; cw = w.Width - pad * 2; showMinMax = false; }
+        if (cw < 4) return;
+
+        // --- Dark rounded background (semi-transparent panel; corners stay transparent) ---
+        canvas.DrawRoundRect(new SKRect(0, 0, w.Width, w.Height), 6, 6, bgPaint);
+
+        // --- Title + current value beside it (start after the measured title) ---
         // NOTE: DrawText's y is the BASELINE, not the top — draw at `pad + titleFs` so the
         // glyphs don't get clipped above the bitmap edge.
-        string title = chartKey == "fps" ? "FPS" : "CPU °C";
-        using var titlePaint = new SKPaint
-        {
-            Color = new SKColor(200, 200, 200, 255),
-            IsAntialias = true,
-            Typeface = TypefaceBold,
-            TextSize = titleFs
-        };
         int titleBaseline = pad + (int)titleFs;
         canvas.DrawText(title, pad, titleBaseline, titlePaint);
+        canvas.DrawText(valStr, pad + titleW + 6, titleBaseline, titlePaint);
 
         // --- Horizontal grid lines ---
-        var gridPaint = new SKPaint { Color = new SKColor(60, 60, 60, 120), StrokeWidth = 1 };
         for (int g = 1; g <= 3; g++)
         {
             int gy = cy + ch * g / 4;
             canvas.DrawLine(cx, gy, cx + cw, gy, gridPaint);
         }
-        gridPaint.Dispose();
 
-        // --- Build points ---
+        // --- Build points (reused array) ---
         int count = Math.Min(buf.Count, cw);
         float xStep = (float)cw / Math.Max(1, count - 1);
-        var points = new SKPoint[count];
+        var points = GetChartPoints(w, count);
         for (int i = 0; i < count; i++)
         {
             float sampleVal = buf.Get(buf.Count - count + i);
@@ -837,89 +1038,57 @@ public sealed class GameOverlayWindow : IDisposable
             );
         }
 
-        // --- Gradient area fill under the line ---
-        var lineColor = chartKey == "fps"
-            ? new SKColor(60, 230, 110)   // green
-            : new SKColor(255, 170, 40);  // orange
-        using var areaPath = new SKPath();
-        areaPath.MoveTo(points[0].X, cy + ch);
-        foreach (var p in points) areaPath.LineTo(p);
-        areaPath.LineTo(points[^1].X, cy + ch);
-        areaPath.Close();
-
-        var fillPaint = new SKPaint { IsAntialias = true };
-        fillPaint.Shader = SKShader.CreateLinearGradient(
-            new SKPoint(0, cy), new SKPoint(0, cy + ch),
-            new[] { lineColor.WithAlpha(90), lineColor.WithAlpha(0) },
-            new[] { 0f, 1f }, SKShaderTileMode.Clamp);
-        canvas.DrawPath(areaPath, fillPaint);
-        fillPaint.Dispose();
-
-        // --- Glow line (thicker, dimmer) ---
-        using (var glowPaint = new SKPaint
+        // --- Gradient area fill under the line (shader reused until geometry/color changes) ---
+        if (w.AreaShader == null || w.AreaShaderCy != cy || w.AreaShaderCh != ch || w.AreaShaderColor != ColorKey(lineColor))
         {
-            Color = lineColor.WithAlpha(55),
-            StrokeWidth = 4,
-            IsAntialias = true,
-            IsStroke = true,
-            StrokeJoin = SKStrokeJoin.Round,
-            StrokeCap = SKStrokeCap.Round
-        })
-        {
-            using var glowPath = new SKPath();
-            glowPath.MoveTo(points[0]);
-            for (int i = 1; i < count; i++) glowPath.LineTo(points[i]);
-            canvas.DrawPath(glowPath, glowPaint);
+            var old = w.AreaShader;
+            w.AreaShader = SKShader.CreateLinearGradient(
+                new SKPoint(0, cy), new SKPoint(0, cy + ch),
+                new[] { lineColor.WithAlpha(90), lineColor.WithAlpha(0) },
+                new[] { 0f, 1f }, SKShaderTileMode.Clamp);
+            areaPaint.Shader = w.AreaShader;
+            old?.Dispose();
+            w.AreaShaderCy = cy;
+            w.AreaShaderCh = ch;
+            w.AreaShaderColor = ColorKey(lineColor);
         }
+        w.AreaPath ??= new SKPath();
+        w.AreaPath.Rewind();
+        w.AreaPath.MoveTo(points[0].X, cy + ch);
+        for (int i = 0; i < count; i++) w.AreaPath.LineTo(points[i]);
+        w.AreaPath.LineTo(points[count - 1].X, cy + ch);
+        w.AreaPath.Close();
+        canvas.DrawPath(w.AreaPath, areaPaint);
+
+        // --- Glow line (thicker, dimmer) — path reused via Rewind ---
+        w.GlowPath ??= new SKPath();
+        w.GlowPath.Rewind();
+        w.GlowPath.MoveTo(points[0]);
+        for (int i = 1; i < count; i++) w.GlowPath.LineTo(points[i]);
+        canvas.DrawPath(w.GlowPath, glowPaint);
 
         // --- Main line ---
-        using (var linePaint = new SKPaint
-        {
-            Color = lineColor,
-            StrokeWidth = 2,
-            IsAntialias = true,
-            IsStroke = true,
-            StrokeJoin = SKStrokeJoin.Round,
-            StrokeCap = SKStrokeCap.Round
-        })
-        {
-            using var linePath = new SKPath();
-            linePath.MoveTo(points[0]);
-            for (int i = 1; i < count; i++) linePath.LineTo(points[i]);
-            canvas.DrawPath(linePath, linePaint);
-        }
+        w.LinePath ??= new SKPath();
+        w.LinePath.Rewind();
+        w.LinePath.MoveTo(points[0]);
+        for (int i = 1; i < count; i++) w.LinePath.LineTo(points[i]);
+        canvas.DrawPath(w.LinePath, linePaint);
 
         // --- Current value dot ---
-        using (var dotPaint = new SKPaint { Color = lineColor, IsAntialias = true })
-            canvas.DrawCircle(points[^1], 4, dotPaint);
-        using (var dotRing = new SKPaint
-        {
-            Color = SKColors.White,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.5f,
-            IsAntialias = true
-        })
-            canvas.DrawCircle(points[^1], 4, dotRing);
+        var last = points[count - 1];
+        canvas.DrawCircle(last, 4, dotPaint);
+        canvas.DrawCircle(last, 4, dotRingPaint);
 
-        // --- Labels: title value, min/max ---
-        using var labelPaint = new SKPaint
+        // --- min/max labels (right-aligned inside the reserved gutter) ---
+        if (showMinMax)
         {
-            Color = new SKColor(150, 150, 150, 255),
-            IsAntialias = true,
-            Typeface = TypefaceNormal,
-            TextSize = Math.Max(8, titleFs * 0.8f)
-        };
-        float val = buf.Get(buf.Count - 1);
-        float valX = pad + 24;
-        canvas.DrawText($"{val:F0}", valX, titleBaseline, titlePaint); // current value beside title
-
-        canvas.DrawText($"{max:F0}", w.Width - 32, cy + 12, labelPaint);
-        canvas.DrawText($"{min:F0}", w.Width - 32, cy + ch - 3, labelPaint);
+            labelPaint.TextAlign = SKTextAlign.Right;
+            canvas.DrawText(maxStr, w.Width - pad, cy + 12, labelPaint);
+            canvas.DrawText(minStr, w.Width - pad, cy + ch - 3, labelPaint);
+            labelPaint.TextAlign = SKTextAlign.Left;
+        }
 
         canvas.Flush();
-
-        // --- Blit SKBitmap into GDI DC at widget position ---
-        BlitSkiaBitmap(hdc, w, bmp);
     }
 
     /// <summary>
@@ -1035,7 +1204,16 @@ public sealed class GameOverlayWindow : IDisposable
     public void SetTargetWindow(IntPtr hwnd) => _targetHwnd = hwnd;
     public void SetDesktopMode(bool desktopMode) => _desktopMode = desktopMode;
     public void SetPosition(OverlayPosition position) => _position = position;
-    public void SetBackgroundOpacity(float opacity) => _bgOpacity = Math.Clamp(opacity, 0f, 1f);
+    public void SetBackgroundOpacity(float opacity)
+    {
+        opacity = Math.Clamp(opacity, 0f, 1f);
+        if (Math.Abs(opacity - _bgOpacity) < 0.001f) return;
+        _bgOpacity = opacity;
+        // Background pixel changed — refill the whole surface and re-render everything
+        _surfaceInited = false;
+        foreach (var w in _widgets) w.Dirty = true;
+        RenderFrame();
+    }
 
     #endregion
 
