@@ -32,7 +32,7 @@ public sealed partial class SpeedTestPage : Page
     private const double Cx = 165, Cy = 150, TrackR = 98, NeedleLen = 86;
     private const double DialStartAngle = -135.0; // 指针起始（左下）
 
-    private readonly SpeedTestEngine _engine = new();
+    private SpeedTestEngine _engine = new(SpeedTestNodes.Default);
     private readonly Stopwatch _testSw = new();
     private readonly ObservableCollection<ObservablePoint> _dlPts = new();
     private readonly ObservableCollection<ObservablePoint> _ulPts = new();
@@ -42,6 +42,10 @@ public sealed partial class SpeedTestPage : Page
     private DispatcherTimer? _animTimer;
     private bool _running;
     private double _lastTickSec;
+
+    private SpeedTestNode _node = SpeedTestNodes.Default;
+    private bool _useBytesPerSec;  // false = Mbps（比特），true = MB/s（字节）
+    private bool _loadingUi;       // 初始化填充 ComboBox 时屏蔽 SelectionChanged
 
     private enum Phase { Idle, Ping, Download, Upload, Done, Stopped }
     private Phase _phase = Phase.Idle;
@@ -92,6 +96,22 @@ public sealed partial class SpeedTestPage : Page
         InitColors();
         BuildGauge();
         InitChart();
+
+        // 节点 / 单位下拉框：恢复上次选择
+        _loadingUi = true;
+        NodeBox.ItemsSource = SpeedTestNodes.All;
+        NodeBox.DisplayMemberPath = nameof(SpeedTestNode.Name);
+        UnitBox.ItemsSource = new[] { "Mbps", "MB/s" };
+        _node = SpeedTestNodes.ById(AppSettings.Get("SpeedTest_Node")) ?? SpeedTestNodes.Default;
+        NodeBox.SelectedItem = _node;
+        _useBytesPerSec = AppSettings.GetBool("SpeedTest_UnitBytes");
+        UnitBox.SelectedIndex = _useBytesPerSec ? 1 : 0;
+        _loadingUi = false;
+
+        // 按所选节点重建引擎（同时规避 Unloaded 时已 Dispose 的实例被复用）
+        _engine.Dispose();
+        _engine = new SpeedTestEngine(_node);
+
         SetChipsIdle();
         SetButtonReady();
         ResetToIdle();
@@ -124,6 +144,68 @@ public sealed partial class SpeedTestPage : Page
         {
             IpText.Text = "本机 IP：--";
         }
+    }
+
+    // ───────────────────────────── 节点 / 单位切换 ─────────────────────────────
+
+    private void NodeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi || NodeBox.SelectedItem is not SpeedTestNode node) return;
+        _node = node;
+        AppSettings.Set("SpeedTest_Node", node.Id);
+
+        // 重建引擎以切换节点；测速进行中下拉框已禁用，这里只会出现在空闲态
+        _engine.Dispose();
+        _engine = new SpeedTestEngine(node);
+        _ = LoadPublicIpAsync();
+    }
+
+    private void UnitBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi) return;
+        bool useBytes = UnitBox.SelectedIndex == 1;
+        if (useBytes == _useBytesPerSec) return;
+        _useBytesPerSec = useBytes;
+        AppSettings.Set("SpeedTest_UnitBytes", useBytes);
+        RefreshUnitTexts();
+    }
+
+    /// <summary>内部速率统一为 Mbps，展示按所选单位换算（1 MB/s = 8 Mbps）。</summary>
+    private string UnitLabel => _useBytesPerSec ? "MB/s" : "Mbps";
+
+    private string FmtSpeed(double mbps) => FmtValue(_useBytesPerSec ? mbps / 8.0 : mbps);
+
+    private double ChartPeakMbps() => Math.Max(
+        _dlPts.Count > 0 ? _dlPts.Max(s => s.Y) ?? 0 : 0,
+        _ulPts.Count > 0 ? _ulPts.Max(s => s.Y) ?? 0 : 0);
+
+    /// <summary>切换单位后刷新所有已展示的速率文本（指标卡 / 仪表 / 结果横幅 / 图表刻度与提示）。</summary>
+    private void RefreshUnitTexts()
+    {
+        RebuildChartTheme(); // 纵轴刻度随单位换算
+        DlValue.Text = FmtSpeed(_dlMbps);
+        UlValue.Text = FmtSpeed(_ulMbps);
+        DlUnitText.Text = UlUnitText.Text = UnitLabel;
+        if (_phase != Phase.Ping) UnitText.Text = UnitLabel;
+
+        if (ResultBanner.Visibility == Visibility.Visible)
+        {
+            var (title, _, comment) = Evaluate(_dlMbps, _pingMs);
+            ResultTitleText.Text = "网络状况：" + title;
+            ResultDetailText.Text = BuildResultDetail(comment);
+        }
+
+        ChartHint.Text = _phase == Phase.Done
+            ? "峰值速率 " + FmtSpeed(ChartPeakMbps()) + " " + UnitLabel + " · 图表由 LiveCharts 渲染，纵轴自动缩放"
+            : "开始测速后，下载 / 上传实时速率将在此绘制（" + UnitLabel + "）";
+    }
+
+    private string BuildResultDetail(string comment)
+    {
+        var text = $"下载 {FmtSpeed(_dlMbps)} {UnitLabel} · 上传 {FmtSpeed(_ulMbps)} {UnitLabel}" +
+                   $" · 延迟 {FmtValue(_pingMs)} ms · 抖动 {FmtValue(_jitterMs)} ms";
+        if (comment.Length > 0) text += "　" + comment;
+        return text;
     }
 
     // ───────────────────────────── 颜色 / 重绘 ─────────────────────────────
@@ -160,7 +242,7 @@ public sealed partial class SpeedTestPage : Page
         _phase = Phase.Idle;
         _targetValue = double.NaN;
         _displayValue = 0;
-        UnitText.Text = "Mbps";
+        UnitText.Text = UnitLabel;
         StageText.Text = "准备就绪";
         StatusText.Text = "点击下方按钮开始测速，完整测试约需 20~25 秒";
         PhaseBar.Value = 0;
@@ -169,7 +251,8 @@ public sealed partial class SpeedTestPage : Page
         ResultBanner.Visibility = Visibility.Collapsed;
         _pingMs = _jitterMs = _dlMbps = _ulMbps = double.NaN;
         DlValue.Text = UlValue.Text = PingValue.Text = JitValue.Text = "--";
-        ChartHint.Text = "开始测速后，下载 / 上传实时速率将在此绘制（Mbps）";
+        DlUnitText.Text = UlUnitText.Text = UnitLabel;
+        ChartHint.Text = "开始测速后，下载 / 上传实时速率将在此绘制（" + UnitLabel + "）";
         ValueText.Text = "--";
     }
 
@@ -343,21 +426,21 @@ public sealed partial class SpeedTestPage : Page
             // 3) 下载
             _phase = Phase.Download;
             _phaseBaseProgress = 0.08;
-            BeginPhase("下载速度", "Mbps", _dlColor, ChipDownload);
+            BeginPhase("下载速度", UnitLabel, _dlColor, ChipDownload);
             _targetValue = 0;
             _dlMbps = await _engine.MeasureDownloadAsync(
                 (m, p, s) => EngineLive(() => OnDlLive(m, p, s)), ct);
-            DlValue.Text = FmtValue(_dlMbps);
+            DlValue.Text = FmtSpeed(_dlMbps);
             SetChipDone(ChipDownload, _dlColor);
 
             // 4) 上传
             _phase = Phase.Upload;
             _phaseBaseProgress = 0.65;
-            BeginPhase("上传速度", "Mbps", _ulColor, ChipUpload);
+            BeginPhase("上传速度", UnitLabel, _ulColor, ChipUpload);
             _targetValue = 0;
             _ulMbps = await _engine.MeasureUploadAsync(
                 (m, p, s) => EngineLive(() => OnUlLive(m, p, s)), ct);
-            UlValue.Text = FmtValue(_ulMbps);
+            UlValue.Text = FmtSpeed(_ulMbps);
             SetChipDone(ChipUpload, _ulColor);
 
             // 5) 完成
@@ -410,22 +493,18 @@ public sealed partial class SpeedTestPage : Page
         double elapsed = _testSw.Elapsed.TotalSeconds;
         StatusText.Text = $"测速完成 · 总耗时 {elapsed:0} 秒";
         StageText.Text = "测速完成";
-        UnitText.Text = "Mbps";
+        UnitText.Text = UnitLabel;
         _targetValue = double.IsNaN(_dlMbps) ? 0 : _dlMbps;
         SetProgress(1);
 
         var (title, color, comment) = Evaluate(_dlMbps, _pingMs);
         ResultTitleText.Text = "网络状况：" + title;
-        ResultDetailText.Text =
-            $"下载 {FmtValue(_dlMbps)} Mbps · 上传 {FmtValue(_ulMbps)} Mbps · 延迟 {FmtValue(_pingMs)} ms · 抖动 {FmtValue(_jitterMs)} ms";
-        if (comment.Length > 0) ResultDetailText.Text += "　" + comment;
+        ResultDetailText.Text = BuildResultDetail(comment);
         ApplyResultBanner();
         ResultBanner.Visibility = Visibility.Visible;
 
-        double peak = Math.Max(
-            _dlPts.Count > 0 ? _dlPts.Max(s => s.Y) ?? 0 : 0,
-            _ulPts.Count > 0 ? _ulPts.Max(s => s.Y) ?? 0 : 0);
-        ChartHint.Text = "峰值速率 " + FmtValue(peak) + " Mbps · 图表由 LiveCharts 渲染，纵轴自动缩放";
+        ChartHint.Text = "峰值速率 " + FmtSpeed(ChartPeakMbps()) + " " + UnitLabel +
+                         " · 图表由 LiveCharts 渲染，纵轴自动缩放";
     }
 
     private void ApplyResultBanner()
@@ -440,7 +519,7 @@ public sealed partial class SpeedTestPage : Page
     {
         StatusText.Text = status;
         StageText.Text = isError ? "测速失败" : "已停止";
-        UnitText.Text = "Mbps";
+        UnitText.Text = UnitLabel;
         _targetValue = double.NaN;
         ValueText.Text = "--";
         if (_activeChip is not null) SetChipIdle(_activeChip);
@@ -480,8 +559,8 @@ public sealed partial class SpeedTestPage : Page
     {
         if (!_running || _phase != Phase.Download) return;
         _targetValue = mbps;
-        DlValue.Text = FmtValue(mbps);
-        StatusText.Text = $"下载测试中：{FmtValue(mbps)} Mbps · 4 路并发";
+        DlValue.Text = FmtSpeed(mbps);
+        StatusText.Text = $"下载测试中：{FmtSpeed(mbps)} {UnitLabel} · 4 路并发";
         SetProgress(_phaseBaseProgress + progress * 0.57);
         _dlPts.Add(new ObservablePoint(_phaseStartGlobalSec + seconds, mbps));
         TrimSeries(_dlPts);
@@ -491,8 +570,8 @@ public sealed partial class SpeedTestPage : Page
     {
         if (!_running || _phase != Phase.Upload) return;
         _targetValue = mbps;
-        UlValue.Text = FmtValue(mbps);
-        StatusText.Text = $"上传测试中：{FmtValue(mbps)} Mbps · 3 路并发";
+        UlValue.Text = FmtSpeed(mbps);
+        StatusText.Text = $"上传测试中：{FmtSpeed(mbps)} {UnitLabel} · 3 路并发";
         SetProgress(_phaseBaseProgress + progress * 0.35);
         _ulPts.Add(new ObservablePoint(_phaseStartGlobalSec + seconds, mbps));
         TrimSeries(_ulPts);
@@ -529,7 +608,10 @@ public sealed partial class SpeedTestPage : Page
         if (_progressArc is not null)
             _progressArc.Data = frac > 0.004 ? BuildArc(0, frac, TrackR) : null;
 
-        string txt = double.IsNaN(_targetValue) && Math.Abs(_displayValue) < 0.01 ? "--" : FmtValue(_displayValue);
+        // 延迟阶段按 ms 展示；速率阶段按所选单位（内部始终 Mbps）换算展示
+        string txt = double.IsNaN(_targetValue) && Math.Abs(_displayValue) < 0.01
+            ? "--"
+            : _phase == Phase.Ping ? FmtValue(_displayValue) : FmtSpeed(_displayValue);
         if (ValueText.Text != txt) ValueText.Text = txt;
 
         // 进行中步骤的呼吸光晕
@@ -704,7 +786,12 @@ public sealed partial class SpeedTestPage : Page
             new Axis
             {
                 MinLimit = 0,
-                Labeler = v => v >= 100 ? v.ToString("0") : v.ToString("0.#"),
+                // 曲线点存的是内部口径 Mbps；纵轴标签按所选展示单位换算
+                Labeler = v =>
+                {
+                    double d = _useBytesPerSec ? v / 8.0 : v;
+                    return d >= 100 ? d.ToString("0") : d.ToString("0.#");
+                },
                 LabelsPaint = new SolidColorPaint(Sk(_textSecondary)),
                 SeparatorsPaint = new SolidColorPaint(SkA(_textSecondary, 36)),
                 TextSize = 10,
@@ -745,6 +832,7 @@ public sealed partial class SpeedTestPage : Page
         StartText.ClearValue(TextBlock.ForegroundProperty);
         StartIcon.Glyph = "\uE768";
         StartText.Text = "开始测速";
+        NodeBox.IsEnabled = UnitBox.IsEnabled = true;
     }
 
     private void SetButtonRunning()
@@ -758,6 +846,7 @@ public sealed partial class SpeedTestPage : Page
         StartText.Foreground = redBrush;
         StartIcon.Glyph = "\uE71A";
         StartText.Text = "停止测速";
+        NodeBox.IsEnabled = UnitBox.IsEnabled = false;
     }
 
     private static Color ColorRes(string key, Color fallback)

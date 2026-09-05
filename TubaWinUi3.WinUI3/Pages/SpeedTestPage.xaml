@@ -28,7 +28,7 @@
             </Border>
             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                 <TextBlock FontSize="20" FontWeight="SemiBold" Text="网速测试" />
-                <TextBlock FontSize="12" Opacity="0.85" Text="基于浙大测速节点 speedtest.zju.edu.cn · 多线程并发测速" />
+                <TextBlock FontSize="12" Opacity="0.85" Text="多线程并发测速 · 浙大 / Ookla / Cloudflare 多测速节点 · 速率单位可切换" />
             </StackPanel>
             <Button x:Name="BackButton" Grid.Column="2" Click="BackButton_Click" Padding="10,5" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -50,6 +50,26 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1" CornerRadius="14" Padding="22,14,22,18">
                     <StackPanel Spacing="6">
+
+                        <!-- 测速节点 / 显示单位 -->
+                        <Grid ColumnSpacing="24" HorizontalAlignment="Center" Margin="0,2,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock FontSize="12" Opacity="0.75" Text="测速节点" VerticalAlignment="Center" />
+                                <ComboBox x:Name="NodeBox" MinWidth="200" FontSize="12"
+                                          ToolTipService.ToolTip="浙江大学：境内教育网节点，低延迟稳定；苏州移动 / 上海电信 / 新加坡 Singtel：Ookla 测速点（多线路对照）；Cloudflare：境外节点，测国际出口带宽"
+                                          SelectionChanged="NodeBox_SelectionChanged" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <TextBlock FontSize="12" Opacity="0.75" Text="显示单位" VerticalAlignment="Center" />
+                                <ComboBox x:Name="UnitBox" MinWidth="96" FontSize="12"
+                                          ToolTipService.ToolTip="Mbps = 兆比特/秒（运营商口径）；MB/s = 兆字节/秒（下载工具口径）。换算：1 MB/s = 8 Mbps"
+                                          SelectionChanged="UnitBox_SelectionChanged" />
+                            </StackPanel>
+                        </Grid>
 
                         <!-- 阶段步骤条：延迟 → 下载 → 上传 -->
                         <Grid HorizontalAlignment="Center" Margin="0,2,0,4">
@@ -160,7 +180,7 @@
                                         <TextBlock x:Name="DlCardLabel" Grid.Column="1" FontSize="13" VerticalAlignment="Center" Text="下载速度" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                                             <TextBlock x:Name="DlValue" FontSize="26" FontWeight="Bold" Text="--" />
-                                            <TextBlock FontSize="12" Opacity="0.6" VerticalAlignment="Bottom" Margin="0,0,0,4" Text="Mbps" />
+                                            <TextBlock x:Name="DlUnitText" FontSize="12" Opacity="0.6" VerticalAlignment="Bottom" Margin="0,0,0,4" Text="Mbps" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -178,7 +198,7 @@
                                         <TextBlock x:Name="UlCardLabel" Grid.Column="1" FontSize="13" VerticalAlignment="Center" Text="上传速度" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
                                             <TextBlock x:Name="UlValue" FontSize="26" FontWeight="Bold" Text="--" />
-                                            <TextBlock FontSize="12" Opacity="0.6" VerticalAlignment="Bottom" Margin="0,0,0,4" Text="Mbps" />
+                                            <TextBlock x:Name="UlUnitText" FontSize="12" Opacity="0.6" VerticalAlignment="Bottom" Margin="0,0,0,4" Text="Mbps" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
