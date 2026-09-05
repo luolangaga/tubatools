@@ -87,11 +87,10 @@ public class HardwareInfoServiceTests
     }
 
     [Theory]
-    [InlineData("0E", "三星(Samsung)")]
-    [InlineData("02", "美光(Micron)")]
-    [InlineData("11", "Hynix")]
-    [InlineData("16", "Kingston")]
-    [InlineData("2C", "金士顿(Kingston)")]
+    // JEP106 page 0：0x2C=美光、0x4E=三星（0xCE 为 0x4E 带奇校验）、0x18=东芝内存(Kioxia)
+    [InlineData("2C", "美光(Micron)")]
+    [InlineData("CE", "三星(Samsung)")]
+    [InlineData("18", "东芝内存(Kioxia)")]
     // 奇校验位：0x92 与 0x12 必须解到同一厂商（Kingbank 的 vendor byte 0x12）
     [InlineData("92", null)] // 单字节无法区分是哪一 bank 的 vendor，返回 null 让上层走字符串路径
     [InlineData("FF", null)]
@@ -101,9 +100,8 @@ public class HardwareInfoServiceTests
     }
 
     [Theory]
-    [InlineData("0x0E", "三星(Samsung)")]
-    [InlineData("0x02", "美光(Micron)")]
-    [InlineData("0x16", "Kingston")]
+    [InlineData("0x2C", "美光(Micron)")]
+    [InlineData("0xCE", "三星(Samsung)")]
     [InlineData("0x92", null)] // 单字节厂商码去校验后是 0x12，表中无匹配
     public void DecodeJedecManufacturer_0xPrefix2Digit(string raw, string? expected)
     {
@@ -123,6 +121,15 @@ public class HardwareInfoServiceTests
     // Bank11 + 0x12 带奇校验位：高位字节 = 0x8B，低位 = 0x92
     [InlineData("8B92", "金百达(Kingbank)")]
     [InlineData("928B", "金百达(Kingbank)")]
+    // 主流大厂真实 SPD 编码：三星 = page0+0x4E（带校验 0xCE，continuation 0x00）
+    [InlineData("00CE", "三星(Samsung)")]
+    [InlineData("CE00", "三星(Samsung)")]
+    // 金士顿 = page1+0x18（带校验 0x98）
+    [InlineData("0118", "金士顿(Kingston)")]
+    [InlineData("1801", "金士顿(Kingston)")]
+    [InlineData("0198", "金士顿(Kingston)")]
+    // 英睿达 = page5+0x1B
+    [InlineData("051B", "英睿达(Crucial)")]
     public void DecodeJedecManufacturer_4DigitHex(string raw, string? expected)
     {
         Assert.Equal(expected, HardwareInfoService.DecodeJedecManufacturer(raw));
@@ -131,10 +138,10 @@ public class HardwareInfoServiceTests
     [Fact]
     public void JedecVendorFromCode_KnownCodes_ReturnCorrectVendor()
     {
-        Assert.Equal("美光(Micron)", HardwareInfoService.JedecVendorFromCode(0x02));
-        Assert.Equal("三星(Samsung)", HardwareInfoService.JedecVendorFromCode(0x0E));
-        Assert.Equal("海力士(SK Hynix)", HardwareInfoService.JedecVendorFromCode(0x1F));
-        Assert.Equal("金士顿(Kingston)", HardwareInfoService.JedecVendorFromCode(0x2C));
+        Assert.Equal("美光(Micron)", HardwareInfoService.JedecVendorFromCode(0x2C));
+        Assert.Equal("三星(Samsung)", HardwareInfoService.JedecVendorFromCode(0x4E));
+        Assert.Equal("海力士(SK Hynix)", HardwareInfoService.JedecVendorFromCode(0x2D));
+        Assert.Equal("三菱(Mitsubishi)", HardwareInfoService.JedecVendorFromCode(0x1C));
         Assert.Null(HardwareInfoService.JedecVendorFromCode(0xFF));
     }
 
@@ -152,6 +159,11 @@ public class HardwareInfoServiceTests
     [Theory]
     [InlineData(0x0B12, "金百达(Kingbank)")] // Bank11 + 0x12 = Kingbank
     [InlineData(0x653, "广颖电通(Silicon Power)")] // Bank6 + 0x53 = Silicon Power
+    [InlineData(0x0118, "金士顿(Kingston)")] // Bank1 + 0x18
+    [InlineData(0x051B, "英睿达(Crucial)")] // Bank5 + 0x1B
+    [InlineData(0x044D, "芝奇(G.Skill)")] // Bank4 + 0x4D
+    [InlineData(0x0818, "科赋(Klevv/Essencore)")] // Bank8 + 0x18
+    [InlineData(0x002C, "美光(Micron)")] // Bank0 + 0x2C 回退单字节表
     public void JedecVendorFromExtendedCode_MultiByte(int fullCode, string? expected)
     {
         Assert.Equal(expected, HardwareInfoService.JedecVendorFromExtendedCode(fullCode));
@@ -185,6 +197,16 @@ public class HardwareInfoServiceTests
     [InlineData("AUO", "友达(AU Optronics)")]
     [InlineData("CSO", "华星光电(CSOT)")]
     [InlineData("CMN", "奇美(Chimei InnoLux)")]
+    [InlineData("HEC", "海信(Hisense)")]
+    [InlineData("HIT", "日立(Hitachi)")]
+    [InlineData("HTC", "日立(Hitachi)")]
+    [InlineData("HRE", "海尔(Haier)")]
+    [InlineData("MEL", "三菱(Mitsubishi)")]
+    [InlineData("MAG", "美格(MAG)")]
+    [InlineData("MSI", "微星(MSI)")]
+    [InlineData("TOL", "TCL")]
+    [InlineData("CSW", "华星光电(CSOT)")]
+    [InlineData("HHT", "鸿合(Hitevision)")]
     [InlineData("XXX", "XXX")]
     [InlineData(null, null)]
     [InlineData("", null)]

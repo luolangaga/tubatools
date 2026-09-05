@@ -851,65 +851,32 @@ public static class HardwareInfoService
 
     internal static string? JedecVendorFromCode(byte code)
     {
-        // 注意：JEDEC JEP106 厂商 ID 是 7-bit 数据 + 1 位奇校验位。校验位为 1 时，
-        // 实际数据仍只看低 7 位（如 0x92 与 0x12 是同一厂商）。所以本表只覆盖
-        // 0x00-0x7E。0x80-0xFF 段并非有效的“厂商 ID”——它们要么是带校验位的同一
-        // 代码（应按低 7 位解码），要么是字节流的高字节，绝不应被当作单独厂商映射。
-        // 历史上这里曾被错误地塞进一批“猜”的国产模组厂映射，导致像金百达
-        // （JEP106 Bank11 vendor 0x12）这类内存被误识别为 Silicon Power 等。
+        // JEDEC JEP106 page 0（无 0x7F 续接字节）。厂商 ID 为 7-bit 数据 + 1 位奇校验位，
+        // 调用方负责去掉校验位（如 0x92 与 0x12 是同一厂商）。
+        // 历史版本误用了一套与 JEP106 错位的“DRAM 厂商”表（0x02=美光、0x0E=三星、
+        // 0x2C=金士顿等均不成立），本表已按 JEP106 原表（decode-dimms @vendors）逐条核对：
+        // page 0 的 0x2C 实为美光、0x4E 实为三星、0x2D 实为海力士。
         return code switch
         {
-            0x02 => "美光(Micron)",
-            0x04 => "Moseley",
-            0x05 => "Inmos",
-            0x06 => "富士通(Fujitsu)",
-            0x07 => "Hitachi",
-            0x08 => "松下(Panasonic)",
-            0x0A => "NEC",
-            0x0B => "东芝(Toshiba)",
-            0x0E => "三星(Samsung)",
-            0x10 => "三菱(Micron)",
-            0x11 => "Hynix",
-            0x13 => "Elpida",
-            0x15 => "英飞凌(Infineon)",
-            0x16 => "Kingston",
-            0x17 => "Fujitsu",
-            0x19 => "Winbond",
-            0x1A => "Nanya",
-            0x1C => "力晶(Powerchip)",
-            0x1E => "茂德(ProMOS)",
-            0x1F => "海力士(SK Hynix)",
-            0x20 => "Mikron",
-            0x23 => "劲永(PQI)",
-            0x25 => "宇瞻(Apacer)",
-            0x26 => "威刚(ADATA)",
-            0x27 => "Corsair",
-            0x28 => "Avant",
-            0x29 => "G.Skill",
-            0x2C => "金士顿(Kingston)",
-            0x30 => "Ramaxel",
-            0x31 => "Crucial",
-            0x34 => "芝奇(G.Skill)",
-            0x36 => "海盗船(Corsair)",
-            0x38 => "Smart",
-            0x3B => "Crucial",
-            0x3C => "Jedec",
-            0x3E => "金邦(Geil)",
-            0x40 => "Smart",
-            0x41 => "博帝(Patriot)",
-            0x42 => "十铨(TeamGroup)",
-            0x43 => "科赋(Klevv)",
-            0x44 => "影驰(Galax)",
-            0x45 => "七彩虹(Colorful)",
-            0x46 => "佰维(Biwin)",
-            0x47 => "江波龙(Longsys)",
-            0x48 => "朗科(Netac)",
-            0x49 => "广颖电通(Silicon Power)",
-            0x4A => "必恩威(PNY)",
-            0x4B => "Goodram",
-            0x4C => "长鑫存储(CXMT)",
-            // JEP106 Bank1 之后各 bank 的高频 DRAM/模组厂（低 7 位去校验后）
-            // 例如 Bank11+0x12（带奇校验 = 0x92）即金百达 Kingbank
+            0x04 => "富士通(Fujitsu)",
+            0x07 => "日立(Hitachi)",
+            0x08 => "Inmos",
+            0x0E => "飞思卡尔(Freescale/Motorola)",
+            0x10 => "NEC",
+            0x15 => "NXP(原飞利浦半导体)",
+            0x17 => "德州仪器(TI)",
+            0x18 => "东芝内存(Kioxia)",
+            0x1C => "三菱(Mitsubishi)",
+            0x1F => "Atmel",
+            0x20 => "意法半导体(ST)",
+            0x2C => "美光(Micron)",
+            0x2D => "海力士(SK Hynix)",
+            0x32 => "松下(Panasonic)",
+            0x40 => "茂德(ProMOS/Mosel)",
+            0x41 => "英飞凌(Infineon)",
+            0x4E => "三星(Samsung)",
+            0x55 => "ISSI",
+            0x5A => "华邦(Winbond)",
             _ => null
         };
     }
@@ -917,30 +884,59 @@ public static class HardwareInfoService
     internal static string? JedecVendorFromExtendedCode(int fullCode)
     {
         // fullCode 的两种表示（调用方需保持一致）：
-        //   - 小整数（如 0x2C）：去掉校验位后的单字节厂商码；
-        //   - 两字节打包值（如 0x0B12 / 0x653）：把 [continuation/bank][vendor] 两个字节
-        //     去掉校验位后拼接成的 16 位值，即 WMI Win32_PhysicalMemory.Manufacturer
+        //   - 小整数（如 0x2C）：去掉校验位后的单字节厂商码（等价 page 0，回退单字节表）；
+        //   - 两字节打包值（如 0x0B12 / 0x120B）：把 [continuation/bank][vendor] 两个字节
+        //     去掉奇校验位后拼接成的 16 位值，即 WMI Win32_PhysicalMemory.Manufacturer
         //     多字节 JEDEC ID 的常见形式（"0B12" 大端 / "120B" 小端经翻转后同样命中）。
-        // 历史版本曾在此塞进一批与实际 JEP106 不符的“猜测”映射，已清理。
+        // 主流内存模组厂大多注册在 page 1 以后，此表按 JEP106 原表核对：
+        // 三星 page0+0x4E、美光 page0+0x2C、海力士 page0+0x2D、金士顿 page1+0x18、
+        // 英睿达 page5+0x1B 等；packed 值 = (page << 8) | vendor。
         // 注意：两字节打包码不得落入单字节表——否则 e.g. 0x120B (little-endian for
         // Kingbank) 会被 0x0B 误判成“东芝(Toshiba)”。仅小整数（bank==0）才回退单字节表。
         var vendorLow7 = (byte)(fullCode & 0x7F);
         var bank = (fullCode >> 7) & 0x7F;
         return fullCode switch
         {
-            0x02 => "美光(Micron)",
-            0x0E => "三星(Samsung)",
-            0x11 => "海力士(SK Hynix)",
-            0x13 => "尔必达(Elpida)",
-            0x15 => "英飞凌(Infineon)",
-            0x16 => "金士顿(Kingston)",
-            0x1A => "南亚(Nanya)",
-            0x1F => "海力士(SK Hynix)",
-            0x2C => "金士顿(Kingston)",
-            0x30 => "记忆科技(Ramaxel)",
-            // Bank6 + 0x53 = Silicon Power（两字节打包 0x0653）
-            0x653 => "广颖电通(Silicon Power)",
-            // Bank11 + 0x12 = 金百达 Kingbank（两字节打包 0x0B12）
+            // page 1
+            0x0114 => "Smart Modular(智模)",
+            0x0118 => "金士顿(Kingston)",
+            0x013A => "必恩威(PNY)",
+            0x014F => "创见(Transcend)",
+            0x017A => "宇瞻(Apacer)",
+            // page 2
+            0x021E => "海盗船(Corsair)",
+            0x027E => "尔必达(Elpida)",
+            // page 3
+            0x030B => "南亚(Nanya)",
+            0x0325 => "胜创(Kingmax)",
+            // page 4
+            0x0443 => "记忆科技(Ramaxel)",
+            0x0448 => "力晶(Powerchip)",
+            0x044D => "芝奇(G.Skill)",
+            0x046F => "十铨(TeamGroup)",
+            0x0471 => "东芝(Toshiba)",
+            // page 5
+            0x0502 => "博帝(Patriot)",
+            0x051B => "英睿达(Crucial)",
+            0x0551 => "奇梦达(Qimonda)",
+            0x0577 => "Avant Technology",
+            // page 6
+            0x0653 => "广颖电通(Silicon Power)",
+            // page 7
+            0x075D => "Goodram(Wilk Elektronik)",
+            // page 8
+            0x0812 => "影驰(Galaxy)",
+            0x0818 => "科赋(Klevv/Essencore)",
+            0x0865 => "东芯(Dosilicon)",
+            // page 9
+            0x094D => "江波龙(Longsys)",
+            0x096C => "七彩虹(Colorful)",
+            0x0977 => "朗科(Netac)",
+            // page 10
+            0x0A11 => "长鑫存储(CXMT)",
+            0x0A2D => "PUSKILL",
+            0x0A31 => "佰维(Biwin)",
+            // page 11
             0x0B12 => "金百达(Kingbank)",
             _ => bank == 0 ? JedecVendorFromCode(vendorLow7) : null
         };
@@ -1313,12 +1309,12 @@ public static class HardwareInfoService
             "AVT" => "AVerMedia",
             "AYA" => "AYANEO",
             "BGO" => "Bangho",
-            "TOL" => "Beyond TV",
+            "TOL" => "TCL",
             "CSP" => "Casper",
             "CPL" or "WOR" => "COMPAL",
             "CRM" => "海盗船(Corsair)",
             "CRU" => "CRUA",
-            "CSO" => "华星光电(CSOT)",
+            "CSO" or "CSW" => "华星光电(CSOT)",
             "CMN" or "CMI" => "奇美(Chimei InnoLux)",
             "DAE" or "DWE" or "PCK" => "大宇(Daewoo)",
             "DAH" => "大华(Dahua)",
@@ -1340,10 +1336,11 @@ public static class HardwareInfoService
             "GMX" => "GameMax",
             "GRE" => "GreBear",
             "GRR" or "GRU" => "Grundig",
-            "HAI" or "HAI_" or "HAR" or "HRE" or "SRD" => "海信(Hisense)",
+            "HEC" => "海信(Hisense)",
             "HSD" or "HSP" => "瀚宇彩晶(HannStar)",
             "HIK" => "海康威视(Hikvision)",
-            "HEC" or "HIT" or "HTC" => "日立(Hitachi)",
+            "HIT" or "HTC" => "日立(Hitachi)",
+            "HRE" => "海尔(Haier)",
             "HAT" or "HUI" or "HUN" => "绘王(Huion)",
             "HIQ" or "IQT" => "现代(Hyundai ImageQuest)",
             "INL" or "INX" => "群创(InnoLux Display)",
@@ -1356,7 +1353,8 @@ public static class HardwareInfoService
                 "LGD" or "LPL" or "LGP" or "GSM" => "LG Display",
             "LOE" => "Loewe",
             "MEA" or "MEB" or "MED" => "Medion",
-            "MAG" or "MAG_" or "MSI" => "微星(MSI)",
+            "MAG" or "MAG_" => "美格(MAG)",
+            "MSI" => "微星(MSI)",
             "NLK" or "MST" => "MStar",
             "NLE" => "Newline",
             "NSL" => "Newskill",
@@ -1365,7 +1363,8 @@ public static class HardwareInfoService
             "MRG" or "NRL" => "Nreal Air",
             "BDL" => "OneMeeting",
             "OPT" or "OTM" => "Optoma",
-            "YLT" or "MEI" or "MEL" => "松下(Panasonic)",
+            "YLT" or "MEI" => "松下(Panasonic)",
+            "MEL" => "三菱(Mitsubishi)",
             "PQA" => "PEAQ",
             "PFL" or "PFT" or "PHA" or "PHG" or "PHI" or "PHL" or "PHP" or "PHT" or "PTS" => "飞利浦(Philips)",
             "GDH" or "PLC" or "PHO" => "Philco",
@@ -1398,7 +1397,7 @@ public static class HardwareInfoService
             "HKC" => "HKC(惠科)",
             "IVO" => "天马(IVO)",
             "HWP" or "HEW" => "HP(惠普)",
-            "CSW" or "GWR" or "GWR_" => "长城(Great Wall)",
+            "GWR" or "GWR_" => "长城(Great Wall)",
             "HPC" => "惠浦(HPC)",
             "VSC" => "优派(ViewSonic)",
             "VIT" => "唯冠(VIT)",
@@ -1407,7 +1406,7 @@ public static class HardwareInfoService
             "ELO" => "Elo Touch",
             "FUJ" or "FUS" => "富士通(Fujitsu)",
             "GGL" => "Google",
-            "HHT" => "HHI",
+            "HHT" => "鸿合(Hitevision)",
             "JDI" or "JDI_" => "日本显示器(JDI)",
             "OEM" => "OEM",
             "PBN" => "Packard Bell",
