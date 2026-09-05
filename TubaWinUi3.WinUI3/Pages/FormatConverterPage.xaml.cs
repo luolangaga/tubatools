@@ -73,7 +73,8 @@ public sealed partial class FormatConverterPage : Page
         int ImageQuality, int MaxEdge,
         int VideoWidth, int SampleRate, int Channels,
         int[] IcoSizes, int ImageVideoSeconds, int ZipLevel,
-        bool ExportZip, bool MergeImages, bool CombineImagesToPdf);
+        bool ExportZip, bool MergeImages, bool CombineImagesToPdf,
+        int DocImageEdge, int DocJpgQuality, string DocPageRange, string DocRenderMode);
 
     /// <summary>压缩区控件句柄（从对话框内容中读取值）。</summary>
     private sealed class CompressUi
@@ -94,6 +95,12 @@ public sealed partial class FormatConverterPage : Page
         public ToggleSwitch? ExportZipToggle;     // 导出为 ZIP 压缩包（通用导出选项）
         public CheckBox? MergeImagesCheck;        // 合并为一张长图
         public CheckBox? CombineImagesCheck;      // 多张图片合成为一份 PDF
+        public FrameworkElement? DocImagePanel;   // 文档参数: 清晰度/页码范围/渲染模式
+        public NumberBox? DocMaxEdgeBox;
+        public TextBox? DocRangeBox;
+        public ComboBox? DocRenderCombo;
+        public FrameworkElement? DocJpgPanel;     // 文档参数: JPG 质量
+        public Slider? DocJpgSlider;
     }
 
     private readonly ObservableCollection<QueueItem> _queue = [];
@@ -432,6 +439,63 @@ public sealed partial class FormatConverterPage : Page
             compressUi.ZipSlider = zipSlider;
         }
 
+        // 文档参数：文档类导出 PDF/图片时的渲染选项（OfficeCLI 原生参数）
+        {
+            var docImagePanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
+            docImagePanel.Children.Add(new TextBlock
+            {
+                FontSize = 11, Opacity = 0.6,
+                Text = "图片清晰度：截图宽度（像素，越大越清晰、文件越大）"
+            });
+            var docMaxEdgeBox = new NumberBox
+            {
+                Value = 1600, Minimum = 400, Maximum = 8000, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+            docImagePanel.Children.Add(docMaxEdgeBox);
+
+            docImagePanel.Children.Add(new TextBlock
+            {
+                FontSize = 11, Opacity = 0.6,
+                Text = "页码范围（如 1-3,5；留空 = 全部页）"
+            });
+            var docRangeBox = new TextBox { PlaceholderText = "全部页" };
+            docImagePanel.Children.Add(docRangeBox);
+
+            docImagePanel.Children.Add(new TextBlock
+            {
+                FontSize = 11, Opacity = 0.6,
+                Text = "渲染模式（原生渲染需本机装有 Word / PowerPoint）"
+            });
+            var docRenderCombo = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+            docRenderCombo.Items.Add(new ComboBoxItem { Content = "自动（优先原生）", Tag = "auto" });
+            docRenderCombo.Items.Add(new ComboBoxItem { Content = "原生渲染（Word / PowerPoint）", Tag = "native" });
+            docRenderCombo.Items.Add(new ComboBoxItem { Content = "HTML 引擎（内置，无需 Office）", Tag = "html" });
+            docRenderCombo.SelectedIndex = 0;
+            docImagePanel.Children.Add(docRenderCombo);
+
+            var docJpgPanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
+            docJpgPanel.Children.Add(new TextBlock
+            {
+                FontSize = 11, Opacity = 0.6,
+                Text = "JPG 质量（越大越清晰、文件越小越模糊；仅 JPG 目标生效）"
+            });
+            var docJpgSlider = new Slider
+            {
+                Minimum = 50, Maximum = 100, Value = 90, StepFrequency = 1, IsThumbToolTipEnabled = true
+            };
+            docJpgPanel.Children.Add(docJpgSlider);
+
+            panel.Children.Add(docImagePanel);
+            panel.Children.Add(docJpgPanel);
+            compressUi ??= new CompressUi();
+            compressUi.DocImagePanel = docImagePanel;
+            compressUi.DocMaxEdgeBox = docMaxEdgeBox;
+            compressUi.DocRangeBox = docRangeBox;
+            compressUi.DocRenderCombo = docRenderCombo;
+            compressUi.DocJpgPanel = docJpgPanel;
+            compressUi.DocJpgSlider = docJpgSlider;
+        }
+
         var outLabel = new TextBlock { Text = "输出：", FontSize = 11, Opacity = 0.6 };
         panel.Children.Add(outLabel);
         panel.Children.Add(outPreview);
@@ -469,9 +533,17 @@ public sealed partial class FormatConverterPage : Page
                 bool docImage = _category is SourceCategory.Word or SourceCategory.Excel or SourceCategory.Ppt
                         or SourceCategory.Markdown or SourceCategory.Text or SourceCategory.Html
                         or SourceCategory.Json or SourceCategory.Pdf
-                    && ((target.Ext == ".png" || target.Ext == ".jpg")
+                    && ((target.Ext is ".png" or ".jpg" or ".pdf")
                         || (isZip && _category == SourceCategory.Pdf && target.Tag is not null));
-                compressUi.MergeImagesCheck.Visibility = docImage ? Visibility.Visible : Visibility.Collapsed;
+                compressUi.MergeImagesCheck.Visibility =
+                    docImage && target.Ext != ".pdf" ? Visibility.Visible : Visibility.Collapsed;
+
+                // 文档参数：清晰度/页码范围/渲染模式（PDF/图片目标），JPG 质量（仅 JPG）
+                if (compressUi.DocImagePanel is not null)
+                    compressUi.DocImagePanel.Visibility = docImage ? Visibility.Visible : Visibility.Collapsed;
+                if (compressUi.DocJpgPanel is not null)
+                    compressUi.DocJpgPanel.Visibility =
+                        docImage && target.Ext == ".jpg" ? Visibility.Visible : Visibility.Collapsed;
             }
 
             // 多张图片合成一份 PDF：仅「图片→PDF」且队列多于一张时可用
@@ -679,7 +751,7 @@ public sealed partial class FormatConverterPage : Page
     {
         if (ui?.Root is null && ui?.ZipSlider is null)
             return new ConvertSettings(false, 23, "medium", 192, 85, 0, 0, 0, 0,
-                new[] { 256, 128, 64, 48, 32, 16 }, 5, 6, false, false, false);
+                new[] { 256, 128, 64, 48, 32, 16 }, 5, 6, false, false, false, 1600, 90, "", "auto");
 
         var compress = ui?.Toggle?.IsOn == true;
         var crf = ui?.Slider is not null ? (int)ui.Slider.Value : 23;
@@ -707,9 +779,20 @@ public sealed partial class FormatConverterPage : Page
         var exportZip = ui?.ExportZipToggle?.IsOn == true;
         var mergeImages = ui?.MergeImagesCheck?.IsChecked == true;
         var combineImages = ui?.CombineImagesCheck?.IsChecked == true;
+        var docImageEdge = ui?.DocMaxEdgeBox is not null
+            ? Math.Clamp((int)ui.DocMaxEdgeBox.Value, 400, 8000)
+            : 1600;
+        var docJpgQuality = ui?.DocJpgSlider is not null
+            ? Math.Clamp((int)ui.DocJpgSlider.Value, 50, 100)
+            : 90;
+        var docPageRange = ui?.DocRangeBox?.Text?.Trim() ?? "";
+        var docRenderMode = ui?.DocRenderCombo?.SelectedItem is ComboBoxItem ri2
+            ? ri2.Tag as string ?? "auto"
+            : "auto";
 
         return new ConvertSettings(compress, crf, preset, bitrate, quality, maxEdge,
-            videoWidth, sampleRate, channels, icoSizes, duration, zipLevel, exportZip, mergeImages, combineImages);
+            videoWidth, sampleRate, channels, icoSizes, duration, zipLevel, exportZip, mergeImages, combineImages,
+            docImageEdge, docJpgQuality, docPageRange, docRenderMode);
     }
 
     // ══════════════ 转换执行 ══════════════
@@ -784,6 +867,18 @@ public sealed partial class FormatConverterPage : Page
             {
                 if (!await ConfirmDownloadAsync("ImageMagick", "图片转换与压缩引擎（约 60MB）")) return;
                 await MagickService.EnsureMagickAsync(progress);
+            }
+            else if (engine == ConvertEngine.OfficeCli && !OfficeCliService.IsReady)
+            {
+                if (await ConfirmDownloadAsync("OfficeCLI 渲染引擎",
+                        "Word/Excel/PPT 真实渲染组件（单文件约 33MB，镜像下载，装后完全离线）。不下载则回退内置引擎转换（保真度较低）"))
+                {
+                    await OfficeCliService.EnsureOfficeCliAsync(progress);
+                }
+                else
+                {
+                    ProgressText.Text = "未使用 OfficeCLI，将回退内置引擎转换";
+                }
             }
 
             // 多张图片 → 一份 PDF：不逐文件转换，一次命令按队列顺序拼接为多页 PDF
@@ -946,7 +1041,9 @@ public sealed partial class FormatConverterPage : Page
             default:
             {
                 var outputs = await _docService!.ConvertAsync(source, item.Category, target,
-                    new DocConvertOptions(settings.ZipLevel, settings.MergeImages), docProgress, ct);
+                    new DocConvertOptions(settings.ZipLevel, settings.MergeImages,
+                        settings.DocImageEdge, settings.DocJpgQuality, settings.DocPageRange, settings.DocRenderMode),
+                    docProgress, ct);
                 return outputs;
             }
         }
@@ -1175,6 +1272,7 @@ public sealed partial class FormatConverterPage : Page
     {
         UpdateFfmpegCard();
         UpdateMagickCard();
+        UpdateOfficeCliCard();
         UpdateSystemCard();
     }
 
@@ -1242,6 +1340,38 @@ public sealed partial class FormatConverterPage : Page
         }
     }
 
+    private void UpdateOfficeCliCard()
+    {
+        if (OfficeCliService.IsReady)
+        {
+            OfficeCliStatusText.Text = $"已就绪（{OfficeCliService.GetOfficeCliSize()}）";
+            OfficeCliActionBtn.Content = "删除";
+            OfficeCliActionBtn.IsEnabled = true;
+            OfficeCliActionBtn.Tag = "delete";
+        }
+        else
+        {
+            var item = OfficeCliService.DownloadItem;
+            if (item is not null && item.State is DownloadItemState.Queued or DownloadItemState.Resolving
+                    or DownloadItemState.Downloading or DownloadItemState.Processing)
+            {
+                var pct = item.Progress is { } p ? (int)p.Percentage : 0;
+                OfficeCliStatusText.Text = item.State == DownloadItemState.Processing
+                    ? $"处理中：{item.ProcessingStatus ?? "处理中..."}"
+                    : $"下载中 {pct}%…";
+                OfficeCliActionBtn.Content = "下载中…";
+                OfficeCliActionBtn.IsEnabled = false;
+            }
+            else
+            {
+                OfficeCliStatusText.Text = "未安装（转换 Office 文档时自动下载，或回退内置引擎）";
+                OfficeCliActionBtn.Content = "下载";
+                OfficeCliActionBtn.IsEnabled = true;
+                OfficeCliActionBtn.Tag = "download";
+            }
+        }
+    }
+
     private void UpdateSystemCard()
     {
         var parts = new List<string>();
@@ -1290,6 +1420,19 @@ public sealed partial class FormatConverterPage : Page
             {
                 MagickService.EnsureMagickViaQueue();
                 ShowToast("已加入下载队列", "可在下载中心查看进度", InfoBarSeverity.Informational);
+            }
+        }
+        else if (btn == OfficeCliActionBtn)
+        {
+            if (OfficeCliService.IsReady)
+            {
+                OfficeCliService.DeleteOfficeCli();
+                ShowToast("已删除", "OfficeCLI 渲染引擎已删除，需要时可重新下载", InfoBarSeverity.Informational);
+            }
+            else
+            {
+                OfficeCliService.EnsureOfficeCliViaQueue();
+                ShowToast("已加入下载队列", "单文件约 33MB，可在下载中心查看进度", InfoBarSeverity.Informational);
             }
         }
         RefreshEngineCards();

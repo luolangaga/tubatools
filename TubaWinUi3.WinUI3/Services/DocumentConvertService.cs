@@ -4,16 +4,18 @@ using HtmlAgilityPack;
 
 namespace TubaWinUi3.Services;
 
-/// <summary>文档转换的可调参数。</summary>
-public sealed record DocConvertOptions(int ZipLevel = 6, bool MergeImages = false)
+/// <summary>文档转换的可调参数（OfficeCLI 原生参数 + 内置回退引擎共用）。</summary>
+public sealed record DocConvertOptions(int ZipLevel = 6, bool MergeImages = false,
+    int ImageMaxEdge = 1600, int JpgQuality = 90, string? PageRange = null, string? RenderMode = null)
 {
     public static DocConvertOptions Default { get; } = new();
 }
 
 /// <summary>
 /// 文档 / 文本 / PDF 转换统一路由：
-/// 内置轻量引擎（WebView2 + JS 库 + 纯 C# 解析器）优先，
-/// 旧版二进制格式（doc/ppt/wps/et/dps）回退 Office / WPS COM 互联。
+/// OfficeCLI 渲染引擎优先（docx/xlsx/pptx 真实渲染 → 分页 HTML 派生各目标），未就绪或失败时回退
+/// 内置轻量引擎（WebView2 + JS 库 + 纯 C# 解析器），
+/// 旧版二进制格式（doc/ppt/wps/et/dps）走 Office / WPS COM 互联。
 /// 必须在 UI 线程调用（WebView2 依赖），耗时阶段内部已异步化。
 /// </summary>
 public sealed class DocumentConvertService
@@ -33,6 +35,23 @@ public sealed class DocumentConvertService
         var ext = Path.GetExtension(source).ToLowerInvariant();
         progress?.Report($"正在转换 {Path.GetFileName(source)}…");
 
+        // OfficeCLI 真实渲染优先（仅 OOXML 源；.doc/.wps/.et 等老格式走 COM / 内置管线），失败自动回退
+        if (ext is ".docx" or ".xlsx" or ".pptx"
+            && FormatConvertCatalog.EngineFor(category, target) == ConvertEngine.OfficeCli)
+        {
+            if (OfficeCliService.IsReady)
+            {
+                try
+                {
+                    return await ConvertOfficeViaOfficeCliAsync(source, category, target, options, progress, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    progress?.Report($"OfficeCLI 渲染失败（{ex.Message}），回退内置引擎...");
+                }
+            }
+        }
+
         return category switch
         {
             SourceCategory.Pdf => await ConvertPdfAsync(source, target, options, progress, ct),
@@ -45,6 +64,247 @@ public sealed class DocumentConvertService
             SourceCategory.Json => await ConvertJsonAsync(source, target, options, progress, ct),
             _ => throw new NotSupportedException($"暂不支持的类别：{category}")
         };
+    }
+
+    // ══════════════ OfficeCLI 渲染管线 ══════════════
+
+    /// <summary>
+    /// 纯 OfficeCLI 原生输出：txt/html/md 由 CLI 直出；pdf/png/jpg 用 CLI 原生逐页截图
+    /// （无头浏览器渲染，像素不经任何重渲染），PDF 仅把页面图片原样嵌入容器，
+    /// JPG/长图仅做像素格式封装/纵向拼接。不再经过 HTML 打印等任何中间转换链。
+    /// </summary>
+    private async Task<List<string>> ConvertOfficeViaOfficeCliAsync(string source, SourceCategory category,
+        FormatOption target, DocConvertOptions options, IProgress<string>? progress, CancellationToken ct)
+    {
+        progress?.Report($"正在用 OfficeCLI 渲染 {Path.GetFileName(source)}…");
+
+        if (target.Ext == ".txt")
+        {
+            var text = await Task.Run(() => OfficeCliService.TextAsync(source, ct), ct);
+            var txtPath = UniqueOutput(source, ".txt");
+            await File.WriteAllTextAsync(txtPath, text.TrimEnd() + "\n", Utf8Bom, ct);
+            return [txtPath];
+        }
+
+        if (target.Ext is ".html" or ".md")
+        {
+            var tempHtml = Path.Combine(Path.GetTempPath(), $"officecli_{Guid.NewGuid():N}.html");
+            try
+            {
+                await Task.Run(() => OfficeCliService.HtmlAsync(source, tempHtml, options.PageRange, progress, ct), ct);
+                if (target.Ext == ".html")
+                {
+                    var htmlOut = UniqueOutput(source, ".html");
+                    await File.WriteAllTextAsync(htmlOut,
+                        SanitizeViewerHtml(await File.ReadAllTextAsync(tempHtml, ct)), Utf8Bom, ct);
+                    return [htmlOut];
+                }
+                var md = HtmlConvert.ToMarkdown(await File.ReadAllTextAsync(tempHtml, ct));
+                var mdPath = UniqueOutput(source, ".md");
+                await File.WriteAllTextAsync(mdPath, md + "\n", Utf8Bom, ct);
+                return [mdPath];
+            }
+            finally
+            {
+                try { File.Delete(tempHtml); } catch { }
+            }
+        }
+
+        // pdf / png / jpg：原生逐页截图（干净像素直出）
+        var tempDir = Path.Combine(Path.GetTempPath(), "officecli_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var pagePngs = await RenderPagesViaOfficeCliAsync(source, category, options, progress, tempDir, ct);
+            var dir = Path.GetDirectoryName(source) ?? ".";
+            var baseName = Path.GetFileNameWithoutExtension(source) + "_converted";
+
+            // 合并长图：纵向拼接（像素原样叠加）
+            if (options.MergeImages && pagePngs.Count > 1)
+            {
+                progress?.Report($"正在拼接 {pagePngs.Count} 页长图...");
+                var merged = MergeImagesVertically(pagePngs, tempDir);
+                var final = target.Ext == ".jpg" ? ConvertToJpg(merged, options.JpgQuality, tempDir) : merged;
+                var mergedOut = UniquePath(Path.Combine(dir, baseName + (target.Ext == ".jpg" ? ".jpg" : ".png")));
+                File.Copy(final, mergedOut, true);
+                return [mergedOut];
+            }
+
+            // PDF：页面图片原样嵌入容器（officecli 官方 pdf 导出需其 exporter 插件，当前未发布）
+            if (target.Ext == ".pdf")
+            {
+                progress?.Report($"正在合成 PDF（{pagePngs.Count} 页，像素原样嵌入）...");
+                var tempPdf = Path.Combine(tempDir, "out.pdf");
+                await _engine.ImagesToPdfAsync(pagePngs, tempPdf, progress, ct);
+                var pdfOut = UniqueOutput(source, ".pdf");
+                File.Copy(tempPdf, pdfOut, true);
+                return [pdfOut];
+            }
+
+            // png / jpg：逐页输出
+            var outputs = new List<string>();
+            for (int i = 0; i < pagePngs.Count; i++)
+            {
+                progress?.Report($"正在输出第 {i + 1}/{pagePngs.Count} 页...");
+                var final = target.Ext == ".jpg"
+                    ? ConvertToJpg(pagePngs[i], options.JpgQuality, tempDir)
+                    : pagePngs[i];
+                var pagePath = FormatConvertPlanner.BuildDocPagePath(dir, baseName, target.Ext, i + 1, pagePngs.Count);
+                var outPath = UniquePath(pagePath);
+                File.Copy(final, outPath, true);
+                outputs.Add(outPath);
+            }
+            return outputs;
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// 逐页原生截图。指定了页码范围则按范围渲染；否则从第 1 页起渲染，
+    /// 超出末页时 CLI 会钳位回已输出过的页（实测钳回第 1 页），按"页内容哈希已出现过"判定结束。
+    /// </summary>
+    private async Task<List<string>> RenderPagesViaOfficeCliAsync(string source, SourceCategory category,
+        DocConvertOptions options, IProgress<string>? progress, string tempDir, CancellationToken ct)
+    {
+        // --render 仅对 docx/pptx 有意义（native = 本机 Word/PowerPoint 渲染）
+        var renderMode = category is SourceCategory.Word or SourceCategory.Ppt ? options.RenderMode : null;
+
+        var pages = new List<string>();
+        var seenHashes = new HashSet<string>(StringComparer.Ordinal);
+
+        var requested = ParsePageRange(options.PageRange);
+        foreach (var p in requested)
+        {
+            ct.ThrowIfCancellationRequested();
+            var png = Path.Combine(tempDir, $"page_{p:D4}.png");
+            await Task.Run(() => OfficeCliService.ScreenshotAsync(source, p.ToString(), options.ImageMaxEdge,
+                renderMode, png, ct), ct);
+            pages.Add(png);
+            progress?.Report($"OfficeCLI 已渲染第 {p} 页...");
+        }
+        if (requested.Count > 0) return pages;
+
+        for (int p = 1; p <= 999; p++)
+        {
+            ct.ThrowIfCancellationRequested();
+            var png = Path.Combine(tempDir, $"page_{p:D4}.png");
+            await Task.Run(() => OfficeCliService.ScreenshotAsync(source, p.ToString(), options.ImageMaxEdge,
+                renderMode, png, ct), ct);
+            var hash = Convert.ToHexString(
+                System.Security.Cryptography.MD5.HashData(await File.ReadAllBytesAsync(png, ct)));
+            if (!seenHashes.Add(hash))
+            {
+                try { File.Delete(png); } catch { }
+                break; // 钳位重复输出 = 已到末页
+            }
+            pages.Add(png);
+            progress?.Report($"OfficeCLI 已渲染第 {p} 页...");
+        }
+        if (pages.Count == 0)
+            throw new InvalidOperationException("OfficeCLI 未渲染出任何页面");
+        return pages;
+    }
+
+    /// <summary>
+    /// 清理 officecli html 观察器的两个浏览器端渲染问题（内容与样式不动，仅禁用其运行时布局脚本）：
+    /// ① 摘除运行时分页脚本——对含不可拆分巨型表格行的文档，该脚本在普通浏览器里会陷入克隆循环
+    ///    （实测同一份文档被克隆出 341 页 = 重影），移除后为单长页渲染；
+    /// ② 把"衬于文字下方"锚定图（position:absolute + z-index:-1 + 100%×100% 背景）转回正常内联图片——
+    ///    这类全页扫描图在单长页模式下会失去定位参照、整张漂移覆盖到其他内容上（= 大字"水印"）。
+    /// </summary>
+    private static string SanitizeViewerHtml(string html)
+    {
+        var result = html;
+
+        // ① 摘除分页脚本（</body> 前最后一个含 _wordPaginate 的 <script> 块）
+        var idx = result.IndexOf("_wordPaginate", StringComparison.Ordinal);
+        if (idx >= 0)
+        {
+            var start = result.LastIndexOf("<script", idx, StringComparison.OrdinalIgnoreCase);
+            var end = result.IndexOf("</script>", idx, StringComparison.OrdinalIgnoreCase);
+            if (start >= 0 && end >= 0)
+                result = result[..start] + result[(end + "</script>".Length)..];
+        }
+
+        // ② 背景锚定图层 → 正常内联图片（随容器宽度缩放，不再绝对定位漂移）
+        const string style = "<style>" +
+            ".page div[style*=\"z-index:-1\"]{position:static!important;width:100%!important;height:auto!important;overflow:visible!important}" +
+            ".page div[style*=\"z-index:-1\"] img{position:static!important;width:100%!important;height:auto!important;object-fit:initial!important}" +
+            "</style>";
+        var headClose = result.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+        result = headClose >= 0 ? result[..headClose] + style + result[headClose..] : result + style;
+
+        return result;
+    }
+
+    /// <summary>解析页码范围（如 "1-3,5"）为页号列表；空 = 全部页。</summary>
+    private static List<int> ParsePageRange(string? range)
+    {
+        var pages = new List<int>();
+        if (string.IsNullOrWhiteSpace(range)) return pages;
+        foreach (var part in range.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var dash = part.IndexOf('-');
+            if (dash > 0 && int.TryParse(part[..dash], out var a) && int.TryParse(part[(dash + 1)..], out var b))
+            {
+                for (int i = Math.Max(1, a); i <= b; i++) pages.Add(i);
+            }
+            else if (int.TryParse(part, out var n) && n >= 1)
+            {
+                pages.Add(n);
+            }
+        }
+        return pages.Distinct().OrderBy(x => x).ToList();
+    }
+
+    /// <summary>多张 PNG 纵向拼接为一张长图（System.Drawing，像素原样叠加，白底补齐）。</summary>
+    private static string MergeImagesVertically(IReadOnlyList<string> pngPaths, string tempDir)
+    {
+        var outPath = Path.Combine(tempDir, "merged.png");
+        var frames = new List<System.Drawing.Bitmap>();
+        try
+        {
+            foreach (var path in pngPaths)
+                frames.Add(new System.Drawing.Bitmap(path));
+            var width = frames.Max(b => b.Width);
+            var totalHeight = frames.Sum(b => b.Height);
+
+            using var canvas = new System.Drawing.Bitmap(width, totalHeight);
+            using (var g = System.Drawing.Graphics.FromImage(canvas))
+            {
+                g.Clear(System.Drawing.Color.White);
+                int y = 0;
+                foreach (var frame in frames)
+                {
+                    g.DrawImage(frame, (width - frame.Width) / 2, y, frame.Width, frame.Height);
+                    y += frame.Height;
+                }
+            }
+            canvas.Save(outPath, System.Drawing.Imaging.ImageFormat.Png);
+        }
+        finally
+        {
+            foreach (var frame in frames) frame.Dispose();
+        }
+        return outPath;
+    }
+
+    /// <summary>PNG → JPG（System.Drawing JPEG 编码器，质量可调，不做其他处理）。</summary>
+    private static string ConvertToJpg(string pngPath, int quality, string tempDir)
+    {
+        var jpgPath = Path.Combine(tempDir,
+            Path.GetFileNameWithoutExtension(pngPath) + ".jpg");
+        using var src = new System.Drawing.Bitmap(pngPath);
+        var codec = System.Drawing.Imaging.ImageCodecInfo.GetImageEncoders()
+            .First(c => c.FormatID == System.Drawing.Imaging.ImageFormat.Jpeg.Guid);
+        using var ep = new System.Drawing.Imaging.EncoderParameters(1);
+        ep.Param[0] = new System.Drawing.Imaging.EncoderParameter(
+            System.Drawing.Imaging.Encoder.Quality, (long)Math.Clamp(quality, 50, 100));
+        src.Save(jpgPath, codec, ep);
+        return jpgPath;
     }
 
     // ══════════════ PDF ══════════════
@@ -89,8 +349,8 @@ public sealed class DocumentConvertService
         {
             progress?.Report("正在渲染 PDF 页面...");
             var fmt = target.Tag == "jpg" ? "jpg" : "png";
-            var images = await _engine.PdfToImagesAsync(source, dir, baseName, fmt, 90, progress, ct,
-                options.MergeImages);
+            var images = await _engine.PdfToImagesAsync(source, dir, baseName, fmt, options.JpgQuality, progress, ct,
+                options.MergeImages, options.ImageMaxEdge);
             var zipPath = UniqueOutput(source, ".zip");
             var (before, after) = FormatConvertPlanner.CreateZipArchive(images, zipPath, options.ZipLevel);
             progress?.Report($"压缩包已生成（{DownloadQueueService.FormatSize(before)} → {DownloadQueueService.FormatSize(after)}）");
@@ -166,8 +426,8 @@ public sealed class DocumentConvertService
         // PNG / JPG 散图（可合并为一张长图）
         progress?.Report(options.MergeImages ? "正在渲染合并长图..." : "正在渲染 PDF 页面...");
         var imageFmt = target.Ext == ".jpg" ? "jpg" : "png";
-        return await _engine.PdfToImagesAsync(source, dir, baseName, imageFmt, 90, progress, ct,
-            options.MergeImages);
+        return await _engine.PdfToImagesAsync(source, dir, baseName, imageFmt, options.JpgQuality, progress, ct,
+            options.MergeImages, options.ImageMaxEdge);
     }
 
     // ══════════════ Word（doc / docx / wps / rtf / odt） ══════════════
@@ -478,7 +738,7 @@ public sealed class DocumentConvertService
                     var dir = Path.GetDirectoryName(source) ?? ".";
                     var baseName = Path.GetFileNameWithoutExtension(source) + "_converted";
                     var fmt = target.Ext == ".jpg" ? "jpg" : "png";
-                    return await _engine.PdfToImagesAsync(pdfPath, dir, baseName, fmt, 90, progress, ct, options.MergeImages);
+                    return await _engine.PdfToImagesAsync(pdfPath, dir, baseName, fmt, options.JpgQuality, progress, ct, options.MergeImages, options.ImageMaxEdge);
                 }
                 finally
                 {
@@ -600,7 +860,7 @@ public sealed class DocumentConvertService
 
         progress?.Report("正在渲染页面为图片...");
         var fmt = target.Ext == ".jpg" ? "jpg" : "png";
-        return await _engine.PdfToImagesAsync(tempPdf, dir, baseName, fmt, 90, progress, ct, options.MergeImages);
+        return await _engine.PdfToImagesAsync(tempPdf, dir, baseName, fmt, options.JpgQuality, progress, ct, options.MergeImages, options.ImageMaxEdge);
     }
 
     /// <summary>PDF → Markdown（文字层，逐页）。</summary>

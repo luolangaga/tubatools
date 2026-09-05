@@ -24,7 +24,8 @@ public enum ConvertEngine
     Magick,
     DocEngine,
     Ocr,
-    OfficeInterop
+    OfficeInterop,
+    OfficeCli
 }
 
 /// <summary>非常规格式输出的特殊操作（由页面/文档服务专门调度）。</summary>
@@ -240,7 +241,7 @@ public static class FormatConvertCatalog
         _ => Array.Empty<FormatOption>()
     };
 
-    /// <summary>该类别（含目标格式）使用的转换引擎。图片转 MP4/WebM 时借用 FFmpeg。</summary>
+    /// <summary>该类别（含目标格式）使用的转换引擎。图片转 MP4/WebM 时借用 FFmpeg；Office 文档真实渲染用 OfficeCLI。</summary>
     public static ConvertEngine EngineFor(SourceCategory category, FormatOption? target = null)
     {
         if (target is not null)
@@ -249,6 +250,9 @@ public static class FormatConvertCatalog
                 return ConvertEngine.Ocr;
             if (category == SourceCategory.Image && (target.Ext == ".mp4" || target.Ext == ".webm"))
                 return ConvertEngine.Ffmpeg;
+            // 非常规输出（ZIP 压缩包等）不参与 OfficeCLI 路由
+            if (target.Special == ConvertSpecial.None && ShouldUseOfficeCli(category, target))
+                return ConvertEngine.OfficeCli;
         }
         return category switch
         {
@@ -257,6 +261,19 @@ public static class FormatConvertCatalog
             _ => ConvertEngine.DocEngine
         };
     }
+
+    /// <summary>
+    /// 该类别 + 目标是否用 OfficeCLI 真实渲染：Word/PPT/Excel 的排版类目标
+    /// （HTML/PDF/图片 由渲染 HTML 派生，Word 的 txt/md 走结构化提取）。
+    /// xlsx/csv/json/md 数据类目标保持 SheetJS 快路径；仅 OOXML 源适用（老格式由文档服务走 COM）。
+    /// </summary>
+    internal static bool ShouldUseOfficeCli(SourceCategory category, FormatOption target) => category switch
+    {
+        SourceCategory.Word => target.Ext is ".pdf" or ".html" or ".png" or ".jpg" or ".txt" or ".md",
+        SourceCategory.Excel => target.Ext is ".pdf" or ".html" or ".png" or ".jpg",
+        SourceCategory.Ppt => target.Ext is ".pdf" or ".html" or ".png" or ".jpg",
+        _ => false
+    };
 
     /// <summary>该文件是否只能通过 Office / WPS 互联转换（旧版二进制格式）。</summary>
     public static bool RequiresOfficeInterop(string filePath)

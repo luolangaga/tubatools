@@ -379,6 +379,22 @@
             });
         },
 
+        /** PNG 页面图片依序合成一份 PDF（异步任务，pdf-lib，页面尺寸 = 图片像素，不做任何重采样）。 */
+        startImagesToPdf: function (list) {
+            return startJob("imgpdf", async function () {
+                if (!window.PDFLib) throw new Error("pdf-lib 未加载");
+                if (!Array.isArray(list)) list = JSON.parse(list);
+                if (!list.length) throw new Error("没有可合成的页面图片");
+                const out = await PDFLib.PDFDocument.create();
+                for (const b64 of list) {
+                    const img = await out.embedPng(b64ToBytes(b64));
+                    const page = out.addPage([img.width, img.height]);
+                    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+                }
+                return b64FromBytes(await out.save());
+            });
+        },
+
         /** 工作簿（xlsx/xls/ods/csv/et）→ 每个工作表的 CSV 或 JSON 文本。
          *  format: "csv" | "json"。返回 [{name, text}]。 */
         startWorkbookOut: function (b64, format) {

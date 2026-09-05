@@ -194,6 +194,74 @@ public class FormatConvertCatalogTests
     }
 
     [Theory]
+    [InlineData(".pdf")]
+    [InlineData(".html")]
+    [InlineData(".png")]
+    [InlineData(".jpg")]
+    [InlineData(".txt")]
+    [InlineData(".md")]
+    public void EngineFor_WordTargets_UsesOfficeCli(string ext)
+    {
+        var target = FormatConvertCatalog.WordTargets.First(t => t.Ext == ext);
+        Assert.Equal(ConvertEngine.OfficeCli, FormatConvertCatalog.EngineFor(SourceCategory.Word, target));
+    }
+
+    [Fact]
+    public void EngineFor_WordDocxTarget_StaysOnBuiltInEngine()
+    {
+        // docx → docx 无渲染收益，保持内置引擎
+        var target = FormatConvertCatalog.WordTargets.First(t => t.Ext == ".docx");
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Word, target));
+    }
+
+    [Theory]
+    [InlineData(".pdf")]
+    [InlineData(".html")]
+    [InlineData(".png")]
+    [InlineData(".jpg")]
+    public void EngineFor_PptTargets_UsesOfficeCli(string ext)
+    {
+        var target = FormatConvertCatalog.PptTargets.First(t => t.Ext == ext);
+        Assert.Equal(ConvertEngine.OfficeCli, FormatConvertCatalog.EngineFor(SourceCategory.Ppt, target));
+    }
+
+    [Theory]
+    [InlineData(".pdf", ConvertEngine.OfficeCli)]
+    [InlineData(".png", ConvertEngine.OfficeCli)]
+    [InlineData(".jpg", ConvertEngine.OfficeCli)]
+    [InlineData(".html", ConvertEngine.OfficeCli)]
+    [InlineData(".xlsx", ConvertEngine.DocEngine)]
+    [InlineData(".csv", ConvertEngine.DocEngine)]
+    [InlineData(".json", ConvertEngine.DocEngine)]
+    [InlineData(".md", ConvertEngine.DocEngine)]
+    public void EngineFor_ExcelTargets_Selective(string ext, ConvertEngine expected)
+    {
+        var target = FormatConvertCatalog.ExcelTargets.First(t => t.Ext == ext);
+        Assert.Equal(expected, FormatConvertCatalog.EngineFor(SourceCategory.Excel, target));
+    }
+
+    [Fact]
+    public void EngineFor_TextDocxTarget_StaysOnBuiltInEngine()
+    {
+        // md/txt/html/json → docx 保持 DocxWriter 快路径
+        var docx = FormatConvertCatalog.TextTargets.First(t => t.Ext == ".docx");
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Markdown, docx));
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Text, docx));
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Html, docx));
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Json, docx));
+    }
+
+    [Fact]
+    public void EngineFor_SpecialTargets_NeverRequireOfficeCli()
+    {
+        // ZIP 压缩包 / PDF 合并拆分 / OCR 等特殊操作不走 OfficeCLI，避免无谓的引擎下载提示
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Word, FormatConvertCatalog.ZipTarget));
+        Assert.Equal(ConvertEngine.DocEngine, FormatConvertCatalog.EngineFor(SourceCategory.Ppt, FormatConvertCatalog.ZipTarget));
+        var merge = new FormatOption("PDF", ".pdf", "", "", ConvertSpecial.MergePdf);
+        Assert.NotEqual(ConvertEngine.OfficeCli, FormatConvertCatalog.EngineFor(SourceCategory.Pdf, merge));
+    }
+
+    [Theory]
     [InlineData("old.doc", true)]
     [InlineData("old.ppt", true)]
     [InlineData("new.docx", false)]

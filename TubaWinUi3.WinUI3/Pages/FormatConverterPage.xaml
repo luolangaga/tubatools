@@ -149,7 +149,7 @@
                 <Expander Header="转换引擎（按需下载 / 系统组件）" HorizontalAlignment="Stretch" IsExpanded="False">
                     <StackPanel Spacing="10" Padding="0,10,0,0">
                         <TextBlock FontSize="11" Opacity="0.6" TextWrapping="Wrap"
-                                   Text="FFmpeg 处理视频/音频，ImageMagick 处理图片，两者首次使用时自动下载；文档引擎内置（无需下载）；OCR 使用系统自带的 Windows OCR 引擎（本地识别）；旧版 Office 格式通过本机 Office / WPS 转换。" />
+                                   Text="FFmpeg 处理视频/音频，ImageMagick 处理图片，两者首次使用时自动下载；文档渲染引擎 OfficeCLI（单文件 33MB）负责文档真实渲染（图片/表格/复选框/页眉页脚全保留，未下载时自动回退内置引擎）；OCR 使用系统自带的 Windows OCR 引擎（本地识别）；旧版 Office 格式也可通过本机 Office / WPS 转换。" />
                         <Grid ColumnSpacing="10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -186,16 +186,17 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- 文档引擎 -->
+                            <!-- 文档渲染引擎 -->
                             <Border Grid.Row="1" Padding="14" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderThickness="1">
                                 <StackPanel Spacing="6">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE8A5;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="文档引擎" VerticalAlignment="Center" />
+                                        <TextBlock FontSize="13" FontWeight="SemiBold" Text="文档渲染引擎" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <TextBlock FontSize="11" Opacity="0.65" Text="内置 · 无需下载" />
-                                    <TextBlock FontSize="11" Opacity="0.7" TextWrapping="Wrap"
-                                               Text="Word / Excel / PPT / Markdown / HTML / JSON / PDF 由内置浏览器渲染与解析，内容保真、排版简化" />
+                                    <TextBlock FontSize="11" Opacity="0.65" Text="OfficeCLI · Word/Excel/PPT 真实渲染（33MB）" />
+                                    <TextBlock x:Name="OfficeCliStatusText" FontSize="11" Opacity="0.7" TextWrapping="Wrap"
+                                               Text="检查中..." />
+                                    <Button x:Name="OfficeCliActionBtn" Click="EngineActionBtn_Click" FontSize="11" Padding="10,4" HorizontalAlignment="Left" />
                                 </StackPanel>
                             </Border>
 

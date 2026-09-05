@@ -152,16 +152,35 @@ public sealed class DocumentEngineService
     }
 
     /// <summary>
+    /// 把 PNG 页面图片依序合成为一份 PDF（pdf-lib，页面尺寸 = 图片像素，像素不做任何重采样）。
+    /// </summary>
+    public async Task ImagesToPdfAsync(IReadOnlyList<string> pngPaths, string pdfPath, IProgress<string>? progress, CancellationToken ct)
+    {
+        var b64List = new List<string>(pngPaths.Count);
+        foreach (var path in pngPaths)
+        {
+            ct.ThrowIfCancellationRequested();
+            b64List.Add(Convert.ToBase64String(await File.ReadAllBytesAsync(path, ct)));
+        }
+        var data = await RunJobAsync("imgpdf",
+            $"docengine.startImagesToPdf({JsonSerializer.Serialize(b64List)})", ct);
+        var b64 = JsonSerializer.Deserialize<string>(data)
+            ?? throw new InvalidOperationException("图片合成 PDF 返回为空");
+        await File.WriteAllBytesAsync(pdfPath, Convert.FromBase64String(b64), ct);
+    }
+
+    /// <summary>
     /// PDF → 每页图片（单页输出原名，多页输出 名称_第N页），返回输出文件列表。
     /// mergeIntoOne=true 时所有页面纵向拼接为一张长图（输出单个文件）。
+    /// quality 仅对 JPG 生效（1-100）；maxLongEdge 限制渲染长边像素（清晰度上限，0 = 引擎默认）。
     /// </summary>
     public async Task<List<string>> PdfToImagesAsync(string pdfPath, string outputDir,
         string baseName, string format, int quality, IProgress<string>? progress, CancellationToken ct,
-        bool mergeIntoOne = false)
+        bool mergeIntoOne = false, int maxLongEdge = 2200)
     {
         var b64 = Convert.ToBase64String(await File.ReadAllBytesAsync(pdfPath, ct));
         var data = await RunJobAsync("pdf",
-            $"docengine.startPdfToImages({JsonSerializer.Serialize(b64)}, {JsonSerializer.Serialize(format)}, {quality}, 2200, {(mergeIntoOne ? "true" : "false")})", ct);
+            $"docengine.startPdfToImages({JsonSerializer.Serialize(b64)}, {JsonSerializer.Serialize(format)}, {quality}, {maxLongEdge}, {(mergeIntoOne ? "true" : "false")})", ct);
 
         using var doc = JsonDocument.Parse(data);
         var el = doc.RootElement;
