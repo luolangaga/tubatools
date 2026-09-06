@@ -7,8 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="using:TubaWinUi3.Pages"
     mc:Ignorable="d"
-    Loaded="WindowsFeaturePage_Loaded"
-    Unloaded="WindowsFeaturePage_Unloaded">
+    Loaded="WindowsFeaturePage_Loaded">
 
     <Page.Resources>
         <!-- 小圆角提示标签的通用底框 -->
@@ -25,6 +24,92 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="CornerRadius" Value="12" />
         </Style>
+        <!-- 功能卡片模板（浏览列表与搜索结果共用） -->
+        <DataTemplate x:Key="FeatureCardTemplate" x:DataType="local:FeatureRowVm">
+            <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,10">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Border Style="{StaticResource TagBorder}">
+                                <TextBlock FontSize="12" Opacity="0.85" Text="{x:Bind IdText}" />
+                            </Border>
+                            <Border Style="{StaticResource TagBorder}" Background="{x:Bind StateBackground}">
+                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind StateBrush}" Text="{x:Bind StateText}" />
+                            </Border>
+                            <Border Style="{StaticResource TagBorder}" Background="{x:Bind ExperimentBackground}" Visibility="{x:Bind ExperimentVisibility}">
+                                <TextBlock FontSize="12" Foreground="{x:Bind ExperimentBrush}" Text="{x:Bind ExperimentText}" />
+                            </Border>
+                            <Border Style="{StaticResource TagBorder}">
+                                <TextBlock FontSize="12" Opacity="0.7" Text="{x:Bind PriorityText}" />
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanEnable}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon Glyph="&#xE73E;" FontSize="12" />
+                                <TextBlock Text="启用" FontSize="13" />
+                            </StackPanel>
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel Spacing="10" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
+                                            <Button Content="确认启用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanDisable}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon Glyph="&#xE71A;" FontSize="12" />
+                                <TextBlock Text="禁用" FontSize="13" />
+                            </StackPanel>
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel Spacing="10" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
+                                            <Button Content="确认禁用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanReset}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <FontIcon Glyph="&#xE777;" FontSize="12" />
+                                <TextBlock Text="重置" FontSize="13" />
+                            </StackPanel>
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel Spacing="10" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
+                                            <Button Content="确认重置" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
     </Page.Resources>
 
     <Grid>
@@ -77,6 +162,13 @@
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="操作失败" />
                 <InfoBar x:Name="SuccessBar" Severity="Success" IsOpen="False" IsClosable="True" />
+                <!-- nexbox 同款状态提示（刷新时按实际状态切换可见性） -->
+                <InfoBar x:Name="BootPendingBar" Severity="Informational" IsOpen="True" IsClosable="False" Visibility="Collapsed"
+                         Title="部分功能配置将在下次重启后生效" />
+                <InfoBar x:Name="NotAdminBar" Severity="Warning" IsOpen="True" IsClosable="False" Visibility="Collapsed"
+                         Title="当前未以管理员身份运行" Message="启用 / 禁用 / 重置操作将被系统拒绝，请以管理员身份重新启动工具箱。" />
+                <InfoBar x:Name="DictMissingBar" Severity="Warning" IsOpen="True" IsClosable="False" Visibility="Collapsed"
+                         Title="未找到功能字典（FeatureDictionary.pfs）" Message="列表将只显示系统已有配置的编号，无法按名称搜索。" />
 
                 <!-- 加载中 -->
                 <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" Spacing="12" Padding="0,64">
@@ -84,7 +176,7 @@
                     <TextBlock FontSize="13" Opacity="0.7" HorizontalAlignment="Center" Text="正在读取功能配置存储…" />
                 </StackPanel>
 
-                <!-- 未找到 ViveTool -->
+                <!-- 系统不支持 -->
                 <Border x:Name="MissingPanel" Visibility="Collapsed" CornerRadius="22" Padding="24" BorderThickness="1" BorderBrush="#26F5A623">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -149,19 +241,20 @@
                         </Border>
                     </Grid>
 
-                    <!-- ═════════ 功能字典搜索 ═════════ -->
+                    <!-- ═════════ 功能列表（浏览 + 搜索，nexbox 单列表逻辑） ═════════ -->
                     <StackPanel Spacing="8">
                         <Grid>
-                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="按名称或 ID 搜索功能" />
-                            <TextBlock FontSize="12" Opacity="0.55" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                       Text="字典共 16,999 条 · 建议先搜索再操作" />
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="功能列表" />
+                            <TextBlock x:Name="ListStats" FontSize="12" Opacity="0.55" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
+
+                        <!-- 搜索框：打字不触发查询，回车 / 点击搜索按钮才提交（nexbox 同款） -->
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBox x:Name="SearchBox" PlaceholderText="输入功能名称或 ID，如 TIFE、48433719…" FontSize="14" />
+                            <TextBox x:Name="SearchBox" PlaceholderText="输入功能名称或 ID（回车或点击搜索提交），如 TIFE、48433719…" FontSize="14" />
                             <Button x:Name="SearchButton" Grid.Column="1" CornerRadius="7" Padding="16,10" Click="SearchButton_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon Glyph="&#xE721;" FontSize="13" />
@@ -169,201 +262,59 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
-                        <Border x:Name="SearchPlaceholder" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1"
-                                CornerRadius="12" Padding="20,18">
+
+                        <!-- 存储切换 + 展示开关（nexbox 同款：store / namedOnly / persistBoot） -->
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <ToggleButton x:Name="RuntimeStoreButton" Click="StoreButton_Click" Padding="12,5" CornerRadius="7"
+                                              ToolTipService.ToolTip="运行时存储：本次开机有效的功能配置">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon Glyph="&#xE770;" FontSize="12" />
+                                        <TextBlock Text="运行时" FontSize="13" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton x:Name="BootStoreButton" Click="StoreButton_Click" Padding="12,5" CornerRadius="7"
+                                              ToolTipService.ToolTip="引导存储：重启后依然生效的持久化配置">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon Glyph="&#xE7E8;" FontSize="12" />
+                                        <TextBlock Text="引导（重启生效）" FontSize="13" />
+                                    </StackPanel>
+                                </ToggleButton>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <ToggleSwitch x:Name="NamedOnlyToggle" OnContent="仅显示有名称" OffContent="显示全部配置"
+                                              MinWidth="0" Margin="0,0" ToolTipService.ToolTip="浏览态（无搜索词）只显示字典可识别名称的条目，过滤系统内部 servicing 编号项" />
+                                <ToggleSwitch x:Name="PersistBootToggle" OnContent="重启后保持生效" OffContent="仅本次开机有效"
+                                              MinWidth="0" Margin="0,0" ToolTipService.ToolTip="启用 / 禁用时是否同时写入 Boot 存储（注册表 Overrides），重启后保持生效" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 单一列表：浏览态 = 所选存储全量配置（按 ID 升序），搜索态 = 配置命中 + 字典补充 -->
+                        <ListView x:Name="FeatureList" SelectionMode="None"
+                                  ItemContainerStyle="{StaticResource FeatureItemContainer}"
+                                  ItemTemplate="{StaticResource FeatureCardTemplate}" />
+
+                        <!-- 空状态 / 无结果 -->
+                        <Border x:Name="NoResultsPanel" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1"
+                                CornerRadius="12" Padding="20,18" Visibility="Collapsed">
                             <StackPanel Spacing="4" HorizontalAlignment="Center">
                                 <FontIcon Glyph="&#xE721;" FontSize="20" Opacity="0.4" HorizontalAlignment="Center" />
-                                <TextBlock FontSize="13" Opacity="0.6" Text="输入功能名称或数字 ID 开始搜索" HorizontalAlignment="Center" />
-                                <TextBlock FontSize="12" Opacity="0.45" Text="搜索会同时匹配内置功能字典与当前系统配置" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="NoResultsText" FontSize="13" Opacity="0.6" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Border>
-                        <TextBlock x:Name="SearchStats" FontSize="12" Opacity="0.55" Visibility="Collapsed" />
-                        <ListView x:Name="SearchList" SelectionMode="None" ItemContainerStyle="{StaticResource FeatureItemContainer}"
-                                  Visibility="Collapsed">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="local:FeatureRowVm">
-                                    <!-- 功能卡片（搜索同款布局） -->
-                                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,10">
-                                        <Grid ColumnSpacing="12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
 
-                                            <StackPanel Spacing="4" VerticalAlignment="Center">
-                                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <Border Style="{StaticResource TagBorder}">
-                                                        <TextBlock FontSize="12" Opacity="0.85" Text="{x:Bind IdText}" />
-                                                    </Border>
-                                                    <Border Style="{StaticResource TagBorder}" Background="{x:Bind StateBackground}">
-                                                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind StateBrush}" Text="{x:Bind StateText}" />
-                                                    </Border>
-                                                    <Border Style="{StaticResource TagBorder}" Background="{x:Bind ExperimentBackground}">
-                                                        <TextBlock FontSize="12" Foreground="{x:Bind ExperimentBrush}" Text="{x:Bind ExperimentText}" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanEnable}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE73E;" FontSize="12" />
-                                                        <TextBlock Text="启用" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认启用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanDisable}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE71A;" FontSize="12" />
-                                                        <TextBlock Text="禁用" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认禁用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" Visibility="{x:Bind ResetVisibility}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE777;" FontSize="12" />
-                                                        <TextBlock Text="重置" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认重置" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </StackPanel>
-
-                    <!-- ═════════ 当前已配置的隐藏功能 ═════════ -->
-                    <StackPanel Spacing="8">
-                        <Grid>
-                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="当前已配置的隐藏功能" />
-                            <TextBlock x:Name="ConfiguredHint" FontSize="12" Opacity="0.55" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                        </Grid>
-                        <ListView x:Name="ConfiguredList" SelectionMode="None" ItemContainerStyle="{StaticResource FeatureItemContainer}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="local:FeatureRowVm">
-                                    <!-- 功能卡片 -->
-                                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,10">
-                                        <Grid ColumnSpacing="12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Spacing="4" VerticalAlignment="Center">
-                                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <Border Style="{StaticResource TagBorder}">
-                                                        <TextBlock FontSize="12" Opacity="0.85" Text="{x:Bind IdText}" />
-                                                    </Border>
-                                                    <Border Style="{StaticResource TagBorder}" Background="{x:Bind StateBackground}">
-                                                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind StateBrush}" Text="{x:Bind StateText}" />
-                                                    </Border>
-                                                    <Border Style="{StaticResource TagBorder}" Background="{x:Bind ExperimentBackground}">
-                                                        <TextBlock FontSize="12" Foreground="{x:Bind ExperimentBrush}" Text="{x:Bind ExperimentText}" />
-                                                    </Border>
-                                                    <Border Style="{StaticResource TagBorder}" Visibility="{x:Bind PriorityVisibility}">
-                                                        <TextBlock FontSize="12" Opacity="0.7" Text="{x:Bind PriorityText}" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanEnable}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE73E;" FontSize="12" />
-                                                        <TextBlock Text="启用" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认启用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanDisable}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE71A;" FontSize="12" />
-                                                        <TextBlock Text="禁用" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认禁用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                                <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" Visibility="{x:Bind ResetVisibility}" Click="FeatureButton_Click">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                                        <FontIcon Glyph="&#xE777;" FontSize="12" />
-                                                        <TextBlock Text="重置" FontSize="13" />
-                                                    </StackPanel>
-                                                    <Button.Flyout>
-                                                        <Flyout>
-                                                            <StackPanel Spacing="10" Padding="4,0">
-                                                                <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                                <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                                                    <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                                                    <Button Content="确认重置" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                        <!-- 分批加载：每批 100 条（nexbox PAGE_SIZE） -->
+                        <Button x:Name="LoadMoreButton" HorizontalAlignment="Center" Padding="20,8" CornerRadius="7"
+                                Click="LoadMoreButton_Click" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                                <TextBlock Text="加载更多" FontSize="13" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
 
                     <!-- 使用说明 -->
@@ -373,10 +324,11 @@
                                 <Run Text="使用说明" /><Run Text="　" /><Run Text="(需求 Windows 10 1903+ 系统)" FontSize="11" Foreground="#808080" />
                             </TextBlock>
                             <TextBlock FontSize="12" Opacity="0.7" TextWrapping="Wrap" LineHeight="19">
-                                <Run Text="· 模块直接调用系统功能配置 API（移植自 ViVe 项目，GPL-3.0），毫秒级查询，无需外部程序；随工具箱携带的 " />
-                                <Run Text="Tools\其他工具\ViveTool" FontWeight="SemiBold" /><Run Text=" 为官方命令行工具，可手动使用。" />
+                                <Run Text="· 总列表按功能 ID 升序分批展示（单次最多 500 条，点击「加载更多」继续），默认仅显示字典可识别名称的条目，可关闭「仅显示有名称」查看系统内部 servicing 配置；「运行时 / 引导」切换查看两种存储。" />
                                 <LineBreak />
-                                <Run Text="· 「启用 / 禁用」默认写入 User 优先级，并同时写入 Runtime 与 Boot 存储——重启后依然生效；「重置」会删除该功能的全部自定义配置，恢复系统默认。部分功能需要重启才能生效。" />
+                                <Run Text="· 搜索按名称或数字 ID 匹配系统配置与内置功能字典（17000 条），字典命中但系统未配置的条目会以「未配置」状态一并展示，可直接启用。" />
+                                <LineBreak />
+                                <Run Text="· 「启用 / 禁用」写入 User 优先级（ViVeTool 同款）；「重启后保持生效」开启时同时写入 Boot 存储，关闭时仅本次开机有效；「重置」会删除该功能的全部自定义配置，恢复系统默认。部分功能需要重启才能生效。" />
                                 <LineBreak />
                                 <Run Text="· 实验性功能可能不稳定或引发系统异常，请按需开启、谨慎操作。" />
                             </TextBlock>

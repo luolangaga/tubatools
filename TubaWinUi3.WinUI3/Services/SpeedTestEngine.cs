@@ -98,6 +98,11 @@ public sealed class SpeedTestEngine : IDisposable
     private const double OverheadCompensation = 1.06;                  // TCP/IP 头开销补偿，与网页端一致
     private const int ReadBufferSize = 256 * 1024;
     private const int MaxConsecutiveFailures = 8;                      // 单流连续失败上限，超过即退出避免空转
+    private const int LatencyMaxConsecutiveFails = 5;                  // 延迟探测连续失败上限：节点不可达时快速报错，不空转满 24 次
+    private const int PingHeaderTimeoutMs = 8000;                      // 单次探测响应头超时：连接建立但服务端不回包时不把阶段卡死
+    private const int DownloadHeaderTimeoutMs = 12000;                 // 下载请求响应头超时（响应体不受限，慢速链路可长时间流式读取）
+    private const double DownloadStallSeconds = 5.0;                   // 下载停滞判定：连续 5s 无任何新字节
+    private const double UploadStallSeconds = 6.0;                     // 上传停滞判定：连续 6s 无任何新发送字节
 
     private readonly HttpClient _client;
     private readonly SpeedTestNode _node;
@@ -160,8 +165,8 @@ public sealed class SpeedTestEngine : IDisposable
 
         if (_node.Kind != SpeedServerKind.Cloudflare)
         {
-            using var resp = await _client.GetAsync(_baseUrl + ZjuGetIpPath,
-                HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            using var resp = await SendWithHeaderTimeoutAsync(
+                new HttpRequestMessage(HttpMethod.Get, _baseUrl + ZjuGetIpPath), ct, PingHeaderTimeoutMs).ConfigureAwait(false);
             resp.EnsureSuccessStatusCode();
             return (await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false)).Trim();
         }
@@ -169,8 +174,8 @@ public sealed class SpeedTestEngine : IDisposable
         // Cloudflare：优先 /meta（JSON clientIp），被 WAF 拒绝（实测 403）时回退 /cdn-cgi/trace
         try
         {
-            using var metaResp = await _client.GetAsync(_baseUrl + CfMetaPath,
-                HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            using var metaResp = await SendWithHeaderTimeoutAsync(
+                new HttpRequestMessage(HttpMethod.Get, _baseUrl + CfMetaPath), ct, PingHeaderTimeoutMs).ConfigureAwait(false);
             if (metaResp.IsSuccessStatusCode)
             {
                 var meta = await metaResp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
@@ -189,8 +194,9 @@ public sealed class SpeedTestEngine : IDisposable
 
     private async Task<string> GetIpFromTraceAsync(string baseUrl, CancellationToken ct)
     {
-        using var traceResp = await _client.GetAsync(baseUrl + CfTracePath,
-            HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+        // 注意：这里不走 NewRequest——Ookla 节点的 Host 头改写只适用于其自身节点，发往 Cloudflare 会 400
+        using var traceResp = await SendWithHeaderTimeoutAsync(
+            new HttpRequestMessage(HttpMethod.Get, baseUrl + CfTracePath), ct, PingHeaderTimeoutMs).ConfigureAwait(false);
         traceResp.EnsureSuccessStatusCode();
         var trace = await traceResp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         foreach (var line in trace.Split('\n'))
@@ -208,6 +214,22 @@ public sealed class SpeedTestEngine : IDisposable
         return req;
     }
 
+    /// <summary>
+    /// 带响应头超时的发送：连接建立但服务端长时间不回响应头时按失败计，
+    /// 避免 HttpClient 总超时为无限时单请求挂起把整个阶段卡死。响应体读取不受此超时限制。
+    /// </summary>
+    private async Task<HttpResponseMessage> SendWithHeaderTimeoutAsync(
+        HttpRequestMessage req, CancellationToken ct, int headerTimeoutMs)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(headerTimeoutMs);
+        return await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>指数退避：60ms 起倍增、1.6s 封顶，容忍节点短暂限流窗口而不是快速把重试次数烧光。</summary>
+    private static int BackoffDelayMs(int consecutiveFailures)
+        => Math.Min(1600, 60 << Math.Min(consecutiveFailures - 1, 5));
+
     // ─────────────────────────── 延迟 / 抖动 ───────────────────────────
 
     private string LatencyUrl()
@@ -224,6 +246,7 @@ public sealed class SpeedTestEngine : IDisposable
         var samples = new List<double>(PingCount);
         double diffSum = 0;
         int diffCount = 0;
+        int consecutiveFails = 0;
 
         for (int i = 0; i < PingCount; i++)
         {
@@ -233,17 +256,21 @@ public sealed class SpeedTestEngine : IDisposable
             {
                 var url = LatencyUrl();
                 using var req = NewRequest(HttpMethod.Get, url);
-                using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct)
+                using var resp = await SendWithHeaderTimeoutAsync(req, ct, PingHeaderTimeoutMs)
                     .ConfigureAwait(false);
                 _ = resp.StatusCode; // 任何响应均视为链路可达
             }
-            catch (OperationCanceledException) { throw; }
-            catch
+            // 用户主动取消（OCE 且 ct 已取消）向上传播；其余失败（含单次头超时）跳过并退避
+            catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
             {
-                // 单次丢包/失败跳过，不中断整体测试
-                await Task.Delay(15, ct).ConfigureAwait(false);
+                consecutiveFails++;
+                if (consecutiveFails >= LatencyMaxConsecutiveFails)
+                    throw new HttpRequestException(
+                        $"无法从{_node.Name}节点测得延迟：连续 {consecutiveFails} 次探测失败，节点可能不可达或拒绝连接，请稍后重试或更换节点");
+                await Task.Delay(120, ct).ConfigureAwait(false);
                 continue;
             }
+            consecutiveFails = 0;
             sw.Stop();
 
             double ms = Math.Max(0.01, sw.Elapsed.TotalMilliseconds);
@@ -265,7 +292,7 @@ public sealed class SpeedTestEngine : IDisposable
         }
 
         if (samples.Count == 0)
-            return (double.NaN, double.NaN);
+            throw new HttpRequestException($"无法从{_node.Name}节点测得延迟：全部探测请求失败，节点可能不可达或拒绝连接");
 
         var final = samples.OrderBy(x => x).ToArray();
         double ping = final.Length % 2 == 1
@@ -299,15 +326,16 @@ public sealed class SpeedTestEngine : IDisposable
                 CancellationToken.None);
         }
 
-        await RunSamplerAsync(sw, phaseCts,
+        var end = await RunSamplerAsync(sw, phaseCts,
             () => Volatile.Read(ref bytes),
             () => Math.Min(1.0, sw.Elapsed.TotalSeconds / DownloadSeconds),
-            DownloadSeconds,
-            live).ConfigureAwait(false);
+            DownloadSeconds, live, streams, DownloadStallSeconds).ConfigureAwait(false);
 
-        await WaitStreamsGracefullyAsync(streams, ct, TimeSpan.FromSeconds(2.5)).ConfigureAwait(false);
+        await WaitStreamsGracefullyAsync(streams, ct,
+            end == PhaseEnd.Normal ? TimeSpan.FromSeconds(2.5) : TimeSpan.FromSeconds(1.2)).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested(); // 用户主动停止时向调用方传播取消，而不是返回残缺结果
         long total = Volatile.Read(ref bytes);
+        ThrowIfPhaseAborted(end, total);
         if (total <= 0)
             throw new HttpRequestException($"{_node.Name}节点无数据返回，节点可能不可达或链路受限");
         return BitsToMbps(total, sw.Elapsed.TotalSeconds);
@@ -324,14 +352,14 @@ public sealed class SpeedTestEngine : IDisposable
             {
                 var target = DownloadTarget(OoklaDownloadSizes[Math.Min(sizeIdx, OoklaDownloadSizes.Length - 1)]);
                 using var req = NewRequest(HttpMethod.Get, target);
-                using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct)
+                using var resp = await SendWithHeaderTimeoutAsync(req, ct, DownloadHeaderTimeoutMs)
                     .ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode)
                 {
                     consecutiveFailures++; // 例如节点对请求尺寸返回 403
                     if (_node.Kind == SpeedServerKind.Ookla && sizeIdx < OoklaDownloadSizes.Length - 1)
                         sizeIdx++;
-                    await Task.Delay(60, ct).ConfigureAwait(false);
+                    await Task.Delay(BackoffDelayMs(consecutiveFailures), ct).ConfigureAwait(false);
                     continue;
                 }
                 consecutiveFailures = 0;
@@ -344,13 +372,18 @@ public sealed class SpeedTestEngine : IDisposable
                     add(n);
                 }
             }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                // 仅本次请求响应头超时（服务端无响应），按失败计退避重试，而不是整条流退出
+                consecutiveFailures++;
+                await DelayBackoffQuietlyAsync(consecutiveFailures, ct).ConfigureAwait(false);
+            }
             catch (OperationCanceledException) { break; }
             catch
             {
                 // 中途断流等异常：退避后重试，连续失败达上限才退出，避免整条流报废
                 consecutiveFailures++;
-                try { await Task.Delay(80, ct).ConfigureAwait(false); }
-                catch (OperationCanceledException) { break; }
+                await DelayBackoffQuietlyAsync(consecutiveFailures, ct).ConfigureAwait(false);
             }
         }
     }
@@ -379,16 +412,17 @@ public sealed class SpeedTestEngine : IDisposable
                 CancellationToken.None);
         }
 
-        await RunSamplerAsync(sw, phaseCts,
+        var end = await RunSamplerAsync(sw, phaseCts,
             () => Volatile.Read(ref sent),
             () => Math.Min(1.0, sw.Elapsed.TotalSeconds / UploadSeconds),
-            UploadSeconds,
-            live).ConfigureAwait(false);
+            UploadSeconds, live, streams, UploadStallSeconds).ConfigureAwait(false);
 
         // 自然结束后不再发起新请求，但放行在途上传块继续发送并计数，避免尾部吞吐被低估
-        await WaitStreamsGracefullyAsync(streams, ct, TimeSpan.FromSeconds(6)).ConfigureAwait(false);
+        await WaitStreamsGracefullyAsync(streams, ct,
+            end == PhaseEnd.Normal ? TimeSpan.FromSeconds(6) : TimeSpan.FromSeconds(1.2)).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
         long total = Volatile.Read(ref sent);
+        ThrowIfPhaseAborted(end, total);
         if (total <= 0)
             throw new HttpRequestException($"{_node.Name}节点无数据返回，节点可能不可达或链路受限");
         return BitsToMbps(total, sw.Elapsed.TotalSeconds);
@@ -425,8 +459,7 @@ public sealed class SpeedTestEngine : IDisposable
                 catch
                 {
                     consecutiveFailures++; // 单流持续失败达上限后退出，避免空转
-                    try { await Task.Delay(80, ct).ConfigureAwait(false); }
-                    catch (OperationCanceledException) { break; }
+                    await DelayBackoffQuietlyAsync(consecutiveFailures, ct).ConfigureAwait(false);
                 }
             }
         }
@@ -468,18 +501,34 @@ public sealed class SpeedTestEngine : IDisposable
 
     // ─────────────────────────── 采样器 / 工具 ───────────────────────────
 
-    private async Task RunSamplerAsync(
+    /// <summary>采样循环的结束原因。</summary>
+    private enum PhaseEnd
+    {
+        /// <summary>阶段正常走完设定时长。</summary>
+        Normal,
+        /// <summary>全部并发流已退出（连续失败达上限）——继续等待不会有任何数据。</summary>
+        StreamsDead,
+        /// <summary>数据流停滞：长时间没有任何新字节（连接挂起、服务端无响应）。</summary>
+        Stalled
+    }
+
+    private async Task<PhaseEnd> RunSamplerAsync(
         Stopwatch sw,
         CancellationTokenSource phaseCts,
         Func<long> totalBytes,
         Func<double> progress,
         double totalSeconds,
-        SpeedCallback? live)
+        SpeedCallback? live,
+        Task[] streams,
+        double stallSeconds)
     {
         // 1 秒滑动窗口：上传按块离散到达、下载有响应间隙，瞬时差分会大幅抖动，
         // 窗口平均既平滑又贴近真实持续吞吐。
         const double windowSeconds = 1.0;
         var window = new Queue<(double T, long Bytes)>();
+        long lastBytes = -1;
+        double lastProgressAt = 0;
+        var end = PhaseEnd.Normal;
 
         try
         {
@@ -502,14 +551,57 @@ public sealed class SpeedTestEngine : IDisposable
                 }
                 live?.Invoke(liveMbps, Math.Clamp(progress(), 0, 1), now);
 
+                // 全部并发流已退出（节点连续拒绝/重置）→ 没有必要干等剩余时长，立即终止阶段
+                bool allDead = true;
+                foreach (var t in streams)
+                    if (!t.IsCompleted) { allDead = false; break; }
+                if (allDead)
+                {
+                    end = PhaseEnd.StreamsDead;
+                    break;
+                }
+
+                // 数据流停滞：长时间无任何新字节（连接挂起/服务端不响应）→ 提前终止并明确报错
+                if (stallSeconds > 0)
+                {
+                    if (b != lastBytes) { lastBytes = b; lastProgressAt = now; }
+                    else if (now - lastProgressAt >= stallSeconds)
+                    {
+                        end = PhaseEnd.Stalled;
+                        break;
+                    }
+                }
+
                 if (now >= totalSeconds)
                     break;
             }
         }
         catch (OperationCanceledException) { }
 
-        // 停止发起新请求，允许在途请求收尾后再统计
+        // 停止发起新请求（异常终止时同时中止挂起的在途请求），允许在途收尾后再统计
         phaseCts.Cancel();
+        return end;
+    }
+
+    /// <summary>阶段异常终止（全部流退出 / 数据流停滞）时给出可行动的错误，而不是静默返回残缺速率。</summary>
+    private void ThrowIfPhaseAborted(PhaseEnd end, long totalBytes)
+    {
+        switch (end)
+        {
+            case PhaseEnd.StreamsDead:
+                throw new HttpRequestException(totalBytes > 0
+                    ? $"{_node.Name} 节点中途多次拒绝或重置连接（可能被限流），请稍后重试或更换测速节点"
+                    : $"{_node.Name} 节点拒绝了所有测速请求（可能被限流或拦截），请稍后重试或更换测速节点");
+            case PhaseEnd.Stalled:
+                throw new HttpRequestException($"{_node.Name} 节点数据流停滞（连接长时间无响应），请重试或更换测速节点");
+        }
+    }
+
+    /// <summary>退避等待：期间用户取消则静默返回，由循环条件退出。</summary>
+    private static async Task DelayBackoffQuietlyAsync(int consecutiveFailures, CancellationToken ct)
+    {
+        try { await Task.Delay(BackoffDelayMs(consecutiveFailures), ct).ConfigureAwait(false); }
+        catch (OperationCanceledException) { }
     }
 
     private static async Task WaitStreamsGracefullyAsync(Task[] streams, CancellationToken ct, TimeSpan timeout)

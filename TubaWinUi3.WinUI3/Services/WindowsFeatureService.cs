@@ -71,6 +71,16 @@ public static unsafe class WindowsFeatureService
     /// <summary>默认写入优先级：User（ViVeTool /enable 同款默认值）。</summary>
     public const uint PriorityUser = 8;
 
+    /// <summary>存储选择（对照 nexbox store 参数）：Runtime = 本次开机有效。</summary>
+    public const string StoreRuntime = "runtime";
+    /// <summary>存储选择：Boot = 持久化存储（重启后依然生效的配置）。</summary>
+    public const string StoreBoot = "boot";
+
+    /// <summary>列表单次查询默认上限（nexbox QUERY_LIMIT / feature_flags_query 的 unwrap_or(500)）。</summary>
+    public const int DefaultQueryLimit = 500;
+    /// <summary>列表单次查询最大上限（nexbox 的 .min(1000)）。</summary>
+    public const int MaxQueryLimit = 1000;
+
     /// <summary>内核不允许写入的不可变优先级（对照 FeatureManager.ImmutablePriorities）。</summary>
     public static readonly uint[] ImmutablePriorities = [0, 1, 3, 9, 15];
 
@@ -401,11 +411,16 @@ public static unsafe class WindowsFeatureService
 
     // ============ 功能字典 ============
 
+    private static readonly Lazy<Dictionary<uint, string>> DictionaryCache = new(ParseDictionaryFromDisk);
+
     /// <summary>
     /// 加载功能字典（行格式「名字,ID」；重复 ID 取首个，与 ViVe 加载行为一致）。
+    /// 进程内只解析一次（对照 nexbox 的 OnceLock 缓存）。
     /// 优先读随包 Assets（精简版也可用），回退读 Tools\其他工具\ViveTool 下的官方字典。
     /// </summary>
-    public static Dictionary<uint, string> LoadDictionary()
+    public static Dictionary<uint, string> LoadDictionary() => DictionaryCache.Value;
+
+    private static Dictionary<uint, string> ParseDictionaryFromDisk()
     {
         var path = FindDictionaryPath();
         return path is null ? new Dictionary<uint, string>() : LoadDictionaryFromFile(path);
@@ -442,26 +457,102 @@ public static unsafe class WindowsFeatureService
 
     // ============ 对外操作（对照 ViveTool /query /enable /disable /reset） ============
 
-    /// <summary>查询全部功能配置（Runtime 存储，毫秒级）。</summary>
-    public static List<FeatureFlagEntry> QueryAll()
+    /// <summary>
+    /// 查询功能列表（完全对照 nexbox feature_flags_query 的取 ID 逻辑）：
+    /// ① 按所选存储（runtime / boot）全量读取配置；② 字典补名字；
+    /// ③ 搜索时按「ID 数字串包含」或「名称包含（忽略大小写）」过滤配置条目；
+    /// ④ 浏览态（无搜索词）namedOnly 时仅保留字典可识别名称的条目（过滤内部 servicing 编号项）；
+    /// ⑤ 搜索时把「字典命中但当前存储无配置」的条目补充进来（has_config=false、User 优先级、未配置态）；
+    /// ⑥ 按功能 ID 升序排序，按 limit 截断（默认 500，最大 1000）。
+    /// 返回值附带该存储的全量条数与已启用数，供页首统计芯片使用。
+    /// </summary>
+    public static (List<FeatureFlagEntry> Entries, int StoreCount, int StoreEnabled) QueryFeatures(
+        string store, string search = "", bool namedOnly = true, int limit = DefaultQueryLimit)
     {
-        var (configs, _) = QueryAllConfigurations(CfgTypeRuntime);
-        var result = new List<FeatureFlagEntry>(configs.Length);
+        var cfgType = string.Equals(store, StoreBoot, StringComparison.OrdinalIgnoreCase)
+            ? CfgTypeBoot
+            : CfgTypeRuntime;
+        var dictionary = LoadDictionary();
+        var (configs, _) = QueryAllConfigurations(cfgType);
+
+        var term = search.Trim().ToLowerInvariant();
+        var entries = new List<FeatureFlagEntry>(configs.Length);
+        var enabledCount = 0;
         foreach (var c in configs)
         {
-            result.Add(new FeatureFlagEntry(
+            var state = (FeatureState)c.EnabledState;
+            if (state == FeatureState.Enabled)
+                enabledCount++;
+            dictionary.TryGetValue(c.FeatureId, out var name);
+            entries.Add(new FeatureFlagEntry(
                 c.FeatureId,
-                Name: null,
-                Priority: c.Priority,
-                State: (FeatureState)c.EnabledState,
-                IsExperiment: c.IsWexp,
+                name,
+                c.Priority,
+                state,
+                c.IsWexp,
                 HasConfig: true));
         }
-        return result;
+        var storeCount = entries.Count;
+
+        if (term.Length > 0)
+        {
+            entries.RemoveAll(e =>
+                !e.FeatureId.ToString().Contains(term, StringComparison.Ordinal)
+                && (e.Name?.ToLowerInvariant().Contains(term, StringComparison.Ordinal) ?? false) == false);
+        }
+        else if (namedOnly)
+        {
+            // 浏览模式（无搜索词）下只看有名称的条目：大部分本机配置是 Windows 内部
+            // servicing 项，字典无法识别，仅显示数字无操作价值（nexbox 同款注释语义）
+            entries.RemoveAll(e => e.Name is null);
+        }
+
+        // 搜索时附带字典命中但无配置的功能，便于按名称启用（nexbox 同款补充逻辑）
+        if (term.Length > 0)
+        {
+            var present = new HashSet<uint>(entries.Select(e => e.FeatureId));
+            foreach (var (id, name) in dictionary)
+            {
+                if (present.Contains(id))
+                    continue;
+                if (id.ToString().Contains(term, StringComparison.Ordinal)
+                    || name.ToLowerInvariant().Contains(term, StringComparison.Ordinal))
+                {
+                    entries.Add(new FeatureFlagEntry(
+                        id,
+                        name,
+                        (int)PriorityUser,
+                        FeatureState.Default,
+                        IsExperiment: false,
+                        HasConfig: false));
+                }
+            }
+        }
+
+        entries.Sort((a, b) => a.FeatureId.CompareTo(b.FeatureId));
+        limit = Math.Clamp(limit, 1, MaxQueryLimit);
+        if (entries.Count > limit)
+            entries.RemoveRange(limit, entries.Count - limit);
+        return (entries, storeCount, enabledCount);
     }
 
-    /// <summary>启用/禁用功能（ViVeTool /enable、/disable 同款：User 优先级 + Runtime/Boot 双存储）。</summary>
-    public static string SetState(uint featureId, bool enabled)
+    /// <summary>Boot 存储是否有待重启生效的配置（对照 nexbox status.boot_pending / ViVeTool）。</summary>
+    public static unsafe bool IsBootPending()
+    {
+        var api = Api.Value;
+        if (api?.GetBootStatus is null)
+            return false;
+        var current = BsdStateUninitialized;
+        var hr = api.GetBootStatus(BsdItemFeatureConfigurationState, &current, 4, null);
+        return hr == 0 && current == BsdStateBootPending;
+    }
+
+    /// <summary>
+    /// 启用/禁用功能（ViVeTool /enable、/disable 同款：User 优先级）。
+    /// persistBoot=true 时同时写入 Boot 存储（注册表 Overrides + LKG 标记），重启后保持生效；
+    /// 为 false 时仅写 Runtime 存储，本次开机有效（nexbox persistBoot 开关同款语义）。
+    /// </summary>
+    public static string SetState(uint featureId, bool enabled, bool persistBoot = true)
     {
         ValidatePriority(PriorityUser);
         var update = new RtlFeatureConfigurationUpdate
@@ -473,10 +564,14 @@ public static unsafe class WindowsFeatureService
             Operation = OperationFeatureState
         };
         SetRuntimeConfigurations([update]);
-        SetBootConfigurationsInRegistry([update]);
-        UpdateLkgStatus();
-        return enabled ? "已启用（已写入 Runtime 与 Boot 存储，重启后保持生效）"
-                       : "已禁用（已写入 Runtime 与 Boot 存储，重启后保持生效）";
+        if (persistBoot)
+        {
+            SetBootConfigurationsInRegistry([update]);
+            UpdateLkgStatus();
+        }
+        return persistBoot
+            ? $"功能 {featureId} 已更新（重启后保持生效）"
+            : $"功能 {featureId} 已更新（仅本次开机有效）";
     }
 
     /// <summary>重置功能的自定义配置（Runtime + Boot，priority 默认 User）。</summary>

@@ -33,11 +33,11 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         // ── 游戏与平台 ──
         new("你想在手机上玩 PC 端的《赛博朋克2077》，正确做法是？",
-            ["通过 ARM 转译层（如 Box64）在手机上模拟 x86 环境运行", "PC 与移动端 ISA 架构不同，可通过云游戏平台（GeForce NOW 等）串流游玩", "使用 Vulkan 渲染层适配，部分 3A 大作已支持移动端原生运行", "下载 Switch 模拟器运行，因为 Switch 也是 ARM 架构的移动设备"],
+            ["手机芯片性能已接近 PC，直接下载 PC 版安装包就能安装运行", "PC 与移动端 ISA 架构不同，可通过云游戏平台（GeForce NOW 等）串流游玩", "使用 Vulkan 渲染层适配，部分 3A 大作已支持移动端原生运行", "下载 Switch 模拟器运行，因为 Switch 也是 ARM 架构的移动设备"],
             1, "PC 游戏基于 x86 架构，手机是 ARM 架构，ISA 不兼容无法直接运行。可通过云游戏串流方案实现。"),
 
         new("你要下载 Steam 平台，应该怎么做？",
-            ["搜索「Steam 管家」下载，它整合了 Steam 加速和游戏管理功能", "访问 store.steampowered.com 官网下载 Steam 客户端安装包", "通过 Windows 包管理器 winget install Valve.Steam 命令行安装", "在 Microsoft Store 搜索 Steam 下载 UWP 版本"],
+            ["搜索「Steam 管家」下载，它整合了 Steam 加速和游戏管理功能", "访问 store.steampowered.com 官网下载 Steam 客户端安装包", "在网盘搜索「Steam 免安装绿色版」压缩包，解压即可使用", "在 Microsoft Store 搜索 Steam 下载 UWP 版本"],
             1, "Steam 官网是 store.steampowered.com，「Steam 管家」等均为第三方仿冒软件，可能携带捆绑或木马。"),
 
         // ── 安全与防护 ──
@@ -58,9 +58,9 @@ public sealed partial class DigitalLiteracyTestPage : Page
             ["内存（RAM）容量，1TB DDR5 已经是消费级旗舰配置", "硬盘（存储）容量，主流电脑内存通常为 16~32GB", "显卡显存容量，对应的是 RTX 4090 级别的 1TB 显存版本", "指的是 NVMe SSD 的 TBW 写入寿命指标"],
             1, "1TB 通常指硬盘存储容量。目前主流电脑内存为 16~64GB，1TB 内存属于服务器级别。"),
 
-        new("你的电脑有独立显卡，但显示器画面很模糊，可能的原因是？",
-            ["显示器面板的 PPI 像素密度不足，需要更换高分辨率屏幕", "视频线插在了主板背部的集成显卡接口上，应插在独立显卡的 DP/HDMI 输出接口", "显卡驱动的 DSR（动态超级分辨率）设置不当导致降采样模糊", "显示器的 Overdrive 响应时间设置过高导致像素过冲产生拖影"],
-            1, "有独显时视频线必须插在独显的输出接口上，插主板接口会使用核显甚至无信号。"),
+        new("你的电脑有独立显卡，但玩游戏帧数很低、画面卡顿，可能的原因是？",
+            ["显示器刷新率只有 60Hz，拖累了显卡的渲染帧数，需要更换高刷新率屏幕", "视频线插在了主板背部的集成显卡接口上，画面实际由核显输出，应插在独立显卡的 DP/HDMI 输出接口", "显卡的 PhysX 物理加速没有开启，现代游戏引擎必须依赖 PhysX 才能渲染画面", "Windows 家庭版没有独显驱动的完整授权，需要升级专业版才能发挥独显性能"],
+            1, "核显性能远弱于独显：视频线插在主板接口上会走核显输出，游戏自然掉帧。装机后务必把显示器接在独立显卡的 DP/HDMI 接口上。"),
 
         new("关于 CPU 性能对比，正确的理解是？",
             ["所有 i7 一定比 i5 强，因为 i7 的 L3 缓存更大、线程数更多", "需看具体代数和型号，如 i3-14100 多核性能可超过老款 i7-7700", "只看单核主频和 IPC 指标就行，多核性能对日常使用影响不大", "看 TDP 功耗就行，功耗越高代表性能越强"],
@@ -73,11 +73,11 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         new("安装软件时，安装路径应该怎么选？",
             ["装到桌面方便快速启动，Windows 的 Shell 文件夹机制会自动管理", "装到 D 盘根目录，利用独立分区的 I/O 隔离提升读写性能", "使用默认的 Program Files 路径或在非系统盘创建专用子目录（如 D:\\Apps\\软件名）", "装到 C:\\ProgramData 目录，该目录对所有用户账户可见且具有 SYSTEM 级权限"],
-            1, "软件应安装在 Program Files 或自定义的专用目录，避免污染桌面或根目录。"),
+            2, "软件应默认装在 Program Files，或自建专用子目录（如 D:\\Apps\\软件名），文件集中便于统一管理和卸载；装到桌面或盘符根目录只会污染目录结构，D 盘根目录也并不会带来「I/O 隔离」之类的性能收益。"),
 
         new("你要卸载一个不再使用的软件，正确做法是？",
-            ["把桌面图标拖到回收站，Windows 会自动触发关联的卸载程序", "进入 设置 → 应用 → 已安装的应用 → 找到该软件 → 卸载", "直接删除安装文件夹，再用 CCleaner 清理注册表残留项", "在 PowerShell 中执行 Get-AppxPackage | Remove-AppxPackage 卸载"],
-            1, "桌面图标只是快捷方式，删除它不会卸载软件。需通过系统设置的应用管理执行正式卸载。"),
+            ["把桌面图标拖到回收站，Windows 会自动触发关联的卸载程序", "通过 设置 → 应用 → 已安装的应用 卸载；顽固软件可用 Geek Uninstaller、HiBit Uninstaller 等专业工具深度清理", "直接删除安装文件夹，再用 CCleaner 清理注册表残留项", "在 PowerShell 中执行 Get-AppxPackage | Remove-AppxPackage 卸载"],
+            1, "系统卸载入口会调用软件自带的卸载程序并清理注册表；Geek/HiBit 等专业卸载工具原理相同，还能强制卸载、扫描残留，对付顽固软件更彻底（本工具箱「其他工具」分类就内置了 HiBit Uninstaller）。删图标、删文件夹只是删文件不算卸载。"),
 
         new("你要解压一个 .zip 压缩包，应该怎么做？",
             ["把 .zip 后缀改成 .txt 用记事本打开，查看压缩包内部结构", "使用 7-Zip、WinRAR 或系统自带功能右键解压到指定目录", "用浏览器直接打开 .zip，Chrome 内置了 ZIP 解码器", "通过 WSL 的 unzip 命令行工具解压，兼容性比 GUI 工具更好"],
@@ -106,7 +106,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             1, "网盘文件应先保存到自己网盘再下载到本地。「在线解压」可能受限且无法保证完整性。"),
 
         new("你收到一个磁力链接（magnet:?xt=...），想下载对应资源，应该？",
-            ["直接粘贴到浏览器地址栏，现代浏览器内置了 magnet 协议处理器", "使用 qBittorrent 等 BT 客户端导入磁力链接，通过 DHT 网络获取元数据", "把 magnet 链接转换为 HTTP 链接，用 wget 或 curl 命令行下载", "在搜索引擎中搜索该磁力链接对应的 .torrent 种子文件再下载"],
+            ["把磁力链接当成普通网址粘贴到浏览器地址栏，浏览器会自动解析并下载文件", "使用 qBittorrent 等 BT 客户端导入磁力链接，通过 DHT 网络获取元数据", "把 magnet 链接转换为 HTTP 链接，用 wget 或 curl 命令行下载", "在搜索引擎中搜索该磁力链接对应的 .torrent 种子文件再下载"],
             1, "磁力链接是 BT 协议的资源标识，需专用 BT 客户端（如 qBittorrent）解析下载。"),
 
         new("你要重装 Windows 系统，正确的做法是？",
@@ -119,7 +119,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             1, "Alt+= 可快速插入 SUM 求和公式，配合自动填充（拖拽单元格右下角）可批量处理多列数据。"),
 
         new("别人通过网盘给你分享了一个 .exe 文件，你应该？",
-            ["直接运行，网盘平台已经做了文件安全扫描", "保持警惕，先用杀毒软件扫描确认安全后再运行，优先从可信渠道获取软件", "右键查看文件的数字签名和证书链，验证发布者身份后即可放心运行", "用沙箱（Sandboxie）运行，即使有病毒也不会影响宿主系统"],
+            ["直接运行，网盘平台已经做了文件安全扫描", "保持警惕，先用杀毒软件扫描确认安全后再运行，优先从可信渠道获取软件", "只要文件带有有效的数字签名就绝对安全，无需扫描直接运行", "用沙箱（Sandboxie）运行，即使有病毒也不会影响宿主系统"],
             1, "来路不明的 .exe 文件可能携带木马。应先用杀毒软件扫描，确认来源可信后再执行。"),
 
         new("以下关于「电子邮箱」的描述，最准确的是？",
@@ -424,7 +424,10 @@ public sealed partial class DigitalLiteracyTestPage : Page
             Tag = originalIndex
         };
 
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14 };
+        // 两列 Grid 约束宽度：横向 StackPanel 不约束子元素宽度，长选项文本会直接溢出卡片
+        var row = new Grid { ColumnSpacing = 14 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         // Label badge
         var labelBorder = new Border
@@ -444,22 +447,20 @@ public sealed partial class DigitalLiteracyTestPage : Page
                 VerticalAlignment = VerticalAlignment.Center
             }
         };
+        Grid.SetColumn(labelBorder, 0);
         row.Children.Add(labelBorder);
 
-        // Option text
-        row.Children.Add(new TextBlock
-        {
-            Text = text,
-            FontSize = 15,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center
-        });
+        // Option text：单行省略，悬停卡片时走马灯滚动展示全文
+        var optionText = new MarqueeText { Text = text };
+        Grid.SetColumn(optionText, 1);
+        row.Children.Add(optionText);
 
         card.Child = row;
 
         // Hover
         card.PointerEntered += (_, _) =>
         {
+            optionText.Start();
             if (!_answered)
             {
                 card.BorderBrush = new SolidColorBrush(ThemeColors.AccentBlue);
@@ -468,6 +469,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         };
         card.PointerExited += (_, _) =>
         {
+            optionText.Stop();
             if (!_answered)
             {
                 card.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
@@ -499,7 +501,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
                     {
                         optCard.Background = new SolidColorBrush(Color.FromArgb(30, 74, 222, 128));
                         optCard.BorderBrush = new SolidColorBrush(ThemeColors.AccentGreen);
-                        if (optCard.Child is StackPanel sp && sp.Children[0] is Border lb)
+                        if (optCard.Child is Grid sp && sp.Children[0] is Border lb)
                         {
                             lb.Background = new SolidColorBrush(Color.FromArgb(40, 74, 222, 128));
                             if (lb.Child is TextBlock lt)
@@ -510,7 +512,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
                     {
                         optCard.Background = new SolidColorBrush(Color.FromArgb(30, 248, 113, 113));
                         optCard.BorderBrush = new SolidColorBrush(ThemeColors.AccentRed);
-                        if (optCard.Child is StackPanel sp && sp.Children[0] is Border lb)
+                        if (optCard.Child is Grid sp && sp.Children[0] is Border lb)
                         {
                             lb.Background = new SolidColorBrush(Color.FromArgb(40, 248, 113, 113));
                             if (lb.Child is TextBlock lt)
@@ -807,6 +809,79 @@ public sealed partial class DigitalLiteracyTestPage : Page
     }
 
     #region Data Model
+
+    // 单行走马灯文本：外层 Grid 手动裁剪，内层 TextBlock 按自然宽度全文渲染，
+    // Start() 后平移来回滚动展示被裁掉的部分，Stop() 复位
+    private sealed class MarqueeText : Grid
+    {
+        private readonly TextBlock _inner = new()
+        {
+            FontSize = 15,
+            TextWrapping = TextWrapping.NoWrap,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        private readonly TranslateTransform _shift = new();
+        private Storyboard? _story;
+
+        public MarqueeText()
+        {
+            _inner.RenderTransform = _shift;
+            Children.Add(_inner);
+            SizeChanged += (_, _) => ApplyClip();
+            Unloaded += (_, _) => Stop();
+        }
+
+        public string Text
+        {
+            get => _inner.Text;
+            set
+            {
+                Stop();
+                _inner.Text = value;
+                _inner.Width = double.NaN; // 恢复自动宽度
+            }
+        }
+
+        // Grid 默认不裁剪溢出内容，必须手动挂矩形 Clip，滚动才能只在本列范围内显示
+        private void ApplyClip()
+        {
+            Clip = new RectangleGeometry { Rect = new Windows.Foundation.Rect(0, 0, ActualWidth, ActualHeight) };
+        }
+
+        public void Start()
+        {
+            if (_story is not null) return;
+            UpdateLayout();
+            ApplyClip();
+            // 约束布局下的 DesiredSize 可能被钳到容器宽，手动用无限宽量一次拿文本自然宽度
+            _inner.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+            double natural = _inner.DesiredSize.Width;
+            double overflow = natural - ActualWidth;
+            if (overflow <= 4) return;
+
+            _inner.Width = natural; // 固定为自然宽度，确保被裁部分的文字真实渲染
+            var anim = new DoubleAnimation
+            {
+                To = -overflow,
+                Duration = TimeSpan.FromSeconds(Math.Max(1.5, overflow / 50)),
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            Storyboard.SetTarget(anim, _shift);
+            Storyboard.SetTargetProperty(anim, "X");
+            _story = new Storyboard();
+            _story.Children.Add(anim);
+            _story.Begin();
+        }
+
+        public void Stop()
+        {
+            _story?.Stop();
+            _story = null;
+            _shift.X = 0;
+        }
+    }
 
     private sealed class QuizQuestion(
         string question,
