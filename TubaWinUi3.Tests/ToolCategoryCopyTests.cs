@@ -1,3 +1,4 @@
+using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Tests;
@@ -93,6 +94,21 @@ public class ToolCategoryCopyTests : IDisposable
         Assert.Equal("memtest", copy.Name);
         Assert.Equal("内存工具", copy.PrimaryCategory);
         Assert.Equal(Path.Combine(_tools, "内存工具", "memtest", "memtest.exe"), copy.Path);
+    }
+
+    [Fact]
+    public void ReorderByName_DuplicateNamesInSavedOrder_NoDuplicateItems()
+    {
+        // 用户真实 settings.json 的 ToolOrder_烤鸡工具 曾含重复的 "memtest"，
+        // 旧实现按名字 First 选取会把同一工具返回两次（页面出现重复卡片）
+        var memtest = new ToolItem { Name = "memtest", Category = "烤鸡工具", Path = "p1", RelativePath = "r1", Extension = "exe" };
+        var builtin = new ToolItem { Name = "一键三烤", Category = "烤鸡工具", Path = "p2", RelativePath = "r2", Extension = "内置" };
+
+        var reordered = ToolCatalog.ReorderByName([memtest, builtin], ["memtest", "memtest", "一键三烤"]);
+
+        Assert.Equal(2, reordered.Count);
+        Assert.Same(memtest, reordered[0]);
+        Assert.Same(builtin, reordered[1]);
     }
 
     [Fact]

@@ -261,17 +261,27 @@ public static class ToolCatalog
         return result;
     }
 
-    /// <summary>按给定工具名顺序重排列表;未列出的项按名称追加。</summary>
+    /// <summary>按给定工具名顺序重排列表;未列出的项按名称追加。
+    /// 顺序表里同名出现多次（历史配置残留）时不重复返回同一工具。</summary>
     internal static IReadOnlyList<ToolItem> ReorderByName(IReadOnlyList<ToolItem> items, IReadOnlyList<string> orderedNames)
     {
-        var orderedSet = new HashSet<string>(orderedNames, StringComparer.CurrentCultureIgnoreCase);
-        var ordered = orderedNames
-            .Where(name => items.Any(it => it.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
-            .Select(name => items.First(it => it.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase)))
-            .ToList();
+        var emitted = new HashSet<ToolItem>(ReferenceEqualityComparer.Instance);
+        var ordered = new List<ToolItem>();
+
+        foreach (var name in orderedNames)
+        {
+            var match = items.FirstOrDefault(it =>
+                !emitted.Contains(it) && it.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            if (match is not null)
+            {
+                emitted.Add(match);
+                ordered.Add(match);
+            }
+        }
+
         foreach (var item in items.OrderBy(it => it.Name, StringComparer.CurrentCultureIgnoreCase))
         {
-            if (!orderedSet.Contains(item.Name))
+            if (!emitted.Contains(item))
                 ordered.Add(item);
         }
         return ordered;

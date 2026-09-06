@@ -22,7 +22,8 @@ public class RogueCleanerRegistrationTests
         var tool = BuiltinToolRegistry.GetById("rogue-cleaner");
         Assert.NotNull(tool);
         Assert.Equal("流氓软件的克星", tool.Name);
-        Assert.Equal("安全工具", tool.Category);
+        // 060ea4f 优化内置工具的分类体系：从「安全工具」并入「系统工具」
+        Assert.Equal("系统工具", tool.Category);
         Assert.Equal(BuiltinToolKind.ProgressTask, tool.Kind);
     }
 
