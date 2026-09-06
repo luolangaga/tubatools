@@ -31,4 +31,13 @@
     <!-- 供测试项目访问 internal 成员（如 ClsidResolver.NormalizeServerPath） -->
     <InternalsVisibleTo Include="TubaWinUi3.Tests" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="binverify 2\TubaWinUI3.BackEnd.dll" />
+    <None Remove="binverify 2\TubaWinUI3.BackEnd.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="binverify 2\" />
+  </ItemGroup>
 </Project>

@@ -27,6 +27,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Border
@@ -92,8 +93,65 @@
         </StackPanel>
 
         <StackPanel
-            x:Name="ProgressSection"
+            x:Name="VariantSection"
             Grid.Row="3"
+            Spacing="6"
+            Visibility="Collapsed">
+            <TextBlock
+                FontSize="13"
+                Opacity="1.0"
+                Text="请选择要下载的内核版本：" />
+            <RadioButton
+                x:Name="LiteRadio"
+                GroupName="TubaBundleVariant"
+                MinWidth="0"
+                Padding="12,8"
+                Checked="OnVariantChecked">
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="精简版" />
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="仅必要检测工具：CPU-Z、GPU-Z、HWiNFO、HWMonitor、FurMark、C2CLatency、DDU、CrystalDiskInfo、CrystalDiskMark" />
+                    <TextBlock
+                        x:Name="LiteRadioSub"
+                        FontSize="11"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Text="" />
+                </StackPanel>
+            </RadioButton>
+            <RadioButton
+                x:Name="FullRadio"
+                GroupName="TubaBundleVariant"
+                MinWidth="0"
+                Padding="12,8"
+                Checked="OnVariantChecked">
+                <StackPanel Spacing="2">
+                    <TextBlock FontWeight="SemiBold" Text="完整版" />
+                    <TextBlock
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="全部分类工具，体积较大" />
+                    <TextBlock
+                        x:Name="FullRadioSub"
+                        FontSize="11"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        Text="" />
+                </StackPanel>
+            </RadioButton>
+            <TextBlock
+                x:Name="VariantHintText"
+                FontSize="11"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel
+            x:Name="ProgressSection"
+            Grid.Row="4"
             Spacing="10"
             Visibility="Collapsed">
 
@@ -154,7 +212,7 @@
 
         <InfoBar
             x:Name="ErrorBar"
-            Grid.Row="4"
+            Grid.Row="5"
             IsOpen="False"
             IsClosable="True"
             Severity="Error"

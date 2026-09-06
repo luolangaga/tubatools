@@ -10,6 +10,7 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
 {
     private ToolsBundleUpdateInfo? _updateInfo;
     private bool _isBusy;
+    private bool _selectedLite;
 
     public bool DownloadSucceeded { get; private set; }
 
@@ -24,12 +25,15 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
         DescText.Text = text;
     }
 
+    /// <summary>
+    /// 弹出下载对话框。info 可为 null（内部自行检查更新），也可直接传入已解析的
+    /// 更新信息（含 HasUpdate=false 的场景：精简版用户升级到完整版）。
+    /// </summary>
     public async Task ShowDownloadAsync(ToolsBundleUpdateInfo? info = null)
     {
-        if (info is not null && info.HasUpdate)
+        if (info is not null)
         {
-            _updateInfo = info;
-            UpdateDescriptionFromInfo(info);
+            ApplyInfo(info);
         }
         else
         {
@@ -40,12 +44,85 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
         await ShowAsync();
     }
 
+    private void ApplyInfo(ToolsBundleUpdateInfo info)
+    {
+        _updateInfo = info;
+        var kind = ToolsBundleService.GetInstalledKind();
+
+        // 完整版已是最新：无事可做（完整版不可降级到精简版，也不重复下载）
+        if (kind == ToolsBundleService.KindFull && !info.HasUpdate)
+        {
+            DescText.Text = "当前完整版内核已是最新版本，无需下载。";
+            IsPrimaryButtonEnabled = false;
+            return;
+        }
+
+        UpdateDescriptionFromInfo(info);
+        ShowVariantSelection(info, kind);
+    }
+
     private void UpdateDescriptionFromInfo(ToolsBundleUpdateInfo info)
     {
-        var sizeStr = info.Size > 0 ? ToolsBundleService.FormatSize(info.Size) : "";
-        DescText.Text = string.IsNullOrEmpty(sizeStr)
-            ? $"发现内核 v{info.Version}，下载完成后即可使用全部功能。"
-            : $"发现内核 v{info.Version}（{sizeStr}），下载完成后即可使用全部功能。";
+        if (info.HasUpdate)
+        {
+            var sizeStr = info.Size > 0 ? $"（完整版约 {ToolsBundleService.FormatSize(info.Size)}）" : "";
+            DescText.Text = $"发现内核新版本 v{info.Version}{sizeStr}，请选择要下载的版本。";
+        }
+        else
+        {
+            DescText.Text = $"当前内核版本 v{info.Version}，可选择切换到完整版内核。";
+        }
+    }
+
+    /// <summary>
+    /// 展示 精简版/完整版 选择：
+    /// - 已安装完整版：精简版选项禁用（不支持降级）；
+    /// - 精简版已是最新：精简版禁用，仅可升级完整版；
+    /// - 首次安装：两者均可选，默认完整版。
+    /// </summary>
+    private void ShowVariantSelection(ToolsBundleUpdateInfo info, string? kind)
+    {
+        VariantSection.Visibility = Visibility.Visible;
+        IsPrimaryButtonEnabled = true;
+
+        var liteSelectable = info.HasLiteAsset &&
+                             kind != ToolsBundleService.KindFull &&
+                             info.HasUpdate;
+
+        LiteRadio.IsEnabled = liteSelectable;
+        LiteRadioSub.Text = !info.HasLiteAsset
+            ? "该版本未提供精简包"
+            : kind == ToolsBundleService.KindFull
+                ? "已安装完整版，不可降级"
+                : !info.HasUpdate
+                    ? (kind == ToolsBundleService.KindLite ? "当前已是最新" : "已内置精简工具，无需下载")
+                    : info.LiteSize > 0
+                        ? $"约 {ToolsBundleService.FormatSize(info.LiteSize)}"
+                        : "";
+
+        FullRadio.IsEnabled = true;
+        FullRadioSub.Text = info.Size > 0 ? $"约 {ToolsBundleService.FormatSize(info.Size)}" : "";
+        FullRadio.IsChecked = true;
+
+        string? hint = (kind, info.HasUpdate) switch
+        {
+            (ToolsBundleService.KindFull, true) => "已安装完整版内核，不支持降级到精简版。",
+            (ToolsBundleService.KindLite, false) => "当前精简版内核已是最新，可升级到完整版获得全部工具。",
+            (null, false) => "已内置精简工具集，可下载完整版内核获得全部工具。",
+            _ => null
+        };
+        if (hint is null)
+        {
+            VariantHintText.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            VariantHintText.Text = hint;
+            VariantHintText.Visibility = Visibility.Visible;
+        }
+
+        // 两个下载源同时竞赛，无需用户手动选择
+        SourceSection.Visibility = Visibility.Visible;
     }
 
     private async Task ResolveAndShowAsync()
@@ -61,17 +138,7 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
                 return;
             }
 
-            _updateInfo = info;
-
-            if (!info.HasUpdate)
-            {
-                DescText.Text = $"当前内核已是最新版本，无需下载。";
-                IsPrimaryButtonEnabled = false;
-                return;
-            }
-
-            UpdateDescriptionFromInfo(info);
-            ShowSourceSelection(info);
+            ApplyInfo(info);
         }
         catch (Exception ex)
         {
@@ -81,10 +148,10 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
         }
     }
 
-    private void ShowSourceSelection(ToolsBundleUpdateInfo info)
+    private void OnVariantChecked(object sender, RoutedEventArgs e)
     {
-        // 两个下载源同时竞赛，无需用户手动选择
-        SourceSection.Visibility = Visibility.Visible;
+        if (sender == LiteRadio) _selectedLite = true;
+        else if (sender == FullRadio) _selectedLite = false;
     }
 
     private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -110,43 +177,43 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
 
     private async Task StartDownloadAsync()
     {
-        if (_updateInfo is null || !_updateInfo.HasUpdate)
+        if (_updateInfo is null)
         {
             _updateInfo = await ToolsBundleService.CheckForToolsUpdateAsync();
-            if (_updateInfo is null || !_updateInfo.HasUpdate)
+            if (_updateInfo is null)
             {
                 ErrorBar.Message = $"未找到可用的内核更新。";
                 ErrorBar.IsOpen = true;
                 return;
             }
-            UpdateDescriptionFromInfo(_updateInfo);
-            ShowSourceSelection(_updateInfo);
-            return;
+            ApplyInfo(_updateInfo);
         }
 
-        // 默认 GitCode，下载失败时自动切换 GitHub 兜底
-        var resolver = ToolsBundleService.CreateUrlResolver(_updateInfo, preferGitCode: true);
-        var fallbackUrl = !string.IsNullOrEmpty(_updateInfo.GitHubUrl) &&
-                          !string.Equals(_updateInfo.GitHubUrl, _updateInfo.GitCodeUrl, StringComparison.OrdinalIgnoreCase)
-            ? _updateInfo.GitHubUrl
-            : null;
+        var lite = _selectedLite;
+        var version = _updateInfo.Version;
+        var kind = lite ? ToolsBundleService.KindLite : ToolsBundleService.KindFull;
+        var variantLabel = lite ? "精简版" : "完整版";
 
         _isBusy = true;
         IsPrimaryButtonEnabled = false;
         CloseButtonText = null;
         PrimaryButtonText = "已加入队列";
         SourceSection.Visibility = Visibility.Collapsed;
+        VariantSection.Visibility = Visibility.Collapsed;
 
-        var toolsDir = ToolsBundleService.GetToolsBundleDir();
+        // MSIX 解压到 LocalAppData 内核目录；精简版便携已内置 Tools 时就地升级
+        var toolsDir = ToolsBundleService.GetInstallTargetDir();
+
+        var resolver = ToolsBundleService.CreateUrlResolver(_updateInfo, preferGitCode: true, lite: lite);
 
         var item = DownloadQueueService.EnqueueWithResolver(
-            displayName: "内核 " + (_updateInfo.Version ?? ""),
+            displayName: $"{variantLabel}内核 " + (version ?? ""),
             urlResolver: resolver,
             destinationPath: toolsDir,
-            postProcessor: new ToolsBundleExtractProcessor(_updateInfo.Version),
-            description: $"图吧工具箱完整内核",
+            postProcessor: new ToolsBundleExtractProcessor(version, kind),
+            description: lite ? "图吧工具箱精简版内核" : "图吧工具箱完整内核",
             glyph: "\uE896",
-            fallbackUrl: fallbackUrl);
+            fallbackUrl: _updateInfo.FallbackUrl(lite));
 
         item.PropertyChanged += (s, e) =>
         {
@@ -192,6 +259,12 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
                 IsPrimaryButtonEnabled = true;
                 PrimaryButtonText = "重试";
                 ProgressSection.Visibility = Visibility.Collapsed;
+                SourceSection.Visibility = Visibility.Collapsed;
+                if (_updateInfo is not null && ToolsBundleService.GetInstalledKind() != ToolsBundleService.KindFull)
+                {
+                    // 失败重试时恢复版本选择（完整版用户本就无选择界面）
+                    VariantSection.Visibility = Visibility.Visible;
+                }
                 _isBusy = false;
                 CloseButtonText = "跳过";
                 break;
@@ -239,6 +312,7 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
 
     private async Task ShowSuccessDialogAsync()
     {
+        var variantLabel = _selectedLite ? "精简版" : "完整版";
         var dialog = new ContentDialog
         {
             Title = "下载完成",
@@ -282,13 +356,13 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
         var infoStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 4 };
         infoStack.Children.Add(new TextBlock
         {
-            Text = $"内核下载完成！",
+            Text = $"{variantLabel}内核下载完成！",
             FontSize = 16,
             FontWeight = Microsoft.UI.Text.FontWeights.Bold
         });
         infoStack.Children.Add(new TextBlock
         {
-            Text = "已解压到工具目录，刷新后可直接使用全部工具。",
+            Text = "已解压到工具目录，刷新后即可使用对应工具。",
             FontSize = 12,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
         });

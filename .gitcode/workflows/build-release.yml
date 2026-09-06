@@ -61,6 +61,44 @@ jobs:
           name: tools-zip
           path: Tools.zip
 
+      - name: Create Tools_Lite.zip
+        shell: pwsh
+        run: |
+          # 精简版内核包：仅必要检测工具，目录结构与 Tools.zip 一致（保留分类层）
+          $liteTools = @(
+            '处理器工具\CPUZ',
+            '处理器工具\C2CLatency',
+            '显卡工具\GPUZ',
+            '显卡工具\DDU',
+            '硬盘工具\CrystalDiskInfo',
+            '硬盘工具\CrystalDiskMark',
+            '烤鸡工具\FurMark_win64',
+            '综合检测\hwinfo',
+            '综合检测\HWMonitor'
+          )
+          $srcRoot = 'TubaWinUi3.WinUI3\Tools'
+          $staging = Join-Path $env:RUNNER_TEMP 'tools-lite-staging'
+          if (Test-Path -LiteralPath $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
+          foreach ($rel in $liteTools) {
+            $src = Join-Path $srcRoot $rel
+            if (-not (Test-Path -LiteralPath $src)) {
+              Write-Host "::error::Lite tool directory not found: $src"
+              exit 1
+            }
+            $dst = Join-Path $staging $rel
+            New-Item -ItemType Directory -Path (Split-Path -Parent $dst) -Force | Out-Null
+            Copy-Item -LiteralPath $src -Destination $dst -Recurse
+          }
+          Compress-Archive -Path "$staging\*" -DestinationPath 'Tools_Lite.zip'
+          $size = [math]::Round((Get-Item 'Tools_Lite.zip').Length / 1MB, 1)
+          Write-Host "Tools_Lite.zip size: $size MB"
+
+      - name: Upload Tools_Lite.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: tools-lite-zip
+          path: Tools_Lite.zip
+
   build:
     strategy:
       matrix:
@@ -222,7 +260,7 @@ jobs:
           name: portable-${{ matrix.arch }}
           path: TubaWinUi3_Portable_${{ inputs.version }}_${{ matrix.arch }}.zip
 
-      - name: Publish app (lite, no tools, x64 only)
+      - name: Publish app (lite with essential tools, x64 only)
         if: matrix.arch == 'x64'
         run: |
           dotnet publish TubaWinUi3.WinUI3/TubaWinUi3.csproj `
@@ -235,6 +273,7 @@ jobs:
             -p:WindowsAppSDKSelfContained=true `
             -p:WindowsPackageType=None `
             -p:ExcludeToolsFromPublish=true `
+            -p:IncludeLiteTools=true `
             -o publish_x64_lite
 
       - name: Restore .pri file for lite
@@ -247,7 +286,7 @@ jobs:
             Write-Host "Restored TubaWinUi3.pri for lite"
           }
 
-      - name: Create lite portable zip (no tools, with marker, x64 only)
+      - name: Create lite portable zip (bundled essential tools, with marker, x64 only)
         if: matrix.arch == 'x64'
         shell: pwsh
         run: |
@@ -412,7 +451,8 @@ jobs:
             | `TubaWinUi3_Setup_${{ inputs.version }}_arm64.exe` | ARM64 安装包 |
             | `TubaWinUi3_Portable_${{ inputs.version }}_x64.zip` | x64 便携版（含工具） |
             | `TubaWinUi3_Portable_${{ inputs.version }}_arm64.zip` | ARM64 便携版（含工具） |
-            | `TubaWinUi3_Lite_${{ inputs.version }}_x64.zip` | x64 精简版（不含工具，首次启动自动下载） |
-            | `Tools.zip` | 工具包（精简版/商店版首次启动下载） |
+            | `TubaWinUi3_Lite_${{ inputs.version }}_x64.zip` | x64 精简版（内置 CPU-Z/GPU-Z/HWiNFO/FurMark 等必要工具，可在设置中升级完整版内核） |
+            | `Tools.zip` | 完整版工具内核包（商店版首次启动可选下载） |
+            | `Tools_Lite.zip` | 精简版工具内核包（仅必要检测工具） |
 
             $(cat hash_table.md)

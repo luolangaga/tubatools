@@ -31,9 +31,38 @@ public class ToolsBundleParsingTests
         var result = ToolsBundleService.ScanReleasesForTools(Parse(json));
 
         Assert.NotNull(result);
-        Assert.Equal("2.5.0", result.Value.Version);
-        Assert.Equal("https://example.com/v2.5.0/Tools.zip", result.Value.Url);
-        Assert.Equal(2048, result.Value.Size);
+        Assert.Equal("2.5.0", result!.Version);
+        Assert.Equal("https://example.com/v2.5.0/Tools.zip", result!.FullUrl);
+        Assert.Equal(2048, result!.FullSize);
+        // 旧发行版未附带精简包：精简版不可选
+        Assert.Null(result!.LiteUrl);
+        Assert.Equal(0, result!.LiteSize);
+    }
+
+    [Fact]
+    public void ScanReleasesForTools_LatestReleaseHasBothZips_CapturesLiteAsset()
+    {
+        var json = """
+            [
+              {
+                "tag_name": "v2.5.0",
+                "prerelease": false,
+                "draft": false,
+                "assets": [
+                  { "name": "Tools.zip", "size": 2048, "browser_download_url": "https://example.com/v2.5.0/Tools.zip" },
+                  { "name": "Tools_Lite.zip", "size": 512, "browser_download_url": "https://example.com/v2.5.0/Tools_Lite.zip" }
+                ]
+              }
+            ]
+            """;
+
+        var result = ToolsBundleService.ScanReleasesForTools(Parse(json));
+
+        Assert.NotNull(result);
+        Assert.Equal("2.5.0", result!.Version);
+        Assert.Equal("https://example.com/v2.5.0/Tools.zip", result!.FullUrl);
+        Assert.Equal("https://example.com/v2.5.0/Tools_Lite.zip", result!.LiteUrl);
+        Assert.Equal(512, result!.LiteSize);
     }
 
     [Fact]
@@ -64,9 +93,9 @@ public class ToolsBundleParsingTests
         var result = ToolsBundleService.ScanReleasesForTools(Parse(json));
 
         Assert.NotNull(result);
-        Assert.Equal("2.4.0", result.Value.Version);
-        Assert.Equal("https://example.com/v2.4.0/Tools.zip", result.Value.Url);
-        Assert.Equal(4096, result.Value.Size);
+        Assert.Equal("2.4.0", result!.Version);
+        Assert.Equal("https://example.com/v2.4.0/Tools.zip", result!.FullUrl);
+        Assert.Equal(4096, result!.FullSize);
     }
 
     [Fact]
@@ -105,8 +134,8 @@ public class ToolsBundleParsingTests
         var result = ToolsBundleService.ScanReleasesForTools(Parse(json));
 
         Assert.NotNull(result);
-        Assert.Equal("2.4.0", result.Value.Version);
-        Assert.Equal("https://example.com/v2.4.0/Tools.zip", result.Value.Url);
+        Assert.Equal("2.4.0", result!.Version);
+        Assert.Equal("https://example.com/v2.4.0/Tools.zip", result!.FullUrl);
     }
 
     [Fact]
@@ -155,8 +184,8 @@ public class ToolsBundleParsingTests
         var result = ToolsBundleService.ScanReleasesForTools(Parse(json));
 
         Assert.NotNull(result);
-        Assert.Equal("3.0.0", result.Value.Version);
-        Assert.Equal("https://example.com/v3.0.0/Tools.zip", result.Value.Url);
-        Assert.Equal(123, result.Value.Size);
+        Assert.Equal("3.0.0", result!.Version);
+        Assert.Equal("https://example.com/v3.0.0/Tools.zip", result!.FullUrl);
+        Assert.Equal(123, result!.FullSize);
     }
 }

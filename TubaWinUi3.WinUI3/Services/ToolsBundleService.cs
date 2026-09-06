@@ -8,10 +8,39 @@ public sealed record ToolsBundleUpdateInfo(
     string Version,
     string? GitCodeUrl = null,
     string? GitHubUrl = null,
-    long Size = 0);
+    long Size = 0,
+    string? GitCodeLiteUrl = null,
+    string? GitHubLiteUrl = null,
+    long LiteSize = 0)
+{
+    /// <summary>发行版是否附带精简包（Tools_Lite.zip）。双源任一可用即视为可用。</summary>
+    public bool HasLiteAsset =>
+        !string.IsNullOrEmpty(GitCodeLiteUrl) || !string.IsNullOrEmpty(GitHubLiteUrl);
+
+    /// <summary>按变种取主源（GitCode 优先）下载地址。</summary>
+    public string? PrimaryUrl(bool lite) => lite
+        ? (GitCodeLiteUrl ?? GitHubLiteUrl)
+        : (GitCodeUrl ?? GitHubUrl);
+
+    /// <summary>按变种取备源（GitHub）下载地址，与主源相同时返回 null（无需兜底）。</summary>
+    public string? FallbackUrl(bool lite)
+    {
+        var fallback = lite ? GitHubLiteUrl : GitHubUrl;
+        var primary = PrimaryUrl(lite);
+        return string.IsNullOrEmpty(fallback) ||
+               string.Equals(fallback, primary, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : fallback;
+    }
+
+    public long AssetSize(bool lite) => lite ? LiteSize : Size;
+}
 
 public static class ToolsBundleService
 {
+    public const string KindFull = "Full";
+    public const string KindLite = "Lite";
+
     private const string Owner = "luolangaga";
     private const string Repo = "tubatool";
     private const string GitHubReleasesApi = $"https://api.github.com/repos/{Owner}/{Repo}/releases";
@@ -19,6 +48,7 @@ public static class ToolsBundleService
     private const string GitCodeRepo = "tubatool";
     private const string GitCodeReleaseApiBase = $"https://api.gitcode.com/api/v5/repos/{GitCodeOwner}/{GitCodeRepo}/releases";
     private const string ToolsAssetName = "Tools.zip";
+    private const string ToolsLiteAssetName = "Tools_Lite.zip";
     private const int ReleasesPerPage = 100;
     private const int MaxReleasePages = 5;
 
@@ -48,9 +78,42 @@ public static class ToolsBundleService
 
     public static string GetToolsBundleDir() => ToolsBundleDir;
 
+    /// <summary>
+    /// 内核包解压目标目录：MSIX 恒为包外 LocalAppData 的内核目录；
+    /// 精简版便携（Lite）已随包内置 Tools 时就地升级（替换应用目录下的 Tools），
+    /// 否则（旧精简版无内置工具）回退 LocalAppData 内核目录。
+    /// </summary>
+    public static string GetInstallTargetDir()
+    {
+        if (RuntimeHelper.IsLiteBuild)
+        {
+            var appTools = Path.Combine(ToolCatalog.AppDirectory, "Tools");
+            if (Directory.Exists(appTools))
+                return appTools;
+        }
+        return ToolsBundleDir;
+    }
+
     public static string? GetCurrentVersion()
     {
         return AppSettings.Get("ToolsBundleVersion");
+    }
+
+    /// <summary>
+    /// 已安装内核包的变种（完整版/精简版）。
+    /// 历史数据兼容：仅记录过版本号、未记录变种的旧安装一律按完整版处理，
+    /// 从而保证「完整版不可降级到精简版」对既有用户同样生效。
+    /// </summary>
+    public static string? GetInstalledKind()
+    {
+        var kind = AppSettings.Get("ToolsBundleKind");
+        if (kind is KindFull or KindLite) return kind;
+        return GetCurrentVersion() is not null ? KindFull : null;
+    }
+
+    public static void SetInstalledKind(string kind)
+    {
+        AppSettings.Set("ToolsBundleKind", kind);
     }
 
     public static Version? CurrentAppVersion
@@ -66,9 +129,9 @@ public static class ToolsBundleService
     {
         var currentVersion = GetCurrentVersion();
 
-        string? gitCodeUrl = null;
-        string? githubUrl = null;
-        long size = 0;
+        string? gitCodeUrl = null, gitCodeLiteUrl = null;
+        string? githubUrl = null, githubLiteUrl = null;
+        long size = 0, liteSize = 0;
         string? versionStr = null;
 
         var gitCodeTask = FetchGitCodeLatestAsync(ct);
@@ -79,9 +142,11 @@ public static class ToolsBundleService
             var gc = await gitCodeTask;
             if (gc is not null)
             {
-                gitCodeUrl = gc.Value.Url;
-                size = gc.Value.Size;
-                versionStr ??= gc.Value.Version;
+                gitCodeUrl = gc.FullUrl;
+                gitCodeLiteUrl = gc.LiteUrl;
+                size = gc.FullSize;
+                liteSize = gc.LiteSize;
+                versionStr ??= gc.Version;
             }
         }
         catch { }
@@ -91,9 +156,11 @@ public static class ToolsBundleService
             var gh = await githubTask;
             if (gh is not null)
             {
-                githubUrl = gh.Value.Url;
-                size = size > 0 ? size : gh.Value.Size;
-                versionStr ??= gh.Value.Version;
+                githubUrl = gh.FullUrl;
+                githubLiteUrl = gh.LiteUrl;
+                size = size > 0 ? size : gh.FullSize;
+                liteSize = liteSize > 0 ? liteSize : gh.LiteSize;
+                versionStr ??= gh.Version;
             }
         }
         catch { }
@@ -101,9 +168,11 @@ public static class ToolsBundleService
         if (versionStr is null) return null;
 
         if (currentVersion is not null && versionStr == currentVersion)
-            return new ToolsBundleUpdateInfo(false, versionStr, gitCodeUrl, githubUrl, size);
+            return new ToolsBundleUpdateInfo(false, versionStr, gitCodeUrl, githubUrl, size,
+                gitCodeLiteUrl, githubLiteUrl, liteSize);
 
-        return new ToolsBundleUpdateInfo(true, versionStr, gitCodeUrl, githubUrl, size);
+        return new ToolsBundleUpdateInfo(true, versionStr, gitCodeUrl, githubUrl, size,
+            gitCodeLiteUrl, githubLiteUrl, liteSize);
     }
 
     public static string? PickBestUrl(ToolsBundleUpdateInfo info)
@@ -114,19 +183,21 @@ public static class ToolsBundleService
     }
 
     public static Func<CancellationToken, Task<ResolvedDownloadUrl>> CreateUrlResolver(
-        ToolsBundleUpdateInfo info, bool preferGitCode = true)
+        ToolsBundleUpdateInfo info, bool preferGitCode = true, bool lite = false)
     {
         return async ct =>
         {
+            var primary = info.PrimaryUrl(lite);
             var url = preferGitCode
-                ? (info.GitCodeUrl ?? info.GitHubUrl)
-                : (info.GitHubUrl ?? info.GitCodeUrl);
+                ? primary
+                : (info.FallbackUrl(lite) ?? primary);
 
             if (string.IsNullOrEmpty(url))
-                throw new InvalidOperationException("没有可用的下载链接");
+                throw new InvalidOperationException(
+                    lite ? "没有可用的精简版内核下载链接" : "没有可用的下载链接");
 
-            var fileName = ToolsAssetName;
-            return new ResolvedDownloadUrl(url, fileName, info.Size);
+            var fileName = lite ? ToolsLiteAssetName : ToolsAssetName;
+            return new ResolvedDownloadUrl(url, fileName, info.AssetSize(lite));
         };
     }
 
@@ -154,7 +225,11 @@ public static class ToolsBundleService
         return $"{t.Seconds}s";
     }
 
-    private static async Task<(string Url, long Size, string Version)?> FetchGitCodeLatestAsync(CancellationToken ct)
+    /// <summary>单个发行版解析出的内核包资产（完整版必查，精简版可选）。</summary>
+    internal sealed record ToolsBundleReleaseAssets(
+        string Version, string? FullUrl, long FullSize, string? LiteUrl, long LiteSize);
+
+    private static async Task<ToolsBundleReleaseAssets?> FetchGitCodeLatestAsync(CancellationToken ct)
     {
         try
         {
@@ -163,7 +238,7 @@ public static class ToolsBundleService
         catch { return null; }
     }
 
-    private static async Task<(string Url, long Size, string Version)?> FetchGitHubLatestAsync(CancellationToken ct)
+    private static async Task<ToolsBundleReleaseAssets?> FetchGitHubLatestAsync(CancellationToken ct)
     {
         try
         {
@@ -175,8 +250,9 @@ public static class ToolsBundleService
     /// <summary>
     /// 从最新发行版开始逐版本向下扫描（分页），返回第一个带 Tools.zip 的发行版。
     /// 某个发行版没附带工具包更新时（例如纯应用更新），自动回退到更早的版本。
+    /// Tools_Lite.zip 只在与 Tools.zip 同一发行版上识别（精简版始终与完整版同版本发布）。
     /// </summary>
-    private static async Task<(string Url, long Size, string Version)?> WalkReleasesForToolsAsync(
+    private static async Task<ToolsBundleReleaseAssets?> WalkReleasesForToolsAsync(
         string releasesApi, CancellationToken ct)
     {
         using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
@@ -210,20 +286,20 @@ public static class ToolsBundleService
     /// <summary>
     /// 按 JSON 数组顺序（发行版列表均为最新在前）扫描，返回第一个带 Tools.zip 的发行版。
     /// </summary>
-    internal static (string Url, long Size, string Version)? ScanReleasesForTools(JsonElement releases)
+    internal static ToolsBundleReleaseAssets? ScanReleasesForTools(JsonElement releases)
     {
         if (releases.ValueKind != JsonValueKind.Array) return null;
 
         foreach (var release in releases.EnumerateArray())
         {
-            var match = ParseToolsAsset(release);
+            var match = ParseToolsAssets(release);
             if (match is not null) return match;
         }
 
         return null;
     }
 
-    private static (string Url, long Size, string Version)? ParseToolsAsset(JsonElement release)
+    private static ToolsBundleReleaseAssets? ParseToolsAssets(JsonElement release)
     {
         var tagName = release.TryGetProperty("tag_name", out var tagEl) ? tagEl.GetString() ?? "" : "";
         if (tagName.Length == 0) return null;
@@ -234,19 +310,36 @@ public static class ToolsBundleService
 
         if (!release.TryGetProperty("assets", out var assetsEl)) return null;
 
+        string? fullUrl = null, liteUrl = null;
+        long fullSize = 0, liteSize = 0;
+
         foreach (var asset in assetsEl.EnumerateArray())
         {
             var name = asset.GetProperty("name").GetString() ?? "";
-            if (!name.Equals(ToolsAssetName, StringComparison.OrdinalIgnoreCase)) continue;
+            var isFull = name.Equals(ToolsAssetName, StringComparison.OrdinalIgnoreCase);
+            var isLite = !isFull && name.Equals(ToolsLiteAssetName, StringComparison.OrdinalIgnoreCase);
+            if (!isFull && !isLite) continue;
 
             var downloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "";
             if (string.IsNullOrEmpty(downloadUrl)) continue;
 
-            var versionStr = tagName.TrimStart('v', 'V');
             var assetSize = asset.TryGetProperty("size", out var sizeEl) ? sizeEl.GetInt64() : 0;
-            return (downloadUrl, assetSize, versionStr);
+            if (isFull)
+            {
+                fullUrl = downloadUrl;
+                fullSize = assetSize;
+            }
+            else
+            {
+                liteUrl = downloadUrl;
+                liteSize = assetSize;
+            }
         }
 
-        return null;
+        // 完整包是版本锚点：首个带 Tools.zip 的发行版生效，精简包缺失时仅为不可选
+        if (fullUrl is null) return null;
+
+        var versionStr = tagName.TrimStart('v', 'V');
+        return new ToolsBundleReleaseAssets(versionStr, fullUrl, fullSize, liteUrl, liteSize);
     }
 }

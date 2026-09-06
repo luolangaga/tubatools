@@ -295,7 +295,9 @@ public sealed class DownloadItem : INotifyPropertyChanged
     internal string? ResolvedFileName { get; set; }
     internal long ResolvedSize { get; set; }
     internal long ResumePosition { get; set; }
-    internal bool SupportsResume { get; set; }
+
+    /// <summary>UI 进度节流：上次派发进度的 Environment.TickCount64。</summary>
+    internal long LastProgressTick;
 
     private DownloadItem(
         string displayName, string? directUrl,
@@ -362,7 +364,7 @@ public sealed class DownloadItem : INotifyPropertyChanged
         ResolvedFileName = null;
         ResolvedSize = 0;
         ResumePosition = 0;
-        SupportsResume = false;
+        LastProgressTick = 0;
     }
 
     internal void PrepareResume()
@@ -540,12 +542,14 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
     private const int CleanupAttempts = 3;
 
     private readonly string? _version;
+    private readonly string? _kind;
 
     public string DisplayName => "解压工具包";
 
-    public ToolsBundleExtractProcessor(string? version = null)
+    public ToolsBundleExtractProcessor(string? version = null, string? kind = null)
     {
         _version = version;
+        _kind = kind;
     }
 
     public async Task ExecuteAsync(string downloadedFilePath, string destinationPath,
@@ -668,6 +672,11 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
         if (!string.IsNullOrEmpty(_version))
         {
             Services.AppSettings.Set("ToolsBundleVersion", _version);
+        }
+
+        if (!string.IsNullOrEmpty(_kind))
+        {
+            Services.ToolsBundleService.SetInstalledKind(_kind);
         }
 
         Services.ToolCatalog.RefreshToolsRoot();

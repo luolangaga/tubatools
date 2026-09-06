@@ -1,18 +1,27 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using System.ComponentModel;
 using System.Text.Json;
+using Downloader;
 using Microsoft.UI.Dispatching;
 using Microsoft.Toolkit.Uwp.Notifications;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+/// <summary>
+/// 下载队列：底层引擎为 Downloader 库（github.com/bezzad/Downloader，MIT）。
+/// 每个文件按 ChunkCount 分块并行下载；暂停/失败/退出应用后半成品
+/// （目标文件名 + .download 侧车文件，内嵌分块元数据）保留在磁盘上，
+/// 再次启动（Resume/Retry 或跨会话）时由 Downloader 自动断点续传。
+/// </summary>
 public static class DownloadQueueService
 {
     private const int MaxConcurrentDownloads = 2;
-    private const string PartialSuffix = ".tubadl";
+    private const int ChunkCount = 8;                 // 单文件分块数（服务器不支持 Range 时自动退化为单连接）
+    private const int ParallelChunkCount = 4;         // 单文件同时活动的分块连接数
+    private const int ProgressThrottleMs = 300;
+    private const string PartialSuffix = ".tubadl";             // 旧版手写引擎的半成品后缀，仅做兼容清理
+    private const string DownloaderPartialSuffix = ".download"; // Downloader 半成品侧车文件
     private static readonly JsonSerializerOptions _jsonOpts = new() { WriteIndented = true };
 
     private static readonly SemaphoreSlim _semaphore = new(MaxConcurrentDownloads);
@@ -24,14 +33,6 @@ public static class DownloadQueueService
     private static bool _dirty;
 #pragma warning restore CS0414
     private static readonly object _saveLock = new();
-
-    private static HttpClient CreateHttpClient(TimeSpan? timeout = null)
-    {
-        var client = ProxyService.CreateClient(timeout ?? TimeSpan.FromMinutes(30));
-        if (!client.DefaultRequestHeaders.Contains("User-Agent"))
-            client.DefaultRequestHeaders.Add("User-Agent", "TubaWinUi3-DownloadQueue");
-        return client;
-    }
 
     public static void Initialize(DispatcherQueue dq)
     {
@@ -279,6 +280,7 @@ public static class DownloadQueueService
                         item.SetProgress(new DownloadQueueProgress(entry.BytesReceived, entry.TotalBytes,
                             entry.TotalBytes > 0 ? (double)entry.BytesReceived / entry.TotalBytes * 100 : 0, 0, null));
                     IncrementPending();
+                    CleanupLegacyPartialFile(item);
                 }
                 else if (entry.State == DownloadItemState.Completed)
                 {
@@ -296,6 +298,7 @@ public static class DownloadQueueService
                         item.SetProgress(new DownloadQueueProgress(entry.BytesReceived, entry.TotalBytes,
                             entry.TotalBytes > 0 ? (double)entry.BytesReceived / entry.TotalBytes * 100 : 0, 0, null));
                     IncrementPending();
+                    CleanupLegacyPartialFile(item);
                 }
                 else
                 {
@@ -322,6 +325,20 @@ public static class DownloadQueueService
                     _queue.Add(item);
                 QueueChanged?.Invoke();
             }
+        }
+        catch { }
+    }
+
+    /// <summary>旧版手写引擎的 .tubadl 半成品无法被 Downloader 续传，启动恢复时直接清理。</summary>
+    private static void CleanupLegacyPartialFile(DownloadItem item)
+    {
+        try
+        {
+            var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
+            if (string.IsNullOrEmpty(fileName)) return;
+            var legacyPartial = Path.Combine(item.DestinationPath, fileName + PartialSuffix);
+            if (File.Exists(legacyPartial))
+                File.Delete(legacyPartial);
         }
         catch { }
     }
@@ -413,8 +430,7 @@ public static class DownloadQueueService
             }
             else
             {
-                var needsResolve = item.ResolvedUrl is null;
-                if (needsResolve)
+                if (item.ResolvedUrl is null)
                 {
                     DispatchState(item, DownloadItemState.Resolving);
                     var resolved = await ResolveUrlAsync(item, ct);
@@ -477,12 +493,10 @@ public static class DownloadQueueService
             return;
         }
 
-        var totalFiles = files.Count;
-        var completedFiles = 0;
-        long totalBytes = 0;
-        long downloadedBytes = 0;
-
         DispatchState(item, DownloadItemState.Downloading);
+
+        long completedBytes = 0;   // 已完成文件的累计字节
+        long knownTotal = 0;       // 已知文件的累计总字节
 
         for (var i = 0; i < files.Count; i++)
         {
@@ -491,52 +505,37 @@ public static class DownloadQueueService
 
             Directory.CreateDirectory(item.DestinationPath);
 
-            var fileName = file.FileName;
-            var localPath = Path.Combine(item.DestinationPath, fileName);
-            var partialPath = localPath + PartialSuffix;
+            var localPath = Path.Combine(item.DestinationPath, file.FileName);
             var localDir = Path.GetDirectoryName(localPath);
             if (localDir is not null) Directory.CreateDirectory(localDir);
 
-            using var client = CreateHttpClient(TimeSpan.FromMinutes(5));
-            var response = await client.GetAsync(file.Url, HttpCompletionOption.ResponseHeadersRead, ct);
-            response.EnsureSuccessStatusCode();
-
-            var fileTotal = response.Content.Headers.ContentLength ?? file.Size;
-            totalBytes += fileTotal;
-
-            using var stream = await response.Content.ReadAsStreamAsync(ct);
-            using var fs = new FileStream(partialPath, FileMode.Create,
-                FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-
-            var buffer = new byte[81920];
-            long fileBytesRead = 0;
-
-            while (true)
+            // 大小一致且已存在的文件直接跳过：重试 / 恢复会话时不重复下载
+            if (file.Size > 0 && File.Exists(localPath) && new FileInfo(localPath).Length == file.Size)
             {
-                ct.ThrowIfCancellationRequested();
-                var read = await stream.ReadAsync(buffer, ct);
-                if (read == 0) break;
-                await fs.WriteAsync(buffer.AsMemory(0, read), ct);
-                fileBytesRead += read;
-                downloadedBytes += read;
-
-                completedFiles = i;
-                var overallPct = totalBytes > 0 ? (double)downloadedBytes / totalBytes * 100 : 0;
-                DispatchProgress(item, new DownloadQueueProgress(downloadedBytes, totalBytes > 0 ? totalBytes : downloadedBytes, overallPct, 0, null));
+                completedBytes += file.Size;
+                knownTotal += file.Size;
+                ReportAggregatedProgress(item, completedBytes, knownTotal, 0);
+                continue;
             }
 
-            await fs.FlushAsync(ct);
-            fs.Close();
+            DeleteLegacyPartial(localPath);
 
-            if (File.Exists(localPath))
-                File.Delete(localPath);
-            File.Move(partialPath, localPath);
+            long fileTotal = file.Size;
+            await DownloadWithDownloaderAsync(item, file.Url, localPath, ct,
+                onStarted: total => fileTotal = total > 0 ? total : file.Size,
+                onProgress: e =>
+                {
+                    fileTotal = e.TotalBytesToReceive > 0 ? e.TotalBytesToReceive : fileTotal;
+                    ReportAggregatedProgress(item, completedBytes + e.ReceivedBytesSize,
+                        knownTotal + fileTotal, e.BytesPerSecondSpeed);
+                });
 
-            completedFiles = i + 1;
-            DispatchProgress(item, new DownloadQueueProgress(downloadedBytes, totalBytes > 0 ? totalBytes : downloadedBytes, completedFiles * 100.0 / totalFiles, 0, null));
+            var actualSize = File.Exists(localPath) ? new FileInfo(localPath).Length : fileTotal;
+            completedBytes += actualSize;
+            knownTotal += actualSize;
         }
 
-        DispatchProgress(item, new DownloadQueueProgress(downloadedBytes, downloadedBytes, 100, 0, TimeSpan.Zero));
+        ReportAggregatedProgress(item, completedBytes, completedBytes, 0);
 
         ct.ThrowIfCancellationRequested();
 
@@ -549,6 +548,16 @@ public static class DownloadQueueService
         }
     }
 
+    private static void DeleteLegacyPartial(string finalPath)
+    {
+        try
+        {
+            var legacyPartial = finalPath + PartialSuffix;
+            if (File.Exists(legacyPartial)) File.Delete(legacyPartial);
+        }
+        catch { }
+    }
+
     private static async Task RunPostProcessorAsync(DownloadItem item, string downloadedFile, CancellationToken ct)
     {
         if (item.PostProcessor is null) return;
@@ -559,7 +568,7 @@ public static class DownloadQueueService
     }
 
     /// <summary>
-    /// 优先使用主下载源（GitCode），失败时先自动重下一次，
+    /// 优先使用主下载源（GitCode），失败时先自动重下一次（续传半成品），
     /// 仍失败则切换备用源（GitHub）重试，并校验 zip 完整性后再交给解压。
     /// </summary>
     private static async Task<string> DownloadFileWithFallbackAsync(DownloadItem item, CancellationToken ct)
@@ -577,9 +586,8 @@ public static class DownloadQueueService
         catch (OperationCanceledException) { throw; }
         catch (Exception primaryEx)
         {
-            // 第 2 次：主源重试一次（网络波动 / 下载到损坏文件常见）
-            DispatchProcessingStatus(item, "下载文件校验失败，正在重新下载...");
-            DeleteDownloadedQuiet(item);
+            // 第 2 次：主源重试一次（网络波动常见；半成品保留，由 Downloader 断点续传）
+            DispatchProcessingStatus(item, "下载中断，正在自动重试...");
             try
             {
                 return await DownloadAndValidateAsync(item, ct);
@@ -589,10 +597,8 @@ public static class DownloadQueueService
             {
                 // 第 3 次：切换备用源（GitHub）
                 DispatchProcessingStatus(item, "GitCode 下载失败，正在切换 GitHub 重试...");
-                DeleteDownloadedQuiet(item);
                 item.ResolvedUrl = alternate;
                 item.ResumePosition = 0;
-                item.SupportsResume = false;
                 MarkDirty();
                 try
                 {
@@ -611,14 +617,70 @@ public static class DownloadQueueService
 
     private static async Task<string> DownloadAndValidateAsync(DownloadItem item, CancellationToken ct)
     {
-        var file = await DownloadFileAsync(item, ct);
-        ValidateDownloadedFile(file);
-        return file;
+        var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
+        var finalPath = Path.Combine(item.DestinationPath, fileName);
+
+        // 已存在的半成品大小（含侧车元数据）用于恢复时初始进度展示
+        var partialPath = finalPath + DownloaderPartialSuffix;
+        var partialBytes = File.Exists(partialPath) ? new FileInfo(partialPath).Length : 0;
+
+        await DownloadWithDownloaderAsync(item, item.ResolvedUrl!, finalPath, ct,
+            onStarted: total =>
+            {
+                if (total > 0)
+                {
+                    item.ResolvedSize = total;
+                    if (partialBytes > 0)
+                        ReportAggregatedProgress(item, partialBytes, total, 0);
+                }
+            },
+            onProgress: e => HandleSingleFileProgress(item, e));
+
+        ValidateDownloadedFile(finalPath);
+        return finalPath;
+    }
+
+    /// <summary>
+    /// 用 Downloader 引擎把 <paramref name="url"/> 下载到 <paramref name="finalPath"/>。
+    /// 成功正常返回；取消/暂停抛 <see cref="OperationCanceledException"/>；
+    /// 失败抛完成事件携带的异常。半成品（finalPath.download）由 Downloader 自动管理，
+    /// 存在且服务器文件大小未变时自动续传。
+    /// </summary>
+    private static async Task DownloadWithDownloaderAsync(DownloadItem item, string url, string finalPath,
+        CancellationToken ct,
+        Action<long>? onStarted = null,
+        Action<DownloadProgressChangedEventArgs>? onProgress = null)
+    {
+        Directory.CreateDirectory(item.DestinationPath);
+        var service = new DownloadService(CreateDownloadConfiguration());
+
+        AsyncCompletedEventArgs? completion = null;
+        service.DownloadFileCompleted += (_, e) => completion = e;
+        if (onStarted is not null)
+            service.DownloadStarted += (_, e) => onStarted(e.TotalBytesToReceive);
+        if (onProgress is not null)
+            service.DownloadProgressChanged += (_, e) => onProgress(e);
+
+        try
+        {
+            await service.DownloadFileTaskAsync(url, finalPath, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            await service.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (completion is null)
+            throw new InvalidOperationException("下载未返回完成状态");
+        if (completion.Cancelled)
+            throw new OperationCanceledException();
+        if (completion.Error is not null)
+            throw completion.Error;
     }
 
     /// <summary>
     /// 若是 zip，校验压缩包完整性（遍历并打开每个条目，验证本地文件头）。
-    /// 损坏则删除并抛异常，触发自动重下 / 切换源。
+    /// 损坏则删除并抛异常，触发自动重下（重下时 Downloader 会清掉损坏的完整文件）。
     /// </summary>
     private static void ValidateDownloadedFile(string filePath)
     {
@@ -640,27 +702,83 @@ public static class DownloadQueueService
         }
     }
 
-    private static void DeleteDownloadedQuiet(DownloadItem item)
+    private static DownloadConfiguration CreateDownloadConfiguration() => new()
     {
-        try
+        BufferBlockSize = 64 * 1024,
+        ChunkCount = ChunkCount,
+        ParallelCount = ParallelChunkCount,
+        ParallelDownload = true,
+        MaxTryAgainOnFailure = 3,                       // 分块级自动重试（指数退避）
+        MinimumSizeOfChunking = 1024 * 1024,            // 小于 1MB 不分块
+        EnableAutoResumeDownload = true,                // 半成品内嵌分块元数据，跨会话续传
+        ClearPackageOnCompletionWithFailure = false,    // 失败保留半成品，重试可续传
+        FileExistPolicy = FileExistPolicy.Delete,       // 目标完整文件已存在则删除重下
+        DownloadFileExtension = DownloaderPartialSuffix,
+        HttpClientTimeout = 2 * 60 * 60 * 1000,         // 默认 100s 会误杀慢速大文件流
+        MaximumMemoryBufferBytes = 64 * 1024 * 1024,
+        RequestConfiguration = new RequestConfiguration
         {
-            var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
-            var finalPath = Path.Combine(item.DestinationPath, fileName);
-            if (File.Exists(finalPath)) File.Delete(finalPath);
+            UserAgent = "TubaWinUi3-DownloadQueue",
+            Proxy = ProxyService.GetWebProxy(),
         }
-        catch { }
-        DeletePartialQuiet(item);
+    };
+
+    private static void HandleSingleFileProgress(DownloadItem item, DownloadProgressChangedEventArgs e)
+        => ReportAggregatedProgress(item, e.ReceivedBytesSize, e.TotalBytesToReceive, e.BytesPerSecondSpeed);
+
+    private static void ReportAggregatedProgress(DownloadItem item, long received, long total, double bytesPerSecond)
+    {
+        var percentage = total > 0 ? Math.Min(received * 100.0 / total, 100) : 0;
+        var speedMbps = bytesPerSecond * 8 / 1_000_000;
+        var remaining = total > 0 && bytesPerSecond > 1
+            ? TimeSpan.FromSeconds(Math.Max(0, total - received) / bytesPerSecond)
+            : (TimeSpan?)null;
+
+        item.ResumePosition = received;
+
+        // Downloader 每个分块的每个数据块都会触发进度事件，直接刷 UI 会卡顿；
+        // 按固定间隔节流，收尾阶段（>=99.9%）立即推送避免停在 99%。
+        var now = Environment.TickCount64;
+        if (percentage > 0 && percentage < 99.9 && now - item.LastProgressTick < ProgressThrottleMs)
+            return;
+        item.LastProgressTick = now;
+
+        DispatchProgress(item, new DownloadQueueProgress(received, total, percentage, speedMbps, remaining));
     }
 
-    private static void DeletePartialQuiet(DownloadItem item)
+    private static void CleanupPartialFile(DownloadItem item)
+    {
+        if (item.State is not (DownloadItemState.Cancelled or DownloadItemState.Failed))
+            return;
+
+        var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
+        if (string.IsNullOrEmpty(fileName)) return;
+
+        var finalPath = Path.Combine(item.DestinationPath, fileName);
+        foreach (var partial in new[] { finalPath + PartialSuffix, finalPath + DownloaderPartialSuffix })
+        {
+            try { if (File.Exists(partial)) File.Delete(partial); } catch { }
+        }
+    }
+
+    private static DownloadItem? FindItem(string itemId)
+        => _queue.FirstOrDefault(i => i.Id == itemId);
+
+    private static void ShowToast(string title, string message)
     {
         try
         {
-            var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
-            var partialPath = Path.Combine(item.DestinationPath, fileName + PartialSuffix);
-            if (File.Exists(partialPath)) File.Delete(partialPath);
+            new ToastContentBuilder()
+                .AddText(title)
+                .AddText(message)
+                .Show();
         }
-        catch { }
+        catch
+        {
+            // Toast notifications may throw ArgumentException ("Value does not
+            // fall within the expected range") in unpackaged mode when no AUMID
+            // is registered. Swallow so the download flow is not broken.
+        }
     }
 
     private static void DispatchState(DownloadItem item, DownloadItemState state)
@@ -730,160 +848,6 @@ public static class DownloadQueueService
             return await item.UrlResolver(ct);
 
         throw new InvalidOperationException("No download URL or resolver provided");
-    }
-
-    private static async Task<string> DownloadFileAsync(DownloadItem item, CancellationToken ct)
-    {
-        var url = item.ResolvedUrl!;
-        var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
-        Directory.CreateDirectory(item.DestinationPath);
-
-        var partialPath = Path.Combine(item.DestinationPath, fileName + PartialSuffix);
-        var finalPath = Path.Combine(item.DestinationPath, fileName);
-
-        long existingBytes = 0;
-        if (File.Exists(partialPath))
-            existingBytes = new FileInfo(partialPath).Length;
-
-        if (File.Exists(finalPath) && existingBytes == 0)
-            File.Delete(finalPath);
-
-        using var downloadClient = CreateHttpClient();
-
-        if (existingBytes > 0)
-        {
-            var rangeRequest = new HttpRequestMessage(HttpMethod.Get, url);
-            rangeRequest.Headers.Range = new RangeHeaderValue(existingBytes, null);
-            var rangeResponse = await downloadClient.SendAsync(rangeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
-
-            if (rangeResponse.StatusCode == System.Net.HttpStatusCode.PartialContent)
-            {
-                item.SupportsResume = true;
-                rangeResponse.EnsureSuccessStatusCode();
-                var result = await WriteDownloadStreamAsync(item, rangeResponse, partialPath, finalPath, existingBytes, item.ResolvedSize, ct);
-                rangeResponse.Dispose();
-                return result;
-            }
-
-            rangeResponse.Dispose();
-            try { File.Delete(partialPath); } catch { }
-            existingBytes = 0;
-            item.ResumePosition = 0;
-            item.SupportsResume = false;
-        }
-        else
-        {
-            item.SupportsResume = false;
-        }
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        var response = await downloadClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-        var file = await WriteDownloadStreamAsync(item, response, partialPath, finalPath, 0, item.ResolvedSize, ct);
-        response.Dispose();
-        return file;
-    }
-
-    private static async Task<string> WriteDownloadStreamAsync(
-        DownloadItem item, HttpResponseMessage response,
-        string partialPath, string finalPath,
-        long existingBytes, long knownSize, CancellationToken ct)
-    {
-        var totalFromHeader = response.Content.Headers.ContentLength ?? 0;
-        var totalBytes = response.StatusCode == System.Net.HttpStatusCode.PartialContent
-            ? existingBytes + totalFromHeader
-            : totalFromHeader;
-        if (totalBytes <= 0)
-            totalBytes = knownSize > 0 ? knownSize : 0;
-
-        using var stream = await response.Content.ReadAsStreamAsync(ct);
-        using var fs = new FileStream(partialPath,
-            existingBytes > 0 ? FileMode.Append : FileMode.Create,
-            FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-
-        var buffer = new byte[81920];
-        long bytesRead = existingBytes;
-        var sw = Stopwatch.StartNew();
-        var lastReport = sw.Elapsed;
-        long lastBytes = bytesRead;
-
-        if (existingBytes > 0 && totalBytes > 0)
-        {
-            var initPct = (double)existingBytes / totalBytes * 100;
-            DispatchProgress(item, new DownloadQueueProgress(existingBytes, totalBytes, initPct, 0, null));
-        }
-
-        while (true)
-        {
-            ct.ThrowIfCancellationRequested();
-            var read = await stream.ReadAsync(buffer, ct);
-            if (read == 0) break;
-
-            await fs.WriteAsync(buffer.AsMemory(0, read), ct);
-            bytesRead += read;
-
-            var now = sw.Elapsed;
-            if (now - lastReport > TimeSpan.FromMilliseconds(300))
-            {
-                var chunkBytes = bytesRead - lastBytes;
-                var chunkTime = (now - lastReport).TotalSeconds;
-                var speedMbps = chunkBytes / Math.Max(chunkTime, 0.001) * 8 / 1_000_000;
-                var percentage = totalBytes > 0 ? (double)bytesRead / totalBytes * 100 : 0;
-                var remaining = totalBytes > 0 && speedMbps > 0
-                    ? TimeSpan.FromSeconds((totalBytes - bytesRead) / Math.Max(speedMbps * 1_000_000 / 8, 1))
-                    : (TimeSpan?)null;
-
-                item.ResumePosition = bytesRead;
-                DispatchProgress(item, new DownloadQueueProgress(bytesRead, totalBytes, percentage, speedMbps, remaining));
-                lastReport = now;
-                lastBytes = bytesRead;
-            }
-        }
-
-        await fs.FlushAsync(ct);
-        fs.Close();
-
-        if (File.Exists(finalPath))
-            File.Delete(finalPath);
-        File.Move(partialPath, finalPath);
-
-        item.ResumePosition = 0;
-        DispatchProgress(item, new DownloadQueueProgress(bytesRead, totalBytes > 0 ? totalBytes : bytesRead, 100, 0, TimeSpan.Zero));
-        return finalPath;
-    }
-
-    private static void CleanupPartialFile(DownloadItem item)
-    {
-        if (item.State is DownloadItemState.Cancelled or DownloadItemState.Failed)
-        {
-            var fileName = item.ResolvedFileName ?? SanitizeFileName(item.DisplayName);
-            if (string.IsNullOrEmpty(fileName)) return;
-            var partialPath = Path.Combine(item.DestinationPath, fileName + PartialSuffix);
-            if (File.Exists(partialPath))
-            {
-                try { File.Delete(partialPath); } catch { }
-            }
-        }
-    }
-
-    private static DownloadItem? FindItem(string itemId)
-        => _queue.FirstOrDefault(i => i.Id == itemId);
-
-    private static void ShowToast(string title, string message)
-    {
-        try
-        {
-            new ToastContentBuilder()
-                .AddText(title)
-                .AddText(message)
-                .Show();
-        }
-        catch
-        {
-            // Toast notifications may throw ArgumentException ("Value does not
-            // fall within the expected range") in unpackaged mode when no AUMID
-            // is registered. Swallow so the download flow is not broken.
-        }
     }
 
     private static void IncrementPending()
