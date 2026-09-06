@@ -30,6 +30,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private bool _isRunning;
 	private bool _uploadInProgress;
 	private bool _historyInProgress;
+	// 每次开始新测试/载入历史记录时自增，用于丢弃仍在途的异步回填（恢复热力图等）
+	private int _uiGeneration;
 	private Brush cardBg = null!;
 	private Brush cardBorderBrush = null!;
 	private TextBlock _gamingScoreText = null!;
@@ -124,6 +126,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	{
 		_cts = new CancellationTokenSource();
 		base.Content = BuildUI();
+		// 导航返回 / 重启应用后，自动回填上一次测试的完整结果，避免重新跑分
+		_ = RestoreLastResultAsync();
 	}
 
 	private ScrollViewer BuildUI()
@@ -771,6 +775,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private async void OnStartClick(object sender, RoutedEventArgs e)
 	{
 		if (_isRunning) return;
+		_uiGeneration++; // 使仍在途的历史恢复回填失效
 		bool runCpu = _chkCpu.IsChecked == true;
 		bool runGpu = _chkGpu.IsChecked == true;
 		bool runMem = _chkMem.IsChecked == true;
@@ -921,6 +926,121 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		_chkDisk.IsEnabled = enabled;
 		_chkBrowser.IsEnabled = enabled;
 		_chkWin.IsEnabled = enabled;
+	}
+
+	/// <summary>
+	/// 把一次完整测试结果整体回填到界面（页面重建后的恢复 / 从历史窗口载入共用）。
+	/// 只回填实际有数据的分区，未测过的项目保持占位符 "—"。
+	/// </summary>
+	private void ApplyResultToUI(PerformanceBenchmarkResult r)
+	{
+		if (r.GamingScore > 0)
+			UpdateTopCard(_gamingScoreText, _gamingGradeText, _gamingBar, r.GamingScore, r.GamingGrade);
+		if (r.OfficeScore > 0)
+			UpdateTopCard(_officeScoreText, _officeGradeText, _officeBar, r.OfficeScore, r.OfficeGrade);
+		if (r.Win.FinalScore > 0)
+			UpdateTopCard(_winScoreText, _winGradeText, _winBar, r.Win.FinalScore, r.Win.Grade);
+
+		if (r.Cpu.SingleCoreScore > 0)
+			UpdateScoreRow(_cpuSingleScoreText, r.Cpu.SingleCoreScore);
+		if (r.Cpu.MultiCoreScore > 0)
+			UpdateScoreRow(_cpuMultiScoreText, r.Cpu.MultiCoreScore);
+		if (r.Cpu.LatencyScore > 0)
+			UpdateScoreRow(_cpuLatencyScoreText, r.Cpu.LatencyScore);
+
+		string gpuName = !string.IsNullOrEmpty(r.Gpu.GpuName) ? r.Gpu.GpuName : r.GpuName;
+		if (!string.IsNullOrEmpty(gpuName))
+			_gpuNameText.Text = gpuName;
+		if (r.Gpu.RenderScore > 0)
+		{
+			UpdateScoreRow(_gpuRenderScoreText, r.Gpu.RenderScore);
+			UpdateDetailRow(_gpuFurMarkScoreText, _gpuAvgFpsText, r.Gpu.FurMarkScore, $"平均 {r.Gpu.AvgFps:F0} FPS");
+			UpdateDetailRow(_gpuMinFpsText, _gpuMaxFpsText, (int)r.Gpu.MinFps, $"最低 {r.Gpu.MinFps:F0} / 最高 {r.Gpu.MaxFps:F0}");
+		}
+
+		if (r.Memory.TotalCapacityGB > 0)
+			_memCapacityText.Text = $"{r.Memory.TotalCapacityGB:F0} GB";
+
+		if (r.Disk.SeqReadMBs > 0)
+			UpdateDetailRow(_diskSeqReadScoreText, _diskSeqReadDetailText, r.Disk.SeqReadScore, $"{r.Disk.SeqReadMBs:F0} MB/s");
+		if (r.Disk.SeqWriteMBs > 0)
+			UpdateDetailRow(_diskSeqWriteScoreText, _diskSeqWriteDetailText, r.Disk.SeqWriteScore, $"{r.Disk.SeqWriteMBs:F0} MB/s");
+		if (r.Disk.Random4KReadIops > 0)
+			UpdateDetailRow(_disk4KReadScoreText, _disk4KReadDetailText, r.Disk.Random4KReadScore, $"{r.Disk.Random4KReadIops / 1000.0:F0}K IOPS");
+		if (r.Disk.Random4KWriteIops > 0)
+			UpdateDetailRow(_disk4KWriteScoreText, _disk4KWriteDetailText, r.Disk.Random4KWriteScore, $"{r.Disk.Random4KWriteIops / 1000.0:F0}K IOPS");
+		if (r.Disk.Temperature > 0f)
+			_diskTempText.Text = $"{r.Disk.Temperature:F0}℃";
+
+		if (r.Browser.TotalScore > 0)
+		{
+			UpdateDetailRow(_brJsScoreText, _brJsDetailText, r.Browser.JsScore, r.Browser.JsDetail);
+			UpdateDetailRow(_brDomScoreText, _brDomDetailText, r.Browser.DomScore, r.Browser.DomDetail);
+			UpdateDetailRow(_brCardScoreText, _brCardDetailText, r.Browser.CardScore, r.Browser.CardDetail);
+			UpdateDetailRow(_brCssScoreText, _brCssDetailText, r.Browser.CssScore, r.Browser.CssDetail);
+			UpdateDetailRow(_brLayoutScoreText, _brLayoutDetailText, r.Browser.LayoutScore, r.Browser.LayoutDetail);
+			UpdateDetailRow(_brEventScoreText, _brEventDetailText, r.Browser.EventScore, r.Browser.EventDetail);
+		}
+
+		if (r.Win.BestAvgMs > 0)
+		{
+			_winListLoadText.Text = $"{r.Win.AvgListLoadMs:F0} ms";
+			_winImageListText.Text = $"{r.Win.AvgImageListMs:F0} ms";
+			_winTabSwitchText.Text = $"{r.Win.AvgTabSwitchMs:F0} ms";
+			_winScrollText.Text = $"{r.Win.AvgScrollMs:F0} ms";
+			_winTreeExpandText.Text = $"{r.Win.AvgTreeExpandMs:F0} ms";
+			_winSortFilterText.Text = $"{r.Win.AvgSortFilterMs:F0} ms";
+			_winTextRenderText.Text = $"{r.Win.AvgTextRenderMs:F0} ms";
+			_winTotalText.Text = $"{r.Win.BestAvgMs:F0} ms";
+		}
+	}
+
+	/// <summary>页面刚构建时回填上一次测试结果（含核间延迟热力图），免于重新跑分。</summary>
+	private async Task RestoreLastResultAsync()
+	{
+		try
+		{
+			int generation = _uiGeneration;
+			List<PerformanceBenchmarkResult> history = await Task.Run(PerformanceBenchmarkService.LoadHistory);
+			if (generation != _uiGeneration || _isRunning || history.Count == 0) return;
+			PerformanceBenchmarkResult last = history[^1];
+			_result = last;
+			_exportBtn.IsEnabled = true;
+			ApplyResultToUI(last);
+			_statusText.Text = $"已恢复上次测试结果 · {last.TestTime:yyyy-MM-dd HH:mm}（点击「开始测试」可重新跑分）";
+			if (last.Cpu.LatencyMatrix != null)
+			{
+				var matrix = last.Cpu.LatencyMatrix;
+				string? png = await Task.Run(() => PerformanceBenchmarkService.GenerateLatencyHeatmap(matrix));
+				if (generation != _uiGeneration || _isRunning) return;
+				_latencyHeatmapPath = png;
+				ShowLatencyHeatmap(png);
+			}
+		}
+		catch { }
+	}
+
+	/// <summary>历史窗口点「载入到主页」：清空当前展示后回填所选历史记录。</summary>
+	private async void LoadResultIntoMainPage(PerformanceBenchmarkResult r)
+	{
+		try
+		{
+			int generation = ++_uiGeneration;
+			_result = r;
+			ResetUI();
+			ApplyResultToUI(r);
+			_exportBtn.IsEnabled = true;
+			_statusText.Text = $"已载入历史测试记录 · {r.TestTime:yyyy-MM-dd HH:mm}（点击「开始测试」可重新跑分）";
+			if (r.Cpu.LatencyMatrix != null)
+			{
+				var matrix = r.Cpu.LatencyMatrix;
+				string? png = await Task.Run(() => PerformanceBenchmarkService.GenerateLatencyHeatmap(matrix));
+				if (generation != _uiGeneration) return;
+				_latencyHeatmapPath = png;
+				ShowLatencyHeatmap(png);
+			}
+		}
+		catch { }
 	}
 
 	// ---------- WinUI 性能测试（弹窗运行） ----------
@@ -1915,127 +2035,31 @@ public sealed partial class PerformanceBenchmarkPage : Page
 
 	private async void OnHistoryClick(object sender, RoutedEventArgs e)
 	{
+		// 防止重复打开多个历史窗口
 		if (_historyInProgress) return;
 		_historyInProgress = true;
 		try
 		{
-			await OnHistoryClickCoreAsync();
+			List<PerformanceBenchmarkResult> list = await Task.Run(PerformanceBenchmarkService.LoadHistory);
+			if (list.Count == 0)
+			{
+				await new ContentDialog
+				{
+					Title = "历史对比",
+					Content = new TextBlock { Text = "暂无历史测试记录，先完成一次性能测试吧。", Margin = new Thickness(16.0) },
+					CloseButtonText = "关闭",
+					XamlRoot = XamlRoot,
+					RequestedTheme = ThemeService.CurrentElementTheme
+				}.ShowAsync();
+				return;
+			}
+			BenchmarkHistoryWindow window = new(list, LoadResultIntoMainPage);
+			window.Closed += (_, _) => _historyInProgress = false;
+			window.Activate();
 		}
-		finally
+		catch
 		{
 			_historyInProgress = false;
-		}
-	}
-
-	private async Task OnHistoryClickCoreAsync()
-	{
-		List<PerformanceBenchmarkResult> list = PerformanceBenchmarkService.LoadHistory();
-		if (list.Count == 0)
-		{
-			await new ContentDialog
-			{
-				Title = "历史对比",
-				Content = new TextBlock { Text = "暂无历史测试记录", Margin = new Thickness(16.0) },
-				CloseButtonText = "关闭",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync();
-			return;
-		}
-		ContentDialog dialog = new()
-		{
-			Title = "历史对比",
-			CloseButtonText = "关闭",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		StackPanel stackPanel = new()
-		{
-			Spacing = 8.0,
-			Padding = new Thickness(8.0)
-		};
-		Button button = new()
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 4.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue74d", FontSize = 12.0 },
-					(UIElement)new TextBlock { Text = "清空全部", FontSize = 12.0 }
-				}
-			},
-			FontSize = 12.0,
-			Padding = new Thickness(8.0, 4.0, 8.0, 4.0)
-		};
-		StackPanel historyStack = new() { Spacing = 6.0 };
-		BuildCards();
-		button.Click += (_, _) =>
-		{
-			PerformanceBenchmarkService.ClearHistory();
-			dialog.Hide();
-		};
-		stackPanel.Children.Add(button);
-		stackPanel.Children.Add(historyStack);
-		dialog.Content = new ScrollViewer
-		{
-			Content = stackPanel,
-			MaxHeight = 400.0
-		};
-		await dialog.ShowAsync();
-
-		void BuildCards()
-		{
-			historyStack.Children.Clear();
-			List<PerformanceBenchmarkResult> all = PerformanceBenchmarkService.LoadHistory();
-			List<PerformanceBenchmarkResult> recent = all.TakeLast(10).Reverse().ToList();
-			int skipCount = Math.Max(0, all.Count - 10);
-			for (int i = 0; i < recent.Count; i++)
-			{
-				int idx = skipCount + (recent.Count - 1 - i);
-				var r = recent[i];
-				Grid grid = new() { Padding = new Thickness(12.0, 8.0, 12.0, 8.0) };
-				grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
-				grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-				StackPanel stackPanel2 = new() { Spacing = 4.0 };
-				stackPanel2.Children.Add(new TextBlock
-				{
-					Text = $"{r.TestTime:yyyy-MM-dd HH:mm}  ({r.DurationMode})",
-					FontSize = 12.0,
-					FontWeight = FontWeights.Bold
-				});
-				stackPanel2.Children.Add(new TextBlock
-				{
-					Text = $"游戏: {r.GamingScore} ({r.GamingGrade})  |  办公: {r.OfficeScore} ({r.OfficeGrade})  |  Win: {r.Win.FinalScore} ({r.Win.Grade})",
-					FontSize = 11.0,
-					Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-				});
-				Grid.SetColumn(stackPanel2, 0);
-				grid.Children.Add(stackPanel2);
-				Button button2 = new()
-				{
-					Content = new FontIcon { Glyph = "\ue74d", FontSize = 11.0 },
-					Tag = idx,
-					Padding = new Thickness(4.0, 2.0, 4.0, 2.0),
-					MinWidth = 0.0,
-					MinHeight = 0.0
-				};
-				button2.Click += async (s, _) =>
-				{
-					PerformanceBenchmarkService.DeleteHistory((int)((Button)s).Tag);
-					BuildCards();
-				};
-				Grid.SetColumn(button2, 1);
-				grid.Children.Add(button2);
-				Border item = new()
-				{
-					Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-					CornerRadius = new CornerRadius(6.0),
-					Child = grid
-				};
-				historyStack.Children.Add(item);
-			}
 		}
 	}
 
