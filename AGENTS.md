@@ -45,7 +45,9 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - `ToolMetadataService` merges `Metadata/tools.json` + `FileVersionInfo` + `readme.txt`. The `"match"` field is a **case-insensitive substring** against tool filenames/paths. tools.json is the single source of truth for: metadata, card order (`"order"`), cross-category copies (`"category"` = physical primary category + `"categories"` = extra categories), and builtin tool placements (`"builtin"` = BuiltinToolRegistry id; virtual dir key `ToolsRoot/分类/目录名` keeps favorites/order-save compatible with the removed link.json dirs). Copy dir resolution scores candidates: exact dir name > flexible match equality > relative-path substring.
 - Sorting: tools.json `"order"` primary → `AppSettings ToolOrder_{category}` fallback for uncatalogued custom tools → name. Drag-reorder (HomePage pure-category view + CustomToolManagerWindow) double-writes via `ToolMetadataService.SaveToolOrder(dirs)`; note `order` is entry-global, so copies share one order across categories.
 - `ToolItem.InitArchOptions()` auto-selects the best arch for the OS (ARM64 > x64 > x86 preference).
-- Built-in tools: see `BuiltinToolRegistry.RegisterDefaults()` (~31 tools). `CommunityToolBuiltinTool` registers only when `!RuntimeHelper.IsMsixPackaged`.
+- Built-in tools: see `BuiltinToolRegistry.RegisterDefaults()` (~45 tools). `CommunityToolBuiltinTool` registers only when `!RuntimeHelper.IsMsixPackaged`.
+- **每个已注册内置工具都必须在 `Metadata/tools.json` 里有 `builtin` 挂载条目**（`categories` 指定挂载分类）：收藏/排序/桌面快捷方式统一以该挂载的虚拟目录路径为键，收藏页与分类页星标互通。新增内置工具时 `RegisterDefaults()` 与 tools.json 两处都要加。
+- **快捷方式统一写入点 = `WindowsSearchIndexService`**：开始菜单搜索注册与「发送到桌面」共用同一 `CreateShortcut`（进程内 WScript.Shell COM，非 STA 线程自动起 STA 线程）。内置工具桌面快捷方式 = 自身 exe + `--open-builtin <id>`，图标为该工具字体字形（Segoe Fluent Icons）离线渲染的多尺寸 .ico，缓存于 `<DataDir>/DesktopIcons/`（字形→Bitmap→ICO 编码在 `BuiltinShortcutIconTests` 有回归测试）。
 
 ### AI 助手（AiAgentPage）— FieldCure ChatPanel 架构
 - 「AI 助手」内置工具 = `AiAgentPage`，消息区/输入区/工具确认全部由 **`FieldCure.AssistStudio.Controls.WinUI`** 的 `ChatPanel` 组件库接管（WebView2 渲染 Markdown/思考块/内联工具调用、`ToolApprovalPanel` 危险操作确认）。

@@ -1478,7 +1478,7 @@
     },
     {
       "match": "常用软件",
-      "builtin": "common-software",
+      "builtin": "winget-store",
       "categories": [
         "其他工具"
       ]
@@ -1548,7 +1548,7 @@
     },
     {
       "match": "视频处理",
-      "builtin": "video-processor",
+      "builtin": "format-converter",
       "categories": [
         "其他工具"
       ]
@@ -1652,6 +1652,97 @@
     {
       "match": "皮肤编辑器",
       "category": "其他工具"
+    },
+    {
+      "match": "磁盘健康",
+      "builtin": "disk-health",
+      "categories": [
+        "硬盘工具"
+      ]
+    },
+    {
+      "match": "游戏监控",
+      "builtin": "game-monitor",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "核间延迟查询",
+      "builtin": "latency-image-query",
+      "categories": [
+        "处理器工具"
+      ]
+    },
+    {
+      "match": "网络优化",
+      "builtin": "network-optimize",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "常用官网",
+      "builtin": "official-websites",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "流氓软件的克星",
+      "builtin": "rogue-cleaner",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "运行库修复",
+      "builtin": "runtime-repair",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "恶意软件沙盒",
+      "builtin": "sandboxie",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "启动项管理",
+      "builtin": "startup-manager",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "流量监控器",
+      "builtin": "traffic-monitor",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "毒蘑菇测试",
+      "builtin": "volume-shader-test",
+      "categories": [
+        "显卡工具"
+      ]
+    },
+    {
+      "match": "Windows 隐藏功能",
+      "builtin": "windows-feature",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
+      "match": "电子文盲测试",
+      "builtin": "digital-literacy-test",
+      "categories": [
+        "其他工具"
+      ]
     }
   ]
 }

@@ -929,8 +929,12 @@ public sealed partial class HomePage : Page
         var isBuiltin = tool.IsBuiltinLink;
         var sendToDesktop = flyout.Items.OfType<MenuFlyoutItem>()
             .FirstOrDefault(i => i.Text.Contains("桌面快捷方式"));
+        // 内置工具只要有注册 Id 也能发桌面快捷方式（--open-builtin 启动），
+        // 仅缺注册信息的旧链接才隐藏
         if (sendToDesktop is not null)
-            sendToDesktop.Visibility = isBuiltin ? Visibility.Collapsed : Visibility.Visible;
+            sendToDesktop.Visibility = isBuiltin && string.IsNullOrWhiteSpace(tool.BuiltinToolId)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
 
         var runAsAdmin = flyout.Items.OfType<MenuFlyoutItem>()
             .FirstOrDefault(i => i.Text.Contains("管理员"));
@@ -1164,6 +1168,17 @@ public sealed partial class HomePage : Page
 
     private static void CreateDesktopShortcut(ToolItem tool)
     {
+        if (tool.IsBuiltinLink)
+        {
+            if (string.IsNullOrWhiteSpace(tool.BuiltinToolId))
+                throw new InvalidOperationException("内置工具缺少注册信息，无法创建快捷方式。");
+            var builtin = BuiltinToolRegistry.GetById(tool.BuiltinToolId);
+            if (builtin is null)
+                throw new InvalidOperationException("找不到对应的内置工具，无法创建快捷方式。");
+            WindowsSearchIndexService.CreateDesktopShortcut(builtin);
+            return;
+        }
+
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         var archSuffix = tool.SelectedArch is not null && !string.IsNullOrEmpty(tool.SelectedArch.Arch)
             ? $" ({tool.SelectedArch.Arch})" : "";

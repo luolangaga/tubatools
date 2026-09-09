@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using System.ComponentModel;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 
@@ -57,6 +59,9 @@ public sealed partial class BuiltinToolsPage : Page
             StartHighlight(_pendingHighlightId);
             _pendingHighlightId = null;
         }
+
+        // 收藏可能在其他页面被改动，重进本页时同步星标状态
+        RefreshFavoriteStates();
 
         // --open-builtin 模式：高亮后自动执行工具
         if (_autoExecuteBuiltinId is not null)
@@ -196,7 +201,7 @@ public sealed partial class BuiltinToolsPage : Page
 
         try
         {
-            var vm = new BuiltinToolViewModel(tool);
+            var vm = new BuiltinToolViewModel(tool, ToolCatalog.GetBuiltinFavoriteKey(tool));
             await ExecuteToolAsync(vm);
         }
         catch (Exception ex)
@@ -210,6 +215,11 @@ public sealed partial class BuiltinToolsPage : Page
         BuiltinPivot.Items.Clear();
         _gridsByCategory.Clear();
 
+        // 收藏键：优先用 tools.json 挂载产生的卡片路径（与分类页星标互通），
+        // 未挂载的内置工具用规范虚拟目录键（收藏页按同规则兜底解析）
+        var favoriteKeys = BuiltinToolRegistry.Tools.ToDictionary(
+            t => t.Id, ToolCatalog.GetBuiltinFavoriteKey, StringComparer.Ordinal);
+
         var grouped = BuiltinToolRegistry.Tools
             .GroupBy(t => t.Category)
             .OrderByDescending(g => g.Count())
@@ -217,15 +227,16 @@ public sealed partial class BuiltinToolsPage : Page
 
         foreach (var group in grouped)
         {
-            BuiltinPivot.Items.Add(CreatePivotItem(group.Key, group.ToList()));
+            BuiltinPivot.Items.Add(CreatePivotItem(group.Key, group.ToList(), favoriteKeys));
         }
 
         ToolCountText.Text = $"{BuiltinToolRegistry.Tools.Count} 个内置工具";
     }
 
-    private PivotItem CreatePivotItem(string category, List<IBuiltinTool> tools)
+    private PivotItem CreatePivotItem(string category, List<IBuiltinTool> tools,
+        IReadOnlyDictionary<string, string> favoriteKeys)
     {
-        var viewModels = tools.Select(t => new BuiltinToolViewModel(t)).ToList();
+        var viewModels = tools.Select(t => new BuiltinToolViewModel(t, favoriteKeys[t.Id])).ToList();
 
         var grid = new GridView
         {
@@ -256,6 +267,82 @@ public sealed partial class BuiltinToolsPage : Page
     {
         if (sender is FrameworkElement { DataContext: BuiltinToolViewModel vm })
             _ = ExecuteToolAsync(vm);
+    }
+
+    private void BuiltinFavoriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: BuiltinToolViewModel vm })
+            ToggleFavorite(vm);
+    }
+
+    private void BuiltinSendDesktopButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: BuiltinToolViewModel vm })
+            SendBuiltinToDesktop(vm);
+    }
+
+    private void BuiltinCard_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is BuiltinToolViewModel vm)
+        {
+            var flyout = (MenuFlyout)Resources[_compactMode ? "BuiltinCompactFlyout" : "BuiltinNormalFlyout"];
+            // 菜单项不在可视树中，无法继承 DataContext，逐项显式绑定
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>())
+                item.DataContext = vm;
+            UpdateFavoriteMenuItem(flyout, vm);
+            flyout.ShowAt(fe, e.GetPosition(fe));
+        }
+    }
+
+    private void BuiltinMenu_ToggleFavorite(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: BuiltinToolViewModel vm })
+            ToggleFavorite(vm);
+    }
+
+    private void BuiltinMenu_SendToDesktop(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem { DataContext: BuiltinToolViewModel vm })
+            SendBuiltinToDesktop(vm);
+    }
+
+    private static void ToggleFavorite(BuiltinToolViewModel vm)
+    {
+        FavoritesService.ToggleFavorite(vm.FavoriteKey);
+        vm.IsFavorite = !vm.IsFavorite;
+    }
+
+    private static void UpdateFavoriteMenuItem(MenuFlyout flyout, BuiltinToolViewModel vm)
+    {
+        var item = flyout.Items.OfType<MenuFlyoutItem>()
+            .FirstOrDefault(i => i.Text.Contains("收藏"));
+        if (item is null) return;
+        item.Text = vm.IsFavorite ? "取消收藏" : "收藏";
+        if (item.Icon is FontIcon icon)
+            icon.Glyph = vm.IsFavorite ? "\uE735" : "\uE734";
+    }
+
+    private void SendBuiltinToDesktop(BuiltinToolViewModel vm)
+    {
+        try
+        {
+            WindowsSearchIndexService.CreateDesktopShortcut(vm.Tool);
+            ShowStatus("已创建", $"已将「{vm.Name}」快捷方式发送到桌面", InfoBarSeverity.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus("创建失败", ex.Message, InfoBarSeverity.Error);
+        }
+    }
+
+    /// <summary>重进页面时按收藏键同步各卡片星标（收藏可能在其他页面被改动）。</summary>
+    private void RefreshFavoriteStates()
+    {
+        foreach (var grid in _gridsByCategory.Values)
+        {
+            foreach (var vm in grid.Items.OfType<BuiltinToolViewModel>())
+                vm.IsFavorite = FavoritesService.IsFavorite(vm.FavoriteKey);
+        }
     }
 
     private void BuiltinGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -387,13 +474,18 @@ public sealed partial class BuiltinToolsPage : Page
     }
 }
 
-public sealed class BuiltinToolViewModel
+public sealed class BuiltinToolViewModel : INotifyPropertyChanged
 {
     public IBuiltinTool Tool { get; }
 
-    public BuiltinToolViewModel(IBuiltinTool tool)
+    /// <summary>收藏持久化键（虚拟目录路径，与收藏页/分类页共用）。</summary>
+    public string FavoriteKey { get; }
+
+    public BuiltinToolViewModel(IBuiltinTool tool, string favoriteKey)
     {
         Tool = tool;
+        FavoriteKey = favoriteKey;
+        _isFavorite = FavoritesService.IsFavorite(favoriteKey);
     }
 
     public string Id => Tool.Id;
@@ -409,4 +501,18 @@ public sealed class BuiltinToolViewModel
         BuiltinToolKind.InstantAction => "即时操作",
         _ => "未知"
     };
+
+    private bool _isFavorite;
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            if (_isFavorite == value) return;
+            _isFavorite = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFavorite)));
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }

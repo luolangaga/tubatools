@@ -1132,7 +1132,29 @@ public static class ToolCatalog
         if (builtinTool is null) return null;
 
         var dirName = !string.IsNullOrWhiteSpace(placement.Match) ? placement.Match : builtinTool.Name;
-        var placedDir = Path.Combine(ToolsRoot, category, dirName);
+        return CreateBuiltinItemCore(builtinTool, category, dirName, placement.Order);
+    }
+
+    /// <summary>
+    /// 内置工具的收藏键：tools.json 内置挂载产生的虚拟目录路径
+    /// （所有注册内置工具都有挂载，与分类页/收藏页星标完全互通）。
+    /// </summary>
+    public static string GetBuiltinFavoriteKey(IBuiltinTool builtinTool)
+    {
+        try
+        {
+            var placed = GetAllToolsCached().FirstOrDefault(t =>
+                t.IsBuiltinLink && string.Equals(t.BuiltinToolId, builtinTool.Id, StringComparison.Ordinal));
+            if (placed is not null)
+                return placed.Path;
+        }
+        catch { }
+        return string.Empty;
+    }
+
+    private static ToolItem CreateBuiltinItemCore(IBuiltinTool builtinTool, string category, string dirName, int? order)
+    {
+        var builtinDir = Path.Combine(ToolsRoot, category, dirName);
         var kindText = builtinTool.Kind switch
         {
             BuiltinToolKind.Dialog => "弹窗",
@@ -1146,17 +1168,17 @@ public static class ToolCatalog
         {
             Name = builtinTool.Name,
             Category = category,
-            Path = placedDir,
-            RelativePath = Path.GetRelativePath(ToolsRoot, placedDir),
+            Path = builtinDir,
+            RelativePath = Path.GetRelativePath(ToolsRoot, builtinDir),
             Extension = "内置",
             IconGlyph = builtinTool.Glyph,
             Description = builtinTool.Description,
-            IsFavorite = FavoritesService.IsFavorite(placedDir),
+            IsFavorite = FavoritesService.IsFavorite(builtinDir),
             IsBuiltinLink = true,
             BuiltinToolId = builtinTool.Id,
             BuiltinKindText = kindText,
             Tags = [],
-            SortOrder = placement.Order
+            SortOrder = order
         };
     }
 

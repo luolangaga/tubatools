@@ -96,7 +96,8 @@ public sealed class ToolItem : INotifyPropertyChanged
 
     public bool NeedsWingetInstall => !string.IsNullOrWhiteSpace(WingetId);
 
-    public bool CanSendToDesktop => !IsBuiltinLink;
+    /// <summary>内置工具（有注册 Id）也能发桌面快捷方式：以 --open-builtin 启动自身直达工具。</summary>
+    public bool CanSendToDesktop => !IsBuiltinLink || !string.IsNullOrWhiteSpace(BuiltinToolId);
 
     private bool _isWingetInstalled;
     public bool IsWingetInstalled

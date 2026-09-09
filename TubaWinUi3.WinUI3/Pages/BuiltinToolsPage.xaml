@@ -4,11 +4,39 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:TubaWinUi3.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     NavigationCacheMode="Enabled"
     mc:Ignorable="d">
 
     <Page.Resources>
+        <local:FavGlyphConverter x:Key="FavGlyphConverter" />
+
+        <!-- 内置工具卡片右键菜单（与首页卡片同构，仅保留收藏/发送到桌面） -->
+        <MenuFlyout x:Key="BuiltinNormalFlyout">
+            <MenuFlyoutItem Text="收藏" Click="BuiltinMenu_ToggleFavorite">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE734;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Text="发送到桌面快捷方式" Click="BuiltinMenu_SendToDesktop">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8AD;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+        </MenuFlyout>
+        <MenuFlyout x:Key="BuiltinCompactFlyout">
+            <MenuFlyoutItem Text="收藏" Click="BuiltinMenu_ToggleFavorite">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE734;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Text="发送到桌面快捷方式" Click="BuiltinMenu_SendToDesktop">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8AD;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+        </MenuFlyout>
         <!-- 普通卡片容器样式（与首页工具卡一致） -->
         <Style x:Key="BuiltinToolCardStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="0,0,12,12" />
@@ -145,7 +173,8 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch">
+                VerticalAlignment="Stretch"
+                RightTapped="BuiltinCard_RightTapped">
                 <Grid RowSpacing="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -158,6 +187,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="56" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Border
                             Width="56"
@@ -183,6 +213,18 @@
                                 Text="{Binding Category}"
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>
+                        <Button
+                            Grid.Column="2"
+                            Width="32"
+                            Height="32"
+                            Padding="0"
+                            VerticalAlignment="Top"
+                            Click="BuiltinFavoriteButton_Click"
+                            ToolTipService.ToolTip="收藏">
+                            <FontIcon
+                                FontSize="14"
+                                Glyph="{Binding IsFavorite, Converter={StaticResource FavGlyphConverter}}" />
+                        </Button>
                     </Grid>
 
                     <TextBlock
@@ -206,8 +248,21 @@
                         </Border>
                     </StackPanel>
 
-                    <Grid Grid.Row="3">
+                    <Grid Grid.Row="3" ColumnSpacing="6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="36" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
                         <Button
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Padding="0"
+                            Click="BuiltinSendDesktopButton_Click"
+                            ToolTipService.ToolTip="发送到桌面快捷方式">
+                            <FontIcon FontSize="12" Glyph="&#xE8AD;" />
+                        </Button>
+                        <Button
+                            Grid.Column="1"
                             MinWidth="88"
                             HorizontalAlignment="Stretch"
                             Padding="10,4"
@@ -229,6 +284,7 @@
                 CornerRadius="8"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
+                RightTapped="BuiltinCard_RightTapped"
                 ToolTipService.ToolTip="{Binding Description}">
                 <StackPanel HorizontalAlignment="Center" Spacing="6">
                     <Border
