@@ -940,6 +940,18 @@ public sealed class GameOverlayWindow : IDisposable
     private static uint ColorKey(SKColor c) => (uint)(c.Alpha << 24 | c.Blue << 16 | c.Green << 8 | c.Red);
 
     /// <summary>
+    /// 图表样式表：标题 / 数值小数位 / 线条颜色。fps、cputemp 两条保持既有
+    /// 外观不变（F0、绿/橙）；帧时间与渲染延迟按毫秒 F1 显示。
+    /// </summary>
+    private static readonly Dictionary<string, (string Title, int Decimals, SKColor Color)> ChartStyles = new()
+    {
+        ["fps"] = ("FPS", 0, new SKColor(60, 230, 110)),            // 绿
+        ["cputemp"] = ("CPU °C", 0, new SKColor(255, 170, 40)),     // 橙
+        ["frametime"] = ("帧时间 ms", 1, new SKColor(80, 190, 255)),     // 蓝
+        ["renderlatency"] = ("渲染延迟 ms", 1, new SKColor(190, 130, 255)) // 紫
+    };
+
+    /// <summary>
     /// Renders a chart widget using SkiaSharp (the component library used by LiveCharts2)
     /// into the widget's cached bitmap; BlitWidget pushes it onto the overlay surface.
     /// SKPaint/SKPath/SKPoint[]/SKShader are reused across frames to avoid GC churn.
@@ -952,6 +964,8 @@ public sealed class GameOverlayWindow : IDisposable
         {
             OverlayWidgetType.FpsChart => "fps",
             OverlayWidgetType.CpuTempChart => "cputemp",
+            OverlayWidgetType.FpsTimeChart => "frametime",
+            OverlayWidgetType.FpsRenderLatencyChart => "renderlatency",
             _ => null
         };
         if (chartKey == null || !_chartData.TryGetValue(chartKey, out var buf) || buf.Count < 2) return;
@@ -965,9 +979,8 @@ public sealed class GameOverlayWindow : IDisposable
         int ch = w.Height - pad * 2 - (int)titleFs - 4;
         if (ch < 4) return;
 
-        var lineColor = chartKey == "fps"
-            ? new SKColor(60, 230, 110)   // green
-            : new SKColor(255, 170, 40);  // orange
+        var style = ChartStyles[chartKey];
+        var lineColor = style.Color;
 
         // Build SKBitmap sized to the widget FIRST — when (re)created it disposes the
         // widget's cached Skia resources (incl. the chart paints below), so paints must
@@ -994,10 +1007,11 @@ public sealed class GameOverlayWindow : IDisposable
         labelPaint.TextSize = Math.Max(8, titleFs * 0.8f);
 
         // --- Labels: measure text so numbers never overlap the title / line / dot ---
-        string title = chartKey == "fps" ? "FPS" : "CPU °C";
+        string title = style.Title;
         float titleW = titlePaint.MeasureText(title);
-        string valStr = $"{buf.Get(buf.Count - 1):F0}";
-        string maxStr = $"{max:F0}", minStr = $"{min:F0}";
+        int decimals = style.Decimals;
+        string valStr = buf.Get(buf.Count - 1).ToString("F" + decimals);
+        string maxStr = max.ToString("F" + decimals), minStr = min.ToString("F" + decimals);
         float maxW = labelPaint.MeasureText(maxStr), minW = labelPaint.MeasureText(minStr);
 
         // Right gutter for the min/max labels; narrow widgets drop the labels instead
@@ -1137,6 +1151,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsText => "FPS: ",
+            OverlayWidgetType.FpsTimeText => "帧时间: ",
+            OverlayWidgetType.FpsRenderLatencyText => "渲染延迟: ",
             OverlayWidgetType.CpuTempText => "CPU 温度: ",
             OverlayWidgetType.CpuLoadText => "CPU 负载: ",
             OverlayWidgetType.CpuClockText => "CPU 频率: ",
@@ -1166,6 +1182,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsText => s.Fps >= 0 ? $"{s.Fps:F0} FPS" : "-- FPS",
+            OverlayWidgetType.FpsTimeText => s.FrameTimeMs >= 0 ? $"{s.FrameTimeMs:F1} ms" : "-- ms",
+            OverlayWidgetType.FpsRenderLatencyText => s.RenderLatencyMs >= 0 ? $"{s.RenderLatencyMs:F1} ms" : "-- ms",
             OverlayWidgetType.CpuTempText => s.CpuTemp >= 0 ? $"{s.CpuTemp:F0}°C" : "--°C",
             OverlayWidgetType.CpuLoadText => s.CpuLoad >= 0 ? $"{s.CpuLoad:F0}%" : "--%",
             OverlayWidgetType.CpuClockText => s.CpuClock > 0 ? $"{s.CpuClock / 1000f:F1} GHz" : "-- GHz",
@@ -1192,6 +1210,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsChart => ("fps", s.Fps >= 0 ? s.Fps : 0),
+            OverlayWidgetType.FpsTimeChart => ("frametime", s.FrameTimeMs >= 0 ? s.FrameTimeMs : 0),
+            OverlayWidgetType.FpsRenderLatencyChart => ("renderlatency", s.RenderLatencyMs >= 0 ? s.RenderLatencyMs : 0),
             OverlayWidgetType.CpuTempChart => ("cputemp", s.CpuTemp >= 0 ? s.CpuTemp : 0),
             _ => (null, 0)
         };

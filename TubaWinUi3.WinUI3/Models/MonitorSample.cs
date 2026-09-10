@@ -20,6 +20,8 @@ public sealed class MonitorSample
     public float Fps = -1;
     public float FpsLow1 = -1;
     public float FpsLow01 = -1;
+    public float FrameTimeMs = -1;
+    public float RenderLatencyMs = -1;
     public string FpsProcess = "";
 }
 

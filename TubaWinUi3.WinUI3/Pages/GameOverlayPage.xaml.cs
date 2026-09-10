@@ -32,7 +32,9 @@ public enum OverlayWidgetType
     CpuNameText, GpuNameText,
     FpsChart, CpuTempChart,
     CustomText, CustomImage, ColorBlock,
-    FpsLow1Text, FpsLow01Text
+    FpsLow1Text, FpsLow01Text,
+    // 追加（必须留在末尾）：布局按枚举数字序列化，插中间会错位旧配置。
+    FpsTimeText, FpsTimeChart, FpsRenderLatencyText, FpsRenderLatencyChart
 }
 
 #endregion
@@ -199,6 +201,10 @@ public sealed partial class GameOverlayPage : Page
         (OverlayWidgetType.NetUpText, "网络上传", "\uE9B0", false),
         (OverlayWidgetType.NetDownText, "网络下载", "\uE9B0", false),
         (OverlayWidgetType.FpsChart, "FPS 图表", "\uE9F5", true),
+        (OverlayWidgetType.FpsTimeText, "帧时间", "\uE823", false),
+        (OverlayWidgetType.FpsTimeChart, "帧时间 图表", "\uE823", true),
+        (OverlayWidgetType.FpsRenderLatencyText, "渲染延迟", "\uE823", false),
+        (OverlayWidgetType.FpsRenderLatencyChart, "渲染延迟 图表", "\uE823", true),
         (OverlayWidgetType.CpuTempChart, "CPU温度 图表", "\uE9B0", true),
         (OverlayWidgetType.CustomText, "自定义文字", "\uE8E5", false),
         (OverlayWidgetType.CustomImage, "自定义图片", "\uEB9F", false),
@@ -1907,7 +1913,8 @@ public sealed partial class GameOverlayPage : Page
                 ColorArgb = item.TryGetProperty("color", out var cl) && cl.TryGetUInt32(out var cc) ? cc : 0xFF00A0FF,
                 TextColorArgb = item.TryGetProperty("tcolor", out var tc) && tc.TryGetUInt32(out var tcv) ? tcv : 0xFFFFFFFFu,
                 Label = PaletteItems.FirstOrDefault(pi => pi.Type == type).Label ?? type.ToString(),
-                IsChart = type is OverlayWidgetType.FpsChart or OverlayWidgetType.CpuTempChart,
+                IsChart = type is OverlayWidgetType.FpsChart or OverlayWidgetType.CpuTempChart
+                    or OverlayWidgetType.FpsTimeChart or OverlayWidgetType.FpsRenderLatencyChart,
             };
             CreateWidgetElement(widget);
             _widgets.Add(widget);

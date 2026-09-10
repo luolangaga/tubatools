@@ -234,4 +234,114 @@ public class FpsServiceTests
         Assert.Equal(2, counted);
         Assert.Equal(1, tracker.TotalFrames); // 2 presents → 1 interval
     }
+
+    [Fact]
+    public void Tracker_FrameTime_ReflectsLatestValidInterval()
+    {
+        // 帧生成时间 = 最近一次有效帧间隔（60 FPS → ≈16.7ms）
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        for (int i = 1; i <= 120; i++)
+            tracker.OnPresent(i * frameTicks);
+
+        Assert.InRange(tracker.LastFrameTimeMs, 16, 17);
+    }
+
+    [Fact]
+    public void Tracker_FrameTime_IgnoresSubMillisecondFakeFrames()
+    {
+        // 0.1ms 假帧不更新帧时间读数 —— 否则卡顿监测会被双源重复事件污染
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        long t = 0;
+        for (int i = 0; i < 60; i++)
+        {
+            t += frameTicks;
+            tracker.OnPresent(t);
+            tracker.OnPresent(t + 1_000); // 0.1ms 假帧
+        }
+
+        Assert.InRange(tracker.LastFrameTimeMs, 16, 17);
+    }
+
+    [Fact]
+    public void ReadFrameMetrics_FrameTime_ExpiresAfterTwoSeconds()
+    {
+        // 无新帧 2s 后帧时间读数过期（与 FPS 过期口径一致）→ -1，覆盖层显示 "--"
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        for (int i = 1; i <= 60; i++)
+            tracker.OnPresent(i * frameTicks);
+
+        var now = DateTime.UtcNow;
+        FpsService.ReadFrameMetrics(tracker, now, out var freshMs, out _);
+        Assert.InRange(freshMs, 16, 17);
+        FpsService.ReadFrameMetrics(tracker, now.AddSeconds(5), out var staleMs, out _);
+        Assert.Equal(-1, staleMs);
+    }
+
+    [Fact]
+    public void RenderLatency_PairsComposeWithPendingSubmit()
+    {
+        // 提交 T → DWM 合成(0xC9) T+12ms → 渲染延迟 ≈ 12ms
+        var tracker = new FpsService.FpsTracker();
+        long submit = 100_000_000;
+        tracker.EnqueueSubmit(submit);
+        tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
+        Assert.InRange(tracker.LastRenderLatencyMs, 11.9, 12.1);
+
+        // 无待配对提交的合成事件（桌面闪烁等）→ 忽略，保留上一读数
+        double before = tracker.LastRenderLatencyMs;
+        tracker.TryRecordComposed(submit + 100_000);
+        Assert.Equal(before, tracker.LastRenderLatencyMs);
+    }
+
+    [Fact]
+    public void RenderLatency_ComposeWithoutSubmit_NeverSamples()
+    {
+        var tracker = new FpsService.FpsTracker();
+        tracker.TryRecordComposed(100_000_000);
+        Assert.Equal(-1, tracker.LastRenderLatencyMs);
+    }
+
+    [Fact]
+    public void RenderLatency_OutOfWindowPair_Discarded()
+    {
+        // 切出/停顿后的陈旧配对（Δ 超 1000ms）不记为有效样本
+        var tracker = new FpsService.FpsTracker();
+        long submit = 100_000_000;
+        tracker.EnqueueSubmit(submit);
+        tracker.TryRecordComposed(submit + TimeSpan.TicksPerSecond * 5);
+        Assert.Equal(-1, tracker.LastRenderLatencyMs);
+    }
+
+    [Fact]
+    public void RenderLatency_MultipleFrames_StrictFifo()
+    {
+        // 多帧排队：合成事件必须按提交顺序配对
+        var tracker = new FpsService.FpsTracker();
+        long f1 = 100_000_000;
+        long f2 = f1 + TimeSpan.TicksPerSecond / 60; // 帧2在帧1后 16.7ms 提交
+        tracker.EnqueueSubmit(f1);
+        tracker.EnqueueSubmit(f2);
+        tracker.TryRecordComposed(f1 + TimeSpan.TicksPerMillisecond * 8);   // 帧1: Δ8ms
+        Assert.InRange(tracker.LastRenderLatencyMs, 7.9, 8.1);
+        tracker.TryRecordComposed(f2 + TimeSpan.TicksPerMillisecond * 12);  // 帧2: Δ12ms
+        Assert.InRange(tracker.LastRenderLatencyMs, 11.9, 12.1);
+    }
+
+    [Fact]
+    public void ReadFrameMetrics_RenderLatency_ExpiresAfterThreeSeconds()
+    {
+        var tracker = new FpsService.FpsTracker();
+        long submit = 100_000_000;
+        tracker.EnqueueSubmit(submit);
+        tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
+
+        var now = DateTime.UtcNow;
+        FpsService.ReadFrameMetrics(tracker, now, out _, out var freshMs);
+        Assert.InRange(freshMs, 11.9, 12.1);
+        FpsService.ReadFrameMetrics(tracker, now.AddSeconds(5), out _, out var staleMs);
+        Assert.Equal(-1, staleMs);
+    }
 }

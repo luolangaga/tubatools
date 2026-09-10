@@ -102,11 +102,13 @@ public sealed class LiteMonitorService : IDisposable
         {
             try
             {
-                var (fps, proc, low1, low01) = FpsService.GetFpsStats();
+                var (fps, proc, low1, low01, frameMs, latencyMs) = FpsService.GetFpsStats();
                 sample.Fps = fps;
                 sample.FpsProcess = proc;
                 sample.FpsLow1 = low1;
                 sample.FpsLow01 = low01;
+                sample.FrameTimeMs = frameMs;
+                sample.RenderLatencyMs = latencyMs;
             }
             catch { }
         }

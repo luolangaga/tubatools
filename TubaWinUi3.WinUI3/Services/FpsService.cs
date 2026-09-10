@@ -111,6 +111,24 @@ public sealed class FpsService : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// 读出帧生成时间与「提交→合成」渲染延迟；-1 = 无有效读数（覆盖层显示 "--"）。
+    /// 帧时间随 FPS 的过期口径（2s 无新帧）；延迟样本只认 3s 内的刚配对数据。
+    /// </summary>
+    internal static void ReadFrameMetrics(FpsTracker tracker, DateTime nowUtc,
+        out float frameTimeMs, out float renderLatencyMs)
+    {
+        frameTimeMs = renderLatencyMs = -1;
+        if (tracker.LastFrameTimeMs > 0 &&
+            tracker.LastPresentUtc != DateTime.MinValue &&
+            nowUtc - tracker.LastPresentUtc <= TimeSpan.FromSeconds(2))
+            frameTimeMs = (float)Math.Round(tracker.LastFrameTimeMs, 1);
+        if (tracker.LastRenderLatencyMs >= 0 &&
+            tracker.LastLatencyUtc != DateTime.MinValue &&
+            nowUtc - tracker.LastLatencyUtc <= TimeSpan.FromSeconds(3))
+            renderLatencyMs = (float)Math.Round(tracker.LastRenderLatencyMs, 1);
+    }
+
     internal sealed class FpsTracker
     {
         private const int SampleCount = 60;
@@ -118,12 +136,18 @@ public sealed class FpsService : IDisposable
         private int _index;
         private int _count;
         private double _lastFps;
+        private double _lastFrameTimeMs;
         private readonly List<double> _frameTimes = new(3600);
         private double _totalFrameTime;
         private int _totalFrames;
         private double _minFps = double.MaxValue;
         private double _maxFps;
         private double _fpsSum;
+        // 「提交→合成」延迟配对：帧提交信号入队，等待 Win32k 合成事件(0xC9) FIFO 配对。
+        // 全屏独占 / MPO 直通不产生合成事件 → 队列有上限，防止无限增长。
+        private const int MaxPendingSubmits = 32;
+        private const double MaxPairLatencyMs = 1000;
+        private readonly Queue<long> _pendingSubmits = new();
 
         /// <summary>QPC timestamp (ticks) of the latest present event.</summary>
         public long LastPresentTicks;
@@ -143,6 +167,12 @@ public sealed class FpsService : IDisposable
         public double PointOnePercentLow => CalcPercentileLow(0.001);
         public int TotalFrames => _totalFrames;
         public double TotalSeconds => _totalFrameTime;
+        /// <summary>最近一次有效帧间隔（毫秒，帧生成时间）；0 = 尚无有效样本。</summary>
+        public double LastFrameTimeMs => _lastFrameTimeMs;
+        /// <summary>最近一次「提交→合成」延迟样本（毫秒）；-1 = 无样本（无合成事件或配对被丢弃）。</summary>
+        public double LastRenderLatencyMs = -1;
+        /// <summary>最近一次延迟样本的墙钟时间（readout 新鲜度判定用）。</summary>
+        public DateTime LastLatencyUtc = DateTime.MinValue;
 
         public void OnPresent(long ticks)
         {
@@ -161,6 +191,7 @@ public sealed class FpsService : IDisposable
                 // 0.1ms 的假帧，混进统计会让 Avg/Max/1%low 全部失真。
                 if (frameTime >= 0.001 && frameTime < 10)
                 {
+                    _lastFrameTimeMs = frameTime * 1000.0;
                     _frameTimes.Add(frameTime);
                     if (_frameTimes.Count > 36000) _frameTimes.RemoveRange(0, _frameTimes.Count - 3600);
 
@@ -177,6 +208,36 @@ public sealed class FpsService : IDisposable
                 var duration = (double)(last - first) / TimeSpan.TicksPerSecond;
                 if (duration > 0)
                     _lastFps = (_count - 1) / duration;
+            }
+        }
+
+        /// <summary>
+        /// 帧提交信号入队，等待同帧的 Win32k 合成事件(0xC9)配对。只在提交信号是
+        /// 非合成事件时调用（合成事件本身就是提交信号的模式下没有独立的提交时刻，
+        /// 延迟无定义，不入队）。队列上限 32，溢出丢最旧 —— 全屏独占/MPO 直通
+        /// 不产生合成事件，没有上限会无限增长。
+        /// </summary>
+        public void EnqueueSubmit(long ticks)
+        {
+            _pendingSubmits.Enqueue(ticks);
+            if (_pendingSubmits.Count > MaxPendingSubmits) _pendingSubmits.Dequeue();
+        }
+
+        /// <summary>
+        /// Win32k TokenCompositionSurfaceObject（DWM 合成该帧，时间戳≈帧上屏时刻）
+        /// → 与最旧的待配对提交按 FIFO 配对，Δ 在 [0, 1000ms] 内记为
+        /// 「提交→合成」渲染延迟样本。无待配对提交（桌面闪烁等）或 Δ 超窗
+        /// （切出/停顿后的陈旧配对）直接丢弃。
+        /// </summary>
+        public void TryRecordComposed(long ticks)
+        {
+            if (_pendingSubmits.Count == 0) return;
+            var submit = _pendingSubmits.Dequeue();
+            var deltaMs = (double)(ticks - submit) / TimeSpan.TicksPerMillisecond;
+            if (deltaMs >= 0 && deltaMs <= MaxPairLatencyMs)
+            {
+                LastRenderLatencyMs = deltaMs;
+                LastLatencyUtc = DateTime.UtcNow;
             }
         }
 
@@ -264,12 +325,12 @@ public sealed class FpsService : IDisposable
     /// <summary>
     /// Returns FPS plus 1% low and 0.1% low for the target (focused) process.
     /// </summary>
-    public (float fps, string process, float low1, float low01) GetFpsStats()
+    public (float fps, string process, float low1, float low01, float frameTimeMs, float renderLatencyMs) GetFpsStats()
     {
-        if (_paused) return (0, "", 0, 0);
+        if (_paused) return (0, "", 0, 0, -1, -1);
         EnsureRunning();
 
-        if (_trackers.IsEmpty) return (0, "", -1, -1);
+        if (_trackers.IsEmpty) return (0, "", -1, -1, -1, -1);
 
         int targetPid;
 
@@ -285,7 +346,7 @@ public sealed class FpsService : IDisposable
             // overlay got stuck showing "1 FPS" while the actual game was untracked.
             targetPid = GetForegroundWindowPid();
             if (targetPid == 0 || !_trackers.ContainsKey(targetPid) || _trackers[targetPid].Fps <= 0)
-                return (0, "", -1, -1);
+                return (0, "", -1, -1, -1, -1);
         }
 
         if (targetPid != 0 && _trackers.TryGetValue(targetPid, out var tracker))
@@ -303,13 +364,16 @@ public sealed class FpsService : IDisposable
                 var v = tracker.PointOnePercentLow;
                 if (v > 0) { low01 = (float)Math.Round(v); if (low01 < 1) low01 = -1; }
             }
+            ReadFrameMetrics(tracker, DateTime.UtcNow, out var frameMs, out var latencyMs);
             return (
                 (float)Math.Round(tracker.Fps),
                 GetProcessName(targetPid),
                 low1,
-                low01);
+                low01,
+                frameMs,
+                latencyMs);
         }
-        return (0, "", -1, -1);
+        return (0, "", -1, -1, -1, -1);
     }
 
     private int GetForegroundWindowPid()
@@ -522,7 +586,12 @@ public sealed class FpsService : IDisposable
             if (Excluded.Contains(name)) return;
 
             var tracker = _trackers.GetOrAdd(data.ProcessID, _ => new FpsTracker());
-            TryRecordPresent(tracker, id, data.TimeStamp.Ticks);
+            // 提交信号入队（Win32k 合成信号除外 —— 它同时是合成时刻，配对会得到
+            // 帧间隔而非延迟）；0xC9 无条件尝试与最旧的提交配对。
+            if (TryRecordPresent(tracker, id, data.TimeStamp.Ticks) && id != Win32kPresentEventId)
+                tracker.EnqueueSubmit(data.TimeStamp.Ticks);
+            if (id == Win32kPresentEventId)
+                tracker.TryRecordComposed(data.TimeStamp.Ticks);
         }
         catch { }
     }
