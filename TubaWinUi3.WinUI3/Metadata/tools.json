@@ -1668,6 +1668,13 @@
       ]
     },
     {
+      "match": "记录查看",
+      "builtin": "game-monitor-records",
+      "categories": [
+        "其他工具"
+      ]
+    },
+    {
       "match": "核间延迟查询",
       "builtin": "latency-image-query",
       "categories": [

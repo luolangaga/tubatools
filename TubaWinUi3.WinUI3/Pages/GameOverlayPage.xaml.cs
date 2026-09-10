@@ -61,6 +61,29 @@ public sealed partial class GameOverlayPage : Page
     private bool _widgetHasCapture;
     private const string SettingsPrefix = "GameOverlay_";
 
+    // ---- 数据记录（采样只进内存，结束时一次性写文件） ----
+    private readonly Dictionary<string, CheckBox> _recordChecks = new();
+    private readonly List<MonitorRecordSample> _recordSamples = new();
+    private List<MonitorRecordMetric> _recordMetrics = new();
+    private readonly Stopwatch _recordWatch = new();
+    private DispatcherTimer? _recordTimer;
+    private bool _recording;
+    private bool _recordSamplingInFlight;
+    private bool _recordTruncated;
+    private bool _suppressRecordMetricEvents;
+    private double _recordIntervalMs = 1000;
+    private DateTime _recordStartTime;
+    private string _recordTarget = "";
+    private string _recordCpu = "";
+    private string _recordGpu = "";
+    private string _recordFpsProcess = "";
+    private string _lastRecordDir = "";
+    private MonitorRecordOutput _recordOutputs = GameMonitorRecorder.DefaultOutputs;
+    private bool _recordUiReady;
+    private bool _recordDialogOpen;
+    private const string RecordMetricsSetting = SettingsPrefix + "RecordMetrics";
+    private const string RecordOutputsSetting = SettingsPrefix + "RecordOutputs";
+
     private sealed class DesignerWidget
     {
         public OverlayWidgetType Type;
@@ -139,6 +162,8 @@ public sealed partial class GameOverlayPage : Page
 
         InitPalette();
         InitFontCombo();
+        InitRecordMetrics();
+        LoadRecordSettings();
         RefreshPresetCombo();
         LoadConfig();
         ScanGameWindows();
@@ -176,6 +201,8 @@ public sealed partial class GameOverlayPage : Page
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         StopPolling();
+        // 离开页面时把已记录的数据落盘，避免整段记录丢失
+        SaveRecordingOnUnload();
         GameOverlayWindow.CloseOverlay();
     }
 
@@ -1332,6 +1359,8 @@ public sealed partial class GameOverlayPage : Page
         );
 
         StartPolling();
+        // 覆盖层已经在采样，记录复用同一批采样即可，不必再起一个定时器
+        if (_recording) StopRecordTimer();
         _overlayRunning = true;
         ToggleOverlayIcon.Glyph = "\uE71A"; // Stop icon
         ToggleOverlayText.Text = "停止覆盖层";
@@ -1340,8 +1369,11 @@ public sealed partial class GameOverlayPage : Page
 
     private void StopOverlay()
     {
+        bool wasRunning = _overlayRunning;
         StopPolling();
         GameOverlayWindow.CloseOverlay();
+        // 覆盖层停了，记录若还在进行则自己接管采样
+        if (wasRunning && _recording) StartRecordTimer();
         _overlayRunning = false;
         ToggleOverlayIcon.Glyph = "\uE768"; // Play icon
         ToggleOverlayText.Text = "启动覆盖层";
@@ -1383,6 +1415,8 @@ public sealed partial class GameOverlayPage : Page
             var sample = await Task.Run(() => LiteMonitorService.Instance.Read(fpsEnabled: true));
             if (!_overlayRunning) return; // 覆盖层已停止，丢弃迟到的采样
             GameOverlayWindow.Instance?.UpdateData(sample);
+            // 记录中：复用这次采样，不额外增加硬件读取开销
+            if (_recording) AppendRecordSample(sample);
         }
         catch (Exception ex)
         {
@@ -1393,6 +1427,604 @@ public sealed partial class GameOverlayPage : Page
             _samplingInFlight = false;
         }
     }
+
+    #endregion
+
+    #region Data Recording
+
+    // 设计取舍（性能优先）：
+    //  · 记录期间采样只追加到内存 List，绝不落盘，游戏帧率不受影响；
+    //  · 结束（手动停止 / 离开页面 / 达到 2 小时上限）时一次性写出 JSON / Markdown；
+    //  · 单次记录硬上限 2 小时，到点自动停止并保存，内存占用有界（≈3.6 万条 @200ms）。
+
+    private void InitRecordMetrics()
+    {
+        RecordMetricPanel.Children.Clear();
+        RecordMetricPanel.ColumnDefinitions.Clear();
+        RecordMetricPanel.RowDefinitions.Clear();
+        RecordMetricPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        RecordMetricPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        _recordChecks.Clear();
+
+        var selectedKeys = GameMonitorRecorder.ParseSelection(AppSettings.Get(RecordMetricsSetting))
+            .Select(m => m.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        int row = 0;
+        foreach (var group in GameMonitorRecorder.AllMetrics.GroupBy(m => m.Group))
+        {
+            EnsureRecordRow(row);
+            var header = new TextBlock
+            {
+                Text = group.Key,
+                FontSize = 11,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Opacity = 0.75,
+                Margin = new Thickness(0, 4, 0, 2)
+            };
+            Grid.SetRow(header, row);
+            Grid.SetColumn(header, 0);
+            Grid.SetColumnSpan(header, 2);
+            RecordMetricPanel.Children.Add(header);
+            row++;
+
+            int col = 0;
+            foreach (var m in group)
+            {
+                EnsureRecordRow(row);
+                var cb = new CheckBox
+                {
+                    Content = m.Label,
+                    FontSize = 11,
+                    MinWidth = 0,
+                    Padding = new Thickness(0),
+                    Tag = m.Key,
+                    IsChecked = selectedKeys.Contains(m.Key)
+                };
+                ToolTipService.SetToolTip(cb, string.IsNullOrEmpty(m.Unit) ? m.Label : $"{m.Label}（{m.Unit}）");
+                cb.Checked += RecordMetric_Changed;
+                cb.Unchecked += RecordMetric_Changed;
+                Grid.SetRow(cb, row);
+                Grid.SetColumn(cb, col);
+                RecordMetricPanel.Children.Add(cb);
+                _recordChecks[m.Key] = cb;
+                col++;
+                if (col == 2) { col = 0; row++; }
+            }
+            if (col != 0) row++; // 该组占半行，下一组另起一行
+        }
+        UpdateRecordMetricCount();
+    }
+
+    private void EnsureRecordRow(int row)
+    {
+        while (RecordMetricPanel.RowDefinitions.Count <= row)
+            RecordMetricPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+    }
+
+    private void LoadRecordSettings()
+    {
+        var outputs = GameMonitorRecorder.ParseOutputs(AppSettings.Get(RecordOutputsSetting));
+        _suppressRecordMetricEvents = true;
+        ChkOutJson.IsChecked = outputs.HasFlag(MonitorRecordOutput.Json);
+        ChkOutMarkdown.IsChecked = outputs.HasFlag(MonitorRecordOutput.Markdown);
+        ChkOutCsv.IsChecked = outputs.HasFlag(MonitorRecordOutput.Csv);
+        _suppressRecordMetricEvents = false;
+        _recordOutputs = outputs;
+        _recordUiReady = true;
+        UpdateRecordDirText();
+        UpdateRecordButton();
+        UpdateRecordStatus();
+    }
+
+    /// <summary>导出格式勾选框变化（多选，至少保留一种）。</summary>
+    private void RecordOutput_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_recordUiReady || _suppressRecordMetricEvents) return;
+        var outputs = GetSelectedOutputs();
+        if (outputs == MonitorRecordOutput.None)
+        {
+            // 不允许全不选：把刚取消的那个恢复回来
+            if (sender is CheckBox cb)
+            {
+                _suppressRecordMetricEvents = true;
+                cb.IsChecked = true;
+                _suppressRecordMetricEvents = false;
+            }
+            TxtRecordStatus.Text = "至少要选择一种导出格式";
+            return;
+        }
+        _recordOutputs = outputs;
+        AppSettings.Set(RecordOutputsSetting, GameMonitorRecorder.SerializeOutputs(outputs));
+    }
+
+    private MonitorRecordOutput GetSelectedOutputs()
+    {
+        var outputs = MonitorRecordOutput.None;
+        if (ChkOutJson.IsChecked == true) outputs |= MonitorRecordOutput.Json;
+        if (ChkOutMarkdown.IsChecked == true) outputs |= MonitorRecordOutput.Markdown;
+        if (ChkOutCsv.IsChecked == true) outputs |= MonitorRecordOutput.Csv;
+        return outputs;
+    }
+
+    private void RecordMetric_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_suppressRecordMetricEvents) return;
+        UpdateRecordMetricCount();
+        AppSettings.Set(RecordMetricsSetting, GameMonitorRecorder.SerializeSelection(GetSelectedRecordKeys()));
+    }
+
+    private List<string> GetSelectedRecordKeys() =>
+        _recordChecks.Where(kv => kv.Value.IsChecked == true).Select(kv => kv.Key).ToList();
+
+    private List<MonitorRecordMetric> GetSelectedRecordMetrics() =>
+        GameMonitorRecorder.AllMetrics
+            .Where(m => _recordChecks.TryGetValue(m.Key, out var cb) && cb.IsChecked == true)
+            .ToList();
+
+    private void SetRecordMetricsEnabled(bool enabled)
+    {
+        // Panel 在 WinUI 里没有公开的 IsEnabled，逐个勾选框控制
+        foreach (var cb in _recordChecks.Values) cb.IsEnabled = enabled;
+        ChkOutJson.IsEnabled = enabled;
+        ChkOutMarkdown.IsEnabled = enabled;
+        ChkOutCsv.IsEnabled = enabled;
+    }
+
+    private void UpdateRecordMetricCount() => TxtRecordMetricCount.Text = $"已选 {GetSelectedRecordKeys().Count} 项";
+
+    private void RecordSelectAll_Click(object sender, RoutedEventArgs e) => SetAllRecordMetrics(true);
+
+    private void RecordClearAll_Click(object sender, RoutedEventArgs e) => SetAllRecordMetrics(false);
+
+    private void SetAllRecordMetrics(bool isChecked)
+    {
+        _suppressRecordMetricEvents = true;
+        foreach (var cb in _recordChecks.Values) cb.IsChecked = isChecked;
+        _suppressRecordMetricEvents = false;
+        UpdateRecordMetricCount();
+        AppSettings.Set(RecordMetricsSetting, GameMonitorRecorder.SerializeSelection(GetSelectedRecordKeys()));
+    }
+
+    /// <summary>刷新间隔变化：让正在跑的采样定时器立即生效（不重启覆盖层/记录）。</summary>
+    private void RefreshInterval_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (_suppressEvents) return;
+        var interval = Math.Max(200, (int)NbRefresh.Value);
+        if (_overlayRunning) StartPolling();
+        if (_recording && !_overlayRunning)
+        {
+            StartRecordTimer();
+            _recordIntervalMs = interval;
+        }
+        SaveConfig();
+    }
+
+    private string GetRecordDir() => GameMonitorRecorder.GetOutputDir();
+
+    private void UpdateRecordDirText()
+    {
+        var dir = GetRecordDir();
+        TxtRecordDir.Text = "输出目录：" + dir;
+        BtnOpenRecordDir.IsEnabled = Directory.Exists(dir);
+    }
+
+    private async void PickRecordDir_Click(object sender, RoutedEventArgs e)
+    {
+        if (_recording)
+        {
+            TxtRecordStatus.Text = "记录进行中，无法修改输出目录";
+            return;
+        }
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FolderPicker
+            {
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeFilter.Add("*");
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var folder = await picker.PickSingleFolderAsync();
+            if (folder is not null && !string.IsNullOrWhiteSpace(folder.Path))
+            {
+                AppSettings.Set(GameMonitorRecorder.RecordDirSetting, folder.Path);
+                UpdateRecordDirText();
+            }
+        }
+        catch (Exception ex)
+        {
+            TxtRecordStatus.Text = $"选择输出目录失败: {ex.Message}";
+        }
+    }
+
+    private void OpenRecordDir_Click(object sender, RoutedEventArgs e)
+    {
+        var dir = string.IsNullOrEmpty(_lastRecordDir) ? GetRecordDir() : _lastRecordDir;
+        try
+        {
+            if (Directory.Exists(dir))
+                Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true });
+            else
+                TxtRecordStatus.Text = "输出目录还不存在，先完成一次记录";
+        }
+        catch (Exception ex)
+        {
+            TxtRecordStatus.Text = $"打开目录失败: {ex.Message}";
+        }
+    }
+
+    private void ViewRecords_Click(object sender, RoutedEventArgs e) => OpenRecordsViewer(null);
+
+    /// <summary>打开「记录查看」窗口（独立窗口，不影响正在进行的覆盖层与记录）。</summary>
+    private static void OpenRecordsViewer(string? file)
+    {
+        try
+        {
+            BuiltinToolWindow.Show(typeof(GameMonitorRecordsPage), file, "游戏监控 · 记录查看");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GameOverlay] 打开记录查看失败: {ex.Message}");
+        }
+    }
+
+    private async void ToggleRecord_Click(object sender, RoutedEventArgs e)
+    {
+        if (_recording) await StopRecordingAsync(autoStop: false);
+        else StartRecording();
+    }
+
+    private void StartRecording()
+    {
+        var metrics = GetSelectedRecordMetrics();
+        if (metrics.Count == 0)
+        {
+            TxtRecordStatus.Text = "请至少勾选一项要记录的指标";
+            return;
+        }
+        var outputs = GetSelectedOutputs();
+        if (outputs == MonitorRecordOutput.None)
+        {
+            TxtRecordStatus.Text = "请至少选择一种导出格式";
+            return;
+        }
+
+        _recordMetrics = metrics;
+        _recordOutputs = outputs;
+        _recordSamples.Clear();
+        _recordTruncated = false;
+        _recordStartTime = DateTime.Now;
+        _recordWatch.Restart();
+        _recordIntervalMs = Math.Max(200, (int)NbRefresh.Value);
+        _recordCpu = "";
+        _recordGpu = "";
+        _recordFpsProcess = "";
+        _recordTarget = (CmbGameWindow.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(_recordTarget)) _recordTarget = TxtWindowStatus.Text;
+        _recording = true;
+
+        // 覆盖层运行时已在自己的轮询里采样，复用它；否则记录器自己起定时器
+        if (_overlayRunning) StopRecordTimer();
+        else StartRecordTimer();
+
+        SetRecordMetricsEnabled(false);
+        UpdateRecordButton();
+        UpdateRecordStatus();
+    }
+
+    private async Task StopRecordingAsync(bool autoStop)
+    {
+        if (!_recording) return;
+        _recording = false;
+        StopRecordTimer();
+        SetRecordMetricsEnabled(true);
+        UpdateRecordButton();
+
+        var metrics = _recordMetrics;
+        // 掐掉首尾「FPS 还没出数」的采样（游戏还没进前台时 FPS 恒为 0），别让这段零值进文件
+        var samples = GameMonitorRecorder.TrimIdleEdges(
+            metrics, new List<MonitorRecordSample>(_recordSamples), out var headTrim, out var tailTrim);
+        var meta = BuildRecordMeta();
+
+        if (metrics.Count == 0 || samples.Count == 0)
+        {
+            TxtRecordStatus.Text = "没有采集到数据，未生成文件";
+            BtnOpenRecordDir.IsEnabled = Directory.Exists(GetRecordDir());
+            return;
+        }
+
+        TxtRecordStatus.Text = "正在写入文件…";
+        var outputs = _recordOutputs;
+        try
+        {
+            var paths = await Task.Run(() => WriteRecordFiles(metrics, samples, meta, outputs));
+            _lastRecordDir = GetRecordDir();
+            UpdateRecordDirText();
+            var names = string.Join("、", paths.Select(Path.GetFileName));
+            var prefix = autoStop ? $"已达 {GameMonitorRecorder.MaxDurationMinutes} 分钟上限，已自动停止并保存：" : "已保存：";
+            TxtRecordStatus.Text = prefix + names + TrimNote(headTrim, tailTrim);
+            await ShowRecordSavedDialogAsync(paths, metrics, samples, meta, autoStop, headTrim, tailTrim);
+            _recordSamples.Clear();
+            _recordMetrics.Clear();
+        }
+        catch (Exception ex)
+        {
+            TxtRecordStatus.Text = $"写入失败: {ex.Message}";
+        }
+    }
+
+    /// <summary>保存完成后的结果弹窗：文件清单 + 关键统计，一键打开输出文件夹。</summary>
+    private async Task ShowRecordSavedDialogAsync(
+        List<string> paths,
+        List<MonitorRecordMetric> metrics,
+        List<MonitorRecordSample> samples,
+        MonitorRecordMeta meta,
+        bool autoStop,
+        double headTrim,
+        double tailTrim)
+    {
+        if (_recordDialogOpen || XamlRoot is null) return;
+        _recordDialogOpen = true;
+        try
+        {
+            var body = new StackPanel { Spacing = 6 };
+            body.Children.Add(new TextBlock
+            {
+                Text = autoStop
+                    ? $"记录已达 {GameMonitorRecorder.MaxDurationMinutes} 分钟上限，已自动停止并保存："
+                    : "记录已保存：",
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 13
+            });
+            foreach (var p in paths)
+            {
+                body.Children.Add(new TextBlock
+                {
+                    Text = "· " + Path.GetFileName(p),
+                    FontSize = 12,
+                    IsTextSelectionEnabled = true,
+                    TextWrapping = TextWrapping.Wrap
+                });
+            }
+
+            var stats = new StringBuilder();
+            stats.AppendLine($"记录时长：{GameMonitorRecorder.FormatDuration(meta.DurationSeconds)}");
+            stats.AppendLine($"采样点数：{samples.Count}");
+            var trimNote = TrimNote(headTrim, tailTrim);
+            if (trimNote.Length > 0) stats.AppendLine(trimNote.Trim('（', '）'));
+            var fpsIndex = metrics.FindIndex(m => m.Key == "fps");
+            if (fpsIndex >= 0)
+            {
+                var fps = GameMonitorRecorder.Collect(metrics, samples, fpsIndex);
+                if (fps.Count > 0)
+                {
+                    stats.AppendLine(
+                        $"FPS：平均 {GameMonitorRecorder.FormatValue(GameMonitorRecorder.Average(fps), "")}" +
+                        $" / 最低 {GameMonitorRecorder.FormatValue(fps[0], "")}" +
+                        $" / P1 {GameMonitorRecorder.FormatValue(GameMonitorRecorder.Percentile(fps, 1), "")}");
+                }
+            }
+            body.Children.Add(new TextBlock
+            {
+                Text = stats.ToString().TrimEnd(),
+                FontSize = 12,
+                Opacity = 0.8,
+                TextWrapping = TextWrapping.Wrap
+            });
+            body.Children.Add(new TextBlock
+            {
+                Text = GetRecordDir(),
+                FontSize = 11,
+                Opacity = 0.6,
+                IsTextSelectionEnabled = true,
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            var dialog = new ContentDialog
+            {
+                Title = "数据记录完成",
+                Content = new ScrollViewer { Content = body, MaxHeight = 320 },
+                PrimaryButtonText = "打开文件夹",
+                CloseButtonText = "确定",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ThemeService.CurrentElementTheme
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                OpenRecordDir_Click(this, new RoutedEventArgs());
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GameOverlay] 结果弹窗显示失败: {ex.Message}");
+        }
+        finally
+        {
+            _recordDialogOpen = false;
+        }
+    }
+
+    /// <summary>离开页面时同步落盘（此时已无法 await，宁可短暂阻塞也不能丢数据）。</summary>
+    private void SaveRecordingOnUnload()
+    {
+        if (!_recording) return;
+        _recording = false;
+        StopRecordTimer();
+
+        var metrics = _recordMetrics;
+        if (metrics.Count == 0 || _recordSamples.Count == 0) return;
+        try
+        {
+            var samples = GameMonitorRecorder.TrimIdleEdges(
+                metrics, new List<MonitorRecordSample>(_recordSamples), out _, out _);
+            if (samples.Count > 0)
+                WriteRecordFiles(metrics, samples, BuildRecordMeta(), _recordOutputs);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GameOverlay] 记录落盘失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>「已剔除首尾无效数据」的说明文案（没有剔除时返回空串）。</summary>
+    private static string TrimNote(double headTrim, double tailTrim)
+    {
+        var parts = new List<string>();
+        if (headTrim > 0.05) parts.Add($"开头 {headTrim:0.#} 秒");
+        if (tailTrim > 0.05) parts.Add($"结尾 {tailTrim:0.#} 秒");
+        return parts.Count == 0 ? "" : $"（已剔除{string.Join("、", parts)}的无效数据）";
+    }
+
+    private MonitorRecordMeta BuildRecordMeta() => new()
+    {
+        StartTime = _recordStartTime,
+        EndTime = DateTime.Now,
+        IntervalMs = _recordIntervalMs,
+        TargetWindow = _recordTarget,
+        CpuName = _recordCpu,
+        GpuName = _recordGpu,
+        FpsProcess = _recordFpsProcess,
+        Truncated = _recordTruncated,
+        DurationSeconds = _recordWatch.Elapsed.TotalSeconds
+    };
+
+    private List<string> WriteRecordFiles(
+        List<MonitorRecordMetric> metrics,
+        List<MonitorRecordSample> samples,
+        MonitorRecordMeta meta,
+        MonitorRecordOutput outputs)
+    {
+        var dir = GetRecordDir();
+        Directory.CreateDirectory(dir);
+        var baseName = GameMonitorRecorder.BuildFileNameBase(meta.StartTime);
+        var utf8 = new UTF8Encoding(false);
+        var paths = new List<string>();
+
+        if (outputs.HasFlag(MonitorRecordOutput.Json))
+        {
+            var jsonPath = UniqueRecordPath(Path.Combine(dir, baseName + ".json"));
+            File.WriteAllText(jsonPath, GameMonitorRecorder.BuildJson(metrics, samples, meta), utf8);
+            paths.Add(jsonPath);
+        }
+        if (outputs.HasFlag(MonitorRecordOutput.Markdown))
+        {
+            var mdPath = UniqueRecordPath(Path.Combine(dir, baseName + ".md"));
+            File.WriteAllText(mdPath, GameMonitorRecorder.BuildMarkdown(metrics, samples, meta), utf8);
+            paths.Add(mdPath);
+        }
+        if (outputs.HasFlag(MonitorRecordOutput.Csv))
+        {
+            var csvPath = UniqueRecordPath(Path.Combine(dir, baseName + ".csv"));
+            File.WriteAllText(csvPath, GameMonitorRecorder.BuildCsv(metrics, samples, meta), utf8);
+            paths.Add(csvPath);
+        }
+        return paths;
+    }
+
+    private static string UniqueRecordPath(string path)
+    {
+        if (!File.Exists(path)) return path;
+        var dir = Path.GetDirectoryName(path)!;
+        var name = Path.GetFileNameWithoutExtension(path);
+        var ext = Path.GetExtension(path);
+        for (int i = 1; ; i++)
+        {
+            var candidate = Path.Combine(dir, $"{name}_{i}{ext}");
+            if (!File.Exists(candidate)) return candidate;
+        }
+    }
+
+    private void StartRecordTimer()
+    {
+        StopRecordTimer();
+        var interval = Math.Max(200, (int)NbRefresh.Value);
+        _recordIntervalMs = interval;
+        _recordTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(interval) };
+        _recordTimer.Tick += OnRecordTick;
+        _recordTimer.Start();
+    }
+
+    private void StopRecordTimer()
+    {
+        if (_recordTimer is null) return;
+        _recordTimer.Tick -= OnRecordTick;
+        _recordTimer.Stop();
+        _recordTimer = null;
+    }
+
+    private async void OnRecordTick(object? sender, object e)
+    {
+        if (_recordSamplingInFlight || !_recording) return;
+        _recordSamplingInFlight = true;
+        try
+        {
+            var needFps = GameMonitorRecorder.NeedsFps(_recordMetrics);
+            var sample = await Task.Run(() => LiteMonitorService.Instance.Read(fpsEnabled: needFps));
+            if (!_recording) return;
+            AppendRecordSample(sample);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GameOverlay] 记录采样失败: {ex.Message}");
+        }
+        finally
+        {
+            _recordSamplingInFlight = false;
+        }
+    }
+
+    private void AppendRecordSample(MonitorSample sample)
+    {
+        var metrics = _recordMetrics;
+        if (metrics.Count == 0) return;
+
+        if (string.IsNullOrEmpty(_recordCpu)) _recordCpu = sample.CpuName;
+        if (string.IsNullOrEmpty(_recordGpu)) _recordGpu = sample.GpuName;
+        if (string.IsNullOrEmpty(_recordFpsProcess)) _recordFpsProcess = sample.FpsProcess;
+
+        var values = new float[metrics.Count];
+        for (int i = 0; i < metrics.Count; i++) values[i] = metrics[i].Read(sample);
+        _recordSamples.Add(new MonitorRecordSample
+        {
+            Seconds = _recordWatch.Elapsed.TotalSeconds,
+            Values = values
+        });
+
+        // 硬上限：到点立即停止并保存，避免长时间记录导致内存持续增长
+        if (_recordWatch.Elapsed.TotalMinutes >= GameMonitorRecorder.MaxDurationMinutes)
+        {
+            _recordTruncated = true;
+            UpdateRecordStatus();
+            _ = StopRecordingAsync(autoStop: true);
+            return;
+        }
+        UpdateRecordStatus();
+    }
+
+    private void UpdateRecordButton()
+    {
+        RecordIcon.Glyph = _recording ? "\uE71A" : "\uE768";
+        RecordText.Text = _recording ? "停止记录并保存" : "开始记录";
+    }
+
+    private void UpdateRecordStatus()
+    {
+        if (!_recording)
+        {
+            if (_recordSamples.Count == 0 && string.IsNullOrEmpty(_lastRecordDir))
+                TxtRecordStatus.Text = "未开始";
+            return;
+        }
+        var elapsed = _recordWatch.Elapsed;
+        var limit = TimeSpan.FromMinutes(GameMonitorRecorder.MaxDurationMinutes);
+        var remaining = limit - elapsed;
+        if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+        TxtRecordStatus.Text =
+            $"记录中… 已采样 {_recordSamples.Count} 条 ｜ 已用 {FormatClock(elapsed)} ｜ 剩余 {FormatClock(remaining)}";
+    }
+
+    private static string FormatClock(TimeSpan t) =>
+        $"{(int)t.TotalHours:00}:{t.Minutes:00}:{t.Seconds:00}";
 
     #endregion
 

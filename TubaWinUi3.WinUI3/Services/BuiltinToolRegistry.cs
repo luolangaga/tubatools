@@ -43,6 +43,7 @@ public static class BuiltinToolRegistry
         Register(new PcTutorialTool());
         Register(new AntiMotionSicknessTool());
         Register(new GameMonitorTool());
+        Register(new GameMonitorRecordsTool());
         if (!RuntimeHelper.IsMsixPackaged)
             Register(new CommunityToolBuiltinTool());
         Register(new ScreenTestTool());

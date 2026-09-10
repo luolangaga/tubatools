@@ -366,10 +366,10 @@ public class FpsServiceTests
     }
 
     [Fact]
-    public void Tracker_PointOnePercentLow_RequiresThousandFrames()
+    public void Tracker_PointOnePercentLow_NeedsEnoughFramesInWindow()
     {
-        // 0.1% low 必须有 1000 帧以上才有统计意义 —— 样本不足必须返回 -1，
-        // 而不是拿 3 帧最差帧的噪声填数字。
+        // 0.1% low 要有统计意义必须有足够多的帧 —— 样本不够必须返回 -1，
+        // 而不是拿一两帧最差帧的噪声填数字。门槛按「窗口内帧数」（900 帧）算。
         var tracker = new FpsService.FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
@@ -379,5 +379,67 @@ public class FpsServiceTests
 
         for (int i = 0; i < 1000; i++) { t += frameTicks; tracker.OnPresent(t); }
         Assert.InRange(tracker.PointOnePercentLow, 55, 65);
+    }
+
+    // ------------------------------------------- 低帧率百分位口径（窗口按时间过期）
+
+    [Fact]
+    public void Tracker_OnePercentLow_RecoversWithinWindowSeconds()
+    {
+        // 「刷新特别慢」的回归测试：一次卡顿必须在窗口时长（1% low = 10s）内滚干净。
+        // 旧实现固定 2048 帧窗口，60fps 下要 34 秒才恢复，读数像被钉住。
+        var tracker = new FpsService.FpsTracker();
+        long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
+        long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
+        long t = 0;
+
+        for (int i = 0; i < 3000; i++) { t += fast; tracker.OnPresent(t); }   // 50s 平稳
+        Assert.InRange(tracker.OnePercentLow, 55, 65);
+
+        for (int i = 0; i < 60; i++) { t += slow; tracker.OnPresent(t); }     // 2s 卡顿
+        Assert.InRange(tracker.OnePercentLow, 28, 34);
+
+        for (int i = 0; i < 660; i++) { t += fast; tracker.OnPresent(t); }    // 11s 平稳 → 卡顿滚出窗口
+        Assert.InRange(tracker.OnePercentLow, 55, 65);
+    }
+
+    [Fact]
+    public void Tracker_OnePercentLow_WindowIsTimeBasedNotFrameCount()
+    {
+        // 帧数窗口在低帧率下会变得极长（2048 帧 @30fps = 68 秒）。改成时间窗口后，
+        // 30fps 下同样只需 ~10 秒就能恢复 —— 同一段画面在高低帧率下口径一致。
+        var tracker = new FpsService.FpsTracker();
+        long fast = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
+        long slow = TimeSpan.TicksPerSecond / 15;   // 66.67ms @15FPS
+        long t = 0;
+
+        for (int i = 0; i < 900; i++) { t += fast; tracker.OnPresent(t); }    // 30s 平稳
+        Assert.InRange(tracker.OnePercentLow, 28, 34);
+
+        for (int i = 0; i < 60; i++) { t += slow; tracker.OnPresent(t); }     // 4s 卡顿
+        Assert.InRange(tracker.OnePercentLow, 13, 17);
+
+        for (int i = 0; i < 330; i++) { t += fast; tracker.OnPresent(t); }    // 11s → 卡顿滚出
+        Assert.InRange(tracker.OnePercentLow, 28, 34);
+    }
+
+    [Fact]
+    public void Tracker_OnePercentLow_UsesTruePercentileCount()
+    {
+        // 真 1% —— 不再有「最少取 3 帧」的兜底：那会把口径悄悄放大成 3%
+        // （n=200 时 1% 只有 2 帧，兜底会取 3 帧，把快帧混进来抬高读数）。
+        // 20fps（50ms/帧）→ 10s 窗口 ≈ 200 帧 → 真 1% = 最差 2 帧。
+        var tracker = new FpsService.FpsTracker();
+        long fast = TimeSpan.TicksPerSecond / 20;   // 50ms
+        long slow = TimeSpan.TicksPerSecond / 10;   // 100ms
+        long t = 0;
+
+        for (int i = 0; i < 300; i++) { t += fast; tracker.OnPresent(t); }   // 15s 平稳
+        t += slow; tracker.OnPresent(t);                                     // 两帧慢帧
+        t += slow; tracker.OnPresent(t);
+
+        // 最差 2 帧都是 100ms → 平均帧时间 100ms → 10 FPS。
+        // 若兜底取 3 帧，会混进一帧 50ms → 83ms → 12 FPS，不再落在这个区间。
+        Assert.InRange(tracker.OnePercentLow, 9.5, 10.5);
     }
 }

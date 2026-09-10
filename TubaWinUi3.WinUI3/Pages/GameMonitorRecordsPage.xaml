@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="TubaWinUi3.Pages.GameMonitorRecordsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <Style x:Key="CardBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title -->
+        <Grid Padding="24,52,24,12" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Border Width="40" Height="40" Background="{ThemeResource AccentFillColorDefaultBrush}" CornerRadius="8">
+                <FontIcon FontSize="20" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Glyph="&#xE9F5;" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock FontSize="22" FontWeight="Bold" Text="记录查看" />
+                <TextBlock Opacity="0.8" FontSize="12"
+                           Text="解析游戏监控导出的 JSON / CSV，图表化回放 FPS、温度、负载等历史数据" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Button Click="Refresh_Click" ToolTipService.ToolTip="重新扫描输出目录">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                        <TextBlock Text="刷新" />
+                    </StackPanel>
+                </Button>
+                <Button Click="OpenFolder_Click" ToolTipService.ToolTip="在资源管理器中打开记录目录">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE838;" FontSize="12" />
+                        <TextBlock Text="打开文件夹" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" Padding="24,0,24,0" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="262" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: record files -->
+            <Border Style="{StaticResource CardBorder}" Padding="10">
+                <Grid RowSpacing="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="记录文件" FontWeight="SemiBold" FontSize="13" />
+                        <TextBlock x:Name="TxtDir" FontSize="11" Opacity="0.6" TextWrapping="Wrap" Text="—" />
+                    </StackPanel>
+                    <ListView x:Name="FileList" Grid.Row="1" SelectionMode="Single"
+                              SelectionChanged="FileList_SelectionChanged"
+                              Background="Transparent" BorderThickness="0">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="2" Margin="0,4">
+                                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Info}" FontSize="11" Opacity="0.6" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <!-- Right: charts（整列可滚动：窗口高度不够时不会把图表挤出可视区） -->
+            <ScrollViewer x:Name="RightScroll" Grid.Column="1"
+                          VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled"
+                          HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
+                          SizeChanged="RightScroll_SizeChanged">
+                <Grid RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Meta chips -->
+                    <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollMode="Enabled" ZoomMode="Disabled">
+                        <StackPanel x:Name="PnlMeta" Orientation="Horizontal" Spacing="6" />
+                    </ScrollViewer>
+
+                    <!-- Stat cards -->
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollMode="Enabled" ZoomMode="Disabled">
+                        <StackPanel x:Name="PnlCards" Orientation="Horizontal" Spacing="8" Padding="0,0,0,2" />
+                    </ScrollViewer>
+
+                    <!-- Group tabs -->
+                    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollMode="Enabled" ZoomMode="Disabled">
+                        <StackPanel x:Name="PnlTabs" Orientation="Horizontal" Spacing="6" />
+                    </ScrollViewer>
+
+                    <!-- Chart -->
+                    <Border x:Name="ChartCard" Grid.Row="3" Height="330" Style="{StaticResource CardBorder}">
+                        <Grid RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="1">
+                                    <TextBlock x:Name="TxtChartTitle" FontSize="13" FontWeight="SemiBold" Text="图表" />
+                                    <TextBlock x:Name="TxtChartHint" FontSize="11" Opacity="0.6" Text="" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <CheckBox x:Name="ChkNorm" Content="归一化" FontSize="12" MinWidth="0"
+                                              Checked="ChartOption_Changed" Unchecked="ChartOption_Changed"
+                                              ToolTipService.ToolTip="把各指标按自身量程缩放到 0–100%，便于跨量纲对比" />
+                                    <CheckBox x:Name="ChkFill" Content="面积" FontSize="12" MinWidth="0" IsChecked="True"
+                                              Checked="ChartOption_Changed" Unchecked="ChartOption_Changed" />
+                                    <Button Content="重置范围" FontSize="12" Padding="8,4" Click="ResetRange_Click" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="1">
+                                <lvc:CartesianChart x:Name="Chart" Background="Transparent" />
+                                <StackPanel x:Name="PnlChartEmpty" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Spacing="6" Visibility="Collapsed">
+                                    <FontIcon x:Name="IcoEmpty" Glyph="&#xE9D2;" FontSize="28" Opacity="0.5" />
+                                    <TextBlock x:Name="TxtEmpty" Text="没有可展示的数据" FontSize="13" Opacity="0.6"
+                                               TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="2" RowSpacing="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="起点" FontSize="11" VerticalAlignment="Center" Opacity="0.7" />
+                                    <Slider x:Name="SliderFrom" Grid.Column="1" Minimum="0" Maximum="1" StepFrequency="1"
+                                            ValueChanged="Range_Changed" />
+                                    <TextBlock x:Name="TxtFrom" Grid.Column="2" FontSize="11" VerticalAlignment="Center"
+                                               Width="60" TextAlignment="Right" Opacity="0.7" Text="—" />
+                                </Grid>
+                                <Grid Grid.Row="1" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="终点" FontSize="11" VerticalAlignment="Center" Opacity="0.7" />
+                                    <Slider x:Name="SliderTo" Grid.Column="1" Minimum="0" Maximum="1" StepFrequency="1"
+                                            ValueChanged="Range_Changed" />
+                                    <TextBlock x:Name="TxtTo" Grid.Column="2" FontSize="11" VerticalAlignment="Center"
+                                               Width="60" TextAlignment="Right" Opacity="0.7" Text="—" />
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Legend + stats -->
+                    <Border x:Name="LegendCard" Grid.Row="4" Style="{StaticResource CardBorder}">
+                        <Grid RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <StackPanel x:Name="PnlLegend" Spacing="6" SizeChanged="Legend_SizeChanged" />
+                            <Grid Grid.Row="1" ColumnSpacing="8" Padding="4,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="76" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="指标" FontSize="11" Opacity="0.6" />
+                                <TextBlock Grid.Column="1" Text="最小" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="平均" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Grid.Column="3" Text="最大" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Grid.Column="4" Text="P1" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Grid.Column="5" Text="P99" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Grid.Column="6" Text="样本" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                            </Grid>
+                            <ListView x:Name="StatsList" Grid.Row="2" MaxHeight="168" SelectionMode="None"
+                                      Background="Transparent" BorderThickness="0" IsItemClickEnabled="False">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnSpacing="8" Padding="4,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="180" />
+                                                <ColumnDefinition Width="76" />
+                                                <ColumnDefinition Width="76" />
+                                                <ColumnDefinition Width="76" />
+                                                <ColumnDefinition Width="76" />
+                                                <ColumnDefinition Width="76" />
+                                                <ColumnDefinition Width="70" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Metric}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Min}" FontSize="12" TextAlignment="Right" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Avg}" FontSize="12" TextAlignment="Right" />
+                                            <TextBlock Grid.Column="3" Text="{Binding Max}" FontSize="12" TextAlignment="Right" />
+                                            <TextBlock Grid.Column="4" Text="{Binding P1}" FontSize="12" TextAlignment="Right" />
+                                            <TextBlock Grid.Column="5" Text="{Binding P99}" FontSize="12" TextAlignment="Right" />
+                                            <TextBlock Grid.Column="6" Text="{Binding Count}" FontSize="12" TextAlignment="Right" Opacity="0.7" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Padding="24,10,24,14">
+            <TextBlock x:Name="TxtStatus" FontSize="12" Opacity="0.7" Text="就绪" />
+            <TextBlock x:Name="TxtRecordedCount" FontSize="12" Opacity="0.7" Text="" />
+        </StackPanel>
+
+        <!-- Loading -->
+        <Grid x:Name="LoadingOverlay" Grid.RowSpan="3" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+              Canvas.ZIndex="99">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <ProgressRing IsActive="True" Width="36" Height="36" />
+                <TextBlock x:Name="TxtLoading" FontSize="13" Opacity="0.8" Text="正在解析…" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

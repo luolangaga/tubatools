@@ -137,12 +137,27 @@ public sealed class FpsService : IDisposable
         private int _count;
         private double _lastFps;
         private double _lastFrameTimeMs;
-        // 帧时间滚动窗口：保留最近 FrameWindowCapacity 个有效帧间隔（秒），
-        // 1% low / 0.1% low / 快照报告都基于它。固定容量环形缓冲，O(1) 写入，
-        // 没有旧实现那种「超过 36000 砍到 3600 再慢慢长」的抖动窗口 —— 旧逻辑下
-        // 1% low 的统计范围随时间漂移 10 倍，且启动/加载/菜单帧长期泡在统计里，
-        // 覆盖层读数永远反映不出当前画面。窗口只滚最近 ~34s（60fps）的实际帧。
-        private const int FrameWindowCapacity = 2048;
+
+        // 帧时间环形缓冲（存的是有效帧间隔，秒）。容量只是**上限**，真正的过期口径是
+        // 「时间」而不是「帧数」：8192 帧在 240Hz 下约 34s、144Hz 下约 57s、60Hz 下约 136s，
+        // 对这个窗口时长都绰绰有余。
+        private const int FrameWindowCapacity = 8192;
+
+        // 1% low / 0.1% low 的统计窗口（秒）。为什么分开、为什么是这两个数：
+        //   1% low 要「反应快」→ 短窗口：一次卡顿几秒内进来，十几秒内滚出去；
+        //   0.1% low 要「有统计意义」→ 长窗口：0.1% 至少要上千帧才成立，
+        //   600 帧的「0.1%」其实只是「最慢的那 1 帧」。
+        // 旧实现是**共用一个固定 2048 帧的窗口**，60fps 下 ≈34 秒 —— 一次卡顿要在读数里
+        // 泡满 34 秒才滚干净，这就是「刷新特别慢」的根源；而且帧数窗口在 30fps 下变成 68 秒、
+        // 144fps 下只有 14 秒，同一段画面在高低帧率下口径完全不同。
+        private const double Low1WindowSeconds = 10.0;
+        private const double Low01WindowSeconds = 30.0;
+
+        // 窗口内最少帧数，不够就返回 -1（上层显示 "--"）。用「窗口内帧数」而不是
+        // 「会话累计帧数」做门槛，门槛与统计口径才一致。
+        private const int Low1MinFrames = 100;
+        private const int Low01MinFrames = 900;
+
         private readonly double[] _frameWindow = new double[FrameWindowCapacity];
         private int _windowIndex;
         private int _windowCount;
@@ -172,8 +187,8 @@ public sealed class FpsService : IDisposable
         public double AvgFps => _totalFrames > 0 && _totalFrameTime > 0 ? _totalFrames / _totalFrameTime : 0;
         public double MinFps => _minFps == double.MaxValue ? 0 : _minFps;
         public double MaxFps => _maxFps;
-        public double OnePercentLow => CalcPercentileLow(0.01);
-        public double PointOnePercentLow => CalcPercentileLow(0.001);
+        public double OnePercentLow => CalcPercentileLow(0.01, Low1WindowSeconds, Low1MinFrames);
+        public double PointOnePercentLow => CalcPercentileLow(0.001, Low01WindowSeconds, Low01MinFrames);
         public int TotalFrames => _totalFrames;
         public double TotalSeconds => _totalFrameTime;
         /// <summary>最近一次有效帧间隔（毫秒，帧生成时间）；0 = 尚无有效样本。</summary>
@@ -252,34 +267,52 @@ public sealed class FpsService : IDisposable
         }
 
         /// <summary>
-        /// 1% low / 0.1% low：取滚动窗口里最慢 `percentile` 帧的「平均帧时间」再换算
-        /// FPS（1 / 平均帧时间）。这是 PresentMon/CapFrameX 的标准口径 —— 对最差帧的
-        /// 瞬时 FPS 取平均（旧实现）会因 1/x 的凸性系统性高估，且帧时间分布越散
-        /// 读数越乱。
-        /// 统计基于最近 FrameWindowCapacity 个有效帧间隔（滚动窗口）：启动/加载/
-        /// 菜单/挂后台的旧帧会自然滚出，读数反映当前画面，而不是整个会话的累计。
-        /// 样本不足（1% < 100 帧、0.1% < 1000 帧）返回 -1（上层显示 "--"）——
-        /// 样本不够时最差百分之零点几只是单帧噪声，填数字只会乱跳。
+        /// 取最近 <paramref name="windowSeconds"/> 秒内的帧时间（最新在前）。
+        /// 逐帧往前累加帧间隔，累计值 = 这段时间的帧时间之和 ≈ 墙钟时长，
+        /// 所以不需要额外存每帧的时间戳。帧间隔 ≥10s 的断档在写入时已被丢弃，
+        /// 长时间切出去再回来不会把「一大坨空档」算进窗口。
         /// </summary>
-        private double CalcPercentileLow(double percentile)
+        private List<double> CollectWindow(double windowSeconds)
         {
-            int minSamples = percentile <= 0.001 ? 1000 : 100;
-            if (_windowCount < minSamples) return -1;
+            var list = new List<double>(Math.Min(_windowCount, 4096));
+            double elapsed = 0;
+            for (int k = 0; k < _windowCount; k++)
+            {
+                var v = _frameWindow[(_windowIndex - 1 - k + FrameWindowCapacity * 2) % FrameWindowCapacity];
+                list.Add(v);
+                elapsed += v;
+                if (elapsed >= windowSeconds) break;
+            }
+            return list;
+        }
 
-            // 按写入顺序复制窗口（环形 → 线性），再升序排序
-            var sorted = new double[_windowCount];
-            for (int i = 0; i < _windowCount; i++)
-                sorted[i] = _frameWindow[(_windowIndex - _windowCount + i + FrameWindowCapacity) % FrameWindowCapacity];
-            Array.Sort(sorted); // ascending: smallest (fastest) frame times first
+        /// <summary>
+        /// 1% low / 0.1% low：取滚动窗口里最慢 `percentile` 帧的「平均帧时间」再换算
+        /// FPS（1 / 平均帧时间）。这是 PresentMon / CapFrameX 的标准口径 —— 对最差帧的
+        /// 瞬时 FPS 直接取平均会因 1/x 的凸性系统性高估。
+        /// 窗口按**时间**过期（见 <see cref="Low1WindowSeconds"/>），启动/加载/菜单的旧帧
+        /// 会自然滚出，读数反映当前画面而不是整个会话。
+        /// 帧数不足 <paramref name="minFrames"/> 时返回 -1（上层显示 "--"）。
+        /// </summary>
+        private double CalcPercentileLow(double percentile, double windowSeconds, int minFrames)
+        {
+            var window = CollectWindow(windowSeconds);
+            if (window.Count < minFrames) return -1;
 
-            int n = sorted.Length;
-            // 最差 `percentile` 帧数；太少时退化为最少 3 帧，保证读数稳定
-            int worst = Math.Max(3, (int)Math.Ceiling(n * percentile));
+            window.Sort(); // 升序：最快的帧在前，最慢的帧在尾部
+            int n = window.Count;
+
+            // 真百分位帧数。这里刻意**不设**「最少 3 帧」之类的下限：那会把口径悄悄放大
+            // （n=100 时 1% 实际变成 3%，n=1000 时 0.1% 变成 0.3%），读数还会随着窗口
+            // 填充进度漂移 —— 同一段画面在第 10 秒和第 30 秒算出来的不是同一个指标。
+            // 样本不足的问题交给 minFrames 门槛和窗口时长解决。
+            int worst = (int)Math.Ceiling(n * percentile);
+            if (worst < 1) worst = 1;
             if (worst > n) worst = n;
 
             double sum = 0;
             for (int i = n - worst; i < n; i++)
-                sum += sorted[i];
+                sum += window[i];
             double avgFrameTime = sum / worst;
             return avgFrameTime > 0 ? 1.0 / avgFrameTime : -1;
         }
@@ -287,10 +320,9 @@ public sealed class FpsService : IDisposable
         public FpsSnapshot TakeSnapshot(string processName)
         {
             // 快照/报告同样用滚动窗口 —— 会话期 2 小时后再读报告，帧时间表不该
-            // 还泡着启动画面和加载关卡的数据。
-            var windowTimes = new double[_windowCount];
-            for (int i = 0; i < _windowCount; i++)
-                windowTimes[i] = _frameWindow[(_windowIndex - _windowCount + i + FrameWindowCapacity) % FrameWindowCapacity];
+            // 还泡着启动画面和加载关卡的数据。窗口口径与 0.1% low 对齐（30 秒）。
+            var windowTimes = CollectWindow(Low01WindowSeconds);
+            windowTimes.Reverse(); // CollectWindow 返回「最新在前」，快照按时间顺序输出
 
             return new FpsSnapshot
             {
@@ -303,7 +335,7 @@ public sealed class FpsService : IDisposable
                 PointOnePercentLow = PointOnePercentLow,
                 TotalFrames = _totalFrames,
                 TotalSeconds = _totalFrameTime,
-                FrameTimes = [.. windowTimes]
+                FrameTimes = windowTimes
             };
         }
 
@@ -376,18 +408,13 @@ public sealed class FpsService : IDisposable
         if (targetPid != 0 && _trackers.TryGetValue(targetPid, out var tracker))
         {
             float low1 = -1, low01 = -1;
-            // 1% low 至少 100 帧、0.1% low 至少 1000 帧才有统计意义（否则取到的是
-            // 单帧噪声，读数乱跳）。样本不足/计算无效时返回 -1 → 覆盖层显示 "--"。
-            if (tracker.TotalFrames >= 100)
-            {
-                var v = tracker.OnePercentLow;
-                if (v > 0) { low1 = (float)Math.Round(v); if (low1 < 1) low1 = -1; }
-            }
-            if (tracker.TotalFrames >= 1000)
-            {
-                var v = tracker.PointOnePercentLow;
-                if (v > 0) { low01 = (float)Math.Round(v); if (low01 < 1) low01 = -1; }
-            }
+            // 样本充足性由 tracker 内部按「窗口内帧数」判定（1% low ≥100 帧 / 0.1% low ≥900 帧），
+            // 不足或算不出来时返回 -1 → 覆盖层显示 "--"。这里不再按会话累计帧数二次拦，
+            // 否则门槛（累计）和口径（窗口）会对不上。
+            var v1 = tracker.OnePercentLow;
+            if (v1 > 0) { low1 = (float)Math.Round(v1); if (low1 < 1) low1 = -1; }
+            var v01 = tracker.PointOnePercentLow;
+            if (v01 > 0) { low01 = (float)Math.Round(v01); if (low01 < 1) low01 = -1; }
             ReadFrameMetrics(tracker, DateTime.UtcNow, out var frameMs, out var latencyMs);
             return (
                 (float)Math.Round(tracker.Fps),

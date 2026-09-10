@@ -189,7 +189,8 @@
                         </ComboBox>
                         <TextBlock Text="刷新:" VerticalAlignment="Center" FontSize="12" />
                         <NumberBox x:Name="NbRefresh" Minimum="200" Maximum="5000"
-                                   SpinButtonPlacementMode="Compact" Width="85" FontSize="12" />
+                                   SpinButtonPlacementMode="Compact" Width="85" FontSize="12"
+                                   ValueChanged="RefreshInterval_Changed" />
                         <TextBlock Text="ms" VerticalAlignment="Center" FontSize="12" />
                         <TextBlock Text="缩放:" VerticalAlignment="Center" FontSize="12" />
                         <NumberBox x:Name="NbScale" Minimum="50" Maximum="200" SmallChange="5"
@@ -257,6 +258,73 @@
                                     </Button>
                                 </StackPanel>
                                 <TextBlock x:Name="TxtWindowStatus" Opacity="0.6" FontSize="11" Text="未扫描" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Data Recording -->
+                        <Border Style="{StaticResource CardBorder}">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="数据记录" FontWeight="SemiBold" FontSize="13" />
+                                <TextBlock FontSize="11" Opacity="0.65" TextWrapping="Wrap"
+                                           Text="勾选要记录的指标；记录期间数据只缓存在内存，结束（或停止）后一次性写入 JSON / Markdown / CSV 文件，不会边采边写拖慢游戏。单次最长 2 小时，到点自动停止并保存。" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button Click="RecordSelectAll_Click" Padding="8,3" FontSize="12" Content="全选" />
+                                    <Button Click="RecordClearAll_Click" Padding="8,3" FontSize="12" Content="清空" />
+                                    <TextBlock x:Name="TxtRecordMetricCount" FontSize="11" VerticalAlignment="Center"
+                                               Opacity="0.7" Text="已选 0 项" />
+                                </StackPanel>
+                                <Grid x:Name="RecordMetricPanel" ColumnSpacing="4" />
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="导出格式（可多选）" FontSize="12" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <CheckBox x:Name="ChkOutJson" Content="JSON" FontSize="11" MinWidth="0"
+                                                  IsChecked="True" Tag="json"
+                                                  Checked="RecordOutput_Changed" Unchecked="RecordOutput_Changed"
+                                                  ToolTipService.ToolTip="原始数据，适合脚本 / 程序分析" />
+                                        <CheckBox x:Name="ChkOutMarkdown" Content="Markdown" FontSize="11" MinWidth="0"
+                                                  IsChecked="True" Tag="markdown"
+                                                  Checked="RecordOutput_Changed" Unchecked="RecordOutput_Changed"
+                                                  ToolTipService.ToolTip="可读报告，含统计摘要与采样明细" />
+                                        <CheckBox x:Name="ChkOutCsv" Content="CSV" FontSize="11" MinWidth="0"
+                                                  Tag="csv"
+                                                  Checked="RecordOutput_Changed" Unchecked="RecordOutput_Changed"
+                                                  ToolTipService.ToolTip="表格数据，可直接用 Excel 作图" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock x:Name="TxtRecordDir" FontSize="11" Opacity="0.65" TextWrapping="Wrap"
+                                           Text="输出目录：--" />
+                                <Button Click="PickRecordDir_Click" Padding="8,4" FontSize="12"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTipService.ToolTip="选择记录文件的输出目录">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <FontIcon Glyph="&#xE8B7;" FontSize="11" />
+                                        <TextBlock Text="选择输出目录" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="BtnRecord" Click="ToggleRecord_Click" Padding="8,6"
+                                        Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Stretch">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                        <FontIcon x:Name="RecordIcon" Glyph="&#xE768;" FontSize="12" />
+                                        <TextBlock x:Name="RecordText" Text="开始记录" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock x:Name="TxtRecordStatus" FontSize="11" Opacity="0.7" TextWrapping="Wrap"
+                                           Text="未开始" />
+                                <Button x:Name="BtnOpenRecordDir" Click="OpenRecordDir_Click" Padding="8,4"
+                                        FontSize="12" HorizontalAlignment="Stretch" IsEnabled="False">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <FontIcon Glyph="&#xE838;" FontSize="11" />
+                                        <TextBlock Text="打开输出文件夹" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Click="ViewRecords_Click" Padding="8,4" FontSize="12"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTipService.ToolTip="打开「记录查看」：解析 JSON / CSV，图表化回放历史数据">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <FontIcon Glyph="&#xE9F5;" FontSize="11" />
+                                        <TextBlock Text="查看记录图表" />
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Border>
 

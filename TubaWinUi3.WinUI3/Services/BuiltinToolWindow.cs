@@ -68,6 +68,18 @@ public sealed class BuiltinToolWindow
         ActiveWindow = instance;
     }
 
+    /// <summary>
+    /// 查出承载指定页面的内置工具窗口（文件/文件夹选择器需要宿主窗口句柄时使用，
+    /// 找不到时调用方自行回退到主窗口）。
+    /// </summary>
+    public static Window? FindHostingWindow(FrameworkElement? page)
+    {
+        if (page is null) return null;
+        foreach (var instance in _openWindows)
+            if (ReferenceEquals(instance._frame.Content, page)) return instance._window;
+        return null;
+    }
+
     public void Close() => _window.Close();
 
     /// <summary>页面内"返回/关闭"按钮调用：能后退则后退，否则关闭窗口。</summary>
