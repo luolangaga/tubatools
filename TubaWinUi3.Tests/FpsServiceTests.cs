@@ -377,8 +377,42 @@ public class FpsServiceTests
         for (int i = 0; i < 500; i++) { t += frameTicks; tracker.OnPresent(t); }
         Assert.Equal(-1, tracker.PointOnePercentLow);
 
-        for (int i = 0; i < 1000; i++) { t += frameTicks; tracker.OnPresent(t); }
+        // 1900 帧 ≈ 31.7s ≥ 30s 窗口：帧数门槛（900）和时间填满门槛同时满足才出数
+        for (int i = 0; i < 1400; i++) { t += frameTicks; tracker.OnPresent(t); }
         Assert.InRange(tracker.PointOnePercentLow, 55, 65);
+    }
+
+    [Fact]
+    public void Tracker_PercentileLow_MaskedUntilWindowFilled()
+    {
+        // 开测头几秒窗口只有半截：启动期（着色器编译、垂直同步爬坡、加载关卡）的坏帧
+        // 会把 1%/0.1% low 放大成离谱读数 —— 这段时间必须显示 "--"，不能拿半截窗口硬算。
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        long t = 0;
+
+        for (int i = 0; i < 300; i++) { t += frameTicks; tracker.OnPresent(t); }   // 5s：帧数够（299 ≥ 100）但 10s 窗口没填满
+        Assert.Equal(-1, tracker.OnePercentLow);
+        Assert.Equal(-1, tracker.PointOnePercentLow);
+
+        for (int i = 0; i < 400; i++) { t += frameTicks; tracker.OnPresent(t); }   // 累计 ≈11.7s：1% 窗口填满
+        Assert.InRange(tracker.OnePercentLow, 55, 65);
+        Assert.Equal(-1, tracker.PointOnePercentLow);                              // 30s 窗口仍未填满 → 继续屏蔽
+    }
+
+    [Fact]
+    public void Tracker_Snapshot_ShortSession_UsesBestEffortPercentile()
+    {
+        // 报告/快照是「整段会话」语义：会话比窗口短时按已有帧算（CapFrameX 对整段
+        // 录制的口径），不能因为滚动窗口没填满就在报告里开天窗。
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        long t = 0;
+        for (int i = 0; i < 300; i++) { t += frameTicks; tracker.OnPresent(t); }   // 5s 短会话
+
+        Assert.Equal(-1, tracker.OnePercentLow);        // 实时读数：窗口没填满 → 屏蔽
+        var snap = tracker.TakeSnapshot("test");
+        Assert.InRange(snap.OnePercentLow, 55, 65);     // 报告：整段会话口径 → 正常出数
     }
 
     // ------------------------------------------- 低帧率百分位口径（窗口按时间过期）

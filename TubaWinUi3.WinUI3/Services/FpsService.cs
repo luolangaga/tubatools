@@ -139,9 +139,10 @@ public sealed class FpsService : IDisposable
         private double _lastFrameTimeMs;
 
         // 帧时间环形缓冲（存的是有效帧间隔，秒）。容量只是**上限**，真正的过期口径是
-        // 「时间」而不是「帧数」：8192 帧在 240Hz 下约 34s、144Hz 下约 57s、60Hz 下约 136s，
-        // 对这个窗口时长都绰绰有余。
-        private const int FrameWindowCapacity = 8192;
+        // 「时间」而不是「帧数」。容量必须 ≥ 最长统计窗口（0.1% low = 30s）在最高刷新率下
+        // 的帧数，否则缓冲会先于时间窗口截断，「窗口已填满」的判定永远不成立：
+        // 16384 帧 @300fps ≈ 54.6s、@240fps ≈ 68s、@144fps ≈ 114s、@60fps ≈ 273s。
+        private const int FrameWindowCapacity = 16384;
 
         // 1% low / 0.1% low 的统计窗口（秒）。为什么分开、为什么是这两个数：
         //   1% low 要「反应快」→ 短窗口：一次卡顿几秒内进来，十几秒内滚出去；
@@ -187,8 +188,8 @@ public sealed class FpsService : IDisposable
         public double AvgFps => _totalFrames > 0 && _totalFrameTime > 0 ? _totalFrames / _totalFrameTime : 0;
         public double MinFps => _minFps == double.MaxValue ? 0 : _minFps;
         public double MaxFps => _maxFps;
-        public double OnePercentLow => CalcPercentileLow(0.01, Low1WindowSeconds, Low1MinFrames);
-        public double PointOnePercentLow => CalcPercentileLow(0.001, Low01WindowSeconds, Low01MinFrames);
+        public double OnePercentLow => CalcPercentileLow(0.01, Low1WindowSeconds, Low1MinFrames, requireFullWindow: true);
+        public double PointOnePercentLow => CalcPercentileLow(0.001, Low01WindowSeconds, Low01MinFrames, requireFullWindow: true);
         public int TotalFrames => _totalFrames;
         public double TotalSeconds => _totalFrameTime;
         /// <summary>最近一次有效帧间隔（毫秒，帧生成时间）；0 = 尚无有效样本。</summary>
@@ -271,17 +272,20 @@ public sealed class FpsService : IDisposable
         /// 逐帧往前累加帧间隔，累计值 = 这段时间的帧时间之和 ≈ 墙钟时长，
         /// 所以不需要额外存每帧的时间戳。帧间隔 ≥10s 的断档在写入时已被丢弃，
         /// 长时间切出去再回来不会把「一大坨空档」算进窗口。
+        /// <paramref name="filled"/> = 窗口是否被时间**填满**：刚开测的头几秒缓冲里
+        /// 只有半截数据，调用方（实时读数）用这个标记把半截窗口的读数屏蔽成 "--"。
         /// </summary>
-        private List<double> CollectWindow(double windowSeconds)
+        private List<double> CollectWindow(double windowSeconds, out bool filled)
         {
-            var list = new List<double>(Math.Min(_windowCount, 4096));
+            var list = new List<double>(Math.Min(_windowCount, 8192));
             double elapsed = 0;
+            filled = false;
             for (int k = 0; k < _windowCount; k++)
             {
                 var v = _frameWindow[(_windowIndex - 1 - k + FrameWindowCapacity * 2) % FrameWindowCapacity];
                 list.Add(v);
                 elapsed += v;
-                if (elapsed >= windowSeconds) break;
+                if (elapsed >= windowSeconds) { filled = true; break; }
             }
             return list;
         }
@@ -292,12 +296,16 @@ public sealed class FpsService : IDisposable
         /// 瞬时 FPS 直接取平均会因 1/x 的凸性系统性高估。
         /// 窗口按**时间**过期（见 <see cref="Low1WindowSeconds"/>），启动/加载/菜单的旧帧
         /// 会自然滚出，读数反映当前画面而不是整个会话。
-        /// 帧数不足 <paramref name="minFrames"/> 时返回 -1（上层显示 "--"）。
+        /// <paramref name="requireFullWindow"/>：实时读数（覆盖层/监控页/记录采样）必须等
+        /// 时间窗口被**填满**才出数 —— 刚开测的头几秒窗口只有半截，启动期（着色器编译、
+        /// 垂直同步爬坡、加载关卡）的坏帧会把最差百分位放大成离谱读数，这段时间显示 "--"。
+        /// 帧数不足 <paramref name="minFrames"/> 时同样返回 -1（上层显示 "--"）。
         /// </summary>
-        private double CalcPercentileLow(double percentile, double windowSeconds, int minFrames)
+        private double CalcPercentileLow(double percentile, double windowSeconds, int minFrames, bool requireFullWindow)
         {
-            var window = CollectWindow(windowSeconds);
+            var window = CollectWindow(windowSeconds, out var filled);
             if (window.Count < minFrames) return -1;
+            if (requireFullWindow && !filled) return -1;
 
             window.Sort(); // 升序：最快的帧在前，最慢的帧在尾部
             int n = window.Count;
@@ -321,9 +329,12 @@ public sealed class FpsService : IDisposable
         {
             // 快照/报告同样用滚动窗口 —— 会话期 2 小时后再读报告，帧时间表不该
             // 还泡着启动画面和加载关卡的数据。窗口口径与 0.1% low 对齐（30 秒）。
-            var windowTimes = CollectWindow(Low01WindowSeconds);
+            var windowTimes = CollectWindow(Low01WindowSeconds, out _);
             windowTimes.Reverse(); // CollectWindow 返回「最新在前」，快照按时间顺序输出
 
+            // 报告是「整段会话」语义：就算会话比窗口短（短时压测），也按已有帧算——
+            // CapFrameX 对整段录制就是这么算的。所以这里不设 requireFullWindow，
+            // 短会话的报告不会因为滚动窗口没填满就开天窗。
             return new FpsSnapshot
             {
                 ProcessName = processName,
@@ -331,8 +342,8 @@ public sealed class FpsService : IDisposable
                 AvgFps = AvgFps,
                 MinFps = MinFps,
                 MaxFps = MaxFps,
-                OnePercentLow = OnePercentLow,
-                PointOnePercentLow = PointOnePercentLow,
+                OnePercentLow = CalcPercentileLow(0.01, Low1WindowSeconds, Low1MinFrames, requireFullWindow: false),
+                PointOnePercentLow = CalcPercentileLow(0.001, Low01WindowSeconds, Low01MinFrames, requireFullWindow: false),
                 TotalFrames = _totalFrames,
                 TotalSeconds = _totalFrameTime,
                 FrameTimes = windowTimes
