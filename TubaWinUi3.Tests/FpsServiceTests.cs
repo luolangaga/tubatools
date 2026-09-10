@@ -344,4 +344,40 @@ public class FpsServiceTests
         FpsService.ReadFrameMetrics(tracker, now.AddSeconds(5), out _, out var staleMs);
         Assert.Equal(-1, staleMs);
     }
+
+    [Fact]
+    public void Tracker_PercentileLow_RollsOldFramesOutOfWindow()
+    {
+        // 滚动窗口语义：启动/加载期的慢帧必须随窗口滚动自然退出，
+        // 1% low 反映「当前画面」而不是整个会话的累计。
+        var tracker = new FpsService.FpsTracker();
+        long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
+        long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
+        long t = 0;
+
+        for (int i = 0; i < 5000; i++) { t += fast; tracker.OnPresent(t); }
+        Assert.InRange(tracker.OnePercentLow, 55, 65);      // 纯 60fps
+
+        for (int i = 0; i < 100; i++) { t += slow; tracker.OnPresent(t); }
+        Assert.InRange(tracker.OnePercentLow, 28, 32);      // 慢帧进了窗口 → 1% low 掉到 ~30
+
+        for (int i = 0; i < 3000; i++) { t += fast; tracker.OnPresent(t); }
+        Assert.InRange(tracker.OnePercentLow, 55, 65);      // 慢帧滚出窗口 → 恢复 ~60
+    }
+
+    [Fact]
+    public void Tracker_PointOnePercentLow_RequiresThousandFrames()
+    {
+        // 0.1% low 必须有 1000 帧以上才有统计意义 —— 样本不足必须返回 -1，
+        // 而不是拿 3 帧最差帧的噪声填数字。
+        var tracker = new FpsService.FpsTracker();
+        long frameTicks = TimeSpan.TicksPerSecond / 60;
+        long t = 0;
+
+        for (int i = 0; i < 500; i++) { t += frameTicks; tracker.OnPresent(t); }
+        Assert.Equal(-1, tracker.PointOnePercentLow);
+
+        for (int i = 0; i < 1000; i++) { t += frameTicks; tracker.OnPresent(t); }
+        Assert.InRange(tracker.PointOnePercentLow, 55, 65);
+    }
 }

@@ -34,7 +34,8 @@ public enum OverlayWidgetType
     CustomText, CustomImage, ColorBlock,
     FpsLow1Text, FpsLow01Text,
     // 追加（必须留在末尾）：布局按枚举数字序列化，插中间会错位旧配置。
-    FpsTimeText, FpsTimeChart, FpsRenderLatencyText, FpsRenderLatencyChart
+    FpsTimeText, FpsTimeChart, FpsRenderLatencyText, FpsRenderLatencyChart,
+    FpsLow1Chart, FpsLow01Chart
 }
 
 #endregion
@@ -205,6 +206,10 @@ public sealed partial class GameOverlayPage : Page
         (OverlayWidgetType.FpsTimeChart, "帧时间 图表", "\uE823", true),
         (OverlayWidgetType.FpsRenderLatencyText, "渲染延迟", "\uE823", false),
         (OverlayWidgetType.FpsRenderLatencyChart, "渲染延迟 图表", "\uE823", true),
+        (OverlayWidgetType.FpsLow1Text, "1% Low", "\uE9F5", false),
+        (OverlayWidgetType.FpsLow1Chart, "1% Low 图表", "\uE9F5", true),
+        (OverlayWidgetType.FpsLow01Text, "0.1% Low", "\uE9F5", false),
+        (OverlayWidgetType.FpsLow01Chart, "0.1% Low 图表", "\uE9F5", true),
         (OverlayWidgetType.CpuTempChart, "CPU温度 图表", "\uE9B0", true),
         (OverlayWidgetType.CustomText, "自定义文字", "\uE8E5", false),
         (OverlayWidgetType.CustomImage, "自定义图片", "\uEB9F", false),
@@ -1891,9 +1896,8 @@ public sealed partial class GameOverlayPage : Page
         foreach (var item in doc.RootElement.EnumerateArray())
         {
             var type = (OverlayWidgetType)item.GetProperty("type").GetInt32();
-            // 1% Low / 0.1% Low 组件已移除 —— 旧布局里保存的这类组件直接跳过，
-            // 不创建不显示（枚举值保留，避免历史配置的类型编号错位）。
-            if (type is OverlayWidgetType.FpsLow1Text or OverlayWidgetType.FpsLow01Text) continue;
+            // 1% Low / 0.1% Low 组件重新启用（2026-09 恢复）：旧布局里保存的
+            // 这类组件直接加载，不再跳过（枚举值从未删过，编号兼容）。
             var widget = new DesignerWidget
             {
                 Type = type,
@@ -1914,7 +1918,8 @@ public sealed partial class GameOverlayPage : Page
                 TextColorArgb = item.TryGetProperty("tcolor", out var tc) && tc.TryGetUInt32(out var tcv) ? tcv : 0xFFFFFFFFu,
                 Label = PaletteItems.FirstOrDefault(pi => pi.Type == type).Label ?? type.ToString(),
                 IsChart = type is OverlayWidgetType.FpsChart or OverlayWidgetType.CpuTempChart
-                    or OverlayWidgetType.FpsTimeChart or OverlayWidgetType.FpsRenderLatencyChart,
+                    or OverlayWidgetType.FpsTimeChart or OverlayWidgetType.FpsRenderLatencyChart
+                    or OverlayWidgetType.FpsLow1Chart or OverlayWidgetType.FpsLow01Chart,
             };
             CreateWidgetElement(widget);
             _widgets.Add(widget);

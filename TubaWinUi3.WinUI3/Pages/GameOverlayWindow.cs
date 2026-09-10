@@ -946,6 +946,8 @@ public sealed class GameOverlayWindow : IDisposable
     private static readonly Dictionary<string, (string Title, int Decimals, SKColor Color)> ChartStyles = new()
     {
         ["fps"] = ("FPS", 0, new SKColor(60, 230, 110)),            // 绿
+        ["low1"] = ("1% Low", 0, new SKColor(255, 200, 60)),               // 琥珀
+        ["low01"] = ("0.1% Low", 0, new SKColor(255, 95, 95)),             // 红
         ["cputemp"] = ("CPU °C", 0, new SKColor(255, 170, 40)),     // 橙
         ["frametime"] = ("帧时间 ms", 1, new SKColor(80, 190, 255)),     // 蓝
         ["renderlatency"] = ("渲染延迟 ms", 1, new SKColor(190, 130, 255)) // 紫
@@ -963,6 +965,8 @@ public sealed class GameOverlayWindow : IDisposable
         var chartKey = w.Type switch
         {
             OverlayWidgetType.FpsChart => "fps",
+            OverlayWidgetType.FpsLow1Chart => "low1",
+            OverlayWidgetType.FpsLow01Chart => "low01",
             OverlayWidgetType.CpuTempChart => "cputemp",
             OverlayWidgetType.FpsTimeChart => "frametime",
             OverlayWidgetType.FpsRenderLatencyChart => "renderlatency",
@@ -1151,6 +1155,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsText => "FPS: ",
+            OverlayWidgetType.FpsLow1Text => "1% Low: ",
+            OverlayWidgetType.FpsLow01Text => "0.1% Low: ",
             OverlayWidgetType.FpsTimeText => "帧时间: ",
             OverlayWidgetType.FpsRenderLatencyText => "渲染延迟: ",
             OverlayWidgetType.CpuTempText => "CPU 温度: ",
@@ -1182,6 +1188,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsText => s.Fps >= 0 ? $"{s.Fps:F0} FPS" : "-- FPS",
+            OverlayWidgetType.FpsLow1Text => s.FpsLow1 >= 0 ? $"{s.FpsLow1:F0} FPS" : "-- FPS",
+            OverlayWidgetType.FpsLow01Text => s.FpsLow01 >= 0 ? $"{s.FpsLow01:F0} FPS" : "-- FPS",
             OverlayWidgetType.FpsTimeText => s.FrameTimeMs >= 0 ? $"{s.FrameTimeMs:F1} ms" : "-- ms",
             OverlayWidgetType.FpsRenderLatencyText => s.RenderLatencyMs >= 0 ? $"{s.RenderLatencyMs:F1} ms" : "-- ms",
             OverlayWidgetType.CpuTempText => s.CpuTemp >= 0 ? $"{s.CpuTemp:F0}°C" : "--°C",
@@ -1210,6 +1218,8 @@ public sealed class GameOverlayWindow : IDisposable
         return type switch
         {
             OverlayWidgetType.FpsChart => ("fps", s.Fps >= 0 ? s.Fps : 0),
+            OverlayWidgetType.FpsLow1Chart => ("low1", s.FpsLow1 >= 0 ? s.FpsLow1 : 0),
+            OverlayWidgetType.FpsLow01Chart => ("low01", s.FpsLow01 >= 0 ? s.FpsLow01 : 0),
             OverlayWidgetType.FpsTimeChart => ("frametime", s.FrameTimeMs >= 0 ? s.FrameTimeMs : 0),
             OverlayWidgetType.FpsRenderLatencyChart => ("renderlatency", s.RenderLatencyMs >= 0 ? s.RenderLatencyMs : 0),
             OverlayWidgetType.CpuTempChart => ("cputemp", s.CpuTemp >= 0 ? s.CpuTemp : 0),

@@ -137,7 +137,15 @@ public sealed class FpsService : IDisposable
         private int _count;
         private double _lastFps;
         private double _lastFrameTimeMs;
-        private readonly List<double> _frameTimes = new(3600);
+        // 帧时间滚动窗口：保留最近 FrameWindowCapacity 个有效帧间隔（秒），
+        // 1% low / 0.1% low / 快照报告都基于它。固定容量环形缓冲，O(1) 写入，
+        // 没有旧实现那种「超过 36000 砍到 3600 再慢慢长」的抖动窗口 —— 旧逻辑下
+        // 1% low 的统计范围随时间漂移 10 倍，且启动/加载/菜单帧长期泡在统计里，
+        // 覆盖层读数永远反映不出当前画面。窗口只滚最近 ~34s（60fps）的实际帧。
+        private const int FrameWindowCapacity = 2048;
+        private readonly double[] _frameWindow = new double[FrameWindowCapacity];
+        private int _windowIndex;
+        private int _windowCount;
         private double _totalFrameTime;
         private int _totalFrames;
         private double _minFps = double.MaxValue;
@@ -159,7 +167,8 @@ public sealed class FpsService : IDisposable
         public long LastWin32kTicks;
 
         public double Fps => _lastFps;
-        // 平均 FPS = 总帧数 / 总帧时间（对瞬时 FPS 求均值会被假帧抬高，口径不稳）
+        // 平均 FPS = 总帧数 / 总帧时间（对瞬时 FPS 求均值会被假帧抬高，口径不稳）。
+        // Avg/Min/Max 是会话级累计口径（报告用）；1% low / 0.1% low 是滚动窗口口径（覆盖层用）。
         public double AvgFps => _totalFrames > 0 && _totalFrameTime > 0 ? _totalFrames / _totalFrameTime : 0;
         public double MinFps => _minFps == double.MaxValue ? 0 : _minFps;
         public double MaxFps => _maxFps;
@@ -192,8 +201,9 @@ public sealed class FpsService : IDisposable
                 if (frameTime >= 0.001 && frameTime < 10)
                 {
                     _lastFrameTimeMs = frameTime * 1000.0;
-                    _frameTimes.Add(frameTime);
-                    if (_frameTimes.Count > 36000) _frameTimes.RemoveRange(0, _frameTimes.Count - 3600);
+                    _frameWindow[_windowIndex] = frameTime;
+                    _windowIndex = (_windowIndex + 1) % FrameWindowCapacity;
+                    if (_windowCount < FrameWindowCapacity) _windowCount++;
 
                     var instantFps = 1.0 / frameTime;
                     _fpsSum += instantFps;
@@ -242,19 +252,27 @@ public sealed class FpsService : IDisposable
         }
 
         /// <summary>
-        /// 1% low / 0.1% low：取最慢 `percentile` 帧的「平均帧时间」再换算 FPS
-        /// （1 / 平均帧时间）。这是 PresentMon/CapFrameX 的标准口径 —— 对最差帧的
+        /// 1% low / 0.1% low：取滚动窗口里最慢 `percentile` 帧的「平均帧时间」再换算
+        /// FPS（1 / 平均帧时间）。这是 PresentMon/CapFrameX 的标准口径 —— 对最差帧的
         /// 瞬时 FPS 取平均（旧实现）会因 1/x 的凸性系统性高估，且帧时间分布越散
         /// 读数越乱。
-        /// 样本不足时返回 -1（上层显示 "--"），不与 0 混淆。
+        /// 统计基于最近 FrameWindowCapacity 个有效帧间隔（滚动窗口）：启动/加载/
+        /// 菜单/挂后台的旧帧会自然滚出，读数反映当前画面，而不是整个会话的累计。
+        /// 样本不足（1% < 100 帧、0.1% < 1000 帧）返回 -1（上层显示 "--"）——
+        /// 样本不够时最差百分之零点几只是单帧噪声，填数字只会乱跳。
         /// </summary>
         private double CalcPercentileLow(double percentile)
         {
-            if (_frameTimes.Count < 100) return -1;
-            var sorted = _frameTimes.ToList();
-            sorted.Sort(); // ascending: smallest (fastest) frame times first
+            int minSamples = percentile <= 0.001 ? 1000 : 100;
+            if (_windowCount < minSamples) return -1;
 
-            int n = sorted.Count;
+            // 按写入顺序复制窗口（环形 → 线性），再升序排序
+            var sorted = new double[_windowCount];
+            for (int i = 0; i < _windowCount; i++)
+                sorted[i] = _frameWindow[(_windowIndex - _windowCount + i + FrameWindowCapacity) % FrameWindowCapacity];
+            Array.Sort(sorted); // ascending: smallest (fastest) frame times first
+
+            int n = sorted.Length;
             // 最差 `percentile` 帧数；太少时退化为最少 3 帧，保证读数稳定
             int worst = Math.Max(3, (int)Math.Ceiling(n * percentile));
             if (worst > n) worst = n;
@@ -268,6 +286,12 @@ public sealed class FpsService : IDisposable
 
         public FpsSnapshot TakeSnapshot(string processName)
         {
+            // 快照/报告同样用滚动窗口 —— 会话期 2 小时后再读报告，帧时间表不该
+            // 还泡着启动画面和加载关卡的数据。
+            var windowTimes = new double[_windowCount];
+            for (int i = 0; i < _windowCount; i++)
+                windowTimes[i] = _frameWindow[(_windowIndex - _windowCount + i + FrameWindowCapacity) % FrameWindowCapacity];
+
             return new FpsSnapshot
             {
                 ProcessName = processName,
@@ -279,7 +303,7 @@ public sealed class FpsService : IDisposable
                 PointOnePercentLow = PointOnePercentLow,
                 TotalFrames = _totalFrames,
                 TotalSeconds = _totalFrameTime,
-                FrameTimes = _frameTimes.ToList()
+                FrameTimes = [.. windowTimes]
             };
         }
 
