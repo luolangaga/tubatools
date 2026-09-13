@@ -195,6 +195,37 @@ public partial class App : Application
         _window.Activate();
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
         BrowserAutomationService.Initialize(_window.DispatcherQueue);
+        // 游戏后台自动覆盖层：常驻轮询后端信号文件（检测到全屏游戏自动显示悬浮窗）
+        Services.GameOverlayAutoService.Instance.Start();
+
+        // 后端检测到游戏自动拉起主程序时（--game-overlay-auto）：
+        // 用户在玩游戏，主界面不应抢焦点弹到游戏前面 —— 最小化到任务栏即可。
+        var gameOverlayAuto = cmdLine
+            .Any(a => string.Equals(a, "--game-overlay-auto", StringComparison.OrdinalIgnoreCase));
+        if (gameOverlayAuto)
+        {
+            Services.GameOverlayAutoService.Log($"后端自动拉起启动（exe={Environment.ProcessPath}），主窗口将延迟最小化");
+            // 不要在 OnLaunched 里立即最小化：窗口尚未完成首次布局，此刻动窗口状态
+            // 与 WinUI 启动竞态，曾触发 ArgumentException 崩溃。延迟到渲染稳定后。
+            // 用 SW_SHOWMINNOACTIVE（最小化且不激活）：Activate() 已经把主窗口弹到
+            // 游戏前面抢了焦点，普通 SW_MINIMIZE 前这 1.5 秒游戏会丢失前台；
+            // NOACTIVE 不改前台归属，游戏不受影响（实测 2026-09-11 23:37 前台被抢 20s）。
+            var w = _window;
+            w.DispatcherQueue.TryEnqueue(async () =>
+            {
+                await Task.Delay(1500);
+                try
+                {
+                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(w);
+                    ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
+                    Services.GameOverlayAutoService.Log("主窗口已延迟最小化（NOACTIVE，不抢前台）");
+                }
+                catch (Exception ex)
+                {
+                    Services.GameOverlayAutoService.Log($"最小化主窗口失败: {ex.Message}");
+                }
+            });
+        }
 
         // 主动拦截 Toast 通知被点击时，后端以 --show-active-intercept 启动主程序，
         // 直接跳转「流氓软件的克星 → 主动拦截」审核页。
@@ -274,12 +305,9 @@ public partial class App : Application
             });
         });
 
-        // 主动拦截：若用户开启了主动拦截，自动拉起 NativeAOT 后端（独立常驻进程）。
-        // MSIX 沙箱下不支持启动独立后端进程。
-        if (!RuntimeHelper.IsMsixPackaged && AppSettings.GetBool("ActiveInterceptEnabled", false))
-        {
-            ActiveInterceptService.Start();
-        }
+        // 后端进程统一入口：按「主动拦截 + 游戏后台监控」两个功能的开关状态同步。
+        // 有任一功能开启 → 拉起 NativeAOT 后端（独立常驻进程）；MSIX 沙箱下不支持。
+        ActiveInterceptService.SyncBackend();
 
         var wizardShown = false;
         try
@@ -541,9 +569,23 @@ public partial class App : Application
 
     private void OnWinUIUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        System.IO.File.WriteAllText(
-            System.IO.Path.Combine(System.IO.Path.GetTempPath(), "app_crash.log"),
-            $"WinUI Unhandled Exception:\n{e.Exception}\n\nMessage: {e.Message}");
+        var detail = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] WinUI Unhandled Exception (Handled={e.Handled}):\n" +
+                     $"Message: {e.Message}\n{e.Exception}\n" +
+                     $"StackTrace:\n{e.Exception?.StackTrace}\n" +
+                     $"Inner: {e.Exception?.InnerException}\n" +
+                     new string('-', 80) + "\n";
+        try
+        {
+            // 追加而非覆盖：连续崩溃时历史记录都在
+            System.IO.File.AppendAllText(
+                System.IO.Path.Combine(System.IO.Path.GetTempPath(), "app_crash.log"), detail);
+            try
+            {
+                Services.GameOverlayAutoService.Log($"WinUI 未处理异常: {e.Message}\n{e.Exception?.StackTrace}");
+            }
+            catch { }
+        }
+        catch { }
         _pendingException = e.Exception ?? new Exception(e.Message);
         NavigateToErrorPage();
         e.Handled = true;
@@ -564,4 +606,10 @@ public partial class App : Application
             errorWindow.Activate();
         });
     }
+
+    private const int SW_MINIMIZE = 6;
+    private const int SW_SHOWMINNOACTIVE = 7;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }

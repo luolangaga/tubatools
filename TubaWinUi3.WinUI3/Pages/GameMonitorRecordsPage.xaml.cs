@@ -473,35 +473,56 @@ public sealed partial class GameMonitorRecordsPage : Page
     }
 
     /// <summary>按可用宽度把图例标签排成多行（WinUI 没有现成的 WrapPanel，这里手动分行）。</summary>
+    private bool _legendLayingOut;
+
     private void LayoutLegend()
     {
+        // 页面已卸载（窗口被关）后 SizeChanged 仍可能触发，此时往断开的树上加元素会抛 0x80070490
+        if (_legendLayingOut || !IsLoaded) return;
+
         var available = PnlLegend.ActualWidth;
         if (available <= 0) available = 720;
         if (Math.Abs(available - _legendWidth) < 1 && PnlLegend.Children.Count > 0) return;
         _legendWidth = available;
 
-        PnlLegend.Children.Clear();
-        if (_legendChips.Count == 0) return;
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-        double used = 0;
-        foreach (var chip in _legendChips)
+        _legendLayingOut = true;
+        try
         {
-            chip.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-            var width = chip.DesiredSize.Width;
-            if (used > 0 && used + width > available)
+            PnlLegend.Children.Clear();
+            if (_legendChips.Count == 0) return;
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            double used = 0;
+            foreach (var chip in _legendChips)
             {
-                PnlLegend.Children.Add(row);
-                row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-                used = 0;
+                // chip 可能还挂在上一轮的旧行上（Clear 只摘行了，没摘 chip），
+                // 不先脱钩就 Add 会抛 COMException（元素已有父级）
+                if (chip.Parent is Panel oldParent) oldParent.Children.Remove(chip);
+
+                chip.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+                var width = chip.DesiredSize.Width;
+                if (used > 0 && used + width > available)
+                {
+                    PnlLegend.Children.Add(row);
+                    row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                    used = 0;
+                }
+                row.Children.Add(chip);
+                used += width + 6;
             }
-            row.Children.Add(chip);
-            used += width + 6;
+            if (row.Children.Count > 0) PnlLegend.Children.Add(row);
         }
-        if (row.Children.Count > 0) PnlLegend.Children.Add(row);
+        finally
+        {
+            _legendLayingOut = false;
+        }
     }
 
-    private void Legend_SizeChanged(object sender, SizeChangedEventArgs e) => LayoutLegend();
+    private void Legend_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // 延迟到布局完成后再重排，避免 SizeChanged 重入时容器处于中间态
+        DispatcherQueue.TryEnqueue(() => LayoutLegend());
+    }
 
     private void RightScroll_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateChartHeight();
 

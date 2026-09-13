@@ -24,6 +24,13 @@ public sealed class GameOverlayWindow : IDisposable
     private readonly List<WidgetInstance> _widgets = new();
     private float _bgOpacity = 0.7f;
     private OverlayPosition _position = OverlayPosition.TopLeft;
+    // OLED 防烧屏：开启后悬浮窗沿小圆轨迹缓慢漂移，避免长时间静止灼烧像素
+    private bool _oledEnabled;
+    private Timer? _oledTimer;
+    private float _oledAngle;
+    private int _driftX, _driftY;
+    // Fluent 卡片背景（圆角 + 1px 边框），预渲染一次；脏区域擦除时从这里拷回像素
+    private SKBitmap? _bgCard;
     // Cached overlay surface (DIB + memory DC), recreated only when the size changes
     private IntPtr _surfaceDib, _surfaceDc, _surfaceOld, _surfaceBits;
     private int _surfaceW, _surfaceH;
@@ -264,7 +271,8 @@ public sealed class GameOverlayWindow : IDisposable
     private GameOverlayWindow() { }
 
     public static GameOverlayWindow ShowOverlay(IntPtr targetHwnd, List<WidgetInstance> widgets,
-        float bgOpacity, OverlayPosition position, int width, int height, bool desktopMode = false)
+        float bgOpacity, OverlayPosition position, int width, int height, bool desktopMode = false,
+        bool oledProtection = false)
     {
         _instance?.Dispose();
 
@@ -286,6 +294,7 @@ public sealed class GameOverlayWindow : IDisposable
         foreach (var w in overlay._widgets) w.Dirty = true;
         overlay.CreateOverlayWindow();
         overlay.StartTopmostTimer();
+        overlay.SetOledProtection(oledProtection);
         _instance = overlay;
 
         System.Diagnostics.Debug.WriteLine($"[GameOverlay] ShowOverlay: {width}x{height}, opacity={overlay._bgOpacity}, hwnd={overlay._hwnd}");
@@ -297,6 +306,9 @@ public sealed class GameOverlayWindow : IDisposable
         _instance?.Dispose();
         _instance = null;
     }
+
+    /// <summary>目标窗口是否仍然有效（供外部服务在绑定前校验信号里的 HWND）。</summary>
+    public static bool IsWindowSafe(IntPtr hwnd) => hwnd != IntPtr.Zero && IsWindow(hwnd);
 
     private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
     private static WndProcDelegate? _wndProcDelegate; // prevent GC
@@ -432,29 +444,87 @@ public sealed class GameOverlayWindow : IDisposable
 
         // Reposition only when the target window / screen size actually moved — data
         // updates every tick, but poking DWM via SetWindowPos only when needed.
-        bool needMove = false;
-        int x = 0, y = 0;
+        if (TryGetBasePosition(out int x, out int y))
+        {
+            x += _driftX; y += _driftY; // OLED 防烧屏漂移
+            if (x != _posX || y != _posY || _width != _posW || _height != _posH)
+            {
+                SetWindowPos(_hwnd, HWND_TOPMOST, x, y, _width, _height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                _posX = x; _posY = y; _posW = _width; _posH = _height;
+            }
+        }
+
+        RenderFrame();
+    }
+
+    /// <summary>
+    /// 计算悬浮窗基准位置（桌面模式 = 全屏锚点；窗口模式 = 目标窗口锚点）。
+    /// 返回 false 表示没有可用锚点（桌面模式以外的无目标窗口场景）。
+    /// </summary>
+    private bool TryGetBasePosition(out int x, out int y)
+    {
         if (_desktopMode)
         {
             // Desktop mode: stay at the configured position over the whole screen
             // (track resolution changes since we don't have a target window rect).
             var (ox, oy) = CalculateOffset(GetSystemMetrics(0), GetSystemMetrics(1));
-            x = ox; y = oy; needMove = true;
+            x = ox; y = oy;
+            return true;
         }
-        else if (_targetHwnd != IntPtr.Zero && IsWindow(_targetHwnd) && GetWindowRect(_targetHwnd, out var rc))
+        if (_targetHwnd != IntPtr.Zero && IsWindow(_targetHwnd) && GetWindowRect(_targetHwnd, out var rc))
         {
             var (ox, oy) = CalculateOffset(rc.Right - rc.Left, rc.Bottom - rc.Top);
-            x = rc.Left + ox; y = rc.Top + oy; needMove = true;
+            x = rc.Left + ox; y = rc.Top + oy;
+            return true;
         }
-
-        if (needMove && (x != _posX || y != _posY || _width != _posW || _height != _posH))
-        {
-            SetWindowPos(_hwnd, HWND_TOPMOST, x, y, _width, _height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-            _posX = x; _posY = y; _posW = _width; _posH = _height;
-        }
-
-        RenderFrame();
+        x = y = 0;
+        return false;
     }
+
+    /// <summary>按基准位置 + OLED 漂移偏移重新落位。</summary>
+    private void ApplyPosition()
+    {
+        if (_hwnd == IntPtr.Zero || !IsWindow(_hwnd)) return;
+        if (!TryGetBasePosition(out var x, out var y)) return;
+        x += _driftX; y += _driftY;
+        SetWindowPos(_hwnd, HWND_TOPMOST, x, y, _width, _height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        _posX = x; _posY = y; _posW = _width; _posH = _height;
+    }
+
+    #region OLED burn-in protection
+
+    /// <summary>
+    /// OLED 防烧屏开关。开启后悬浮窗每 45 秒沿半径 8px 的小圆轨迹挪一步
+    /// （每步 30°，整圈 9 分钟），避免监控内容长时间静止在同一批像素上灼烧面板；
+    /// 关闭时立即回到基准位置。
+    /// </summary>
+    public void SetOledProtection(bool enabled)
+    {
+        if (_oledEnabled == enabled) return;
+        _oledEnabled = enabled;
+        if (enabled)
+        {
+            _oledTimer ??= new Timer(_ => OledDriftTick(), null, 45000, 45000);
+        }
+        else
+        {
+            _oledTimer?.Dispose();
+            _oledTimer = null;
+            _driftX = _driftY = 0;
+            ApplyPosition();
+        }
+    }
+
+    private void OledDriftTick()
+    {
+        if (!_oledEnabled) return;
+        _oledAngle += MathF.PI / 6f;
+        _driftX = (int)MathF.Round(MathF.Cos(_oledAngle) * 8f);
+        _driftY = (int)MathF.Round(MathF.Sin(_oledAngle) * 8f);
+        ApplyPosition();
+    }
+
+    #endregion
 
     private (int x, int y) CalculateOffset(int screenW, int screenH)
     {
@@ -495,18 +565,15 @@ public sealed class GameOverlayWindow : IDisposable
         {
             if (!EnsureSurface(hdcScreen)) return;
 
-            // The background panel uses _bgOpacity while widgets stay fully opaque — so the
-            // 背景透明度 slider only affects the background, not the text/charts on top.
-            byte bgA = (byte)(_bgOpacity * 255);
-            uint r = (uint)(0x1E * bgA / 255), g = (uint)(0x1E * bgA / 255), b = (uint)(0x1E * bgA / 255);
-            uint bgPixel = (uint)bgA << 24 | b << 16 | g << 8 | r;
+            // Fluent 卡片背景（半透明圆角面板 + 细边框）预渲染在 _bgCard 里，
+            // 首帧整幅拷入 surface；脏区域擦除 = 从 _bgCard 拷回对应像素。
+            if (_bgCard == null || _bgCard.Width != _width || _bgCard.Height != _height)
+                RenderBackgroundCard();
 
-            // Fill the whole surface with the background panel only when it's (re)created;
-            // later dirty frames just erase the affected region with the same pixel.
             bool drew = false;
             if (!_surfaceInited)
             {
-                unsafe { new Span<uint>((void*)_surfaceBits, _width * _height).Fill(bgPixel); }
+                CopyBgRegion(0, 0, _width, _height);
                 _surfaceInited = true;
                 drew = true;
             }
@@ -524,10 +591,11 @@ public sealed class GameOverlayWindow : IDisposable
 
             if (maxX > minX && maxY > minY)
             {
-                // Erase the region, then re-blit every widget overlapping it in layer order —
-                // dirty ones re-render into their cached bitmap first, unchanged overlapping
-                // ones reuse their cached pixels so the layer stacking stays correct.
-                EraseRegion(bgPixel, minX, minY, maxX, maxY);
+                // Erase the region (restore background card pixels), then re-blit every
+                // widget overlapping it in layer order — dirty ones re-render into their
+                // cached bitmap first, unchanged overlapping ones reuse their cached pixels
+                // so the layer stacking stays correct.
+                CopyBgRegion(minX, minY, maxX, maxY);
                 foreach (var w in _widgets.OrderBy(x => x.Layer))
                 {
                     if (w.X >= maxX || w.Y >= maxY || w.X + w.Width <= minX || w.Y + w.Height <= minY)
@@ -562,20 +630,52 @@ public sealed class GameOverlayWindow : IDisposable
         }
     }
 
-    /// <summary>Fills a sub-region of the overlay surface with the background pixel.</summary>
-    private void EraseRegion(uint bgPixel, int x0, int y0, int x1, int y1)
+    /// <summary>
+    /// Fluent 卡片背景：半透明深色圆角面板（圆角 10px，跟随背景透明度滑杆）
+    /// + 1px 白色低透明度细边框（Fluent 卡片描边）。预渲染到 _bgCard，
+    /// 透明度变化时置空重建。
+    /// </summary>
+    private void RenderBackgroundCard()
     {
+        _bgCard?.Dispose();
+        var bmp = new SKBitmap(_width, _height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        using var canvas = new SKCanvas(bmp);
+        canvas.Clear(SKColors.Transparent);
+
+        byte a = (byte)(_bgOpacity * 255);
+        var rect = new SKRect(0.5f, 0.5f, _width - 0.5f, _height - 0.5f);
+        using var fill = new SKPaint { Color = new SKColor(32, 32, 32, a), IsAntialias = true };
+        using var border = new SKPaint
+        {
+            Color = new SKColor(255, 255, 255, 32),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1
+        };
+        canvas.DrawRoundRect(rect, 10, 10, fill);
+        canvas.DrawRoundRect(rect, 10, 10, border);
+        canvas.Flush();
+        _bgCard = bmp;
+    }
+
+    /// <summary>
+    /// 把 _bgCard 的一个子区域拷回 overlay surface（=「擦除」该区域的控件像素）。
+    /// 按行 memcpy，圆角/边框像素与首帧完全一致，不会再出现方角穿帮。
+    /// </summary>
+    private unsafe void CopyBgRegion(int x0, int y0, int x1, int y1)
+    {
+        if (_bgCard == null || _surfaceBits == IntPtr.Zero) return;
         x0 = Math.Clamp(x0, 0, _width);
         y0 = Math.Clamp(y0, 0, _height);
         x1 = Math.Clamp(x1, 0, _width);
         y1 = Math.Clamp(y1, 0, _height);
         if (x1 <= x0 || y1 <= y0) return;
-        unsafe
-        {
-            var span = new Span<uint>((void*)_surfaceBits, _width * _height);
-            for (int y = y0; y < y1; y++)
-                span.Slice(y * _width + x0, x1 - x0).Fill(bgPixel);
-        }
+
+        var src = (byte*)_bgCard.GetPixels();
+        var dst = (byte*)_surfaceBits;
+        int rowBytes = (x1 - x0) * 4;
+        for (int y = y0; y < y1; y++)
+            Buffer.MemoryCopy(src + (y * _width + x0) * 4, dst + (y * _width + x0) * 4, rowBytes, rowBytes);
     }
 
     /// <summary>Re-renders a dirty widget into its cached bitmap (no blit).</summary>
@@ -912,17 +1012,19 @@ public sealed class GameOverlayWindow : IDisposable
     {
         if (w.ChartPaints == null)
         {
+            // Fluent 配色：面板 = 卡片上的浅色浮层（白色低透明度），网格/文字降低对比，
+            // 语义色（fps 绿 / 温度橙等）保持不变
             w.ChartPaints = new SKPaint[9]
             {
-                new SKPaint { Color = new SKColor(30, 30, 30, 130), IsAntialias = true },
-                new SKPaint { Color = new SKColor(200, 200, 200, 255), IsAntialias = true, Typeface = TypefaceBold },
-                new SKPaint { Color = new SKColor(60, 60, 60, 120), StrokeWidth = 1 },
+                new SKPaint { Color = new SKColor(255, 255, 255, 16), IsAntialias = true },
+                new SKPaint { Color = new SKColor(235, 235, 235, 255), IsAntialias = true, Typeface = TypefaceBold },
+                new SKPaint { Color = new SKColor(255, 255, 255, 26), StrokeWidth = 1, PathEffect = SKPathEffect.CreateDash(new float[] { 4, 5 }, 0) },
                 new SKPaint { IsAntialias = true },
                 new SKPaint { StrokeWidth = 4, IsAntialias = true, IsStroke = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round },
                 new SKPaint { StrokeWidth = 2, IsAntialias = true, IsStroke = true, StrokeJoin = SKStrokeJoin.Round, StrokeCap = SKStrokeCap.Round },
                 new SKPaint { IsAntialias = true },
                 new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Stroke, StrokeWidth = 1.5f, IsAntialias = true },
-                new SKPaint { Color = new SKColor(150, 150, 150, 255), IsAntialias = true, Typeface = TypefaceNormal }
+                new SKPaint { Color = new SKColor(185, 185, 185, 255), IsAntialias = true, Typeface = TypefaceNormal }
             };
         }
         return w.ChartPaints;
@@ -954,6 +1056,56 @@ public sealed class GameOverlayWindow : IDisposable
     };
 
     /// <summary>
+    /// 图表 Y 轴范围（鲁棒自适应）。纯数据 min/max 自适应有两个毛病：
+    /// ① 毛刺型序列（帧时间/渲染延迟）：单个 100ms 毛刺把正常 5ms 段压成贴底直线；
+    /// ② 平稳序列（60±1 FPS）：噪声被放大成满屏锯齿，波动看起来巨大但毫无信息量。
+    /// 修法：毛刺型序列上限取 P98；所有序列强制最小跨度（相对 mid 的 8%、绝对下限），
+    /// 波动不足时居中扩展 —— 噪声不再是「趋势」。
+    /// </summary>
+    private static (float min, float max) ChartAxisRange(CircularBuffer buf, string key)
+    {
+        int take = Math.Min(buf.Count, 256);
+        if (take == 0) return (0, 1);
+        var vals = new float[take];
+        for (int i = 0; i < take; i++) vals[i] = buf.Get(buf.Count - take + i);
+        Array.Sort(vals);
+
+        float lo = vals[0], hi = vals[take - 1];
+        if (key is "frametime" or "renderlatency")
+        {
+            // 毛刺压制：上限用 P98（只留 2% 顶部空间给尖峰）
+            var p98 = vals[Math.Max(0, (int)Math.Ceiling(take * 0.98) - 1)];
+            if (p98 > lo) hi = p98;
+        }
+
+        float mid = (lo + hi) / 2f;
+        float minHalf = key is "frametime" or "renderlatency" ? 2f : 1f;
+        float half = Math.Max((hi - lo) / 2f, Math.Max(Math.Abs(mid) * 0.08f, minHalf));
+        return (mid - half, mid + half);
+    }
+
+    /// <summary>Catmull-Rom 平滑折线（三次贝塞尔逼近）：像素级采样点画直线会显生硬。</summary>
+    private static void AppendSmoothLines(SKPath path, SKPoint[] pts, int count)
+    {
+        if (count < 3)
+        {
+            for (int i = 1; i < count; i++) path.LineTo(pts[i]);
+            return;
+        }
+        for (int i = 0; i < count - 1; i++)
+        {
+            var p0 = pts[Math.Max(0, i - 1)];
+            var p1 = pts[i];
+            var p2 = pts[i + 1];
+            var p3 = pts[Math.Min(count - 1, i + 2)];
+            path.CubicTo(
+                p1.X + (p2.X - p0.X) / 6f, p1.Y + (p2.Y - p0.Y) / 6f,
+                p2.X - (p3.X - p1.X) / 6f, p2.Y - (p3.Y - p1.Y) / 6f,
+                p2.X, p2.Y);
+        }
+    }
+
+    /// <summary>
     /// Renders a chart widget using SkiaSharp (the component library used by LiveCharts2)
     /// into the widget's cached bitmap; BlitWidget pushes it onto the overlay surface.
     /// SKPaint/SKPath/SKPoint[]/SKShader are reused across frames to avoid GC churn.
@@ -974,7 +1126,7 @@ public sealed class GameOverlayWindow : IDisposable
         };
         if (chartKey == null || !_chartData.TryGetValue(chartKey, out var buf) || buf.Count < 2) return;
 
-        var (min, max) = buf.GetRange();
+        var (min, max) = ChartAxisRange(buf, chartKey);
         int pad = 6;
         // Title font size follows the widget's FontSize (editable in the property panel),
         // auto-shrunk when the widget is too short; the chart area adapts to it.
@@ -1025,8 +1177,8 @@ public sealed class GameOverlayWindow : IDisposable
         if (cw < 24) { rightPad = 0; cw = w.Width - pad * 2; showMinMax = false; }
         if (cw < 4) return;
 
-        // --- Dark rounded background (semi-transparent panel; corners stay transparent) ---
-        canvas.DrawRoundRect(new SKRect(0, 0, w.Width, w.Height), 6, 6, bgPaint);
+        // --- Light rounded panel (Fluent elevation layer on the card; corners transparent) ---
+        canvas.DrawRoundRect(new SKRect(0, 0, w.Width, w.Height), 8, 8, bgPaint);
 
         // --- Title + current value beside it (start after the measured title) ---
         // NOTE: DrawText's y is the BASELINE, not the top — draw at `pad + titleFs` so the
@@ -1078,18 +1230,18 @@ public sealed class GameOverlayWindow : IDisposable
         w.AreaPath.Close();
         canvas.DrawPath(w.AreaPath, areaPaint);
 
-        // --- Glow line (thicker, dimmer) — path reused via Rewind ---
+        // --- Glow line (thicker, dimmer) — path reused via Rewind, Catmull-Rom smoothed ---
         w.GlowPath ??= new SKPath();
         w.GlowPath.Rewind();
         w.GlowPath.MoveTo(points[0]);
-        for (int i = 1; i < count; i++) w.GlowPath.LineTo(points[i]);
+        AppendSmoothLines(w.GlowPath, points, count);
         canvas.DrawPath(w.GlowPath, glowPaint);
 
-        // --- Main line ---
+        // --- Main line (smoothed) ---
         w.LinePath ??= new SKPath();
         w.LinePath.Rewind();
         w.LinePath.MoveTo(points[0]);
-        for (int i = 1; i < count; i++) w.LinePath.LineTo(points[i]);
+        AppendSmoothLines(w.LinePath, points, count);
         canvas.DrawPath(w.LinePath, linePaint);
 
         // --- Current value dot ---
@@ -1215,15 +1367,18 @@ public sealed class GameOverlayWindow : IDisposable
 
     private static (string? key, float value) GetChartValue(OverlayWidgetType type, MonitorSample s)
     {
+        // 无效样本返回 -1（填充处以 value >= 0 过滤，不入 buffer）。
+        // 不能用 0 兜底：0 会混进曲线把 min 压到 0，整个 Y 轴坐标系被毁掉
+        //（典型：渲染延迟无数据时画成 0ms 贴底直线）。
         return type switch
         {
-            OverlayWidgetType.FpsChart => ("fps", s.Fps >= 0 ? s.Fps : 0),
-            OverlayWidgetType.FpsLow1Chart => ("low1", s.FpsLow1 >= 0 ? s.FpsLow1 : 0),
-            OverlayWidgetType.FpsLow01Chart => ("low01", s.FpsLow01 >= 0 ? s.FpsLow01 : 0),
-            OverlayWidgetType.FpsTimeChart => ("frametime", s.FrameTimeMs >= 0 ? s.FrameTimeMs : 0),
-            OverlayWidgetType.FpsRenderLatencyChart => ("renderlatency", s.RenderLatencyMs >= 0 ? s.RenderLatencyMs : 0),
-            OverlayWidgetType.CpuTempChart => ("cputemp", s.CpuTemp >= 0 ? s.CpuTemp : 0),
-            _ => (null, 0)
+            OverlayWidgetType.FpsChart => ("fps", s.Fps),
+            OverlayWidgetType.FpsLow1Chart => ("low1", s.FpsLow1),
+            OverlayWidgetType.FpsLow01Chart => ("low01", s.FpsLow01),
+            OverlayWidgetType.FpsTimeChart => ("frametime", s.FrameTimeMs),
+            OverlayWidgetType.FpsRenderLatencyChart => ("renderlatency", s.RenderLatencyMs),
+            OverlayWidgetType.CpuTempChart => ("cputemp", s.CpuTemp),
+            _ => (null, -1)
         };
     }
 
@@ -1239,7 +1394,10 @@ public sealed class GameOverlayWindow : IDisposable
         opacity = Math.Clamp(opacity, 0f, 1f);
         if (Math.Abs(opacity - _bgOpacity) < 0.001f) return;
         _bgOpacity = opacity;
-        // Background pixel changed — refill the whole surface and re-render everything
+        // Background card changed — regenerate it and refill the whole surface,
+        // then re-render everything
+        _bgCard?.Dispose();
+        _bgCard = null;
         _surfaceInited = false;
         foreach (var w in _widgets) w.Dirty = true;
         RenderFrame();
@@ -1257,11 +1415,18 @@ public sealed class GameOverlayWindow : IDisposable
         _topmostTimer?.Dispose();
         _topmostTimer = null;
 
+        _oledTimer?.Dispose();
+        _oledTimer = null;
+        _oledEnabled = false;
+
         if (_hwnd != IntPtr.Zero && IsWindow(_hwnd))
         {
             DestroyWindow(_hwnd);
             _hwnd = IntPtr.Zero;
         }
+
+        _bgCard?.Dispose();
+        _bgCard = null;
 
         // Dispose cached image bitmaps and per-widget render resources
         foreach (var w in _widgets)

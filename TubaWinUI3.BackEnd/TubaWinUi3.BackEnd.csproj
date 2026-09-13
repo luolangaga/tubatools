@@ -33,11 +33,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="binverify 2\TubaWinUI3.BackEnd.dll" />
-    <None Remove="binverify 2\TubaWinUI3.BackEnd.exe" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="binverify 2\" />
+    <!--
+      与主程序共享的纯逻辑源文件（Compile 链接，非复制）：
+      - FpsTracker.cs：帧追踪器（PresentMon 口径），保证后台覆盖层与主程序
+        游戏监控页的 FPS / 1% Low / 0.1% Low 读数口径完全一致。
+      - MonitorSample.cs：FpsSnapshot 等纯数据模型。
+    -->
+    <Compile Include="..\TubaWinUi3.WinUI3\Services\FpsTracker.cs" Link="GameMonitor\FpsTracker.cs" />
+    <Compile Include="..\TubaWinUi3.WinUI3\Models\MonitorSample.cs" Link="GameMonitor\MonitorSample.cs" />
   </ItemGroup>
 </Project>

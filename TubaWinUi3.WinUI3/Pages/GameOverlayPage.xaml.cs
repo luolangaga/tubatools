@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
+using TubaWinUi3.Services.ActiveIntercept;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI;
@@ -58,25 +59,20 @@ public sealed partial class GameOverlayPage : Page
     private Point _dragStartPoint;
     private double _dragStartX, _dragStartY;
     private bool _suppressEvents;
+    // LoadConfig 完成前禁止 SaveConfig 落盘（防止初始化事件用空 _widgets 覆盖已保存布局）
+    private bool _configLoaded;
     private bool _widgetHasCapture;
     private const string SettingsPrefix = "GameOverlay_";
 
-    // ---- 数据记录（采样只进内存，结束时一次性写文件） ----
+    // ---- 数据记录（会话逻辑在 Services.GameMonitorRecordSession，与后台自动记录共用一份） ----
     private readonly Dictionary<string, CheckBox> _recordChecks = new();
-    private readonly List<MonitorRecordSample> _recordSamples = new();
+    private readonly GameMonitorRecordSession _session = new();
     private List<MonitorRecordMetric> _recordMetrics = new();
-    private readonly Stopwatch _recordWatch = new();
     private DispatcherTimer? _recordTimer;
     private bool _recording;
     private bool _recordSamplingInFlight;
-    private bool _recordTruncated;
     private bool _suppressRecordMetricEvents;
     private double _recordIntervalMs = 1000;
-    private DateTime _recordStartTime;
-    private string _recordTarget = "";
-    private string _recordCpu = "";
-    private string _recordGpu = "";
-    private string _recordFpsProcess = "";
     private string _lastRecordDir = "";
     private MonitorRecordOutput _recordOutputs = GameMonitorRecorder.DefaultOutputs;
     private bool _recordUiReady;
@@ -150,10 +146,17 @@ public sealed partial class GameOverlayPage : Page
         InitializeComponent();
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+        InitBackendMonitorToggle();
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
     {
+        // 开关状态可能被设置页/另一处改过，每次进入页面都刷新
+        _backendToggleInitializing = true;
+        TglBackendMonitor.IsOn = GameMonitorBackendService.IsEnabled;
+        _backendToggleInitializing = false;
+        UpdateBackendMonitorStatus();
+
         if (!IsRunningAsAdmin())
         {
             AdminOverlay.Visibility = Visibility.Visible;
@@ -167,6 +170,99 @@ public sealed partial class GameOverlayPage : Page
         RefreshPresetCombo();
         LoadConfig();
         ScanGameWindows();
+
+        // 首次打开游戏监控工具：弹窗询问是否开启后台自动监控（仅询问一次）
+        _ = ShowBackendMonitorPromptAsync();
+    }
+
+    // ================= 后台自动监控（与流氓软件拦截共用后端进程） =================
+
+    private bool _backendToggleInitializing;
+
+    /// <summary>
+    /// 初始化「后台自动监控」开关：MSIX 打包模式 / 后端 exe 缺失时整个选项隐藏。
+    /// </summary>
+    private void InitBackendMonitorToggle()
+    {
+        _backendToggleInitializing = true;
+
+        if (!GameMonitorBackendService.IsSupported || !GameMonitorBackendService.IsBackendAvailable)
+        {
+            TglBackendMonitor.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            TglBackendMonitor.IsOn = GameMonitorBackendService.IsEnabled;
+        }
+
+        _backendToggleInitializing = false;
+        UpdateBackendMonitorStatus();
+    }
+
+    private void TglBackendMonitor_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_backendToggleInitializing) return;
+        GameMonitorBackendService.SetEnabled(TglBackendMonitor.IsOn);
+        UpdateBackendMonitorStatus();
+    }
+
+    private void UpdateBackendMonitorStatus()
+    {
+        if (!GameMonitorBackendService.IsSupported) return;
+
+        if (!TglBackendMonitor.IsOn)
+        {
+            TxtBackendStatus.Text = "";
+        }
+        else if (ActiveInterceptService.IsRunning)
+        {
+            TxtBackendStatus.Text = "运行中";
+            TxtBackendStatus.Foreground = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+        }
+        else
+        {
+            TxtBackendStatus.Text = "未运行（后端缺失）";
+            TxtBackendStatus.Foreground = new SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+        }
+    }
+
+    /// <summary>首次打开本工具时询问是否开启后台自动监控；无论选什么只询问一次。</summary>
+    private async Task ShowBackendMonitorPromptAsync()
+    {
+        try
+        {
+            if (!GameMonitorBackendService.IsSupported || !GameMonitorBackendService.IsBackendAvailable) return;
+            if (GameMonitorBackendService.HasPrompted) return;
+            if (XamlRoot is null) return;
+
+            GameMonitorBackendService.MarkPrompted();
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot,
+                Title = "开启游戏后台自动监控？",
+                Content = "开启后，即使图吧工具箱没有运行，后台服务也会在检测到全屏/无边框游戏时，"
+                        + "自动在游戏窗口上显示 FPS、1% Low、帧生成时间等读数。\n\n"
+                        + "该功能与「流氓软件拦截」共用同一个轻量后台服务，随时可以在本页面开关。",
+                PrimaryButtonText = "开启",
+                CloseButtonText = "暂不",
+                DefaultButton = ContentDialogButton.Primary,
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && !TglBackendMonitor.IsOn)
+            {
+                _backendToggleInitializing = true;
+                TglBackendMonitor.IsOn = true;
+                _backendToggleInitializing = false;
+                GameMonitorBackendService.SetEnabled(true);
+                UpdateBackendMonitorStatus();
+            }
+        }
+        catch
+        {
+            // 弹窗失败（页面未挂载等）不影响页面其余功能
+        }
     }
 
     private static bool IsRunningAsAdmin()
@@ -304,8 +400,13 @@ public sealed partial class GameOverlayPage : Page
             if (families[i].Equals(defaultFont, StringComparison.OrdinalIgnoreCase))
                 selectedIndex = i;
         }
+        // 设置选中项会触发 Font_Changed → SaveConfig()；此时 LoadConfig 还没跑、
+        // _widgets 为空，会把已保存的 GameOverlay_Layout 覆盖成 "[]" —— 自动悬浮窗
+        // 退化成默认 FPS+曲线、编辑器画布空白的元凶。必须先屏蔽事件。
+        _suppressEvents = true;
         if (CmbFont.Items.Count > 0)
             CmbFont.SelectedIndex = selectedIndex;
+        _suppressEvents = false;
     }
 
     private void Font_Changed(object sender, SelectionChangedEventArgs e)
@@ -1091,6 +1192,13 @@ public sealed partial class GameOverlayPage : Page
         SaveConfig();
     }
 
+    private void OledProtection_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_suppressEvents) return;
+        AppSettings.Set(SettingsPrefix + "OledProtection", TglOled.IsOn ? "true" : "false");
+        GameOverlayWindow.Instance?.SetOledProtection(TglOled.IsOn);
+    }
+
     #endregion
 
     #region Game Window Scanning
@@ -1355,7 +1463,8 @@ public sealed partial class GameOverlayPage : Page
             (float)(SliderBgOpacity.Value / 100),
             GetSelectedPosition(),
             cw, ch,
-            _isDesktopTarget
+            _isDesktopTarget,
+            oledProtection: AppSettings.Get(SettingsPrefix + "OledProtection") == "true"
         );
 
         StartPolling();
@@ -1656,6 +1765,41 @@ public sealed partial class GameOverlayPage : Page
 
     private void ViewRecords_Click(object sender, RoutedEventArgs e) => OpenRecordsViewer(null);
 
+    /// <summary>
+    /// 「记录设置」弹窗：把指标勾选/导出格式/输出目录整块（RecordSettingsPanel）
+    /// 搬进 ContentDialog —— 控件的 x:Name 与事件绑定不变，主界面保持精简。
+    /// 关闭后放回隐藏宿主（RecordSettingsHost），下次打开再搬。
+    /// </summary>
+    private async void RecordSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (_recordDialogOpen) return;
+        _recordDialogOpen = true;
+        try
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "记录设置",
+                Content = new ScrollViewer { Content = RecordSettingsPanel, MaxHeight = 480, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
+                CloseButtonText = "完成",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = XamlRoot,
+                RequestedTheme = ThemeService.CurrentElementTheme
+            };
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[GameOverlay] 记录设置弹窗失败: {ex.Message}");
+        }
+        finally
+        {
+            _recordDialogOpen = false;
+            // 弹窗关闭后把控件收回隐藏宿主：控件不能留在已关闭的对话框视觉树里
+            RecordSettingsHost.Children.Clear();
+            RecordSettingsHost.Children.Add(RecordSettingsPanel);
+        }
+    }
+
     /// <summary>打开「记录查看」窗口（独立窗口，不影响正在进行的覆盖层与记录）。</summary>
     private static void OpenRecordsViewer(string? file)
     {
@@ -1692,16 +1836,10 @@ public sealed partial class GameOverlayPage : Page
 
         _recordMetrics = metrics;
         _recordOutputs = outputs;
-        _recordSamples.Clear();
-        _recordTruncated = false;
-        _recordStartTime = DateTime.Now;
-        _recordWatch.Restart();
         _recordIntervalMs = Math.Max(200, (int)NbRefresh.Value);
-        _recordCpu = "";
-        _recordGpu = "";
-        _recordFpsProcess = "";
-        _recordTarget = (CmbGameWindow.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
-        if (string.IsNullOrWhiteSpace(_recordTarget)) _recordTarget = TxtWindowStatus.Text;
+        var target = (CmbGameWindow.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(target)) target = TxtWindowStatus.Text;
+        _session.Start(metrics, outputs, (int)_recordIntervalMs, target);
         _recording = true;
 
         // 覆盖层运行时已在自己的轮询里采样，复用它；否则记录器自己起定时器
@@ -1721,49 +1859,39 @@ public sealed partial class GameOverlayPage : Page
         SetRecordMetricsEnabled(true);
         UpdateRecordButton();
 
-        var metrics = _recordMetrics;
-        // 掐掉首尾「FPS 还没出数」的采样（游戏还没进前台时 FPS 恒为 0），别让这段零值进文件
-        var samples = GameMonitorRecorder.TrimIdleEdges(
-            metrics, new List<MonitorRecordSample>(_recordSamples), out var headTrim, out var tailTrim);
-        var meta = BuildRecordMeta();
+        TxtRecordStatus.Text = "正在写入文件…";
+        RecordResult? result;
+        try
+        {
+            // 写盘放线程池，避免样本多时阻塞 UI
+            result = await Task.Run(() => _session.Stop());
+        }
+        catch (Exception ex)
+        {
+            TxtRecordStatus.Text = $"写入失败: {ex.Message}";
+            return;
+        }
 
-        if (metrics.Count == 0 || samples.Count == 0)
+        if (result is null)
         {
             TxtRecordStatus.Text = "没有采集到数据，未生成文件";
             BtnOpenRecordDir.IsEnabled = Directory.Exists(GetRecordDir());
             return;
         }
 
-        TxtRecordStatus.Text = "正在写入文件…";
-        var outputs = _recordOutputs;
-        try
-        {
-            var paths = await Task.Run(() => WriteRecordFiles(metrics, samples, meta, outputs));
-            _lastRecordDir = GetRecordDir();
-            UpdateRecordDirText();
-            var names = string.Join("、", paths.Select(Path.GetFileName));
-            var prefix = autoStop ? $"已达 {GameMonitorRecorder.MaxDurationMinutes} 分钟上限，已自动停止并保存：" : "已保存：";
-            TxtRecordStatus.Text = prefix + names + TrimNote(headTrim, tailTrim);
-            await ShowRecordSavedDialogAsync(paths, metrics, samples, meta, autoStop, headTrim, tailTrim);
-            _recordSamples.Clear();
-            _recordMetrics.Clear();
-        }
-        catch (Exception ex)
-        {
-            TxtRecordStatus.Text = $"写入失败: {ex.Message}";
-        }
+        _lastRecordDir = GetRecordDir();
+        UpdateRecordDirText();
+        var names = string.Join("、", result.Paths.Select(Path.GetFileName));
+        var prefix = autoStop ? $"已达 {GameMonitorRecorder.MaxDurationMinutes} 分钟上限，已自动停止并保存：" : "已保存：";
+        TxtRecordStatus.Text = prefix + names + TrimNote(result.HeadTrim, result.TailTrim);
+        await ShowRecordSavedDialogAsync(result, autoStop);
     }
 
     /// <summary>保存完成后的结果弹窗：文件清单 + 关键统计，一键打开输出文件夹。</summary>
-    private async Task ShowRecordSavedDialogAsync(
-        List<string> paths,
-        List<MonitorRecordMetric> metrics,
-        List<MonitorRecordSample> samples,
-        MonitorRecordMeta meta,
-        bool autoStop,
-        double headTrim,
-        double tailTrim)
+    private async Task ShowRecordSavedDialogAsync(RecordResult result, bool autoStop)
     {
+        var (paths, meta, samples, headTrim, tailTrim) = result;
+        var metrics = _recordMetrics; // 与样本列一一对应
         if (_recordDialogOpen || XamlRoot is null) return;
         _recordDialogOpen = true;
         try
@@ -1851,14 +1979,9 @@ public sealed partial class GameOverlayPage : Page
         _recording = false;
         StopRecordTimer();
 
-        var metrics = _recordMetrics;
-        if (metrics.Count == 0 || _recordSamples.Count == 0) return;
         try
         {
-            var samples = GameMonitorRecorder.TrimIdleEdges(
-                metrics, new List<MonitorRecordSample>(_recordSamples), out _, out _);
-            if (samples.Count > 0)
-                WriteRecordFiles(metrics, samples, BuildRecordMeta(), _recordOutputs);
+            _session.Stop(); // 空会话（无有效采样）内部不会产生文件
         }
         catch (Exception ex)
         {
@@ -1873,65 +1996,6 @@ public sealed partial class GameOverlayPage : Page
         if (headTrim > 0.05) parts.Add($"开头 {headTrim:0.#} 秒");
         if (tailTrim > 0.05) parts.Add($"结尾 {tailTrim:0.#} 秒");
         return parts.Count == 0 ? "" : $"（已剔除{string.Join("、", parts)}的无效数据）";
-    }
-
-    private MonitorRecordMeta BuildRecordMeta() => new()
-    {
-        StartTime = _recordStartTime,
-        EndTime = DateTime.Now,
-        IntervalMs = _recordIntervalMs,
-        TargetWindow = _recordTarget,
-        CpuName = _recordCpu,
-        GpuName = _recordGpu,
-        FpsProcess = _recordFpsProcess,
-        Truncated = _recordTruncated,
-        DurationSeconds = _recordWatch.Elapsed.TotalSeconds
-    };
-
-    private List<string> WriteRecordFiles(
-        List<MonitorRecordMetric> metrics,
-        List<MonitorRecordSample> samples,
-        MonitorRecordMeta meta,
-        MonitorRecordOutput outputs)
-    {
-        var dir = GetRecordDir();
-        Directory.CreateDirectory(dir);
-        var baseName = GameMonitorRecorder.BuildFileNameBase(meta.StartTime);
-        var utf8 = new UTF8Encoding(false);
-        var paths = new List<string>();
-
-        if (outputs.HasFlag(MonitorRecordOutput.Json))
-        {
-            var jsonPath = UniqueRecordPath(Path.Combine(dir, baseName + ".json"));
-            File.WriteAllText(jsonPath, GameMonitorRecorder.BuildJson(metrics, samples, meta), utf8);
-            paths.Add(jsonPath);
-        }
-        if (outputs.HasFlag(MonitorRecordOutput.Markdown))
-        {
-            var mdPath = UniqueRecordPath(Path.Combine(dir, baseName + ".md"));
-            File.WriteAllText(mdPath, GameMonitorRecorder.BuildMarkdown(metrics, samples, meta), utf8);
-            paths.Add(mdPath);
-        }
-        if (outputs.HasFlag(MonitorRecordOutput.Csv))
-        {
-            var csvPath = UniqueRecordPath(Path.Combine(dir, baseName + ".csv"));
-            File.WriteAllText(csvPath, GameMonitorRecorder.BuildCsv(metrics, samples, meta), utf8);
-            paths.Add(csvPath);
-        }
-        return paths;
-    }
-
-    private static string UniqueRecordPath(string path)
-    {
-        if (!File.Exists(path)) return path;
-        var dir = Path.GetDirectoryName(path)!;
-        var name = Path.GetFileNameWithoutExtension(path);
-        var ext = Path.GetExtension(path);
-        for (int i = 1; ; i++)
-        {
-            var candidate = Path.Combine(dir, $"{name}_{i}{ext}");
-            if (!File.Exists(candidate)) return candidate;
-        }
     }
 
     private void StartRecordTimer()
@@ -1975,25 +2039,13 @@ public sealed partial class GameOverlayPage : Page
 
     private void AppendRecordSample(MonitorSample sample)
     {
-        var metrics = _recordMetrics;
-        if (metrics.Count == 0) return;
-
-        if (string.IsNullOrEmpty(_recordCpu)) _recordCpu = sample.CpuName;
-        if (string.IsNullOrEmpty(_recordGpu)) _recordGpu = sample.GpuName;
-        if (string.IsNullOrEmpty(_recordFpsProcess)) _recordFpsProcess = sample.FpsProcess;
-
-        var values = new float[metrics.Count];
-        for (int i = 0; i < metrics.Count; i++) values[i] = metrics[i].Read(sample);
-        _recordSamples.Add(new MonitorRecordSample
-        {
-            Seconds = _recordWatch.Elapsed.TotalSeconds,
-            Values = values
-        });
+        if (_recordMetrics.Count == 0) return;
+        _session.Append(sample);
 
         // 硬上限：到点立即停止并保存，避免长时间记录导致内存持续增长
-        if (_recordWatch.Elapsed.TotalMinutes >= GameMonitorRecorder.MaxDurationMinutes)
+        if (_session.ExceededMaxDuration)
         {
-            _recordTruncated = true;
+            _session.MarkTruncated();
             UpdateRecordStatus();
             _ = StopRecordingAsync(autoStop: true);
             return;
@@ -2011,16 +2063,16 @@ public sealed partial class GameOverlayPage : Page
     {
         if (!_recording)
         {
-            if (_recordSamples.Count == 0 && string.IsNullOrEmpty(_lastRecordDir))
+            if (string.IsNullOrEmpty(_lastRecordDir))
                 TxtRecordStatus.Text = "未开始";
             return;
         }
-        var elapsed = _recordWatch.Elapsed;
+        var elapsed = _session.Elapsed;
         var limit = TimeSpan.FromMinutes(GameMonitorRecorder.MaxDurationMinutes);
         var remaining = limit - elapsed;
         if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
         TxtRecordStatus.Text =
-            $"记录中… 已采样 {_recordSamples.Count} 条 ｜ 已用 {FormatClock(elapsed)} ｜ 剩余 {FormatClock(remaining)}";
+            $"记录中… 已采样 {_session.SampleCount} 条 ｜ 已用 {FormatClock(elapsed)} ｜ 剩余 {FormatClock(remaining)}";
     }
 
     private static string FormatClock(TimeSpan t) =>
@@ -2416,12 +2468,19 @@ public sealed partial class GameOverlayPage : Page
 
     private void SaveConfig()
     {
+        // LoadConfig 完成前 _widgets 还是空的，此时落盘会把已保存的布局覆盖成 "[]"
+        if (!_configLoaded) return;
         try
         {
-            AppSettings.Set(SettingsPrefix + "CanvasW", NbCanvasW.Value);
-            AppSettings.Set(SettingsPrefix + "CanvasH", NbCanvasH.Value);
+            // NaN 防护：NumberBox 未初始化/清空时 Value 可能为 NaN，一旦写成 "NaN"，
+            // 下次 LoadConfig 读到 NaN 会让布局加载半途而废（画布空白）。
+            double canvasW = double.IsNaN(NbCanvasW.Value) ? 600 : NbCanvasW.Value;
+            double canvasH = double.IsNaN(NbCanvasH.Value) ? 300 : NbCanvasH.Value;
+            double refresh = double.IsNaN(NbRefresh.Value) ? 1000 : NbRefresh.Value;
+            AppSettings.Set(SettingsPrefix + "CanvasW", canvasW);
+            AppSettings.Set(SettingsPrefix + "CanvasH", canvasH);
             AppSettings.Set(SettingsPrefix + "Position", CmbPosition.SelectedIndex);
-            AppSettings.Set(SettingsPrefix + "Refresh", NbRefresh.Value);
+            AppSettings.Set(SettingsPrefix + "Refresh", refresh);
             AppSettings.Set(SettingsPrefix + "BgOpacity", SliderBgOpacity.Value);
             AppSettings.Set(SettingsPrefix + "Scale", _scalePercent);
             AppSettings.Set(SettingsPrefix + "FontFamily", CmbFont.SelectedItem as string ?? "Microsoft YaHei UI");
@@ -2445,19 +2504,29 @@ public sealed partial class GameOverlayPage : Page
         try
         {
             _suppressEvents = true;
+            _configLoaded = false;
 
-            NbCanvasW.Value = AppSettings.GetDouble(SettingsPrefix + "CanvasW", 600);
-            NbCanvasH.Value = AppSettings.GetDouble(SettingsPrefix + "CanvasH", 300);
-            if (double.IsNaN(NbCanvasW.Value) || NbCanvasW.Value < 200) NbCanvasW.Value = 600;
-            if (double.IsNaN(NbCanvasH.Value) || NbCanvasH.Value < 100) NbCanvasH.Value = 300;
-            DesignCanvas.Width = NbCanvasW.Value;
-            DesignCanvas.Height = NbCanvasH.Value;
+            // NaN 防护：历史版本可能已把 NaN 写进配置（如 GameOverlay_Refresh=NaN），
+            // 这里统一兜底，并在读取时把坏值修复回默认，避免下次再触发。
+            double cw = AppSettings.GetDouble(SettingsPrefix + "CanvasW", 600);
+            double chh = AppSettings.GetDouble(SettingsPrefix + "CanvasH", 300);
+            if (double.IsNaN(cw) || cw < 200) cw = 600;
+            if (double.IsNaN(chh) || chh < 100) chh = 300;
+            NbCanvasW.Value = cw;
+            NbCanvasH.Value = chh;
+            DesignCanvas.Width = cw;
+            DesignCanvas.Height = chh;
             UpdateCanvasDecorations();
 
-            CmbPosition.SelectedIndex = AppSettings.GetInt(SettingsPrefix + "Position", 0);
-            NbRefresh.Value = AppSettings.GetDouble(SettingsPrefix + "Refresh", 1000);
-            SliderBgOpacity.Value = AppSettings.GetDouble(SettingsPrefix + "BgOpacity", 70);
+            CmbPosition.SelectedIndex = Math.Clamp(AppSettings.GetInt(SettingsPrefix + "Position", 0), 0, 8);
+            double refresh = AppSettings.GetDouble(SettingsPrefix + "Refresh", 1000);
+            if (double.IsNaN(refresh) || refresh < 100) refresh = 1000;
+            NbRefresh.Value = refresh;
+            double bgOp = AppSettings.GetDouble(SettingsPrefix + "BgOpacity", 70);
+            if (double.IsNaN(bgOp) || bgOp < 0 || bgOp > 100) bgOp = 70;
+            SliderBgOpacity.Value = bgOp;
             TxtBgOpacity.Text = $"{SliderBgOpacity.Value:F0}%";
+            TglOled.IsOn = AppSettings.Get(SettingsPrefix + "OledProtection") == "true";
 
             // Overall scale — the stored layout values already include the last applied scale
             double scale = AppSettings.GetDouble(SettingsPrefix + "Scale", 100);
@@ -2494,11 +2563,14 @@ public sealed partial class GameOverlayPage : Page
             LoadWidgetsFromJson(layoutJson);
 
             _suppressEvents = false;
+            _configLoaded = true;
             UpdateStatus();
         }
         catch
         {
             _suppressEvents = false;
+            // 即使加载失败也允许保存（编辑器保持可用），但布局可能不完整
+            _configLoaded = true;
         }
     }
 
@@ -2523,10 +2595,16 @@ public sealed partial class GameOverlayPage : Page
 
     private void LoadWidgetsFromJson(string json)
     {
+        // 先清空画布：页面实例可能被缓存复用，二次进入时不清会叠出重复组件，
+        // 编辑界面也就无法如实还原「上一次保存的样式」；保存的布局为空 = 画布本来就该是空的
+        ClearAllWidgets();
         if (string.IsNullOrEmpty(json)) return;
         using var doc = JsonDocument.Parse(json);
         foreach (var item in doc.RootElement.EnumerateArray())
         {
+            // 单组件解析失败不拖垮整个布局（跳过该组件继续加载）
+            try
+            {
             var type = (OverlayWidgetType)item.GetProperty("type").GetInt32();
             // 1% Low / 0.1% Low 组件重新启用（2026-09 恢复）：旧布局里保存的
             // 这类组件直接加载，不再跳过（枚举值从未删过，编号兼容）。
@@ -2555,6 +2633,8 @@ public sealed partial class GameOverlayPage : Page
             };
             CreateWidgetElement(widget);
             _widgets.Add(widget);
+            }
+            catch { }
         }
     }
 

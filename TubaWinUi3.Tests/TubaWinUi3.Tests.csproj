@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TubaWinUi3.WinUI3\TubaWinUi3.csproj" />
-    <ProjectReference Include="..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" />
+    <ProjectReference Include="..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" Aliases="backend" />
   </ItemGroup>
 
   <ItemGroup>

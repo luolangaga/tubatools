@@ -36,9 +36,17 @@
                 <FontIcon FontSize="20" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Glyph="&#xE9F5;" />
             </Border>
             <StackPanel Grid.Column="1" Spacing="2">
-                <TextBlock FontSize="22" FontWeight="Bold" Text="记录查看" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock FontSize="22" FontWeight="Bold" Text="记录查看" />
+                    <Border Background="#26E81123" BorderBrush="#66E81123" BorderThickness="1"
+                            CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                        <TextBlock FontSize="12" FontWeight="Bold" Foreground="#E81123" Text="Beta" />
+                    </Border>
+                </StackPanel>
                 <TextBlock Opacity="0.8" FontSize="12"
                            Text="解析游戏监控导出的 JSON / CSV，图表化回放 FPS、温度、负载等历史数据" />
+                <TextBlock FontSize="12" Foreground="#E81123"
+                           Text="此功能处于Beta测试中，可能部分数据出现偏差和不准确的问题。" />
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
                 <Button Click="Refresh_Click" ToolTipService.ToolTip="重新扫描输出目录">

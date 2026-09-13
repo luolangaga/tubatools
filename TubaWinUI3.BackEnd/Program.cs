@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using TubaWinUI3.BackEnd.GameMonitor;
 using TubaWinUI3.BackEnd.Models;
 
 namespace TubaWinUI3.BackEnd;
@@ -17,7 +18,7 @@ internal static class Program
 {
     private const string MutexName = "Global\\TubaWinUi3_ActiveIntercept_Backend";
 
-    private static int Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         // 常驻托盘服务：隐藏自身控制台窗口（后台服务不弹黑窗口）。
         // 但 --help 时保留控制台方便查看用法。
@@ -104,30 +105,53 @@ internal static class Program
         }
 
         BackEndLog.Configure(config.LogFile);
-        BackEndLog.Info($"主动拦截后端启动（PID {Environment.ProcessId}），配置：{configPath ?? "(默认)"}");
+        BackEndLog.Info($"后端启动（PID {Environment.ProcessId}），配置：{configPath ?? "(默认)"}，" +
+                        $"拦截={config.EnableIntercept}，游戏监控={config.EnableGameMonitor}");
 
-        NotificationHelper.RegisterComServer();
+        // ---- 功能隔离：两个子系统互不激活，没开的绝不装配 ----
+        if (!config.EnableIntercept && !config.EnableGameMonitor)
+        {
+            BackEndLog.Info("两个功能均未启用，后端无事可做，退出。");
+            return 0;
+        }
+
+        if (config.EnableIntercept) NotificationHelper.RegisterComServer();
 
         // ---- 装配（共享同一组存储实例）----
-        var monitor = new InterceptMonitor(config);
-        var handler = new InterceptRequestHandler(
-            Path.Combine(config.DataDir, "active_intercept"),
-            monitor.State,
-            monitor.Events,
-            monitor.BlockEngine,
-            monitor.Policies,
-            monitor.Ignore,
-            monitor.Notifications);
-        var server = new NamedPipeBackendServer(handler.DispatchAsync);
+        InterceptMonitor? monitor = null;
+        InterceptRequestHandler? handler = null;
+        NamedPipeBackendServer? server = null;
+        if (config.EnableIntercept)
+        {
+            monitor = new InterceptMonitor(config);
+            handler = new InterceptRequestHandler(
+                Path.Combine(config.DataDir, "active_intercept"),
+                monitor.State,
+                monitor.Events,
+                monitor.BlockEngine,
+                monitor.Policies,
+                monitor.Ignore,
+                monitor.Notifications);
+            server = new NamedPipeBackendServer(handler.DispatchAsync);
+        }
+
+        GameMonitorService? gameMonitor = null;
+        if (config.EnableGameMonitor)
+        {
+            gameMonitor = new GameMonitorService(config);
+        }
 
         using var cts = new CancellationTokenSource();
 
-        // 推送：监视器与管道处理器都直通管道广播
-        monitor.Notify = server.BroadcastNotification;
-        handler.Notify = server.BroadcastNotification;
+        if (monitor is not null && handler is not null && server is not null)
+        {
+            // 推送：监视器与管道处理器都直通管道广播
+            monitor.Notify = server.BroadcastNotification;
+            handler.Notify = server.BroadcastNotification;
 
-        // 优雅停机：任何一方请求退出 → 取消令牌
-        handler.ShutdownRequested += (_, _) => SafeCancel(cts);
+            // 优雅停机：任何一方请求退出 → 取消令牌
+            handler.ShutdownRequested += (_, _) => SafeCancel(cts);
+        }
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
@@ -135,14 +159,26 @@ internal static class Program
         };
         AppDomain.CurrentDomain.ProcessExit += (_, _) => SafeCancel(cts);
 
-        server.Start(cts.Token);
-        BackEndLog.Info($"命名管道服务器已启动：{InterceptPipeConstants.PipeName}");
+        if (server is not null)
+        {
+            server.Start(cts.Token);
+            BackEndLog.Info($"命名管道服务器已启动：{InterceptPipeConstants.PipeName}");
+        }
 
-        // 系统托盘（常驻模式；--once 诊断模式不建托盘）
+        if (gameMonitor is not null)
+        {
+            gameMonitor.Start();
+            BackEndLog.Info("游戏后台自动监控已启动（检测到游戏时自动显示 FPS 覆盖层）");
+        }
+
+        // 系统托盘（常驻模式；--once 诊断模式不建托盘）。菜单文案按启用功能自适应。
         BackendTrayHost? tray = null;
         if (!once)
         {
-            tray = new BackendTrayHost("图吧工具箱CE · 主动拦截已开启", config.DataDir, () => SafeCancel(cts));
+            var tip = config.EnableIntercept && config.EnableGameMonitor ? "图吧工具箱CE · 主动拦截与游戏监控运行中"
+                    : config.EnableGameMonitor ? "图吧工具箱CE · 游戏自动监控运行中"
+                    : "图吧工具箱CE · 主动拦截已开启";
+            tray = new BackendTrayHost(tip, config.DataDir, config.EnableIntercept, () => SafeCancel(cts));
             tray.Start();
         }
 
@@ -150,14 +186,28 @@ internal static class Program
         {
             if (once)
             {
-                monitor.RunOnce();
+                monitor?.RunOnce();
                 BackEndLog.Info("--once 单轮执行完成");
             }
             else
             {
-                monitor.Run();
-                BackEndLog.Info("主动拦截后端退出");
+                // 阻塞等待停机信号（拦截循环由 monitor.Run 自行阻塞；纯游戏监控模式
+                // 没有常驻循环，靠 Delay 保持进程存活直到 cts 触发）
+                if (monitor is not null)
+                {
+                    monitor.Run();
+                    BackEndLog.Info("后端退出");
+                }
+                else
+                {
+                    await Task.Delay(Timeout.Infinite, cts.Token).ConfigureAwait(false);
+                }
             }
+            return 0;
+        }
+        catch (OperationCanceledException)
+        {
+            BackEndLog.Info("后端退出");
             return 0;
         }
         catch (Exception ex)
@@ -167,9 +217,10 @@ internal static class Program
         }
         finally
         {
+            try { gameMonitor?.Dispose(); } catch { }
             tray?.Dispose();
-            server.BroadcastServiceStopping();
-            server.Stop();
+            server?.BroadcastServiceStopping();
+            server?.Stop();
         }
     }
 

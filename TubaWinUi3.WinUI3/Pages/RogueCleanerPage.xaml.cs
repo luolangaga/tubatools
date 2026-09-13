@@ -1936,14 +1936,16 @@ public sealed partial class RogueCleanerPage : Page
     private void AiEnableBackend_Click(object sender, RoutedEventArgs e)
     {
         AppSettings.Set("ActiveInterceptEnabled", true);
-        ActiveInterceptService.Start();
+        // 同步而非裸启动：若游戏后台监控开着，后端已在运行，只需换配置重启装配
+        ActiveInterceptService.SyncBackend();
         RefreshActiveIntercept();
     }
 
     private void AiDisableBackend_Click(object sender, RoutedEventArgs e)
     {
         AppSettings.Set("ActiveInterceptEnabled", false);
-        ActiveInterceptService.Stop();
+        // 同步而非裸停止：游戏后台监控仍开着时后端必须继续常驻（只是卸掉拦截子系统）
+        ActiveInterceptService.SyncBackend();
         RefreshActiveIntercept();
     }
 

@@ -6,6 +6,16 @@ namespace TubaWinUI3.BackEnd.Models;
 /// <summary>后端配置（由主程序写入，后端 --config 参数读取）。</summary>
 public sealed class BackendConfig
 {
+    /// <summary>
+    /// 是否启用「流氓软件右键菜单主动拦截」子系统。默认 true 是为了兼容
+    /// 旧版配置文件（无此字段时保持拦截器原行为）；主程序新版写入时会显式赋值。
+    /// 两个功能开关互相独立：没开的子系统绝不装配、绝不激活。
+    /// </summary>
+    public bool EnableIntercept { get; set; } = true;
+
+    /// <summary>是否启用「游戏后台自动监控」子系统（检测到游戏自动显示 FPS 覆盖层）。</summary>
+    public bool EnableGameMonitor { get; set; } = false;
+
     /// <summary>轮询间隔（秒），默认 10。</summary>
     public int PollIntervalSeconds { get; set; } = 10;
 

@@ -1137,11 +1137,12 @@ public sealed partial class SettingsPage : Page
 
         if (enabled)
         {
-            ActiveInterceptService.Start();
+            ActiveInterceptService.SyncBackend();
         }
         else
         {
-            ActiveInterceptService.Stop();
+            // 同步而非裸停止：游戏后台监控仍开着时后端必须继续常驻
+            ActiveInterceptService.SyncBackend();
         }
         UpdateActiveInterceptStatus();
     }
@@ -1221,11 +1222,7 @@ public sealed partial class SettingsPage : Page
         };
         AppSettings.Set("ActiveInterceptNotifyMode", mode);
         // 重启后端使新配置生效
-        if (AppSettings.GetBool("ActiveInterceptEnabled", false))
-        {
-            ActiveInterceptService.Stop();
-            ActiveInterceptService.Start();
-        }
+        ActiveInterceptService.RestartBackend();
     }
 
     private void InitCpuzDataSourceStatus()

@@ -194,21 +194,61 @@ public static class ActiveInterceptService
     /// <summary>写后端配置文件到数据目录（JSON，JsonSerializer 保证转义正确）。</summary>
     public static void EnsureConfigWritten() => WriteConfig();
 
+    /// <summary>
+    /// 是否还有任一功能需要后端进程（以主程序当前设置为准）。
+    /// </summary>
+    private static bool AnyFeatureEnabled =>
+        AppSettings.GetBool("ActiveInterceptEnabled", false) ||
+        GameMonitorBackendService.IsEnabled;
+
+    /// <summary>
+    /// 按两个功能的开关状态同步后端进程（单一事实来源）：
+    ///   有任一功能开启 → 写配置并确保后端在运行；
+    ///   全部关闭 → 停掉后端。
+    /// 后端已运行但配置与期望不一致（如只开拦截时又打开了游戏监控）→ 重启后端，
+    /// 否则新开关永远不会生效（后端只在启动时读一次配置）。
+    /// 拦截开关切换时调用本方法而不是裸 Start/Stop —— 只有拦截关闭而游戏监控
+    /// 仍然开着时，后端进程必须继续常驻（只是不再装配拦截子系统）。
+    /// </summary>
+    public static void SyncBackend()
+    {
+        if (RuntimeHelper.IsMsixPackaged) return;
+
+        if (AnyFeatureEnabled)
+        {
+            lock (_lock)
+            {
+                bool running = _process is not null && !_process.HasExited;
+                if (running && ConfigDiffersFromDesired())
+                {
+                    // 配置漂移：停旧（释放互斥锁）→ 启新（加载新配置）
+                    Stop();
+                    Start();
+                    return;
+                }
+            }
+            Start();
+        }
+        else
+        {
+            Stop();
+        }
+    }
+
+    /// <summary>重启后端使配置变更生效（仅在任一功能开启时有意义）。</summary>
+    public static void RestartBackend()
+    {
+        if (RuntimeHelper.IsMsixPackaged) return;
+        if (!AnyFeatureEnabled) return;
+        Stop();
+        Start();
+    }
+
     private static void WriteConfig()
     {
         try
         {
-            var dataDir = ConfigManager.GetDataDir();
-            var config = new BackendConfigDto
-            {
-                PollIntervalSeconds = 10,
-                DataDir = dataDir,
-                LogFile = Path.Combine(dataDir, "active_intercept", "backend.log"),
-                NotifyMode = AppSettings.Get("ActiveInterceptNotifyMode") ?? "always",
-                NotifyCooldownMinutes = Math.Max(1, AppSettings.GetInt("ActiveInterceptNotifyCooldownMinutes", 30)),
-                MaxEventRows = 1000,
-            };
-            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            var json = BuildConfigJson();
             var dir = Path.GetDirectoryName(ConfigPath)!;
             Directory.CreateDirectory(dir);
             File.WriteAllText(ConfigPath, json);
@@ -216,6 +256,42 @@ public static class ActiveInterceptService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ActiveIntercept] 写配置失败：{ex.Message}");
+        }
+    }
+
+    private static string BuildConfigJson()
+    {
+        var dataDir = ConfigManager.GetDataDir();
+        var config = new BackendConfigDto
+        {
+            PollIntervalSeconds = 10,
+            DataDir = dataDir,
+            LogFile = Path.Combine(dataDir, "active_intercept", "backend.log"),
+            NotifyMode = AppSettings.Get("ActiveInterceptNotifyMode") ?? "always",
+            NotifyCooldownMinutes = Math.Max(1, AppSettings.GetInt("ActiveInterceptNotifyCooldownMinutes", 30)),
+            MaxEventRows = 1000,
+            // 功能隔离：两个子系统各自独立开关，没开的在后端里绝不装配
+            EnableIntercept = AppSettings.GetBool("ActiveInterceptEnabled", false),
+            EnableGameMonitor = GameMonitorBackendService.IsEnabled,
+        };
+        return JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    /// <summary>
+    /// 磁盘上的后端配置是否与当前设置期望的不一致（不一致说明某个功能开关
+    /// 在后端运行期间发生了变化，需要重启后端才能生效）。
+    /// </summary>
+    private static bool ConfigDiffersFromDesired()
+    {
+        try
+        {
+            if (!File.Exists(ConfigPath)) return true;
+            var onDisk = File.ReadAllText(ConfigPath);
+            return onDisk.Trim() != BuildConfigJson().Trim();
+        }
+        catch
+        {
+            return false; // 读不了就别乱重启
         }
     }
 
@@ -227,6 +303,8 @@ public static class ActiveInterceptService
         public string NotifyMode { get; set; } = "always";
         public int NotifyCooldownMinutes { get; set; } = 30;
         public int MaxEventRows { get; set; } = 1000;
+        public bool EnableIntercept { get; set; } = true;
+        public bool EnableGameMonitor { get; set; }
     }
 
     // ========== 通知监控 ==========

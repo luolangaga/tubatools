@@ -32,6 +32,7 @@ internal sealed class BackendTrayHost : IDisposable
     private const uint MF_SEPARATOR = 0x00000800;
     private const uint TPM_RIGHTBUTTON = 0x00000002;
     private const uint TPM_RETURNCMD = 0x00000100;
+    private const uint WM_NULL = 0x0000;
 
     private const int ID_OPEN = 1001;
     private const int ID_DATA = 1002;
@@ -43,6 +44,8 @@ internal sealed class BackendTrayHost : IDisposable
     private readonly string _tip;
     private readonly string _dataDir;
     private readonly Action _shutdown;
+    /// <summary>主动拦截功能是否启用（决定托盘菜单文案与主程序跳转参数）。</summary>
+    private readonly bool _interceptEnabled;
     private readonly object _lifeLock = new();
     private Thread? _thread;
     private IntPtr _hwnd;
@@ -53,10 +56,14 @@ internal sealed class BackendTrayHost : IDisposable
     /// <summary>窗口过程委托必须持有强引用，防止被 GC 回收导致崩溃。</summary>
     private static readonly WndProcDelegate WndProcHolder = WndProc;
 
-    public BackendTrayHost(string tooltip, string dataDir, Action shutdown)
+    /// <summary>Explorer 重启广播（TaskbarCreated）：收到后须重新添加托盘图标，否则图标永久消失。</summary>
+    private static uint _taskbarCreatedMsg;
+
+    public BackendTrayHost(string tooltip, string dataDir, bool interceptEnabled, Action shutdown)
     {
         _tip = tooltip;
         _dataDir = dataDir;
+        _interceptEnabled = interceptEnabled;
         _shutdown = shutdown;
     }
 
@@ -119,6 +126,11 @@ internal sealed class BackendTrayHost : IDisposable
         {
             var hInstance = GetModuleHandleW(null);
             const string className = "TubaWinUi3BackendTrayHost";
+
+            // TaskbarCreated 广播消息 ID（每进程一次）：Explorer 重启后任务栏重建，
+            // 不监听这个消息的话托盘图标会永久消失（表现为「托盘图标没了/点不了」）。
+            if (_taskbarCreatedMsg == 0)
+                _taskbarCreatedMsg = RegisterWindowMessageW("TaskbarCreated");
 
             var wndClass = new WNDCLASS
             {
@@ -200,6 +212,28 @@ internal sealed class BackendTrayHost : IDisposable
         }
     }
 
+    /// <summary>Explorer 重启后重新添加托盘图标（TaskbarCreated 广播到达时调用，托盘线程）。</summary>
+    private void ReAddTrayIcon()
+    {
+        try
+        {
+            if (_hwnd == IntPtr.Zero || _disposed) return;
+            var nid = BuildNotifyIconData();
+            if (Shell_NotifyIconW(NIM_ADD, ref nid))
+            {
+                BackEndLog.Info("托盘：Explorer 已重启，图标重新注册");
+            }
+            else
+            {
+                BackEndLog.Warn($"托盘：图标重注册失败 GLE={Marshal.GetLastWin32Error()}");
+            }
+        }
+        catch (Exception ex)
+        {
+            BackEndLog.Warn($"托盘：图标重注册异常 {ex.Message}");
+        }
+    }
+
     // ---------- 图标 ----------
 
     private IntPtr ExtractMainAppIcon()
@@ -271,10 +305,17 @@ internal sealed class BackendTrayHost : IDisposable
 
     private static IntPtr WndProc(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam)
     {
-        if (Windows.TryGetValue(hWnd, out var host))
-        {
-            switch (message)
+            if (Windows.TryGetValue(hWnd, out var host))
             {
+                // Explorer 重启 → 任务栏重建 → 重新添加图标（NIM_ADD 幂等，失败也不影响后续）
+                if (_taskbarCreatedMsg != 0 && message == _taskbarCreatedMsg)
+                {
+                    host.ReAddTrayIcon();
+                    return IntPtr.Zero;
+                }
+
+                switch (message)
+                {
                 case (uint)WM_TRAYCALLBACK:
                     switch ((uint)lParam)
                     {
@@ -319,11 +360,16 @@ internal sealed class BackendTrayHost : IDisposable
             var menu = CreatePopupMenu();
             if (menu == IntPtr.Zero) return;
 
-            AppendMenuW(menu, MF_STRING, (IntPtr)ID_OPEN, "打开主动拦截审核页");
+            AppendMenuW(menu, MF_STRING, (IntPtr)ID_OPEN,
+                _interceptEnabled ? "打开主动拦截审核页" : "打开图吧工具箱");
             AppendMenuW(menu, MF_SEPARATOR, IntPtr.Zero, null);
             AppendMenuW(menu, MF_STRING, (IntPtr)ID_DATA, "打开数据目录");
             AppendMenuW(menu, MF_SEPARATOR, IntPtr.Zero, null);
             AppendMenuW(menu, MF_STRING, (IntPtr)ID_EXIT, "退出后端");
+
+            // 关键：TrackPopupMenu 弹出前必须把托盘窗口设为前台（微软官方要求，
+            // 否则前台是全屏游戏/其他窗口时菜单弹不出来或被立即取消 —— 「右键没反应」的根源）。
+            SetForegroundWindow(_hwnd);
 
             if (!GetCursorPos(out var pt))
             {
@@ -331,6 +377,10 @@ internal sealed class BackendTrayHost : IDisposable
             }
 
             var cmd = TrackPopupMenuEx(menu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.X, pt.Y, _hwnd, IntPtr.Zero);
+
+            // 经典配套处理：菜单关闭后补一个 WM_NULL，否则下一次弹出可能挂住
+            PostMessage(_hwnd, WM_NULL, IntPtr.Zero, IntPtr.Zero);
+
             switch ((int)cmd)
             {
                 case ID_OPEN: OpenFrontend(); break;
@@ -363,10 +413,10 @@ internal sealed class BackendTrayHost : IDisposable
             Process.Start(new ProcessStartInfo
             {
                 FileName = exe,
-                Arguments = "--show-active-intercept",
+                Arguments = _interceptEnabled ? "--show-active-intercept" : "",
                 UseShellExecute = true,
             });
-            BackEndLog.Info("托盘：已启动主程序（主动拦截审核页）");
+            BackEndLog.Info("托盘：已启动主程序");
         }
         catch (Exception ex)
         {
@@ -378,7 +428,10 @@ internal sealed class BackendTrayHost : IDisposable
     {
         try
         {
-            var dir = Path.Combine(_dataDir, "active_intercept");
+            // 拦截功能的数据在 active_intercept 子目录；纯游戏监控模式直接开数据根目录
+            var dir = _interceptEnabled
+                ? Path.Combine(_dataDir, "active_intercept")
+                : _dataDir;
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             Process.Start(new ProcessStartInfo("explorer.exe", $"\"{dir}\"") { UseShellExecute = true });
         }
@@ -533,6 +586,12 @@ internal sealed class BackendTrayHost : IDisposable
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint RegisterWindowMessageW(string lpString);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern bool SHGetFileInfoW(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);

@@ -34,7 +34,7 @@ public class FpsServiceTests
     [Fact]
     public void Tracker_Regular60Hz_ReadsNear60Fps()
     {
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60; // 60Hz
         for (int i = 1; i <= 300; i++)
             tracker.OnPresent(i * frameTicks);
@@ -49,7 +49,7 @@ public class FpsServiceTests
     {
         // A desktop process presenting ~1x/sec used to be picked up by the
         // "first tracker with FPS > 0" fallback → the old stuck-at-1 symptom.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long secondTicks = TimeSpan.TicksPerSecond;
         for (int i = 1; i <= 10; i++)
             tracker.OnPresent(i * secondTicks);
@@ -63,7 +63,7 @@ public class FpsServiceTests
     {
         // When presents stop (menu, loading, dead ETW session) the readout must
         // zero out quickly instead of lingering on the last value for minutes.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         for (int i = 1; i <= 120; i++)
             tracker.OnPresent(i * frameTicks);
@@ -82,7 +82,7 @@ public class FpsServiceTests
     {
         // 1000 帧里混入 10% 的 33.3ms 帧（30 FPS），其余 60 FPS。
         // 1% low 应 ≈ 最差 1% 帧的平均帧时间 → 30 FPS（旧实现取瞬时 FPS 平均会偏高）。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
         long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
         long t = 0;
@@ -99,7 +99,7 @@ public class FpsServiceTests
     public void Tracker_PercentileLow_InsufficientSamples_ReturnsMinusOne()
     {
         // 样本不足时返回 -1（上层显示 "--"），而不是拿 1-2 帧噪声填数字
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         for (int i = 1; i <= 50; i++)
             tracker.OnPresent(i * frameTicks);
@@ -113,7 +113,7 @@ public class FpsServiceTests
     {
         // 双源重复事件会产生 0.1ms 的假帧 —— 必须被帧时间下限过滤，否则
         // Avg/Max/1%low 全被污染。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
         for (int i = 0; i < 120; i++)
@@ -131,7 +131,7 @@ public class FpsServiceTests
     [Fact]
     public void Tracker_AvgFps_IsTotalFramesOverTotalTime()
     {
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 60;
         long slow = TimeSpan.TicksPerSecond / 30;
         long t = 0;
@@ -150,7 +150,7 @@ public class FpsServiceTests
         // modern Windows — including fullscreen, where Present (0xB8) fires for
         // the same frame. Counting both would double the FPS, so while history
         // events flow (within a 500ms window), legacy + win32k events are shadowed.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         int counted = 0;
 
         // history event at t=10s
@@ -172,7 +172,7 @@ public class FpsServiceTests
     [Fact]
     public void TryRecordPresent_PresentHistoryExpires_ThenLowerTierCounts()
     {
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
 
         // history at t=0
         Assert.True(FpsService.TryRecordPresent(tracker, 0x00AB, 10_000_000));
@@ -191,7 +191,7 @@ public class FpsServiceTests
         // DWM composition — the per-frame signal is the Win32k composition
         // surface event (0xC9), NOT the DxgKrnl legacy events. While win32k
         // events flow, stray legacy presents must not add duplicate frames.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         int counted = 0;
 
         Assert.True(FpsService.TryRecordPresent(tracker, 0x00C9, 100_000_000)); counted++;
@@ -208,7 +208,7 @@ public class FpsServiceTests
     {
         // Fullscreen exclusive on a system without present history: only the
         // legacy kernel events fire; win32k never appears.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         int counted = 0;
 
         Assert.True(FpsService.TryRecordPresent(tracker, 0x00B8, 100_000_000)); counted++;
@@ -222,7 +222,7 @@ public class FpsServiceTests
     {
         // MPO blt + flip events for the same frame arrive microseconds apart;
         // only the first one within the dedup window may be counted.
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         int counted = 0;
 
         Assert.True(FpsService.TryRecordPresent(tracker, 0x00B8, 100_000_000));
@@ -239,7 +239,7 @@ public class FpsServiceTests
     public void Tracker_FrameTime_ReflectsLatestValidInterval()
     {
         // 帧生成时间 = 最近一次有效帧间隔（60 FPS → ≈16.7ms）
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         for (int i = 1; i <= 120; i++)
             tracker.OnPresent(i * frameTicks);
@@ -251,7 +251,7 @@ public class FpsServiceTests
     public void Tracker_FrameTime_IgnoresSubMillisecondFakeFrames()
     {
         // 0.1ms 假帧不更新帧时间读数 —— 否则卡顿监测会被双源重复事件污染
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
         for (int i = 0; i < 60; i++)
@@ -268,7 +268,7 @@ public class FpsServiceTests
     public void ReadFrameMetrics_FrameTime_ExpiresAfterTwoSeconds()
     {
         // 无新帧 2s 后帧时间读数过期（与 FPS 过期口径一致）→ -1，覆盖层显示 "--"
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         for (int i = 1; i <= 60; i++)
             tracker.OnPresent(i * frameTicks);
@@ -284,7 +284,7 @@ public class FpsServiceTests
     public void RenderLatency_PairsComposeWithPendingSubmit()
     {
         // 提交 T → DWM 合成(0xC9) T+12ms → 渲染延迟 ≈ 12ms
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long submit = 100_000_000;
         tracker.EnqueueSubmit(submit);
         tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
@@ -299,7 +299,7 @@ public class FpsServiceTests
     [Fact]
     public void RenderLatency_ComposeWithoutSubmit_NeverSamples()
     {
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         tracker.TryRecordComposed(100_000_000);
         Assert.Equal(-1, tracker.LastRenderLatencyMs);
     }
@@ -308,7 +308,7 @@ public class FpsServiceTests
     public void RenderLatency_OutOfWindowPair_Discarded()
     {
         // 切出/停顿后的陈旧配对（Δ 超 1000ms）不记为有效样本
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long submit = 100_000_000;
         tracker.EnqueueSubmit(submit);
         tracker.TryRecordComposed(submit + TimeSpan.TicksPerSecond * 5);
@@ -319,7 +319,7 @@ public class FpsServiceTests
     public void RenderLatency_MultipleFrames_StrictFifo()
     {
         // 多帧排队：合成事件必须按提交顺序配对
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long f1 = 100_000_000;
         long f2 = f1 + TimeSpan.TicksPerSecond / 60; // 帧2在帧1后 16.7ms 提交
         tracker.EnqueueSubmit(f1);
@@ -333,7 +333,7 @@ public class FpsServiceTests
     [Fact]
     public void ReadFrameMetrics_RenderLatency_ExpiresAfterThreeSeconds()
     {
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long submit = 100_000_000;
         tracker.EnqueueSubmit(submit);
         tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
@@ -350,7 +350,7 @@ public class FpsServiceTests
     {
         // 滚动窗口语义：启动/加载期的慢帧必须随窗口滚动自然退出，
         // 1% low 反映「当前画面」而不是整个会话的累计。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
         long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
         long t = 0;
@@ -370,7 +370,7 @@ public class FpsServiceTests
     {
         // 0.1% low 要有统计意义必须有足够多的帧 —— 样本不够必须返回 -1，
         // 而不是拿一两帧最差帧的噪声填数字。门槛按「窗口内帧数」（900 帧）算。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
 
@@ -387,7 +387,7 @@ public class FpsServiceTests
     {
         // 开测头几秒窗口只有半截：启动期（着色器编译、垂直同步爬坡、加载关卡）的坏帧
         // 会把 1%/0.1% low 放大成离谱读数 —— 这段时间必须显示 "--"，不能拿半截窗口硬算。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
 
@@ -405,7 +405,7 @@ public class FpsServiceTests
     {
         // 报告/快照是「整段会话」语义：会话比窗口短时按已有帧算（CapFrameX 对整段
         // 录制的口径），不能因为滚动窗口没填满就在报告里开天窗。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long frameTicks = TimeSpan.TicksPerSecond / 60;
         long t = 0;
         for (int i = 0; i < 300; i++) { t += frameTicks; tracker.OnPresent(t); }   // 5s 短会话
@@ -422,7 +422,7 @@ public class FpsServiceTests
     {
         // 「刷新特别慢」的回归测试：一次卡顿必须在窗口时长（1% low = 10s）内滚干净。
         // 旧实现固定 2048 帧窗口，60fps 下要 34 秒才恢复，读数像被钉住。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
         long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
         long t = 0;
@@ -442,7 +442,7 @@ public class FpsServiceTests
     {
         // 帧数窗口在低帧率下会变得极长（2048 帧 @30fps = 68 秒）。改成时间窗口后，
         // 30fps 下同样只需 ~10 秒就能恢复 —— 同一段画面在高低帧率下口径一致。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
         long slow = TimeSpan.TicksPerSecond / 15;   // 66.67ms @15FPS
         long t = 0;
@@ -463,7 +463,7 @@ public class FpsServiceTests
         // 真 1% —— 不再有「最少取 3 帧」的兜底：那会把口径悄悄放大成 3%
         // （n=200 时 1% 只有 2 帧，兜底会取 3 帧，把快帧混进来抬高读数）。
         // 20fps（50ms/帧）→ 10s 窗口 ≈ 200 帧 → 真 1% = 最差 2 帧。
-        var tracker = new FpsService.FpsTracker();
+        var tracker = new FpsTracker();
         long fast = TimeSpan.TicksPerSecond / 20;   // 50ms
         long slow = TimeSpan.TicksPerSecond / 10;   // 100ms
         long t = 0;
