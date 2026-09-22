@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- keyboard-test 键盘测试 -->
+  <path fill="none" d="M5.5 6.5H18.5C19.6 6.5 20.5 7.4 20.5 8.5V15.5C20.5 16.6 19.6 17.5 18.5 17.5H5.5C4.4 17.5 3.5 16.6 3.5 15.5V8.5C3.5 7.4 4.4 6.5 5.5 6.5Z" stroke="#4F52B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.4 9H7.6V10.2H6.4ZM9.6 9H10.8V10.2H9.6ZM12.8 9H14V10.2H12.8ZM16 9H17.2V10.2H16ZM6.4 11.8H7.6V13H6.4ZM9.6 11.8H10.8V13H9.6ZM12.8 11.8H14V13H12.8ZM16 11.8H17.2V13H16ZM8.2 14.6H15.8V15.8H8.2Z" fill="#8E92E0"/>
+</svg>

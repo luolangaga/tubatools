@@ -69,8 +69,14 @@ public sealed partial class NewbieTutorialPage : Page
     {
         Content = tool.Name,
         Tag = tool.Id,
-        Icon = new FontIcon { Glyph = tool.Glyph }
+        Icon = ToolIcon(tool, 16)
     };
+
+    /// <summary>内置工具图标：有彩色矢量图标就用它，否则回退字体字形。</summary>
+    private static IconElement ToolIcon(IBuiltinTool tool, double size) =>
+        BuiltinIconService.Get(tool.Id) is { } source
+            ? new ImageIcon { Source = source, Width = size, Height = size }
+            : new FontIcon { Glyph = tool.Glyph, FontSize = size };
 
     // ------------------------------------------------------------------
     // 内容渲染
@@ -132,7 +138,7 @@ public sealed partial class NewbieTutorialPage : Page
                 Spacing = 10,
                 Children =
                 {
-                    new FontIcon { Glyph = tool.Glyph, FontSize = 16 },
+                    ToolIcon(tool, 16),
                     new TextBlock { Text = tool.Name, VerticalAlignment = VerticalAlignment.Center },
                     new TextBlock
                     {
@@ -168,7 +174,7 @@ public sealed partial class NewbieTutorialPage : Page
             Spacing = 10,
             Children =
             {
-                new FontIcon { Glyph = tool.Glyph, FontSize = 22, Foreground = new SolidColorBrush(ThemeColors.AccentBlue) },
+                ToolIcon(tool, 22),
                 new TextBlock { Text = tool.Name, FontSize = 24, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center }
             }
         });

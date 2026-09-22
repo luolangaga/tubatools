@@ -166,6 +166,10 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
     <PackageReference Include="SIPSorcery" Version="10.0.14" />
 
+    <!-- 内置工具彩色矢量图标（Assets/BuiltinIcons/*.svg）光栅化：界面走 WinUI 原生
+         SvgImageSource，桌面快捷方式的 .ico 需要离屏渲染，用这个 MIT 纯托管库。 -->
+    <PackageReference Include="Svg" Version="3.4.7" />
+
     <PackageReference Include="System.Speech" Version="10.0.10" />
 
     <PackageReference Include="WinUI3Localizer" Version="2.3.0" />

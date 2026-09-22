@@ -9,6 +9,7 @@ export default {
 
   "nav.home": "Home",
   "nav.download": "Download",
+  "nav.features": "Features",
   "nav.why": "Why Choose",
   "nav.docs": "Docs",
   "nav.about": "About",
@@ -25,7 +26,7 @@ export default {
 
   "home.hero.badge": "Community Edition · Native WinUI 3 · Free · Open Source",
   "home.hero.title": "The PC Hardware Testing Toolkit",
-  "home.hero.subtitle": "82 professional tools included. Launch CPU-Z, GPU-Z, CrystalDiskMark with one click. Completely free, offline, zero data collection.",
+  "home.hero.subtitle": "134 tool entries and 47 built-in tools included. Launch CPU-Z, GPU-Z, CrystalDiskMark with one click. Completely free, offline, zero data collection.",
   "home.hero.download": "Get TubaWinUi3 CE",
   "home.hero.view-github": "View on GitHub",
   "home.hero.why-choose": "Why TubaWinUi3 CE?",
@@ -40,7 +41,7 @@ export default {
 
   "home.section1.title": "Open source and completely free",
   "home.section1.text1": "TubaWinUi3 CE is a community rebuild (Community Edition) of the original toolbox — a free, open source and privacy-focused PC hardware toolkit for Windows! No untrusted websites needed to handle your data.",
-  "home.section1.text2": "It ships with 82 external tools and 20 built-in tools, including:",
+  "home.section1.text2": "It ships with 134 tool entries, 47 of them built-in tools that need no extra downloads, including:",
   "home.section1.items": "CPU-Z processor details|GPU-Z GPU info|CrystalDiskMark disk benchmark|FurMark GPU stress test|AIDA64 system diagnostics",
   "home.section1.text3": "The toolkit is extensible - submit new tools right from the app!",
 
@@ -53,11 +54,16 @@ export default {
   "home.section3.text1": "Built with WinUI 3, embracing the Windows 11 design language natively.",
   "home.section3.items": "Mica / Acrylic backdrop materials|Light / Dark / System theme|Custom window background image|Compact mode / Turbo mode|Global search quick launch|x86 / x64 / ARM64 support|Modern responsive UI",
 
-  "home.section4.title": "20 built-in utilities",
-  "home.section4.text1": "20 built-in tools that work out of the box, covering common system maintenance scenarios.",
-  "home.section4.items": "Certificate blocking - block rogue certificates|Port viewer - inspect TCP/UDP ports|Hosts editor - manage hosts mapping|Keyboard tester - detect key states|Junk cleaner - clean system cache|BSOD analyzer - parse crash dumps|More: battery report, speed test, KMS…",
+  "home.section4.title": "47 built-in utilities",
+  "home.section4.text1": "47 built-in tools that work out of the box, covering everyday system maintenance, network diagnostics and gaming helpers.",
+  "home.section4.items": "Junk cleaner - deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner - context menus, startup, scheduled tasks|Game networking helper - play together without touching the router|Format converter - images, media, documents and ZIP packaging|Triple stress test - CPU / GPU / NIC load testing|Time sync - NTP server latency test and one-click resync|More: port viewer, startup manager, Windows images, AI assistant…",
 
-  "home.tools.title": "82 external tools + 20 built-in tools, organized by category",
+  "home.gallery.title": "There is more to discover",
+  "home.gallery.subtitle": "Screenshots taken from a real session: AI assistant, game monitoring overlay, game networking, format converter, ladder charts - all built in",
+  "home.gallery.more": "See all 23 feature screenshots",
+  "home.gallery.count": "real screenshots",
+
+  "home.tools.title": "134 tools, organized by category",
   "home.tools.more": "and more…",
 
   "home.support.title": "Support us!",
@@ -70,6 +76,120 @@ export default {
   "home.footer.credit1": "Design inspired by",
   "home.footer.credit2": "UI controls powered by",
   "home.footer.credit-link": "WinUIonWeb",
+
+  "features.title": "Feature Tour",
+  "features.subtitle": "23 real screenshots - see what TubaWinUi3 CE can do, from hardware detection and benchmarks to system maintenance",
+  "features.filter-label": "Filter features by category",
+  "features.empty": "Nothing in this category yet",
+  "features.prev": "Previous",
+  "features.next": "Next",
+  "features.close": "Close",
+  "features.view-doc": "Read the docs",
+
+  "features.stat.tools": "tool entries",
+  "features.stat.builtin": "built-in tools",
+  "features.stat.community": "community tools",
+  "features.stat.arch": "supported architectures",
+
+  "features.cat.all": "All",
+  "features.cat.hardware": "Hardware",
+  "features.cat.perf": "Benchmarks",
+  "features.cat.maintain": "Maintenance",
+  "features.cat.network": "Network",
+  "features.cat.ai": "AI Assistant",
+  "features.cat.shell": "Interface",
+
+  "features.home.title": "The tool library",
+  "features.home.desc": "134 tools laid out by category: card browsing, star favourites, context menus and one-click launch, plus instant global search.",
+  "features.home.tags": "Category filter|Global search|Star favourites|One-click launch",
+
+  "features.hardware.title": "Hardware at a glance",
+  "features.hardware.desc": "Reads motherboard, CPU, memory, GPU, NPU, monitor, disk, audio and network details in one WMI pass, with CPU-Z report override verification.",
+  "features.hardware.tags": "CPU / motherboard|Memory / slots|GPU / driver|Monitor / disks",
+
+  "features.builtin-tools.title": "47 built-in tools",
+  "features.builtin-tools.desc": "No external executables needed. Organized into system, hardware, utility, network and gaming groups.",
+  "features.builtin-tools.tags": "System tools|Hardware tools|Utilities|Network / gaming",
+
+  "features.ai-assistant.title": "AI assistant",
+  "features.ai-assistant.desc": "Describe the problem in plain language and the built-in agent diagnoses it, tunes settings, runs operations and searches the web - asking first before anything risky.",
+  "features.ai-assistant.tags": "Conversational diagnosis|Tool calling|Full-access mode|Custom models",
+
+  "features.game-monitor.title": "Game monitoring overlay",
+  "features.game-monitor.desc": "Drag widgets to design your own overlay, then layer it over the game window for live FPS, CPU/GPU temperature, clocks, power, VRAM and memory usage.",
+  "features.game-monitor.tags": "Live FPS|Temperature / power|Draggable layout|Session recording",
+
+  "features.game-tunnel.title": "Game networking helper",
+  "features.game-tunnel.desc": "Puts two PCs on the same virtual LAN so Minecraft, Terraria, Stardew Valley and Don't Starve just connect - no public IP, no router changes.",
+  "features.game-tunnel.tags": "Virtual LAN|Invite code|Game presets|TCP / UDP",
+
+  "features.stress-test.title": "Triple stress test",
+  "features.stress-test.desc": "CPU, GPU and NIC stress testing with live temperature, clock, power and throughput monitoring. FurMark render API, resolution, MSAA and OSD are configurable, and reports can be exported.",
+  "features.stress-test.tags": "CPU stress|GPU stress|NIC stress|Export report",
+
+  "features.gpu-stress-test.title": "Mushroom test",
+  "features.gpu-stress-test.desc": "Voxel fractal rendering as a GPU stress test with easy, medium and extreme levels, overlaying frame rate, frame time and GPU model in real time.",
+  "features.gpu-stress-test.tags": "Fractal rendering|Three levels|Live frame rate|GPU stability",
+
+  "features.benchmark-cloud.title": "Cloud benchmark ranking",
+  "features.benchmark-cloud.desc": "Upload your results with one click and compare gaming and office scores, plus individual CPU, GPU, memory and disk scores, against the community.",
+  "features.benchmark-cloud.tags": "Gaming / office|Per-part scores|Same-config compare|My records",
+
+  "features.cpu-ranking.title": "CPU / GPU ladder charts",
+  "features.cpu-ranking.desc": "Built-in ladder data split between desktop and laptop, filterable by Intel, AMD, Apple and Qualcomm, with multi-core and single-core scores at a glance.",
+  "features.cpu-ranking.tags": "Multi / single core|Desktop / laptop|Brand filter|Refreshable",
+
+  "features.quick-device-check.title": "One-click device check",
+  "features.quick-device-check.desc": "An 8-step wizard walks you through a brand-new PC, from the physical inspection checklist to the hardware itself, so nothing gets missed.",
+  "features.quick-device-check.tags": "8-step wizard|Inspection checklist|Item by item",
+
+  "features.traffic-monitor.title": "Traffic monitor",
+  "features.traffic-monitor.desc": "Pick an adapter to see download/upload speed and latency per connection, with whole-adapter throughput charts, snapshot recording and a tray mode.",
+  "features.traffic-monitor.tags": "Per-connection|Throughput charts|Snapshot recording|Tray resident",
+
+  "features.speed-test.title": "Speed test",
+  "features.speed-test.desc": "Multi-threaded testing against several nodes, with live charts for download, upload, latency and jitter.",
+  "features.speed-test.tags": "Multiple nodes|Live charts|Latency / jitter",
+
+  "features.port-viewer.title": "Port viewer",
+  "features.port-viewer.desc": "Scans every TCP and UDP connection with state, process and PID, so you can find the conflict and end the owning process right there.",
+  "features.port-viewer.tags": "TCP / UDP|Process / PID|End owning process",
+
+  "features.junk-cleaner.title": "Junk cleaner",
+  "features.junk-cleaner.desc": "Scans app caches, temp files and registry leftovers using the Winapp2 rule database (4000+ rules built in). Review every item before cleaning - fully offline.",
+  "features.junk-cleaner.tags": "Winapp2 rules|Cache / temp files|Registry leftovers|Preinstalled apps",
+
+  "features.rogue-cleaner.title": "Rogue software cleaner",
+  "features.rogue-cleaner.desc": "Cleans rogue context menus, startup entries, scheduled tasks, services, browser plugins and file-association leftovers. Everything is backed up first and restorable from the recovery centre.",
+  "features.rogue-cleaner.tags": "Context menus|Startup / tasks|Plugin leftovers|Recovery centre",
+
+  "features.startup-manager.title": "Startup manager",
+  "features.startup-manager.desc": "Scans registry, startup folders and scheduled tasks for every auto-start entry, flags the risky ones and disables them on the spot.",
+  "features.startup-manager.tags": "Full scan|Risk flags|One-click disable",
+
+  "features.format-converter.title": "Format converter",
+  "features.format-converter.desc": "Drop files in to convert images, audio, video, Word, Excel, PowerPoint, PDF, Markdown, TXT, HTML and JSON - or pack anything into a ZIP.",
+  "features.format-converter.tags": "Drag and drop|Images / media|Office documents|Zip packaging",
+
+  "features.windows-image.title": "Windows image download",
+  "features.windows-image.desc": "Three routes in one: official Microsoft ISO links, community mirrors and UUP Dump - so LTSC, Enterprise, Education, IoT and Server builds can become ISOs too.",
+  "features.windows-image.tags": "Official ISOs|UUP Dump|ESD to ISO",
+
+  "features.time-sync.title": "Time sync",
+  "features.time-sync.desc": "Built-in NTP servers from Alibaba Cloud, Tencent Cloud, the national time service centre and Cloudflare - test latency first, then switch, resync and repair the Windows Time service.",
+  "features.time-sync.tags": "Server latency test|One-click resync|Service repair|Health report",
+
+  "features.favorites.title": "Favourites",
+  "features.favorites.desc": "Tools you use most are recommended automatically, and starred tools can be reordered by dragging so your daily drivers sit right where you want them.",
+  "features.favorites.tags": "Smart ordering|Drag to reorder|Shared star state",
+
+  "features.community.title": "Community tool plugins",
+  "features.community.desc": "Search, download and install community-contributed tools right inside the app - or submit your own setup to share with everyone else.",
+  "features.community.tags": "One-click install|Category filter|Submit your own",
+
+  "features.settings.title": "Personalization",
+  "features.settings.desc": "Theme and backdrop, interface language, navigation layout, default landing page, compact list mode and turbo mode - tune the toolbox to fit you.",
+  "features.settings.tags": "Theme / backdrop|Interface language|Navigation layout|Turbo mode",
 
   "download.title": "Download TubaWinUi3 CE",
   "download.subtitle": "Free · Offline · Auto-detects your architecture",
@@ -187,8 +307,8 @@ export default {
   "why.utf8.legacyItems": "Runtime exceptions when Windows UTF-8 global support is enabled|EPL defaults to ANSI encoding with poor UTF-8 compatibility|Chinese paths may display garbled characters or fail to resolve",
 
   "why.tools.title": "FluentUI Built-in Tools",
-  "why.tools.subtitle": "20+ built-in tools vs limited basic utilities",
-  "why.tools.winItems": "Certificate blocking — block rogue software certificates|Port viewer — inspect active TCP/UDP ports|Hosts editor — manage hosts mapping|Keyboard tester — detect key states|Junk cleaner — clean system cache|BSOD analyzer — parse crash dumps|Speed test, WiFi password viewer, KMS activation|CPU / GPU tier list, battery report, and more",
+  "why.tools.subtitle": "47 built-in tools vs limited basic utilities",
+  "why.tools.winItems": "Junk cleaner — deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner — context menus, startup, scheduled tasks|Game networking helper — play together without a public IP|Format converter — images, media, documents and ZIP packaging|Triple stress test — CPU / GPU / NIC load testing with reports|Port viewer, startup manager, time sync, Windows image download|AI assistant, CPU / GPU ladder charts, cloud benchmark ranking",
   "why.tools.legacyItems": "Limited number of built-in tools|Inconsistent tool interface styles|Some tools have only basic functionality",
 
   "why.ai.title": "AI-Powered",

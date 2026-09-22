@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Models;
@@ -57,6 +58,27 @@ public sealed class ToolItem : INotifyPropertyChanged
     {
         get => _iconGlyph;
         set => SetField(ref _iconGlyph, value);
+    }
+
+    private ImageSource? _iconSource;
+    private bool _iconSourceResolved;
+
+    /// <summary>
+    /// 内置工具的彩色矢量图标；外部工具与没有专属图标的工具返回 null（改用 <see cref="IconGlyph"/>）。
+    /// 惰性求值：ToolCatalog 的扫描跑在后台线程，而 SvgImageSource 只能在 UI 线程创建，
+    /// 所以推迟到首次界面绑定读取时才构造。
+    /// </summary>
+    public ImageSource? IconSource
+    {
+        get
+        {
+            if (!_iconSourceResolved)
+            {
+                _iconSource = IsBuiltinLink ? BuiltinIconService.Get(BuiltinToolId) : null;
+                _iconSourceResolved = true;
+            }
+            return _iconSource;
+        }
     }
 
     public string? Description { get; init; }

@@ -137,6 +137,16 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 2. Pick `BuiltinToolKind`: `Dialog` / `BackgroundTask` / `ProgressTask` / `InstantAction`.
 3. Register in `BuiltinToolRegistry.RegisterDefaults()` — **duplicate IDs throw**.
 4. Create dialogs via `context.CreateDialog(title)` (or manually set `RequestedTheme = ThemeService.CurrentElementTheme`) so ContentDialogs respect the app theme.
+5. 加彩色矢量图标 `Assets/BuiltinIcons/<id>.svg`（文件名 = `Id`）——**必须有**，`BuiltinIconTests` 会拦住漏配。
+
+### 内置工具彩色矢量图标
+
+- 每个内置工具一个 `TubaWinUi3.WinUI3/Assets/BuiltinIcons/<tool-id>.svg`（`Assets\**` 已是 Content glob，随包分发，不需要改 csproj）。`Services/BuiltinIconService.cs` 负责加载：`Has(id)` 只探测文件（后台线程安全），`Get(id)` 返回缓存的 `SvgImageSource`（**只能在 UI 线程调用**）。没有 SVG 就返回 null，界面回退到 `IBuiltinTool.Glyph` 的字体字形，所以漏配只会退回旧样式、不会开天窗。
+- **图标按 Fluent System Icons 规范画**（对照微软官方 [fluentui-system-icons](https://github.com/microsoft/fluentui-system-icons) 的 24px Regular 图标）：`viewBox="0 0 24 24"` + 根节点 `fill="none"`；**内容收在 2..22 的 20×20 网格**里（这是 Fluent 的图标网格，四周留 2px）；**以描边为主**（`stroke-width="1.5"` + `stroke-linecap="round"` + `stroke-linejoin="round"`，圆角矩形圆角半径 2~3）；**两色**＝主色描边（Fluent 2 色板，如 `#0F6CBD` 蓝 / `#107C10` 绿 / `#C50F1F` 红 / `#CA5010` 橙 / `#5C2E91` 紫 / `#038387` 青 / `#986F0B` 金 / `#B626A9` 洋红 / `#4F52B2` 靛 / `#5C6670` 灰）＋同色系浅一档的高光（描边或实心小色块，只做点缀，不要整块填满）。**别做成实心色块拼贴**——那是 Material/iOS 的语言，不是 Fluent。
+- **SVG 写法必须落在 Direct2D SVG 支持的子集里**（[支持清单](https://learn.microsoft.com/windows/win32/direct2d/svg-support)）：`path` + `fill`/`stroke` 系（`stroke-width`/`-linecap`/`-linejoin` 都在支持列表里）；`<style>`（CSS 表）、`class=`、`currentColor`、`<text>`、`filter`、`mask` 会被**静默忽略**（不报错、只是不渲染）。`linearGradient`/`<defs>` 官方支持，但本套图标不用。上述约束由 `BuiltinIconTests` 强制（含统一 1.5 线宽、圆头圆角、≥2 色、XML 可解析、光栅化后非空白）。
+- 渲染点靠「三选一」图层：卡片模板里 `Image(IconPath)` / `Image(IconSource)` / `FontIcon(IconGlyph)` 三层并存，用 `NullToVisibilityConverter`（`Pages/FavGlyphConverter.cs`）驱动显隐；有 SVG 的内置工具在 `ToolCatalog.CreateBuiltinItemCore` 里把 `IconGlyph` 置空，字形层自然收起。`ToolItem.IconSource` / `BuiltinToolViewModel.IconSource` / `SearchResult.IconSource` 都是**惰性属性**——ToolCatalog 扫描在后台线程，而 `SvgImageSource` 是 DependencyObject，必须在 UI 线程构造。
+- 桌面快捷方式的 .ico 用同一份 SVG 离屏光栅化：`WindowsSearchIndexService.RenderBuiltinIconBitmap` 走 `Svg` 包（MIT，NuGet）的 `SvgDocument.Draw(256,256)`，失败回退 `RenderGlyphBitmap`（字形，`BuiltinShortcutIconTests` 靠反射调它，**签名不能改**）。缓存文件名带 `IconCacheVersion`（`-v2`）后缀——换图标风格时必须改它，否则老用户盘上的旧 `.ico` 永远不会重新生成。
+- 页头 `Controls/ToolPageHeader` 的图标瓦片**有意不参与**：那是 40×40 强调色/工具专属渐变底 + 白色字形的独立设计语言，彩色双色图标压在彩色底上会糊。
 
 ### 界面本地化（WinUI3Localizer）
 

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- ai-assistant AI 助手 -->
+  <path fill="none" d="M4 8.5C4 6.29 5.79 4.5 8 4.5H16C18.21 4.5 20 6.29 20 8.5V13.5C20 15.71 18.21 17.5 16 17.5H8C5.79 17.5 4 15.71 4 13.5V8.5Z" stroke="#B626A9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 7.3C12.42 9.58 13.72 10.88 16 11.3C13.72 11.72 12.42 13.02 12 15.3C11.58 13.02 10.28 11.72 8 11.3C10.28 10.88 11.58 9.58 12 7.3Z" fill="#DE7FD4"/>
+</svg>

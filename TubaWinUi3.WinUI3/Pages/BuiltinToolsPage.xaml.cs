@@ -505,7 +505,27 @@ public sealed class BuiltinToolViewModel : INotifyPropertyChanged
     public string Id => Tool.Id;
     public string Name => Tool.Name;
     public string Description => Tool.Description;
-    public string Glyph => Tool.Glyph;
+
+    /// <summary>有彩色矢量图标时为 null，卡片改用 <see cref="IconSource"/>（字形作为回退保留）。</summary>
+    public string? Glyph => IconSource is null ? Tool.Glyph : null;
+
+    private ImageSource? _iconSource;
+    private bool _iconSourceResolved;
+
+    /// <summary>彩色矢量图标；惰性求值，首次读取发生在界面绑定所在的 UI 线程。</summary>
+    public ImageSource? IconSource
+    {
+        get
+        {
+            if (!_iconSourceResolved)
+            {
+                _iconSource = BuiltinIconService.Get(Id);
+                _iconSourceResolved = true;
+            }
+            return _iconSource;
+        }
+    }
+
     public string Category => Tool.Category;
     public string KindText => Tool.Kind switch
     {

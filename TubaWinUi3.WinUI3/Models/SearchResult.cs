@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Models;
@@ -13,7 +14,32 @@ public sealed class SearchResult
     public string? Category { get; init; }
     public double Score { get; init; }
 
+    /// <summary>内置工具 id；有它就优先显示彩色矢量图标。</summary>
+    public string? BuiltinToolId { get; init; }
+
     public bool HasIconPath => !string.IsNullOrEmpty(IconPath);
+
+    private ImageSource? _iconSource;
+    private bool _iconSourceResolved;
+
+    /// <summary>彩色矢量图标；惰性求值（SvgImageSource 只能在 UI 线程创建）。</summary>
+    public ImageSource? IconSource
+    {
+        get
+        {
+            if (!_iconSourceResolved)
+            {
+                _iconSource = BuiltinIconService.Get(BuiltinToolId);
+                _iconSourceResolved = true;
+            }
+            return _iconSource;
+        }
+    }
+
+    public bool HasIconSource => !HasIconPath && IconSource is not null;
+
+    /// <summary>没有任何图片资源时才回退到字形（快捷操作、设置项走这条）。</summary>
+    public bool HasGlyphFallback => !HasIconPath && IconSource is null;
 
     public string KindText => Kind switch
     {

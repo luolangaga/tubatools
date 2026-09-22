@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- latency-image-query 核间延迟查询 -->
+  <path fill="none" d="M6 3.5H18C18.83 3.5 19.5 4.17 19.5 5V7C19.5 7.83 18.83 8.5 18 8.5H6C5.17 8.5 4.5 7.83 4.5 7V5C4.5 4.17 5.17 3.5 6 3.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M6 15.5H18C18.83 15.5 19.5 16.17 19.5 17V19C19.5 19.83 18.83 20.5 18 20.5H6C5.17 20.5 4.5 19.83 4.5 19V17C4.5 16.17 5.17 15.5 6 15.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 10.2V13.8M10.3 11.9L12 10.2L13.7 11.9M10.3 12.1L12 13.8L13.7 12.1" stroke="#4DBFC4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

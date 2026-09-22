@@ -77,6 +77,7 @@ public static class UnifiedSearchService
                         : SearchItemKind.ExternalTool,
                     MatchKey = tool.Path,
                     IconPath = iconPath,
+                    BuiltinToolId = tool.IsBuiltinLink ? tool.BuiltinToolId : null,
                     Category = tool.Category,
                     Score = 100
                 });
@@ -119,6 +120,7 @@ public static class UnifiedSearchService
                     Kind = isCustom ? SearchItemKind.CustomTool : SearchItemKind.ExternalTool,
                     MatchKey = tool.Path,
                     IconPath = iconPath,
+                    BuiltinToolId = tool.IsBuiltinLink ? tool.BuiltinToolId : null,
                     Category = tool.Category,
                     Score = isCustom ? score + 1 : score
                 });
@@ -143,6 +145,7 @@ public static class UnifiedSearchService
                         Glyph = tool.Glyph,
                         Kind = SearchItemKind.BuiltinTool,
                         MatchKey = tool.Id,
+                        BuiltinToolId = tool.Id,
                         Category = tool.Category,
                         Score = score
                     });

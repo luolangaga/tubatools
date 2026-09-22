@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using Svg;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
@@ -10,7 +11,8 @@ namespace TubaWinUi3.Services;
 /// <summary>
 /// 工具快捷方式的统一写入点：注册 Windows 搜索索引（开始菜单）与「发送到桌面」。
 /// 内置工具快捷方式以 --open-builtin &lt;id&gt; 启动本程序直达工具，
-/// 图标用该工具的字体图标（Segoe Fluent Icons 字形）离线渲染成 .ico。
+/// 图标用该工具的彩色矢量图标（Assets/BuiltinIcons/&lt;id&gt;.svg）离线渲染成 .ico；
+/// 没有 SVG 的工具回退到 Segoe Fluent Icons 字形。
 /// </summary>
 internal static class WindowsSearchIndexService
 {
@@ -451,7 +453,11 @@ internal static class WindowsSearchIndexService
         }
     }
 
-    /// <summary>按工具 Id 缓存字形 .ico；已存在直接复用。</summary>
+    /// <summary>
+    /// 按工具 Id 缓存 .ico；已存在直接复用。
+    /// 文件名带版本后缀：图标从单色字形换成彩色矢量后，老版本留下的 <c>&lt;id&gt;.ico</c>
+    /// 必须重新生成，否则升级用户的桌面图标永远是旧的。
+    /// </summary>
     private static string? EnsureBuiltinIcon(IBuiltinTool tool)
     {
         try
@@ -465,7 +471,7 @@ internal static class WindowsSearchIndexService
 
         var safeName = string.Concat((tool.Id ?? "builtin").Select(c => char.IsLetterOrDigit(c) ? c : '-'));
         var path = Path.Combine(IconCacheDir,
-            string.IsNullOrWhiteSpace(safeName) ? "builtin" : safeName + ".ico");
+            string.IsNullOrWhiteSpace(safeName) ? "builtin" + IconCacheVersion : safeName + IconCacheVersion + ".ico");
         if (File.Exists(path))
             return path;
 
@@ -477,7 +483,7 @@ internal static class WindowsSearchIndexService
             Bitmap? master = null;
             try
             {
-                master = RenderGlyphBitmap(tool.Glyph);
+                master = RenderBuiltinIconBitmap(tool.Id, tool.Glyph);
                 var bytes = EncodeIco(master);
                 File.WriteAllBytes(path, bytes);
             }
@@ -487,6 +493,31 @@ internal static class WindowsSearchIndexService
             }
             return path;
         }
+    }
+
+    /// <summary>桌面图标缓存版本后缀；换图标风格时改这里即可让所有缓存失效。</summary>
+    private const string IconCacheVersion = "-v2";
+
+    /// <summary>
+    /// 优先用彩色矢量图标；没有 SVG 或光栅化失败时回退到字体字形，
+    /// 保证任何情况下快捷方式都有图标（渲染失败只影响显示，不抛给调用方）。
+    /// </summary>
+    private static Bitmap RenderBuiltinIconBitmap(string toolId, string glyph)
+    {
+        var svgPath = BuiltinIconService.ResolveSvgPath(toolId);
+        if (svgPath is not null)
+        {
+            try
+            {
+                return SvgDocument.Open(svgPath).Draw(256, 256);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[BuiltinIcon] {toolId} 光栅化失败，回退字形：{ex.Message}");
+            }
+        }
+
+        return RenderGlyphBitmap(glyph);
     }
 
     /// <summary>256×256 透明底字形图：字形居中铺满、着系统强调色。</summary>

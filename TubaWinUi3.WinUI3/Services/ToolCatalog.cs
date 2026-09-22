@@ -1171,7 +1171,8 @@ public static class ToolCatalog
             Path = builtinDir,
             RelativePath = Path.GetRelativePath(ToolsRoot, builtinDir),
             Extension = "内置",
-            IconGlyph = builtinTool.Glyph,
+            // 有彩色矢量图标的工具把字形置空，卡片就只会显示 SVG 那一层（字形保留为回退）。
+            IconGlyph = BuiltinIconService.Has(builtinTool.Id) ? null : builtinTool.Glyph,
             Description = builtinTool.Description,
             IsFavorite = FavoritesService.IsFavorite(builtinDir),
             IsBuiltinLink = true,

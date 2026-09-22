@@ -631,7 +631,27 @@ public sealed partial class HomePage : Page, ILocalizablePage
             Glyph = tool.IconGlyph ?? "",
             Visibility = tool.IconGlyph is not null ? Visibility.Visible : Visibility.Collapsed
         };
+        var colorIcon = new Image
+        {
+            Width = 28,
+            Height = 28,
+            Stretch = Stretch.Uniform
+        };
+        colorIcon.SetBinding(Image.SourceProperty, new Microsoft.UI.Xaml.Data.Binding
+        {
+            Path = new PropertyPath(nameof(ToolItem.IconSource)),
+            Source = tool,
+            Mode = Microsoft.UI.Xaml.Data.BindingMode.OneWay
+        });
+        colorIcon.SetBinding(Image.VisibilityProperty, new Microsoft.UI.Xaml.Data.Binding
+        {
+            Path = new PropertyPath(nameof(ToolItem.IconSource)),
+            Source = tool,
+            Mode = Microsoft.UI.Xaml.Data.BindingMode.OneWay,
+            Converter = (Microsoft.UI.Xaml.Data.IValueConverter)Resources["NullToCollapse"]
+        });
         iconGrid.Children.Add(image);
+        iconGrid.Children.Add(colorIcon);
         iconGrid.Children.Add(fontIcon);
         Grid.SetColumn(iconGrid, 1);
         grid.Children.Add(iconGrid);

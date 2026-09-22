@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- screen-test 屏幕坏点检测 -->
+  <path fill="none" d="M5.5 5.5H18.5C19.6 5.5 20.5 6.4 20.5 7.5V15.5C20.5 16.6 19.6 17.5 18.5 17.5H5.5C4.4 17.5 3.5 16.6 3.5 15.5V7.5C3.5 6.4 4.4 5.5 5.5 5.5Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M9.5 17.5V20M14.5 17.5V20M8 20H16" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.9 7.4H9.1V9.6H6.9ZM10.4 7.4H12.6V9.6H10.4ZM13.9 7.4H16.1V9.6H13.9ZM6.9 10.1H9.1V12.3H6.9ZM10.4 10.1H12.6V12.3H10.4ZM13.9 10.1H16.1V12.3H13.9Z" fill="#6CB8F0"/>
+</svg>

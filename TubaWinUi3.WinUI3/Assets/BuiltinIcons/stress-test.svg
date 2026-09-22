@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- stress-test 一键三烤 -->
+  <path fill="none" d="M12 3C12 3 18 8 18 13.5C18 16.81 15.31 19.5 12 19.5C8.69 19.5 6 16.81 6 13.5C6 8 12 3 12 3Z" stroke="#C50F1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 11C13.5 12.7 14.5 13.6 14.5 15.2C14.5 16.7 13.38 17.8 12 17.8C10.62 17.8 9.5 16.7 9.5 15.2C9.5 13.6 10.5 12.7 12 11Z" stroke="#E86E7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -4,6 +4,7 @@ import type { RouteRecordRaw } from 'vue-router';
 const pageLoaders = {
   home: () => import('./pages/HomePage.vue'),
   download: () => import('./pages/DownloadPage.vue'),
+  features: () => import('./pages/FeaturesPage.vue'),
   why: () => import('./pages/WhyChoosePage.vue'),
   about: () => import('./pages/AboutPage.vue'),
   docs: () => import('./pages/DocsPage.vue'),
@@ -19,6 +20,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: pageLoaders.home },
   { path: '/download', name: 'download', component: pageLoaders.download },
   { path: '/download/thanks', name: 'thanks', component: pageLoaders.thanks },
+  { path: '/features', name: 'features', component: pageLoaders.features },
   { path: '/why', name: 'why', component: pageLoaders.why },
   { path: '/about', name: 'about', component: pageLoaders.about },
   { path: '/ranking', name: 'ranking', component: pageLoaders.ranking },

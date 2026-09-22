@@ -79,6 +79,7 @@ export interface SitePageEntry {
 const pages: SitePageEntry[] = [
   { title: '首页', subtitle: 'PC 硬件检测利器', tag: 'home', url: '/', text: '图吧工具箱CE 图吧工具箱 硬件检测 CPU-Z GPU-Z CrystalDiskMark WinUI3 免费 开源 下载 工具集' },
   { title: '下载', subtitle: '免费 · 离线运行 · 自动识别架构', tag: 'download', url: '/download', text: '图吧工具箱CE 图吧工具箱 下载 便携版 安装包 微软商店 x64 arm64 系统要求' },
+  { title: '功能展示', subtitle: '实机截图与内置工具一览', tag: 'features', url: '/features', text: '功能展示 截图 预览 内置工具 硬件信息 一键验机 烤机 压力测试 游戏监控 游戏联机 流量监控 网速测试 端口占用 垃圾清理 格式转换 时间同步 Windows 镜像 天梯图 跑分 AI 助手 社区工具 设置' },
   { title: '跑分排行', subtitle: '社区性能跑分排行榜', tag: 'ranking', url: '/ranking', text: '跑分 排行榜 排行 性能 游戏性能 办公性能 CPU GPU 硬盘 浏览器 天梯 对比 跑分排行 benchmark leaderboard' },
   { title: '核间延迟', subtitle: 'CPU 核心间通信延迟热力图', tag: 'latency', url: '/latency', text: '核间延迟 核延迟 延迟 热力图 CPU 核心 跨核心 通信延迟 查询 latency heatmap core-to-core' },
   { title: '毒蘑菇测试', subtitle: '在线 GPU 分形压力测试', tag: 'mushroom', url: '/mushroom', text: '毒蘑菇测试 GPU 压力测试 分形 显卡 稳定性 散热 轻松 中等 变态 渲染倍率 实时光线追踪 帧率 fps WebGL mushroom stress test' },

@@ -169,6 +169,37 @@
         </div>
       </section>
 
+      <!-- 功能截图画廊 -->
+      <section class="site-section">
+        <div class="site-section-inner">
+          <h2 class="site-section-title">{{ t('home.gallery.title') }}</h2>
+          <p class="site-section-subtitle">{{ t('home.gallery.subtitle') }}</p>
+          <div class="site-gallery">
+            <button
+              v-for="item in galleryItems"
+              :key="item.id"
+              type="button"
+              class="site-gallery-card"
+              @click="goFeatures">
+              <img :src="item.image" :alt="t(`features.${item.id}.title`)" loading="lazy" decoding="async" />
+              <span class="site-gallery-overlay">
+                <span class="site-gallery-cat">{{ t(`features.cat.${item.cat}`) }}</span>
+                <span class="site-gallery-title">{{ t(`features.${item.id}.title`) }}</span>
+                <span class="site-gallery-desc">{{ t(`features.${item.id}.desc`) }}</span>
+              </span>
+            </button>
+          </div>
+          <div class="site-gallery-actions">
+            <WinButton
+              Style="AccentButtonStyle"
+              :Content="t('home.gallery.more')"
+              Height="40"
+              Padding="20,0"
+              @Click="goFeatures" />
+          </div>
+        </div>
+      </section>
+
       <!-- 工具分类网格 -->
       <section class="site-section">
         <div class="site-section-inner">
@@ -220,11 +251,16 @@ import SiteFooter from '../components/SiteFooter.vue';
 import screenshotTools from '../../assets/site/screenshot-tools.png';
 import screenshotHardware from '../../assets/site/screenshot-hardware.png';
 import screenshotBuiltin from '../../assets/site/screenshot-builtin.png';
+import { features } from '../services/features';
 import { useI18n } from '../../components/i18n/index';
 
 const { t } = useI18n();
 const navigate = inject('navigate', () => {});
 const heroRef = ref(null);
+
+/* 首页画廊精选：覆盖「进阶玩法」的关键功能 */
+const galleryIds = ['ai-assistant', 'game-monitor', 'game-tunnel', 'format-converter', 'junk-cleaner', 'stress-test', 'cpu-ranking', 'traffic-monitor'];
+const galleryItems = computed(() => galleryIds.map((id) => features.find((item) => item.id === id)).filter(Boolean));
 
 const section1Items = computed(() => t('home.section1.items').split('|'));
 const section2Items = computed(() => t('home.section2.items').split('|'));
@@ -256,11 +292,12 @@ const toolColumns = [
     { title: '外设工具', tools: [
       { name: '键盘测试' }, { name: 'MouseTester' }, { name: '鼠标回报率' }, { name: 'KeyTweak' }, { name: '鼠标单击变双击' } ] },
     { title: '内置工具', tools: [
-      { name: '证书拦截' }, { name: '端口占用' }, { name: 'Hosts 编辑' }, { name: '垃圾清理' }, { name: '蓝屏分析' }, { name: '网速测试' }, { name: 'WiFi 密码' }, { name: 'CPU 天梯图' }, { name: 'GPU 天梯图' }, { name: t('home.tools.more'), url: '/guide/builtin' } ] }
+      { name: 'AI 助手' }, { name: '游戏联机助手' }, { name: '一键三烤' }, { name: '格式转换' }, { name: '垃圾清理' }, { name: '流氓软件的克星' }, { name: '端口占用' }, { name: '时间同步' }, { name: '启动项管理' }, { name: 'Windows 镜像' }, { name: t('home.tools.more'), url: '/features' } ] }
   ]
 ];
 
 const goDownload = () => navigate('download');
+const goFeatures = () => navigate('features');
 const openGithub = () => window.open(t('app.repository'), '_blank', 'noopener');
 const goWhyChoose = () => navigate('why');
 
@@ -574,6 +611,118 @@ onUnmounted(() => {
 
 .site-feature-text :deep(.site-check-list) {
   margin-top: 10px;
+}
+
+/* ---------- 功能截图画廊 ---------- */
+
+.site-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.site-gallery-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--card-stroke);
+  border-radius: 10px;
+  background: var(--card-bg-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.site-gallery-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-base) 38%, transparent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.site-gallery-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 400ms ease;
+}
+
+.site-gallery-card:hover img {
+  transform: scale(1.04);
+}
+
+.site-gallery-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 34px 14px 12px 14px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82) 12%, rgba(0, 0, 0, 0.45) 52%, rgba(0, 0, 0, 0) 100%);
+  color: #ffffff;
+}
+
+.site-gallery-cat {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.site-gallery-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 21px;
+}
+
+.site-gallery-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  font-size: 12px;
+  line-height: 17px;
+  color: rgba(255, 255, 255, 0.82);
+  transition: max-height 240ms ease, opacity 240ms ease, margin-top 240ms ease;
+}
+
+.site-gallery-card:hover .site-gallery-desc {
+  max-height: 40px;
+  opacity: 1;
+  margin-top: 3px;
+}
+
+.site-gallery-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .site-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .site-gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-gallery-desc {
+    max-height: 40px;
+    opacity: 1;
+    margin-top: 3px;
+  }
 }
 
 /* ---------- 工具网格 ---------- */

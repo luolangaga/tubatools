@@ -9,6 +9,7 @@ export default {
 
   "nav.home": "首页",
   "nav.download": "下载",
+  "nav.features": "功能展示",
   "nav.why": "为什么选择",
   "nav.docs": "文档",
   "nav.about": "关于",
@@ -25,7 +26,7 @@ export default {
 
   "home.hero.badge": "社区重构版 · WinUI 3 原生 · 完全免费 · 开源",
   "home.hero.title": "PC 硬件检测利器",
-  "home.hero.subtitle": "收录 82 款专业工具，一键启动 CPU-Z、GPU-Z、CrystalDiskMark，完全免费离线运行，零数据收集",
+  "home.hero.subtitle": "收录 134 个工具条目、47 款内置工具，一键启动 CPU-Z、GPU-Z、CrystalDiskMark，完全免费离线运行，零数据收集",
   "home.hero.download": "获取图吧工具箱CE",
   "home.hero.view-github": "查看 GitHub",
   "home.hero.why-choose": "为什么选择图吧工具箱CE？",
@@ -40,7 +41,7 @@ export default {
 
   "home.section1.title": "开源且完全免费",
   "home.section1.text1": "图吧工具箱CE 是原版图吧工具箱的社区重构版，免费、开源且注重隐私的 PC 硬件工具集，运行在 Windows 平台！无需使用各种不可信的网站来处理你的数据。",
-  "home.section1.text2": "它自带 82 款外部工具和 20 款内置工具，包括：",
+  "home.section1.text2": "它自带 134 个工具条目，其中 47 款是免下载的内置工具，包括：",
   "home.section1.items": "CPU-Z 处理器详细信息|GPU-Z 显卡参数检测|CrystalDiskMark 磁盘测速|FurMark 显卡压力测试|AIDA64 综合硬件检测",
   "home.section1.text3": "工具集是可扩展的，你可以在软件内直接提交新工具！",
 
@@ -53,11 +54,16 @@ export default {
   "home.section3.text1": "图吧工具箱CE采用 WinUI 3 打造，原生拥抱 Windows 11 设计语言。",
   "home.section3.items": "Mica / Acrylic 毛玻璃背景|亮色 / 暗色 / 跟随系统主题|自定义窗口背景图片|紧凑模式 / 快速模式|全局搜索快速启动|x86 / x64 / ARM64 全架构|现代化响应式界面",
 
-  "home.section4.title": "20 款内置实用工具",
-  "home.section4.text1": "图吧工具箱CE自带 20 款内置工具，无需额外下载即可使用，覆盖系统维护的常见场景。",
-  "home.section4.items": "证书屏蔽 — 阻止流氓软件证书|端口查看 — 检查活动 TCP/UDP 端口|Hosts 编辑 — 管理 hosts 映射|键盘测试 — 检测按键状态|垃圾清理 — 清理系统缓存|蓝屏分析 — 解析 BSOD 转储|更多：电池报告、网络测速、KMS 激活…",
+  "home.section4.title": "47 款内置实用工具",
+  "home.section4.text1": "图吧工具箱CE自带 47 款内置工具，无需额外下载即可使用，覆盖系统维护、网络诊断与游戏辅助的常见场景。",
+  "home.section4.items": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不开路由器也能和朋友联机|格式转换 — 图片、音视频、文档、打包 ZIP|一键三烤 — CPU / GPU / 网卡压力测试|时间同步 — NTP 服务器测速与一键校时|更多：端口占用、启动项管理、Windows 镜像、AI 助手…",
 
-  "home.tools.title": "82 款外部工具 + 20 款内置工具，按分类一目了然",
+  "home.gallery.title": "更多功能，等你发现",
+  "home.gallery.subtitle": "截图来自实机运行：AI 助手、游戏监控覆盖层、游戏联机、格式转换、天梯图…全部内置，装完就能用",
+  "home.gallery.more": "查看全部 23 张功能截图",
+  "home.gallery.count": "张实机截图",
+
+  "home.tools.title": "134 个工具，按分类一目了然",
   "home.tools.more": "还有更多…",
 
   "home.support.title": "支持我们！",
@@ -70,6 +76,120 @@ export default {
   "home.footer.credit1": "网站设计灵感来源于",
   "home.footer.credit2": "界面控件基于",
   "home.footer.credit-link": "WinUIonWeb",
+
+  "features.title": "功能展示",
+  "features.subtitle": "23 张实机截图，从硬件检测、性能测试到系统维护，一次看清图吧工具箱CE 能做什么",
+  "features.filter-label": "按分类筛选功能",
+  "features.empty": "该分类下暂无内容",
+  "features.prev": "上一张",
+  "features.next": "下一张",
+  "features.close": "关闭",
+  "features.view-doc": "查看相关文档",
+
+  "features.stat.tools": "工具条目",
+  "features.stat.builtin": "内置工具",
+  "features.stat.community": "社区工具",
+  "features.stat.arch": "支持架构",
+
+  "features.cat.all": "全部",
+  "features.cat.hardware": "硬件检测",
+  "features.cat.perf": "性能测试",
+  "features.cat.maintain": "系统维护",
+  "features.cat.network": "网络与联机",
+  "features.cat.ai": "AI 助手",
+  "features.cat.shell": "界面与体验",
+
+  "features.home.title": "工具总库",
+  "features.home.desc": "134 个工具按分类平铺展示，卡片式浏览、星标收藏、右键菜单、一键打开，支持全局搜索秒级定位。",
+  "features.home.tags": "分类筛选|全局搜索|星标收藏|一键运行",
+
+  "features.hardware.title": "硬件信息总览",
+  "features.hardware.desc": "通过 WMI 一次性读取主板、处理器、内存、显卡、NPU、显示器、硬盘、声卡与网卡参数，支持 CPU-Z 报表覆盖校验。",
+  "features.hardware.tags": "处理器 / 主板|内存 / 插槽|显卡 / 驱动|显示器 / 硬盘",
+
+  "features.builtin-tools.title": "47 款内置工具",
+  "features.builtin-tools.desc": "无需外部程序，开箱即用。按系统工具、硬件工具、实用工具、网络工具、游戏工具五个分类整理。",
+  "features.builtin-tools.tags": "系统工具|硬件工具|实用工具|网络 / 游戏",
+
+  "features.ai-assistant.title": "AI 助手",
+  "features.ai-assistant.desc": "内置智能体，用自然语言描述问题即可诊断故障、优化设置、执行操作并联网搜索；危险操作会先征求确认。",
+  "features.ai-assistant.tags": "对话式诊断|工具调用|完全访问模式|自定义模型",
+
+  "features.game-monitor.title": "游戏监控覆盖层",
+  "features.game-monitor.desc": "拖动组件自由设计覆盖层布局，叠加到游戏窗口实时显示 FPS、CPU / GPU 温度、频率、功耗、显存与内存占用。",
+  "features.game-monitor.tags": "实时 FPS|温度 / 功耗|布局可拖拽|数据记录",
+
+  "features.game-tunnel.title": "游戏联机助手",
+  "features.game-tunnel.desc": "把两台电脑接进同一个虚拟局域网，我的世界、泰拉瑞亚、星露谷、饥荒等游戏直接联机，不用公网 IP、不改路由器。",
+  "features.game-tunnel.tags": "虚拟局域网|邀请码入网|内置游戏预设|TCP / UDP",
+
+  "features.stress-test.title": "一键三烤",
+  "features.stress-test.desc": "CPU / GPU / 网卡压力测试，实时监控温度、频率、功耗与网卡吞吐；FurMark 渲染 API、分辨率、MSAA、OSD 参数可调，支持导出报告。",
+  "features.stress-test.tags": "CPU 烤机|GPU 烤机|网卡烤机|导出报告",
+
+  "features.gpu-stress-test.title": "毒蘑菇测试",
+  "features.gpu-stress-test.desc": "体素分形渲染压力测试，轻松 / 中等 / 变态三档压力，实时叠加帧率、帧耗时与显卡型号。",
+  "features.gpu-stress-test.tags": "分形渲染|三档压力|实时帧率|显卡稳定性",
+
+  "features.benchmark-cloud.title": "云端跑分排行",
+  "features.benchmark-cloud.desc": "跑完性能测试可一键上传云端，与社区用户对比游戏性能、办公性能以及 CPU、GPU、内存、硬盘分项得分。",
+  "features.benchmark-cloud.tags": "游戏 / 办公分|分项硬件分|同配置对比|我的记录",
+
+  "features.cpu-ranking.title": "CPU / GPU 天梯图",
+  "features.cpu-ranking.desc": "内置天梯图数据，桌面与笔记本分开，支持 Intel / AMD / Apple / Qualcomm 筛选，多核、单核分数一览。",
+  "features.cpu-ranking.tags": "多核 / 单核|桌面 / 笔记本|按品牌筛选|随时刷新",
+
+  "features.quick-device-check.title": "一键验机",
+  "features.quick-device-check.desc": "8 步向导带你把新电脑从外观到硬件逐项核验一遍，附外观检查清单，装机、验机不再漏项。",
+  "features.quick-device-check.tags": "8 步向导|外观检查清单|逐项核验",
+
+  "features.traffic-monitor.title": "流量监控器",
+  "features.traffic-monitor.desc": "选择网卡查看每个连接进程的下载 / 上传速度与延迟，整卡吞吐折线统计，支持快照录制回放与最小化到托盘。",
+  "features.traffic-monitor.tags": "按连接监控|整卡吞吐曲线|快照录制|托盘常驻",
+
+  "features.speed-test.title": "网速测试",
+  "features.speed-test.desc": "多线程测速，支持浙大、Ookla、Cloudflare 多个测速节点，实时曲线显示下载 / 上传 / 延迟 / 抖动。",
+  "features.speed-test.tags": "多节点选择|实时曲线|延迟 / 抖动",
+
+  "features.port-viewer.title": "端口占用",
+  "features.port-viewer.desc": "扫描全部 TCP / UDP 连接，显示状态、进程与 PID，定位端口冲突后可直接结束占用进程。",
+  "features.port-viewer.tags": "TCP / UDP|进程 / PID|结束占用进程",
+
+  "features.junk-cleaner.title": "垃圾清理",
+  "features.junk-cleaner.desc": "基于 Winapp2 规则库（内置 4000+ 条规则）扫描应用缓存、临时文件与注册表残留，清理前可逐项确认，离线开箱即用。",
+  "features.junk-cleaner.tags": "Winapp2 规则库|缓存 / 临时文件|注册表残留|预装应用清理",
+
+  "features.rogue-cleaner.title": "流氓软件的克星",
+  "features.rogue-cleaner.desc": "扫描清理流氓右键菜单、自启动项、计划任务、服务、浏览器插件与文件关联残留；所有处理先备份，可随时在恢复中心还原。",
+  "features.rogue-cleaner.tags": "右键菜单|自启动 / 计划任务|插件残留|恢复中心",
+
+  "features.startup-manager.title": "启动项管理",
+  "features.startup-manager.desc": "扫描注册表、启动文件夹、计划任务等所有开机自启项，标出风险条目并可直接禁用，开机变慢一眼找到原因。",
+  "features.startup-manager.tags": "全量扫描|风险标记|一键禁用",
+
+  "features.format-converter.title": "格式转换",
+  "features.format-converter.desc": "拖入文件即可转换图片、音视频、Word / Excel / PPT / PDF、Markdown、TXT、HTML、JSON，任意文件也能打包成 ZIP。",
+  "features.format-converter.tags": "拖放转换|图片 / 音视频|Office 文档|打包 ZIP",
+
+  "features.windows-image.title": "Windows 镜像下载",
+  "features.windows-image.desc": "微软官方 ISO 直链、社区镜像源与 UUP Dump 三条路走通，LTSC / 企业版 / 教育版 / IoT / Server 也能从 UUP 转出 ISO。",
+  "features.windows-image.tags": "官方 ISO|UUP Dump|ESD 转 ISO",
+
+  "features.time-sync.title": "时间同步",
+  "features.time-sync.desc": "内置阿里云、腾讯云、国家授时中心、Cloudflare 等 NTP 服务器，先测速再切换，一键校时并修复 Windows 时间服务。",
+  "features.time-sync.tags": "服务器测速|一键校时|服务修复|体检报告",
+
+  "features.favorites.title": "常用与收藏",
+  "features.favorites.desc": "按使用频率智能推荐常用工具，收藏的工具可拖拽排序，把每天都要用的几个工具放在最顺手的位置。",
+  "features.favorites.tags": "频率智能排序|拖拽排序|星标互通",
+
+  "features.community.title": "社区工具插件",
+  "features.community.desc": "社区贡献的工具插件可在应用内直接搜索、下载、安装，也可以把自己整理的工具提交上去分享给其他人。",
+  "features.community.tags": "一键安装|分类筛选|提交自己的工具",
+
+  "features.settings.title": "个性化设置",
+  "features.settings.desc": "主题与背景、界面语言、导航布局、默认启动页、简洁列表模式与快速模式，把工具箱调成顺手的样子。",
+  "features.settings.tags": "主题 / 背景|界面语言|导航布局|快速模式",
 
   "download.title": "下载图吧工具箱CE",
   "download.subtitle": "免费 · 离线运行 · 自动识别架构",
@@ -187,8 +307,8 @@ export default {
   "why.utf8.legacyItems": "开启 Windows UTF-8 全局支持后运行异常|易语言默认使用 ANSI 编码，对 UTF-8 兼容性差|中文路径可能显示乱码或无法正确解析",
 
   "why.tools.title": "FluentUI 内置工具",
-  "why.tools.subtitle": "20+ 款内置工具 vs 少量基础内置功能",
-  "why.tools.winItems": "证书屏蔽 — 阻止流氓软件证书|端口查看 — 检查活动 TCP/UDP 端口|Hosts 编辑器 — 管理 hosts 映射|键盘测试 — 检测按键状态|垃圾清理 — 清理系统缓存|蓝屏分析 — 解析 BSOD 转储|网络测速、WiFi 密码查看、KMS 激活|CPU / GPU 天梯图、电池报告等",
+  "why.tools.subtitle": "47 款内置工具 vs 少量基础内置功能",
+  "why.tools.winItems": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不用公网 IP 也能和朋友联机|格式转换 — 图片 / 音视频 / 文档 / 打包 ZIP|一键三烤 — CPU / GPU / 网卡压力测试，可导出报告|端口查看、启动项管理、时间同步、Windows 镜像下载|AI 助手、CPU / GPU 天梯图、云端跑分排行",
   "why.tools.legacyItems": "内置工具数量有限|工具界面风格不统一|部分工具功能较为基础",
 
   "why.ai.title": "AI 智能体驱动",

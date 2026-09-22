@@ -14,7 +14,6 @@
     <Grid PointerPressed="RootGrid_PointerPressed">
         <Grid.Resources>
             <local:IconPathToVisibilityConverter x:Key="IconPathToVisibility" />
-            <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
@@ -162,12 +161,17 @@
                                                             Stretch="Uniform"
                                                             Source="{Binding IconPath}"
                                                             Visibility="{Binding HasIconPath, Converter={StaticResource IconPathToVisibility}}" />
+                                                        <Image
+                                                            Width="24" Height="24"
+                                                            Stretch="Uniform"
+                                                            Source="{Binding IconSource}"
+                                                            Visibility="{Binding HasIconSource, Converter={StaticResource IconPathToVisibility}}" />
                                                         <FontIcon
                                                             FontSize="14"
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
                                                             Glyph="{Binding Glyph}"
-                                                            Visibility="{Binding HasIconPath, Converter={StaticResource InverseBoolToVisibility}}" />
+                                                            Visibility="{Binding HasGlyphFallback, Converter={StaticResource IconPathToVisibility}}" />
                                                     </Grid>
                                                 </Border>
 

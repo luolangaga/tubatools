@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- junk-cleaner 垃圾清理 -->
+  <path fill="none" d="M10 5V4.5C10 3.672 10.672 3 11.5 3H12.5C13.328 3 14 3.672 14 4.5V5" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M4.5 5.75H19.5" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M6.5 5.75L7.45 18.55C7.53 19.66 8.45 20.5 9.56 20.5H14.44C15.55 20.5 16.47 19.66 16.55 18.55L17.5 5.75" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M10 9.75V17.5" stroke="#6BB700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M14 9.75V17.5" stroke="#6BB700" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

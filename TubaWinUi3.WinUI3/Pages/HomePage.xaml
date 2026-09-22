@@ -303,6 +303,12 @@
                                                      Source="{Binding IconPath}"
                                                      Stretch="Uniform"
                                                      Visibility="{Binding IconPath, Converter={StaticResource NullToCollapse}}" />
+                                                 <Image
+                                                     Width="40"
+                                                     Height="40"
+                                                     Source="{Binding IconSource}"
+                                                     Stretch="Uniform"
+                                                     Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
                                                  <FontIcon
                                                      FontSize="28"
                                                      Glyph="{Binding IconGlyph}"
@@ -519,6 +525,12 @@
                                                 Source="{Binding IconPath}"
                                                 Stretch="Uniform"
                                                 Visibility="{Binding IconPath, Converter={StaticResource NullToCollapse}}" />
+                                            <Image
+                                                Width="38"
+                                                Height="38"
+                                                Source="{Binding IconSource}"
+                                                Stretch="Uniform"
+                                                Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
                                             <FontIcon
                                                 FontSize="26"
                                                 HorizontalAlignment="Center"

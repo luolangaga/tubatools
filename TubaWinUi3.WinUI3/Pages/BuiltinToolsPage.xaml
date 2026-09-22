@@ -12,6 +12,7 @@
 
     <Page.Resources>
         <local:FavGlyphConverter x:Key="FavGlyphConverter" />
+        <local:NullToVisibilityConverter x:Key="NullToCollapse" />
 
         <!-- 内置工具卡片右键菜单（与首页卡片同构，仅保留收藏/发送到桌面） -->
         <MenuFlyout x:Key="BuiltinNormalFlyout">
@@ -195,11 +196,20 @@
                             Height="56"
                             Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                             CornerRadius="8">
-                            <FontIcon
-                                FontSize="28"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Glyph="{Binding Glyph}" />
+                            <Grid>
+                                <Image
+                                    Width="40"
+                                    Height="40"
+                                    Source="{Binding IconSource}"
+                                    Stretch="Uniform"
+                                    Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
+                                <FontIcon
+                                    FontSize="28"
+                                    Glyph="{Binding Glyph}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding Glyph, Converter={StaticResource NullToCollapse}}" />
+                            </Grid>
                         </Border>
                         <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                             <TextBlock
@@ -296,11 +306,20 @@
                         HorizontalAlignment="Center"
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="10">
-                        <FontIcon
-                            FontSize="26"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Glyph="{Binding Glyph}" />
+                        <Grid>
+                            <Image
+                                Width="38"
+                                Height="38"
+                                Source="{Binding IconSource}"
+                                Stretch="Uniform"
+                                Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
+                            <FontIcon
+                                FontSize="26"
+                                Glyph="{Binding Glyph}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding Glyph, Converter={StaticResource NullToCollapse}}" />
+                        </Grid>
                     </Border>
                     <TextBlock
                         HorizontalAlignment="Center"
