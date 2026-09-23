@@ -372,6 +372,15 @@
   <data name="Favorites_FrequentSubtitleCount" xml:space="preserve">
     <value>基于使用频率智能排序 · {0} 个</value>
   </data>
+  <data name="Favorites_FrequentHiddenTitle" xml:space="preserve">
+    <value>已隐藏</value>
+  </data>
+  <data name="Favorites_FrequentHiddenMessage" xml:space="preserve">
+    <value>常用推荐已隐藏，可在「设置 - 常规」中重新开启</value>
+  </data>
+  <data name="Favorites_HideFrequentButton.ToolTip" xml:space="preserve">
+    <value>不再显示常用推荐</value>
+  </data>
   <data name="Favorites_NoFavorites" xml:space="preserve">
     <value>暂无收藏</value>
   </data>
@@ -436,6 +445,12 @@
   </data>
   <data name="Search_SettingDefaultPageDesc" xml:space="preserve">
     <value>选择应用启动后默认打开的页面</value>
+  </data>
+  <data name="Search_SettingShowFrequent" xml:space="preserve">
+    <value>显示常用推荐</value>
+  </data>
+  <data name="Search_SettingShowFrequentDesc" xml:space="preserve">
+    <value>在常用页面显示按使用频率排序的推荐工具</value>
   </data>
   <data name="Search_SettingFastMode" xml:space="preserve">
     <value>快速模式</value>
@@ -1430,6 +1445,12 @@
   </data>
   <data name="Settings_SearchIndex_Title.Text" xml:space="preserve">
     <value>注册到 Windows 搜索</value>
+  </data>
+  <data name="Settings_ShowFrequent_Desc.Text" xml:space="preserve">
+    <value>在「常用」页面顶部显示按使用频率排序的推荐工具</value>
+  </data>
+  <data name="Settings_ShowFrequent_Title.Text" xml:space="preserve">
+    <value>显示常用推荐</value>
   </data>
   <data name="Settings_StorageUsage_Button.Text" xml:space="preserve">
     <value>查看占用</value>

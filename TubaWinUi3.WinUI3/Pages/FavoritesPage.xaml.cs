@@ -57,6 +57,12 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
     {
         _frequentTools.Clear();
 
+        if (!AppSettings.GetBool(LaunchHistoryService.ShowFrequentRecommendationsSettingKey, true))
+        {
+            FrequentSection.Visibility = Visibility.Collapsed;
+            return;
+        }
+
         var frequentRecords = LaunchHistoryService.GetFrequentTools(12);
         if (frequentRecords.Count == 0)
         {
@@ -102,6 +108,16 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
             : string.Format(LocalizationService.L("Favorites_FrequentSubtitleCount", "基于使用频率智能排序 · {0} 个"), _frequentTools.Count);
 
         _ = ToolIconService.LoadIconsAsync(_frequentTools.ToList(), DispatcherQueue);
+    }
+
+    private void HideFrequentButton_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Set(LaunchHistoryService.ShowFrequentRecommendationsSettingKey, false);
+        FrequentSection.Visibility = Visibility.Collapsed;
+        ShowStatus(
+            LocalizationService.L("Favorites_FrequentHiddenTitle", "已隐藏"),
+            LocalizationService.L("Favorites_FrequentHiddenMessage", "常用推荐已隐藏，可在「设置 - 常规」中重新开启"),
+            InfoBarSeverity.Informational);
     }
 
     private Border CreateFrequentCard(ToolItem tool)
@@ -303,7 +319,9 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
         EditModePanel.Visibility = Visibility.Collapsed;
         ClearAllButton.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         ToolsGrid.Visibility = _tools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        FrequentSection.Visibility = _frequentTools.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        FrequentSection.Visibility = _frequentTools.Count > 0 && AppSettings.GetBool(LaunchHistoryService.ShowFrequentRecommendationsSettingKey, true)
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         // 拖拽过程已实时保存,这里兜底保证最终顺序落盘
         FavoritesService.SaveOrder(_tools.Select(t => t.Path));
     }

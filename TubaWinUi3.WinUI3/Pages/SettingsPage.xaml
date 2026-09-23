@@ -282,6 +282,24 @@
                                     </Grid>
                                 </Border>
 
+                                <Border x:Name="SettingsShowFrequentCard" Style="{StaticResource SettingsCardStyle}">
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource IconBorderStyle}">
+                                            <FontIcon FontSize="18" Glyph="&#xE734;" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock FontWeight="Bold" Text="显示常用推荐" l:Uids.Uid="Settings_ShowFrequent_Title" />
+                                            <TextBlock Opacity="1.0" FontSize="13" TextWrapping="Wrap" Text="在「常用」页面顶部显示按使用频率排序的推荐工具" l:Uids.Uid="Settings_ShowFrequent_Desc" />
+                                        </StackPanel>
+                                        <ToggleSwitch x:Name="ShowFrequentToggle" Grid.Column="2" VerticalAlignment="Center" Toggled="ShowFrequentToggle_Toggled" />
+                                    </Grid>
+                                </Border>
+
                                 <Border x:Name="SettingsFastModeCard" Style="{StaticResource SettingsCardStyle}">
                                     <Grid ColumnSpacing="16">
                                         <Grid.ColumnDefinitions>

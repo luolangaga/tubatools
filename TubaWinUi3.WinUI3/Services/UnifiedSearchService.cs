@@ -15,6 +15,7 @@ public static class UnifiedSearchService
         new("Search_SettingCompact", "简洁列表模式", "Search_SettingCompactDesc", "原版图吧工具箱的样式", "\uE8FD", "CompactMode"),
         new("Search_SettingBrandLogo", "显示品牌 Logo", "Search_SettingBrandLogoDesc", "在硬件信息页面显示品牌图标", "\uE8F1", "BrandLogo"),
         new("Search_SettingDefaultPage", "默认启动页面", "Search_SettingDefaultPageDesc", "选择应用启动后默认打开的页面", "\uE8A5", "DefaultPage"),
+        new("Search_SettingShowFrequent", "显示常用推荐", "Search_SettingShowFrequentDesc", "在常用页面显示按使用频率排序的推荐工具", "\uE734", "ShowFrequentRecommendations"),
         new("Search_SettingFastMode", "快速模式", "Search_SettingFastModeDesc", "禁用所有动画，提升响应速度", "\uEB3F", "FastMode"),
         new("Search_SettingWatermark", "截图水印", "Search_SettingWatermarkDesc", "硬件信息截图时添加水印", "\uE8B9", "Watermark"),
         new("Search_SettingRememberWindow", "记住窗口位置和大小", "Search_SettingRememberWindowDesc", "关闭后下次启动恢复位置", "\uE784", "RememberWindow"),

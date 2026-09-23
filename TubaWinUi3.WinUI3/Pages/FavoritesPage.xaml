@@ -127,34 +127,54 @@
                 x:Name="FrequentSection"
                 Spacing="10"
                 Visibility="Collapsed">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Border
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border
+                            Width="28"
+                            Height="28"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource AccentFillColorDefaultBrush}"
+                            CornerRadius="6">
+                            <FontIcon
+                                FontSize="14"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE734;"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock
+                            FontSize="18"
+                            FontWeight="Bold"
+                            VerticalAlignment="Center"
+                            Text="常用推荐"
+                            l:Uids.Uid="Favorites_FrequentTitle" />
+                        <TextBlock
+                            x:Name="FrequentSubtitle"
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            Opacity="1.0"
+                            Text="基于使用频率智能排序"
+                            l:Uids.Uid="Favorites_FrequentSubtitle" />
+                    </StackPanel>
+                    <Button
+                        x:Name="HideFrequentButton"
+                        Grid.Column="1"
                         Width="28"
                         Height="28"
+                        Padding="0"
                         VerticalAlignment="Center"
-                        Background="{ThemeResource AccentFillColorDefaultBrush}"
-                        CornerRadius="6">
-                        <FontIcon
-                            FontSize="14"
-                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                            Glyph="&#xE734;"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center" />
-                    </Border>
-                    <TextBlock
-                        FontSize="18"
-                        FontWeight="Bold"
-                        VerticalAlignment="Center"
-                        Text="常用推荐"
-                        l:Uids.Uid="Favorites_FrequentTitle" />
-                    <TextBlock
-                        x:Name="FrequentSubtitle"
-                        VerticalAlignment="Center"
-                        FontSize="13"
-                        Opacity="1.0"
-                        Text="基于使用频率智能排序"
-                        l:Uids.Uid="Favorites_FrequentSubtitle" />
-                </StackPanel>
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="HideFrequentButton_Click"
+                        ToolTipService.ToolTip="不再显示常用推荐"
+                        l:Uids.Uid="Favorites_HideFrequentButton">
+                        <FontIcon FontSize="12" Glyph="&#xE711;" />
+                    </Button>
+                </Grid>
                 <ScrollViewer
                     HorizontalScrollBarVisibility="Hidden"
                     HorizontalScrollMode="Enabled"

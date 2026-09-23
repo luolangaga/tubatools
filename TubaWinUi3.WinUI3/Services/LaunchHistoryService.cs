@@ -21,6 +21,10 @@ public class LaunchRecord
 public static class LaunchHistoryService
 {
     private const int MaxEntries = 100;
+
+    /// <summary>「常用」页面顶部常用推荐区块的显示开关（设置页 - 常规 可重新开启）。</summary>
+    public const string ShowFrequentRecommendationsSettingKey = "ShowFrequentRecommendations";
+
     private static string HistoryPath => ConfigManager.GetLaunchHistoryPath();
     private static List<LaunchRecord>? _cache;
 

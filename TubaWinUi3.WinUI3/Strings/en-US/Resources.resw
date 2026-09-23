@@ -372,6 +372,15 @@
   <data name="Favorites_FrequentSubtitleCount" xml:space="preserve">
     <value>Sorted by usage frequency · {0}</value>
   </data>
+  <data name="Favorites_FrequentHiddenTitle" xml:space="preserve">
+    <value>Hidden</value>
+  </data>
+  <data name="Favorites_FrequentHiddenMessage" xml:space="preserve">
+    <value>Frequent recommendations are hidden. Re-enable them in Settings &gt; General.</value>
+  </data>
+  <data name="Favorites_HideFrequentButton.ToolTip" xml:space="preserve">
+    <value>Hide frequent recommendations</value>
+  </data>
   <data name="Favorites_NoFavorites" xml:space="preserve">
     <value>No favorites</value>
   </data>
@@ -436,6 +445,12 @@
   </data>
   <data name="Search_SettingDefaultPageDesc" xml:space="preserve">
     <value>Choose the page shown on startup</value>
+  </data>
+  <data name="Search_SettingShowFrequent" xml:space="preserve">
+    <value>Show frequent recommendations</value>
+  </data>
+  <data name="Search_SettingShowFrequentDesc" xml:space="preserve">
+    <value>Show frequently used tools on the Favorites page</value>
   </data>
   <data name="Search_SettingFastMode" xml:space="preserve">
     <value>Fast mode</value>
@@ -1416,6 +1431,12 @@
   </data>
   <data name="Settings_SearchIndex_Title.Text" xml:space="preserve">
     <value>Register in Windows Search</value>
+  </data>
+  <data name="Settings_ShowFrequent_Desc.Text" xml:space="preserve">
+    <value>Show frequently used tools at the top of the Favorites page</value>
+  </data>
+  <data name="Settings_ShowFrequent_Title.Text" xml:space="preserve">
+    <value>Show frequent recommendations</value>
   </data>
   <data name="Settings_StorageUsage_Button.Text" xml:space="preserve">
     <value>View usage</value>
