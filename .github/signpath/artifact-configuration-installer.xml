@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <pe-file product-name="图吧工具箱CE">
+    <authenticode-sign />
+  </pe-file>
+</artifact-configuration>

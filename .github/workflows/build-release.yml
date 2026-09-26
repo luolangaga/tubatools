@@ -29,6 +29,10 @@ permissions:
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
   DOTNET_NOLOGO: '1'
+  SIGNPATH_ORGANIZATION_ID: '78a9f5a2-00d0-440d-a4d2-943a8ab33dbd'
+  SIGNPATH_PROJECT_SLUG: tubatools
+  # 正式证书签发前先用测试证书策略，SignPath 复核通过后改为 release-signing
+  SIGNPATH_POLICY_SLUG: test-signing
 
 jobs:
   build-tools:
@@ -220,6 +224,57 @@ jobs:
         with:
           path: installer-${{ matrix.arch }}.iss
 
+      # metadata 必须与 SignPath 上的 artifact configuration 完全一致，否则签名请求会被拒绝
+      # 注意安装包的 FileVersion 为空、ProductVersion 随版本变化，配置里只限制 product-name
+      - name: Show installer metadata
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -LiteralPath 'SetupOutput' -Filter 'TubaWinUi3_Setup_*_${{ matrix.arch }}.exe' | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host '::error::未找到安装包'
+            exit 1
+          }
+          $v = $exe.VersionInfo
+          "ProductName    = $($v.ProductName)"
+          "ProductVersion = $($v.ProductVersion)"
+          "FileVersion    = $($v.FileVersion)"
+          "CompanyName    = $($v.CompanyName)"
+
+      - name: Upload unsigned installer
+        id: upload-unsigned-installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: installer-unsigned-${{ matrix.arch }}
+          path: SetupOutput\TubaWinUi3_Setup_*_${{ matrix.arch }}.exe
+          archive: false
+          if-no-files-found: error
+
+      - name: Sign installer
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.upload-unsigned-installer.outputs.artifact-id }}
+          skip-decompress: true
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: '3600'
+          output-artifact-directory: installer-signed
+
+      - name: Replace installer with signed one
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -LiteralPath 'installer-signed' -Filter '*.exe' -Recurse | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host '::error::签名安装包产物为空，未找到 .exe'
+            exit 1
+          }
+          Copy-Item -LiteralPath $exe.FullName -Destination (Join-Path 'SetupOutput' $exe.Name) -Force
+          $sig = Get-AuthenticodeSignature -LiteralPath (Join-Path 'SetupOutput' $exe.Name)
+          "已签名安装包: $($exe.Name) / 签名者: $($sig.SignerCertificate.Subject)"
+
       - name: Build compatible edition (single-file .NET Framework)
         shell: pwsh
         run: |
@@ -232,6 +287,42 @@ jobs:
           } else {
             Write-Host "::warning::Compatible edition exe not found at $compatExe"
           }
+
+      # 启动器必须在打包便携版之前签名，否则 zip 内是未签名的启动器
+      - name: Upload unsigned launcher
+        id: upload-unsigned-launcher
+        uses: actions/upload-artifact@v7
+        with:
+          name: launcher-unsigned-${{ matrix.arch }}
+          path: Launcher/bin/图吧工具箱WinUI3_${{ matrix.arch }}.exe
+          archive: false
+          if-no-files-found: error
+
+      - name: Sign launcher
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ env.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ env.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: initial
+          github-artifact-id: ${{ steps.upload-unsigned-launcher.outputs.artifact-id }}
+          skip-decompress: true
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: '3600'
+          output-artifact-directory: launcher-signed
+
+      - name: Replace launcher with signed one
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -LiteralPath 'launcher-signed' -Filter '*.exe' -Recurse | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host '::error::签名启动器产物为空，未找到 .exe'
+            exit 1
+          }
+          Copy-Item -LiteralPath $exe.FullName -Destination 'Launcher/bin/图吧工具箱WinUI3_${{ matrix.arch }}.exe' -Force
+          $sig = Get-AuthenticodeSignature -LiteralPath 'Launcher/bin/图吧工具箱WinUI3_${{ matrix.arch }}.exe'
+          "已签名启动器: $($exe.Name) / 签名者: $($sig.SignerCertificate.Subject)"
 
       - name: Create portable zip (src/ layout with launcher)
         shell: pwsh
@@ -411,7 +502,11 @@ jobs:
       - name: Collect release files
         run: |
           mkdir -p release_files
-          find artifacts -type f \( -name '*.exe' -o -name '*.zip' \) -exec cp {} release_files/ \;
+          # 排除签名流程的临时 artifact（未签名副本，文件名与正式包相同）
+          find artifacts -type f \( -name '*.exe' -o -name '*.zip' \) \
+            ! -path 'artifacts/launcher-unsigned-*/*' \
+            ! -path 'artifacts/installer-unsigned-*/*' \
+            -exec cp {} release_files/ \;
           if [ -f artifacts/tools-zip/Tools.zip ]; then
             cp artifacts/tools-zip/Tools.zip release_files/Tools.zip
           fi
