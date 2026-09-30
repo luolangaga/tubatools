@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3040,6 +3040,9 @@ Permissions
   </data>
   <data name="Hw_CopyFailed" xml:space="preserve">
     <value>Copy failed</value>
+  </data>
+  <data name="Hw_CopyBusyRetry" xml:space="preserve">
+    <value>Copy failed: the clipboard is in use by another app. Please try again.</value>
   </data>
   <data name="Hw_MarkdownCopied" xml:space="preserve">
     <value>Markdown copied</value>

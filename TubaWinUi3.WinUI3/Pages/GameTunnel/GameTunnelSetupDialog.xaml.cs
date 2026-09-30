@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace TubaWinUi3.Pages;
 
@@ -630,16 +629,14 @@ public sealed partial class GameTunnelSetupDialog : ContentDialog
     private void CopyAuthUrl_Click(object sender, RoutedEventArgs e)
     {
         if (_authUrl is null) return;
-        try
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        if (ClipboardService.TrySetText(_authUrl).Success)
         {
-            var package = new DataPackage();
-            package.SetText(_authUrl);
-            Clipboard.SetContent(package);
             StatusBar.Severity = InfoBarSeverity.Success;
             StatusBar.Message = "登录地址已复制";
             StatusBar.IsOpen = true;
         }
-        catch
+        else
         {
             ShowError("复制失败，请手动选中文本复制");
         }

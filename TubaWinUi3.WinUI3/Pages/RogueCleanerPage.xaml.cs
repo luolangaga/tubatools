@@ -1747,17 +1747,11 @@ public sealed partial class RogueCleanerPage : Page
     {
         var text = AiDetailsText.Text;
         if (string.IsNullOrWhiteSpace(text)) return;
-        try
-        {
-            var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-            package.SetText(text);
-            Clipboard.SetContent(package);
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        if (ClipboardService.TrySetText(text).Success)
             ShowAiStatus("详情已复制到剪贴板", InfoBarSeverity.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowAiStatus($"复制失败:{ex.Message}", InfoBarSeverity.Error);
-        }
+        else
+            ShowAiStatus("复制失败：剪贴板被其他程序占用，请稍后重试", InfoBarSeverity.Error);
     }
 
     // ================= 信任策略 =================
@@ -2452,14 +2446,7 @@ public sealed partial class RogueCleanerPage : Page
     private void CopyFindingDetail(Finding f)
     {
         var text = $"项目：{f.UserVisibleName}\n风险：{f.RiskDisplay}\n软件：{f.SoftwareName}\n位置：{f.TechnicalLocation}\n影响：{f.UserImpact}\n处理方式：{f.ActionText}\n证据：{f.Evidence}";
-        try
-        {
-            var data = new DataPackage();
-            data.SetText(text);
-            Clipboard.SetContent(data);
-            Clipboard.Flush();
-        }
-        catch { }
+        ClipboardService.TrySetText(text, flush: true);
     }
 
     #endregion
@@ -2738,14 +2725,7 @@ public sealed partial class RogueCleanerPage : Page
             else
             {
                 var url = FeedbackService.BuildIssueUrl(report);
-                try
-                {
-                    var data = new DataPackage();
-                    data.SetText(FeedbackService.BuildMarkdown(report));
-                    Clipboard.SetContent(data);
-                    Clipboard.Flush();
-                }
-                catch { }
+                ClipboardService.TrySetText(FeedbackService.BuildMarkdown(report), flush: true);
                 try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); } catch { }
             }
         }
@@ -3363,15 +3343,10 @@ public sealed partial class RogueCleanerPage : Page
     private void CmCopy_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(CmDetailsText.Text)) return;
-        try
-        {
-            var data = new DataPackage();
-            data.SetText(CmDetailsText.Text);
-            Clipboard.SetContent(data);
-            Clipboard.Flush();
-            CmStatusText.Text = "详情已复制到剪贴板。";
-        }
-        catch { }
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        CmStatusText.Text = ClipboardService.TrySetText(CmDetailsText.Text, flush: true).Success
+            ? "详情已复制到剪贴板。"
+            : "复制失败：剪贴板被其他程序占用，请稍后重试。";
     }
 
     private void CmLocation_Click(object sender, RoutedEventArgs e)
@@ -3380,12 +3355,9 @@ public sealed partial class RogueCleanerPage : Page
         if (entry == null) return;
         try
         {
-            var data = new DataPackage();
-            data.SetText(entry.TechnicalLocation);
-            Clipboard.SetContent(data);
-            Clipboard.Flush();
+            var copied = ClipboardService.TrySetText(entry.TechnicalLocation, flush: true).Success;
             Process.Start(new ProcessStartInfo { FileName = "regedit.exe", UseShellExecute = true });
-            CmStatusText.Text = "注册表位置已复制，并已打开注册表编辑器。";
+            CmStatusText.Text = copied ? "注册表位置已复制，并已打开注册表编辑器。" : "位置复制失败，已打开注册表编辑器。";
         }
         catch { }
     }

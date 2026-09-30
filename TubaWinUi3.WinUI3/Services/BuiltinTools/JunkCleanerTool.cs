@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Pages;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 
 namespace TubaWinUi3.Services;
@@ -1254,9 +1253,8 @@ public sealed class JunkCleanerTool : IBuiltinTool
             sb.AppendLine("=== 注册表 ===");
             foreach (var r in item.Result.RegistryToDelete) sb.AppendLine(r.ToString());
         }
-        var data = new DataPackage();
-        data.SetText(sb.ToString());
-        Clipboard.SetContent(data);
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        ClipboardService.TrySetText(sb.ToString());
     }
 
     // 判断点击是否落在某个子元素内（用于屏蔽开关自身的点击）

@@ -1,4 +1,3 @@
-using Windows.ApplicationModel.DataTransfer;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Windowing;
 using TubaWinUi3.Services;
@@ -213,9 +212,8 @@ public sealed partial class CommunitySubmitWindow : Window
 
     private void CopyErrorButton_Click(object sender, RoutedEventArgs e)
     {
-        var package = new DataPackage();
-        package.SetText(_errorDetail);
-        Clipboard.SetContent(package);
-        CopyErrorButtonText.Text = "已复制";
+        // 剪贴板写入失败不得让窗口本身崩溃（详见 ClipboardService）
+        var result = ClipboardService.TrySetText(_errorDetail);
+        CopyErrorButtonText.Text = result.Success ? "已复制" : "复制失败，请重试";
     }
 }

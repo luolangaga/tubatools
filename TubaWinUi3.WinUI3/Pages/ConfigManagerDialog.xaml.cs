@@ -246,10 +246,8 @@ public sealed partial class ConfigManagerDialog : ContentDialog
         try
         {
             var path = ConfigManager.GetDataDir();
-            Windows.ApplicationModel.DataTransfer.DataPackage dp = new();
-            dp.SetText(path);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dp);
-            StatusText.Text = "已复制路径到剪贴板";
+            var result = ClipboardService.TrySetText(path);
+            StatusText.Text = result.Success ? "已复制路径到剪贴板" : "复制失败，请稍后重试";
         }
         catch { StatusText.Text = "复制失败"; }
     }

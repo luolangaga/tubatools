@@ -340,10 +340,11 @@ public sealed partial class ScriptRunnerWindow : Window
         var text = _allOutput.ToString();
         if (string.IsNullOrEmpty(text)) return;
 
-        var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-        package.SetText(text);
-        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-        ShowToast("已复制", "输出内容已复制到剪贴板", InfoBarSeverity.Success);
+        var result = ClipboardService.TrySetText(text);
+        if (result.Success)
+            ShowToast("已复制", "输出内容已复制到剪贴板", InfoBarSeverity.Success);
+        else
+            ShowToast("复制失败", "剪贴板被其他程序占用，请稍后重试", InfoBarSeverity.Warning);
     }
 
     private void ScrollToBottomButton_Click(object sender, RoutedEventArgs e)

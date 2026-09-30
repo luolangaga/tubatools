@@ -14,7 +14,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.Win32;
 using TubaWinUi3.Pages;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 
 namespace TubaWinUi3.Services;
@@ -1137,14 +1136,10 @@ public sealed class StartupManagerTool : IBuiltinTool
         {
             var text = e.EntryLocation.Length > 0 ? e.EntryLocation : e.ImagePath;
             if (text.Length == 0) return;
-            try
-            {
-                var dp = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-                dp.SetText(text);
-                Clipboard.SetContent(dp);
-                if (state.StatusText is { } st) st.Text = "已复制到剪贴板。";
-            }
-            catch { }
+            // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+            var copied = ClipboardService.TrySetText(text).Success;
+            if (state.StatusText is { } st)
+                st.Text = copied ? "已复制到剪贴板。" : "复制失败：剪贴板被其他程序占用，请稍后重试。";
         };
         actionRow.Children.Add(copyBtn);
 

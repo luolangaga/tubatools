@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using TubaWinUi3.Services;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace TubaWinUi3.Pages;
 
@@ -339,9 +338,8 @@ public sealed partial class OfficialWebsitesPage : Page
     {
         if (sender is Button btn && btn.Tag is OfficialWebsite site)
         {
-            var data = new DataPackage();
-            data.SetText(site.Url);
-            Clipboard.SetContent(data);
+            // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+            ClipboardService.TrySetText(site.Url);
         }
     }
 

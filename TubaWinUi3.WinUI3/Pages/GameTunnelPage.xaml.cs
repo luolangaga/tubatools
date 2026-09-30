@@ -412,17 +412,11 @@ public sealed partial class GameTunnelPage : Page
 
     private void CopyText(string text, string message)
     {
-        try
-        {
-            var package = new DataPackage();
-            package.SetText(text);
-            Clipboard.SetContent(package);
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        if (ClipboardService.TrySetText(text).Success)
             ShowInfo(message);
-        }
-        catch
-        {
+        else
             ShowError("复制失败，请手动选中复制", null);
-        }
     }
 
     private void ShowInfo(string message)

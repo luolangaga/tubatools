@@ -669,15 +669,27 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         if (sender is not FrameworkElement fe) return;
         if (fe.DataContext is not HardwareInfoItem item) return;
         if (item.Value == LocalizationService.L("Hw_Unknown", "未知") && string.IsNullOrWhiteSpace(item.Label)) return;
-        CopyToClipboard(item.Value);
+        TryCopyToClipboard(item.Value);
     }
 
-    private void CopyToClipboard(string text)
+    /// <summary>
+    /// 复制并给出反馈。剪贴板被占用是瞬时状态，失败重试由 ClipboardService 负责；
+    /// 这里只负责把最终结果翻译成状态栏提示（失败也不抛，避免闪退）。
+    /// </summary>
+    private bool TryCopyToClipboard(string text)
     {
-        var dp = new DataPackage();
-        dp.SetText(text);
-        Clipboard.SetContent(dp);
-        ShowCopyToast(text);
+        var result = ClipboardService.TrySetText(text);
+        if (result.Success)
+        {
+            ShowCopyToast(text);
+            return true;
+        }
+
+        ShowStatusBar(
+            LocalizationService.L("Hw_CopyFailed", "复制失败"),
+            LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试"),
+            InfoBarSeverity.Warning);
+        return false;
     }
 
     private DispatcherTimer? _statusBarTimer;

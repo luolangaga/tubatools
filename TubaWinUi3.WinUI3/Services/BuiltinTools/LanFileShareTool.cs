@@ -238,13 +238,8 @@ public sealed partial class LanFileSharePage : Page
     {
         if (!LanFileShareService.IsRunning) return;
         var url = $"http://{LanFileShareService.GetLocalIp()}:{LanFileShareService.Port}/";
-        try
-        {
-            var dp = new Windows.ApplicationModel.DataTransfer.DataPackage();
-            dp.SetText(url);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dp);
-        }
-        catch { }
+        // 统一走 ClipboardService（占用重试 + 失败留痕），不再直连 WinRT 剪贴板
+        ClipboardService.TrySetText(url);
     }
 
     private void OpenShareDir()

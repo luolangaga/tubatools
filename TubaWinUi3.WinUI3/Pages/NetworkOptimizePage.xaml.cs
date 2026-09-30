@@ -409,11 +409,18 @@ public sealed partial class NetworkOptimizePage : Page
         var ip = PublicIpText.Text;
         if (System.Net.IPAddress.TryParse(ip, out _))
         {
-            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-            package.SetText(ip);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            await ShowSuccessAsync("公网 IP 已复制到剪贴板", ip);
+            var result = ClipboardService.TrySetText(ip, flush: true);
+            if (result.Success)
+            {
+                await ShowSuccessAsync("公网 IP 已复制到剪贴板", ip);
+            }
+            else
+            {
+                SuccessBar.IsOpen = false;
+                ErrorBar.Title = "复制失败";
+                ErrorBar.Message = "剪贴板被其他程序占用，请稍后重试";
+                ErrorBar.IsOpen = true;
+            }
         }
     }
 

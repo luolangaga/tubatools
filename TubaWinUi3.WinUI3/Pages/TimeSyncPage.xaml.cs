@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 
 namespace TubaWinUi3.Pages;
@@ -810,9 +809,15 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
             var probes = _probes.OrderBy(p => p.Result.Ok ? 0 : 1).ThenBy(p => p.Result.RoundTripMs).Select(p => p.Result).ToList();
             var report = TimeSyncService.BuildDiagnosticReport(snapshot, probes);
 
-            var package = new DataPackage();
-            package.SetText(report);
-            Clipboard.SetContent(package);
+            var result = ClipboardService.TrySetText(report);
+            if (!result.Success)
+            {
+                ShowResult(TimeSyncActionResult.Failure(
+                    LocalizationService.L("TimeSync_CopyReportFailed", "复制诊断报告失败"),
+                    LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试")));
+                Render();
+                return;
+            }
 
             ShowResult(TimeSyncActionResult.Success(
                 LocalizationService.L("TimeSync_ReportCopiedTitle", "诊断报告已复制到剪贴板"),
@@ -871,9 +876,14 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
     private async void CopySourceButton_Click(object sender, RoutedEventArgs e)
     {
         if (SourceText.Text.Length == 0) return;
-        var package = new DataPackage();
-        package.SetText(SourceText.Text);
-        Clipboard.SetContent(package);
+        var result = ClipboardService.TrySetText(SourceText.Text);
+        if (!result.Success)
+        {
+            await ShowMessageAsync(
+                LocalizationService.L("Hw_CopyFailed", "复制失败"),
+                LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试"));
+            return;
+        }
         await ShowMessageAsync(
             LocalizationService.L("TimeSync_CopiedTitle", "已复制"),
             string.Format(LocalizationService.L("TimeSync_CopiedSource", "当前时间源：{0}"), SourceText.Text));

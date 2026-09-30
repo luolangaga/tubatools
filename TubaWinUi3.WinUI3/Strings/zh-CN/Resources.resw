@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -3056,6 +3056,9 @@
   </data>
   <data name="Hw_CopyFailed" xml:space="preserve">
     <value>复制失败</value>
+  </data>
+  <data name="Hw_CopyBusyRetry" xml:space="preserve">
+    <value>复制失败：剪贴板被其他程序占用，请稍后重试</value>
   </data>
   <data name="Hw_MarkdownCopied" xml:space="preserve">
     <value>Markdown 已复制</value>

@@ -517,9 +517,15 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
         if (_msResolvedEntry is null) return;
         try
         {
-            var dp = new Windows.ApplicationModel.DataTransfer.DataPackage();
-            dp.SetText(_msResolvedEntry.DownloadUrl);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dp);
+            // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+            if (!ClipboardService.TrySetText(_msResolvedEntry.DownloadUrl).Success)
+            {
+                StatusInfoBar.Title = LocalizationService.L("Hw_CopyFailed", "复制失败");
+                StatusInfoBar.Message = LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试");
+                StatusInfoBar.Severity = InfoBarSeverity.Warning;
+                StatusInfoBar.IsOpen = true;
+                return;
+            }
 
             StatusInfoBar.Title = LocalizationService.L("WindowsImage_Copied", "已复制");
             StatusInfoBar.Message = LocalizationService.L("WindowsImage_CopiedMsg", "下载链接已复制到剪贴板");

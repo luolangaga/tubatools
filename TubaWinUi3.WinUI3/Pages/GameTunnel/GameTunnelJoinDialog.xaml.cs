@@ -327,17 +327,11 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
     private void CopyFinalAddress_Click(object sender, RoutedEventArgs e)
     {
         if (_invite is null) return;
-        try
-        {
-            var package = new DataPackage();
-            package.SetText(_invite.Address);
-            Clipboard.SetContent(package);
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        if (ClipboardService.TrySetText(_invite.Address).Success)
             ShowStatus(InfoBarSeverity.Success, "地址已复制");
-        }
-        catch
-        {
+        else
             ShowStatus(InfoBarSeverity.Error, "复制失败，请手动选中复制");
-        }
     }
 
     // ══════════════════ 进度行 ══════════════════

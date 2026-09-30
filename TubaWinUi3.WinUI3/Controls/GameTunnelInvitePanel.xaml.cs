@@ -436,17 +436,11 @@ public sealed partial class GameTunnelInvitePanel : UserControl
 
     private void Copy(string text, string message)
     {
-        try
-        {
-            var package = new DataPackage();
-            package.SetText(text);
-            Clipboard.SetContent(package);
+        // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+        if (ClipboardService.TrySetText(text).Success)
             ShowStatus(InfoBarSeverity.Success, message);
-        }
-        catch
-        {
+        else
             ShowError("复制失败，请手动选中文本复制");
-        }
     }
 
     private void SaveScript_Click(object sender, RoutedEventArgs e)

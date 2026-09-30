@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -58,14 +57,20 @@ public sealed partial class ErrorPage : Page
 
     private async void CopyButton_Click(object sender, RoutedEventArgs e)
     {
-        var package = new DataPackage();
-        package.SetText(_errorDetail);
-        Clipboard.SetContent(package);
+        // 剪贴板写入失败不得让错误上报页本身崩溃（详见 ClipboardService）
+        var result = ClipboardService.TrySetText(_errorDetail);
         CopyButton.Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         if (CopyButton.Content is StackPanel sp)
         {
-            sp.Children.Add(new FontIcon { FontSize = 12, Glyph = "\uE73E" });
-            sp.Children.Add(new TextBlock { FontSize = 12, Text = "已复制" });
+            if (result.Success)
+            {
+                sp.Children.Add(new FontIcon { FontSize = 12, Glyph = "\uE73E" });
+                sp.Children.Add(new TextBlock { FontSize = 12, Text = "已复制" });
+            }
+            else
+            {
+                sp.Children.Add(new TextBlock { FontSize = 12, Text = "复制失败，请重试" });
+            }
         }
     }
 

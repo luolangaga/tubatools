@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -98,18 +97,15 @@ public sealed partial class ErrorWindow : Window
 
     private void CopyButton_Click(object sender, RoutedEventArgs e)
     {
-        var package = new DataPackage();
-        package.SetText(_errorDetail);
-        Clipboard.SetContent(package);
-        CopyButtonText.Text = "已复制";
+        // 剪贴板写入失败不得让错误上报窗口本身崩溃（详见 ClipboardService）
+        var result = ClipboardService.TrySetText(_errorDetail);
+        CopyButtonText.Text = result.Success ? "已复制" : "复制失败，请重试";
     }
 
     private void CopySysInfoButton_Click(object sender, RoutedEventArgs e)
     {
-        var package = new DataPackage();
-        package.SetText(_systemInfo);
-        Clipboard.SetContent(package);
-        CopySysInfoButtonText.Text = "已复制";
+        var result = ClipboardService.TrySetText(_systemInfo);
+        CopySysInfoButtonText.Text = result.Success ? "已复制" : "复制失败，请重试";
     }
 
     private async void ReportButton_Click(object sender, RoutedEventArgs e)

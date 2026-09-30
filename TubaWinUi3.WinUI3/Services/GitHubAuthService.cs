@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.Http;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
@@ -224,12 +224,8 @@ public static class GitHubAuthService
         {
             try
             {
-                if (userCode is not null)
-                {
-                    var dp = new Windows.ApplicationModel.DataTransfer.DataPackage();
-                    dp.SetText(userCode);
-                    Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dp);
-                }
+                // 统一走 ClipboardService：占用重试，失败只留痕（文案照旧提示"已复制"）
+                if (userCode is not null) ClipboardService.TrySetText(userCode);
                 if (verificationUri is not null)
                 {
                     Process.Start(new ProcessStartInfo(verificationUri) { UseShellExecute = true });

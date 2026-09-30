@@ -409,9 +409,9 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         LoadingRing.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void Card1_Tapped(object sender, TappedRoutedEventArgs e) => CopyToClipboard(ModelText.Text);
-    private void Card2_Tapped(object sender, TappedRoutedEventArgs e) => CopyToClipboard(SystemText.Text);
-    private void Card3_Tapped(object sender, TappedRoutedEventArgs e) => CopyToClipboard(UptimeText.Text);
+    private void Card1_Tapped(object sender, TappedRoutedEventArgs e) => TryCopyToClipboard(ModelText.Text);
+    private void Card2_Tapped(object sender, TappedRoutedEventArgs e) => TryCopyToClipboard(SystemText.Text);
+    private void Card3_Tapped(object sender, TappedRoutedEventArgs e) => TryCopyToClipboard(UptimeText.Text);
 
     private void DetailItem_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -421,15 +421,27 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     {
         if (sender is not FrameworkElement fe) return;
         if (fe.DataContext is not HardwareInfoItem item) return;
-        CopyToClipboard(item.Value);
+        TryCopyToClipboard(item.Value);
     }
 
-    private void CopyToClipboard(string text)
+    /// <summary>
+    /// 复制并给出反馈。剪贴板被占用是瞬时状态，失败重试由 ClipboardService 负责；
+    /// 这里只负责把最终结果翻译成用户能看懂的状态栏提示（失败也不抛，避免闪退）。
+    /// </summary>
+    private bool TryCopyToClipboard(string text)
     {
-        var dp = new DataPackage();
-        dp.SetText(text);
-        Clipboard.SetContent(dp);
-        ShowCopyToast(text);
+        var result = ClipboardService.TrySetText(text);
+        if (result.Success)
+        {
+            ShowCopyToast(text);
+            return true;
+        }
+
+        ShowStatusBar(
+            LocalizationService.L("Hw_CopyFailed", "复制失败"),
+            LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试"),
+            InfoBarSeverity.Warning);
+        return false;
     }
 
     private DispatcherTimer? _statusBarTimer;
@@ -539,8 +551,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     {
         try
         {
-            CopyToClipboard(BuildTextExport());
-            ShowStatusBar(LocalizationService.L("Hw_PlainCopied", "纯文字已复制"), LocalizationService.L("Hw_PlainCopiedMsg", "硬件信息文本已复制到剪贴板"), InfoBarSeverity.Success);
+            if (TryCopyToClipboard(BuildTextExport()))
+                ShowStatusBar(LocalizationService.L("Hw_PlainCopied", "纯文字已复制"), LocalizationService.L("Hw_PlainCopiedMsg", "硬件信息文本已复制到剪贴板"), InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
@@ -552,8 +564,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     {
         try
         {
-            CopyToClipboard(BuildMarkdownExport());
-            ShowStatusBar(LocalizationService.L("Hw_MarkdownCopied", "Markdown 已复制"), LocalizationService.L("Hw_MarkdownCopiedMsg", "硬件信息 Markdown 已复制到剪贴板"), InfoBarSeverity.Success);
+            if (TryCopyToClipboard(BuildMarkdownExport()))
+                ShowStatusBar(LocalizationService.L("Hw_MarkdownCopied", "Markdown 已复制"), LocalizationService.L("Hw_MarkdownCopiedMsg", "硬件信息 Markdown 已复制到剪贴板"), InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
@@ -725,19 +737,16 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
             using var ms = new MemoryStream();
             finalBmp.Save(ms, ImageFormat.Png);
-            ms.Seek(0, SeekOrigin.Begin);
-
-            var inMemStream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
             var bytes = ms.ToArray();
-            var winBuffer = System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(bytes);
-            await inMemStream.WriteAsync(winBuffer);
-            inMemStream.Seek(0);
 
-            var dataPackage = new DataPackage();
-            dataPackage.SetBitmap(Windows.Storage.Streams.RandomAccessStreamReference.CreateFromStream(inMemStream));
-            dataPackage.RequestedOperation = DataPackageOperation.Copy;
-            Clipboard.SetContent(dataPackage);
-            Clipboard.Flush();
+            var result = ClipboardService.TrySetBitmap(_ => BitmapFactory.Create(bytes));
+            if (!result.Success)
+            {
+                ShowStatusBar(LocalizationService.L("Hw_ScreenshotFailed", "截图失败"),
+                    LocalizationService.L("Hw_CopyBusyRetry", "复制失败：剪贴板被其他程序占用，请稍后重试"),
+                    InfoBarSeverity.Warning);
+                return;
+            }
 
             ShowStatusBar(LocalizationService.L("Hw_ScreenshotCopied", "截图已复制到剪贴板"), LocalizationService.L("Hw_ScreenshotCopiedMsg", "可直接粘贴使用"), InfoBarSeverity.Success);
         }
@@ -748,6 +757,22 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         finally
         {
             _isScreenshotting = false;
+        }
+    }
+
+    /// <summary>把 PNG 字节包成剪贴板位图引用；每次尝试都要新建（旧流可能已被剪贴板消费）。</summary>
+    private static class BitmapFactory
+    {
+        public static Windows.Storage.Streams.RandomAccessStreamReference Create(byte[] pngBytes)
+        {
+            var stream = new Windows.Storage.Streams.InMemoryRandomAccessStream();
+            // 用 DataWriter 同步写入：不加锁、不等 IAsyncAction（避免在 UI 线程上阻塞等待）
+            using (var writer = new Windows.Storage.Streams.DataWriter(stream))
+            {
+                writer.WriteBytes(pngBytes);
+            }
+            stream.Seek(0);
+            return Windows.Storage.Streams.RandomAccessStreamReference.CreateFromStream(stream);
         }
     }
 

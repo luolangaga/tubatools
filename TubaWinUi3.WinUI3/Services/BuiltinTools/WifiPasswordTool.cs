@@ -162,13 +162,8 @@ public sealed class WifiPasswordTool : IBuiltinTool
         };
         copyBtn.Click += (_, _) =>
         {
-            try
-            {
-                var data = new Windows.ApplicationModel.DataTransfer.DataPackage();
-                data.SetText(network.Password);
-                Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(data);
-            }
-            catch { }
+            // 统一走 ClipboardService：占用重试，失败只留痕（卡片内没有提示位）
+            ClipboardService.TrySetText(network.Password);
         };
 
         var passwordPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };

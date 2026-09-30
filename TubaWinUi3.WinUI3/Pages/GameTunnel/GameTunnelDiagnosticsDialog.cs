@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
-using Windows.ApplicationModel.DataTransfer;
 using static TubaWinUi3.Pages.GameTunnelUi;
 
 namespace TubaWinUi3.Pages;
@@ -285,17 +284,9 @@ public sealed class GameTunnelDiagnosticsDialog
         var copyButton = new Button { Content = "复制诊断信息", Padding = new Thickness(12, 6, 12, 6), CornerRadius = new CornerRadius(7) };
         copyButton.Click += (_, _) =>
         {
-            try
-            {
-                var package = new DataPackage();
-                package.SetText(_report.ToString());
-                Clipboard.SetContent(package);
-                copyButton.Content = "已复制";
-            }
-            catch
-            {
-                copyButton.Content = "复制失败";
-            }
+            // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
+            var copied = ClipboardService.TrySetText(_report.ToString());
+            copyButton.Content = copied.Success ? "已复制" : "复制失败";
         };
 
         panel.Children.Add(copyButton);

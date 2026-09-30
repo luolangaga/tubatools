@@ -112,16 +112,9 @@ public partial class App : Application
         {
             if (copyPathIndex + 1 < cmdLine.Length && !string.IsNullOrWhiteSpace(cmdLine[copyPathIndex + 1]))
             {
-                try
-                {
-                    var data = new Windows.ApplicationModel.DataTransfer.DataPackage();
-                    data.SetText(cmdLine[copyPathIndex + 1]);
-                    Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(data);
-                    Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-                }
-                catch
-                {
-                }
+                // 统一走 ClipboardService：占用时重试，失败只记日志（本进程马上 Exit，
+                // 没有窗口可以承载错误提示）。flush 保证进程退出后剪贴板内容依然可粘贴。
+                ClipboardService.TrySetText(cmdLine[copyPathIndex + 1], flush: true);
             }
             Exit();
             return;
