@@ -43,124 +43,99 @@ public static class ActiveInterceptStartupService
         return await GetAdminScheduleTaskExistsAsync() ? StartupType.Admin : StartupType.None;
     }
 
-    /// <summary>创建（或覆盖）管理员计划任务：登录时以最高权限启动主动拦截后端。需管理员。</summary>
-    public static async Task<bool> CreateAdminScheduleTaskAsync()
+    /// <summary>
+    /// 计划任务 XML。internal 以便单测锁定「encoding 声明（UTF-16）与落盘编码一致」——
+    /// 声明 UTF-16 却按 UTF-8 写盘，会让 schtasks 解析到中文 &lt;Description&gt; 直接失败，
+    /// 详见 <see cref="ScheduledTaskHelper"/>。
+    /// </summary>
+    internal static string BuildTaskXml(string exePath, string arguments, string userId) => $$"""
+        <?xml version="1.0" encoding="UTF-16"?>
+        <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+        <RegistrationInfo>
+            <Description>登录时启动图吧工具箱CE主动拦截后端（流氓软件拦截器），需管理员权限以屏蔽第三方右键菜单。</Description>
+            <URI>\{{ScheduleTaskName}}</URI>
+        </RegistrationInfo>
+        <Triggers>
+            <LogonTrigger>
+                <Enabled>true</Enabled>
+                <UserId>{{ScheduledTaskHelper.Escape(userId)}}</UserId>
+            </LogonTrigger>
+        </Triggers>
+        <Principals>
+            <Principal id="Author">
+                <LogonType>InteractiveToken</LogonType>
+                <RunLevel>HighestAvailable</RunLevel>
+            </Principal>
+        </Principals>
+        <Settings>
+            <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+            <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+            <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+            <AllowHardTerminate>true</AllowHardTerminate>
+            <StartWhenAvailable>false</StartWhenAvailable>
+            <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+            <IdleSettings>
+                <StopOnIdleEnd>false</StopOnIdleEnd>
+                <RestartOnIdle>false</RestartOnIdle>
+            </IdleSettings>
+            <AllowStartOnDemand>true</AllowStartOnDemand>
+            <Enabled>true</Enabled>
+            <Hidden>false</Hidden>
+            <RunOnlyIfIdle>false</RunOnlyIfIdle>
+            <WakeToRun>false</WakeToRun>
+            <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+            <Priority>5</Priority>
+        </Settings>
+        <Actions Context="Author">
+            <Exec>
+                <Command>{{ScheduledTaskHelper.Escape(exePath)}}</Command>
+                <Arguments>{{ScheduledTaskHelper.Escape(arguments)}}</Arguments>
+            </Exec>
+        </Actions>
+        </Task>
+        """;
+
+    /// <summary>创建（或覆盖）管理员计划任务：登录时以最高权限启动主动拦截后端。失败时返回真实原因。</summary>
+    public static async Task<StartupTaskResult> CreateAdminScheduleTaskAsync()
     {
         var exePath = ActiveInterceptService.BackEndExePath;
-        if (!File.Exists(exePath)) return false;
+        if (!File.Exists(exePath)) return StartupTaskResult.Fail($"找不到后端程序：{exePath}");
 
         // 先把后端配置写好，计划任务启动时后端直接读取（不依赖主程序进程）。
         ActiveInterceptService.EnsureConfigWritten();
 
-        var xml = $$"""
-            <?xml version="1.0" encoding="UTF-16"?>
-            <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-            <RegistrationInfo>
-                <Description>登录时启动图吧工具箱CE主动拦截后端（流氓软件拦截器），需管理员权限以屏蔽第三方右键菜单。</Description>
-                <URI>\{{ScheduleTaskName}}</URI>
-            </RegistrationInfo>
-            <Triggers>
-                <LogonTrigger>
-                    <Enabled>true</Enabled>
-                    <UserId>{{WindowsIdentity.GetCurrent().Name}}</UserId>
-                </LogonTrigger>
-            </Triggers>
-            <Principals>
-                <Principal id="Author">
-                    <LogonType>InteractiveToken</LogonType>
-                    <RunLevel>HighestAvailable</RunLevel>
-                </Principal>
-            </Principals>
-            <Settings>
-                <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-                <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-                <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-                <AllowHardTerminate>true</AllowHardTerminate>
-                <StartWhenAvailable>false</StartWhenAvailable>
-                <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-                <IdleSettings>
-                    <StopOnIdleEnd>false</StopOnIdleEnd>
-                    <RestartOnIdle>false</RestartOnIdle>
-                </IdleSettings>
-                <AllowStartOnDemand>true</AllowStartOnDemand>
-                <Enabled>true</Enabled>
-                <Hidden>false</Hidden>
-                <RunOnlyIfIdle>false</RunOnlyIfIdle>
-                <WakeToRun>false</WakeToRun>
-                <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-                <Priority>5</Priority>
-            </Settings>
-            <Actions Context="Author">
-                <Exec>
-                    <Command>{{exePath}}</Command>
-                    <Arguments>"--config" "{{ActiveInterceptService.ConfigPath}}"</Arguments>
-                </Exec>
-            </Actions>
-            </Task>
-            """;
-
-        var xmlPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
-        await File.WriteAllTextAsync(xmlPath, xml);
-
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "schtasks",
-                Arguments = $"/create /tn \"{ScheduleTaskName}\" /XML \"{xmlPath}\" /f",
-                UseShellExecute = true,
-                // 主程序本身以管理员运行，runas 兜底 UAC 授权。
-                Verb = "runas",
-                WindowStyle = ProcessWindowStyle.Hidden
-            }
-        };
+        var arguments = $"\"--config\" \"{ActiveInterceptService.ConfigPath}\"";
+        var xmlPath = await ScheduledTaskHelper.WriteTaskXmlAsync(
+            BuildTaskXml(exePath, arguments, WindowsIdentity.GetCurrent().Name));
 
         try
         {
-            process.Start();
-            await process.WaitForExitAsync();
-        }
-        catch (Exception)
-        {
-            // UAC 被取消 / 非管理员环境拒绝提权。
-            try { File.Delete(xmlPath); } catch { }
-            return false;
+            var result = await ScheduledTaskHelper.RunAsync(
+                $"/create /tn \"{ScheduleTaskName}\" /XML \"{xmlPath}\" /f");
+            if (!result.Success) return result;
+
+            return await GetAdminScheduleTaskExistsAsync()
+                ? StartupTaskResult.Ok()
+                : StartupTaskResult.Fail("schtasks 报告成功，但计划任务未出现在系统中");
         }
         finally
         {
             try { File.Delete(xmlPath); } catch { }
         }
-
-        return await GetAdminScheduleTaskExistsAsync();
     }
 
-    /// <summary>删除计划任务。需管理员。</summary>
-    public static async Task<bool> DeleteAdminScheduleTaskAsync()
+    /// <summary>删除计划任务。</summary>
+    public static async Task<StartupTaskResult> DeleteAdminScheduleTaskAsync()
     {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "schtasks",
-                Arguments = $"/delete /tn \"{ScheduleTaskName}\" /f",
-                UseShellExecute = true,
-                Verb = "runas",
-                WindowStyle = ProcessWindowStyle.Hidden
-            }
-        };
-        try
-        {
-            process.Start();
-            await process.WaitForExitAsync();
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-        return !await GetAdminScheduleTaskExistsAsync();
+        var result = await ScheduledTaskHelper.RunAsync($"/delete /tn \"{ScheduleTaskName}\" /f");
+        if (!result.Success) return result;
+
+        return await GetAdminScheduleTaskExistsAsync()
+            ? StartupTaskResult.Fail("计划任务仍然存在（删除未生效）")
+            : StartupTaskResult.Ok();
     }
 
-    public static async Task<bool> SetStartupEnabledAsync(bool enabled)
+    public static async Task<StartupTaskResult> SetStartupEnabledAsync(bool enabled)
     {
         if (enabled)
         {

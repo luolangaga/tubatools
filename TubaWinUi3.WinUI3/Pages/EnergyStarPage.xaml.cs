@@ -213,10 +213,12 @@ public sealed partial class EnergyStarPage : Page
         RunAtStartupToggle.IsEnabled = false;
         try
         {
-            var ok = await EnergyStarStartupService.SetStartupEnabledAsync(desired);
-            if (!ok)
+            var result = await EnergyStarStartupService.SetStartupEnabledAsync(desired);
+            if (!result.Success)
             {
-                ShowToast(InfoBarSeverity.Warning, desired ? "创建计划任务失败 (UAC 可能被拒绝)" : "删除计划任务失败");
+                // 显示 schtasks 的真实报错，不再一律猜成「UAC 被拒绝」
+                ShowToast(InfoBarSeverity.Warning,
+                    (desired ? "创建计划任务失败：" : "删除计划任务失败：") + (result.Error ?? "未知原因"));
                 _loading = true;
                 RunAtStartupToggle.IsOn = !desired;
                 _loading = false;

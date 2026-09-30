@@ -46,121 +46,95 @@ public static class EnergyStarStartupService
         return await GetAdminScheduleTaskExistsAsync() ? StartupType.Admin : StartupType.None;
     }
 
-    /// <summary>Create (or replace) the admin scheduled task. Requires UAC (already admin).</summary>
-    public static async Task<bool> CreateAdminScheduleTaskAsync()
+    /// <summary>
+    /// 计划任务 XML。internal 以便单测锁定「encoding 声明（UTF-16）与落盘编码一致」——
+    /// 声明 UTF-16 却按 UTF-8 写盘，会让 schtasks 解析到中文 &lt;Description&gt; 直接失败，
+    /// 详见 <see cref="ScheduledTaskHelper"/>。
+    /// </summary>
+    internal static string BuildTaskXml(string exePath, string userId) => $$"""
+        <?xml version="1.0" encoding="UTF-16"?>
+        <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+        <RegistrationInfo>
+            <Description>开机自启 TubaWinUi3 后台节能 (EcoQoS 效率模式)。</Description>
+            <URI>\{{ScheduleTaskName}}</URI>
+        </RegistrationInfo>
+        <Triggers>
+            <LogonTrigger>
+                <Enabled>true</Enabled>
+                <UserId>{{ScheduledTaskHelper.Escape(userId)}}</UserId>
+            </LogonTrigger>
+        </Triggers>
+        <Principals>
+            <Principal id="Author">
+                <LogonType>InteractiveToken</LogonType>
+                <RunLevel>HighestAvailable</RunLevel>
+            </Principal>
+        </Principals>
+        <Settings>
+            <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+            <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+            <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+            <AllowHardTerminate>true</AllowHardTerminate>
+            <StartWhenAvailable>false</StartWhenAvailable>
+            <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+            <IdleSettings>
+                <StopOnIdleEnd>false</StopOnIdleEnd>
+                <RestartOnIdle>false</RestartOnIdle>
+            </IdleSettings>
+            <AllowStartOnDemand>true</AllowStartOnDemand>
+            <Enabled>true</Enabled>
+            <Hidden>false</Hidden>
+            <RunOnlyIfIdle>false</RunOnlyIfIdle>
+            <WakeToRun>false</WakeToRun>
+            <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+            <Priority>7</Priority>
+        </Settings>
+        <Actions Context="Author">
+            <Exec>
+                <Command>{{ScheduledTaskHelper.Escape(exePath)}}</Command>
+                <Arguments>{{SilentArg}}</Arguments>
+            </Exec>
+        </Actions>
+        </Task>
+        """;
+
+    /// <summary>创建（或替换）管理员计划任务。失败时返回真实原因，不再是「UAC 可能被拒绝」。</summary>
+    public static async Task<StartupTaskResult> CreateAdminScheduleTaskAsync()
     {
         var exePath = GetExecutablePath();
-        if (string.IsNullOrEmpty(exePath)) return false;
+        if (string.IsNullOrEmpty(exePath)) return StartupTaskResult.Fail("拿不到程序自身路径");
 
-        var xml = $$"""
-            <?xml version="1.0" encoding="UTF-16"?>
-            <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-            <RegistrationInfo>
-                <Description>开机自启 TubaWinUi3 后台节能 (EcoQoS 效率模式)。</Description>
-                <URI>\{{ScheduleTaskName}}</URI>
-            </RegistrationInfo>
-            <Triggers>
-                <LogonTrigger>
-                    <Enabled>true</Enabled>
-                    <UserId>{{WindowsIdentity.GetCurrent().Name}}</UserId>
-                </LogonTrigger>
-            </Triggers>
-            <Principals>
-                <Principal id="Author">
-                    <LogonType>InteractiveToken</LogonType>
-                    <RunLevel>HighestAvailable</RunLevel>
-                </Principal>
-            </Principals>
-            <Settings>
-                <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-                <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-                <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-                <AllowHardTerminate>true</AllowHardTerminate>
-                <StartWhenAvailable>false</StartWhenAvailable>
-                <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-                <IdleSettings>
-                    <StopOnIdleEnd>false</StopOnIdleEnd>
-                    <RestartOnIdle>false</RestartOnIdle>
-                </IdleSettings>
-                <AllowStartOnDemand>true</AllowStartOnDemand>
-                <Enabled>true</Enabled>
-                <Hidden>false</Hidden>
-                <RunOnlyIfIdle>false</RunOnlyIfIdle>
-                <WakeToRun>false</WakeToRun>
-                <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-                <Priority>7</Priority>
-            </Settings>
-            <Actions Context="Author">
-                <Exec>
-                    <Command>{{exePath}}</Command>
-                    <Arguments>{{SilentArg}}</Arguments>
-                </Exec>
-            </Actions>
-            </Task>
-            """;
-
-        var xmlPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
-        await File.WriteAllTextAsync(xmlPath, xml);
-
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "schtasks",
-                Arguments = $"/create /tn \"{ScheduleTaskName}\" /XML \"{xmlPath}\" /f",
-                UseShellExecute = true,
-                // Already admin (the window tool runs as admin); runas would fail silently otherwise.
-                Verb = "runas",
-                WindowStyle = ProcessWindowStyle.Hidden
-            }
-        };
+        var xmlPath = await ScheduledTaskHelper.WriteTaskXmlAsync(
+            BuildTaskXml(exePath, WindowsIdentity.GetCurrent().Name));
 
         try
         {
-            process.Start();
-            await process.WaitForExitAsync();
-        }
-        catch (Exception)
-        {
-            // UAC cancelled / already-admin elevation rejected.
-            try { File.Delete(xmlPath); } catch { }
-            return false;
+            var result = await ScheduledTaskHelper.RunAsync(
+                $"/create /tn \"{ScheduleTaskName}\" /XML \"{xmlPath}\" /f");
+            if (!result.Success) return result;
+
+            return await GetAdminScheduleTaskExistsAsync()
+                ? StartupTaskResult.Ok()
+                : StartupTaskResult.Fail("schtasks 报告成功，但计划任务未出现在系统中");
         }
         finally
         {
             try { File.Delete(xmlPath); } catch { }
         }
-
-        return await GetAdminScheduleTaskExistsAsync();
     }
 
-    /// <summary>Delete the scheduled task. Requires admin.</summary>
-    public static async Task<bool> DeleteAdminScheduleTaskAsync()
+    /// <summary>删除计划任务。</summary>
+    public static async Task<StartupTaskResult> DeleteAdminScheduleTaskAsync()
     {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "schtasks",
-                Arguments = $"/delete /tn \"{ScheduleTaskName}\" /f",
-                UseShellExecute = true,
-                Verb = "runas",
-                WindowStyle = ProcessWindowStyle.Hidden
-            }
-        };
-        try
-        {
-            process.Start();
-            await process.WaitForExitAsync();
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-        return !await GetAdminScheduleTaskExistsAsync();
+        var result = await ScheduledTaskHelper.RunAsync($"/delete /tn \"{ScheduleTaskName}\" /f");
+        if (!result.Success) return result;
+
+        return await GetAdminScheduleTaskExistsAsync()
+            ? StartupTaskResult.Fail("计划任务仍然存在（删除未生效）")
+            : StartupTaskResult.Ok();
     }
 
-    public static async Task<bool> SetStartupEnabledAsync(bool enabled)
+    public static async Task<StartupTaskResult> SetStartupEnabledAsync(bool enabled)
     {
         if (enabled)
         {

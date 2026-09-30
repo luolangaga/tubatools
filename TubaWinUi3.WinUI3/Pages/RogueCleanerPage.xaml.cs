@@ -473,8 +473,8 @@ public sealed partial class RogueCleanerPage : Page
         AiStartupToggle.IsEnabled = false;
         try
         {
-            var ok = await ActiveInterceptStartupService.SetStartupEnabledAsync(desired);
-            if (ok)
+            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(desired);
+            if (result.Success)
             {
                 AiStartupHint.Text = desired
                     ? $"计划任务：{ActiveInterceptStartupService.ScheduleTaskName}"
@@ -484,10 +484,10 @@ public sealed partial class RogueCleanerPage : Page
             else
             {
                 AiStartupToggle.IsOn = !desired;
-                AiStartupHint.Text = desired
-                    ? "开机自启设置失败：后端程序缺失，或计划任务创建未成功（需要管理员权限）。"
-                    : "取消失败：计划任务删除未成功。";
-                ShowAiStatus(desired ? "开机自启设置失败。" : "取消开机自启失败。", InfoBarSeverity.Error);
+                // 显示 schtasks 的真实报错（XML 解析失败 / 后端缺失 / 提权被拒都有各自的文案）
+                var reason = result.Error ?? "未知原因";
+                AiStartupHint.Text = (desired ? "开机自启设置失败：" : "取消开机自启失败：") + reason;
+                ShowAiStatus((desired ? "开机自启设置失败：" : "取消开机自启失败：") + reason, InfoBarSeverity.Error);
             }
         }
         catch (Exception ex)
