@@ -195,6 +195,8 @@ The "文件传输" feature spans three pieces with their own toolchains — none
 
 **There is no push/PR CI** — nothing builds or tests automatically on commit; run `dotnet build` + `dotnet test` locally before pushing.
 
+> **2026-09-30 修复**：`TubaWinUi3.Tests/NavIconTests.cs` 引用的 `NavIconCatalog` 从未提交（`Assets/NavIcons/` 在仓库、git 全历史、已发布安装包里都不存在），测试项目因此一直编译失败（13 个 CS0103）→ **已删除该孤儿测试**。被删掉的规格（如果以后要做侧边栏导航图标）：每个固定导航项（首页/常用/硬件信息/内置工具/社区工具…）与每个已知工具分类各需一个 `Assets/NavIcons/<slug>.svg`，slug 一一对应不重复，图标写法要过 `IconAssetValidation.ValidateAll`（Fluent 规范：viewBox 24、收在 2..22 网格、1.5 描边、圆头圆角、≥2 色）与 `ValidateRasterizes`（光栅化非空白）；`IconAssetValidation` 仍在被 `BuiltinIconTests` 使用，不要一起删。
+
 - `build-release.yml` — bumps `<Version>` in **both** `.csproj`s and `#define MyAppVersion` in all `installer*.iss`, publishes x64/x86/ARM64 portable + Inno installer + x64-lite (`ExcludeToolsFromPublish=true` + `.lite_build` marker), builds the Compatible edition, restores `.pri`, generates the changelog via **DeepSeek** (`DEEPSEEK_API_KEY`), creates the GitHub release, and optionally mirrors to **GitCode/AtomGit** (`GITCODE_ACCESS_TOKEN`). Portable zips are staged as a `src/` folder plus the native `Launcher\bin\图吧工具箱WinUI3_<arch>.exe` (renamed `图吧工具箱WinUI3.exe`).
 - `android-build.yml` — Gradle debug APK for `android-tuba-installer/`; the only workflow that runs tests.
 - `sync-to-gitcode.yml` — re-uploads assets from an existing GitHub Release to GitCode via AtomGit API.
