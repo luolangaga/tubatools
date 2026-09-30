@@ -647,10 +647,39 @@ public partial class App : Application
 
     private static Exception? _pendingException;
 
+    /// <summary>
+    /// 已知的 AI 助手面板（FieldCure ChatPanel）销毁竞态：面板已从界面移除、本轮回复作废，
+    /// 异常来自第三方组件对已关闭 WebView2 的收尾渲染（async void 事件里抛出，宿主拦不住），
+    /// 记日志留痕即可，不该再弹错误窗口打断用户（Issue #194，详见 ChatPanelCrashFilter）。
+    ///
+    /// <para><b>两个未处理异常入口都必须先过这里</b>：WinUI 的 Application.UnhandledException
+    /// 与 AppDomain 的 UnhandledException。此前只判了前者，用户报告里那条 ChatPanel
+    /// 异常正是从 AppDomain 入口漏过去、弹了错误窗口。</para>
+    /// </summary>
+    private static bool IsIgnorableAiPanelTeardownRace(Exception? ex)
+    {
+        if (!ChatPanelCrashFilter.IsTeardownRace(ex)) return false;
+
+        try
+        {
+            TubaWinUi3.Services.Agent.AgentDebugLog.Error(
+                "[App] AI 面板销毁竞态异常（已忽略，不影响使用）", ex);
+        }
+        catch { }
+
+        return true;
+    }
+
     private void OnUnhandledException(object sender, System.UnhandledExceptionEventArgs e)
     {
-        _pendingException = e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "未知错误");
-        TelemetryService.TrackException(_pendingException, "AppDomain", fatal: true);
+        var ex = e.ExceptionObject as Exception ?? new Exception(e.ExceptionObject?.ToString() ?? "未知错误");
+
+        // 先过已知噪声过滤，再决定要不要把错误窗口弹给用户
+        var ignorable = IsIgnorableAiPanelTeardownRace(ex);
+        TelemetryService.TrackException(ex, ignorable ? "AppDomain.ChatPanelTeardownRace" : "AppDomain", fatal: true);
+        if (ignorable) return;
+
+        _pendingException = ex;
         NavigateToErrorPage();
     }
 
@@ -696,19 +725,7 @@ public partial class App : Application
 
         e.Handled = true;
 
-        // AI 助手面板（FieldCure ChatPanel）的销毁竞态：面板已从界面移除、本轮回复作废，
-        // 异常来自第三方组件对已关闭 WebView2 的收尾渲染（async void 事件里抛出，宿主拦不住），
-        // 记日志留痕即可，不该再弹错误窗口打断用户（Issue #194，详见 ChatPanelCrashFilter）。
-        if (ChatPanelCrashFilter.IsTeardownRace(e.Exception))
-        {
-            try
-            {
-                TubaWinUi3.Services.Agent.AgentDebugLog.Error(
-                    "[App] AI 面板销毁竞态异常（已忽略，不影响使用）", e.Exception);
-            }
-            catch { }
-            return;
-        }
+        if (IsIgnorableAiPanelTeardownRace(e.Exception)) return;
 
         _pendingException = e.Exception ?? new Exception(e.Message);
         NavigateToErrorPage();
