@@ -19,6 +19,7 @@ public static class UnifiedSearchService
         new("Search_SettingFastMode", "快速模式", "Search_SettingFastModeDesc", "禁用所有动画，提升响应速度", "\uEB3F", "FastMode"),
         new("Search_SettingWatermark", "截图水印", "Search_SettingWatermarkDesc", "硬件信息截图时添加水印", "\uE8B9", "Watermark"),
         new("Search_SettingRememberWindow", "记住窗口位置和大小", "Search_SettingRememberWindowDesc", "关闭后下次启动恢复位置", "\uE784", "RememberWindow"),
+        new("Search_SettingCloseToTray", "关闭时最小化到系统托盘", "Search_SettingCloseToTrayDesc", "点关闭按钮不退出，留在托盘继续运行", "\uE921", "CloseToTray"),
         new("Search_SettingBackground", "背景图片", "Search_SettingBackgroundDesc", "导入图片作为主页面背景", "\uE91B", "Background"),
         new("Search_SettingUpdate", "检查更新", "Search_SettingUpdateDesc", "检查是否有新版本", "\uE895", "Update"),
         new("Search_SettingConfigManager", "配置管理", "Search_SettingConfigManagerDesc", "管理配置文件的存储位置、导出和导入", "\uE8B7", "ConfigManager"),

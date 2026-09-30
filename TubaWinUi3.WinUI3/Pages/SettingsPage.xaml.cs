@@ -31,6 +31,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private bool _fastModeInitializing;
     private bool _navLayoutInitializing;
     private bool _rememberWindowInitializing;
+    private bool _closeToTrayInitializing;
     private bool _defaultPageInitializing;
     private bool _showFrequentInitializing;
     private bool _languageInitializing;
@@ -124,6 +125,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ShowFrequentRecommendations"] = "GeneralExpander",
         ["FastMode"] = "GeneralExpander",
         ["RememberWindow"] = "GeneralExpander",
+        ["CloseToTray"] = "GeneralExpander",
         ["Update"] = "GeneralExpander",
         ["ToolsBundle"] = "GeneralExpander",
         ["Background"] = "AppearanceExpander",
@@ -160,6 +162,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ShowFrequentRecommendations"] = "SettingsShowFrequentCard",
         ["FastMode"] = "SettingsFastModeCard",
         ["RememberWindow"] = "SettingsRememberWindowCard",
+        ["CloseToTray"] = "SettingsCloseToTrayCard",
         ["Update"] = "SettingsUpdateCard",
         ["ToolsBundle"] = "SettingsToolsBundleCard",
         ["Background"] = "SettingsBackgroundCard",
@@ -211,6 +214,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitLanguageComboBox();
         InitFastModeToggle();
         InitRememberWindowToggle();
+        InitCloseToTrayToggle();
         InitUpdateSection();
         InitBackdropSettings();
         LoadBackgroundSettings();
@@ -574,6 +578,19 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (_rememberWindowInitializing) return;
         WindowSizeService.SetRememberEnabled(RememberWindowToggle.IsOn);
+    }
+
+    private void InitCloseToTrayToggle()
+    {
+        _closeToTrayInitializing = true;
+        CloseToTrayToggle.IsOn = CloseToTrayService.IsEnabled;
+        _closeToTrayInitializing = false;
+    }
+
+    private void CloseToTrayToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_closeToTrayInitializing) return;
+        CloseToTrayService.SetEnabled(CloseToTrayToggle.IsOn);
     }
 
     private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)

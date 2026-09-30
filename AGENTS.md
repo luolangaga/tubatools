@@ -49,6 +49,17 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - **每个已注册内置工具都必须在 `Metadata/tools.json` 里有 `builtin` 挂载条目**（`categories` 指定挂载分类）：收藏/排序/桌面快捷方式统一以该挂载的虚拟目录路径为键，收藏页与分类页星标互通。新增内置工具时 `RegisterDefaults()` 与 tools.json 两处都要加。
 - **快捷方式统一写入点 = `WindowsSearchIndexService`**：开始菜单搜索注册与「发送到桌面」共用同一 `CreateShortcut`（进程内 WScript.Shell COM，非 STA 线程自动起 STA 线程）。内置工具桌面快捷方式 = 自身 exe + `--open-builtin <id>`，图标为该工具字体字形（Segoe Fluent Icons）离线渲染的多尺寸 .ico，缓存于 `<DataDir>/DesktopIcons/`（字形→Bitmap→ICO 编码在 `BuiltinShortcutIconTests` 有回归测试）。「发送到桌面」两种工具都走 `CreateDesktopShortcut(ToolItem|IBuiltinTool)`（COM，写后回读校验），**禁止**改用 `powershell.exe -Command` 生成快捷方式：中文路径经子进程命令行会在非中文系统 / UTF-8 beta 代码页（ACP=65001）下写成乱码（回归测试 `DesktopShortcutTests`）。
 
+### 关闭主窗口 → 最小化到系统托盘（CloseToTrayService / TrayIconService）
+- 默认**开启**：点标题栏 × / Alt+F4 不再退出进程，而是隐藏主窗口、常驻托盘继续运行——避免误关闭后被迫重启、把 WMI 硬件盘点（20+ 条查询）与 LiteMonitor 初始化再跑一遍。设置页「常规 → 关闭主窗口时最小化到系统托盘」（`AppSettings["CloseToTray"]`）可关。
+- 判据只有一处：`CloseToTrayService.ShouldHideOnClose(closeToTrayEnabled, isLiteMode, isExiting, sessionEnding)`（纯函数，`CloseToTrayTests` 覆盖）。**`isExiting`（托盘「退出」）与 `sessionEnding`（注销/关机）必须放行真关闭**，否则程序退不掉、系统关不掉；`isLiteMode`（后台工具在跑）沿用旧行为，开关关掉也照样留在托盘（那些页面的「最小化到托盘」按钮本来就是这个语义）。
+- 两个关闭入口都接了同一个判据：`AppWindow.Closing`（系统入口，`args.Cancel = true`，这是可取消的官方通道）与 `Window.Closed`（编程式 `App.MainWindow?.Close()`，`args.Handled = true`——后台工具页面走这条）。先到先得，不要只留一个。
+- **退出统一走 `App.RequestExit()`**：关闭主窗口 → `MainWindow_Closed` 跑完整清理（FPS 的 ETW 会话、LiteMonitor 句柄、遥测收尾、`AppSettings.Flush`、托盘图标移除）→ `Application.Exit()`；另有兜底看门狗：**先等 `MainWindow_Closed` 报「清理已跑完」（`App.NotifyCleanupFinished`，上限 20s）再宽限 2s 硬退**——固定 3 秒硬超时会砍在 ETW 会话释放中途，那正是最不能丢的一步；只有主窗口不存在/关闭请求排不进 UI 队列时才用 3 秒短兜底。**禁止**回到 `Process.Kill()` 的老写法：内核 ETW 会话不随进程终止回收，残留会让下次启动的帧率采集失效。
+- **所有「真的要退出/重启」的地方都必须走 `App.RequestExit()`**（`isExiting` 置位后关闭拦截才会放行）：更新安装器启动后退出（`UpdateService.LaunchScannedUpdate`/`StartPendingInstaller`、`DownloadQueueModels` 的安装分支）、提权重启（`GameOverlayPage`）、错误页「重开」、配置目录切换后重启。直接用 `Application.Current.Exit()` 或 `App.MainWindow?.Close()` 会被「最小化到托盘」解读成隐藏——安装器撞上仍在运行的程序、或留下两个实例。
+- `TrayIconService` 仍是全进程唯一 `NotifyIcon`，现在有两个独立的常驻理由：「后台工具在跑」（`Show(toolName, stopAction)`，流量监控器/网络调度器/防晕3D 在用）与「关闭后留在托盘」（`ShowForCloseToTray()`）。任一成立图标就可见，都没有就自动收起；托盘菜单 = 打开主窗口 / [停止「工具名」并退出] / 退出图吧工具箱（文案 `Tray_*` 资源键，中英双语）。
+- 首次隐藏弹一次气泡（`AppSettings["CloseToTrayHintShown"]` 只弹一次，且只在开关开启时消耗，后台工具页面自己点的「最小化到托盘」不弹）说明「程序还在后台、双击恢复、右键退出」。`EnergyStarService.Shutdown()` 只在真正退出时调用——隐藏到托盘后程序还在后台跑，而后台节流本身就是常驻功能，隐藏时解除等于把用户开着的省电功能关掉。
+- 会话结束保护：`CloseToTrayService.AttachSessionEndingWatch()`（`SystemEvents.SessionEnding`，App 构造函数里注册）在注销/关机时置位，放行关闭；窗口重新可见时 `ResetSessionEnding()` 复位（用户取消注销不会有「取消」事件，只能靠「还能操作窗口」反推）。`_sessionEnding` 由 SystemEvents 自己的监听线程写、主线程读，必须是 `volatile`。
+- 已知限制：程序常驻托盘期间再次双击快捷方式会**再开一个实例**（项目暂无单实例激活机制），两个实例各读一份硬件信息。要根治需要单实例 + 激活转发（命名互斥体 + 唤回窗口 / 转发 `--open-builtin`），属于独立改动。
+
 ### AI 助手（AiAgentPage）— FieldCure ChatPanel 架构
 - 「AI 助手」内置工具 = `AiAgentPage`，消息区/输入区/工具确认全部由 **`FieldCure.AssistStudio.Controls.WinUI`** 的 `ChatPanel` 组件库接管（WebView2 渲染 Markdown/思考块/内联工具调用、`ToolApprovalPanel` 危险操作确认）。
 - 适配层在 `Services/Ai/`：`TubaChatProvider`（`IAiProvider`，OpenAI 兼容端点 → `StreamEvent` 流，含 `reasoning_content` JsonPatch 回传）、`AgentToolAdapter`（`AgentToolRegistry` 28 个工具 → `IAssistTool`，`RequiresConfirmation` 按 `AgentToolContext.IsFullAccess` 动态计算）。

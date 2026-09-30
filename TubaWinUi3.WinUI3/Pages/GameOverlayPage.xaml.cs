@@ -286,7 +286,9 @@ public sealed partial class GameOverlayPage : Page
                 Verb = "runas"
             };
             Process.Start(psi);
-            Application.Current.Exit();
+            // 以管理员身份重开了一个实例，本进程必须真的退出（App.RequestExit：
+            // 「关闭时最小化到系统托盘」会把直接关窗口解读成隐藏，留下两个实例）
+            App.RequestExit();
         }
         catch
         {

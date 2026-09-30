@@ -336,6 +336,24 @@
                                     </Grid>
                                 </Border>
 
+                                <Border x:Name="SettingsCloseToTrayCard" Style="{StaticResource SettingsCardStyle}">
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource IconBorderStyle}">
+                                            <FontIcon FontSize="18" Glyph="&#xE921;" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock FontWeight="Bold" Text="关闭主窗口时最小化到系统托盘" l:Uids.Uid="Settings_CloseToTray_Title" />
+                                            <TextBlock Opacity="1.0" FontSize="13" TextWrapping="Wrap" Text="点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；双击托盘图标恢复窗口，右键可退出" l:Uids.Uid="Settings_CloseToTray_Desc" />
+                                        </StackPanel>
+                                        <ToggleSwitch x:Name="CloseToTrayToggle" Grid.Column="2" VerticalAlignment="Center" Toggled="CloseToTrayToggle_Toggled" />
+                                    </Grid>
+                                </Border>
+
                                 <Border x:Name="SettingsTelemetryCard" Style="{StaticResource SettingsCardStyle}">
                                     <Grid ColumnSpacing="16">
                                         <Grid.ColumnDefinitions>

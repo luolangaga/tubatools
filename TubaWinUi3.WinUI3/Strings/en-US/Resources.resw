@@ -476,6 +476,12 @@
   <data name="Search_SettingRememberWindowDesc" xml:space="preserve">
     <value>Restore the window on next launch</value>
   </data>
+  <data name="Search_SettingCloseToTray" xml:space="preserve">
+    <value>Minimize to tray on close</value>
+  </data>
+  <data name="Search_SettingCloseToTrayDesc" xml:space="preserve">
+    <value>Keep running in the system tray instead of exiting</value>
+  </data>
   <data name="Search_SettingBackground" xml:space="preserve">
     <value>Background image</value>
   </data>
@@ -540,6 +546,29 @@
   </data>
   <data name="Settings_LanguageAuto" xml:space="preserve">
     <value>Follow system</value>
+  </data>
+
+  <!-- System tray (minimize to tray when the main window is closed) -->
+  <data name="Tray_OpenMainWindow" xml:space="preserve">
+    <value>Open main window</value>
+  </data>
+  <data name="Tray_StopToolAndExit" xml:space="preserve">
+    <value>Stop "{0}" and exit</value>
+  </data>
+  <data name="Tray_ExitApp" xml:space="preserve">
+    <value>Exit Tuba Toolbox</value>
+  </data>
+  <data name="Tray_TooltipResident" xml:space="preserve">
+    <value>{0}: minimized to the system tray</value>
+  </data>
+  <data name="Tray_TooltipTool" xml:space="preserve">
+    <value>{0}: {1} is running in the background</value>
+  </data>
+  <data name="Tray_BalloonTitle" xml:space="preserve">
+    <value>Tuba Toolbox is still running</value>
+  </data>
+  <data name="Tray_BalloonText" xml:space="preserve">
+    <value>The app is now minimized to the system tray and keeps its loaded data, so reopening it needs no new hardware scan. Double-click the tray icon to restore the window, or right-click it to exit.</value>
   </data>
 
   <!-- Update banner -->
@@ -861,6 +890,12 @@
   </data>
   <data name="Settings_BuiltinOpenModeOptionWindow" xml:space="preserve">
     <value>Separate window</value>
+  </data>
+  <data name="Settings_CloseToTray_Desc.Text" xml:space="preserve">
+    <value>Closing the window keeps the app running in the system tray instead of exiting, so an accidental close never forces a fresh hardware scan. Double-click the tray icon to restore the window, or right-click it to exit.</value>
+  </data>
+  <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
+    <value>Minimize to the system tray when closing</value>
   </data>
   <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve">
     <value>Submit tool</value>

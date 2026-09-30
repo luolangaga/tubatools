@@ -31,6 +31,9 @@ public sealed partial class MainWindow : Window
     private bool _refreshCategoriesInFlight;
     private bool _refreshCategoriesPending;
 
+    /// <summary>用户明确要退出程序（托盘菜单「退出」）——关闭拦截必须放行，不再隐藏到托盘。</summary>
+    private bool _exitRequested;
+
     /// <summary>当前正在执行的内置工具名称（入口页在 ExecuteAsync 前设置），供独立窗口标题使用。</summary>
     public static string? ActiveToolName { get; set; }
 
@@ -163,6 +166,11 @@ public sealed partial class MainWindow : Window
 
         Closed += MainWindow_Closed;
         AppWindow.Changed += AppWindow_Changed;
+        // 系统关闭入口（标题栏 ×、Alt+F4、系统菜单）走 AppWindow.Closing，可取消：
+        // 「关闭时最小化到系统托盘」在这里把关闭改写成隐藏。Window.Closed 里的
+        // Handled 分支保留给编程式 Close()（App.MainWindow?.Close()，后台工具页面在用），
+        // 两条路径共用同一个判据，先到先得。
+        AppWindow.Closing += MainWindow_Closing;
         NavFrame.Navigated += NavFrame_Navigated;
         NavView.ItemInvoked += NavView_ItemInvoked;
 
@@ -392,22 +400,110 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>这次关闭是否应改写成「隐藏到托盘」（判据集中在 CloseToTrayService，单测覆盖）。</summary>
+    private bool ShouldHideToTray()
+        => CloseToTrayService.ShouldHideOnClose(
+            CloseToTrayService.IsEnabled,
+            App.IsLiteMode,
+            _exitRequested || App.IsExiting,
+            CloseToTrayService.IsSessionEnding);
+
+    /// <summary>系统关闭入口（标题栏 ×、Alt+F4、系统菜单）：取消关闭，改为隐藏到系统托盘。</summary>
+    private void MainWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (!ShouldHideToTray()) return;
+
+        // 隐藏失败就不要取消关闭：宁可正常退出，也不能让用户点了 × 却毫无反应
+        args.Cancel = HideToTray();
+    }
+
+    /// <summary>
+    /// 隐藏主窗口并常驻托盘——进程继续在后台运行，硬件信息等已加载的数据全部保留。
+    /// 返回 false 表示隐藏失败（调用方应放行真正的关闭）。
+    /// </summary>
+    private bool HideToTray()
+    {
+        try
+        {
+            AppWindow.Hide();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 隐藏窗口失败，改为正常关闭: {ex.Message}");
+            return false;
+        }
+
+        // 窗口位置/大小仍在隐藏前落盘：之后从托盘退出时窗口已经不可见，读的是同一份尺寸
+        try { WindowSizeService.SaveWindowSize(this); } catch { }
+
+        // 托盘图标/首次气泡在这里创建：失败不能让异常从关闭回调里逃出去
+        // （宁可退回「正常关闭」，也不能让用户点了 × 既没隐藏也没退出）
+        try
+        {
+            CloseToTrayService.OnHiddenToTray();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 托盘常驻设置失败，改为正常关闭: {ex.Message}");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 从托盘恢复主窗口（显示 + 取消最小化 + 激活）。
+    /// 返回窗口是否真的显示出来了——失败时调用方不能收起托盘图标，
+    /// 否则用户会同时失去窗口和托盘入口。
+    /// </summary>
+    public bool RestoreFromTray()
+    {
+        try
+        {
+            if (!AppWindow.IsVisible)
+                AppWindow.Show();
+
+            if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
+                presenter.Restore();
+
+            Activate();
+            return AppWindow.IsVisible;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 从托盘恢复窗口失败: {ex.Message}");
+            try { return AppWindow.IsVisible; } catch { return false; }
+        }
+    }
+
+    /// <summary>退出程序：放行关闭拦截，让 <see cref="MainWindow_Closed"/> 跑完整清理。</summary>
+    public void CloseForExit()
+    {
+        _exitRequested = true;
+        Close();
+    }
+
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        if (ShouldHideToTray() && HideToTray())
+        {
+            // 编程式 Close()（后台工具页面的 App.MainWindow?.Close()）下的兜底：拦下这次关闭只做隐藏。
+            // 系统关闭入口已在 MainWindow_Closing 取消，不会走到这里。
+            args.Handled = true;
+            return;
+        }
+
         // Gracefully stop EnergyStar throttling so any throttled processes recover
         // their normal scheduling priority before the app exits. If the user has
         // enabled the scheduled-task auto-start, the next logon will re-enable it.
+        // 必须放在「隐藏到托盘」分支之后：隐藏后程序还在后台跑（后台节流本身就是常驻功能），
+        // 这时候解除节流等于把用户开着的省电功能关掉。
         try { EnergyStarService.Shutdown(); } catch { }
 
-        if (App.IsLiteMode)
-        {
-            args.Handled = true;
-            AppWindow.Hide();
-            return;
-        }
         BackdropService.BackdropChanged -= OnBackdropChanged;
         AppWindow.Changed -= AppWindow_Changed;
-        WindowSizeService.SaveWindowSize(this);
+        AppWindow.Closing -= MainWindow_Closing;
+        try { WindowSizeService.SaveWindowSize(this); } catch { }
         DownloadQueueService.QueueChanged -= OnDownloadQueueChanged;
         AppSettings.SettingChanged -= OnBackgroundSettingChanged;
         NavLayoutModeService.NavLayoutModeChanged -= OnNavLayoutModeChanged;
@@ -422,6 +518,12 @@ public sealed partial class MainWindow : Window
         // 残留会让下次启动的 FPS 采集失效；轮询定时器/自动覆盖层/未落盘记录一并收尾。
         try { LiteMonitorService.Instance.Dispose(); } catch { }
         try { GameOverlayAutoService.Instance.Stop(); } catch { }
+        // 托盘图标必须显式移除：进程退出后残留的图标要等鼠标划过去才消失
+        try { TrayIconService.Dispose(); } catch { }
+
+        // 通知退出兜底看门狗「清理已跑完」：它据此决定何时可以硬退，
+        // 避免 3 秒硬超时砍在清理中途（FPS 的 ETW 会话会因此泄漏）
+        App.NotifyCleanupFinished();
     }
 
     private void OnDownloadQueueChanged()
@@ -520,6 +622,15 @@ public sealed partial class MainWindow : Window
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
+        // 窗口被重新显示（托盘双击、页面里的 App.MainWindow?.Activate() 等任何路径）：
+        // 收起「已最小化到托盘」标记，否则会留下一个提示"已最小化到系统托盘"的过期图标
+        if (args.DidVisibilityChange && sender.IsVisible)
+        {
+            TrayIconService.OnMainWindowRestored();
+            // 用户又能看到窗口了 = 上次注销/关机没有真的发生（被取消），恢复正常关闭行为
+            CloseToTrayService.ResetSessionEnding();
+        }
+
         if (!args.DidSizeChange) return;
         var size = sender.Size;
         var minWidth = 800;

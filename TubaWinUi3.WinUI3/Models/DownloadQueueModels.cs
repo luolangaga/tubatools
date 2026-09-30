@@ -221,7 +221,10 @@ public sealed class UpdateInstallProcessor : IDownloadPostProcessor
                 // 下载的文件可能被杀软移除/隔离或损坏，抛给队列以 Failed 状态呈现，避免崩溃
                 throw new IOException($"无法启动更新安装程序，文件已不可用（可能被安全软件移除或磁盘错误）：{ex.Message}", ex);
             }
-            Microsoft.UI.Xaml.Application.Current.Exit();
+            // 安装包已经起来了，本进程必须真的退出（否则安装器替换文件时程序还在运行）。
+            // 走 App.RequestExit 而不是 Application.Exit：「关闭时最小化到系统托盘」会把
+            // 直接关窗口解读成隐藏，而且这里需要完整清理（ETW 会话/遥测/托盘图标）。
+            App.RequestExit();
         }
         else if (isZip && _isPortableMode)
         {

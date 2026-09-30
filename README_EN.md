@@ -66,8 +66,9 @@ The left navigation browses every tool by category, the search box at the top fi
 * **System Optimization & Security** — junk cleaner / startup manager / context menu manager / malware blocker / sandbox analysis / time sync
 * **Network Tools** — speed test / traffic monitor / port viewer / hosts editor / LAN file sharing
 * **Native Fluent Experience** — Mica material, rounded windows, light & dark themes, English and Chinese UI, global search, drag-to-reorder favorites
+* **No Accidental Quits** — closing the window minimizes to the system tray by default, so the hardware data already loaded is not scanned again; double-click the tray icon to restore the window, or right-click it to really exit (can be turned off in Settings)
 * **An Extensible Tool List** — drop your own tools into the `Tools/` folder and they are picked up; metadata lives in `Metadata/tools.json`
-* **Clean** — the portable build runs straight after extraction and the installer is per-user; there are no background services, so closing it really closes it
+* **Clean** — the portable build runs straight after extraction and the installer is per-user; there are no background services, and "Exit" in the tray menu really ends the process
 
 ---
 
@@ -474,7 +475,7 @@ Yes. The portable build runs straight after extraction, and settings default to 
 Some tools legitimately operate at system level (drivers, registry, cleanup), so heuristic engines may flag them. Official release artifacts are signed through SignPath; please download only from the [official channels](#installation).
 
 **Q: Will it slow my PC down?**
-There are no background services: hardware monitoring runs only while its page or an in-game overlay is open, and the overlay and co-op helper end when you close them — nothing lingers, nothing runs behind your back.
+There are no background services: hardware monitoring runs only while its page or an in-game overlay is open, and the overlay and co-op helper end when you close them — nothing lingers, nothing runs behind your back. "Close the window = minimize to the tray" (the default) merely keeps the app resident so reopening it needs no new hardware scan; right-click the tray icon and choose Exit to end it completely, or turn the option off under Settings → General.
 
 **Q: A tool won't start, or complains about missing DLLs?**
 Use "Runtime Repair" to install the missing Visual C++ 2008-2026, .NET Framework and DirectX components in one click. Legacy document conversion needs a locally installed Office or WPS — if neither is present, you get a clear message instead of a silent failure.

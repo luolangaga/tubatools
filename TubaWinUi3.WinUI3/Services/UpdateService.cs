@@ -565,7 +565,9 @@ public static class UpdateService
         {
             if (TryLaunchInstaller(file))
             {
-                Microsoft.UI.Xaml.Application.Current.Exit();
+                // 安装器已经起来，本进程必须真的退出（走 App.RequestExit：「关闭时最小化到
+                // 系统托盘」会把直接关窗口解读成隐藏，安装器随后会撞上正在运行的程序）
+                App.RequestExit();
                 return true;
             }
             return false;
@@ -679,7 +681,8 @@ public static class UpdateService
             {
                 if (TryLaunchInstaller(filePath))
                 {
-                    Microsoft.UI.Xaml.Application.Current.Exit();
+                    // 同上：安装器已启动，本进程必须真的退出
+                    App.RequestExit();
                     return true;
                 }
                 return false;

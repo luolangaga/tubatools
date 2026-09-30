@@ -476,6 +476,12 @@
   <data name="Search_SettingRememberWindowDesc" xml:space="preserve">
     <value>关闭后下次启动恢复位置</value>
   </data>
+  <data name="Search_SettingCloseToTray" xml:space="preserve">
+    <value>关闭时最小化到系统托盘</value>
+  </data>
+  <data name="Search_SettingCloseToTrayDesc" xml:space="preserve">
+    <value>点关闭按钮不退出，留在托盘继续运行</value>
+  </data>
   <data name="Search_SettingBackground" xml:space="preserve">
     <value>背景图片</value>
   </data>
@@ -540,6 +546,29 @@
   </data>
   <data name="Settings_LanguageAuto" xml:space="preserve">
     <value>跟随系统</value>
+  </data>
+
+  <!-- 系统托盘（关闭主窗口 → 最小化到系统托盘） -->
+  <data name="Tray_OpenMainWindow" xml:space="preserve">
+    <value>打开主窗口</value>
+  </data>
+  <data name="Tray_StopToolAndExit" xml:space="preserve">
+    <value>停止「{0}」并退出</value>
+  </data>
+  <data name="Tray_ExitApp" xml:space="preserve">
+    <value>退出图吧工具箱</value>
+  </data>
+  <data name="Tray_TooltipResident" xml:space="preserve">
+    <value>{0}：已最小化到系统托盘</value>
+  </data>
+  <data name="Tray_TooltipTool" xml:space="preserve">
+    <value>{0}：{1} 正在后台运行</value>
+  </data>
+  <data name="Tray_BalloonTitle" xml:space="preserve">
+    <value>图吧工具箱仍在后台运行</value>
+  </data>
+  <data name="Tray_BalloonText" xml:space="preserve">
+    <value>程序已最小化到系统托盘，硬件信息等数据依然保留，再次打开无需重新检测。双击托盘图标可恢复窗口；右键图标可退出程序。</value>
   </data>
 
   <!-- 更新提示条 -->
@@ -861,6 +890,12 @@
   </data>
   <data name="Settings_BuiltinOpenModeOptionWindow" xml:space="preserve">
     <value>独立窗口</value>
+  </data>
+  <data name="Settings_CloseToTray_Desc.Text" xml:space="preserve">
+    <value>点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；双击托盘图标恢复窗口，右键可退出</value>
+  </data>
+  <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
+    <value>关闭主窗口时最小化到系统托盘</value>
   </data>
   <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve">
     <value>提交工具</value>

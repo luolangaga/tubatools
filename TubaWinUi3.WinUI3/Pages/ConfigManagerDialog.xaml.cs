@@ -398,7 +398,9 @@ public sealed partial class ConfigManagerDialog : ContentDialog
             var exePath = Environment.ProcessPath;
             if (string.IsNullOrEmpty(exePath)) return;
             System.Diagnostics.Process.Start(exePath);
-            App.MainWindow?.Close();
+            // 重启应用：旧实例必须真的退出（App.RequestExit：「关闭时最小化到系统托盘」
+            // 会把直接关窗口解读成隐藏，留下两个实例）
+            App.RequestExit();
         }
         catch { }
     }

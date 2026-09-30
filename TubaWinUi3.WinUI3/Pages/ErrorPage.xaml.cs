@@ -107,7 +107,9 @@ public sealed partial class ErrorPage : Page
     private void RestartButton_Click(object sender, RoutedEventArgs e)
     {
         Process.Start(Environment.ProcessPath!);
-        App.MainWindow?.Close();
+        // 「重开」= 新实例接管，旧实例必须真的退出（App.RequestExit：「关闭时最小化到
+        // 系统托盘」会把直接关窗口解读成隐藏，留下两个实例）
+        App.RequestExit();
     }
 
     private static string GetAppVersion()
