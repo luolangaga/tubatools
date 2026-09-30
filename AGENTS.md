@@ -69,7 +69,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
   - **重复调用拦截**：同会话「工具+参数」相同（`NormalizeArgs` 递归按键排序签名）第二次直接拦截不执行，空参数（查询类）豁免；`MaxToolResultChars=6000` 结果截断 + 空结果标记「未返回内容」。
   - **无进展检测**：连续 6 轮纯工具调用（无用户文本）→ 新引擎 `TubaChatProvider` 在首条 system 注入终止指令，旧引擎 `AgentRuntime` 直接终止循环。
   - **web_search 技能拦截计数**：技能触发（配电脑查价）拦截第二次起返回硬终止「已连续两次被拦截」。
-  - **思维链护栏**：`TubaChatProvider.MaxThinkingChars=6000` 流式按轮限流 + `TruncateThinking` 截断（保留开头+标记，防切断 surrogate pair）；旧引擎 `AgentRuntime` 流式累积同样限流。
+  - **思维链护栏**：`TubaChatProvider.MaxThinkingChars=6000` 流式按轮限流 + `TruncateThinking` 截断（保留开头+标记，防切断 surrogate pair）；旧引擎 `AgentRuntime` 流式累积同样限流。**截断标记只有一份**：`AgentRuntimeLimits.ReasoningTruncatedMarker`（`[思维链过长，已截断]`），新引擎 `TubaChatProvider.TruncateThinking`、旧引擎 `AgentRuntimeLimits.TruncateReasoning` 与两边的流式分支都读它 —— 曾经新引擎写「思维链过长」、旧引擎写「思维过程过长」，`ReasoningEchoChatClientTests` 因此长期失败（2026-09-30 统一）。
   - **历史预算压缩**：`HistoryBudgetChars=40000`，超限从最旧丢（保留首条 system——DeepSeek 网关拒绝多条 system）；新引擎 `TubaChatProvider.TrimHistory` 与旧引擎 `AgentRuntime.TrimHistory` 同语义。
   - **错误终态分类**：`FormatToolError` 参数类异常（Argument/Json/Format）→「可调整重试」，其余系统性失败 →「请勿重试」（`AgentToolAdapter` 与 `AgentErrorPolicy` 文案对齐）。
   - 兜底：两引擎均有轮次上限（`MaxToolCallRounds=30` / `AgentRuntime.DefaultMaxRounds=30`）。

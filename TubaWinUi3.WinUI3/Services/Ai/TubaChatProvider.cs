@@ -59,7 +59,7 @@ public sealed class TubaChatProvider : IAiProvider
         if (string.IsNullOrEmpty(thinking) || thinking.Length <= MaxThinkingChars) return thinking;
         var cut = thinking[..MaxThinkingChars];
         if (cut.Length > 0 && char.IsHighSurrogate(cut[^1])) cut = cut[..^1];
-        return cut + "\n\n[思维链过长，已截断]";
+        return cut + "\n\n" + AgentRuntimeLimits.ReasoningTruncatedMarker;
     }
 
     /// <summary>每轮完成（含取消前已拿到的用量）上报，页面据此累计会话 token 统计。</summary>
@@ -240,7 +240,7 @@ public sealed class TubaChatProvider : IAiProvider
                 else if (!thinkingTruncated)
                 {
                     thinkingTruncated = true;
-                    yield return new StreamEvent.ThinkingDelta("\n\n[思维链过长，已截断]");
+                    yield return new StreamEvent.ThinkingDelta("\n\n" + AgentRuntimeLimits.ReasoningTruncatedMarker);
                 }
             }
 

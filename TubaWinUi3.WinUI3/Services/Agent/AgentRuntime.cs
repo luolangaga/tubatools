@@ -147,7 +147,7 @@ public static class AgentRuntime
                                 reasoningSb.Append(cut);
                                 reasoningRoom = 0;
                                 if (cut.Length > 0) cb.OnReasoningChunk?.Invoke(cut);
-                                cb.OnReasoningChunk?.Invoke("\n\n[思维过程过长，已截断]");
+                                cb.OnReasoningChunk?.Invoke("\n\n" + AgentRuntimeLimits.ReasoningTruncatedMarker);
                             }
                         }
 
