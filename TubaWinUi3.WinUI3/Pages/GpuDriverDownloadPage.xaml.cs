@@ -10,6 +10,8 @@ public sealed partial class GpuDriverDownloadPage : Page
 {
     private string _hardwareId = "";
     private CancellationTokenSource? _searchCancellation;
+    private readonly Dictionary<string, (string Name, string HardwareId)> _adaptersByVendor =
+        new(StringComparer.OrdinalIgnoreCase);
 
     public GpuDriverDownloadPage()
     {
@@ -47,16 +49,33 @@ public sealed partial class GpuDriverDownloadPage : Page
                 if (vendor is null)
                     continue;
 
-                ModelText.Text = name;
-                _hardwareId = adapter["PNPDeviceID"]?.ToString() ?? "";
-                VendorCombo.SelectedItem = GpuDriverCatalogService.GetVendors()
-                    .FirstOrDefault(item => item.Name == vendor);
-                return;
+                _adaptersByVendor[vendor] = (name, adapter["PNPDeviceID"]?.ToString() ?? "");
             }
+
+            var firstAdapter = _adaptersByVendor.FirstOrDefault();
+            if (firstAdapter.Key is not null)
+                VendorCombo.SelectedItem = GpuDriverCatalogService.GetVendors()
+                    .FirstOrDefault(item => item.Name == firstAdapter.Key);
         }
         catch (Exception ex)
         {
             StatusText.Text = $"无法自动识别显卡：{ex.Message}。可手动填写型号。";
+        }
+    }
+
+    private void VendorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (VendorCombo.SelectedItem is not GpuDriverVendor vendor)
+            return;
+
+        if (_adaptersByVendor.TryGetValue(vendor.Name, out var adapter))
+        {
+            ModelText.Text = adapter.Name;
+            _hardwareId = adapter.HardwareId;
+        }
+        else
+        {
+            _hardwareId = "";
         }
     }
 

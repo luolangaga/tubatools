@@ -86,7 +86,8 @@
                     x:Name="VendorCombo"
                     Grid.Column="1"
                     DisplayMemberPath="Name"
-                    SelectedIndex="0" />
+                    SelectedIndex="0"
+                    SelectionChanged="VendorCombo_SelectionChanged" />
                 <TextBlock Grid.Column="2" Text="显卡型号" VerticalAlignment="Center" />
                 <TextBox
                     x:Name="ModelText"
