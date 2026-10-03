@@ -1,127 +1,142 @@
 using System.Diagnostics;
+using System.Management;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.Web.WebView2.Core;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Pages;
 
 public sealed partial class GpuDriverDownloadPage : Page
 {
-    private bool _webViewInitialized;
+    private string _hardwareId = "";
+    private CancellationTokenSource? _searchCancellation;
 
     public GpuDriverDownloadPage()
     {
         InitializeComponent();
         VendorCombo.ItemsSource = GpuDriverCatalogService.GetVendors();
-        VendorCombo.DisplayMemberPath = nameof(GpuDriverVendor.Name);
     }
 
-    private async void Page_Loaded(object sender, RoutedEventArgs e)
+    private void Page_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_webViewInitialized)
-            return;
+        DetectGraphicsAdapter();
+    }
 
-        _webViewInitialized = true;
+    private void DetectGraphicsAdapter()
+    {
         try
         {
-            await DriverWebView.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync());
-            DriverWebView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
-            DriverWebView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
-            DriverWebView.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
-            NavigateToSelectedVendor();
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT Name, PNPDeviceID FROM Win32_VideoController");
+            foreach (ManagementObject adapter in searcher.Get())
+            {
+                var name = adapter["Name"]?.ToString();
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                var vendor = name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("GeForce", StringComparison.OrdinalIgnoreCase) ? "NVIDIA" :
+                             name.Contains("AMD", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("Radeon", StringComparison.OrdinalIgnoreCase) ? "AMD" :
+                             name.Contains("Intel", StringComparison.OrdinalIgnoreCase) ? "Intel" : null;
+                if (vendor is null)
+                    continue;
+
+                ModelText.Text = name;
+                _hardwareId = adapter["PNPDeviceID"]?.ToString() ?? "";
+                VendorCombo.SelectedItem = GpuDriverCatalogService.GetVendors()
+                    .FirstOrDefault(item => item.Name == vendor);
+                return;
+            }
         }
         catch (Exception ex)
         {
-            _webViewInitialized = false;
-            StatusText.Text = $"浏览器初始化失败：{ex.Message}";
+            StatusText.Text = $"无法自动识别显卡：{ex.Message}。可手动填写型号。";
         }
     }
 
-    private void VendorCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void SearchButton_Click(object sender, RoutedEventArgs e)
     {
-        NavigateToSelectedVendor();
-    }
-
-    private void NavigateToSelectedVendor()
-    {
-        if (DriverWebView.CoreWebView2 is null || VendorCombo.SelectedItem is not GpuDriverVendor vendor)
-            return;
-
-        DriverWebView.CoreWebView2.Navigate(vendor.CatalogUri.AbsoluteUri);
-        StatusText.Text = $"正在打开 {vendor.Name} 官方驱动目录…";
-    }
-
-    private void CoreWebView2_NavigationStarting(CoreWebView2 sender, CoreWebView2NavigationStartingEventArgs args)
-    {
-        LoadingRing.IsActive = true;
-    }
-
-    private void CoreWebView2_NavigationCompleted(CoreWebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
-    {
-        LoadingRing.IsActive = false;
-        if (!args.IsSuccess)
-            StatusText.Text = "官方页面加载失败，请检查网络连接，或在浏览器中打开。";
-    }
-
-    private void CoreWebView2_DownloadStarting(CoreWebView2 sender, CoreWebView2DownloadStartingEventArgs args)
-    {
-        var download = args.DownloadOperation;
-        var directory = GpuDriverCatalogService.GetDownloadDirectory();
-        if (!GpuDriverCatalogService.TryGetDownloadDestination(
-                download.Uri, args.ResultFilePath, directory, out var destination))
+        if (VendorCombo.SelectedItem is not GpuDriverVendor vendor ||
+            string.IsNullOrWhiteSpace(ModelText.Text))
         {
-            args.Cancel = true;
-            StatusText.Text = "已阻止非官方来源或非 .exe / .zip 文件的下载。";
+            StatusText.Text = "请选择厂商并填写显卡型号。";
             return;
         }
+
+        _searchCancellation?.Cancel();
+        _searchCancellation?.Dispose();
+        _searchCancellation = new CancellationTokenSource();
+        ResultsList.ItemsSource = null;
+        EmptyPanel.Visibility = Visibility.Visible;
+        StatusText.Text = $"正在查询 {vendor.Name} 官方驱动目录…";
 
         try
         {
+            var releases = await GpuDriverCatalogService.FindDriversAsync(
+                vendor.Name, ModelText.Text.Trim(), _hardwareId, _searchCancellation.Token);
+            ResultsList.ItemsSource = releases;
+            EmptyPanel.Visibility = releases.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            StatusText.Text = releases.Count == 0
+                ? "未解析到可下载的官方驱动版本。可检查型号/硬件 ID，或打开官方页面备用。"
+                : $"找到 {releases.Count} 个可下载版本。";
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            EmptyPanel.Visibility = Visibility.Visible;
+            StatusText.Text = $"查询失败：{ex.Message}。可打开厂商官方页面备用。";
+        }
+    }
+
+    private void DownloadButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: GpuDriverRelease release })
+            return;
+
+        var directory = GpuDriverCatalogService.GetDownloadDirectory();
+        try
+        {
             Directory.CreateDirectory(directory);
-            args.ResultFilePath = destination;
-            args.Handled = true;
-            StatusText.Text = $"正在下载：{Path.GetFileName(destination)}";
-            download.StateChanged += (_, _) => DispatcherQueue.TryEnqueue(() =>
+            if (!GpuDriverCatalogService.TryGetDownloadDestination(
+                    release.DownloadUri.AbsoluteUri, release.FileName, directory, out var path))
             {
-                if (download.State == CoreWebView2DownloadState.Completed)
-                    StatusText.Text = $"下载完成：{destination}";
-                else if (download.State == CoreWebView2DownloadState.Interrupted)
-                    StatusText.Text = $"下载未完成：{Path.GetFileName(destination)}";
+                StatusText.Text = "下载链接不是受支持的厂商官方 HTTPS 直链，已拒绝。";
+                return;
+            }
+
+            DownloadQueueService.Enqueue(
+                $"{release.Vendor} {release.Version}",
+                release.DownloadUri.AbsoluteUri,
+                path,
+                description: $"{release.Model} · 官方显卡驱动",
+                glyph: "\uE950");
+            StatusText.Text = $"已加入下载队列：{release.FileName}";
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"加入下载队列失败：{ex.Message}";
+        }
+    }
+
+    private void OpenOfficialPage_Click(object sender, RoutedEventArgs e)
+    {
+        if (VendorCombo.SelectedItem is not GpuDriverVendor vendor)
+            return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = vendor.CatalogUri.AbsoluteUri,
+                UseShellExecute = true,
             });
         }
         catch (Exception ex)
         {
-            args.Cancel = true;
-            StatusText.Text = $"无法创建下载目录：{ex.Message}";
-        }
-    }
-
-    private void BackButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (DriverWebView.CoreWebView2?.CanGoBack == true)
-            DriverWebView.CoreWebView2.GoBack();
-    }
-
-    private void RefreshButton_Click(object sender, RoutedEventArgs e)
-    {
-        DriverWebView.CoreWebView2?.Reload();
-    }
-
-    private void OpenInBrowserButton_Click(object sender, RoutedEventArgs e)
-    {
-        var url = DriverWebView.CoreWebView2?.Source?.ToString() ??
-                  (VendorCombo.SelectedItem as GpuDriverVendor)?.CatalogUri.AbsoluteUri;
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
-            return;
-
-        try
-        {
-            Process.Start(new ProcessStartInfo { FileName = uri.AbsoluteUri, UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"无法打开浏览器：{ex.Message}";
+            StatusText.Text = $"无法打开厂商官网：{ex.Message}";
         }
     }
 

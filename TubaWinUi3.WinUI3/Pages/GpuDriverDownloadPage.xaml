@@ -4,10 +4,43 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:local="using:TubaWinUi3.Services"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <DataTemplate x:Key="DriverTemplate" x:DataType="local:GpuDriverRelease">
+            <Grid Padding="12,9" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="3">
+                    <TextBlock FontWeight="SemiBold" Text="{x:Bind Version}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind FileName}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Text="{x:Bind ReleaseDate}" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Click="DownloadButton_Click"
+                    Tag="{x:Bind}"
+                    ToolTipService.ToolTip="下载官方安装包">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="13" Glyph="&#xE896;" />
+                        <TextBlock Text="下载" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -18,7 +51,7 @@
         <controls:ToolPageHeader
             Grid.Row="0"
             Title="显卡驱动下载"
-            Subtitle="从 NVIDIA、AMD、Intel 官方驱动目录选择型号和版本"
+            Subtitle="查询官方驱动版本并直接下载原厂安装包"
             Glyph="&#xE950;">
             <controls:ToolPageHeader.Actions>
                 <Button Click="OpenDownloadFolder_Click" Padding="10,5" VerticalAlignment="Center">
@@ -30,7 +63,7 @@
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
 
-        <Grid Grid.Row="1" RowSpacing="8" Padding="24,4,24,20">
+        <Grid Grid.Row="1" RowSpacing="10" Padding="24,4,24,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -41,52 +74,69 @@
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="厂商" VerticalAlignment="Center" />
                 <ComboBox
                     x:Name="VendorCombo"
                     Grid.Column="1"
-                    SelectedIndex="0"
-                    SelectionChanged="VendorCombo_SelectionChanged" />
-                <Button Grid.Column="2" Click="BackButton_Click" ToolTipService.ToolTip="后退">
-                    <FontIcon Glyph="&#xE72B;" />
+                    DisplayMemberPath="Name"
+                    SelectedIndex="0" />
+                <TextBlock Grid.Column="2" Text="显卡型号" VerticalAlignment="Center" />
+                <TextBox
+                    x:Name="ModelText"
+                    Grid.Column="3"
+                    PlaceholderText="自动识别，也可输入 NVIDIA / AMD 型号" />
+                <Button Grid.Column="4" Click="SearchButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="13" Glyph="&#xE721;" />
+                        <TextBlock Text="查询驱动" />
+                    </StackPanel>
                 </Button>
-                <Button Grid.Column="3" Click="RefreshButton_Click" ToolTipService.ToolTip="刷新">
-                    <FontIcon Glyph="&#xE72C;" />
-                </Button>
-                <Button Grid.Column="4" Click="OpenInBrowserButton_Click" ToolTipService.ToolTip="在浏览器中打开官方页面">
+                <Button
+                    Grid.Column="5"
+                    Click="OpenOfficialPage_Click"
+                    ToolTipService.ToolTip="直链查询不可用时打开厂商官方页面">
                     <FontIcon Glyph="&#xE774;" />
                 </Button>
-                <ProgressRing
-                    x:Name="LoadingRing"
-                    Grid.Column="5"
-                    Width="20"
-                    Height="20"
-                    HorizontalAlignment="Right"
-                    IsActive="False" />
             </Grid>
 
             <TextBlock
                 Grid.Row="1"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="在官方页面选择显卡型号和驱动版本；下载的 .exe / .zip 安装包会保存到「下载」下的「图吧工具箱\显卡驱动」目录。" />
+                Text="优先从厂商目录解析版本和官方下载直链；Intel 需使用已识别显卡硬件 ID。若官方接口暂不可用，可打开官网备用。" />
 
-            <WebView2
-                x:Name="DriverWebView"
-                Grid.Row="2"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch" />
+            <Grid Grid.Row="2">
+                <ListView
+                    x:Name="ResultsList"
+                    ItemTemplate="{StaticResource DriverTemplate}"
+                    SelectionMode="None" />
+                <StackPanel
+                    x:Name="EmptyPanel"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="8">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        FontSize="28"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Glyph="&#xE950;" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="查询结果将在这里显示"
+                        TextAlignment="Center" />
+                </StackPanel>
+            </Grid>
 
             <TextBlock
                 x:Name="StatusText"
                 Grid.Row="3"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="仅从 NVIDIA、AMD、Intel 官方域名下载驱动安装包；下载完成后请自行确认并安装。" />
+                Text="驱动包来自厂商官方服务器；下载后请确认型号与操作系统兼容性再安装。" />
         </Grid>
     </Grid>
 </Page>

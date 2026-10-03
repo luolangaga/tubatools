@@ -33,6 +33,92 @@ public class GpuDriverCatalogTests
         Assert.Equal(".exe", Path.GetExtension(path));
     }
 
+    [Fact]
+    public void ParseNvidiaDrivers_ExtractsVersionAndOfficialDirectUrl()
+    {
+        const string response = """
+            {
+              "IDS": [
+                {
+                  "downloadInfo": {
+                    "Version": "591.86",
+                    "ReleaseDateTime": "2026-10-01",
+                    "DownloadURL": "https://us.download.nvidia.com/Windows/591.86/591.86-desktop.exe"
+                  }
+                }
+              ]
+            }
+            """;
+
+        var results = GpuDriverCatalogService.ParseNvidiaDrivers(
+            response, "GeForce RTX 5090", new Uri("https://www.nvidia.com/Download/index.aspx"));
+
+        var release = Assert.Single(results);
+        Assert.Equal("591.86", release.Version);
+        Assert.Equal("2026-10-01", release.ReleaseDate);
+        Assert.Equal("https://us.download.nvidia.com/Windows/591.86/591.86-desktop.exe", release.DownloadUri.AbsoluteUri);
+    }
+
+    [Fact]
+    public void ParseNvidiaDrivers_RejectsNonVendorLinks()
+    {
+        const string response = """
+            {"IDS":[{"downloadInfo":{"Version":"1.0","DownloadURL":"https://evil.example/driver.exe"}}]}
+            """;
+
+        Assert.Empty(GpuDriverCatalogService.ParseNvidiaDrivers(
+            response, "GeForce RTX 5090", new Uri("https://www.nvidia.com/Download/index.aspx")));
+    }
+
+    [Fact]
+    public void ParseAmdDrivers_ExtractsDirectInstallerLinksAndVersions()
+    {
+        const string html = """
+            <html><body>
+              <a href="https://drivers.amd.com/drivers/whql-amd-software-adrenalin-edition-26.5.2-fullinstall-260514.exe">Full package</a>
+              <a href="https://example.org/whql-amd-software-adrenalin-edition-27.1.0.exe">Fake package</a>
+            </body></html>
+            """;
+
+        var results = GpuDriverCatalogService.ParseAmdDrivers(
+            html, "Radeon RX 9070 XT", new Uri("https://www.amd.com/en/support"));
+
+        var release = Assert.Single(results);
+        Assert.Equal("26.5.2", release.Version);
+        Assert.Equal("whql-amd-software-adrenalin-edition-26.5.2-fullinstall-260514.exe", release.FileName);
+        Assert.Equal("drivers.amd.com", release.DownloadUri.Host);
+    }
+
+    [Fact]
+    public void ParseIntelCatalog_UsesMatchingGraphicsDeviceAndOfficialExe()
+    {
+        const string catalog = """
+            [
+              {
+                "Name": "Intel Graphics Driver",
+                "Version": "32.0.101.7088 WHQL",
+                "DisplayReleaseDate": "2026-06-22",
+                "IsBeta": false,
+                "Files": [{
+                  "Url": "https://downloadmirror.intel.com/101/gfx_win_101.7088.exe",
+                  "OperatingSystems": ["windows-11-24h2-64"]
+                }],
+                "Components": [{
+                  "Category": "Graphics",
+                  "DetectionValues": ["VEN_8086&DEV_9A49&SUBSYS_00000000"]
+                }]
+              }
+            ]
+            """;
+
+        var results = GpuDriverCatalogService.ParseIntelCatalog(
+            catalog, @"PCI\VEN_8086&DEV_9A49&SUBSYS_12345678", new Uri("https://www.intel.com/support"));
+
+        var release = Assert.Single(results);
+        Assert.Equal("32.0.101.7088 WHQL", release.Version);
+        Assert.Equal("https://downloadmirror.intel.com/101/gfx_win_101.7088.exe", release.DownloadUri.AbsoluteUri);
+    }
+
     [Theory]
     [InlineData("http://download.nvidia.com/driver.exe", "driver.exe")]
     [InlineData("https://nvidia.com.example.org/driver.exe", "driver.exe")]
