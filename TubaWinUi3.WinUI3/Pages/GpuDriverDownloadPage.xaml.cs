@@ -22,6 +22,11 @@ public sealed partial class GpuDriverDownloadPage : Page
         DetectGraphicsAdapter();
     }
 
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        _searchCancellation?.Cancel();
+    }
+
     private void DetectGraphicsAdapter()
     {
         try
@@ -58,7 +63,7 @@ public sealed partial class GpuDriverDownloadPage : Page
     private async void SearchButton_Click(object sender, RoutedEventArgs e)
     {
         if (VendorCombo.SelectedItem is not GpuDriverVendor vendor ||
-            string.IsNullOrWhiteSpace(ModelText.Text))
+            string.IsNullOrWhiteSpace(ModelText.Text) || ModelText.Text.Trim().Length < 3)
         {
             StatusText.Text = "请选择厂商并填写显卡型号。";
             return;

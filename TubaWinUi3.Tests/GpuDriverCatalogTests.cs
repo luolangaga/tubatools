@@ -101,7 +101,7 @@ public class GpuDriverCatalogTests
                 "IsBeta": false,
                 "Files": [{
                   "Url": "https://downloadmirror.intel.com/101/gfx_win_101.7088.exe",
-                  "OperatingSystems": ["windows-11-24h2-64"]
+                  "OperatingSystems": ["windows-10-22h2-64", "windows-11-24h2-64"]
                 }],
                 "Components": [{
                   "Category": "Graphics",

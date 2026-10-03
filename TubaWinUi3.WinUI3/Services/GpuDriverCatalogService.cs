@@ -132,7 +132,8 @@ public static partial class GpuDriverCatalogService
         {
             var href = HtmlEntity.DeEntitize(link.GetAttributeValue("href", ""));
             if (!TryValidateDownloadUrl(href, "amd.com", out var uri) ||
-                !Path.GetExtension(uri.LocalPath).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+                !Path.GetExtension(uri.LocalPath).Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
+                !Path.GetFileName(uri.LocalPath).Contains("adrenalin", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var fileName = Path.GetFileName(uri.LocalPath);
@@ -213,43 +214,37 @@ public static partial class GpuDriverCatalogService
     {
         var seriesDocument = XDocument.Parse(await client.GetStringAsync(
             "https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=2", cancellationToken));
-        var productDocument = XDocument.Parse(await client.GetStringAsync(
-            "https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=3", cancellationToken));
         var cleanModel = NormalizeModel(model);
-        var product = productDocument.Descendants()
+        var generation = NvidiaGeneration(cleanModel);
+        var series = seriesDocument.Descendants()
             .Where(element => element.Name.LocalName == "LookupValue")
             .Select(element => new
             {
                 Name = ChildValue(element, "Name"),
                 Value = ChildValue(element, "Value"),
-                Parent = ChildValue(element, "ParentID"),
             })
+            .Where(item => item.Name is not null && item.Value is not null &&
+                           item.Name.Contains("GeForce", StringComparison.OrdinalIgnoreCase) &&
+                           (generation is null || item.Name.Contains(generation, StringComparison.OrdinalIgnoreCase)) &&
+                           item.Name.Contains("Notebook", StringComparison.OrdinalIgnoreCase) ==
+                           cleanModel.Contains("laptop", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+        if (series is null)
+            return (null, null);
+
+        var products = XDocument.Parse(await client.GetStringAsync(
+            $"https://www.nvidia.com/Download/API/lookupValueSearch.aspx?TypeID=3&ParentID={Uri.EscapeDataString(series.Value!)}",
+            cancellationToken));
+        var product = products.Descendants()
+            .Where(element => element.Name.LocalName == "LookupValue")
+            .Select(element => new { Name = ChildValue(element, "Name"), Value = ChildValue(element, "Value") })
             .Where(item => item.Name is not null && item.Value is not null)
             .OrderByDescending(item => string.Equals(NormalizeModel(item.Name!), cleanModel, StringComparison.OrdinalIgnoreCase))
             .FirstOrDefault(item =>
                 string.Equals(NormalizeModel(item.Name!), cleanModel, StringComparison.OrdinalIgnoreCase) ||
                 NormalizeModel(item.Name!).Contains(cleanModel, StringComparison.OrdinalIgnoreCase));
 
-        if (product is null)
-            return (null, null);
-
-        var series = product.Parent;
-        if (string.IsNullOrWhiteSpace(series))
-        {
-            var generation = NvidiaGeneration(cleanModel);
-            series = seriesDocument.Descendants()
-                .Where(element => element.Name.LocalName == "LookupValue")
-                .FirstOrDefault(element =>
-                {
-                    var name = ChildValue(element, "Name") ?? "";
-                    return name.Contains("GeForce", StringComparison.OrdinalIgnoreCase) &&
-                           (generation is null || name.Contains(generation, StringComparison.OrdinalIgnoreCase)) &&
-                           name.Contains("Notebook", StringComparison.OrdinalIgnoreCase) ==
-                           cleanModel.Contains("laptop", StringComparison.OrdinalIgnoreCase);
-                }) is { } match ? ChildValue(match, "Value") : null;
-        }
-
-        return (series, product.Value);
+        return (series.Value, product?.Value);
     }
 
     private static async Task<string?> FindNvidiaOsAsync(HttpClient client, CancellationToken cancellationToken)
@@ -259,8 +254,11 @@ public static partial class GpuDriverCatalogService
         var target = Environment.OSVersion.Version.Build >= 22000 ? "Windows 11" : "Windows 10";
         return document.Descendants()
             .Where(element => element.Name.LocalName == "LookupValue")
-            .FirstOrDefault(element => (ChildValue(element, "Name") ?? "")
+            .Where(element => (ChildValue(element, "Name") ?? "")
                 .Contains(target, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(element => (ChildValue(element, "Name") ?? "")
+                .Contains("64", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault()
             is { } match ? ChildValue(match, "Value") : null;
     }
 
@@ -299,7 +297,7 @@ public static partial class GpuDriverCatalogService
 
     private static Uri BuildAmdProductPage(string model)
     {
-        var rx = Regex.Match(model, @"RX\s*(\d{4})\s*(XT|XTX)?", RegexOptions.IgnoreCase);
+        var rx = Regex.Match(model, @"RX\s*(\d{4})\s*(XTX|XT)?", RegexOptions.IgnoreCase);
         if (!rx.Success)
             return Vendors[1].CatalogUri;
 
@@ -323,7 +321,7 @@ public static partial class GpuDriverCatalogService
     }
 
     private static string NormalizeModel(string name) =>
-        Regex.Replace(name, @"^(NVIDIA|GeForce)\s+", "", RegexOptions.IgnoreCase).Trim();
+        Regex.Replace(name, @"^(?:(?:NVIDIA|GeForce)\s+)+", "", RegexOptions.IgnoreCase).Trim();
 
     private static string? NvidiaGeneration(string name)
     {
