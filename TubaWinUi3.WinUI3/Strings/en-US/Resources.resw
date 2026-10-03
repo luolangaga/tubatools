@@ -2378,6 +2378,12 @@ Permissions
   <data name="Builtin_time-sync_Name" xml:space="preserve">
     <value>Time Sync</value>
   </data>
+  <data name="Builtin_gpu-driver-download_Name" xml:space="preserve">
+    <value>GPU Driver Downloads</value>
+  </data>
+  <data name="Builtin_gpu-driver-download_Desc" xml:space="preserve">
+    <value>Select your graphics model and driver version on official NVIDIA, AMD, or Intel pages, then download the installer.</value>
+  </data>
   <data name="Builtin_traffic-monitor_Desc" xml:space="preserve">
     <value>Pick a network adapter to watch per-connection traffic, speed, and latency, with whole-adapter throughput charts, snapshot recording, and slider replay.</value>
   </data>

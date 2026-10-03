@@ -318,7 +318,7 @@ CPU / GPU / 内存 / 硬盘 / 浏览器五大项全测，按比例折算「游�
 | 类别 | 数量 | 代表工具 |
 |:----:|:----:|:--------|
 | 处理器工具 | 9 | CPU-Z / Core Temp / ThrottleStop / LinX / Prime95 / Superpi / wPrime / C2CLatency |
-| 显卡工具 | 9 | GPU-Z / DDU / GpuTest / dxvachecker / nvidiaProfileInspector / AMD·NVIDIA 驱动下载 |
+| 显卡工具 | 8 | GPU-Z / DDU / GpuTest / dxvachecker / nvidiaProfileInspector / NVIDIA、AMD、Intel 显卡驱动下载（内置） |
 | 硬盘工具 | 22 | CrystalDiskMark / CrystalDiskInfo / DiskGenius / HDTune / WizTree / finaldata / URWTEST |
 | 内存工具 | 7 | MemTest / MemTest64 / TM5 / Thaiphoon Burner / ZenTimings / 魔方内存盘 |
 | 综合检测 | 5 | AIDA64 / HWiNFO / HWMonitor / Speccy / RWEverything |

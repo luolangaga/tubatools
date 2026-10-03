@@ -269,30 +269,6 @@
       "version": 1
     },
     {
-      "match": "AMD显卡驱动",
-      "order": 16,
-      "description": "AMD 显卡驱动程序官方下载入口。",
-      "publisher": "AMD",
-      "tags": [
-        "显卡",
-        "驱动下载"
-      ],
-      "downloadUrl": "gc:Tools/显卡工具/AMD显卡驱动下载",
-      "version": 1
-    },
-    {
-      "match": "Nvidia显卡驱动",
-      "order": 17,
-      "description": "NVIDIA 显卡驱动程序官方下载入口。",
-      "publisher": "NVIDIA",
-      "tags": [
-        "显卡",
-        "驱动下载"
-      ],
-      "downloadUrl": "gc:Tools/显卡工具/Nvidia显卡驱动下载",
-      "version": 1
-    },
-    {
       "match": "FurMark_win64",
       "order": 18,
       "description": "FurMark 2（64 位）GPU 压力测试和烤机工具，支持 Vulkan 和 OpenGL，用于检测显卡稳定性。",
@@ -1591,6 +1567,13 @@
     {
       "match": "GPU排行",
       "builtin": "gpu-ranking",
+      "categories": [
+        "显卡工具"
+      ]
+    },
+    {
+      "match": "显卡驱动下载",
+      "builtin": "gpu-driver-download",
       "categories": [
         "显卡工具"
       ]
