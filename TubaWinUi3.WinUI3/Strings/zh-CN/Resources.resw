@@ -2394,6 +2394,12 @@
   <data name="Builtin_time-sync_Name" xml:space="preserve">
     <value>时间同步</value>
   </data>
+  <data name="Builtin_gpu-driver-download_Name" xml:space="preserve">
+    <value>显卡驱动下载</value>
+  </data>
+  <data name="Builtin_gpu-driver-download_Desc" xml:space="preserve">
+    <value>在 NVIDIA、AMD、Intel 官方页面选择显卡型号和驱动版本，并直接下载官方安装包。</value>
+  </data>
   <data name="Builtin_traffic-monitor_Desc" xml:space="preserve">
     <value>选择网卡实时查看各连接的流量、速度与延迟，整卡吞吐折线统计，支持快照录制与滑条回放。</value>
   </data>

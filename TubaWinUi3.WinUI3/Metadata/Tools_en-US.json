@@ -138,24 +138,6 @@
                                ]
                   },
                   {
-                      "match":  "AMD显卡驱动",
-                      "description":  "Official AMD graphics driver download page.",
-                      "publisher":  "AMD",
-                      "tags":  [
-                                   "GPU",
-                                   "Driver Download"
-                               ]
-                  },
-                  {
-                      "match":  "Nvidia显卡驱动",
-                      "description":  "Official NVIDIA graphics driver download page.",
-                      "publisher":  "NVIDIA",
-                      "tags":  [
-                                   "GPU",
-                                   "Driver Download"
-                               ]
-                  },
-                  {
                       "match":  "FurMark_win64",
                       "description":  "FurMark 2 (64-bit) GPU stress and burn-in tool with Vulkan and OpenGL support for stability checking.",
                       "publisher":  "Geeks3D",
