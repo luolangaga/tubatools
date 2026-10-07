@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    「文件占用查看」Win11 新版右键菜单处理程序（IExplorerCommand）。
+    编译为 NativeAOT 原生 DLL（无 .NET 运行时依赖），由包清单 com:SurrogateServer 声明、
+    dllhost（包内 COM 代理进程）加载。构建入口 = 仓库根 build-shell-ext-aot.ps1；
+    主程序发布时由 TubaWinUi3.csproj 的 PublishShellExtension 目标驱动（仅 MSIX 构建）。
+  -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>TubaWinUi3.ShellExtension</RootNamespace>
+    <AssemblyName>TubaWinUi3.ShellExtension</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- NativeAOT：共享库形式（.dll），导出 DllGetClassObject / DllCanUnloadNow -->
+    <PublishAot>true</PublishAot>
+    <NativeLib>Shared</NativeLib>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <StripSymbols>true</StripSymbols>
+    <DebugType>none</DebugType>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+    <Version>1.0.0</Version>
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      跨进程契约（CLSID / 标记文件格式 / 命令行构造）与主程序共享同一份源码：
+      链接编译（非复制），保证两边永远一致。约束见文件头注释（仅 BCL，无 WinUI/WinRT）。
+    -->
+    <Compile Include="..\TubaWinUi3.WinUI3\Services\FileLock\FileLockShellMenuContract.cs" Link="FileLockShellMenuContract.cs" />
+  </ItemGroup>
+</Project>
