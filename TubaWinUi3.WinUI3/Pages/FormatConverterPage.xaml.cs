@@ -65,6 +65,9 @@ public sealed class QueueItem : INotifyPropertyChanged
         StatusBrush = brush;
         Detail = detail;
     }
+
+    /// <summary>主题切换后按当前状态重新取状态色画刷（代码构建的画刷不随主题自动刷新）。</summary>
+    internal void RefreshStatusBrush() => StatusBrush = FormatConverterPage.StatusBrushes.For(_state);
 }
 
 public sealed partial class FormatConverterPage : Page
@@ -122,7 +125,7 @@ public sealed partial class FormatConverterPage : Page
     private List<string> _lastOutputs = [];
     private string? _zipSummary;
 
-    private static class StatusBrushes
+    internal static class StatusBrushes
     {
         public static Brush? Waiting;
         public static Brush? Running;
@@ -134,15 +137,29 @@ public sealed partial class FormatConverterPage : Page
         public static void Init(Page page)
         {
             if (Initialized) return;
-            Waiting = Resolve(page, "TextFillColorSecondaryBrush", "#9AA0A6");
-            Running = Resolve(page, "AccentFillColorDefaultBrush", "#0078D4");
-            Done = Resolve(page, "SystemFillColorSuccessBrush", "#6CCB5F");
-            Failed = Resolve(page, "SystemFillColorCriticalBrush", "#FF6B6B");
-            Skipped = Resolve(page, "TextFillColorTertiaryBrush", "#9AA0A6");
+            // 队列状态语义色：等待 = Neutral（次要文字）/ 转换中 = Accent / 完成 = Success / 失败 = Critical / 跳过 = 三级文字
+            Waiting = Resolve(page, "TextFillColorSecondaryBrush") ?? new SolidColorBrush(ThemeColors.Neutral);
+            Running = Resolve(page, "AccentFillColorDefaultBrush") ?? new SolidColorBrush(ThemeColors.AccentBlue);
+            Done = Resolve(page, "SystemFillColorSuccessBrush") ?? new SolidColorBrush(ThemeColors.AccentGreen);
+            Failed = Resolve(page, "SystemFillColorCriticalBrush") ?? new SolidColorBrush(ThemeColors.AccentRed);
+            Skipped = Resolve(page, "TextFillColorTertiaryBrush") ?? new SolidColorBrush(ThemeColors.DimText);
             Initialized = true;
         }
 
-        private static Brush Resolve(Page page, string key, string fallbackHex)
+        /// <summary>主题切换后按新主题重新解析状态色。</summary>
+        public static void Reset() => Initialized = false;
+
+        /// <summary>按队列状态取当前主题下的状态色画刷。</summary>
+        public static Brush? For(QueueState state) => state switch
+        {
+            QueueState.Running => Running,
+            QueueState.Done => Done,
+            QueueState.Failed => Failed,
+            QueueState.Skipped => Skipped,
+            _ => Waiting
+        };
+
+        private static Brush? Resolve(Page page, string key)
         {
             try
             {
@@ -150,10 +167,7 @@ public sealed partial class FormatConverterPage : Page
                 if (Application.Current.Resources.TryGetValue(key, out var v2) && v2 is Brush b2) return b2;
             }
             catch { }
-            return new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(0xFF,
-                Convert.ToByte(fallbackHex.Substring(1, 2), 16),
-                Convert.ToByte(fallbackHex.Substring(3, 2), 16),
-                Convert.ToByte(fallbackHex.Substring(5, 2), 16)));
+            return null;
         }
     }
 
@@ -161,6 +175,13 @@ public sealed partial class FormatConverterPage : Page
     {
         InitializeComponent();
         StatusBrushes.Init(this);
+        // 代码解析的状态色画刷不会随主题自动刷新，切换主题后按当前状态回填队列
+        ActualThemeChanged += (_, _) =>
+        {
+            StatusBrushes.Reset();
+            StatusBrushes.Init(this);
+            foreach (var item in _queue) item.RefreshStatusBrush();
+        };
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         RefreshEngineCards();
@@ -329,11 +350,14 @@ public sealed partial class FormatConverterPage : Page
         panel.Children.Add(new TextBlock
         {
             Text = sourceLabel,
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis
         });
-        panel.Children.Add(new TextBlock { Text = "选择目标格式：", FontSize = 11, Opacity = 0.6 });
+        panel.Children.Add(new TextBlock
+        {
+            Text = "选择目标格式：", FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush")
+        });
 
         var grid = new GridView
         {
@@ -353,11 +377,11 @@ public sealed partial class FormatConverterPage : Page
                         new FontIcon
                         {
                             Glyph = FormatGlyph(fmt),
-                            FontSize = 18, HorizontalAlignment = HorizontalAlignment.Center
+                            FontSize = 20, HorizontalAlignment = HorizontalAlignment.Center
                         },
                         new TextBlock
                         {
-                            Text = fmt.Name, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center,
+                            Text = fmt.Name, FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center,
                             TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextAlignment = TextAlignment.Center
                         }
                     }
@@ -368,12 +392,23 @@ public sealed partial class FormatConverterPage : Page
         grid.SelectedIndex = 0;
 
         // 输出预览（提前声明：下方事件处理器引用的 UpdatePreview 会用到它）
-        var outPreview = new TextBlock { FontSize = 11, Opacity = 0.7, TextWrapping = TextWrapping.Wrap };
+        var outPreview = new TextBlock
+        {
+            FontSize = 12, Foreground = ThemeBrush("TextFillColorSecondaryBrush"), TextWrapping = TextWrapping.Wrap
+        };
 
         // 目标格式专属参数（随所选格式重建：滑块 + 数值输入框 / 下拉框 / 开关）
-        var paramsTitle = new TextBlock { Text = "格式参数：", FontSize = 11, Opacity = 0.6, Visibility = Visibility.Collapsed };
+        var paramsTitle = new TextBlock
+        {
+            Text = "格式参数：", FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
+            Visibility = Visibility.Collapsed
+        };
         var paramsHost = new StackPanel { Spacing = 12 };
-        var paramsSummary = new TextBlock { FontSize = 11, Opacity = 0.7, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
+        var paramsSummary = new TextBlock
+        {
+            FontSize = 12, Foreground = ThemeBrush("TextFillColorSecondaryBrush"),
+            TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed
+        };
         panel.Children.Add(paramsTitle);
         panel.Children.Add(paramsHost);
         panel.Children.Add(paramsSummary);
@@ -391,15 +426,18 @@ public sealed partial class FormatConverterPage : Page
         var mergeImages = new CheckBox
         {
             Content = "合并为一张长图（多页文档导出图片时纵向拼接）",
-            FontSize = 11, Visibility = Visibility.Collapsed
+            FontSize = 12, Visibility = Visibility.Collapsed
         };
         var combineImages = new CheckBox
         {
             Content = "把多张图片合成为一份 PDF（按队列顺序逐页拼接）",
-            FontSize = 11, Visibility = Visibility.Collapsed
+            FontSize = 12, Visibility = Visibility.Collapsed
         };
-        panel.Children.Add(new TextBlock { Text = "导出选项：", FontSize = 11, Opacity = 0.6 });
-        panel.Children.Add(new StackPanel { Spacing = 6, Children = { exportZip, mergeImages, combineImages } });
+        panel.Children.Add(new TextBlock
+        {
+            Text = "导出选项：", FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush")
+        });
+        panel.Children.Add(new StackPanel { Spacing = 8, Children = { exportZip, mergeImages, combineImages } });
         ui.ExportZipToggle = exportZip;
         ui.MergeImagesCheck = mergeImages;
         ui.CombineImagesCheck = combineImages;
@@ -408,7 +446,7 @@ public sealed partial class FormatConverterPage : Page
         var zipPanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
         zipPanel.Children.Add(new TextBlock
         {
-            FontSize = 11, Opacity = 0.6,
+            FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
             Text = "ZIP 压缩级别（0 = 仅打包不压缩，9 = 压缩最强最慢）"
         });
         var zipSlider = new Slider
@@ -422,10 +460,14 @@ public sealed partial class FormatConverterPage : Page
 
         // ICO 多尺寸（仅目标为 ICO 时显示）
         var icoPanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
-        icoPanel.Children.Add(new TextBlock { FontSize = 11, Opacity = 0.6, Text = "图标尺寸（多选，打包进同一 .ico）" });
-        var icoWrap = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+        icoPanel.Children.Add(new TextBlock
+        {
+            FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
+            Text = "图标尺寸（多选，打包进同一 .ico）"
+        });
+        var icoWrap = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var icoChecks = new[] { 256, 128, 64, 48, 32, 24, 16 }
-            .Select(s => new CheckBox { Content = $"{s}×{s}", Tag = s, IsChecked = true, FontSize = 11 })
+            .Select(s => new CheckBox { Content = $"{s}×{s}", Tag = s, IsChecked = true, FontSize = 12 })
             .ToArray();
         foreach (var check in icoChecks) icoWrap.Children.Add(check);
         icoPanel.Children.Add(icoWrap);
@@ -438,7 +480,7 @@ public sealed partial class FormatConverterPage : Page
             var docImagePanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
             docImagePanel.Children.Add(new TextBlock
             {
-                FontSize = 11, Opacity = 0.6,
+                FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
                 Text = "图片清晰度：截图宽度（像素，越大越清晰、文件越大）"
             });
             var docMaxEdgeBox = new NumberBox
@@ -449,7 +491,7 @@ public sealed partial class FormatConverterPage : Page
 
             docImagePanel.Children.Add(new TextBlock
             {
-                FontSize = 11, Opacity = 0.6,
+                FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
                 Text = "页码范围（如 1-3,5；留空 = 全部页）"
             });
             var docRangeBox = new TextBox { PlaceholderText = "全部页" };
@@ -457,7 +499,7 @@ public sealed partial class FormatConverterPage : Page
 
             docImagePanel.Children.Add(new TextBlock
             {
-                FontSize = 11, Opacity = 0.6,
+                FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
                 Text = "渲染模式（原生渲染需本机装有 Word / PowerPoint）"
             });
             var docRenderCombo = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -470,7 +512,7 @@ public sealed partial class FormatConverterPage : Page
             var docJpgPanel = new StackPanel { Spacing = 4, Visibility = Visibility.Collapsed };
             docJpgPanel.Children.Add(new TextBlock
             {
-                FontSize = 11, Opacity = 0.6,
+                FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush"),
                 Text = "JPG 质量（越大越清晰、文件越小越模糊；仅 JPG 目标生效）"
             });
             var docJpgSlider = new Slider
@@ -489,7 +531,10 @@ public sealed partial class FormatConverterPage : Page
             ui.DocJpgSlider = docJpgSlider;
         }
 
-        var outLabel = new TextBlock { Text = "输出：", FontSize = 11, Opacity = 0.6 };
+        var outLabel = new TextBlock
+        {
+            Text = "输出：", FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush")
+        };
         panel.Children.Add(outLabel);
         panel.Children.Add(outPreview);
 
@@ -693,7 +738,7 @@ public sealed partial class FormatConverterPage : Page
     private static (StackPanel Root, List<ParamRow> Rows) BuildFormatParams(
         IReadOnlyList<FormatParam> parameters, Action onChanged)
     {
-        var root = new StackPanel { Spacing = 10 };
+        var root = new StackPanel { Spacing = 8 };
         var rows = new List<ParamRow>();
 
         foreach (var param in parameters)
@@ -704,10 +749,13 @@ public sealed partial class FormatConverterPage : Page
             var labelText = param.Unit.Length > 0 && param.Kind is FormatParamKind.Slider or FormatParamKind.Number
                 ? $"{param.Label}（{param.Unit}）"
                 : param.Label;
-            var label = new TextBlock { FontSize = 11, Opacity = 0.75, TextWrapping = TextWrapping.Wrap };
+            var label = new TextBlock
+            {
+                FontSize = 12, Foreground = ThemeBrush("TextFillColorSecondaryBrush"), TextWrapping = TextWrapping.Wrap
+            };
             label.Inlines.Add(new Run { Text = labelText });
             if (param.Hint is { Length: > 0 } hint)
-                label.Inlines.Add(new Run { Text = "　" + hint, FontSize = 10, Foreground = ThemeBrush("TextFillColorTertiaryBrush") });
+                label.Inlines.Add(new Run { Text = "　" + hint, FontSize = 12, Foreground = ThemeBrush("TextFillColorTertiaryBrush") });
             host.Children.Add(label);
 
             var step = param.Step <= 0 ? 1 : param.Step;
@@ -730,7 +778,7 @@ public sealed partial class FormatConverterPage : Page
                     {
                         if (Math.Abs(box.Value - e.NewValue) > 0.0001) box.Value = e.NewValue;
                     };
-                    var composite = new Grid { ColumnSpacing = 10 };
+                    var composite = new Grid { ColumnSpacing = 8 };
                     composite.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                     composite.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                     Grid.SetColumn(box, 1);

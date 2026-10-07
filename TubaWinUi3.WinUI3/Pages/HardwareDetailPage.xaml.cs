@@ -8,6 +8,7 @@ using LiveChartsCore.SkiaSharpView.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using SkiaSharp;
 using TubaWinUi3.Controls;
@@ -42,6 +43,15 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         ChartInitializer.EnsureConfigured();
         Loaded += HardwareDetailPage_Loaded;
         Unloaded += HardwareDetailPage_Unloaded;
+        // 代码构建的画刷（图表调色板 / 条目计数）不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (!_pageAlive) return;
+            StopRealtimeMonitor();
+            InitRealtimeMonitor();
+            if (_lastDetailData is not null)
+                ApplyData(_lastDetailData);
+        };
     }
 
     private void HardwareDetailPage_Loaded(object sender, RoutedEventArgs e)
@@ -163,6 +173,10 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
 
     #region 实时监控
 
+    /// <summary>主题语义色 → Skia 画刷色（保留原有 alpha 派生，如 40/30）。</summary>
+    private static SKColor ChartColor(Windows.UI.Color color, byte alpha = 255)
+        => new(color.R, color.G, color.B, alpha);
+
     private void InitRealtimeMonitor()
     {
         _isLaptop = HardwareInfoService.IsLaptop();
@@ -171,8 +185,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         CpuChart.Series = [new LineSeries<double>
         {
             Values = _cpuHist,
-            Stroke = new SolidColorPaint(new SKColor(76, 110, 245)) { StrokeThickness = 2 },
-            Fill = new SolidColorPaint(new SKColor(76, 110, 245, 40)),
+            Stroke = new SolidColorPaint(ChartColor(ThemeColors.Series1)) { StrokeThickness = 2 },
+            Fill = new SolidColorPaint(ChartColor(ThemeColors.Series1, 40)),
             GeometrySize = 0,
             LineSmoothness = 0.4
         }];
@@ -184,8 +198,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         GpuChart.Series = [new LineSeries<double>
         {
             Values = _gpuHist,
-            Stroke = new SolidColorPaint(new SKColor(121, 80, 242)) { StrokeThickness = 2 },
-            Fill = new SolidColorPaint(new SKColor(121, 80, 242, 40)),
+            Stroke = new SolidColorPaint(ChartColor(ThemeColors.Series2)) { StrokeThickness = 2 },
+            Fill = new SolidColorPaint(ChartColor(ThemeColors.Series2, 40)),
             GeometrySize = 0,
             LineSmoothness = 0.4
         }];
@@ -197,8 +211,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         MemChart.Series = [new LineSeries<double>
         {
             Values = _memHist,
-            Stroke = new SolidColorPaint(new SKColor(21, 170, 191)) { StrokeThickness = 2 },
-            Fill = new SolidColorPaint(new SKColor(21, 170, 191, 40)),
+            Stroke = new SolidColorPaint(ChartColor(ThemeColors.Series3)) { StrokeThickness = 2 },
+            Fill = new SolidColorPaint(ChartColor(ThemeColors.Series3, 40)),
             GeometrySize = 0,
             LineSmoothness = 0.4
         }];
@@ -212,16 +226,16 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
             new LineSeries<double>
             {
                 Values = _diskReadHist,
-                Stroke = new SolidColorPaint(new SKColor(76, 110, 245)) { StrokeThickness = 1.5f },
-                Fill = new SolidColorPaint(new SKColor(76, 110, 245, 30)),
+                Stroke = new SolidColorPaint(ChartColor(ThemeColors.Series1)) { StrokeThickness = 1.5f },
+                Fill = new SolidColorPaint(ChartColor(ThemeColors.Series1, 30)),
                 GeometrySize = 0,
                 LineSmoothness = 0.4
             },
             new LineSeries<double>
             {
                 Values = _diskWriteHist,
-                Stroke = new SolidColorPaint(new SKColor(121, 80, 242)) { StrokeThickness = 1.5f },
-                Fill = new SolidColorPaint(new SKColor(121, 80, 242, 30)),
+                Stroke = new SolidColorPaint(ChartColor(ThemeColors.Series2)) { StrokeThickness = 1.5f },
+                Fill = new SolidColorPaint(ChartColor(ThemeColors.Series2, 30)),
                 GeometrySize = 0,
                 LineSmoothness = 0.4
             }
@@ -236,8 +250,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
             BatChart.Series = [new LineSeries<double>
             {
                 Values = _batHist,
-                Stroke = new SolidColorPaint(new SKColor(64, 192, 87)) { StrokeThickness = 2 },
-                Fill = new SolidColorPaint(new SKColor(64, 192, 87, 40)),
+                Stroke = new SolidColorPaint(ChartColor(ThemeColors.AccentGreen)) { StrokeThickness = 2 },
+                Fill = new SolidColorPaint(ChartColor(ThemeColors.AccentGreen, 40)),
                 GeometrySize = 0,
                 LineSmoothness = 0.4
             }];
@@ -396,8 +410,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         var count = new TextBlock
         {
             Text = section.Items.Count.ToString(),
-            FontSize = 11,
-            Opacity = 0.5,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 4, 0)
         };
@@ -474,20 +488,20 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         sb.AppendLine($"<title>{LocalizationService.L("HwDetail_HtmlTitle", "硬件详细信息")}</title>");
         sb.AppendLine("<style>");
         sb.AppendLine("*{margin:0;padding:0;box-sizing:border-box}");
-        sb.AppendLine("body{font-family:-apple-system,\"Microsoft YaHei\",\"Segoe UI\",sans-serif;background:#f5f5f5;color:#1a1a1a;padding:24px}");
+        sb.AppendLine("body{font-family:-apple-system,\"Microsoft YaHei\",\"Segoe UI\",sans-serif;background:rgb(245,245,245);color:rgb(26,26,26);padding:24px}");
         sb.AppendLine(".container{max-width:1200px;margin:0 auto}");
         sb.AppendLine("h1{font-size:22px;font-weight:600;margin-bottom:4px}");
-        sb.AppendLine(".sub{font-size:13px;color:#888;margin-bottom:20px}");
+        sb.AppendLine(".sub{font-size:13px;color:rgb(136,136,136);margin-bottom:20px}");
         sb.AppendLine(".grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}");
         sb.AppendLine("@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}");
         sb.AppendLine("@media(max-width:560px){.grid{grid-template-columns:1fr}}");
-        sb.AppendLine(".card{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:12px 14px}");
-        sb.AppendLine(".card-title{font-size:13px;font-weight:600;color:#555;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #f0f0f0}");
+        sb.AppendLine(".card{background:rgb(255,255,255);border:1px solid rgb(229,229,229);border-radius:8px;padding:12px 14px}");
+        sb.AppendLine(".card-title{font-size:13px;font-weight:600;color:rgb(85,85,85);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgb(240,240,240)}");
         sb.AppendLine(".row{display:flex;padding:3px 0;font-size:12px;line-height:1.6}");
-        sb.AppendLine(".row-label{color:#888;min-width:96px;flex-shrink:0}");
-        sb.AppendLine(".row-sep{width:1px;background:#e0e0e0;margin:2px 8px;flex-shrink:0}");
-        sb.AppendLine(".row-value{color:#1a1a1a;font-weight:500;word-break:break-all}");
-        sb.AppendLine(".footer{margin-top:20px;font-size:11px;color:#bbb;text-align:center}");
+        sb.AppendLine(".row-label{color:rgb(136,136,136);min-width:96px;flex-shrink:0}");
+        sb.AppendLine(".row-sep{width:1px;background:rgb(224,224,224);margin:2px 8px;flex-shrink:0}");
+        sb.AppendLine(".row-value{color:rgb(26,26,26);font-weight:500;word-break:break-all}");
+        sb.AppendLine(".footer{margin-top:20px;font-size:11px;color:rgb(187,187,187);text-align:center}");
         sb.AppendLine("</style>");
         sb.AppendLine("</head>");
         sb.AppendLine("<body>");

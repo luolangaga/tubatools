@@ -1,0 +1,386 @@
+<Page
+    x:Class="TubaWinUi3.Pages.AiPlaygroundPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:l="using:WinUI3Localizer">
+
+    <Grid RowDefinitions="Auto,*">
+        <controls:ToolPageHeader
+            x:Name="Header"
+            Grid.Row="0"
+            Title="本地AI试炼场"
+            Subtitle="本地部署并运行 AI 模型 · NPU / GPU / CPU · 离线推理"
+            l:Uids.Uid="AiPlayground_PageHeader"
+            Glyph="&#xE950;" />
+
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            <!-- 顶部状态条：设备 / EP / 引擎模式 -->
+            <Border
+                Grid.Row="0"
+                Padding="16,8"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock
+                        x:Name="DeviceChip"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <TextBlock
+                        x:Name="EpChip"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <TextBlock
+                        Text="引擎"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <ComboBox x:Name="ModeCombo" MinWidth="150" SelectionChanged="ModeCombo_SelectionChanged" />
+                    <TextBlock
+                        Text="设备"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}" />
+                    <ComboBox x:Name="DeviceCombo" MinWidth="200" SelectionChanged="DeviceCombo_SelectionChanged" />
+                    <TextBlock
+                        x:Name="ModeHint"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
+
+            <Pivot x:Name="MainPivot" Grid.Row="1">
+                <!-- ① 模型库 -->
+                <PivotItem l:Uids.Uid="AiPlayground_TabLibrary">
+                    <Grid Padding="16,8" RowDefinitions="Auto,*,Auto">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                            <AutoSuggestBox
+                                x:Name="SearchBox"
+                                Width="240"
+                                PlaceholderText="搜索模型"
+                                QueryIcon="Find"
+                                TextChanged="SearchBox_TextChanged" />
+                            <ComboBox x:Name="FilterCombo" MinWidth="130" SelectionChanged="FilterCombo_SelectionChanged">
+                                <ComboBoxItem Content="全部" Tag="all" />
+                                <ComboBoxItem Content="对话" Tag="chat" />
+                                <ComboBoxItem Content="图像分类" Tag="classification" />
+                                <ComboBoxItem Content="目标检测" Tag="detection" />
+                                <ComboBoxItem Content="图像特征" Tag="embedding" />
+                                <ComboBoxItem Content="已下载" Tag="ready" />
+                            </ComboBox>
+                            <Button x:Name="ImportButton" Click="ImportButton_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE8B5;" />
+                                    <TextBlock x:Name="ImportButtonText" Text="导入本地模型" />
+                                </StackPanel>
+                            </Button>
+                            <Button x:Name="OpenFolderButton" Click="OpenFolderButton_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE8DA;" />
+                                    <TextBlock x:Name="OpenFolderButtonText" Text="打开模型目录" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" Margin="0,8,0,0">
+                            <StackPanel x:Name="LibraryList" Spacing="8" />
+                        </ScrollViewer>
+
+                        <TextBlock
+                            x:Name="LibraryFooter"
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Grid>
+                </PivotItem>
+
+                <!-- ② 试炼场 -->
+                <PivotItem l:Uids.Uid="AiPlayground_TabPlayground">
+                    <Grid Padding="16,8" RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock x:Name="CurrentModelLabel" Text="当前模型" VerticalAlignment="Center" />
+                            <ComboBox
+                                x:Name="ModelCombo"
+                                MinWidth="320"
+                                SelectionChanged="ModelCombo_SelectionChanged" />
+                            <Button x:Name="ReloadModelButton" Click="ReloadModelButton_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="13" Glyph="&#xE72C;" />
+                                    <TextBlock x:Name="ReloadModelText" Text="重新加载" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock
+                                x:Name="RuntimeChip"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+
+                        <Grid Grid.Row="1" Margin="0,8,0,0">
+                            <!-- 空状态 -->
+                            <StackPanel
+                                x:Name="PlaygroundEmpty"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="10">
+                                <FontIcon
+                                    FontSize="40"
+                                    Glyph="&#xE950;"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock x:Name="EmptyHint" Text="还没有可用的模型：请先在「模型库」下载一个模型。" />
+                                <Button x:Name="GoLibraryButton" Content="去模型库" Click="GoLibraryButton_Click" HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- 对话 -->
+                            <Grid x:Name="ChatPane" Visibility="Collapsed" RowDefinitions="Auto,Auto,*,Auto,Auto">
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock x:Name="SessionLabel" Text="会话" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <ComboBox
+                                        x:Name="SessionCombo"
+                                        MinWidth="220"
+                                        SelectionChanged="SessionCombo_SelectionChanged" />
+                                    <Button x:Name="NewSessionButton" Click="NewSessionButton_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon FontSize="13" Glyph="&#xE710;" />
+                                            <TextBlock x:Name="NewSessionText" Text="新建对话" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="DeleteSessionButton" Click="DeleteSessionButton_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon FontSize="13" Glyph="&#xE74D;" />
+                                            <TextBlock x:Name="DeleteSessionText" Text="删除会话" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+
+                                <Expander x:Name="SystemPromptExpander" Grid.Row="1" HorizontalAlignment="Stretch" Header="系统提示词（可选）">
+                                    <TextBox
+                                        x:Name="SystemPromptBox"
+                                        AcceptsReturn="True"
+                                        MinHeight="60"
+                                        MaxHeight="140"
+                                        TextWrapping="Wrap"
+                                        PlaceholderText="例如：你是一个简洁的助手，只回答要点。" />
+                                </Expander>
+
+                                <ScrollViewer x:Name="ChatScroll" Grid.Row="2" Margin="0,8,0,0" Padding="4">
+                                    <StackPanel x:Name="ChatMessages" Spacing="12" />
+                                </ScrollViewer>
+
+                                <StackPanel x:Name="ChatSettingsRow" Grid.Row="3" Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                                    <TextBlock x:Name="TemperatureLabel" Text="温度" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <Slider x:Name="TemperatureSlider" Width="160" Minimum="0" Maximum="1.5" StepFrequency="0.05" Value="0.7" ValueChanged="TemperatureSlider_ValueChanged" />
+                                    <TextBlock x:Name="TemperatureValue" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock x:Name="MaxTokensLabel" Text="最大生成" VerticalAlignment="Center" Margin="12,0,0,0" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <NumberBox x:Name="MaxTokensBox" Width="110" Minimum="64" Maximum="4096" Value="1024" SpinButtonPlacementMode="Compact" />
+                                    <TextBlock x:Name="ContextLabel" Text="上下文" VerticalAlignment="Center" Margin="12,0,0,0" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <NumberBox x:Name="ContextTokensBox" Width="110" Minimum="0" Maximum="16384" Value="0"
+                                               SmallChange="256" SpinButtonPlacementMode="Compact" ValueChanged="ContextTokensBox_ValueChanged"
+                                               ToolTipService.ToolTip="上下文 token 上限；0 = 自动（按可用内存）。自定义值不会超过内存安全上限。" />
+                                    <TextBlock x:Name="ChatStats" VerticalAlignment="Center" Margin="12,0,0,0" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+
+                                <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,8,0,0">
+                                    <TextBox
+                                        x:Name="ChatInput"
+                                        Grid.Column="0"
+                                        AcceptsReturn="True"
+                                        MaxHeight="120"
+                                        TextWrapping="Wrap"
+                                        PlaceholderText="输入消息，Enter 发送（Shift+Enter 换行）"
+                                        KeyDown="ChatInput_KeyDown" />
+                                    <Button x:Name="SendButton" Grid.Column="1" Click="SendButton_Click" Style="{ThemeResource AccentButtonStyle}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon FontSize="14" Glyph="&#xE725;" />
+                                            <TextBlock x:Name="SendButtonText" Text="发送" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="StopButton" Grid.Column="2" Click="StopButton_Click" Visibility="Collapsed">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <FontIcon FontSize="14" Glyph="&#xE71A;" />
+                                            <TextBlock x:Name="StopButtonText" Text="停止" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Grid>
+
+                            <!-- 图像任务（分类 / 检测 / 特征）-->
+                            <Grid x:Name="VisionPane" Visibility="Collapsed" ColumnDefinitions="*,360" ColumnSpacing="12">
+                                <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto">
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <ScrollViewer
+                                            Grid.Column="0"
+                                            HorizontalScrollBarVisibility="Auto"
+                                            HorizontalScrollMode="Enabled"
+                                            VerticalScrollBarVisibility="Disabled"
+                                            VerticalScrollMode="Disabled">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button x:Name="PickImageButton" Click="PickImageButton_Click">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon FontSize="14" Glyph="&#xEB9F;" />
+                                                        <TextBlock x:Name="PickImageText" Text="选择图片" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <ComboBox x:Name="SourceCombo" MinWidth="130" SelectionChanged="SourceCombo_SelectionChanged">
+                                                    <ComboBoxItem Content="本地图片" Tag="file" />
+                                                    <ComboBoxItem Content="摄像头" Tag="camera" />
+                                                    <ComboBoxItem Content="屏幕" Tag="screen" />
+                                                    <ComboBoxItem Content="窗口" Tag="window" />
+                                                </ComboBox>
+                                                <Button x:Name="PickWindowButton" Click="PickWindowButton_Click" Visibility="Collapsed">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon FontSize="14" Glyph="&#xE8A7;" />
+                                                        <TextBlock x:Name="PickWindowText" Text="选择窗口" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button x:Name="RunInferenceButton" Click="RunInferenceButton_Click" Style="{ThemeResource AccentButtonStyle}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                                        <TextBlock x:Name="RunInferenceText" Text="开始推理" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button x:Name="LiveToggleButton" Click="LiveToggleButton_Click" Visibility="Collapsed">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon FontSize="14" Glyph="&#xE895;" />
+                                                        <TextBlock x:Name="LiveToggleText" Text="开始实时" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button x:Name="ClearGalleryButton" Click="ClearGalleryButton_Click" Visibility="Collapsed">
+                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                                                        <TextBlock x:Name="ClearGalleryText" Text="清空对比" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            x:Name="VisionStatus"
+                                            VerticalAlignment="Center"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </Grid>
+
+                                    <!-- 检测高级设置 + 规则入口（窄窗口时横向滚动，避免溢出裁切）-->
+                                    <ScrollViewer
+                                        Grid.Row="1"
+                                        x:Name="DetectAdvancedPanel"
+                                        Margin="0,6,0,0"
+                                        HorizontalScrollBarVisibility="Auto"
+                                        HorizontalScrollMode="Enabled"
+                                        VerticalScrollBarVisibility="Disabled"
+                                        VerticalScrollMode="Disabled"
+                                        Visibility="Collapsed">
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock x:Name="ThresholdLabel" Text="置信度" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                                <Slider x:Name="ThresholdSlider" Width="120" Minimum="1" Maximum="99" StepFrequency="1" Value="25" ValueChanged="ThresholdSlider_ValueChanged" />
+                                                <TextBlock x:Name="ThresholdValue" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" MinWidth="34" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock x:Name="IouLabel" Text="IoU" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                                <Slider x:Name="IouSlider" Width="110" Minimum="5" Maximum="95" StepFrequency="1" Value="45" ValueChanged="IouSlider_ValueChanged" />
+                                                <TextBlock x:Name="IouValue" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" MinWidth="34" />
+                                            </StackPanel>
+                                            <NumberBox x:Name="MaxDetBox" Width="90" Minimum="1" Maximum="1000" Value="300" SpinButtonPlacementMode="Compact" />
+                                            <CheckBox x:Name="ClassAwareNmsCheck" Content="类别内 NMS" VerticalAlignment="Center" />
+                                            <Button x:Name="ClassFilterButton" Click="ClassFilterButton_Click">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon FontSize="13" Glyph="&#xE71C;" />
+                                                    <TextBlock x:Name="ClassFilterText" Text="类别过滤" />
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="DrawRulesButton" Click="DrawRulesButton_Click">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <FontIcon FontSize="13" Glyph="&#xE790;" />
+                                                    <TextBlock x:Name="DrawRulesText" Text="绘制规则" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </ScrollViewer>
+
+                                    <Border
+                                        Grid.Row="3"
+                                        x:Name="ImageStage"
+                                        Margin="0,8,0,0"
+                                        CornerRadius="8"
+                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1">
+                                        <Grid x:Name="ImageStageInner">
+                                            <TextBlock
+                                                x:Name="DropHint"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Text="把图片拖到这里，或点击「选择图片」"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            <Image x:Name="PreviewImage" Stretch="Uniform" Margin="4" />
+                                            <Canvas x:Name="DetectOverlay" IsHitTestVisible="False" />
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock
+                                        x:Name="ImageInfoText"
+                                        Grid.Row="4"
+                                        Margin="0,6,0,0"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </Grid>
+
+                                <ScrollViewer Grid.Column="1">
+                                    <StackPanel x:Name="ResultsPanel" Spacing="10" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </PivotItem>
+
+                <!-- ③ 引擎与设备 -->
+                <PivotItem l:Uids.Uid="AiPlayground_TabEngine">
+                    <ScrollViewer Padding="16,8">
+                        <StackPanel Spacing="12">
+                            <InfoBar
+                                x:Name="UnsupportedBanner"
+                                Severity="Warning"
+                                IsOpen="False"
+                                IsClosable="False" />
+
+                            <TextBlock x:Name="DeviceSectionTitle" Text="设备信息" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                            <StackPanel x:Name="DeviceInfoPanel" Spacing="4" />
+
+                            <TextBlock x:Name="EpSectionTitle" Text="加速包（执行提供程序）" Style="{ThemeResource SubtitleTextBlockStyle}" Margin="0,8,0,0" />
+                            <TextBlock
+                                x:Name="EpHintText"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                            <StackPanel x:Name="EpListPanel" Spacing="8" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button x:Name="InstallAllButton" Click="InstallAllButton_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="14" Glyph="&#xE896;" />
+                                        <TextBlock x:Name="InstallAllText" Text="一键下载并注册推荐加速包" />
+                                    </StackPanel>
+                                </Button>
+                                <ProgressRing x:Name="EpBusyRing" Width="20" Height="20" IsActive="False" />
+                                <TextBlock x:Name="EpStatusText" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+
+                            <TextBlock x:Name="DeviceTableTitle" Text="已注册设备（ONNX Runtime）" Style="{ThemeResource SubtitleTextBlockStyle}" Margin="0,8,0,0" />
+                            <StackPanel x:Name="DeviceTablePanel" Spacing="4" />
+
+                            <TextBlock x:Name="CacheSectionTitle" Text="NPU 编译缓存" Style="{ThemeResource SubtitleTextBlockStyle}" Margin="0,8,0,0" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock x:Name="CacheText" VerticalAlignment="Center" />
+                                <Button x:Name="ClearCacheButton" Click="ClearCacheButton_Click">
+                                    <TextBlock x:Name="ClearCacheText" Text="清理缓存" />
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </PivotItem>
+            </Pivot>
+        </Grid>
+    </Grid>
+</Page>

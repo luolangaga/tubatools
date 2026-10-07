@@ -35,6 +35,14 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
         HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
         ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
 
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重新着色并按当前筛选重渲染列表
+        ActualThemeChanged += (_, _) =>
+        {
+            HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
+            ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
+            ApplyFilter();
+        };
+
         InitUupArchCombo();
         UpdateUupLocationText();
         ApplyCommunityRiskText();
@@ -165,7 +173,7 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
         {
             Text = entry.DisplayName,
             FontSize = 12,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -175,7 +183,7 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
         var fileNameText = new TextBlock
         {
             Text = entry.FileName,
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -205,11 +213,11 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
                 Spacing = 4,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE896", FontSize = 11 },
+                    new FontIcon { Glyph = "\uE896", FontSize = 12 },
                     new TextBlock { Text = LocalizationService.L("WindowsImage_BtnDownload", "下载"), FontSize = 12 }
                 }
             },
-            Padding = new Thickness(10, 4, 10, 4),
+            Padding = new Thickness(8, 4, 8, 4),
             Tag = entry
         };
         downloadBtn.Click += DownloadBtn_Click;
@@ -222,11 +230,11 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
                 Spacing = 4,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE898", FontSize = 11 },
+                    new FontIcon { Glyph = "\uE898", FontSize = 12 },
                     new TextBlock { Text = LocalizationService.L("WindowsImage_BtnDownloadConvert", "下载并转ISO"), FontSize = 12 }
                 }
             },
-            Padding = new Thickness(10, 4, 10, 4),
+            Padding = new Thickness(8, 4, 8, 4),
             Tag = entry,
             Visibility = entry.IsEsd ? Visibility.Visible : Visibility.Collapsed
         };
@@ -275,8 +283,8 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
             Child = new TextBlock
             {
                 Text = text,
-                FontSize = 11,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 12,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(color),
                 VerticalAlignment = VerticalAlignment.Center
             }

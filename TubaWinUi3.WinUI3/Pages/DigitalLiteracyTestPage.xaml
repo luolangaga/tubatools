@@ -17,8 +17,8 @@
             Subtitle="用几道题快速检验你的电脑常识与安全意识水平"
             Glyph="&#xE9CE;" />
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" Padding="48,8,48,32">
-            <StackPanel x:Name="ContentPanel" Opacity="1" VerticalAlignment="Center">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" Padding="24,8,24,24">
+            <StackPanel x:Name="ContentPanel" Spacing="16" VerticalAlignment="Center">
                 <StackPanel.RenderTransform>
                     <TranslateTransform x:Name="ContentPanelTransform" Y="0" />
                 </StackPanel.RenderTransform>

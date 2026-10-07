@@ -43,7 +43,7 @@
                     Width="96"
                     Height="96"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="20"
+                    CornerRadius="12"
                     HorizontalAlignment="Center">
                     <Image
                         Width="64"
@@ -62,9 +62,9 @@
                         l:Uids.Uid="MainWindow_SplashTitle"
                         Text="图吧工具箱CE" />
                     <TextBlock
-                        FontSize="13"
+                        FontSize="12"
                         HorizontalAlignment="Center"
-                        Opacity="0.6"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         x:Name="SplashStatusText"
                         l:Uids.Uid="MainWindow_SplashStatus"
                         Text="正在初始化..." />
@@ -80,9 +80,9 @@
                 <TextBlock
                     x:Name="SplashVersionText"
                     Grid.Row="3"
-                    FontSize="11"
+                    FontSize="12"
                     HorizontalAlignment="Center"
-                    Opacity="0.4" />
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
             </Grid>
         </Grid>
 
@@ -90,7 +90,7 @@
             x:Name="AppTitleBar"
             Title="图吧工具箱CE"
 
-            FontWeight="Bold"
+            FontWeight="SemiBold"
             BackRequested="TitleBar_BackRequested"
             IsBackButtonVisible="True"
             IsPaneToggleButtonVisible="True"
@@ -154,7 +154,7 @@
                                                     Width="32"
                                                     Height="32"
                                                     Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                                    CornerRadius="6">
+                                                    CornerRadius="8">
                                                     <Grid>
                                                         <Image
                                                             Width="24" Height="24"
@@ -178,15 +178,15 @@
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                                     <TextBlock
 
-                                                        FontSize="13"
-                                                        FontWeight="Bold"
+                                                        FontSize="14"
+                                                        FontWeight="SemiBold"
                                                         MaxLines="1"
                                                         Text="{Binding Title}"
                                                         TextTrimming="CharacterEllipsis" />
                                                     <TextBlock
 
-                                                        FontSize="11"
-                                                        Opacity="1.0"
+                                                        FontSize="12"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                         MaxLines="1"
                                                         Text="{Binding Subtitle}"
                                                         TextTrimming="CharacterEllipsis" />
@@ -194,13 +194,11 @@
 
                                                 <Border
                                                     Grid.Column="2"
-                                                    Padding="6,2"
-                                                    CornerRadius="4"
-                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                    Style="{StaticResource StatusPillStyle}"
                                                     VerticalAlignment="Center">
                                                     <TextBlock
 
-                                                        FontSize="10"
+                                                        FontSize="12"
                                                         Text="{Binding KindText}" />
                                                 </Border>
                                             </Grid>

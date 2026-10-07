@@ -8,11 +8,12 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class PortViewerPage : Page, ILocalizablePage
 {
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 146, 60);
-    private static readonly Color AccentPurple = Color.FromArgb(255, 167, 139, 250);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方语义色 / 图表系列色）
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
+    private static Color AccentPurple => ThemeColors.AccentPurple;
+    private static Color AccentRed => ThemeColors.AccentRed;
 
     private List<PortEntry>? _allEntries;
     private string _filter = "";
@@ -24,6 +25,14 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
 
         HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
         ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
+            ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
+            if (_allEntries is not null) ApplyFilter();
+        };
 
         _ = LoadDataAsync();
     }
@@ -97,23 +106,23 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
 
     private Border CreateRow(PortEntry entry)
     {
-        // 协议徽章颜色：TCP 蓝、UDP 紫，IPv6 用青色强调区分
+        // 协议徽章颜色：TCP 蓝、UDP 紫，IPv6 用第三个图表系列色强调区分
         Color protoBg, protoFg;
         if (entry.Protocol == "TCP")
         {
-            protoBg = Color.FromArgb(40, 96, 165, 250);
+            protoBg = Color.FromArgb(40, AccentBlue.R, AccentBlue.G, AccentBlue.B);
             protoFg = AccentBlue;
         }
         else
         {
-            protoBg = Color.FromArgb(40, 167, 139, 250);
+            protoBg = Color.FromArgb(40, AccentPurple.R, AccentPurple.G, AccentPurple.B);
             protoFg = AccentPurple;
         }
         if (entry.IsIPv6)
         {
-            // IPv6 用青色覆盖，让 v4/v6 一眼可辨
-            protoBg = Color.FromArgb(45, 45, 212, 191);
-            protoFg = Color.FromArgb(255, 45, 212, 191);
+            // IPv6 用图表系列色 3 覆盖，让 v4/v6 一眼可辨
+            protoBg = Color.FromArgb(45, ThemeColors.Series3.R, ThemeColors.Series3.G, ThemeColors.Series3.B);
+            protoFg = ThemeColors.Series3;
         }
 
         var protoBadge = new Border
@@ -124,8 +133,8 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
             Child = new TextBlock
             {
                 Text = entry.ProtocolLabel,   // TCP / TCP6 / UDP / UDP6
-                FontSize = 11,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 12,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(protoFg)
             }
         };
@@ -133,8 +142,8 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
         var portText = new TextBlock
         {
             Text = entry.LocalPort.ToString(),
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -160,14 +169,14 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
         var pidText = new TextBlock
         {
             Text = $"PID {entry.ProcessId}",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center
         };
 
         var killBtn = new Button
         {
-            Content = new FontIcon { Glyph = "\uE894", FontSize = 11 },
+            Content = new FontIcon { Glyph = "\uE894", FontSize = 12 },
             Padding = new Thickness(6, 2, 6, 2),
             Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
             Foreground = new SolidColorBrush(AccentRed),
@@ -248,13 +257,13 @@ public sealed partial class PortViewerPage : Page, ILocalizablePage
         return new Border
         {
             Padding = new Thickness(6, 1, 6, 1),
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(4),
             Background = new SolidColorBrush(Color.FromArgb(30, color.R, color.G, color.B)),
             Child = new TextBlock
             {
                 Text = text,
-                FontSize = 10,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 12,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(color),
                 VerticalAlignment = VerticalAlignment.Center
             }

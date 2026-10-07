@@ -26,14 +26,17 @@ public sealed partial class CpuRankingPage : Page
     private AutoSuggestBox _searchBox = null!;
     private StackPanel _brandStack = null!;
     private ComboBox _sortCombo = null!;
+    private Button _desktopBtn = null!;
+    private Button _laptopBtn = null!;
 
-    private static readonly Color Gold = Color.FromArgb(255, 255, 215, 0);
-    private readonly Color Silver = Color.FromArgb(255, 192, 192, 192);
-    private readonly Color Bronze = Color.FromArgb(255, 205, 127, 50);
-    private static readonly Color IntelBlue = Color.FromArgb(255, 0, 114, 198);
-    private static readonly Color AmdRed = Color.FromArgb(255, 237, 28, 36);
-    private static readonly Color AppleGray = Color.FromArgb(255, 160, 160, 160);
-    private static readonly Color QualcommPurple = Color.FromArgb(255, 99, 71, 217);
+    // 视觉色板（名次徽章用图表系列色、品牌芯片用系列色/语义强调色，均取自 ThemeColors，随主题解析）
+    private static Color Gold => ThemeColors.Series4;           // 名次 1：金
+    private static Color Silver => ThemeColors.Neutral;         // 名次 2：银
+    private static Color Bronze => ThemeColors.Series2;         // 名次 3：铜（深调，与金/银可辨）
+    private static Color IntelBlue => ThemeColors.Series1;      // Intel
+    private static Color AmdRed => ThemeColors.AccentRed;       // AMD
+    private static Color AppleGray => ThemeColors.Neutral;      // Apple
+    private static Color QualcommPurple => ThemeColors.Series2; // Qualcomm
 
     private static SvgImageSource? IntelLogo;
     private static SvgImageSource? AmdLogo;
@@ -59,6 +62,20 @@ public sealed partial class CpuRankingPage : Page
         Content = root;
 
         RefreshList();
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前筛选状态重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_brandStack is not null)
+                UpdateBrandButtons(_brandStack, _brand);
+            if (_desktopBtn is not null && _laptopBtn is not null)
+            {
+                var desktopActive = _category != "laptop";
+                UpdateCategoryButtons(desktopActive ? _desktopBtn : _laptopBtn,
+                                      desktopActive ? _laptopBtn : _desktopBtn);
+            }
+            RefreshList();
+        };
     }
 
     private static void LoadBrandLogos()
@@ -96,8 +113,8 @@ public sealed partial class CpuRankingPage : Page
     {
         var mainGrid = new Grid
         {
-            Padding = new Thickness(28, 0, 28, 20),
-            RowSpacing = 14
+            Padding = new Thickness(24, 8, 24, 24),
+            RowSpacing = 16
         };
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -138,15 +155,14 @@ public sealed partial class CpuRankingPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
                     new FontIcon { Glyph = "\uE72C", FontSize = 12 },
-                    new TextBlock { Text = "刷新数据", FontSize = 13 }
+                    new TextBlock { Text = "刷新数据" }
                 }
             },
-            Padding = new Thickness(12, 5, 12, 5),
-            VerticalAlignment = VerticalAlignment.Center
+            Style = (Style)Application.Current.Resources["ToolHeaderActionButtonStyle"]
         };
 
         refreshBtn.Click += async (_, _) => await RefreshDataAsync();
@@ -167,7 +183,7 @@ public sealed partial class CpuRankingPage : Page
             Visibility = Visibility.Collapsed
         };
 
-        var outer = new StackPanel { Spacing = 12 };
+        var outer = new StackPanel { Spacing = 16 };
         outer.Children.Add(_toolHeader);
         outer.Children.Add(_loadingBar);
         outer.Children.Add(_infoBar);
@@ -281,15 +297,15 @@ public sealed partial class CpuRankingPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
                     new FontIcon { Glyph = "\uE964", FontSize = 14 },
-                    new TextBlock { Text = "桌面", FontSize = 13 }
+                    new TextBlock { Text = "桌面", FontSize = 14 }
                 }
             },
             Padding = new Thickness(16, 8, 16, 8),
-            CornerRadius = new CornerRadius(6, 0, 0, 6),
+            CornerRadius = new CornerRadius(8, 0, 0, 8),
             Tag = "desktop"
         };
 
@@ -298,15 +314,15 @@ public sealed partial class CpuRankingPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
                     new FontIcon { Glyph = "\uE7F7", FontSize = 14 },
-                    new TextBlock { Text = "笔记本", FontSize = 13 }
+                    new TextBlock { Text = "笔记本", FontSize = 14 }
                 }
             },
             Padding = new Thickness(16, 8, 16, 8),
-            CornerRadius = new CornerRadius(0, 6, 6, 0),
+            CornerRadius = new CornerRadius(0, 8, 8, 0),
             Tag = "laptop"
         };
 
@@ -328,6 +344,8 @@ public sealed partial class CpuRankingPage : Page
         };
 
         UpdateCategoryButtons(desktopBtn, laptopBtn);
+        _desktopBtn = desktopBtn;
+        _laptopBtn = laptopBtn;
 
         return new Border
         {
@@ -370,31 +388,31 @@ public sealed partial class CpuRankingPage : Page
             FrameworkElement btnContent;
             if (label == "全部")
             {
-                btnContent = new TextBlock { Text = "全部", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
+                btnContent = new TextBlock { Text = "全部", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
             }
             else if (logo is not null)
             {
                 btnContent = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
-                    Spacing = 6,
+                    Spacing = 8,
                     Children =
                     {
                         new Image { Source = logo, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center },
-                        new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center }
+                        new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }
                     }
                 };
             }
             else
             {
-                btnContent = new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
+                btnContent = new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
             }
 
             var btn = new Button
             {
                 Content = btnContent,
-                Padding = new Thickness(12, 6, 12, 6),
-                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(12, 8, 12, 8),
+                CornerRadius = new CornerRadius(8),
                 Tag = label
             };
 
@@ -453,7 +471,7 @@ public sealed partial class CpuRankingPage : Page
         var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null);
         var intelCard = MakeStatCard("Intel", $"{intelCount} 款", "\uE912", IntelBlue, IntelLogo);
         var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo);
-        var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", Color.FromArgb(255, 251, 191, 36), null);
+        var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", ThemeColors.Series4, null);
 
         var grid = new Grid { ColumnSpacing = 10 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -474,7 +492,7 @@ public sealed partial class CpuRankingPage : Page
         if (logo is not null)
             iconChild = new Image { Source = logo, Width = 18, Height = 18 };
         else
-            iconChild = new FontIcon { FontSize = 18, Foreground = new SolidColorBrush(accent), Glyph = glyph };
+            iconChild = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph };
 
         var iconBorder = new Border
         {
@@ -484,8 +502,8 @@ public sealed partial class CpuRankingPage : Page
             Child = iconChild
         };
 
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
-        var valueBlock = new TextBlock { Text = value, FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(accent) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var valueBlock = new TextBlock { Text = value, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(accent) };
 
         var stack = new StackPanel { Spacing = 2 };
         stack.Children.Add(labelBlock);
@@ -512,7 +530,7 @@ public sealed partial class CpuRankingPage : Page
     {
         var headerGrid = new Grid
         {
-            ColumnSpacing = 10,
+            ColumnSpacing = 8,
             Padding = new Thickness(14, 8, 14, 8)
         };
         headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
@@ -611,8 +629,8 @@ public sealed partial class CpuRankingPage : Page
         var tb = new TextBlock
         {
             Text = text,
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
         grid.Children.Add(tb);
@@ -720,7 +738,7 @@ public sealed partial class CpuRankingPage : Page
             var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null);
             var intelCard = MakeStatCard("Intel", $"{intelCount} 款", "\uE912", IntelBlue, IntelLogo);
             var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo);
-            var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", Color.FromArgb(255, 251, 191, 36), null);
+            var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", ThemeColors.Series4, null);
 
             statsGrid.Children.Add(totalCard);
             statsGrid.Children.Add(intelCard); Grid.SetColumn(intelCard, 1);
@@ -745,11 +763,11 @@ public sealed partial class CpuRankingPage : Page
             rankBadge = new Border
             {
                 Width = 32, Height = 32,
-                CornerRadius = new CornerRadius(6),
+                CornerRadius = new CornerRadius(8),
                 Background = new SolidColorBrush(Color.FromArgb(40, rankColor.R, rankColor.G, rankColor.B)),
                 Child = new TextBlock
                 {
-                    Text = rank.ToString(), FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                    Text = rank.ToString(), FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     Foreground = new SolidColorBrush(rankColor),
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
                 }
@@ -759,21 +777,21 @@ public sealed partial class CpuRankingPage : Page
         {
             rankBadge = new TextBlock
             {
-                Text = rank.ToString(), FontSize = 13, Foreground = new SolidColorBrush(ThemeColors.DimText),
+                Text = rank.ToString(), FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
                 HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Width = 32
             };
         }
 
         var nameText = new TextBlock
         {
-            Text = entry.Name, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            Text = entry.Name, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center
         };
 
         var coresSubText = !string.IsNullOrWhiteSpace(entry.Cores)
             ? new TextBlock
             {
-                Text = entry.Cores, FontSize = 10, Foreground = new SolidColorBrush(ThemeColors.DimText),
+                Text = entry.Cores, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
                 VerticalAlignment = VerticalAlignment.Center
             }
             : null;
@@ -782,27 +800,25 @@ public sealed partial class CpuRankingPage : Page
         namePanel.Children.Add(nameText);
         if (coresSubText is not null) namePanel.Children.Add(coresSubText);
 
-        var multiCoreColor = entry.MultiCore >= 30000 ? ThemeColors.AccentBlue
-            : entry.MultiCore >= 15000 ? Color.FromArgb(255, 96, 165, 250)
+        var multiCoreColor = entry.MultiCore >= 15000 ? ThemeColors.AccentBlue
             : entry.MultiCore >= 5000 ? ThemeColors.AccentOrange
             : ThemeColors.DimText;
 
         var multiCoreText = new TextBlock
         {
             Text = entry.MultiCore > 0 ? entry.MultiCore.ToString("N0") : "-",
-            FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(multiCoreColor), VerticalAlignment = VerticalAlignment.Center
         };
 
-        var singleCoreColor = entry.SingleCore >= 2000 ? ThemeColors.AccentBlue
-            : entry.SingleCore >= 1500 ? Color.FromArgb(255, 96, 165, 250)
+        var singleCoreColor = entry.SingleCore >= 1500 ? ThemeColors.AccentBlue
             : entry.SingleCore >= 1000 ? ThemeColors.AccentOrange
             : ThemeColors.DimText;
 
         var singleCoreText = new TextBlock
         {
             Text = entry.SingleCore > 0 ? entry.SingleCore.ToString("N0") : "-",
-            FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(singleCoreColor), VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -827,7 +843,7 @@ public sealed partial class CpuRankingPage : Page
                 Child = new TextBlock
                 {
                     Text = entry.Brand.Length > 0 ? entry.Brand[..1] : "?",
-                    FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                    FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     Foreground = new SolidColorBrush(brandColor),
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
                 }

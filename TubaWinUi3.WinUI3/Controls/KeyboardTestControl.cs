@@ -16,9 +16,10 @@ namespace TubaWinUi3.Controls;
 /// </summary>
 public sealed class KeyboardTestControl : UserControl
 {
-    private static readonly Color KeyPressed = Color.FromArgb(255, 66, 133, 244);
-    private static readonly Color KeyVisited = Color.FromArgb(60, 66, 133, 244);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
+    // 按键高亮/已按标记/统计色取自 ThemeColors（跟随系统强调色与明暗主题），不再本地硬编码品牌色
+    private static Color KeyPressed => ThemeColors.AccentBlue;
+    private static Color KeyVisited => Color.FromArgb(60, KeyPressed.R, KeyPressed.G, KeyPressed.B);
+    private static Color AccentGreen => ThemeColors.AccentGreen;
 
     private static readonly VirtualKey NumpadEnter = (VirtualKey)0xE01C;
     private static readonly VirtualKey CopilotKey = (VirtualKey)0xE07E;
@@ -241,7 +242,7 @@ public sealed class KeyboardTestControl : UserControl
         var countText = new TextBlock
         {
             FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentGreen),
             Text = "0"
         };
@@ -261,7 +262,7 @@ public sealed class KeyboardTestControl : UserControl
             Children =
             {
                 new FontIcon { Glyph = "\uE92E", FontSize = 14, Foreground = new SolidColorBrush(AccentGreen) },
-                new TextBlock { Text = "已检测按键:", FontSize = 13, VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(ThemeColors.DimText) },
+                new TextBlock { Text = "已检测按键:", FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(ThemeColors.DimText) },
                 countText
             }
         });
@@ -271,7 +272,7 @@ public sealed class KeyboardTestControl : UserControl
             Spacing = 6,
             Children =
             {
-                new TextBlock { Text = "最后按键:", FontSize = 13, VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(ThemeColors.DimText) },
+                new TextBlock { Text = "最后按键:", FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Foreground = new SolidColorBrush(ThemeColors.DimText) },
                 lastKeyText
             }
         });
@@ -497,12 +498,13 @@ public sealed class KeyboardTestControl : UserControl
 
     private Border MakeKeyBorder(string label, double width, double height)
     {
-        double fontSize = label.Length > 3 ? (height > 44 ? 12 : 10) : (height > 44 ? 13 : 12);
+        // 键帽字号只允许 12 / 14：长标签（F1、Backspace 等）用 12，短标签高键帽用 14
+        double fontSize = label.Length > 3 ? 12 : (height > 44 ? 14 : 12);
         var text = new TextBlock
         {
             Text = label,
             FontSize = fontSize,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.KeyText),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,

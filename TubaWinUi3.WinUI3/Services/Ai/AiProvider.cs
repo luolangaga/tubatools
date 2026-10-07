@@ -2,6 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace TubaWinUi3.Services.Ai;
 
+/// <summary>提供商种类：云端 OpenAI 兼容端点，或进程内本地 ONNX 模型。</summary>
+public enum ProviderKind
+{
+    /// <summary>OpenAI 兼容 HTTP 端点（默认）。</summary>
+    OpenAi,
+
+    /// <summary>进程内本地 ONNX 模型（由「本地 AI 试炼场」的模型库提供）。</summary>
+    Local,
+}
+
 /// <summary>
 /// 一个可用的模型选项（提供商下的预设/自定义模型）。
 /// </summary>
@@ -42,6 +52,10 @@ public sealed class AiProvider
     /// <summary>显示名称。</summary>
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
+
+    /// <summary>提供商种类（缺省 OpenAi，向后兼容旧配置）。</summary>
+    [JsonPropertyName("kind")]
+    public ProviderKind Kind { get; set; } = ProviderKind.OpenAi;
 
     /// <summary>OpenAI 兼容 Base URL（不含 /chat/completions）。</summary>
     [JsonPropertyName("baseUrl")]

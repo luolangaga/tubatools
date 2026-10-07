@@ -40,7 +40,7 @@
             </StackPanel>
 
             <!-- ══════════ 第 1 步：选择游戏 ══════════ -->
-            <StackPanel x:Name="Step1Panel" Spacing="10">
+            <StackPanel x:Name="Step1Panel" Spacing="8">
                 <TextBlock
                     FontSize="12"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -60,7 +60,7 @@
                     </GridView.ItemsPanel>
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="local:TunnelGameCard">
-                            <Grid Padding="4,3" ColumnSpacing="10">
+                            <Grid Padding="4,4" ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -71,37 +71,36 @@
                                     Height="40"
                                     VerticalAlignment="Center"
                                     Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    CornerRadius="10">
+                                    CornerRadius="8">
                                     <Grid>
                                         <FontIcon
-                                            FontSize="17"
+                                            FontSize="16"
                                             Glyph="{x:Bind Glyph}"
                                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Visibility="{x:Bind GlyphVisibility, Mode=OneWay}" />
                                         <Image
-                                            Margin="5,4"
+                                            Margin="4,4"
                                             Source="{x:Bind Logo, Mode=OneWay}"
                                             Stretch="Uniform" />
                                     </Grid>
                                 </Border>
 
-                                <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
                                         <Border
-                                            Padding="5,0"
-                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                            CornerRadius="5"
+                                            Style="{StaticResource StatusPillStyle}"
+                                            Padding="4,0"
                                             Visibility="{x:Bind HasProtocolBadge}">
-                                            <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ProtocolBadge}" />
+                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ProtocolBadge}" />
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind PortText}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind PortText}" />
                                     <TextBlock
                                         MaxLines="1"
-                                        FontSize="11"
+                                        FontSize="12"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{x:Bind Tagline}"
                                         TextTrimming="CharacterEllipsis" />
@@ -112,7 +111,7 @@
                 </GridView>
 
                 <TextBlock
-                    FontSize="11"
+                    FontSize="12"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     TextWrapping="Wrap"
                     Text="游戏 Logo 取自各家官方公开素材，版权归各自所有者，仅用于标识对应游戏。" />
@@ -120,23 +119,23 @@
                 <!-- 选中游戏的说明（只展示当前这一个游戏，不堆在一起） -->
                 <Border
                     x:Name="GameHintCard"
-                    Padding="14,12"
+                    Padding="16,12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
-                    CornerRadius="10"
+                    CornerRadius="8"
                     Visibility="Collapsed">
-                    <StackPanel Spacing="6">
-                        <TextBlock x:Name="GameHintTitle" FontSize="13" FontWeight="SemiBold" />
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="GameHintTitle" Style="{StaticResource SectionHeaderStyle}" />
                         <TextBlock
                             x:Name="GameHintAction"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
-                        <TextBlock x:Name="GameHintNote" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+                        <TextBlock x:Name="GameHintNote" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
                         <StackPanel x:Name="CustomGameActions" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
-                            <Button x:Name="EditCustomGameButton" Click="EditCustomGame_Click" Padding="10,5" CornerRadius="7" Content="编辑" FontSize="12" />
-                            <Button x:Name="DeleteCustomGameButton" Click="DeleteCustomGame_Click" Padding="10,5" CornerRadius="7" Content="删除" FontSize="12" />
+                            <Button x:Name="EditCustomGameButton" Click="EditCustomGame_Click" Padding="8,4" CornerRadius="8" Content="编辑" FontSize="12" />
+                            <Button x:Name="DeleteCustomGameButton" Click="DeleteCustomGame_Click" Padding="8,4" CornerRadius="8" Content="删除" FontSize="12" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -144,20 +143,20 @@
                 <!-- 自定义游戏内联表单（ContentDialog 不能再套 ContentDialog，所以就地编辑） -->
                 <Border
                     x:Name="CustomGameForm"
-                    Padding="14,12"
+                    Padding="16,12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
-                    CornerRadius="10"
+                    CornerRadius="8"
                     Visibility="Collapsed">
                     <StackPanel Spacing="8">
-                        <TextBlock x:Name="CustomGameFormTitle" FontSize="13" FontWeight="SemiBold" Text="新建自定义游戏" />
+                        <TextBlock x:Name="CustomGameFormTitle" Style="{StaticResource SectionHeaderStyle}" Text="新建自定义游戏" />
                         <TextBlock
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap"
                             Text="只需要填游戏用的端口。不知道的话，在游戏「开服 / 建房」时通常会显示。" />
-                        <Grid ColumnSpacing="10">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="130" />
@@ -173,8 +172,8 @@
                         </Grid>
                         <TextBlock x:Name="CustomGameError" FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button x:Name="SaveCustomGameButton" Click="SaveCustomGame_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7" Content="保存并选中" FontSize="13" />
-                            <Button x:Name="CancelCustomGameButton" Click="CancelCustomGame_Click" CornerRadius="7" Padding="14,7" Content="取消" FontSize="13" />
+                            <Button x:Name="SaveCustomGameButton" Click="SaveCustomGame_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="8" Padding="12,8" Content="保存并选中" FontSize="14" />
+                            <Button x:Name="CancelCustomGameButton" Click="CancelCustomGame_Click" CornerRadius="8" Padding="12,8" Content="取消" FontSize="14" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -183,22 +182,17 @@
             <!-- ══════════ 第 2 步：游戏与端口 ══════════ -->
             <StackPanel x:Name="Step2Panel" Spacing="12" Visibility="Collapsed">
 
-                <Border
-                    Padding="14,12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="10">
-                    <Grid ColumnSpacing="14">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="3" VerticalAlignment="Center">
-                            <TextBlock x:Name="Step2GameName" FontSize="15" FontWeight="SemiBold" />
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="Step2GameName" Style="{StaticResource SectionHeaderStyle}" />
                             <TextBlock x:Name="Step2GameMeta" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="3">
+                        <StackPanel Grid.Column="1" Spacing="4">
                             <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="联机端口" />
                             <NumberBox
                                 x:Name="PortBox"
@@ -211,21 +205,16 @@
                     </Grid>
                 </Border>
 
-                <Border
-                    Padding="14,12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="10">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xE7FC;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="先在游戏里把游戏开起来" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="先在游戏里把游戏开起来" />
                         </StackPanel>
                         <ItemsControl x:Name="HostStepsList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2" ColumnSpacing="8">
+                                    <Grid Margin="0,4" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -249,12 +238,12 @@
                 </Border>
 
                 <Border
-                    Padding="14,10"
+                    Padding="16,8"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
-                    CornerRadius="10">
-                    <Grid ColumnSpacing="10">
+                    CornerRadius="8">
+                    <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -272,10 +261,10 @@
                         <Button
                             x:Name="RecheckPortButton"
                             Grid.Column="2"
-                            Padding="10,5"
+                            Padding="8,4"
                             Click="RecheckPort_Click"
                             Content="重新检测"
-                            CornerRadius="7"
+                            CornerRadius="8"
                             FontSize="12" />
                     </Grid>
                 </Border>
@@ -285,33 +274,25 @@
             <StackPanel x:Name="Step3Panel" Spacing="12" Visibility="Collapsed">
 
                 <Border
-                    Padding="16,14"
+                    Padding="16,12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
-                    CornerRadius="12">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Offset="0" Color="#1F7C6CF0" />
-                            <GradientStop Offset="1" Color="#1F5B8DEF" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Border.BorderBrush>
-                        <SolidColorBrush Color="#407C6CF0" />
-                    </Border.BorderBrush>
+                    CornerRadius="8">
                     <StackPanel Spacing="8">
                         <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="你的联机地址（朋友在游戏里要填的地址）" />
-                        <StackPanel Orientation="Horizontal" Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock
                                 x:Name="RoomAddressText"
                                 VerticalAlignment="Center"
                                 FontFamily="Consolas"
-                                FontSize="26"
-                                FontWeight="Bold"
+                                Style="{StaticResource StatValueStyle}"
                                 IsTextSelectionEnabled="True"
                                 Text="--" />
-                            <Button x:Name="CopyRoomAddressButton" Click="CopyRoomAddress_Click" CornerRadius="7" Padding="12,6" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button x:Name="CopyRoomAddressButton" Click="CopyRoomAddress_Click" CornerRadius="8" Padding="12,8" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
-                                    <TextBlock FontSize="13" Text="复制" />
+                                    <TextBlock FontSize="14" Text="复制" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -322,12 +303,12 @@
                 <controls:GameTunnelInvitePanel x:Name="InvitePanel" />
 
                 <Expander Header="朋友加入后，在游戏里怎么操作？" HorizontalAlignment="Stretch">
-                    <StackPanel Padding="0,8" Spacing="6">
+                    <StackPanel Padding="0,8" Spacing="8">
                         <TextBlock FontSize="12" FontWeight="SemiBold" Text="朋友侧" />
                         <ItemsControl x:Name="GuestStepsList">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2" ColumnSpacing="8">
+                                    <Grid Margin="0,4" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -348,7 +329,7 @@
                 </Expander>
 
                 <Expander Header="朋友连不上？按顺序检查这几项" HorizontalAlignment="Stretch">
-                    <StackPanel Padding="0,8" Spacing="6">
+                    <StackPanel Padding="0,8" Spacing="8">
                         <TextBlock
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -372,7 +353,7 @@
                     </StackPanel>
                 </Expander>
 
-                <TextBlock x:Name="FirewallText" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
+                <TextBlock x:Name="FirewallText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
 
             <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" Severity="Informational" />

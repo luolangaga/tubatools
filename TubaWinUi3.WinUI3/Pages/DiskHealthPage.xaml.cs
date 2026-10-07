@@ -84,22 +84,19 @@ public sealed class PartitionVm
 /// </summary>
 public sealed partial class DiskHealthPage : Page, ILocalizablePage
 {
-    // 品牌调色板（与主题无关，两套主题下一致）
-    private static readonly Color BrandViolet = Color.FromArgb(255, 124, 108, 240);
-    private static readonly Color BrandBlue = Color.FromArgb(255, 91, 141, 239);
-    private static readonly Color SuccessGreen = Color.FromArgb(255, 43, 182, 115);
-    private static readonly Color CautionAmber = Color.FromArgb(255, 245, 166, 35);
-    private static readonly Color CriticalRed = Color.FromArgb(255, 242, 80, 59);
-    private static readonly Color NeutralGray = Color.FromArgb(255, 142, 142, 142);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方 SystemFillColor* 语义色）
+    private static Color SuccessGreen => ThemeColors.AccentGreen;
+    private static Color CautionAmber => ThemeColors.AccentOrange;
+    private static Color CriticalRed => ThemeColors.AccentRed;
+    private static Color NeutralGray => ThemeColors.Neutral;
 
-    /// <summary>分区配色（按全局分区顺序轮转，环图与容量条形图共用同一色）。</summary>
-    private static readonly Color[] PartitionPalette =
+    /// <summary>分区配色（系统图表系列色，按全局分区顺序轮转，环图与容量条形图共用同一色）。</summary>
+    private static Color[] PartitionPalette =>
     [
-        Color.FromArgb(255, 124, 108, 240), // 紫
-        Color.FromArgb(255, 47, 184, 166),  // 青
-        Color.FromArgb(255, 245, 166, 35),  // 琥珀
-        Color.FromArgb(255, 91, 141, 239),  // 蓝
-        Color.FromArgb(255, 233, 108, 180), // 粉
+        ThemeColors.Series1,
+        ThemeColors.Series2,
+        ThemeColors.Series3,
+        ThemeColors.Series4,
     ];
 
     private CancellationTokenSource? _cts;
@@ -112,6 +109,12 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
     public DiskHealthPage()
     {
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_lastResponse is not null)
+                Render(_lastResponse);
+        };
     }
 
     // ───────────────────────────── 初始化 / 清理 ─────────────────────────────
@@ -275,8 +278,8 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
             DataReadGb = readGb,
             DataWriteGb = writeGb,
             ReadWriteMax = Math.Max(Math.Max(readGb, writeGb), 0.1),
-            ReadBarBrush = Brush(BrandBlue),
-            WriteBarBrush = Brush(BrandViolet),
+            ReadBarBrush = Brush(ThemeColors.Series1),
+            WriteBarBrush = Brush(ThemeColors.Series2),
             OperationalText = hasError ? LocalizationService.L("DiskHealth_ReadFailed", "读取失败")
                 : disk.OperationalStatus switch
                 {
@@ -330,7 +333,7 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
             : media.Contains("ssd") || media.Contains("solid state") ? "SSD"
             : LocalizationService.L("DiskHealth_FirmwareDisk", "固件硬盘");
         var mediaColor = disk.IsNvme || media.Contains("ssd") || media.Contains("solid state")
-            ? BrandViolet : CautionAmber;
+            ? ThemeColors.Series2 : CautionAmber;
         tags.Add(new DiskTagVm
         {
             Text = mediaText,
@@ -426,8 +429,8 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         var barContainer = new Border
         {
             Height = 16,
-            CornerRadius = new CornerRadius(6),
-            Background = Brush(Color.FromArgb(0x12, 0, 0, 0)),
+            CornerRadius = new CornerRadius(4),
+            Background = Brush(ThemeColors.SubtleBg),
             VerticalAlignment = VerticalAlignment.Center,
         };
         var barGrid = new Grid { Margin = new Thickness(1) };
@@ -460,8 +463,8 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         summary.Children.Add(new TextBlock
         {
             Text = $"{usedPct:0}%",
-            FontSize = 16,
-            FontWeight = FontWeights.Bold,
+            FontSize = 18,
+            FontWeight = FontWeights.SemiBold,
             Foreground = Brush(PartitionPalette[0]),
             TextAlignment = TextAlignment.Right,
         });
@@ -469,7 +472,7 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         {
             Text = string.Format(LocalizationService.L("DiskHealth_UsedOf", "已用 {0} / {1}"), FormatGb(disk.TotalUsageGb), FormatGb(disk.TotalCapacityGb)),
             FontSize = 12,
-            Opacity = 0.65,
+            Foreground = Brush(ThemeColors.SecondaryText),
             TextAlignment = TextAlignment.Right,
         });
         Grid.SetColumn(summary, 2);

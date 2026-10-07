@@ -38,7 +38,7 @@
             </ListView>
             <TextBlock x:Name="EmptyHint" HorizontalAlignment="Center" VerticalAlignment="Center"
                        MaxWidth="320" TextAlignment="Center" TextWrapping="Wrap"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="14"
                        Text="暂无任务。手机执行命令或安装软件后会出现在这里。"/>
         </Grid>
 

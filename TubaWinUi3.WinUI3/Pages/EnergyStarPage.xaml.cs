@@ -18,9 +18,10 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class EnergyStarPage : Page
 {
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentGray = Color.FromArgb(255, 148, 163, 184);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 146, 60);
+    // 语义状态色：跟随系统主题（经 ThemeColors 取官方语义色），不再使用固定品牌色
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentGray => ThemeColors.Neutral;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
 
     // Guard against Toggled handlers firing while we programmatically sync the UI
     // to the current service state on open.
@@ -54,6 +55,10 @@ public sealed partial class EnergyStarPage : Page
         _ = LoadStartupStateAsync();
 
         Unloaded += EnergyStarPage_Unloaded;
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前服务状态重着色
+        ActualThemeChanged += (_, _) =>
+            UpdateStatusBadge(EnergyStarService.ThrottleStatus, EnergyStarService.PauseThrottling);
     }
 
     // ---------------------------------------------------------------------
@@ -92,14 +97,14 @@ public sealed partial class EnergyStarPage : Page
         {
             StatusBadgeText.Text = "已停止";
             StatusBadge.Background = new SolidColorBrush(AccentGray);
-            StatusBadgeText.Foreground = new SolidColorBrush(Color.FromArgb(255, 30, 41, 59));
+            StatusBadgeText.Foreground = new SolidColorBrush(ThemeColors.PrimaryText);
             PageHeader.Subtitle = paused ? "节流已暂停 (进程列表保留, 可随时恢复)" : "效率模式未启用";
         }
         else
         {
             StatusBadgeText.Text = EnergyStarService.IsOnBattery ? "电池模式" : "运行中";
             StatusBadge.Background = new SolidColorBrush(AccentGreen);
-            StatusBadgeText.Foreground = new SolidColorBrush(Color.FromArgb(255, 30, 41, 59));
+            StatusBadgeText.Foreground = new SolidColorBrush(ThemeColors.PrimaryText);
             PageHeader.Subtitle = EnergyStarService.ThrottleStatusDescription(status);
         }
     }

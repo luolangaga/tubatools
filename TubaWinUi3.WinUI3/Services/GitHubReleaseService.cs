@@ -318,56 +318,6 @@ public static class GitHubReleaseService
             _ => "x64"
         };
     }
-
-    public static async Task<string> ShowDownloadFlowAsync(
-        BuiltinToolContext context,
-        string toolName,
-        string description,
-        string projectUrl,
-        string repo,
-        string? tag,
-        AssetMatchStrategy strategy,
-        string? warningText = null,
-        string? sizeHint = null,
-        string? portableDir = null)
-    {
-        var arch = GetCurrentArch();
-        var release = await FetchReleaseByTagAsync(repo, tag);
-
-        if (release is null)
-        {
-            var errDialog = context.CreateDialog("获取版本信息失败", "确定");
-            errDialog.Content = new TextBlock
-            {
-                Text = "无法从 GitHub 获取版本信息，请检查网络连接后重试。",
-                TextWrapping = TextWrapping.Wrap
-            };
-            await errDialog.ShowAsync();
-            return "";
-        }
-
-        var asset = FindBestAsset(release.Assets, arch, strategy);
-        if (asset is null)
-        {
-            var errDialog = context.CreateDialog("未找到适配版本", "确定");
-            errDialog.Content = new TextBlock
-            {
-                Text = $"当前架构 {arch} 没有匹配的下载文件。版本：{release.TagName}",
-                TextWrapping = TextWrapping.Wrap
-            };
-            await errDialog.ShowAsync();
-            return "";
-        }
-
-        var detailInfo = sizeHint ?? $"文件：{asset.Name}（{ToolDownloaderService.FormatSize(asset.Size)}）· 架构：{arch}";
-
-        var window = new Pages.GitHubDownloadWindow(
-            toolName, description, asset, release.TagName,
-            warningText, detailInfo, portableDir);
-        window.Activate();
-
-        return "";
-    }
 }
 
 public enum AssetMatchStrategy

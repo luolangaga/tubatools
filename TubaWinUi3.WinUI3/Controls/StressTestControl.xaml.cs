@@ -27,15 +27,19 @@ public sealed partial class StressTestControl : UserControl
     private static string FurMarkSettingsPath => Path.Combine(ConfigManager.GetDataDir(), "furmark_settings.json");
     private static string NetSettingsPath => Path.Combine(ConfigManager.GetDataDir(), "net_stress_settings.json");
 
-    private static readonly SKColor TempC = new(248, 113, 113);
-    private static readonly SKColor UsageC = new(96, 165, 250);
-    private static readonly SKColor ClockC = new(251, 191, 36);
-    private static readonly SKColor PowerC = new(52, 211, 153);
-    private static readonly SKColor GpuTempC = new(251, 146, 60);
-    private static readonly SKColor GpuClockC = new(167, 139, 250);
-    private static readonly SKColor GpuPowerC = new(244, 114, 182);
-    private static readonly SKColor NetTxC = new(56, 189, 248);
-    private static readonly SKColor NetRxC = new(251, 113, 133);
+    // 监控曲线配色：统一取共享语义色 / 图表系列色（ThemeColors），不再硬编码品牌色。
+    // 折线画刷由代码构造，不会随主题自动刷新，故由 ActualThemeChanged 重建系列。
+    private static SKColor TempC => Sk(ThemeColors.AccentRed);
+    private static SKColor UsageC => Sk(ThemeColors.Series1);
+    private static SKColor ClockC => Sk(ThemeColors.AccentOrange);
+    private static SKColor PowerC => Sk(ThemeColors.AccentGreen);
+    private static SKColor GpuTempC => Sk(ThemeColors.AccentOrange);
+    private static SKColor GpuClockC => Sk(ThemeColors.Series2);
+    private static SKColor GpuPowerC => Sk(ThemeColors.AccentRed);
+    private static SKColor NetTxC => Sk(ThemeColors.Series1);
+    private static SKColor NetRxC => Sk(ThemeColors.AccentRed);
+
+    private static SKColor Sk(Windows.UI.Color c) => new(c.R, c.G, c.B, 255);
 
     private readonly ObservableCollection<double> _cpuTempChart = [];
     private readonly ObservableCollection<double> _cpuUsageChart = [];
@@ -105,6 +109,8 @@ public sealed partial class StressTestControl : UserControl
     {
         InitializeComponent();
         InitCharts();
+        // 曲线画刷在代码里构造，切换主题后按现有数据集合重建系列
+        ActualThemeChanged += (_, _) => InitCharts();
         _settingsReady = true;
         LoadFurMarkSettings();
         UpdateDxt5Availability();

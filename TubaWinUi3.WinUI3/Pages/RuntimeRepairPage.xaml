@@ -24,8 +24,8 @@
 
         <!-- 正文 -->
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="24,4,24,24">
-            <StackPanel Spacing="14">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="运行库修复失败" />
                 <InfoBar x:Name="SuccessBar" Severity="Success" IsOpen="False" IsClosable="True" Title="运行库修复完成" />
@@ -33,9 +33,9 @@
                 <!-- ═════════ Visual C++ 2008-2026 ═════════ -->
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="14" Padding="18,16">
+                        BorderThickness="1" CornerRadius="8" Padding="16">
                     <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -43,22 +43,21 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Logo 图标 -->
-                            <Border x:Name="VcIconBg" Width="46" Height="46" CornerRadius="12"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                            <Border x:Name="VcIconBg" Style="{StaticResource IconTileStyle}" VerticalAlignment="Top">
                                 <FontIcon x:Name="VcIcon" FontSize="20" Glyph="&#xE950;"
                                           Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
                             </Border>
 
                             <!-- 中间信息 -->
                             <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Top">
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="Microsoft Visual C++ 2008-2026" />
-                                <TextBlock x:Name="VcDesc" FontSize="13" Opacity="0.85" Text="检测并修复游戏常用 VC++ x86 和 x64 运行库" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Microsoft Visual C++ 2008-2026" />
+                                <TextBlock x:Name="VcDesc" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="检测并修复游戏常用 VC++ x86 和 x64 运行库" />
                                 <TextBlock x:Name="VcDetail" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            Text="覆盖 2008、2010、2012、2013 及当前 v14 (2015-2026)；v14 同时校验完整运行时 DLL。" />
                                 <TextBlock x:Name="VcMissing" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                                            MaxLines="2" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
-                                <StackPanel x:Name="VcProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,6,0,0">
-                                    <Grid ColumnSpacing="10">
+                                <StackPanel x:Name="VcProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,8,0,0">
+                                    <Grid ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -74,16 +73,16 @@
 
                             <!-- 右侧状态 + 操作 -->
                             <StackPanel Grid.Column="2" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                    <FontIcon x:Name="VcStatusIcon" FontSize="13" Glyph="&#xE73E;" Visibility="Collapsed" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <FontIcon x:Name="VcStatusIcon" FontSize="12" Glyph="&#xE73E;" Visibility="Collapsed" />
                                     <TextBlock x:Name="VcStatusText" FontSize="12" FontWeight="SemiBold" Text="检测中…" />
                                 </StackPanel>
                                 <Button x:Name="VcRepairButton" Tag="visual-cpp" Click="RepairButton_Click"
-                                        MinWidth="112" MinHeight="34" Padding="14,0" IsEnabled="False">
+                                        MinWidth="112" MinHeight="34" Padding="12,0" IsEnabled="False">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <ProgressRing x:Name="VcBtnSpinner" Width="14" Height="14" IsActive="True"
                                                       Visibility="Collapsed" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="VcBtnText" FontSize="13" Text="修复缺失项" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="VcBtnText" FontSize="14" Text="修复缺失项" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -94,30 +93,29 @@
                 <!-- ═════════ .NET Framework ═════════ -->
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="14" Padding="18,16">
+                        BorderThickness="1" CornerRadius="8" Padding="16">
                     <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Border x:Name="DotNetIconBg" Width="46" Height="46" CornerRadius="12"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                            <Border x:Name="DotNetIconBg" Style="{StaticResource IconTileStyle}" VerticalAlignment="Top">
                                 <FontIcon x:Name="DotNetIcon" FontSize="20" Glyph="&#xE9E9;"
                                           Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
                             </Border>
 
                             <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Top">
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text=".NET Framework 4.8.1" />
-                                <TextBlock x:Name="DotNetDesc" FontSize="13" Opacity="0.85" Text="修复 Microsoft .NET Framework 4.8.1 Runtime" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text=".NET Framework 4.8.1" />
+                                <TextBlock x:Name="DotNetDesc" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="修复 Microsoft .NET Framework 4.8.1 Runtime" />
                                 <TextBlock x:Name="DotNetDetail" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            Text="使用微软离线 Runtime 安装包，不安装开发者工具包。" />
                                 <TextBlock x:Name="DotNetMissing" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                                            MaxLines="2" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
-                                <StackPanel x:Name="DotNetProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,6,0,0">
-                                    <Grid ColumnSpacing="10">
+                                <StackPanel x:Name="DotNetProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,8,0,0">
+                                    <Grid ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -132,16 +130,16 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                    <FontIcon x:Name="DotNetStatusIcon" FontSize="13" Glyph="&#xE73E;" Visibility="Collapsed" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <FontIcon x:Name="DotNetStatusIcon" FontSize="12" Glyph="&#xE73E;" Visibility="Collapsed" />
                                     <TextBlock x:Name="DotNetStatusText" FontSize="12" FontWeight="SemiBold" Text="检测中…" />
                                 </StackPanel>
                                 <Button x:Name="DotNetRepairButton" Tag="dotnet" Click="RepairButton_Click"
-                                        MinWidth="112" MinHeight="34" Padding="14,0" IsEnabled="False">
+                                        MinWidth="112" MinHeight="34" Padding="12,0" IsEnabled="False">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <ProgressRing x:Name="DotNetBtnSpinner" Width="14" Height="14" IsActive="True"
                                                       Visibility="Collapsed" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="DotNetBtnText" FontSize="13" Text="修复缺失项" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="DotNetBtnText" FontSize="14" Text="修复缺失项" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -152,30 +150,29 @@
                 <!-- ═════════ DirectX 9-12 ═════════ -->
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="14" Padding="18,16">
+                        BorderThickness="1" CornerRadius="8" Padding="16">
                     <StackPanel Spacing="12">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Border x:Name="DxIconBg" Width="46" Height="46" CornerRadius="12"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                            <Border x:Name="DxIconBg" Style="{StaticResource IconTileStyle}" VerticalAlignment="Top">
                                 <FontIcon x:Name="DxIcon" FontSize="20" Glyph="&#xE7C4;"
                                           Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
                             </Border>
 
                             <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Top">
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="DirectX 9-12 游戏组件" />
-                                <TextBlock x:Name="DxDesc" FontSize="13" Opacity="0.85" Text="补充旧版 DirectX SDK 兼容组件" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="DirectX 9-12 游戏组件" />
+                                <TextBlock x:Name="DxDesc" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="补充旧版 DirectX SDK 兼容组件" />
                                 <TextBlock x:Name="DxDetail" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                            Text="修复 D3DX、XAudio、XInput 等旧游戏依赖；系统 DirectX 12 由 Windows 更新维护。" />
                                 <TextBlock x:Name="DxMissing" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                                            MaxLines="2" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
-                                <StackPanel x:Name="DxProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,6,0,0">
-                                    <Grid ColumnSpacing="10">
+                                <StackPanel x:Name="DxProgressPanel" Visibility="Collapsed" Spacing="4" Margin="0,8,0,0">
+                                    <Grid ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
@@ -190,16 +187,16 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
-                                    <FontIcon x:Name="DxStatusIcon" FontSize="13" Glyph="&#xE73E;" Visibility="Collapsed" />
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <FontIcon x:Name="DxStatusIcon" FontSize="12" Glyph="&#xE73E;" Visibility="Collapsed" />
                                     <TextBlock x:Name="DxStatusText" FontSize="12" FontWeight="SemiBold" Text="检测中…" />
                                 </StackPanel>
                                 <Button x:Name="DxRepairButton" Tag="directx" Click="RepairButton_Click"
-                                        MinWidth="112" MinHeight="34" Padding="14,0" IsEnabled="False">
+                                        MinWidth="112" MinHeight="34" Padding="12,0" IsEnabled="False">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <ProgressRing x:Name="DxBtnSpinner" Width="14" Height="14" IsActive="True"
                                                       Visibility="Collapsed" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="DxBtnText" FontSize="13" Text="修复缺失项" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="DxBtnText" FontSize="14" Text="修复缺失项" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -207,7 +204,7 @@
                     </StackPanel>
                 </Border>
 
-                <TextBlock FontSize="12" Opacity="0.7" Text="安装过程可能需要网络连接，完成后按系统提示重启。" />
+                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="安装过程可能需要网络连接，完成后按系统提示重启。" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

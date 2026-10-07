@@ -277,7 +277,7 @@ public sealed partial class AiAgentPage : UserControl
         panel.Children.Add(new TextBlock
         {
             Text = "技能默认全部启用；取消勾选即禁用（勾选/取消后立即生效，下一条消息按新状态执行）",
-            FontSize = 11,
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 2, 8, 8),
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
@@ -296,13 +296,13 @@ public sealed partial class AiAgentPage : UserControl
             texts.Children.Add(new TextBlock
             {
                 Text = skill.DisplayName,
-                FontSize = 13,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
             });
             texts.Children.Add(new TextBlock
             {
                 Text = skill.Description,
-                FontSize = 11,
+                FontSize = 12,
                 TextWrapping = TextWrapping.Wrap,
                 MaxWidth = 230,
                 Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
@@ -813,13 +813,13 @@ public sealed partial class AiAgentPage : UserControl
         {
             Width = 28,
             Height = 28,
-            CornerRadius = new CornerRadius(14),
+            CornerRadius = new CornerRadius(12),
             VerticalAlignment = VerticalAlignment.Top,
             Background = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"],
             Child = new FontIcon
             {
                 Glyph = "\uE946",
-                FontSize = 13,
+                FontSize = 14,
                 Foreground = (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"]
             }
         };
@@ -828,7 +828,7 @@ public sealed partial class AiAgentPage : UserControl
         var nameRow = new TextBlock
         {
             Text = "图吧助手",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
         };
 
@@ -938,7 +938,7 @@ public sealed partial class AiAgentPage : UserControl
             Content = "重试",
             FontSize = 12,
             Padding = new Thickness(12, 4, 12, 4),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             HorizontalAlignment = HorizontalAlignment.Right
         };
         retryBtn.Click += RetryButton_Click;
@@ -967,14 +967,14 @@ public sealed partial class AiAgentPage : UserControl
                             new FontIcon
                             {
                                 Glyph = "\uE783",
-                                FontSize = 13,
+                                FontSize = 14,
                                 Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"]
                             },
                             new TextBlock
                             {
                                 Text = "出错了",
                                 FontSize = 12,
-                                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                                 Foreground = (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"]
                             }
                         }
@@ -1064,13 +1064,13 @@ public sealed partial class AiAgentPage : UserControl
                     Spacing = 5,
                     Children =
                     {
-                        new FontIcon { Glyph = glyph, FontSize = 11 },
+                        new FontIcon { Glyph = glyph, FontSize = 12 },
                         new TextBlock { Text = text, FontSize = 12 }
                     }
                 },
                 Background = (Brush)Application.Current.Resources["ControlFillColorSecondaryBrush"],
                 BorderThickness = new Thickness(0),
-                CornerRadius = new CornerRadius(14),
+                CornerRadius = new CornerRadius(12),
                 Padding = new Thickness(12, 5, 12, 5),
                 Tag = text
             };
@@ -1110,6 +1110,7 @@ public sealed partial class AiAgentPage : UserControl
         _syncingCombos = true;
         try
         {
+            AiProviderStore.SyncLocalProviderModels();
             var providers = AiProviderStore.GetProviders();
             var selectedId = AiProviderStore.SelectedProviderId;
             // 传副本（见 SettingsPage.RefreshAiProviderList：活列表原地修改会导致
@@ -1163,6 +1164,100 @@ public sealed partial class AiAgentPage : UserControl
         App.MainWindow?.NavigateToSettings("AiApiEndpoint");
     }
 
+    /// <summary>
+    /// 提供商管理弹窗：列出全部提供商，可改自定义提供商名称、删除、新建。
+    /// 预设提供商（含「本地模型」）不可改名/删除。
+    /// </summary>
+    private async void ManageProvidersButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isProcessing) return;
+
+        var panel = new StackPanel { Spacing = 8, MinWidth = 360 };
+
+        void Rebuild()
+        {
+            panel.Children.Clear();
+
+            foreach (var provider in AiProviderStore.GetProviders().ToList())
+            {
+                var row = new Grid { ColumnSpacing = 8 };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                if (provider.IsPreset)
+                {
+                    row.Children.Add(new TextBlock
+                    {
+                        Text = provider.Name,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                    });
+                    if (provider.Kind == ProviderKind.Local)
+                    {
+                        var badge = new TextBlock
+                        {
+                            Text = "本地",
+                            FontSize = 11,
+                            Margin = new Thickness(8, 0, 0, 0),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
+                        };
+                        Grid.SetColumn(badge, 1);
+                        row.Children.Add(badge);
+                    }
+                }
+                else
+                {
+                    var box = new TextBox
+                    {
+                        Text = provider.Name,
+                        PlaceholderText = "提供商名称",
+                    };
+                    var id = provider.Id;
+                    box.LostFocus += (_, _) => AiProviderStore.RenameProvider(id, box.Text);
+                    row.Children.Add(box);
+
+                    var del = new Button { Content = new FontIcon { Glyph = "\uE74D", FontSize = 12 }, Padding = new Thickness(8, 4, 8, 4) };
+                    del.Click += (_, _) =>
+                    {
+                        AiProviderStore.DeleteProvider(id);
+                        Rebuild();
+                    };
+                    Grid.SetColumn(del, 1);
+                    row.Children.Add(del);
+                }
+
+                panel.Children.Add(row);
+            }
+
+            var add = new Button { Content = "新建自定义提供商", HorizontalAlignment = HorizontalAlignment.Left };
+            add.Click += (_, _) =>
+            {
+                AiProviderStore.AddCustomProvider();
+                Rebuild();
+            };
+            panel.Children.Add(add);
+        }
+
+        Rebuild();
+
+        var dialog = new ContentDialog
+        {
+            Title = "管理 AI 提供商",
+            Content = new ScrollViewer { Content = panel, MaxHeight = 400 },
+            CloseButtonText = "完成",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+            RequestedTheme = ThemeService.CurrentElementTheme,
+        };
+
+        await dialog.ShowAsync();
+
+        // 改名/删除/新建在操作时即已持久化；关闭后刷新顶栏下拉
+        AiProviderStore.Save();
+        RefreshProviderCombos();
+    }
+
     /// <summary>会话已有内容时，切换后提示新模型从下一条消息生效。</summary>
     private void NotifyModelSwitch(string providerName, string modelId)
     {
@@ -1172,7 +1267,15 @@ public sealed partial class AiAgentPage : UserControl
 
     private void UpdateServiceStatus()
     {
-        if (AiService.IsUsingDefaultModel)
+        if (AiService.IsLocalProviderSelected)
+        {
+            var model = AiProviderStore.SelectedModelId;
+            ModelStatusText.Text = string.IsNullOrWhiteSpace(model)
+                ? "本地模型（请先在「本地 AI 试炼场」下载模型）"
+                : $"本地模型 · {model}";
+            ModelStatusText.Foreground = (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"];
+        }
+        else if (AiService.IsUsingDefaultModel)
         {
             ModelStatusText.Text = "默认模型（建议在设置中配置 AI 服务）";
             ModelStatusText.Foreground = (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];

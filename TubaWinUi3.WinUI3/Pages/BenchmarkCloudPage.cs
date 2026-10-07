@@ -116,7 +116,8 @@ public sealed partial class BenchmarkCloudPage : Page
 
 	private TextBlock LoadMoreText = null!;
 
-	private static readonly Color AccentBlue = Color.FromArgb(255, 0, 99, 177);
+	// 视觉色板（品牌色/固定色板统一取自 ThemeColors，随主题解析）
+	private static Color AccentBlue => ThemeColors.AccentBlue;
 
 	public BenchmarkCloudPage()
 	{
@@ -128,13 +129,7 @@ public sealed partial class BenchmarkCloudPage : Page
 
 	private Grid BuildUI()
 	{
-		bool isDark;
-		if (ThemeService.CurrentTheme == AppTheme.Dark)
-			isDark = true;
-		else if (ThemeService.CurrentTheme == AppTheme.Default)
-			isDark = Application.Current.RequestedTheme == ApplicationTheme.Dark;
-		else
-			isDark = false;
+		bool isDark = ThemeService.IsDarkEffective;
 
 		Color borderColor = isDark ? Color.FromArgb(255, 60, 60, 60) : Color.FromArgb(255, 229, 229, 229);
 		SolidColorBrush cardBg = isDark
@@ -147,7 +142,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		Grid root = new()
 		{
 			RowSpacing = 0.0,
-			Padding = new Thickness(24.0, 16.0, 24.0, 0.0)
+			Padding = new Thickness(24.0, 8.0, 24.0, 24.0)
 		};
 		root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 		root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
@@ -164,14 +159,14 @@ public sealed partial class BenchmarkCloudPage : Page
 			Content = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue72c", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "刷新", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "刷新" }
 				}
 			},
-			Padding = new Thickness(12.0, 5.0, 12.0, 5.0)
+			Style = (Style)Application.Current.Resources["ToolHeaderActionButtonStyle"]
 		};
 		RefreshButton.Click += RefreshButton_Click;
 		header.Actions.Add(RefreshButton);
@@ -190,14 +185,14 @@ public sealed partial class BenchmarkCloudPage : Page
 			Content = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue898", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "上传报告", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "上传报告" }
 				}
 			},
-			Padding = new Thickness(12.0, 5.0, 12.0, 5.0)
+			Style = (Style)Application.Current.Resources["ToolHeaderActionButtonStyle"]
 		};
 		UploadButton.Click += UploadButton_Click;
 		header.Actions.Add(UploadButton);
@@ -205,7 +200,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		ReportCountText = new TextBlock
 		{
 			Text = "",
-			FontSize = 13.0,
+			FontSize = 12.0,
 			VerticalAlignment = VerticalAlignment.Center,
 			Foreground = dimText
 		};
@@ -310,7 +305,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		LeaderboardEmpty.Children.Add(new FontIcon
 		{
 			Glyph = "\ue946",
-			FontSize = 36.0,
+			FontSize = 28.0,
 			Foreground = dimText
 		});
 		LeaderboardEmptyText = new TextBlock
@@ -343,40 +338,40 @@ public sealed partial class BenchmarkCloudPage : Page
 						<ColumnDefinition Width='*'/>
 						<ColumnDefinition Width='Auto'/>
 					</Grid.ColumnDefinitions>
-					<TextBlock Text='{Binding Rank}' FontSize='18' FontWeight='Bold' VerticalAlignment='Center'
+					<TextBlock Text='{Binding Rank}' FontSize='18' FontWeight='SemiBold' VerticalAlignment='Center'
 							   Foreground='{Binding RankBrush}'/>
 					<StackPanel Grid.Column='1' Spacing='2'>
-						<TextBlock Text='{Binding Report.Author}' FontSize='13' FontWeight='Bold'/>
+						<TextBlock Text='{Binding Report.Author}' FontSize='14' FontWeight='SemiBold'/>
 						<TextBlock FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}'>
 							<Run Text='{Binding Report.CpuName}'/><Run Text=' | '/><Run Text='{Binding Report.GpuName}'/>
 						</TextBlock>
 						<StackPanel Orientation='Horizontal' Spacing='8' Margin='0,2,0,0'>
 							<StackPanel Orientation='Horizontal'>
-								<TextBlock Text='CPU' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
-								<TextBlock Text='{Binding Report.CpuMultiCoreScore}' FontSize='10' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
+								<TextBlock Text='CPU' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
+								<TextBlock Text='{Binding Report.CpuMultiCoreScore}' FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
 							</StackPanel>
 							<StackPanel Orientation='Horizontal'>
-								<TextBlock Text='GPU' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
-								<TextBlock Text='{Binding Report.GpuRenderScore}' FontSize='10' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
+								<TextBlock Text='GPU' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
+								<TextBlock Text='{Binding Report.GpuRenderScore}' FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
 							</StackPanel>
 							<StackPanel Orientation='Horizontal'>
-								<TextBlock Text='内存' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
-								<TextBlock Text='{Binding Report.MemoryCapacityScore}' FontSize='10' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
+								<TextBlock Text='内存' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
+								<TextBlock Text='{Binding Report.MemoryCapacityScore}' FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
 							</StackPanel>
 							<StackPanel Orientation='Horizontal'>
-								<TextBlock Text='硬盘' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
-								<TextBlock Text='{Binding Report.DiskSeqReadScore}' FontSize='10' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
+								<TextBlock Text='硬盘' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' VerticalAlignment='Center' Margin='0,0,2,0'/>
+								<TextBlock Text='{Binding Report.DiskSeqReadScore}' FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}' VerticalAlignment='Center'/>
 							</StackPanel>
 						</StackPanel>
 					</StackPanel>
 					<StackPanel Grid.Column='2' Orientation='Horizontal' Spacing='16' VerticalAlignment='Center'>
 						<StackPanel Spacing='0' HorizontalAlignment='Right'>
-							<TextBlock Text='{Binding Report.GamingScore}' FontSize='15' FontWeight='Bold' HorizontalAlignment='Right'/>
-							<TextBlock Text='游戏' FontSize='9' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
+							<TextBlock Text='{Binding Report.GamingScore}' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Right'/>
+							<TextBlock Text='游戏' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
 						</StackPanel>
 						<StackPanel Spacing='0' HorizontalAlignment='Right'>
-							<TextBlock Text='{Binding Report.OfficeScore}' FontSize='15' FontWeight='Bold' HorizontalAlignment='Right'/>
-							<TextBlock Text='办公' FontSize='9' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
+							<TextBlock Text='{Binding Report.OfficeScore}' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Right'/>
+							<TextBlock Text='办公' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
 						</StackPanel>
 					</StackPanel>
 				</Grid>
@@ -399,14 +394,14 @@ public sealed partial class BenchmarkCloudPage : Page
 		SameHwCpuText = new TextBlock
 		{
 			Text = "CPU: ",
-			FontSize = 13.0,
+			FontSize = 14.0,
 			Foreground = dimText
 		};
 		SameHwInfo.Children.Add(SameHwCpuText);
 		SameHwGpuText = new TextBlock
 		{
 			Text = "GPU: ",
-			FontSize = 13.0,
+			FontSize = 14.0,
 			Foreground = dimText
 		};
 		SameHwInfo.Children.Add(SameHwGpuText);
@@ -441,7 +436,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		SameHwEmpty.Children.Add(new FontIcon
 		{
 			Glyph = "\ue946",
-			FontSize = 36.0,
+			FontSize = 28.0,
 			Foreground = dimText
 		});
 		SameHwEmpty.Children.Add(new TextBlock
@@ -487,7 +482,7 @@ public sealed partial class BenchmarkCloudPage : Page
 					new TextBlock { Text = "添加报告", FontSize = 12.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 4.0, 12.0, 4.0)
 		};
 		addBtn.Click += (s, e) =>
@@ -500,8 +495,8 @@ public sealed partial class BenchmarkCloudPage : Page
 		CompareButton = new Button
 		{
 			Content = "对比",
-			CornerRadius = new CornerRadius(6.0),
-			Padding = new Thickness(16.0, 6.0, 16.0, 6.0)
+			CornerRadius = new CornerRadius(8.0),
+			Padding = new Thickness(16.0, 8.0, 16.0, 8.0)
 		};
 		CompareButton.Click += CompareButton_Click;
 		btnRow.Children.Add(CompareButton);
@@ -561,7 +556,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		CompareEmpty.Children.Add(new FontIcon
 		{
 			Glyph = "\ue946",
-			FontSize = 36.0,
+			FontSize = 28.0,
 			Foreground = dimText
 		});
 		CompareEmpty.Children.Add(new TextBlock
@@ -604,8 +599,8 @@ public sealed partial class BenchmarkCloudPage : Page
 			var removeBtn = new Button
 			{
 				Content = new FontIcon { Glyph = "\uE711", FontSize = 12.0 },
-				CornerRadius = new CornerRadius(6.0),
-				Padding = new Thickness(6.0, 4.0, 6.0, 4.0),
+				CornerRadius = new CornerRadius(8.0),
+				Padding = new Thickness(8.0, 4.0, 8.0, 4.0),
 				Tag = combo
 			};
 			removeBtn.Click += (s, e) =>
@@ -650,7 +645,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		MyHistoryLoginHint = new TextBlock
 		{
 			Text = "",
-			FontSize = 13.0,
+			FontSize = 14.0,
 			Foreground = dimText,
 			Margin = new Thickness(0.0, 0.0, 0.0, 8.0)
 		};
@@ -680,15 +675,15 @@ public sealed partial class BenchmarkCloudPage : Page
 			Content = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue74d", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "删除选中报告", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "删除选中报告", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
-			Padding = new Thickness(12.0, 6.0, 12.0, 6.0),
+			CornerRadius = new CornerRadius(8.0),
+			Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
 			Visibility = Visibility.Collapsed,
 			Margin = new Thickness(0.0, 8.0, 0.0, 0.0)
 		};
@@ -719,7 +714,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		MyHistoryEmpty.Children.Add(new FontIcon
 		{
 			Glyph = "\ue946",
-			FontSize = 36.0,
+			FontSize = 28.0,
 			Foreground = dimText
 		});
 		MyHistoryEmpty.Children.Add(new TextBlock
@@ -752,7 +747,7 @@ public sealed partial class BenchmarkCloudPage : Page
 						<ColumnDefinition Width='Auto'/>
 					</Grid.ColumnDefinitions>
 					<StackPanel Spacing='2'>
-						<TextBlock FontSize='13' FontWeight='Bold'>
+						<TextBlock FontSize='14' FontWeight='SemiBold'>
 							<Run Text='@'/><Run Text='{Binding Author}'/>
 						</TextBlock>
 						<TextBlock FontSize='12' Foreground='{ThemeResource TextFillColorSecondaryBrush}'>
@@ -760,12 +755,12 @@ public sealed partial class BenchmarkCloudPage : Page
 						</TextBlock>
 					</StackPanel>
 					<StackPanel Grid.Column='1' Spacing='2' HorizontalAlignment='Right'>
-						<TextBlock Text='{Binding GamingScore}' FontSize='14' FontWeight='Bold' HorizontalAlignment='Right'/>
-						<TextBlock Text='游戏' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
+						<TextBlock Text='{Binding GamingScore}' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Right'/>
+						<TextBlock Text='游戏' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
 					</StackPanel>
 					<StackPanel Grid.Column='2' Spacing='2' HorizontalAlignment='Right' Margin='12,0,0,0'>
-						<TextBlock Text='{Binding OfficeScore}' FontSize='14' FontWeight='Bold' HorizontalAlignment='Right'/>
-						<TextBlock Text='办公' FontSize='10' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
+						<TextBlock Text='{Binding OfficeScore}' FontSize='14' FontWeight='SemiBold' HorizontalAlignment='Right'/>
+						<TextBlock Text='办公' FontSize='12' Foreground='{ThemeResource TextFillColorTertiaryBrush}' HorizontalAlignment='Right'/>
 					</StackPanel>
 				</Grid>
 			</DataTemplate>");
@@ -1085,21 +1080,21 @@ public sealed partial class BenchmarkCloudPage : Page
 		];
 		var skiaColors = new SkiaSharp.SKColor[]
 		{
-			new SkiaSharp.SKColor(59, 125, 216, 0x33),
-			new SkiaSharp.SKColor(224, 123, 57, 0x33),
-			new SkiaSharp.SKColor(80, 180, 80, 0x33),
-			new SkiaSharp.SKColor(180, 80, 180, 0x33),
-			new SkiaSharp.SKColor(220, 180, 50, 0x33),
-			new SkiaSharp.SKColor(50, 180, 180, 0x33)
+			new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B, 0x33),
+			new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B, 0x33),
+			new SkiaSharp.SKColor(ThemeColors.Series3.R, ThemeColors.Series3.G, ThemeColors.Series3.B, 0x33),
+			new SkiaSharp.SKColor(ThemeColors.Series2.R, ThemeColors.Series2.G, ThemeColors.Series2.B, 0x33),
+			new SkiaSharp.SKColor(ThemeColors.Series4.R, ThemeColors.Series4.G, ThemeColors.Series4.B, 0x33),
+			new SkiaSharp.SKColor(ThemeColors.Neutral.R, ThemeColors.Neutral.G, ThemeColors.Neutral.B, 0x33)
 		};
 		var strokeColors = new[]
 		{
-			SkiaSharp.SKColor.Parse("#3b7dd8"),
-			SkiaSharp.SKColor.Parse("#e07b39"),
-			SkiaSharp.SKColor.Parse("#50b450"),
-			SkiaSharp.SKColor.Parse("#b450b4"),
-			SkiaSharp.SKColor.Parse("#dcb432"),
-			SkiaSharp.SKColor.Parse("#32b4b4")
+			new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B),
+			new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B),
+			new SkiaSharp.SKColor(ThemeColors.Series3.R, ThemeColors.Series3.G, ThemeColors.Series3.B),
+			new SkiaSharp.SKColor(ThemeColors.Series2.R, ThemeColors.Series2.G, ThemeColors.Series2.B),
+			new SkiaSharp.SKColor(ThemeColors.Series4.R, ThemeColors.Series4.G, ThemeColors.Series4.B),
+			new SkiaSharp.SKColor(ThemeColors.Neutral.R, ThemeColors.Neutral.G, ThemeColors.Neutral.B)
 		};
 
 		var series = new List<ISeries>();
@@ -1152,12 +1147,12 @@ public sealed partial class BenchmarkCloudPage : Page
 		];
 		var strokeColors = new[]
 		{
-			SkiaSharp.SKColor.Parse("#3b7dd8"),
-			SkiaSharp.SKColor.Parse("#e07b39"),
-			SkiaSharp.SKColor.Parse("#50b450"),
-			SkiaSharp.SKColor.Parse("#b450b4"),
-			SkiaSharp.SKColor.Parse("#dcb432"),
-			SkiaSharp.SKColor.Parse("#32b4b4")
+			new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B),
+			new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B),
+			new SkiaSharp.SKColor(ThemeColors.Series3.R, ThemeColors.Series3.G, ThemeColors.Series3.B),
+			new SkiaSharp.SKColor(ThemeColors.Series2.R, ThemeColors.Series2.G, ThemeColors.Series2.B),
+			new SkiaSharp.SKColor(ThemeColors.Series4.R, ThemeColors.Series4.G, ThemeColors.Series4.B),
+			new SkiaSharp.SKColor(ThemeColors.Neutral.R, ThemeColors.Neutral.G, ThemeColors.Neutral.B)
 		};
 
 		var series = new List<ISeries>();
@@ -1218,12 +1213,12 @@ public sealed partial class BenchmarkCloudPage : Page
 			CompareTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 		}
 
-		var headerBg = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(40, 0, 120, 212));
+		var headerBg = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(40, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B));
 		var cellBg = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-		var altBg = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(20, 0, 0, 0));
+		var altBg = new SolidColorBrush(ThemeColors.SubtleBg);
 
 		var headerRow = new Border { Background = headerBg, Padding = new Thickness(8, 6, 8, 6) };
-		headerRow.Child = new TextBlock { Text = "项目", FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
+		headerRow.Child = new TextBlock { Text = "项目", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
 		CompareTableGrid.Children.Add(headerRow);
 		Grid.SetRow(headerRow, 0);
 		Grid.SetColumn(headerRow, 0);
@@ -1231,7 +1226,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		for (int i = 0; i < reports.Count; i++)
 		{
 			var header = new Border { Background = headerBg, Padding = new Thickness(8, 6, 8, 6) };
-			var txt = new TextBlock { Text = GetCompareShortName(reports[i]), FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
+			var txt = new TextBlock { Text = GetCompareShortName(reports[i]), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis };
 			ToolTipService.SetToolTip(txt, reports[i].CpuName + " | " + reports[i].GpuName);
 			header.Child = txt;
 			CompareTableGrid.Children.Add(header);
@@ -1258,8 +1253,8 @@ public sealed partial class BenchmarkCloudPage : Page
 				var txt = new TextBlock { Text = score.ToString(), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
 				if (score == maxScore && maxScore > 0)
 				{
-					txt.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Green);
-					txt.FontWeight = Microsoft.UI.Text.FontWeights.Bold;
+					txt.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
+					txt.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
 				}
 				cellBorder.Child = txt;
 				CompareTableGrid.Children.Add(cellBorder);
@@ -1368,10 +1363,10 @@ public sealed partial class BenchmarkCloudPage : Page
 			Values = sorted.Select(r => (double)r.GamingScore).ToArray(),
 			Name = "游戏性能",
 			Fill = null,
-			Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#3b7dd8")) { StrokeThickness = 2.5f },
+			Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B)) { StrokeThickness = 2.5f },
 			GeometrySize = 6,
-			GeometryStroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#3b7dd8")) { StrokeThickness = 2f },
-			GeometryFill = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#3b7dd8")),
+			GeometryStroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B)) { StrokeThickness = 2f },
+			GeometryFill = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.Series1.R, ThemeColors.Series1.G, ThemeColors.Series1.B)),
 		};
 
 		var officeSeries = new LineSeries<double>
@@ -1379,10 +1374,10 @@ public sealed partial class BenchmarkCloudPage : Page
 			Values = sorted.Select(r => (double)r.OfficeScore).ToArray(),
 			Name = "办公性能",
 			Fill = null,
-			Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#e07b39")) { StrokeThickness = 2.5f },
+			Stroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B)) { StrokeThickness = 2.5f },
 			GeometrySize = 6,
-			GeometryStroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#e07b39")) { StrokeThickness = 2f },
-			GeometryFill = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColor.Parse("#e07b39")),
+			GeometryStroke = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B)) { StrokeThickness = 2f },
+			GeometryFill = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(new SkiaSharp.SKColor(ThemeColors.AccentOrange.R, ThemeColors.AccentOrange.G, ThemeColors.AccentOrange.B)),
 		};
 
 		MyHistoryChart.Series = new List<ISeries> { gamingSeries, officeSeries };
@@ -1558,104 +1553,104 @@ public sealed partial class BenchmarkCloudPage : Page
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "CPU: " + report.CpuName,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "GPU: " + report.GpuName,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "主板: " + report.MotherboardName,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "内存: " + report.MemoryInfo,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "硬盘: " + report.DiskInfo,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "显示器: " + report.DisplayInfo,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "OS: " + report.OsName,
-			Opacity = 0.8
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new Border
 		{
 			Height = 1.0,
-			Background = new SolidColorBrush(ColorHelper.FromArgb(byte.MaxValue, 208, 221, 232)),
+			Background = new SolidColorBrush(ThemeColors.Separator),
 			Margin = new Thickness(0.0, 4.0, 0.0, 4.0)
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"游戏性能: {report.GamingScore} ({report.GamingGrade})",
-			FontWeight = FontWeights.Bold
+			FontWeight = FontWeights.SemiBold
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"办公性能: {report.OfficeScore} ({report.OfficeGrade})",
-			FontWeight = FontWeights.Bold
+			FontWeight = FontWeights.SemiBold
 		});
 		stackPanel.Children.Add(new Border
 		{
 			Height = 1.0,
-			Background = new SolidColorBrush(ColorHelper.FromArgb(byte.MaxValue, 208, 221, 232)),
+			Background = new SolidColorBrush(ThemeColors.Separator),
 			Margin = new Thickness(0.0, 4.0, 0.0, 4.0)
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"CPU单核: {report.CpuSingleCoreScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"CPU多核: {report.CpuMultiCoreScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"GPU渲染: {report.GpuRenderScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"内存: {report.MemoryCapacityScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"硬盘顺序读: {report.DiskSeqReadScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"硬盘顺序写: {report.DiskSeqWriteScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"硬盘4K读: {report.Disk4KReadScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"硬盘4K写: {report.Disk4KWriteScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = $"浏览器: {report.BrowserTotalScore}",
-			Opacity = 0.7
+			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		bool num = GitHubAuthService.IsLoggedIn && GitHubAuthService.GetToken() != null && _myReports.Any((BenchmarkReportEntry r) => r.Id == report.Id);
 		ContentDialog contentDialog = new ContentDialog

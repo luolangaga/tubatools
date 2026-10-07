@@ -108,19 +108,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
 
     private void UpdateItemWidth()
     {
-        var grid = _compactMode ? CompactGrid : ToolsGrid;
-        var panel = grid.ItemsPanelRoot as ItemsWrapGrid;
-        if (panel is null) return;
-
-        double minItemWidth = _compactMode ? 100 : 280;
-        double spacing = _compactMode ? 10 : 12;
-        double availableWidth = grid.ActualWidth - grid.Padding.Left - grid.Padding.Right;
-
-        if (availableWidth <= 0) return;
-
-        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
-        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
-        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+        ToolCardLayout.Apply(_compactMode ? CompactGrid : ToolsGrid, _compactMode);
     }
 
     private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -628,7 +616,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         });
         var fontIcon = new FontIcon
         {
-            FontSize = 22,
+            FontSize = 20,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Glyph = tool.IconGlyph ?? "",
@@ -664,7 +652,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         textStack.Children.Add(new TextBlock
         {
             Text = tool.Name,
-            FontSize = 15,
+            FontSize = 14,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis
         });
@@ -1022,7 +1010,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
                     {
                         Text = LocalizationService.L("HomePage_DeleteDialogConfirm", "确定要删除此工具吗？此操作不可撤销！"),
                         TextWrapping = TextWrapping.Wrap,
-                        FontWeight = Microsoft.UI.Text.FontWeights.Bold
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
                     },
                     new TextBlock
                     {

@@ -22,6 +22,13 @@ public sealed partial class WingetStorePage : Page
     {
         InitializeComponent();
         Loaded += OnPageLoaded;
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存目录重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_catalog.Count > 0)
+                ApplyFilter();
+        };
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -106,7 +113,7 @@ public sealed partial class WingetStorePage : Page
             Style = (Style)Resources["StoreCategoryChipStyle"],
         };
 
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         panel.Children.Add(new TextBlock
         {
             Text = string.IsNullOrEmpty(glyph) ? "\uE719" : glyph,
@@ -117,7 +124,7 @@ public sealed partial class WingetStorePage : Page
         panel.Children.Add(new TextBlock
         {
             Text = name,
-            FontSize = 12.5,
+            FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center
         });
         btn.Content = panel;
@@ -311,36 +318,33 @@ public sealed partial class WingetStorePage : Page
         var section = new StackPanel { Spacing = 16 };
 
         // 标题行：图标 + 标题 + 数量
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, VerticalAlignment = VerticalAlignment.Center };
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
 
         header.Children.Add(new TextBlock
         {
             Text = string.IsNullOrEmpty(glyph) ? "\uE719" : glyph,
             FontFamily = new FontFamily("Segoe Fluent Icons"),
-            FontSize = 15,
-            Opacity = 0.6,
+            FontSize = 14,
+            Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
             VerticalAlignment = VerticalAlignment.Center
         });
 
         header.Children.Add(new TextBlock
         {
             Text = title,
-            FontSize = 16,
-            FontWeight = FontWeights.SemiBold,
+            Style = (Style)Application.Current.Resources["SectionHeaderStyle"],
             VerticalAlignment = VerticalAlignment.Center
         });
 
         header.Children.Add(new Border
         {
-            Padding = new Thickness(8, 1, 8, 2),
-            CornerRadius = new CornerRadius(8),
-            Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"],
+            Style = (Style)Application.Current.Resources["StatusPillStyle"],
             VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
                 Text = packages.Count.ToString(),
-                FontSize = 11,
-                Opacity = 0.55
+                FontSize = 12,
+                Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
             }
         });
 
@@ -386,7 +390,7 @@ public sealed partial class WingetStorePage : Page
     /// </summary>
     private FrameworkElement CreatePackageCard(StorePackage pkg)
     {
-        var accent = (Windows.UI.Color)Application.Current.Resources["SystemAccentColor"];
+        var accent = ThemeColors.AccentBlue;
         var accentBrush = new SolidColorBrush(accent);
         var accentTintBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0x20, accent.R, accent.G, accent.B));
 
@@ -414,8 +418,7 @@ public sealed partial class WingetStorePage : Page
         nameRow.Children.Add(new TextBlock
         {
             Text = pkg.Name,
-            FontSize = 15,
-            FontWeight = FontWeights.SemiBold,
+            Style = (Style)Application.Current.Resources["CardTitleStyle"],
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxLines = 1,
             VerticalAlignment = VerticalAlignment.Center
@@ -425,14 +428,13 @@ public sealed partial class WingetStorePage : Page
         {
             nameRow.Children.Add(new Border
             {
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(6, 1, 6, 2),
+                Style = (Style)Application.Current.Resources["StatusPillStyle"],
                 Background = accentTintBrush,
                 VerticalAlignment = VerticalAlignment.Center,
                 Child = new TextBlock
                 {
                     Text = "推荐",
-                    FontSize = 10,
+                    FontSize = 12,
                     Foreground = accentBrush
                 }
             });
@@ -444,13 +446,13 @@ public sealed partial class WingetStorePage : Page
         var descText = new TextBlock
         {
             Text = pkg.Description ?? "来自 WinGet 官方源",
-            FontSize = 12.5,
+            FontSize = 12,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxLines = 2,
             LineHeight = 20,
             Height = 40,
-            Margin = new Thickness(0, 6, 0, 0),
+            Margin = new Thickness(0, 8, 0, 0),
         };
         Grid.SetRow(descText, 1);
         card.Children.Add(descText);
@@ -459,9 +461,9 @@ public sealed partial class WingetStorePage : Page
         var installBtn = new Button
         {
             Height = 32,
-            Padding = new Thickness(18, 0, 18, 0),
-            CornerRadius = new CornerRadius(7),
-            FontSize = 12.5,
+            Padding = new Thickness(16, 0, 16, 0),
+            CornerRadius = new CornerRadius(4),
+            FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 12, 0, 0),
@@ -508,7 +510,7 @@ public sealed partial class WingetStorePage : Page
                 {
                     btn.IsEnabled = false;
                     btn.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                        (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]);
+                        new SolidColorBrush(ThemeColors.AccentGreen));
                     pkg.InstallState = "queued";
                 }
                 else
@@ -527,7 +529,7 @@ public sealed partial class WingetStorePage : Page
                 pkg.InstallState = "queued";
                 btn.IsEnabled = false;
                 btn.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                    (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]);
+                    new SolidColorBrush(ThemeColors.AccentGreen));
             }
             else
             {

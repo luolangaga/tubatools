@@ -39,8 +39,8 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="14" Opacity="0.6" VerticalAlignment="Center" />
-                        <TextBox x:Name="SearchBox" Grid.Column="1" PlaceholderText="搜索软件名称..." TextChanged="SearchBox_TextChanged" />
+                        <FontIcon Grid.Column="0" Glyph="&#xE721;" FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                        <AutoSuggestBox x:Name="SearchBox" Grid.Column="1" QueryIcon="Find" PlaceholderText="搜索软件名称..." TextChanged="SearchBox_TextChanged" QuerySubmitted="SearchBox_QuerySubmitted" />
                     </Grid>
                 </Border>
 
@@ -57,13 +57,13 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Margin="0,0,0,10">
+                <Grid Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="CurrentCategoryText" FontSize="16" FontWeight="Bold" Text="游戏平台" VerticalAlignment="Center" />
-                    <TextBlock x:Name="SiteCountText" Grid.Column="1" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
+                    <TextBlock x:Name="CurrentCategoryText" Style="{StaticResource CardTitleStyle}" Text="游戏平台" VerticalAlignment="Center" />
+                    <TextBlock x:Name="SiteCountText" Grid.Column="1" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
                 </Grid>
 
                 <ListView
@@ -75,8 +75,8 @@
 
                 <Grid x:Name="EmptyState" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
                     <StackPanel Spacing="16">
-                        <FontIcon Glyph="&#xE721;" FontSize="64" Opacity="0.3" HorizontalAlignment="Center" />
-                        <TextBlock FontSize="15" Opacity="0.6" Text="未找到匹配的网站" TextAlignment="Center" />
+                        <FontIcon Glyph="&#xE721;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" />
+                        <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="未找到匹配的网站" TextAlignment="Center" />
                     </StackPanel>
                 </Grid>
             </Grid>

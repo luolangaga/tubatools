@@ -66,18 +66,26 @@ public sealed partial class BatteryAnalyzerPage : Page
     private ComboBox _sprSessionFilter = null!;
     private int _sprSessionFilterIndex;
 
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 191, 36);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);    private static readonly Color AccentPurple = Color.FromArgb(255, 167, 139, 250);
-    private static readonly Color ChartGreen = Color.FromArgb(255, 52, 211, 153);
-    private static readonly Color ChartBlue = Color.FromArgb(255, 96, 165, 250);
+    // 语义强调色 / 图表系列色：统一取共享令牌（ThemeColors），不再硬编码品牌色
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
+    private static Color AccentRed => ThemeColors.AccentRed;
+    private static Color AccentPurple => ThemeColors.Series2;
+    private static Color ChartGreen => ThemeColors.Series3;
+    private static Color ChartBlue => ThemeColors.Series1;
 
     public BatteryAnalyzerPage()
     {
         InitializeComponent();
         Unloaded += (_, _) => OnPageClosed();
         Content = BuildUI();
+        // 画布折线/填充画刷由代码构造，切换主题后按现有数据重绘
+        ActualThemeChanged += (_, _) =>
+        {
+            DrawTrendChart();
+            DrawPowerSparkline();
+        };
         _ = LoadAllDataAsync();
     }
 
@@ -90,7 +98,7 @@ public sealed partial class BatteryAnalyzerPage : Page
 
     private Grid BuildUI()
     {
-        var mainStack = new StackPanel { Spacing = 16, Padding = new Thickness(28, 4, 28, 20) };
+        var mainStack = new StackPanel { Spacing = 16, Padding = new Thickness(24, 8, 24, 24) };
 
         _chartLoading = new ProgressBar { IsIndeterminate = true, Visibility = Visibility.Collapsed };
         _infoBar = new InfoBar { Severity = InfoBarSeverity.Error, IsOpen = false, IsClosable = true };
@@ -131,15 +139,13 @@ public sealed partial class BatteryAnalyzerPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
                     new FontIcon { Glyph = "\uE72C", FontSize = 12 },
-                    new TextBlock { Text = "刷新", FontSize = 13 }
+                    new TextBlock { Text = "刷新" }
                 }
-            },
-            Padding = new Thickness(12, 5, 12, 5),
-            VerticalAlignment = VerticalAlignment.Center
+            }
         };
         refreshBtn.Click += async (_, _) => await ReloadTrendAsync();
 
@@ -148,15 +154,13 @@ public sealed partial class BatteryAnalyzerPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
                     new FontIcon { Glyph = "\uE8A5", FontSize = 12 },
-                    new TextBlock { Text = "查看详细报告", FontSize = 13 }
+                    new TextBlock { Text = "查看详细报告" }
                 }
-            },
-            Padding = new Thickness(12, 5, 12, 5),
-            VerticalAlignment = VerticalAlignment.Center
+            }
         };
         exportBtn.Click += async (_, _) => await ExportReportAsync();
 
@@ -168,7 +172,7 @@ public sealed partial class BatteryAnalyzerPage : Page
 
     private Grid BuildOverviewCards()
     {
-        var grid = new Grid { ColumnSpacing = 10 };
+        var grid = new Grid { ColumnSpacing = 8 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -183,22 +187,22 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         _timeValueText = new TextBlock
         {
-            FontSize = 22,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 20,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentGreen)
         };
         var timeIconBorder = new Border
         {
             Width = 36, Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, AccentGreen.R, AccentGreen.G, AccentGreen.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(AccentGreen), Glyph = "\uE823" }
         };
-        var timeLabel = new TextBlock { Text = "预估时间", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var timeLabel = new TextBlock { Text = "预估时间", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var timeStack = new StackPanel { Spacing = 2 };
         timeStack.Children.Add(timeLabel);
         timeStack.Children.Add(_timeValueText);
-        var timeInnerGrid = new Grid { ColumnSpacing = 10 };
+        var timeInnerGrid = new Grid { ColumnSpacing = 8 };
         timeInnerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         timeInnerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         timeInnerGrid.Children.Add(timeIconBorder);
@@ -210,14 +214,14 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         _healthValueText = new TextBlock
         {
-            FontSize = 22,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 20,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentGreen)
         };
         _healthStatusText = new TextBlock
         {
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentGreen)
         };
         _healthBar = new ProgressBar { Minimum = 0, Maximum = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -225,16 +229,16 @@ public sealed partial class BatteryAnalyzerPage : Page
         {
             Width = 36, Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, AccentGreen.R, AccentGreen.G, AccentGreen.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(AccentGreen), Glyph = "\uE95E" }
         };
-        var healthLabel = new TextBlock { Text = "电池健康", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var healthLabel = new TextBlock { Text = "电池健康", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var healthStack = new StackPanel { Spacing = 2 };
         healthStack.Children.Add(healthLabel);
         healthStack.Children.Add(_healthValueText);
         healthStack.Children.Add(_healthStatusText);
         healthStack.Children.Add(_healthBar);
-        var healthInnerGrid = new Grid { ColumnSpacing = 10 };
+        var healthInnerGrid = new Grid { ColumnSpacing = 8 };
         healthInnerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         healthInnerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         healthInnerGrid.Children.Add(healthIconBorder);
@@ -253,17 +257,17 @@ public sealed partial class BatteryAnalyzerPage : Page
         {
             Width = 36, Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph }
         };
         valueText = new TextBlock
         {
             Text = initial,
-            FontSize = 22,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 20,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(accent)
         };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         sparkline = new Canvas { Width = 120, Height = 30, HorizontalAlignment = HorizontalAlignment.Left };
 
         var stack = new StackPanel { Spacing = 2 };
@@ -271,7 +275,7 @@ public sealed partial class BatteryAnalyzerPage : Page
         stack.Children.Add(valueText);
         stack.Children.Add(sparkline);
 
-        var innerGrid = new Grid { ColumnSpacing = 10 };
+        var innerGrid = new Grid { ColumnSpacing = 8 };
         innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         innerGrid.Children.Add(iconBorder);
@@ -287,25 +291,25 @@ public sealed partial class BatteryAnalyzerPage : Page
         {
             Width = 36, Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph }
         };
         valueText = new TextBlock
         {
             Text = initial,
-            FontSize = 22,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 20,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(accent)
         };
         bar = new ProgressBar { Minimum = 0, Maximum = 100, HorizontalAlignment = HorizontalAlignment.Stretch };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
 
         var stack = new StackPanel { Spacing = 2 };
         stack.Children.Add(labelBlock);
         stack.Children.Add(valueText);
         stack.Children.Add(bar);
 
-        var innerGrid = new Grid { ColumnSpacing = 10 };
+        var innerGrid = new Grid { ColumnSpacing = 8 };
         innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         innerGrid.Children.Add(iconBorder);
@@ -320,8 +324,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         var label = new TextBlock
         {
             Text = "电量变化趋势",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
@@ -351,11 +355,11 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         var legendAc = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         legendAc.Children.Add(new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(ChartGreen) });
-        legendAc.Children.Add(new TextBlock { Text = "充电", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) });
+        legendAc.Children.Add(new TextBlock { Text = "充电", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
         var legendDc = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         legendDc.Children.Add(new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(ChartBlue) });
-        legendDc.Children.Add(new TextBlock { Text = "放电", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) });
-        var legendPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, Margin = new Thickness(0, 4, 0, 0) };
+        legendDc.Children.Add(new TextBlock { Text = "放电", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
+        var legendPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Margin = new Thickness(0, 4, 0, 0) };
         legendPanel.Children.Add(legendAc);
         legendPanel.Children.Add(legendDc);
 
@@ -365,8 +369,8 @@ public sealed partial class BatteryAnalyzerPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10, 6, 10, 6),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8),
             Child = _chartTooltipText,
             Visibility = Visibility.Collapsed
         };
@@ -394,7 +398,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             Child = chartWrapper
         };
 
-        var section = new StackPanel { Spacing = 10 };
+        var section = new StackPanel { Spacing = 16 };
         section.Children.Add(headerGrid);
         section.Children.Add(legendPanel);
         section.Children.Add(chartBorder);
@@ -406,8 +410,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         var label = new TextBlock
         {
             Text = "高耗电进程排行",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
@@ -434,11 +438,11 @@ public sealed partial class BatteryAnalyzerPage : Page
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14),
+            Padding = new Thickness(16),
             Child = _processList
         };
 
-        var section = new StackPanel { Spacing = 10 };
+        var section = new StackPanel { Spacing = 16 };
         section.Children.Add(headerGrid);
         section.Children.Add(listBorder);
         return section;
@@ -449,15 +453,15 @@ public sealed partial class BatteryAnalyzerPage : Page
         var label = new TextBlock
         {
             Text = "系统电源报告 (SPR)",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
         var subtitle = new TextBlock
         {
             Text = "基于 powercfg /spr 生成，分析待机/休眠/关机状态下的电池消耗",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
@@ -466,18 +470,18 @@ public sealed partial class BatteryAnalyzerPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE8A5", FontSize = 13 },
-                    new TextBlock { Text = "查看原始报告", FontSize = 13 }
+                    new FontIcon { Glyph = "\uE8A5", FontSize = 14 },
+                    new TextBlock { Text = "查看原始报告", FontSize = 14 }
                 }
             },
             Background = new SolidColorBrush(ThemeColors.SubtleBg),
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            Padding = new Thickness(14, 6, 14, 6),
-            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 8, 12, 8),
+            CornerRadius = new CornerRadius(4),
             VerticalAlignment = VerticalAlignment.Center
         };
         viewHtmlBtn.Click += async (_, _) =>
@@ -506,18 +510,18 @@ public sealed partial class BatteryAnalyzerPage : Page
             Content = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE72C", FontSize = 13 },
-                    new TextBlock { Text = "刷新SPR", FontSize = 13 }
+                    new FontIcon { Glyph = "\uE72C", FontSize = 14 },
+                    new TextBlock { Text = "刷新SPR", FontSize = 14 }
                 }
             },
             Background = new SolidColorBrush(ThemeColors.SubtleBg),
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            Padding = new Thickness(14, 6, 14, 6),
-            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 8, 12, 8),
+            CornerRadius = new CornerRadius(4),
             VerticalAlignment = VerticalAlignment.Center
         };
         refreshSprBtn.Click += async (_, _) => await LoadSprDataAsync();
@@ -538,7 +542,7 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         _sprLoading = new ProgressBar { IsIndeterminate = true, Visibility = Visibility.Collapsed };
 
-        _sprSummaryPanel = new StackPanel { Spacing = 10 };
+        _sprSummaryPanel = new StackPanel { Spacing = 8 };
         _sprBatteryPanel = new StackPanel { Spacing = 8 };
         _sprSessionPanel = new StackPanel { Spacing = 4 };
 
@@ -565,8 +569,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         sessionHeaderGrid.Children.Add(new TextBlock
         {
             Text = "电源状态会话记录",
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             VerticalAlignment = VerticalAlignment.Center
         });
@@ -579,7 +583,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14),
+            Padding = new Thickness(16),
             Child = _sprSessionPanel
         };
 
@@ -595,12 +599,12 @@ public sealed partial class BatteryAnalyzerPage : Page
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14),
+            Padding = new Thickness(16),
             Child = contentStack,
             Visibility = Visibility.Collapsed
         };
 
-        _sprSection = new StackPanel { Spacing = 10 };
+        _sprSection = new StackPanel { Spacing = 16 };
         _sprSection.Children.Add(headerGrid);
         _sprSection.Children.Add(_sprLoading);
         _sprSection.Children.Add(contentBorder);
@@ -613,8 +617,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         var label = new TextBlock
         {
             Text = "电池详细信息",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
@@ -642,11 +646,11 @@ public sealed partial class BatteryAnalyzerPage : Page
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(14),
+            Padding = new Thickness(16),
             Child = grid
         };
 
-        var section = new StackPanel { Spacing = 10 };
+        var section = new StackPanel { Spacing = 16 };
         section.Children.Add(label);
         section.Children.Add(detailBorder);
         return section;
@@ -666,7 +670,7 @@ public sealed partial class BatteryAnalyzerPage : Page
     private static Border MakeDetailCell(string label, TextBlock value, string glyph)
     {
         var icon = new FontIcon { FontSize = 14, Glyph = glyph, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
 
         var inner = new Grid { ColumnSpacing = 8 };
         inner.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
@@ -678,16 +682,16 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         return new Border
         {
-            Padding = new Thickness(10, 8, 10, 8),
+            Padding = new Thickness(8),
             Background = new SolidColorBrush(ThemeColors.SubtleBg),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = inner
         };
     }
 
     private static Border MakeCardBorder(UIElement child) => new()
     {
-        Padding = new Thickness(14),
+        Padding = new Thickness(16),
         Background = new SolidColorBrush(ThemeColors.CardBg),
         BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
         BorderThickness = new Thickness(1),
@@ -764,7 +768,7 @@ public sealed partial class BatteryAnalyzerPage : Page
         _sprSummaryPanel.Children.Clear();
         var r = _sprReport!;
 
-        var grid = new Grid { ColumnSpacing = 10 };
+        var grid = new Grid { ColumnSpacing = 8 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -813,7 +817,7 @@ public sealed partial class BatteryAnalyzerPage : Page
         var activeTimeStr = FormatTimeSpan(r.TotalActiveTime);
         var standbyTimeStr = FormatTimeSpan(r.TotalStandbyTime + r.TotalHibernateTime);
 
-        var infoGrid = new Grid { ColumnSpacing = 16, RowSpacing = 6 };
+        var infoGrid = new Grid { ColumnSpacing = 16, RowSpacing = 8 };
         infoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         infoGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         AddSprInfoRow(infoGrid, 0, "报告范围", $"{r.ReportDurationDays} 天", "扫描时间", r.ScanTimeLocal == default ? "未知" : r.ScanTimeLocal.ToString("yyyy/M/d HH:mm"));
@@ -822,8 +826,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         _sprSummaryPanel.Children.Add(new Border
         {
             Background = new SolidColorBrush(ThemeColors.SubtleBg),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(10),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12),
             Child = infoGrid
         });
     }
@@ -837,8 +841,8 @@ public sealed partial class BatteryAnalyzerPage : Page
         _sprBatteryPanel.Children.Add(new TextBlock
         {
             Text = "电池信息 (SPR)",
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         });
 
@@ -846,7 +850,7 @@ public sealed partial class BatteryAnalyzerPage : Page
         {
             var healthColor = bat.CapacityRatio >= 80 ? AccentGreen : bat.CapacityRatio >= 60 ? AccentOrange : AccentRed;
 
-            var batGrid = new Grid { ColumnSpacing = 16, RowSpacing = 6 };
+            var batGrid = new Grid { ColumnSpacing = 16, RowSpacing = 8 };
             batGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             batGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             AddSprInfoRow(batGrid, 0, "名称", bat.Id, "制造商", bat.Manufacturer);
@@ -858,8 +862,8 @@ public sealed partial class BatteryAnalyzerPage : Page
             _sprBatteryPanel.Children.Add(new Border
             {
                 Background = new SolidColorBrush(ThemeColors.SubtleBg),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12),
                 Child = batGrid
             });
         }
@@ -905,7 +909,7 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         foreach (var (h, col) in new[] { "#", "开始时间", "持续时长", "状态", "电源", "电量变化", "活动级别" }.Select((h, i) => (h, i)))
         {
-            var tb = new TextBlock { Text = h, FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+            var tb = new TextBlock { Text = h, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.DimText) };
             headerRow.Children.Add(tb);
             Grid.SetColumn(tb, col);
         }
@@ -920,7 +924,7 @@ public sealed partial class BatteryAnalyzerPage : Page
                 : drainPct > 10 ? AccentRed
                 : drainPct > 3 ? AccentOrange : AccentGreen;
 
-            var row = new Grid { ColumnSpacing = 8, Padding = new Thickness(4, 3, 4, 3) };
+            var row = new Grid { ColumnSpacing = 8, Padding = new Thickness(4, 4, 4, 4) };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(80) });
@@ -929,19 +933,19 @@ public sealed partial class BatteryAnalyzerPage : Page
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var c0 = new TextBlock { Text = $"{i + 1}", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
+            var c0 = new TextBlock { Text = $"{i + 1}", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c0); Grid.SetColumn(c0, 0);
 
-            var c1 = new TextBlock { Text = s.EntryTimeLocal.ToString("M/d HH:mm"), FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
+            var c1 = new TextBlock { Text = s.EntryTimeLocal.ToString("M/d HH:mm"), FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c1); Grid.SetColumn(c1, 1);
 
-            var c2 = new TextBlock { Text = s.DurationText, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
+            var c2 = new TextBlock { Text = s.DurationText, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c2); Grid.SetColumn(c2, 2);
 
-            var c3 = new TextBlock { Text = s.TypeNameZh, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
+            var c3 = new TextBlock { Text = s.TypeNameZh, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c3); Grid.SetColumn(c3, 3);
 
-            var c4 = new TextBlock { Text = s.OnAc ? "交流" : "电池", FontSize = 11, Foreground = new SolidColorBrush(s.OnAc ? AccentBlue : AccentPurple), VerticalAlignment = VerticalAlignment.Center };
+            var c4 = new TextBlock { Text = s.OnAc ? "交流" : "电池", FontSize = 12, Foreground = new SolidColorBrush(s.OnAc ? AccentBlue : AccentPurple), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c4); Grid.SetColumn(c4, 4);
 
             string drainText;
@@ -966,10 +970,10 @@ public sealed partial class BatteryAnalyzerPage : Page
             {
                 drainText = "0%";
             }
-            var c5 = new TextBlock { Text = drainText, FontSize = 11, Foreground = new SolidColorBrush(drainColor), VerticalAlignment = VerticalAlignment.Center, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
+            var c5 = new TextBlock { Text = drainText, FontSize = 12, Foreground = new SolidColorBrush(drainColor), VerticalAlignment = VerticalAlignment.Center, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
             row.Children.Add(c5); Grid.SetColumn(c5, 5);
 
-            var c6 = new TextBlock { Text = s.ActivityLevelZh, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
+            var c6 = new TextBlock { Text = s.ActivityLevelZh, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center };
             row.Children.Add(c6); Grid.SetColumn(c6, 6);
 
             if (i % 2 == 1)
@@ -987,11 +991,11 @@ public sealed partial class BatteryAnalyzerPage : Page
         {
             Width = 32, Height = 32,
             Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 14, Foreground = new SolidColorBrush(accent), Glyph = glyph }
         };
-        var labelBlock = new TextBlock { Text = label, FontSize = 10, Foreground = new SolidColorBrush(ThemeColors.DimText) };
-        var valueBlock = new TextBlock { Text = value, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(accent) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var valueBlock = new TextBlock { Text = value, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(accent) };
 
         var stack = new StackPanel { Spacing = 1 };
         stack.Children.Add(labelBlock);
@@ -1006,7 +1010,7 @@ public sealed partial class BatteryAnalyzerPage : Page
 
         return new Border
         {
-            Padding = new Thickness(10),
+            Padding = new Thickness(12),
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
@@ -1028,15 +1032,15 @@ public sealed partial class BatteryAnalyzerPage : Page
     {
         return new Border
         {
-            Padding = new Thickness(8, 5, 8, 5),
+            Padding = new Thickness(8, 4, 8, 4),
             CornerRadius = new CornerRadius(4),
             Child = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 6,
+                Spacing = 8,
                 Children =
                 {
-                    new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center },
+                    new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), VerticalAlignment = VerticalAlignment.Center },
                     new TextBlock { Text = value, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis }
                 }
             }
@@ -1274,7 +1278,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             c.Children.Add(new TextBlock
             {
                 Text = $"{pct}%",
-                FontSize = 10,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 RenderTransform = new TranslateTransform { X = -42, Y = y - 7 }
             });
@@ -1319,7 +1323,7 @@ public sealed partial class BatteryAnalyzerPage : Page
         c.Children.Add(new Polygon
         {
             Points = fillPoints,
-            Fill = new SolidColorBrush(Color.FromArgb(18, 96, 165, 250))
+            Fill = new SolidColorBrush(Color.FromArgb(18, ChartBlue.R, ChartBlue.G, ChartBlue.B))
         });
 
         var timeAxisCount = Math.Min(8, data.Count);
@@ -1332,7 +1336,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             c.Children.Add(new TextBlock
             {
                 Text = label,
-                FontSize = 9,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 RenderTransform = new TranslateTransform { X = x - 20, Y = padT + chartH + 4 }
             });
@@ -1429,7 +1433,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             {
                 Text = $"{i + 1}",
                 FontSize = 12,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = i < 3 ? new SolidColorBrush(barColor) : new SolidColorBrush(ThemeColors.DimText),
                 Width = 24,
                 VerticalAlignment = VerticalAlignment.Center
@@ -1437,7 +1441,7 @@ public sealed partial class BatteryAnalyzerPage : Page
             var nameText = new TextBlock
             {
                 Text = entry.ProcessName,
-                FontSize = 13,
+                FontSize = 14,
                 Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -1462,14 +1466,14 @@ public sealed partial class BatteryAnalyzerPage : Page
             var memText = new TextBlock
             {
                 Text = FormatBytes(entry.MemoryBytes),
-                FontSize = 11,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 64,
                 TextAlignment = TextAlignment.Right
             };
 
-            var row = new Grid { ColumnSpacing = 8, Padding = new Thickness(4, 5, 4, 5) };
+            var row = new Grid { ColumnSpacing = 8, Padding = new Thickness(4, 4, 4, 4) };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(24) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });

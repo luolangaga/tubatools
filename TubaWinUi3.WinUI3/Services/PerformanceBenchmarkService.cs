@@ -816,7 +816,7 @@ public static class PerformanceBenchmarkService
 			using var g = Graphics.FromImage(bitmap);
 			g.SmoothingMode = SmoothingMode.HighQuality;
 			g.TextRenderingHint = TextRenderingHint.AntiAlias;
-			bool isDark = ThemeService.CurrentTheme == AppTheme.Dark;
+			bool isDark = ThemeService.IsDarkEffective;
 			var bgColor = isDark ? Color.FromArgb(255, 30, 30, 30) : Color.FromArgb(255, 255, 255, 255);
 			var titleColor = isDark ? Color.FromArgb(255, 200, 200, 200) : Color.FromArgb(255, 40, 40, 40);
 			var labelColor = isDark ? Color.FromArgb(255, 140, 140, 140) : Color.FromArgb(255, 120, 120, 120);

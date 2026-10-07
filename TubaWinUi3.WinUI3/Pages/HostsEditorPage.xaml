@@ -22,57 +22,57 @@
             BackRequested="OnBackRequested" />
 
         <!-- Main content -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-            <StackPanel Spacing="14">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
                 <!-- Stat cards -->
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border x:Name="ActiveCard" Padding="12" CornerRadius="6" BorderThickness="1">
-                        <Grid ColumnSpacing="10">
+                    <Border x:Name="ActiveCard" Padding="12" CornerRadius="8" BorderThickness="1">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="36" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border x:Name="ActiveIcon" Width="36" Height="36" CornerRadius="6">
+                            <Border x:Name="ActiveIcon" Width="36" Height="36" CornerRadius="8">
                                 <FontIcon FontSize="16" Glyph="&#xE73E;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock FontSize="11" Opacity="1.0" Text="启用规则" />
-                                <TextBlock x:Name="ActiveCountText" FontSize="22" FontWeight="Bold" />
+                                <TextBlock FontSize="12" Text="启用规则" />
+                                <TextBlock x:Name="ActiveCountText" Style="{StaticResource StatValueStyle}" />
                             </StackPanel>
                         </Grid>
                     </Border>
-                    <Border x:Name="DisabledCard" Grid.Column="1" Padding="12" CornerRadius="6" BorderThickness="1">
-                        <Grid ColumnSpacing="10">
+                    <Border x:Name="DisabledCard" Grid.Column="1" Padding="12" CornerRadius="8" BorderThickness="1">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="36" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border x:Name="DisabledIcon" Width="36" Height="36" CornerRadius="6">
+                            <Border x:Name="DisabledIcon" Width="36" Height="36" CornerRadius="8">
                                 <FontIcon FontSize="16" Glyph="&#xE894;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock FontSize="11" Opacity="1.0" Text="禁用规则" />
-                                <TextBlock x:Name="DisabledCountText" FontSize="22" FontWeight="Bold" />
+                                <TextBlock FontSize="12" Text="禁用规则" />
+                                <TextBlock x:Name="DisabledCountText" Style="{StaticResource StatValueStyle}" />
                             </StackPanel>
                         </Grid>
                     </Border>
-                    <Border x:Name="AdminCard" Grid.Column="2" Padding="12" CornerRadius="6" BorderThickness="1">
-                        <Grid ColumnSpacing="10">
+                    <Border x:Name="AdminCard" Grid.Column="2" Padding="12" CornerRadius="8" BorderThickness="1">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="36" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border x:Name="AdminIcon" Width="36" Height="36" CornerRadius="6">
+                            <Border x:Name="AdminIcon" Width="36" Height="36" CornerRadius="8">
                                 <FontIcon FontSize="16" Glyph="&#xE77B;" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="2">
-                                <TextBlock FontSize="11" Opacity="1.0" Text="管理员" />
-                                <TextBlock x:Name="AdminText" FontSize="22" FontWeight="Bold" />
+                                <TextBlock FontSize="12" Text="管理员" />
+                                <TextBlock x:Name="AdminText" Style="{StaticResource StatValueStyle}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -81,31 +81,31 @@
                 <!-- Action buttons -->
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button x:Name="AddBtn" Click="AddBtn_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE710;" FontSize="12" />
                             <TextBlock Text="添加规则" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="SaveBtn" Click="SaveBtn_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE74E;" FontSize="12" />
                             <TextBlock Text="保存" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="BackupBtn" Click="BackupBtn_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE787;" FontSize="12" />
                             <TextBlock Text="备份" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="FlushBtn" Click="FlushBtn_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE72C;" FontSize="12" />
                             <TextBlock Text="刷新DNS" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="ReloadBtn" Click="ReloadBtn_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE777;" FontSize="12" />
                             <TextBlock Text="重载" />
                         </StackPanel>
@@ -115,7 +115,7 @@
                 <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
 
                 <!-- Column headers -->
-                <Border x:Name="HeaderBorder" Padding="12,6,12,6" CornerRadius="6,6,0,0">
+                <Border x:Name="HeaderBorder" Padding="12,8,12,8" CornerRadius="8,8,0,0">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -124,23 +124,23 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" FontSize="11" FontWeight="Bold" Opacity="1.0" Text="状态" />
-                        <TextBlock Grid.Column="1" FontSize="11" FontWeight="Bold" Opacity="1.0" Text="IP 地址" />
-                        <TextBlock Grid.Column="2" FontSize="11" FontWeight="Bold" Opacity="1.0" Text="主机名" />
-                        <TextBlock Grid.Column="3" FontSize="11" FontWeight="Bold" Opacity="1.0" Text="备注" />
-                        <TextBlock Grid.Column="4" FontSize="11" FontWeight="Bold" Opacity="1.0" Text="操作" />
+                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="状态" />
+                        <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="IP 地址" />
+                        <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="主机名" />
+                        <TextBlock Grid.Column="3" FontSize="12" FontWeight="SemiBold" Text="备注" />
+                        <TextBlock Grid.Column="4" FontSize="12" FontWeight="SemiBold" Text="操作" />
                     </Grid>
                 </Border>
 
                 <!-- List -->
-                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,6,6">
+                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8">
                     <StackPanel x:Name="ListContainer" />
                 </Border>
 
                 <!-- Loading -->
-                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,30,0,30" Visibility="Collapsed">
+                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,32,0,32" Visibility="Collapsed">
                     <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
-                    <TextBlock FontSize="13" Opacity="1.0" Text="正在加载 Hosts 文件..." />
+                    <TextBlock FontSize="14" Text="正在加载 Hosts 文件..." />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

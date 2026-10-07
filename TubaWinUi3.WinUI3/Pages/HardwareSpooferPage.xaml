@@ -22,53 +22,53 @@
             Subtitle="修改注册表中的硬件信息显示"
             Glyph="&#xEEA1;" />
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,0">
-            <StackPanel x:Name="MainPanel" Spacing="14">
-                <Grid ColumnSpacing="10">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel x:Name="MainPanel" Spacing="16">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="1.0" Text="已修改项" />
-                            <TextBlock x:Name="ModifiedCountText" FontSize="20" FontWeight="Bold" Text="0" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="已修改项" />
+                            <TextBlock x:Name="ModifiedCountText" FontSize="20" FontWeight="SemiBold" Text="0" />
                         </StackPanel>
                     </Border>
-                    <Border Grid.Column="1" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Column="1" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="1.0" Text="备份状态" />
-                            <TextBlock x:Name="BackupStatusText" FontSize="14" FontWeight="Bold" Text="无备份" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="备份状态" />
+                            <TextBlock x:Name="BackupStatusText" FontSize="14" FontWeight="SemiBold" Text="无备份" />
                         </StackPanel>
                     </Border>
-                    <Border Grid.Column="2" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                    <Border Grid.Column="2" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="1.0" Text="管理员权限" />
-                            <TextBlock x:Name="AdminStatusText" FontSize="14" FontWeight="Bold" Text="检测中..." />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="管理员权限" />
+                            <TextBlock x:Name="AdminStatusText" FontSize="14" FontWeight="SemiBold" Text="检测中..." />
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <Border x:Name="WarningBorder" Padding="14,10,14,10" BorderThickness="1" CornerRadius="6">
+                <Border x:Name="WarningBorder" Padding="12,8,12,8" BorderThickness="1" CornerRadius="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon x:Name="WarningIcon" FontSize="16" Glyph="&#xE7BA;" />
-                        <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" Text="修改注册表可能影响系统稳定性，建议在修改前创建系统还原点。部分软件可能仍通过其他方式检测真实硬件。" />
+                        <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" Text="修改注册表可能影响系统稳定性，建议在修改前创建系统还原点。部分软件可能仍通过其他方式检测真实硬件。" />
                     </StackPanel>
                 </Border>
 
                 <Expander x:Name="CpuExpander" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xEEA1;" />
-                            <TextBlock FontWeight="Bold" Text="CPU 处理器" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xEEA1;" />
+                            <TextBlock FontWeight="SemiBold" Text="CPU 处理器" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="CPU 名称：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="CPU 名称：" />
                             <ComboBox x:Name="CpuNameBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch" PlaceholderText="输入或选择 CPU 名称" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="厂商标识：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="厂商标识：" />
                             <ComboBox x:Name="CpuVendorBox" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0">
                                 <x:String>GenuineIntel</x:String>
                                 <x:String>AuthenticAMD</x:String>
@@ -76,55 +76,55 @@
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="频率 (MHz)：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="频率 (MHz)：" />
                             <TextBox x:Name="CpuMhzBox" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="如 3600" />
                         </Grid>
-                        <TextBlock x:Name="CpuOriginalText" FontSize="11" Opacity="1.0" TextWrapping="Wrap" />
+                        <TextBlock x:Name="CpuOriginalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Expander>
 
                 <Expander x:Name="GpuExpander" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xF211;" />
-                            <TextBlock FontWeight="Bold" Text="GPU 显卡" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xF211;" />
+                            <TextBlock FontWeight="SemiBold" Text="GPU 显卡" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="GPU 描述：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="GPU 描述：" />
                             <ComboBox x:Name="GpuDescBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch" PlaceholderText="输入或选择 GPU 名称" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="驱动提供商：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="驱动提供商：" />
                             <ComboBox x:Name="GpuProviderBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch">
                                 <x:String>NVIDIA</x:String>
                                 <x:String>AMD</x:String>
                                 <x:String>Intel</x:String>
                             </ComboBox>
                         </Grid>
-                        <TextBlock x:Name="GpuOriginalText" FontSize="11" Opacity="1.0" TextWrapping="Wrap" />
+                        <TextBlock x:Name="GpuOriginalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Expander>
 
                 <Expander x:Name="SystemExpander" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xE977;" />
-                            <TextBlock FontWeight="Bold" Text="系统信息" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xE977;" />
+                            <TextBlock FontWeight="SemiBold" Text="系统信息" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="产品名称：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="产品名称：" />
                             <ComboBox x:Name="SystemProductBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch" PlaceholderText="如 XPS 15 9530" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="制造商：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="制造商：" />
                             <ComboBox x:Name="SystemManufacturerBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch">
                                 <x:String>Dell Inc.</x:String>
                                 <x:String>LENOVO</x:String>
@@ -136,24 +136,24 @@
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="系统系列：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="系统系列：" />
                             <TextBox x:Name="SystemFamilyBox" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="可选" />
                         </Grid>
-                        <TextBlock x:Name="SystemOriginalText" FontSize="11" Opacity="1.0" TextWrapping="Wrap" />
+                        <TextBlock x:Name="SystemOriginalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Expander>
 
                 <Expander x:Name="BiosExpander" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xE977;" />
-                            <TextBlock FontWeight="Bold" Text="BIOS / 主板" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xE977;" />
+                            <TextBlock FontWeight="SemiBold" Text="BIOS / 主板" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="BIOS 厂商：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="BIOS 厂商：" />
                             <ComboBox x:Name="BiosVendorBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch">
                                 <x:String>American Megatrends Inc.</x:String>
                                 <x:String>Insyde Corp.</x:String>
@@ -163,12 +163,12 @@
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="BIOS 版本：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="BIOS 版本：" />
                             <TextBox x:Name="BiosVersionBox" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="可选" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="主板制造商：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="主板制造商：" />
                             <ComboBox x:Name="BoardManufacturerBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch">
                                 <x:String>ASUSTeK COMPUTER INC.</x:String>
                                 <x:String>Micro-Star International Co., Ltd.</x:String>
@@ -178,10 +178,10 @@
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="主板型号：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="主板型号：" />
                             <TextBox x:Name="BoardProductBox" Grid.Column="1" HorizontalAlignment="Stretch" PlaceholderText="可选" />
                         </Grid>
-                        <TextBlock x:Name="BiosOriginalText" FontSize="11" Opacity="1.0" TextWrapping="Wrap" />
+                        <TextBlock x:Name="BiosOriginalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Expander>
 
@@ -189,7 +189,7 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="24,12,24,20" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Padding="24,12,24,16" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -199,25 +199,25 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button Click="ApplyButton_Click" Style="{ThemeResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE73E;" />
                         <TextBlock Text="应用修改" />
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="1" Click="RestoreButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="一键恢复" />
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="2" Click="BackupButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE787;" />
                         <TextBlock Text="备份当前" />
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="4" Click="RefreshButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="刷新" />
                     </StackPanel>

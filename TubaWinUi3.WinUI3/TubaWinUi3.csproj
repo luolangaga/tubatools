@@ -173,6 +173,16 @@
 
     <PackageReference Include="System.Speech" Version="10.0.10" />
 
+    <!-- 本地 AI 试炼场：Windows ML 自包含运行时（ONNX Runtime 1.27 + DirectML + ExecutionProviderCatalog
+         的 WinRT API），负责 NPU/GPU/CPU 执行提供程序的发现、按需下载与注册。
+         原生资产仅 win-x64 / win-arm64（无 x86），页面在 x86 下做降级提示。 -->
+    <PackageReference Include="Microsoft.Windows.AI.MachineLearning" Version="2.4.89" />
+    <!-- 本地 AI 试炼场：ONNX Runtime GenAI（LLM 生成循环 / KV Cache / 采样），WinML 变体经
+         Windows ML 自动选择硬件（NPU → GPU → CPU）。不要同时引用其它 GenAI 变体（原生库同名冲突）。
+         该包自带 targets 明确拒绝 x86 平台，故 x86 RID 下排除引用，改用编译桩。 -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.WinML" Version="0.17.1"
+                      Condition="'$(RuntimeIdentifier)' != 'win-x86'" />
+
     <PackageReference Include="WinUI3Localizer" Version="2.3.0" />
 
   </ItemGroup>
@@ -183,6 +193,11 @@
     <PublishTrimmed>false</PublishTrimmed>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
+  <!-- x86：Windows ML 运行时无 32 位原生资产，且 ORT GenAI 包拒绝 x86；本地 LLM 部分以编译桩替代。 -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x86'">
+    <DefineConstants>$(DefineConstants);AI_PLAYGROUND_X86</DefineConstants>
   </PropertyGroup>
 
   <!--

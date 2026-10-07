@@ -476,6 +476,29 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// 被外部启动（重复启动工具箱、桌面快捷方式、右键菜单）时唤醒主窗口：
+    /// 从托盘恢复、取消最小化后尽力置到前台。返回窗口是否可见。
+    /// 与 <see cref="RestoreFromTray"/> 的差别只在「强制前台」——恢复本身已由
+    /// AppWindow_Changed 复位托盘/会话状态。
+    /// </summary>
+    public bool ActivateFromExternal()
+    {
+        var visible = RestoreFromTray();
+        try
+        {
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            ShowWindow(hwnd, SW_SHOW);
+            BringWindowToTop(hwnd);
+            SetForegroundWindow(hwnd);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 外部激活置前失败（已忽略）: {ex.Message}");
+        }
+        return visible;
+    }
+
     /// <summary>退出程序：放行关闭拦截，让 <see cref="MainWindow_Closed"/> 跑完整清理。</summary>
     public void CloseForExit()
     {
@@ -518,8 +541,13 @@ public sealed partial class MainWindow : Window
         // 残留会让下次启动的 FPS 采集失效；轮询定时器/自动覆盖层/未落盘记录一并收尾。
         try { LiteMonitorService.Instance.Dispose(); } catch { }
         try { GameOverlayAutoService.Instance.Stop(); } catch { }
+        // 本地 ONNX 模型句柄（AI 助手的「本地模型」提供商）显式释放
+        try { Services.Ai.Onnx.LocalModelRuntime.Unload(); } catch { }
         // 托盘图标必须显式移除：进程退出后残留的图标要等鼠标划过去才消失
         try { TrayIconService.Dispose(); } catch { }
+
+        // 单实例：停激活监听、释放互斥体（让提权重启的新实例能立即接管）、删 PID 文件
+        try { SingleInstanceService.Shutdown(); } catch { }
 
         // 通知退出兜底看门狗「清理已跑完」：它据此决定何时可以硬退，
         // 避免 3 秒硬超时砍在清理中途（FPS 的 ETW 会话会因此泄漏）
@@ -1193,4 +1221,17 @@ public sealed partial class MainWindow : Window
                 break;
         }
     }
+
+    // ---------- 外部激活置前（ActivateFromExternal） ----------
+
+    private const int SW_SHOW = 5;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 }

@@ -9,8 +9,8 @@
     mc:Ignorable="d">
 
     <Grid RowSpacing="0">
-        <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,0">
-            <StackPanel Spacing="14" MaxWidth="960" HorizontalAlignment="Center">
+        <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16" MaxWidth="960" HorizontalAlignment="Center">
 
                 <Border Padding="12,8,12,8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
                     <Grid ColumnSpacing="8">
@@ -28,25 +28,25 @@
                         <CheckBox x:Name="GpuSelBox" Grid.Column="1" IsChecked="True" Content="GPU 烤机" MinWidth="96" />
                         <CheckBox x:Name="NetSelBox" Grid.Column="2" IsChecked="False" Content="网卡烤机" MinWidth="96" />
                         <Button x:Name="TripleStressBtn" Grid.Column="3" Click="TripleStress_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xECAD;" />
                                 <TextBlock Text="一键三烤" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="StartStressBtn" Grid.Column="4" Click="StartStress_Click" Style="{ThemeResource AccentButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="StartStressBtn" Grid.Column="4" Click="StartStress_Click" Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE768;" />
                                 <TextBlock Text="开始烤机" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="ExportBtn" Grid.Column="6" Click="Export_Click" IsEnabled="False">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xEDE1;" />
                                 <TextBlock Text="导出报告" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="StopBtn" Grid.Column="7" Click="Stop_Click" IsEnabled="False">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE71A;" />
                                 <TextBlock Text="停止" />
                             </StackPanel>
@@ -54,11 +54,11 @@
                     </Grid>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="16"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="16"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
-                        <TextBlock FontSize="14" FontWeight="Bold" Text="烤机时长设置" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="烤机时长设置" />
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -66,20 +66,20 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="CPU 烤机时长 (分钟)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 烤机时长 (分钟)" />
                                 <NumberBox x:Name="CpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="GPU 烤机时长 (分钟)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 烤机时长 (分钟)" />
                                 <NumberBox x:Name="GpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="网卡烤机时长 (分钟)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="网卡烤机时长 (分钟)" />
                                 <NumberBox x:Name="NetDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
                             </StackPanel>
                         </Grid>
-                        <TextBlock FontSize="11" Opacity="0.6" TextWrapping="Wrap">
-                            <Run FontWeight="Bold" Text="时长含义：" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap">
+                            <Run FontWeight="SemiBold" Text="时长含义：" />
                             <Run Text="15 分钟 — 快速验证散热与稳定性；30 分钟 — 常规稳定性测试；1 小时+ — 深度烤机。" />
                             <LineBreak />
                             <Run Text="可自由勾选要烤的部件（CPU / GPU / 网卡），多选时各部件按自己的时长运行，全部结束后自动停止。" />
@@ -89,24 +89,24 @@
                     </StackPanel>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="16"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="16"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="FurMark GPU 参数设置" VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Click="ResetFurMarkSettings_Click" Padding="10,4">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="FurMark GPU 参数设置" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Click="ResetFurMarkSettings_Click" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE72C;" />
                                     <TextBlock FontSize="12" Text="恢复默认" />
                                 </StackPanel>
                             </Button>
                         </Grid>
-                        <Grid ColumnSpacing="12" RowSpacing="10">
+                        <Grid ColumnSpacing="12" RowSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -121,7 +121,7 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="渲染 API" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="渲染 API" />
                                 <ComboBox x:Name="ApiBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="OpenGL 3.2 (furmark-gl)" Tag="furmark-gl" />
                                     <ComboBoxItem Content="Vulkan (furmark-vk)" Tag="furmark-vk" />
@@ -130,7 +130,7 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="分辨率" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="分辨率" />
                                 <ComboBox x:Name="ResolutionBox" HorizontalAlignment="Stretch" SelectedIndex="1" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="1280 × 720" Tag="1280,720" />
                                     <ComboBoxItem Content="1920 × 1080" Tag="1920,1080" />
@@ -142,7 +142,7 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="MSAA 抗锯齿" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="MSAA 抗锯齿" />
                                 <ComboBox x:Name="MsaaBox" HorizontalAlignment="Stretch" SelectedIndex="2" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="关闭 (1x)" Tag="1" />
                                     <ComboBoxItem Content="2x" Tag="2" />
@@ -151,7 +151,7 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="3" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="显存数据量 (VRAM)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="显存数据量 (VRAM)" />
                                 <ComboBox x:Name="VramBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="默认 (0 GB)" Tag="0" />
                                     <ComboBoxItem Content="2 GB" Tag="2" />
@@ -167,18 +167,18 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="GPU 索引 (0 起算)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 索引 (0 起算)" />
                                 <NumberBox x:Name="GpuIndexBox" Value="0" Minimum="0" Maximum="15" SpinButtonPlacementMode="Compact" HorizontalAlignment="Stretch" ValueChanged="FurMarkNumber_Changed" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="VSync 垂直同步" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="VSync 垂直同步" />
                                 <ComboBox x:Name="VsyncBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="关闭" Tag="0" />
                                     <ComboBoxItem Content="开启" Tag="1" />
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="2" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="动态背景图像" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="动态背景图像" />
                                 <ComboBox x:Name="BkgImgBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="默认 (0)" Tag="0" />
                                     <ComboBoxItem Content="背景 1" Tag="1" />
@@ -187,7 +187,7 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="3" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="毛皮颜色图像" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="毛皮颜色图像" />
                                 <ComboBox x:Name="FurImgBox" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="FurMarkSetting_Changed">
                                     <ComboBoxItem Content="默认 (0)" Tag="0" />
                                     <ComboBoxItem Content="图像 1" Tag="1" />
@@ -201,24 +201,24 @@
 
                             <ToggleSwitch Grid.Row="3" x:Name="GpumonToggle" Header="GPU 监控" OnContent="开" OffContent="关" IsOn="True" Toggled="FurMarkToggle_Changed" />
                             <ToggleSwitch Grid.Row="3" Grid.Column="1" x:Name="GlCoreToggle" Header="OpenGL 核心模式" OnContent="开" OffContent="关" IsOn="False" Toggled="FurMarkToggle_Changed" />
-                            <TextBlock Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" FontSize="11" Opacity="0.6" TextWrapping="Wrap" VerticalAlignment="Center"
+                            <TextBlock Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="2" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" VerticalAlignment="Center"
                                        Text="显存数据量会大幅提高 VRAM 负载（显存不足时自动按 0 处理）；DXT5 压缩纹理与 OpenGL 核心模式仅对 OpenGL 渲染有效。" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="16"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="16"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="网卡烤机参数设置" VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Click="ResetNetSettings_Click" Padding="10,4">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网卡烤机参数设置" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Click="ResetNetSettings_Click" Padding="8,4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE72C;" />
                                     <TextBlock FontSize="12" Text="恢复默认" />
                                 </StackPanel>
@@ -230,11 +230,11 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="4" MaxWidth="240" HorizontalAlignment="Left">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="每秒数据量 (MB/s)" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="每秒数据量 (MB/s)" />
                                 <NumberBox x:Name="NetDataRateBox" Value="100" Minimum="1" Maximum="10000" SpinButtonPlacementMode="Compact" Width="200" HorizontalAlignment="Left" ValueChanged="NetSetting_NumberChanged" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4">
-                                <TextBlock FontSize="12" Opacity="0.8" Text="测试目标模式" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="测试目标模式" />
                                 <ComboBox x:Name="NetTargetModeBox" SelectedIndex="0" HorizontalAlignment="Left" MinWidth="320" SelectionChanged="NetSetting_Changed">
                                     <ComboBoxItem Content="自动（有线→广播全双工，无线→单播路由器）" />
                                     <ComboBoxItem Content="单播 · 路由器（发送优先）" />
@@ -242,15 +242,15 @@
                                 </ComboBox>
                             </StackPanel>
                         </Grid>
-                        <TextBlock x:Name="NetRefText" FontSize="11" Opacity="0.7" TextWrapping="Wrap" />
-                        <TextBlock FontSize="11" Opacity="0.6" TextWrapping="Wrap">
-                            <Run FontWeight="Bold" Text="说明：" />
+                        <TextBlock x:Name="NetRefText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap">
+                            <Run FontWeight="SemiBold" Text="说明：" />
                             <Run Text="单播模式向路由器发送，速率最高（WiFi 实测约为链路的 50%，有线千兆 100+ MB/s），但接收为 0（路由器不回包）；广播模式由交换机/AP 把帧回环到本机网卡，收发双工，有线千兆可全双工跑满，WiFi 上会被 AP 限速到几 MB/s。" />
                         </TextBlock>
                     </StackPanel>
                 </Border>
 
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -258,36 +258,36 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="CPU 温度" />
-                            <TextBlock x:Name="CpuTempText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 温度" />
+                            <TextBlock x:Name="CpuTempText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="1" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="CPU 占用" />
-                            <TextBlock x:Name="CpuUsageText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 占用" />
+                            <TextBlock x:Name="CpuUsageText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="2" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="CPU 频率" />
-                            <TextBlock x:Name="CpuClockText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 频率" />
+                            <TextBlock x:Name="CpuClockText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="3" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="CPU 功耗" />
-                            <TextBlock x:Name="CpuPowerText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 功耗" />
+                            <TextBlock x:Name="CpuPowerText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -295,36 +295,36 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="GPU 温度" />
-                            <TextBlock x:Name="GpuTempText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 温度" />
+                            <TextBlock x:Name="GpuTempText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="1" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="GPU 频率" />
-                            <TextBlock x:Name="GpuClockText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 频率" />
+                            <TextBlock x:Name="GpuClockText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="2" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="GPU 功耗" />
-                            <TextBlock x:Name="GpuPowerText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 功耗" />
+                            <TextBlock x:Name="GpuPowerText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="3" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="已运行" />
-                            <TextBlock x:Name="ElapsedText" FontSize="22" FontWeight="Bold" Text="0:00" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="已运行" />
+                            <TextBlock x:Name="ElapsedText" Style="{StaticResource StatValueStyle}" Text="0:00" />
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -332,40 +332,40 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="网卡发送速率" />
-                            <TextBlock x:Name="NetTxRateText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="网卡发送速率" />
+                            <TextBlock x:Name="NetTxRateText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="1" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="网卡接收速率" />
-                            <TextBlock x:Name="NetRxRateText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="网卡接收速率" />
+                            <TextBlock x:Name="NetRxRateText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="2" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="已发送数据" />
-                            <TextBlock x:Name="NetSentText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="已发送数据" />
+                            <TextBlock x:Name="NetSentText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                     <Border Grid.Column="3" Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.8" Text="链路速率" />
-                            <TextBlock x:Name="NetLinkText" FontSize="22" FontWeight="Bold" Text="--" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="链路速率" />
+                            <TextBlock x:Name="NetLinkText" Style="{StaticResource StatValueStyle}" Text="--" />
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="12"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="12"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
-                        <TextBlock FontSize="14" FontWeight="Bold" Text="CPU 监控曲线" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="CPU 监控曲线" />
                         <Grid ColumnSpacing="8" Height="120">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -373,43 +373,43 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="温度 (°C)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="温度 (°C)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="CpuTempChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="1" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border Grid.Column="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="占用 (%)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="占用 (%)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="CpuUsageChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="2" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border Grid.Column="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="频率 (MHz)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="频率 (MHz)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="CpuClockChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="3" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border Grid.Column="3" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="功耗 (W)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="功耗 (W)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="CpuPowerChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
@@ -417,44 +417,44 @@
                     </StackPanel>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="12"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="12"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
-                        <TextBlock FontSize="14" FontWeight="Bold" Text="GPU 监控曲线" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="GPU 监控曲线" />
                         <Grid ColumnSpacing="8" Height="120">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="温度 (°C)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="温度 (°C)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="GpuTempChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="1" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border Grid.Column="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="频率 (MHz)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="频率 (MHz)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="GpuClockChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="2" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border Grid.Column="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="功耗 (W)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="功耗 (W)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="GpuPowerChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
@@ -462,8 +462,8 @@
                     </StackPanel>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="12"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="12"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                     <StackPanel Spacing="8">
                         <Grid ColumnSpacing="16">
@@ -471,15 +471,15 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="网卡监控曲线" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网卡监控曲线" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Border Width="10" Height="10" CornerRadius="2" Background="#38BDF8" VerticalAlignment="Center" />
-                                    <TextBlock FontSize="11" Opacity="0.8" Text="发送 (MB/s)" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Width="10" Height="10" CornerRadius="4" Background="{ThemeResource DataSeries1Brush}" VerticalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="发送 (MB/s)" />
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Border Width="10" Height="10" CornerRadius="2" Background="#FB7185" VerticalAlignment="Center" />
-                                    <TextBlock FontSize="11" Opacity="0.8" Text="接收 (MB/s)" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Width="10" Height="10" CornerRadius="4" Background="{ThemeResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="接收 (MB/s)" />
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
@@ -487,13 +487,13 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
+                            <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="4">
                                 <Grid RowSpacing="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
-                                    <TextBlock FontSize="10" Opacity="0.6" Text="吞吐 (MB/s)" HorizontalAlignment="Center" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="吞吐 (MB/s)" HorizontalAlignment="Center" />
                                     <lvc:CartesianChart x:Name="NetChart" Grid.Row="1" Background="Transparent" />
                                 </Grid>
                             </Border>
@@ -501,23 +501,23 @@
                     </StackPanel>
                 </Border>
 
-                <Border BorderThickness="1" CornerRadius="6" Padding="16"
-                        BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
+                <Border BorderThickness="1" CornerRadius="8" Padding="16"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="运行日志" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="运行日志" />
                             <Button Grid.Column="1" Click="ClearLog_Click" ToolTipService.ToolTip="清空日志">
                                 <FontIcon Glyph="&#xE74D;" FontSize="12" />
                             </Button>
                         </Grid>
-                        <Border BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" Padding="8" CornerRadius="4">
+                        <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Padding="8" CornerRadius="4">
                             <ScrollViewer x:Name="LogScrollViewer" Height="100" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" />
+                                <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </Border>
                     </StackPanel>

@@ -22,13 +22,13 @@
             Glyph="&#xE774;">
             <controls:ToolPageHeader.Actions>
                 <ProgressRing x:Name="LoadingRing" Width="20" Height="20" IsActive="False" VerticalAlignment="Center" />
-                <Button x:Name="BackButton" Click="BackButton_Click" Padding="6" ToolTipService.ToolTip="网页后退">
+                <Button x:Name="BackButton" Click="BackButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="网页后退">
                     <FontIcon FontSize="12" Glyph="&#xE72B;" />
                 </Button>
-                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Padding="6" ToolTipService.ToolTip="刷新">
+                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="刷新">
                     <FontIcon FontSize="12" Glyph="&#xE72C;" />
                 </Button>
-                <Button x:Name="OpenInBrowserButton" Click="OpenInBrowserButton_Click" Padding="6" ToolTipService.ToolTip="在浏览器中打开">
+                <Button x:Name="OpenInBrowserButton" Click="OpenInBrowserButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="在浏览器中打开">
                     <FontIcon FontSize="12" Glyph="&#xE774;" />
                 </Button>
             </controls:ToolPageHeader.Actions>

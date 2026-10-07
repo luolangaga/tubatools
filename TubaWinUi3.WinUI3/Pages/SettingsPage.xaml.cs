@@ -49,6 +49,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private bool _hardwareMultiDeviceNewLineInitializing;
     private bool _cpuzBusy;
     private bool _aiSettingsInitializing;
+    private bool _aiNameSyncing;
     private bool _aiTesting;
     private bool _zenBusy;
     private bool _proxySettingsInitializing;
@@ -212,6 +213,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitDefaultPageComboBox();
         InitShowFrequentToggle();
         InitLanguageComboBox();
+        InitThemeSelector();
         InitFastModeToggle();
         InitRememberWindowToggle();
         InitCloseToTrayToggle();
@@ -242,6 +244,16 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             ToolsCommunityTitleText.Text = LocalizationService.L("Settings_ToolsCommunity_TitleMsix", "工具");
             ToolsCommunityDescText.Text = LocalizationService.L("Settings_ToolsCommunity_DescMsix", "配置管理、自定义工具、导出");
         }
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前设置重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            UpdateBackdropOptionSelection(BackdropService.GetBackdropType());
+            UpdateTintColorSelection(_currentTintColor);
+            PopulateBgList();
+            UpdateActiveInterceptStatus();
+            UpdateAiConfigStatus();
+        };
     }
 
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -497,6 +509,30 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitLanguageComboBox();
     }
 
+    /// <summary>主题选择器：0 跟随系统 / 1 浅色 / 2 深色。</summary>
+    private void InitThemeSelector()
+    {
+        ThemeSelector.SelectedIndex = ThemeService.CurrentTheme switch
+        {
+            AppTheme.Light => 1,
+            AppTheme.Dark => 2,
+            _ => 0,
+        };
+    }
+
+    private void ThemeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var tag = ((sender as ComboBox)?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        var theme = tag switch
+        {
+            "light" => AppTheme.Light,
+            "dark" => AppTheme.Dark,
+            _ => AppTheme.Default,
+        };
+        // SetTheme 对相同值有 no-op 守卫，初始化赋值不会重复应用主题
+        ThemeService.SetTheme(theme);
+    }
+
     /// <summary>语言切换后刷新自绘文本（打了 Uid 的控件由 WinUI3Localizer 自动更新）。</summary>
     public void ApplyLocalization()
     {
@@ -748,7 +784,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             var tag = border.Tag?.ToString();
             var isSelected = tag == selected.ToString();
             border.BorderBrush = isSelected
-                ? new SolidColorBrush(Color.FromArgb(255, 0, 120, 215))
+                ? new SolidColorBrush(ThemeColors.AccentBlue)
                 : (Brush)App.Current.Resources["SubtleFillColorSecondaryBrush"];
         }
     }
@@ -834,7 +870,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         {
             var isSelected = BackdropSettings.ParseColor(swatch.Tag?.ToString(), Color.FromArgb(0, 0, 0, 0)) == color;
             swatch.BorderBrush = isSelected
-                ? new SolidColorBrush(Color.FromArgb(255, 0, 120, 215))
+                ? new SolidColorBrush(ThemeColors.AccentBlue)
                 : (Brush)App.Current.Resources["ControlStrokeColorDefaultBrush"];
         }
     }
@@ -904,7 +940,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var thumbnailBorder = new Border
         {
             Width = 140,
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             BorderThickness = new Thickness(isSelected ? 2 : 1),
             BorderBrush = isSelected ? accentBrush : (Brush)App.Current.Resources["CardStrokeColorDefaultBrush"],
             Tag = entry.Path,
@@ -935,8 +971,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var nameText = new TextBlock
         {
             Text = entry.FileName,
-            FontSize = 11,
-            Opacity = 0.72,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -956,8 +992,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var deleteIcon = new FontIcon
         {
             Glyph = "\uE74D",
-            FontSize = 10,
-            Foreground = (Brush)App.Current.Resources["TextFillColorSecondaryBrush"],
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
         };
         deleteButton.Content = deleteIcon;
         deleteButton.Click += BgDeleteItem_Click;
@@ -973,7 +1009,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             {
                 Width = 20,
                 Height = 20,
-                CornerRadius = new CornerRadius(10),
+                CornerRadius = new CornerRadius(12),
                 Background = accentBrush,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Top,
@@ -982,7 +1018,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             var checkIcon = new FontIcon
             {
                 Glyph = "\uE73E",
-                FontSize = 10,
+                FontSize = 12,
                 Foreground = (Brush)App.Current.Resources["TextOnAccentFillColorPrimaryBrush"],
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -1269,17 +1305,17 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         if (!enabled)
         {
             ActiveInterceptStatusText.Text = LocalizationService.L("Settings_InterceptStatusOff", "已关闭");
-            ActiveInterceptStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Gray);
+            ActiveInterceptStatusText.Foreground = new SolidColorBrush(ThemeColors.Neutral);
         }
         else if (ActiveInterceptService.IsRunning)
         {
             ActiveInterceptStatusText.Text = LocalizationService.L("Settings_InterceptStatusRunning", "运行中");
-            ActiveInterceptStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+            ActiveInterceptStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
         }
         else
         {
             ActiveInterceptStatusText.Text = LocalizationService.L("Settings_InterceptStatusBackendMissing", "未运行（后端缺失）");
-            ActiveInterceptStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+            ActiveInterceptStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
     }
 
@@ -1421,25 +1457,25 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
         var stack = new StackPanel { Spacing = 12 };
 
+        // 语义色统一取自 ThemeColors（随生效主题解析），透明度为派生的浅底/描边
+        var cautionColor = ThemeColors.AccentOrange;
+        var successColor = ThemeColors.AccentGreen;
+        var accentColor = ThemeColors.AccentBlue;
+        var darkTheme = ThemeService.IsDarkEffective;
+
         stack.Children.Add(new TextBlock
         {
             Text = LocalizationService.L("Settings_CpuzIntro", "当前硬件信息通过 WMI（Windows 管理规范）获取，数据来源于厂商在 SMBIOS/DMI 中填写的内容。"),
             TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.85
+            Foreground = new SolidColorBrush(ThemeColors.SecondaryText)
         });
 
         var problemBorder = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(6),
-            Background = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(40, 255, 185, 0)
-                    : Color.FromArgb(30, 200, 130, 0)),
-            BorderBrush = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(80, 255, 185, 0)
-                    : Color.FromArgb(60, 200, 130, 0)),
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)40 : (byte)30, cautionColor.R, cautionColor.G, cautionColor.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)80 : (byte)60, cautionColor.R, cautionColor.G, cautionColor.B)),
             BorderThickness = new Thickness(1)
         };
         problemBorder.Child = new StackPanel
@@ -1450,15 +1486,15 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzWmiWarningTitle", "⚠ WMI 数据可能被伪造"),
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     FontSize = 14
                 },
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzWmiWarningBody", "部分厂商或商家可能通过修改 BIOS/SMBIOS 信息来伪造 CPU 型号、内存品牌、主板型号等，导致 WMI 读取到的信息与实际硬件不符。"),
                     TextWrapping = TextWrapping.Wrap,
-                    Opacity = 0.85,
-                    FontSize = 13
+                    Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
+                    FontSize = 14
                 }
             }
         };
@@ -1467,15 +1503,9 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var solutionBorder = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(6),
-            Background = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(40, 0, 200, 100)
-                    : Color.FromArgb(25, 0, 160, 80)),
-            BorderBrush = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(80, 0, 200, 100)
-                    : Color.FromArgb(60, 0, 160, 80)),
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)40 : (byte)25, successColor.R, successColor.G, successColor.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)80 : (byte)60, successColor.R, successColor.G, successColor.B)),
             BorderThickness = new Thickness(1)
         };
         solutionBorder.Child = new StackPanel
@@ -1486,15 +1516,15 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzHowTitle", "✓ CPU-Z 读取原理"),
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     FontSize = 14
                 },
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzHowBody", "CPU-Z 通过 CPUID 指令直接读取 CPU 硬件寄存器，通过 PCI 枚举直接扫描硬件，通过 SPD 芯片直接读取内存条信息——这些是底层硬件级别的数据，厂商无法通过修改 SMBIOS 来伪造。"),
                     TextWrapping = TextWrapping.Wrap,
-                    Opacity = 0.85,
-                    FontSize = 13
+                    Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
+                    FontSize = 14
                 }
             }
         };
@@ -1503,15 +1533,9 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var warnBorder = new Border
         {
             Padding = new Thickness(12),
-            CornerRadius = new CornerRadius(6),
-            Background = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(40, 100, 150, 255)
-                    : Color.FromArgb(25, 60, 120, 255)),
-            BorderBrush = new SolidColorBrush(
-                ThemeService.CurrentTheme == AppTheme.Dark
-                    ? Color.FromArgb(80, 100, 150, 255)
-                    : Color.FromArgb(60, 60, 120, 255)),
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)40 : (byte)25, accentColor.R, accentColor.G, accentColor.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(darkTheme ? (byte)80 : (byte)60, accentColor.R, accentColor.G, accentColor.B)),
             BorderThickness = new Thickness(1)
         };
         warnBorder.Child = new StackPanel
@@ -1522,15 +1546,15 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzNotesTitle", "⏱ 注意事项"),
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     FontSize = 14
                 },
                 new TextBlock
                 {
                     Text = LocalizationService.L("Settings_CpuzNotesBody", "• 使用 CPU-Z 获取信息需要约 3~8 秒，期间会短暂启动 CPU-Z 进程\n• 获取完成后会自动关闭 CPU-Z 进程\n• 切换后可在设置中随时切回 WMI 数据源"),
                     TextWrapping = TextWrapping.Wrap,
-                    Opacity = 0.85,
-                    FontSize = 13
+                    Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
+                    FontSize = 14
                 }
             }
         };
@@ -1602,6 +1626,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private void RefreshAiProviderList()
     {
+        AiProviderStore.SyncLocalProviderModels();
         var providers = AiProviderStore.GetProviders();
         var selectedId = AiProviderStore.SelectedProviderId;
         // 必须传副本：传活列表实例时，列表被原地修改后 ItemsSourceView 快照不刷新，
@@ -1620,6 +1645,21 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         AiEndpointTextBox.Text = provider.BaseUrl ?? "";
         AiEndpointTextBox.IsEnabled = !provider.EndpointLocked;
         AiApiKeyBox.Password = provider.ApiKey ?? "";
+
+        var isLocal = provider.Kind == ProviderKind.Local;
+
+        // 名称：预设不可改（由「恢复默认」复位），自定义可改
+        _aiNameSyncing = true;
+        AiProviderNameBox.Text = provider.Name;
+        _aiNameSyncing = false;
+        AiProviderNameBox.IsEnabled = !provider.IsPreset;
+        AiDeleteProviderButton.IsEnabled = !provider.IsPreset;
+
+        // 本地模型提供商没有端点/Key/手工模型列表（模型由「本地 AI 试炼场」派生）
+        AiEndpointTextBox.IsEnabled = !provider.EndpointLocked && !isLocal;
+        AiApiKeyBox.IsEnabled = !isLocal;
+        AiNewModelBox.IsEnabled = !isLocal;
+        AiAddModelButton.IsEnabled = !isLocal;
 
         // ItemsSource 用同一份列表实例，保证 SelectedItem 引用一致
         var models = provider.Models.ToList();
@@ -1686,16 +1726,22 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private void UpdateAiConfigStatus()
     {
-        if (AiService.IsUsingDefaultModel)
+        if (AiService.IsLocalProviderSelected)
+        {
+            AiConfigStatusText.Text = LocalizationService.L("Settings_AiProvider_LocalHint",
+                "本地模型：对话在「本地 AI 试炼场」的模型库中下载/导入；仅 AI 助手使用本地推理，其他 AI 功能仍走自带网关。");
+            AiConfigStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentBlue);
+        }
+        else if (AiService.IsUsingDefaultModel)
         {
             AiConfigStatusText.Text = LocalizationService.L("Settings_AiUsingDefaultModel", "⚠️ 使用自带默认模型，可能出现排队/限额满速，质量低下等问题。推荐使用 DeepSeek V4 Pro。");
-            AiConfigStatusText.Foreground = new SolidColorBrush(Color.FromArgb(255, 251, 191, 36));
+            AiConfigStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentOrange);
         }
         else
         {
             var provider = AiProviderStore.SelectedProvider;
             AiConfigStatusText.Text = string.Format(LocalizationService.L("Settings_AiConfigured", "已配置：{0} · {1}"), provider.Name, AiProviderStore.SelectedModelId);
-            AiConfigStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Green);
+            AiConfigStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
         }
     }
 
@@ -1713,6 +1759,44 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var provider = AiProviderStore.AddCustomProvider();
         RefreshAiProviderList();
         LoadAiProviderIntoUi(provider.Id);
+    }
+
+    private async void AiDeleteProviderButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (CurrentAiProvider() is not { } provider) return;
+        if (provider.IsPreset) return;
+
+        var dialog = new ContentDialog
+        {
+            Title = LocalizationService.L("Settings_AiProvider_DeleteTitle", "删除提供商"),
+            Content = new TextBlock
+            {
+                Text = string.Format(LocalizationService.L("Settings_AiProvider_DeleteConfirm", "确定删除提供商「{0}」？此操作不可恢复。"), provider.Name),
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = LocalizationService.L("Settings_AiProvider_DeleteButton", "删除"),
+            CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+            RequestedTheme = ThemeService.CurrentElementTheme,
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+        AiProviderStore.DeleteProvider(provider.Id);
+        RefreshAiProviderList();
+        LoadAiProviderIntoUi(null);
+    }
+
+    private void AiProviderNameBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_aiSettingsInitializing || _aiNameSyncing) return;
+        if (CurrentAiProvider() is not { } provider) return;
+        if (provider.IsPreset) return;
+        AiProviderStore.RenameProvider(provider.Id, AiProviderNameBox.Text);
+        // 更新下拉显示名（不重建列表以免打断输入焦点）
+        AiProviderCombo.ItemsSource = AiProviderStore.GetProviders().ToList();
+        AiProviderCombo.SelectedItem = AiProviderStore.GetProvider(provider.Id);
+        UpdateAiConfigStatus();
     }
 
     private void AiResetProviderButton_Click(object sender, RoutedEventArgs e)
@@ -1857,14 +1941,14 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                 AiTestIcon.Glyph = "\uE73E";
                 AiTestButtonText.Text = LocalizationService.L("Settings_AiTestSuccess", "连接成功");
                 AiConfigStatusText.Text = LocalizationService.L("Settings_AiTestSuccessStatus", "AI 服务已配置，连接测试成功");
-                AiConfigStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Green);
+                AiConfigStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
             }
             else
             {
                 AiTestIcon.Glyph = "\uE783";
                 AiTestButtonText.Text = LocalizationService.L("Settings_AiTestFailed", "连接失败");
                 AiConfigStatusText.Text = string.Format(LocalizationService.L("Settings_AiTestFailedStatus", "连接失败：{0}"), result.Error);
-                AiConfigStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Red);
+                AiConfigStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
 
                 var dialog = new ContentDialog
                 {
@@ -1877,7 +1961,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                         {
                             Text = result.Error ?? LocalizationService.L("Common_UnknownError", "未知错误"),
                             TextWrapping = TextWrapping.Wrap,
-                            FontSize = 13
+                            FontSize = 14
                         }
                     },
                     CloseButtonText = LocalizationService.L("Common_Confirm", "确定"),
@@ -2020,7 +2104,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                         ProxyTestIcon.Glyph = "\uE73E";
                         ProxyTestButtonText.Text = LocalizationService.L("Settings_AiTestSuccess", "连接成功");
                         ProxyTestStatusText.Text = string.Format(LocalizationService.L("Settings_ProxyTestSuccess", "代理连接成功（{0}）"), response.StatusCode);
-                        ProxyTestStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Green);
+                        ProxyTestStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
                         return;
                     }
                 }
@@ -2033,14 +2117,14 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             ProxyTestIcon.Glyph = "\uE783";
             ProxyTestButtonText.Text = LocalizationService.L("Settings_AiTestFailed", "连接失败");
             ProxyTestStatusText.Text = lastError?.Message ?? LocalizationService.L("Settings_ProxyTestUnreachable", "无法连接代理服务器");
-            ProxyTestStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Red);
+            ProxyTestStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
         catch (Exception ex)
         {
             ProxyTestIcon.Glyph = "\uE783";
             ProxyTestButtonText.Text = LocalizationService.L("Settings_AiTestFailed", "连接失败");
             ProxyTestStatusText.Text = ex.Message;
-            ProxyTestStatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.Red);
+            ProxyTestStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
         finally
         {
@@ -2223,7 +2307,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 80,
             MaxHeight = 160,
-            FontSize = 13,
+            FontSize = 14,
         };
 
         var stepsBox = new TextBox
@@ -2233,13 +2317,13 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 80,
             MaxHeight = 160,
-            FontSize = 13,
+            FontSize = 14,
         };
 
         var panel = new StackPanel { Spacing = 12 };
-        panel.Children.Add(new TextBlock { Text = LocalizationService.L("Settings_FeedbackDescLabel", "问题描述"), FontWeight = Microsoft.UI.Text.FontWeights.Bold, FontSize = 14 });
+        panel.Children.Add(new TextBlock { Text = LocalizationService.L("Settings_FeedbackDescLabel", "问题描述"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14 });
         panel.Children.Add(descriptionBox);
-        panel.Children.Add(new TextBlock { Text = LocalizationService.L("Settings_FeedbackStepsLabel", "复现步骤 *必填"), FontWeight = Microsoft.UI.Text.FontWeights.Bold, FontSize = 14 });
+        panel.Children.Add(new TextBlock { Text = LocalizationService.L("Settings_FeedbackStepsLabel", "复现步骤 *必填"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, FontSize = 14 });
         panel.Children.Add(stepsBox);
 
         while (true)
@@ -2562,10 +2646,10 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var random = new Random();
         Color[] tints =
         [
-            Color.FromArgb(255, 255, 214, 102),
-            Color.FromArgb(255, 255, 236, 179),
-            Color.FromArgb(255, 255, 179, 71),
-            Color.FromArgb(255, 255, 255, 255),
+            ThemeColors.AccentOrange,
+            ThemeColors.AccentGreen,
+            ThemeColors.AccentBlue,
+            ThemeColors.PrimaryText,
         ];
 
         const int count = 18;

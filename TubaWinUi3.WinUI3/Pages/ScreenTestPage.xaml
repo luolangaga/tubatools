@@ -13,18 +13,18 @@
                 Margin="0,32,32,0"
                 Background="#E6000000"
                 CornerRadius="12"
-                Padding="28,18"
+                Padding="24,16"
                 Visibility="Collapsed"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="HintTranslate" X="0"/>
             </Border.RenderTransform>
             <StackPanel Orientation="Horizontal" Spacing="16">
-                <FontIcon Glyph="&#xE7FC;" FontSize="20" Foreground="#60A5FA" VerticalAlignment="Center"/>
+                <FontIcon Glyph="&#xE7FC;" FontSize="20" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="HintText"
                            Foreground="White"
                            FontSize="18"
-                           FontWeight="Bold"
+                           FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
             </StackPanel>
         </Border>

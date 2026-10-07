@@ -102,8 +102,8 @@ public sealed partial class NewbieTutorialPage : Page
         host.Children.Add(new TextBlock
         {
             Text = "欢迎使用图吧工具箱CE",
-            FontSize = 26,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontSize = 28,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
         host.Children.Add(new TextBlock
         {
@@ -174,8 +174,8 @@ public sealed partial class NewbieTutorialPage : Page
             Spacing = 10,
             Children =
             {
-                ToolIcon(tool, 22),
-                new TextBlock { Text = tool.Name, FontSize = 24, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center }
+                ToolIcon(tool, 20),
+                new TextBlock { Text = tool.Name, FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }
             }
         });
         header.Children.Add(new TextBlock
@@ -226,7 +226,7 @@ public sealed partial class NewbieTutorialPage : Page
             Background = new SolidColorBrush(ThemeColors.SubtleBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10),
+            CornerRadius = new CornerRadius(8),
             Padding = new Thickness(16, 12, 16, 12),
             Child = new StackPanel
             {
@@ -238,7 +238,7 @@ public sealed partial class NewbieTutorialPage : Page
                     new TextBlock
                     {
                         Text = tutorial.Tips,
-                        FontSize = 13,
+                        FontSize = 14,
                         TextWrapping = TextWrapping.Wrap,
                         VerticalAlignment = VerticalAlignment.Center
                     }
@@ -298,7 +298,7 @@ public sealed partial class NewbieTutorialPage : Page
     private static FrameworkElement BuildSectionHeader(string text) => new TextBlock
     {
         Text = text,
-        FontSize = 17,
+        FontSize = 18,
         FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
         Margin = new Thickness(0, 10, 0, 0)
     };
@@ -310,7 +310,7 @@ public sealed partial class NewbieTutorialPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10),
+            CornerRadius = new CornerRadius(8),
             Padding = new Thickness(14, 12, 14, 12)
         };
         card.Child = new StackPanel
@@ -323,7 +323,7 @@ public sealed partial class NewbieTutorialPage : Page
         {
             Width = 26,
             Height = 26,
-            CornerRadius = new CornerRadius(13),
+            CornerRadius = new CornerRadius(12),
             Background = new SolidColorBrush(ThemeColors.AccentBlue),
             VerticalAlignment = VerticalAlignment.Top
         };
@@ -331,7 +331,7 @@ public sealed partial class NewbieTutorialPage : Page
         {
             Text = number,
             Foreground = new SolidColorBrush(Microsoft.UI.Colors.White),
-            FontSize = 13,
+            FontSize = 12,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
@@ -347,7 +347,7 @@ public sealed partial class NewbieTutorialPage : Page
         textCol.Children.Add(new TextBlock
         {
             Text = body,
-            FontSize = 13,
+            FontSize = 14,
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 22,
             Foreground = new SolidColorBrush(ThemeColors.SecondaryText)

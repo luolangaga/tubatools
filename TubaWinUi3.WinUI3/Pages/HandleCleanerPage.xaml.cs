@@ -134,23 +134,23 @@ public sealed class HandleCleanerBrowserTypeOption
 /// </summary>
 public sealed partial class HandleCleanerPage : Page, ILocalizablePage
 {
-    // 品牌调色板（与其它内置工具页一致）
-    public static readonly Color AccentColor = Color.FromArgb(255, 15, 108, 189);
-    public static readonly Color SuccessColor = Color.FromArgb(255, 43, 182, 115);
-    public static readonly Color CautionColor = Color.FromArgb(255, 245, 166, 35);
-    public static readonly Color CriticalColor = Color.FromArgb(255, 242, 80, 59);
-    public static readonly Color NeutralColor = Color.FromArgb(255, 142, 142, 142);
+    // 语义调色板（跟随系统主题：经 ThemeColors 取官方语义色，不再使用固定品牌色）
+    public static Color AccentColor => ThemeColors.AccentBlue;
+    public static Color SuccessColor => ThemeColors.AccentGreen;
+    public static Color CautionColor => ThemeColors.AccentOrange;
+    public static Color CriticalColor => ThemeColors.AccentRed;
+    public static Color NeutralColor => ThemeColors.Neutral;
 
-    public static readonly Brush AccentBrush = new SolidColorBrush(AccentColor);
-    public static readonly Brush SuccessBrush = new SolidColorBrush(SuccessColor);
-    public static readonly Brush CautionBrush = new SolidColorBrush(CautionColor);
-    public static readonly Brush CriticalBrush = new SolidColorBrush(CriticalColor);
-    public static readonly Brush NeutralBrush = new SolidColorBrush(NeutralColor);
-    public static readonly Brush AccentBackground = TintFor(AccentColor);
-    public static readonly Brush SuccessBackground = TintFor(SuccessColor);
-    public static readonly Brush CautionBackground = TintFor(CautionColor);
-    public static readonly Brush CriticalBackground = TintFor(CriticalColor);
-    public static readonly Brush NeutralBackground = TintFor(NeutralColor);
+    public static Brush AccentBrush => new SolidColorBrush(AccentColor);
+    public static Brush SuccessBrush => new SolidColorBrush(SuccessColor);
+    public static Brush CautionBrush => new SolidColorBrush(CautionColor);
+    public static Brush CriticalBrush => new SolidColorBrush(CriticalColor);
+    public static Brush NeutralBrush => new SolidColorBrush(NeutralColor);
+    public static Brush AccentBackground => TintFor(AccentColor);
+    public static Brush SuccessBackground => TintFor(SuccessColor);
+    public static Brush CautionBackground => TintFor(CautionColor);
+    public static Brush CriticalBackground => TintFor(CriticalColor);
+    public static Brush NeutralBackground => TintFor(NeutralColor);
 
     private const string DeepModeSettingKey = "HandleCleanerDeepMode";
 
@@ -184,6 +184,15 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
     public HandleCleanerPage()
     {
         InitializeComponent();
+        // 代码构建的语义画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_overview is not null)
+            {
+                RenderHero(_overview);
+                RenderRows(_overview);
+            }
+        };
     }
 
     public static SolidColorBrush TintFor(Color color)
@@ -424,6 +433,8 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
 
     private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) => ApplyFilter();
 
+    private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) => ApplyFilter();
+
     private void ApplyFilter()
     {
         var query = SearchBox.Text.Trim();
@@ -548,7 +559,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
             var content = new StackPanel { Spacing = 2 };
             content.Children.Add(new TextBlock
             {
-                FontSize = 13,
+                FontSize = 14,
                 Text = string.Format(L("HandleCleaner_ConfirmProcessFormat", "{0}（PID {1}）— 失效 {2} 个"),
                     group.Name, group.ProcessId, group.Handles.Count),
                 TextWrapping = TextWrapping.Wrap,
@@ -559,7 +570,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
             {
                 content.Children.Add(new TextBlock
                 {
-                    FontSize = 11,
+                    FontSize = 12,
                     Foreground = NeutralBrush,
                     Text = sample + (group.Handles.Count > 1 ? " …" : ""),
                     TextTrimming = TextTrimming.CharacterEllipsis,
@@ -574,7 +585,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         var body = new StackPanel { Spacing = 10 };
         body.Children.Add(new TextBlock
         {
-            FontSize = 13,
+            FontSize = 14,
             Text = L("HandleCleaner_ConfirmMessage",
                 "将关闭下列进程里指向已删除文件的句柄。这类文件已经不会回来，关闭句柄只是让系统释放残留占用；持有句柄的程序若再次使用它会得到一条错误提示，通常不影响正常使用。"),
             TextWrapping = TextWrapping.Wrap,
@@ -725,7 +736,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         {
             body.Children.Add(new TextBlock
             {
-                FontSize = 13,
+                FontSize = 14,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Text = L("HandleCleaner_ProcessDetailTypes", "句柄类型分布"),
             });
@@ -1341,6 +1352,12 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         ApplyBrowserFilter();
     }
 
+    private void BrowserSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (_browseLoading) return;
+        ApplyBrowserFilter();
+    }
+
     private void BrowserDeletedOnly_Changed(object sender, RoutedEventArgs e)
     {
         if (_browseLoading) return;
@@ -1497,7 +1514,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         {
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 21,
-            FontSize = 13,
+            FontSize = 14,
             Text = L("HandleCleaner_HelpBody", """
             它能做什么
             · 总览：全系统句柄总数、每个进程的句柄占用排行，超过 5 万的进程会标「疑似泄漏」（20 万以上标红）。
@@ -1585,7 +1602,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         dialog.Content = new ScrollViewer
         {
             MaxHeight = 380,
-            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 13 },
+            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 14 },
         };
         await ContentDialogGuard.ShowWhenIdleAsync(dialog, TimeSpan.FromSeconds(10));
     }
@@ -1595,7 +1612,7 @@ public sealed partial class HandleCleanerPage : Page, ILocalizablePage
         var dialog = CreateDialog(title, L("Common_Cancel", "取消"));
         dialog.PrimaryButtonText = primaryText;
         dialog.DefaultButton = ContentDialogButton.Primary;
-        dialog.Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 13 };
+        dialog.Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 14 };
 
         bool confirmed = false;
         dialog.PrimaryButtonClick += (_, _) => confirmed = true;

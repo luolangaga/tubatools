@@ -65,6 +65,14 @@ public sealed partial class QuickDeviceCheckPage : Page
         _currentStep = 0;
         UpdateStepUI();
         Loaded += OnLoaded;
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重建当前步骤界面
+        // （压力测试 / 摄像头预览进行中不重建，避免打断正在运行的检测）
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_stressControl?.IsRunning != true && !_cameraLaunched)
+                UpdateStepContent();
+        };
     }
 
     public void Cleanup()
@@ -144,12 +152,12 @@ public sealed partial class QuickDeviceCheckPage : Page
 
     private void BuildWelcomeStep()
     {
-        var stack = new StackPanel { Spacing = 24, HorizontalAlignment = HorizontalAlignment.Center };
+        var stack = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
 
         var emojiBlock = new TextBlock
         {
             Text = "💻",
-            FontSize = 72,
+            FontSize = 28,
             HorizontalAlignment = HorizontalAlignment.Center
         };
         var emojiBorder = new Border
@@ -157,7 +165,7 @@ public sealed partial class QuickDeviceCheckPage : Page
             Width = 160,
             Height = 160,
             HorizontalAlignment = HorizontalAlignment.Center,
-            CornerRadius = new CornerRadius(24),
+            CornerRadius = new CornerRadius(12),
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
@@ -169,7 +177,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         {
             Text = "🎉 恭喜你收获了一台新电脑！",
             FontSize = 28,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
@@ -178,8 +186,8 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(24, 20, 24, 20),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             MaxWidth = 500,
             HorizontalAlignment = HorizontalAlignment.Center
         };
@@ -188,7 +196,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         {
             Text = "📋 外观检查清单",
             FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
 
         var checks = new (string Title, string Desc)[]
@@ -206,14 +214,14 @@ public sealed partial class QuickDeviceCheckPage : Page
             row.Children.Add(new TextBlock
             {
                 Text = $"✓ {title}",
-                FontSize = 15,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ThemeColors.AccentBlue)
             });
             row.Children.Add(new TextBlock
             {
                 Text = desc,
-                FontSize = 13,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -226,7 +234,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = "💡 请在继续之前仔细完成以上检查，如有问题请及时联系商家",
-            FontSize = 13,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.AccentOrange),
             HorizontalAlignment = HorizontalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -253,11 +261,11 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            Padding = new Thickness(20, 16, 20, 16),
+            Padding = new Thickness(16),
             MaxWidth = 700,
             HorizontalAlignment = HorizontalAlignment.Center
         };
-        var hwStack = new StackPanel { Spacing = 14 };
+        var hwStack = new StackPanel { Spacing = 12 };
 
         var loadingRing = new ProgressRing
         {
@@ -296,8 +304,8 @@ public sealed partial class QuickDeviceCheckPage : Page
                         hwStack.Children.Add(new TextBlock
                         {
                             Text = section.Title,
-                            FontSize = 16,
-                            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+                            FontSize = 18,
+                            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
                         });
 
                         foreach (var item in section.Items)
@@ -305,7 +313,7 @@ public sealed partial class QuickDeviceCheckPage : Page
                             var row = new Grid
                             {
                                 ColumnSpacing = 12,
-                                Padding = new Thickness(0, 3, 0, 3)
+                                Padding = new Thickness(0, 4, 0, 4)
                             };
                             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
                             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -318,14 +326,14 @@ public sealed partial class QuickDeviceCheckPage : Page
                                 VerticalAlignment = VerticalAlignment.Center
                             });
 
-                            var valueStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                            var valueStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
                             Grid.SetColumn(valueStack, 1);
 
                             valueStack.Children.Add(new TextBlock
                             {
                                 Text = item.Value,
                                 FontSize = 14,
-                                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                                 TextWrapping = TextWrapping.Wrap,
                                 VerticalAlignment = VerticalAlignment.Center
                             });
@@ -334,16 +342,16 @@ public sealed partial class QuickDeviceCheckPage : Page
                             {
                                 valueStack.Children.Add(new Border
                                 {
-                                    Padding = new Thickness(6, 1, 6, 1),
-                                    CornerRadius = new CornerRadius(3),
-                                    Background = new SolidColorBrush(Color.FromArgb(38, 0, 200, 100)),
+                                    Padding = new Thickness(8, 2, 8, 2),
+                                    CornerRadius = new CornerRadius(4),
+                                    Background = new SolidColorBrush(Color.FromArgb(38, ThemeColors.AccentGreen.R, ThemeColors.AccentGreen.G, ThemeColors.AccentGreen.B)),
                                     VerticalAlignment = VerticalAlignment.Center,
                                     Child = new TextBlock
                                     {
                                         Text = "真",
-                                        FontSize = 11,
-                                        FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                                        Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 200, 100))
+                                        FontSize = 12,
+                                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                                        Foreground = new SolidColorBrush(ThemeColors.AccentGreen)
                                     }
                                 });
                             }
@@ -390,8 +398,8 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(24, 20, 24, 20),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         var launchStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
@@ -399,7 +407,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         launchStack.Children.Add(new TextBlock
         {
             Text = "将打开 DiskInfo 查看硬盘通电信息",
-            FontSize = 16,
+            FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
@@ -412,11 +420,11 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uEDA7", FontSize = 16 },
-                    new TextBlock { Text = "打开 DiskInfo", FontSize = 15 }
+                    new TextBlock { Text = "打开 DiskInfo", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 10, 24, 10)
+            Padding = new Thickness(24, 8, 24, 8)
         };
         launchBtn.Click += async (_, _) =>
         {
@@ -428,7 +436,7 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new ProgressRing { Width = 16, Height = 16, IsActive = true },
-                    new TextBlock { Text = "正在启动 DiskInfo...", FontSize = 15 }
+                    new TextBlock { Text = "正在启动 DiskInfo...", FontSize = 14 }
                 }
             };
 
@@ -444,7 +452,7 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uEDA7", FontSize = 16 },
-                    new TextBlock { Text = "打开 DiskInfo", FontSize = 15 }
+                    new TextBlock { Text = "打开 DiskInfo", FontSize = 14 }
                 }
             };
         };
@@ -458,8 +466,8 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(20),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             MaxWidth = 500,
             HorizontalAlignment = HorizontalAlignment.Center
         };
@@ -467,8 +475,8 @@ public sealed partial class QuickDeviceCheckPage : Page
         judgeStack.Children.Add(new TextBlock
         {
             Text = "📊 判断标准",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
         judgeStack.Children.Add(new TextBlock
         {
@@ -554,8 +562,8 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(24, 20, 24, 20),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         var launchStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
@@ -563,7 +571,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         launchStack.Children.Add(new TextBlock
         {
             Text = "全屏检测坏点、漏光、色斑和漏光情况",
-            FontSize = 16,
+            FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
@@ -576,11 +584,11 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE7F4", FontSize = 16 },
-                    new TextBlock { Text = "开始屏幕检测", FontSize = 15 }
+                    new TextBlock { Text = "开始屏幕检测", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 10, 24, 10)
+            Padding = new Thickness(24, 8, 24, 8)
         };
         launchBtn.Click += (_, _) => LaunchScreenTest();
         launchStack.Children.Add(launchBtn);
@@ -648,7 +656,7 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
+            CornerRadius = new CornerRadius(8),
             Width = 480,
             Height = 320,
             HorizontalAlignment = HorizontalAlignment.Center
@@ -664,7 +672,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         placeholder.Children.Add(new FontIcon
         {
             Glyph = "\uE960",
-            FontSize = 48,
+            FontSize = 28,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         });
         var placeholderText = new TextBlock
@@ -699,11 +707,11 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE960", FontSize = 16 },
-                    new TextBlock { Text = "开启摄像头", FontSize = 15 }
+                    new TextBlock { Text = "开启摄像头", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 10, 24, 10),
+            Padding = new Thickness(24, 8, 24, 8),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         cameraBtn.Click += async (_, _) =>
@@ -764,7 +772,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = "💡 如果摄像头无法打开，请检查隐私设置中是否允许访问摄像头",
-            FontSize = 13,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             HorizontalAlignment = HorizontalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -804,8 +812,8 @@ public sealed partial class QuickDeviceCheckPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(32, 24, 32, 24),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         var audioStack = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
@@ -813,14 +821,14 @@ public sealed partial class QuickDeviceCheckPage : Page
         audioStack.Children.Add(new FontIcon
         {
             Glyph = "\uEA60",
-            FontSize = 48,
+            FontSize = 28,
             Foreground = new SolidColorBrush(ThemeColors.AccentBlue)
         });
 
         audioStack.Children.Add(new TextBlock
         {
             Text = "将使用 Windows 语音合成朗读测试语句",
-            FontSize = 15,
+            FontSize = 14,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
@@ -833,11 +841,11 @@ public sealed partial class QuickDeviceCheckPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE102", FontSize = 16 },
-                    new TextBlock { Text = "播放测试语音", FontSize = 15 }
+                    new TextBlock { Text = "播放测试语音", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 10, 24, 10),
+            Padding = new Thickness(24, 8, 24, 8),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         playBtn.Click += (_, _) => PlayTestAudio();
@@ -846,7 +854,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         audioStack.Children.Add(new TextBlock
         {
             Text = "💡 如果听不到语音，请检查音量设置和扬声器连接",
-            FontSize = 13,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             HorizontalAlignment = HorizontalAlignment.Center
         });
@@ -1020,8 +1028,8 @@ public sealed partial class QuickDeviceCheckPage : Page
     {
         var card = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(30, 96, 165, 250)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(80, 96, 165, 250)),
+            Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(80, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(16, 12, 16, 12),
@@ -1031,7 +1039,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 10
+            Spacing = 8
         };
         row.Children.Add(new FontIcon
         {

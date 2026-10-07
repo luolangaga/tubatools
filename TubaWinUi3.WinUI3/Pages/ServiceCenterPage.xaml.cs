@@ -13,6 +13,12 @@ public sealed partial class ServiceCenterPage : Page
     public ServiceCenterPage()
     {
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重渲染选中态
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_selectedButton is not null)
+                UpdateSelectionVisual(_selectedButton);
+        };
 
         PopulateNavList();
     }
@@ -43,7 +49,7 @@ public sealed partial class ServiceCenterPage : Page
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             Tag = brand,
             Style = Application.Current.Resources["SubtleButtonStyle"] as Style,
-            CornerRadius = new CornerRadius(6)
+            CornerRadius = new CornerRadius(4)
         };
 
         var grid = new Grid { ColumnSpacing = 10 };
@@ -79,7 +85,7 @@ public sealed partial class ServiceCenterPage : Page
         var nameText = new TextBlock
         {
             Text = brand.Name,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         };
 
@@ -151,8 +157,7 @@ public sealed partial class ServiceCenterPage : Page
 
         if (selectedBtn is not null)
         {
-            selectedBtn.Background = Application.Current.Resources["SubtleFillColorSecondaryBrush"] as SolidColorBrush
-                ?? new SolidColorBrush(Microsoft.UI.Colors.LightGray);
+            selectedBtn.Background = new SolidColorBrush(ThemeColors.SubtleBg);
         }
 
         _selectedButton = selectedBtn;

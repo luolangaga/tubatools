@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RowSpacing="0">
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <!-- Title bar -->
-        <Grid Padding="24,20,24,12" ColumnSpacing="12">
+        <Grid Padding="24,16,24,12" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -34,11 +34,11 @@
                 </Grid>
             </Grid>
             <StackPanel Grid.Column="1" Spacing="2">
-                <TextBlock x:Name="TitleText" FontSize="22" FontWeight="Bold" Text="脚本运行" />
-                <TextBlock x:Name="SubtitleText" Opacity="1.0" FontSize="11" FontFamily="Consolas" IsTextSelectionEnabled="True" />
+                <TextBlock x:Name="TitleText" FontSize="20" FontWeight="SemiBold" Text="脚本运行" />
+                <TextBlock x:Name="SubtitleText" FontSize="12" FontFamily="Consolas" IsTextSelectionEnabled="True" />
             </StackPanel>
-            <Button x:Name="CloseButton" Grid.Column="2" Click="CloseButton_Click" CornerRadius="6">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button x:Name="CloseButton" Grid.Column="2" Click="CloseButton_Click" CornerRadius="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE711;" FontSize="12" />
                     <TextBlock Text="关闭" />
                 </StackPanel>
@@ -58,35 +58,35 @@
                     </Grid.ColumnDefinitions>
 
                     <Border x:Name="CmdBadge" Padding="8,4" CornerRadius="4" VerticalAlignment="Center">
-                        <TextBlock FontSize="11" FontWeight="Bold" Opacity="1.0" Text="CMD" FontFamily="Cascadia Code, Consolas" />
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="CMD" FontFamily="Cascadia Code, Consolas" />
                     </Border>
 
                     <TextBox x:Name="CommandBox"
                              Grid.Column="1"
                              PlaceholderText="输入命令，如: ping 127.0.0.1"
                              FontFamily="Cascadia Code, Consolas"
-                             FontSize="13"
-                             CornerRadius="6"
+                             FontSize="14"
+                             CornerRadius="4"
                              KeyDown="CommandBox_KeyDown" />
 
-                    <Button x:Name="RunButton" Grid.Column="2" Click="RunButton_Click" CornerRadius="6"
-                            Style="{ThemeResource AccentButtonStyle}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="RunButton" Grid.Column="2" Click="RunButton_Click" CornerRadius="4"
+                            Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE768;" FontSize="12" />
                             <TextBlock Text="运行" />
                         </StackPanel>
                     </Button>
 
-                    <Button x:Name="StopButton" Grid.Column="3" Click="StopButton_Click" CornerRadius="6"
+                    <Button x:Name="StopButton" Grid.Column="3" Click="StopButton_Click" CornerRadius="4"
                             Visibility="Collapsed">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE71A;" FontSize="12" />
                             <TextBlock Text="停止" />
                         </StackPanel>
                     </Button>
 
-                    <Button x:Name="ClearButton" Grid.Column="4" Click="ClearButton_Click" CornerRadius="6">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="ClearButton" Grid.Column="4" Click="ClearButton_Click" CornerRadius="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE74D;" FontSize="12" />
                             <TextBlock Text="清空" />
                         </StackPanel>
@@ -107,11 +107,11 @@
                     <CheckBox x:Name="AutoScrollCheck" Content="自动滚动" FontSize="12" IsChecked="True" VerticalAlignment="Center" />
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="缓冲区" FontSize="11" Opacity="1.0" VerticalAlignment="Center" />
+                        <TextBlock Text="缓冲区" FontSize="12" VerticalAlignment="Center" />
                         <NumberBox x:Name="BufferLimitBox" Value="2000" Minimum="100" Maximum="50000"
-                                   SpinButtonPlacementMode="Compact" FontSize="11" Width="80"
+                                   SpinButtonPlacementMode="Compact" FontSize="12" Width="80"
                                    FontFamily="Cascadia Code, Consolas" CornerRadius="4" />
-                        <TextBlock Text="行" FontSize="11" Opacity="1.0" VerticalAlignment="Center" />
+                        <TextBlock Text="行" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
 
                     <TextBox x:Name="WorkDirBox"
@@ -119,11 +119,11 @@
                              PlaceholderText="工作目录（可选）"
                              FontSize="12"
                              FontFamily="Cascadia Code, Consolas"
-                             CornerRadius="6" />
+                             CornerRadius="4" />
 
-                    <DropDownButton x:Name="EncodingButton" Grid.Column="4" CornerRadius="6" FontSize="12">
+                    <DropDownButton x:Name="EncodingButton" Grid.Column="4" CornerRadius="4" FontSize="12">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon Glyph="&#xE8BD;" FontSize="11" />
+                            <FontIcon Glyph="&#xE8BD;" FontSize="12" />
                             <TextBlock x:Name="EncodingLabel" Text="UTF-8" />
                         </StackPanel>
                         <DropDownButton.Flyout>
@@ -139,9 +139,8 @@
         </Border>
 
         <!-- Terminal output area -->
-        <Border Grid.Row="2" Margin="24,0,24,0" CornerRadius="8" BorderThickness="1"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+        <Border Grid.Row="2" Margin="24,0,24,0" Padding="0"
+                Style="{StaticResource FluentCardStyle}">
             <Grid RowSpacing="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -162,26 +161,26 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#FF5F56" />
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#FFBD2E" />
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#27C93F" />
+                        <Border Width="10" Height="10" CornerRadius="4" Background="{ThemeResource SystemFillColorCriticalBrush}" />
+                        <Border Width="10" Height="10" CornerRadius="4" Background="{ThemeResource SystemFillColorCautionBrush}" />
+                        <Border Width="10" Height="10" CornerRadius="4" Background="{ThemeResource SystemFillColorSuccessBrush}" />
 
                         <TextBlock x:Name="StatusText" Grid.Column="3"
-                                   FontSize="11" Opacity="1.0" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="12" FontFamily="Cascadia Code, Consolas"
                                    HorizontalAlignment="Right" VerticalAlignment="Center" />
 
                         <TextBlock x:Name="DurationText" Grid.Column="4"
-                                   FontSize="11" Opacity="1.0" FontFamily="Cascadia Code, Consolas"
+                                   FontSize="12" FontFamily="Cascadia Code, Consolas"
                                    VerticalAlignment="Center" />
 
                         <Button x:Name="ScrollToBottomButton" Grid.Column="5" Click="ScrollToBottomButton_Click"
                                 Padding="4,2" CornerRadius="4" ToolTipService.ToolTip="滚动到底部">
-                            <FontIcon Glyph="&#xE74B;" FontSize="11" Opacity="1.0" />
+                            <FontIcon Glyph="&#xE74B;" FontSize="12" />
                         </Button>
 
                         <Button x:Name="CopyOutputButton" Grid.Column="6" Click="CopyOutputButton_Click"
                                 Padding="4,2" CornerRadius="4" ToolTipService.ToolTip="复制输出">
-                            <FontIcon Glyph="&#xE8C8;" FontSize="11" Opacity="1.0" />
+                            <FontIcon Glyph="&#xE8C8;" FontSize="12" />
                         </Button>
                     </Grid>
                 </Border>
@@ -203,16 +202,14 @@
 
         <!-- Input area (for stdin) -->
         <Border x:Name="InputPanel" Grid.Row="3" Margin="24,8,24,0" Padding="12"
-                CornerRadius="6" BorderThickness="1" Visibility="Collapsed"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                Style="{StaticResource FluentCardStyle}" Visibility="Collapsed">
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="STDIN" FontSize="11" FontWeight="Bold" Opacity="1.0"
+                <TextBlock Text="STDIN" FontSize="12" FontWeight="SemiBold"
                            FontFamily="Cascadia Code, Consolas" VerticalAlignment="Center" />
                 <TextBox x:Name="InputBox" Grid.Column="1"
                          PlaceholderText="输入内容后按回车发送到进程标准输入..."
@@ -220,7 +217,7 @@
                          KeyDown="InputBox_KeyDown" />
                 <Button x:Name="SendInputButton" Grid.Column="2" Click="SendInputButton_Click" CornerRadius="4">
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon Glyph="&#xE724;" FontSize="11" />
+                        <FontIcon Glyph="&#xE724;" FontSize="12" />
                         <TextBlock Text="发送" FontSize="12" />
                     </StackPanel>
                 </Button>
@@ -228,7 +225,7 @@
         </Border>
 
         <!-- Status bar -->
-        <Border Grid.Row="4" Padding="24,10,24,14">
+        <Border Grid.Row="4" Padding="24,8,24,12">
             <Grid ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -239,14 +236,14 @@
                 </Grid.ColumnDefinitions>
 
                 <Border x:Name="ExitCodeBadge" Padding="8,2" CornerRadius="4" Visibility="Collapsed">
-                    <TextBlock x:Name="ExitCodeText" FontSize="11" FontWeight="Bold"
+                    <TextBlock x:Name="ExitCodeText" FontSize="12" FontWeight="SemiBold"
                                FontFamily="Cascadia Code, Consolas" />
                 </Border>
 
-                <TextBlock x:Name="LineCountText" Grid.Column="1" FontSize="11" Opacity="1.0"
+                <TextBlock x:Name="LineCountText" Grid.Column="1" FontSize="12"
                            FontFamily="Cascadia Code, Consolas" />
 
-                <TextBlock x:Name="ProcessInfoText" Grid.Column="2" FontSize="11" Opacity="1.0"
+                <TextBlock x:Name="ProcessInfoText" Grid.Column="2" FontSize="12"
                            FontFamily="Cascadia Code, Consolas" />
 
                 <InfoBar x:Name="ToastBar" Grid.Column="4" IsClosable="True" IsOpen="False" />

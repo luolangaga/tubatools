@@ -15,8 +15,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock
-                FontSize="14"
-                FontWeight="Bold"
+                Style="{StaticResource SectionHeaderStyle}"
                 VerticalAlignment="Center"
                 Text="下载队列" />
 
@@ -45,20 +44,17 @@
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
                         <Border
-                            Padding="12,10"
                             Margin="0,4"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                            <Grid RowSpacing="6">
+                            Padding="12,8"
+                            Style="{StaticResource FluentCardStyle}">
+                            <Grid RowSpacing="8">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <Grid ColumnSpacing="10">
+                                <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
@@ -67,8 +63,7 @@
 
                                     <Border
                                         Width="32" Height="32"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="6"
+                                        Style="{StaticResource IconTileStyle}"
                                         VerticalAlignment="Center">
                                         <FontIcon
                                             FontSize="14"
@@ -79,16 +74,12 @@
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                         <TextBlock
-
-                                            FontSize="13"
-                                            FontWeight="Bold"
+                                            Style="{StaticResource SectionHeaderStyle}"
                                             TextTrimming="CharacterEllipsis"
                                             MaxLines="1"
                                             Text="{Binding DisplayName}" />
                                         <TextBlock
-
-                                            FontSize="11"
-                                            Opacity="1.0"
+                                            FontSize="12"
                                             TextTrimming="CharacterEllipsis"
                                             MaxLines="1"
                                             Text="{Binding Description}" />
@@ -96,13 +87,11 @@
 
                                     <Border
                                         Grid.Column="2"
-                                        Padding="6,2"
-                                        CornerRadius="4"
-                                        VerticalAlignment="Center"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        Style="{StaticResource StatusPillStyle}"
+                                        VerticalAlignment="Center">
                                         <TextBlock
-
-                                            FontSize="10"
+                                            FontSize="12"
+                                            Foreground="{Binding StateBrush}"
                                             Text="{Binding StateText}" />
                                     </Border>
                                 </Grid>
@@ -121,9 +110,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock
-
-                                        FontSize="11"
-                                        Opacity="1.0"
+                                        FontSize="12"
                                         TextTrimming="CharacterEllipsis"
                                         MaxLines="1"
                                         Text="{Binding StatusLine}" />
@@ -135,54 +122,54 @@
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="PauseButton_Click"
-                                            Padding="6,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding PauseVisible}"
                                             Content="暂停" />
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="ResumeButton_Click"
-                                            Padding="6,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding ResumeVisible}"
                                             Content="继续" />
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="RetryButton_Click"
-                                            Padding="6,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding RetryVisible}"
                                             Content="重试" />
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="CancelButton_Click"
-                                            Padding="6,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding CancelVisible}"
                                             Content="取消" />
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="OpenFolderButton_Click"
-                                            Padding="6,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding OpenFolderVisible}"
                                             Content="打开" />
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="DeleteFileButton_Click"
-                                            Padding="4,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding DeleteFileVisible}"
                                             ToolTipService.ToolTip="删除文件">
-                                            <FontIcon FontSize="10" Glyph="&#xE74D;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74D;" />
                                         </Button>
                                         <Button
                                             Tag="{Binding Id}"
                                             Click="RemoveButton_Click"
-                                            Padding="4,2"
-                                            FontSize="11"
+                                            Padding="8,4"
+                                            FontSize="12"
                                             Visibility="{Binding RemoveVisible}">
-                                            <FontIcon FontSize="10" Glyph="&#xE711;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE711;" />
                                         </Button>
                                     </StackPanel>
                                 </Grid>
@@ -200,13 +187,11 @@
             Spacing="8"
             Visibility="Visible">
             <FontIcon
-                FontSize="32"
-                Opacity="1.0"
+                FontSize="28"
                 HorizontalAlignment="Center"
                 Glyph="&#xE896;" />
             <TextBlock
-                FontSize="13"
-                Opacity="1.0"
+                FontSize="12"
                 HorizontalAlignment="Center"
                 Text="暂无下载任务" />
         </StackPanel>

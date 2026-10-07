@@ -33,7 +33,7 @@ public sealed class DnsPresetVm : INotifyPropertyChanged
     private string _latencyText = "--";
     public string LatencyText { get => _latencyText; set { _latencyText = value; Raise(); } }
 
-    private SolidColorBrush _latencyBrush = new(Color.FromArgb(255, 142, 142, 142));
+    private SolidColorBrush _latencyBrush = new(ThemeColors.Neutral);
     public SolidColorBrush LatencyBrush { get => _latencyBrush; set { _latencyBrush = value; Raise(); } }
 
     private string _latencyHint = "尚未探测或请求超时";
@@ -44,7 +44,7 @@ public sealed class DnsPresetVm : INotifyPropertyChanged
 
     public Visibility AppliedVisibility => IsApplied ? Visibility.Visible : Visibility.Collapsed;
 
-    private SolidColorBrush _cardBorderBrush = new(Color.FromArgb(0x1F, 0, 0, 0));
+    private SolidColorBrush _cardBorderBrush = new(ThemeColors.BorderColor);
     public SolidColorBrush CardBorderBrush { get => _cardBorderBrush; set { _cardBorderBrush = value; Raise(); } }
 
     /// <summary>外部（应用 DNS 后）标记本卡是否已应用。</summary>
@@ -54,7 +54,7 @@ public sealed class DnsPresetVm : INotifyPropertyChanged
         if (applied && accent is not null)
             CardBorderBrush = accent;
         else if (!applied)
-            CardBorderBrush = new SolidColorBrush(Color.FromArgb(0x1F, 0, 0, 0));
+            CardBorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
     }
 }
 
@@ -88,11 +88,12 @@ public sealed class OptimizeItemVm : INotifyPropertyChanged
 /// </summary>
 public sealed partial class NetworkOptimizePage : Page
 {
-    private static readonly Color BrandViolet = Color.FromArgb(255, 124, 108, 240);
-    private static readonly Color SuccessGreen = Color.FromArgb(255, 43, 182, 115);
-    private static readonly Color CautionAmber = Color.FromArgb(255, 245, 166, 35);
-    private static readonly Color CriticalRed = Color.FromArgb(255, 242, 80, 59);
-    private static readonly Color NeutralGray = Color.FromArgb(255, 142, 142, 142);
+    // 语义调色板（跟随系统主题：经 ThemeColors 取官方语义色，不再使用固定品牌色）
+    private static Color BrandPurple => ThemeColors.Series2;
+    private static Color SuccessGreen => ThemeColors.AccentGreen;
+    private static Color CautionAmber => ThemeColors.AccentOrange;
+    private static Color CriticalRed => ThemeColors.AccentRed;
+    private static Color NeutralGray => ThemeColors.Neutral;
 
     /// <summary>各优化项开启前确认弹窗的影响说明（关闭/恢复默认无需确认）。</summary>
     private static readonly Dictionary<string, string> EnableImpactMessages = new()
@@ -125,6 +126,36 @@ public sealed partial class NetworkOptimizePage : Page
     public NetworkOptimizePage()
     {
         InitializeComponent();
+        // 代码构建的语义色画刷不会随主题自动刷新：切换主题时就地更新实例（已绑定的控件自动跟随）
+        ActualThemeChanged += (_, _) =>
+        {
+            RefreshThemeBrushes();
+            if (CopyIpButton.IsEnabled)
+                PublicIpText.Foreground = Brush(ThemeColors.PrimaryText);
+        };
+    }
+
+    /// <summary>按当前主题就地刷新代码构建的语义色画刷（不重建列表，避免打断开关状态）。</summary>
+    private void RefreshThemeBrushes()
+    {
+        foreach (var vm in _itemVms)
+        {
+            var item = NetworkOptimizeService.OptimizerItems.FirstOrDefault(i => i.Id == vm.Id);
+            if (item is null) continue;
+            var color = BrandColor(item.ColorHex);
+            vm.ColorBrush.Color = color;
+            vm.IconBackground.Color = Color.FromArgb(0x22, color.R, color.G, color.B);
+        }
+
+        foreach (var vm in _dnsVms)
+        {
+            var preset = NetworkOptimizeService.DnsPresets.FirstOrDefault(p => p.Id == vm.Id);
+            if (preset is null) continue;
+            var color = BrandColor(preset.ColorHex);
+            vm.ColorBrush.Color = color;
+            vm.IconBackground.Color = Color.FromArgb(0x22, color.R, color.G, color.B);
+            vm.CardBorderBrush.Color = IsPresetApplied(preset) ? color : ThemeColors.BorderColor;
+        }
     }
 
     // ───────────────────────────── 初始化 / 清理 ─────────────────────────────
@@ -148,11 +179,16 @@ public sealed partial class NetworkOptimizePage : Page
 
     private static SolidColorBrush Tint(Color color, byte alpha) => new(Color.FromArgb(alpha, color.R, color.G, color.B));
 
-    private static Color ParseHex(string hex)
+    /// <summary>服务里的品牌 hex 折算为系统语义色（不再使用固定品牌色，随主题解析）。</summary>
+    private static Color BrandColor(string hex) => hex.ToUpperInvariant() switch
     {
-        var value = Convert.ToInt32(hex[1..], 16);
-        return Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value);
-    }
+        "#38A169" or "#00A0A0" => SuccessGreen,
+        "#FF6A00" or "#F6821F" or "#DD6B20" => CautionAmber,
+        "#DE2910" => CriticalRed,
+        "#805AD5" or "#FF6B9D" or "#E0408A" => BrandPurple,
+        "#3182CE" => ThemeColors.Series1,
+        _ => ThemeColors.AccentBlue,
+    };
 
     private async Task LoadAsync()
     {
@@ -231,7 +267,7 @@ public sealed partial class NetworkOptimizePage : Page
         _itemVms.Clear();
         foreach (var item in NetworkOptimizeService.OptimizerItems)
         {
-            var color = ParseHex(item.ColorHex);
+            var color = BrandColor(item.ColorHex);
             _itemVms.Add(new OptimizeItemVm
             {
                 Id = item.Id,
@@ -260,7 +296,7 @@ public sealed partial class NetworkOptimizePage : Page
         _dnsVms.Clear();
         foreach (var preset in NetworkOptimizeService.DnsPresets)
         {
-            var color = ParseHex(preset.ColorHex);
+            var color = BrandColor(preset.ColorHex);
             var vm = new DnsPresetVm
             {
                 Id = preset.Id,
@@ -287,7 +323,7 @@ public sealed partial class NetworkOptimizePage : Page
         foreach (var vm in _dnsVms)
         {
             var preset = NetworkOptimizeService.DnsPresets.First(p => p.Id == vm.Id);
-            vm.SetApplied(IsPresetApplied(preset), Brush(ParseHex(preset.ColorHex)));
+            vm.SetApplied(IsPresetApplied(preset), Brush(BrandColor(preset.ColorHex)));
         }
     }
 
@@ -380,7 +416,7 @@ public sealed partial class NetworkOptimizePage : Page
             if (manual || PublicIpText.Text == "--")
             {
                 PublicIpText.Text = ip;
-                PublicIpText.Foreground = Brush(Color.FromArgb(255, 240, 240, 240));
+                PublicIpText.Foreground = Brush(ThemeColors.PrimaryText);
                 CopyIpButton.IsEnabled = true;
             }
             _ = manual ? ShowSuccessAsync("公网 IP 已更新", ip) : Task.CompletedTask;

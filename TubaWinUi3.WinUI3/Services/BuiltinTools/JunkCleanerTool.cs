@@ -21,11 +21,12 @@ public sealed class JunkCleanerTool : IBuiltinTool
     public string Category => "系统工具";
     public BuiltinToolKind Kind => BuiltinToolKind.ProgressTask;
 
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
-    private static readonly Color AccentYellow = Color.FromArgb(255, 251, 191, 36);
-    private static readonly Color AccentPurple = Color.FromArgb(255, 167, 139, 250);
+    // 语义色改为 ThemeColors 同名映射（跟随系统强调色/语义色与明暗主题），不再维护本地品牌色调色板拷贝
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentRed => ThemeColors.AccentRed;
+    private static Color AccentYellow => ThemeColors.AccentOrange;
+    private static Color AccentPurple => ThemeColors.AccentPurple;
 
     // Detail preview shows at most this many file lines; beyond that a hint points at 复制完整列表.
     private const int DetailFileCap = 800;
@@ -118,9 +119,9 @@ public sealed class JunkCleanerTool : IBuiltinTool
             TextWrapping = TextWrapping.Wrap
         };
 
-        var totalSizeText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentBlue), Text = "0 B" };
-        var totalFilesText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentGreen), Text = "0" };
-        var itemCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Text = "0" };
+        var totalSizeText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentBlue), Text = "0 B" };
+        var totalFilesText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentGreen), Text = "0" };
+        var itemCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Text = "0" };
 
         var statsGrid = new Grid { ColumnSpacing = 10 };
         statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -167,7 +168,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
         var loadingText = new TextBlock
         {
             Text = "",
-            FontSize = 13,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap,
@@ -187,8 +188,8 @@ public sealed class JunkCleanerTool : IBuiltinTool
 
         var confirmText = new TextBlock
         {
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentYellow),
             TextWrapping = TextWrapping.Wrap
         };
@@ -228,7 +229,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
         var resultText = new TextBlock
         {
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(AccentGreen),
             TextWrapping = TextWrapping.NoWrap,
             MaxLines = 2,
@@ -848,14 +849,14 @@ public sealed class JunkCleanerTool : IBuiltinTool
             {
                 Text = item.Entry.Name,
                 FontSize = 14,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
                 TextWrapping = TextWrapping.Wrap
             };
             var warnText = new TextBlock
             {
                 Text = item.Entry.Warning ?? item.Entry.PackageName,
-                FontSize = 11,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 TextWrapping = TextWrapping.Wrap,
                 MaxLines = 2,
@@ -893,7 +894,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
                 Background = new SolidColorBrush(ThemeColors.CardBg),
                 BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
+                CornerRadius = new CornerRadius(8),
                 Child = grid
             });
         }
@@ -923,8 +924,8 @@ public sealed class JunkCleanerTool : IBuiltinTool
             groupHeader.Children.Add(new TextBlock
             {
                 Text = group.Key.Name,
-                FontSize = 15,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
             });
             groupHeader.Children.Add(new TextBlock
@@ -959,7 +960,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Width = 36,
             Height = 36,
             Background = new SolidColorBrush(dimAccent),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = item.HasRegistry ? "\uE7BA" : "\uE8B7" }
         };
 
@@ -967,7 +968,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
         {
             Text = item.Entry.Name,
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             TextWrapping = TextWrapping.Wrap
         };
@@ -975,7 +976,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
         var descText = new TextBlock
         {
             Text = DescribeResult(item),
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextWrapping = TextWrapping.Wrap,
             MaxLines = 2,
@@ -986,14 +987,14 @@ public sealed class JunkCleanerTool : IBuiltinTool
         {
             Text = item.SizeBytes > 0 ? ScanResult.FormatBytes(item.SizeBytes) : (item.HasRegistry ? "注册表" : "0 B"),
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(item.SizeBytes > 0 || item.HasRegistry ? accent : ThemeColors.DimText)
         };
 
         var chevron = new FontIcon
         {
             Glyph = item.Expanded ? "\uE70E" : "\uE70D",
-            FontSize = 10,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
         var detailHint = new StackPanel
@@ -1004,7 +1005,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Children =
             {
                 chevron,
-                new TextBlock { Text = item.Expanded ? "收起详情" : "查看详情", FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) }
+                new TextBlock { Text = item.Expanded ? "收起详情" : "查看详情", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) }
             }
         };
 
@@ -1070,7 +1071,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = grid
         };
 
@@ -1115,14 +1116,14 @@ public sealed class JunkCleanerTool : IBuiltinTool
         var titleBlock = new TextBlock
         {
             Text = "清理详情",
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
         var summaryBlock = new TextBlock
         {
             Text = $"{fileCount:N0} 个文件 · {regCount:N0} 项注册表 · 共 {ScanResult.FormatBytes(item.SizeBytes)}",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
@@ -1173,7 +1174,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Background = new SolidColorBrush(dimAccent),
             BorderBrush = new SolidColorBrush(Color.FromArgb(70, accent.R, accent.G, accent.B)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = content
         };
     }
@@ -1210,7 +1211,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             panel.Children.Add(new TextBlock
             {
                 Text = $"…… 其余 {paths.Count - DetailFileCap:N0} 项未显示，可用上方「复制完整列表」查看全部。",
-                FontSize = 11,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 Margin = new Thickness(0, 4, 0, 0)
             });
@@ -1311,10 +1312,10 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Width = 36,
             Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph }
         };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var stack = new StackPanel { Spacing = 2 };
         stack.Children.Add(labelBlock);
         stack.Children.Add(value);
@@ -1331,7 +1332,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = grid
         };
     }

@@ -15,17 +15,10 @@
         <StackPanel Spacing="16" Padding="0,4,0,0">
 
             <TextBlock
-                FontSize="14"
-                FontWeight="Bold"
-                Opacity="1.0"
+                Style="{StaticResource SectionHeaderStyle}"
                 Text="配置存储位置" />
 
-            <Border
-                Padding="16"
-                CornerRadius="8"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
+            <Border Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="12">
                     <RadioButton
                         x:Name="AppDataRadio"
@@ -54,13 +47,12 @@
                         <TextBlock
                             x:Name="CustomPathPreviewText"
                             FontSize="12"
-                            Opacity="1.0"
                             TextWrapping="Wrap" />
                         <Button
                             x:Name="ApplyCustomPathButton"
                             Click="ApplyCustomPathButton_Click"
                             Style="{StaticResource AccentButtonStyle}">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE73E;" />
                                 <TextBlock Text="应用自定义路径" />
                             </StackPanel>
@@ -74,7 +66,7 @@
                             </Expander.Header>
                             <Expander.Content>
                                 <StackPanel Spacing="4" Padding="8,4">
-                                    <TextBlock x:Name="PlaceholderListText" FontSize="12" TextWrapping="Wrap" Opacity="1.0" />
+                                    <TextBlock x:Name="PlaceholderListText" FontSize="12" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Expander.Content>
                         </Expander>
@@ -83,17 +75,10 @@
             </Border>
 
             <TextBlock
-                FontSize="14"
-                FontWeight="Bold"
-                Opacity="1.0"
+                Style="{StaticResource SectionHeaderStyle}"
                 Text="当前配置目录" />
 
-            <Border
-                Padding="16"
-                CornerRadius="8"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1">
+            <Border Style="{StaticResource FluentCardStyle}">
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -127,33 +112,31 @@
                 </Grid>
             </Border>
 
-            <TextBlock x:Name="DataSizeText" Opacity="1.0" FontSize="13" />
+            <TextBlock x:Name="DataSizeText" FontSize="12" />
 
             <Border
                 Padding="0,1"
                 Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
             <TextBlock
-                FontSize="14"
-                FontWeight="Bold"
-                Opacity="1.0"
+                Style="{StaticResource SectionHeaderStyle}"
                 Text="数据操作" />
 
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <Button x:Name="ExportButton" Click="ExportButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE896;" />
                         <TextBlock Text="导出配置" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="ImportButton" Click="ImportButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE8E5;" />
                         <TextBlock Text="导入配置" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="CleanCacheButton" Click="CleanCacheButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE74D;" />
                         <TextBlock Text="清除图标缓存" />
                     </StackPanel>
@@ -162,7 +145,6 @@
 
             <TextBlock
                 x:Name="StatusText"
-                Opacity="1.0"
                 FontSize="12"
                 TextWrapping="Wrap" />
 

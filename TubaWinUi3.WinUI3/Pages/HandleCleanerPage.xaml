@@ -15,7 +15,7 @@
     <Page.Resources>
         <!-- 进程句柄排行行 -->
         <DataTemplate x:Key="ProcessRowTemplate" x:DataType="local:HandleCleanerProcessRow">
-            <Grid ColumnSpacing="10" Padding="2,3" ToolTipService.ToolTip="{x:Bind ImagePath}">
+            <Grid ColumnSpacing="8" Padding="2,3" ToolTipService.ToolTip="{x:Bind ImagePath}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="64" />
@@ -24,31 +24,31 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <TextBlock FontSize="13" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock FontSize="14" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                     <Border
-                        Padding="5,1"
+                        Padding="4,1"
                         Background="{x:Bind ProtectedBackground}"
                         CornerRadius="4"
                         VerticalAlignment="Center"
                         Visibility="{x:Bind ProtectedVisibility}">
-                        <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{x:Bind ProtectedBrush}" Text="{x:Bind ProtectedText}" />
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind ProtectedBrush}" Text="{x:Bind ProtectedText}" />
                     </Border>
                     <Border
-                        Padding="5,1"
+                        Padding="4,1"
                         Background="{x:Bind LeakBackground}"
                         CornerRadius="4"
                         VerticalAlignment="Center"
                         Visibility="{x:Bind LeakVisibility}">
-                        <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{x:Bind LeakBrush}" Text="{x:Bind LeakText}" />
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind LeakBrush}" Text="{x:Bind LeakText}" />
                     </Border>
                     <Border
-                        Padding="5,1"
+                        Padding="4,1"
                         Background="{x:Bind CandidateBackground}"
                         CornerRadius="4"
                         VerticalAlignment="Center"
                         Visibility="{x:Bind CandidateVisibility, Mode=OneWay}">
-                        <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{x:Bind CandidateBrush}" Text="{x:Bind CandidateText, Mode=OneWay}" />
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind CandidateBrush}" Text="{x:Bind CandidateText, Mode=OneWay}" />
                     </Border>
                 </StackPanel>
 
@@ -76,7 +76,7 @@
                     VerticalAlignment="Center" />
                 <TextBlock
                     Grid.Column="4"
-                    FontSize="11"
+                    FontSize="12"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Text="{x:Bind TypesSummary}"
                     TextTrimming="CharacterEllipsis"
@@ -89,9 +89,9 @@
             <Grid Padding="2,3">
                 <CheckBox IsChecked="{x:Bind IsChecked, Mode=TwoWay}" MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                     <StackPanel Spacing="2">
-                        <TextBlock FontSize="13" Text="{x:Bind Title}" TextWrapping="Wrap" />
+                        <TextBlock FontSize="14" Text="{x:Bind Title}" TextWrapping="Wrap" />
                         <TextBlock
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="{x:Bind SamplePath}"
                             TextTrimming="CharacterEllipsis" />
@@ -117,11 +117,11 @@
                     IsEnabled="{x:Bind CheckEnabled}" />
                 <Border
                     Grid.Column="1"
-                    Padding="5,0"
+                    Padding="4,0"
                     Background="{x:Bind RiskBackground}"
                     CornerRadius="4"
                     VerticalAlignment="Center">
-                    <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{x:Bind RiskBrush}" Text="{x:Bind TypeLabel}" />
+                    <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind RiskBrush}" Text="{x:Bind TypeLabel}" />
                 </Border>
                 <TextBlock
                     Grid.Column="2"
@@ -133,14 +133,14 @@
                 <TextBlock
                     Grid.Column="3"
                     FontFamily="Consolas"
-                    FontSize="11"
+                    FontSize="12"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Text="{x:Bind AccessText}"
                     VerticalAlignment="Center" />
                 <TextBlock
                     Grid.Column="4"
                     FontFamily="Consolas"
-                    FontSize="11"
+                    FontSize="12"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Text="{x:Bind HandleText}"
                     VerticalAlignment="Center" />
@@ -161,23 +161,17 @@
             Glyph="&#xE777;"
             BackRequested="PageHeader_BackRequested"
             l:Uids.Uid="HandleCleaner_PageHeader">
-            <controls:ToolPageHeader.IconBackground>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#0F6CBD" />
-                    <GradientStop Offset="1" Color="#038387" />
-                </LinearGradientBrush>
-            </controls:ToolPageHeader.IconBackground>
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72C;" />
-                        <TextBlock FontSize="13" Text="重新扫描" l:Uids.Uid="HandleCleaner_RefreshButton" />
+                        <TextBlock Text="重新扫描" l:Uids.Uid="HandleCleaner_RefreshButton" />
                     </StackPanel>
                 </Button>
-                <Button Click="HelpButton_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Click="HelpButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE897;" />
-                        <TextBlock FontSize="13" Text="说明" l:Uids.Uid="HandleCleaner_HelpButton" />
+                        <TextBlock Text="说明" l:Uids.Uid="HandleCleaner_HelpButton" />
                     </StackPanel>
                 </Button>
             </controls:ToolPageHeader.Actions>
@@ -186,29 +180,24 @@
         <Grid Grid.Row="1">
         <ScrollViewer
             x:Name="MainScroll"
-            Padding="28,6,28,28"
+            Padding="24,8,24,24"
             HorizontalScrollBarVisibility="Disabled"
             HorizontalScrollMode="Disabled"
             VerticalScrollBarVisibility="Auto">
 
-            <StackPanel Spacing="14">
+            <StackPanel Spacing="16">
 
                 <!-- 使用模式 -->
-                <Border
-                    Padding="16,10"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="14">
+                <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Width="170" Spacing="2" VerticalAlignment="Center">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Text="使用模式" l:Uids.Uid="HandleCleaner_ModeTitle" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="使用模式" l:Uids.Uid="HandleCleaner_ModeTitle" />
                             <TextBlock
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="深度模式可关闭任意句柄，请谨慎使用"
                                 TextWrapping="Wrap"
@@ -216,18 +205,18 @@
                         </StackPanel>
                         <RadioButtons x:Name="ModeRadios" Grid.Column="1" MaxColumns="2" SelectionChanged="ModeRadios_SelectionChanged">
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="安全模式" l:Uids.Uid="HandleCleaner_ModeSafe" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="安全模式" l:Uids.Uid="HandleCleaner_ModeSafe" />
                                 <TextBlock
-                                    FontSize="11"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="只清理指向已删除文件的失效句柄，风险最低"
                                     TextWrapping="Wrap"
                                     l:Uids.Uid="HandleCleaner_ModeSafeDesc" />
                             </StackPanel>
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="深度模式" l:Uids.Uid="HandleCleaner_ModeDeep" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="深度模式" l:Uids.Uid="HandleCleaner_ModeDeep" />
                                 <TextBlock
-                                    FontSize="11"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="任意句柄可查询 / 关闭 · 按路径强制解除占用"
                                     TextWrapping="Wrap"
@@ -241,7 +230,7 @@
                 <InfoBar x:Name="AdminBar" IsClosable="True" IsOpen="False" Severity="Warning">
                     <InfoBar.ActionButton>
                         <Button x:Name="RestartAsAdminBtn" Click="RestartAsAdmin_Click" Padding="12,5">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE7EF;" />
                                 <TextBlock Text="以管理员身份重新启动" l:Uids.Uid="HandleCleaner_AdminRestart" />
                                 <ProgressRing x:Name="RestartAsAdminRing" Width="14" Height="14" IsActive="False" Visibility="Collapsed" />
@@ -251,17 +240,7 @@
                 </InfoBar>
 
                 <!-- ═════════ 总览 ═════════ -->
-                <Border Padding="18,16" BorderThickness="1" CornerRadius="16">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Offset="0" Color="#160F6CBD" />
-                            <GradientStop Offset="1" Color="#16038387" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Border.BorderBrush>
-                        <SolidColorBrush Color="#330F6CBD" />
-                    </Border.BorderBrush>
-
+                <Border Style="{StaticResource FluentCardStyle}">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -269,14 +248,14 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Width="52" Height="52" CornerRadius="14" Background="#260F6CBD" VerticalAlignment="Top">
-                            <FontIcon FontSize="24" Foreground="#0F6CBD" Glyph="&#xE777;" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border Style="{StaticResource IconTileStyle}" Width="52" Height="52" VerticalAlignment="Top">
+                            <FontIcon FontSize="24" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE777;" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
-                        <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock x:Name="HeroTitle" FontSize="17" FontWeight="Bold" Text="正在读取系统句柄占用…" TextWrapping="Wrap" />
-                                <ProgressRing x:Name="HeroRing" Width="15" Height="15" IsActive="False" Visibility="Collapsed" VerticalAlignment="Center" />
+                                <TextBlock x:Name="HeroTitle" FontSize="18" FontWeight="SemiBold" Text="正在读取系统句柄占用…" TextWrapping="Wrap" />
+                                <ProgressRing x:Name="HeroRing" Width="16" Height="16" IsActive="False" Visibility="Collapsed" VerticalAlignment="Center" />
                             </StackPanel>
                             <TextBlock
                                 x:Name="HeroDetail"
@@ -285,38 +264,38 @@
                                 TextWrapping="Wrap"
                                 Text="统计全系统句柄总数、各进程占用与疑似泄漏进程。" />
 
-                            <StackPanel Orientation="Horizontal" Spacing="18">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
                                 <StackPanel Spacing="1">
-                                    <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="系统句柄总数" l:Uids.Uid="HandleCleaner_StatTotalLabel" />
-                                    <TextBlock x:Name="StatTotalText" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold" Text="--" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="系统句柄总数" l:Uids.Uid="HandleCleaner_StatTotalLabel" />
+                                    <TextBlock x:Name="StatTotalText" FontFamily="Consolas" FontSize="18" FontWeight="SemiBold" Text="--" />
                                 </StackPanel>
                                 <StackPanel Spacing="1">
-                                    <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="进程数" l:Uids.Uid="HandleCleaner_StatProcessLabel" />
-                                    <TextBlock x:Name="StatProcessText" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold" Text="--" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="进程数" l:Uids.Uid="HandleCleaner_StatProcessLabel" />
+                                    <TextBlock x:Name="StatProcessText" FontFamily="Consolas" FontSize="18" FontWeight="SemiBold" Text="--" />
                                 </StackPanel>
                                 <StackPanel Spacing="1">
-                                    <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="疑似泄漏进程" l:Uids.Uid="HandleCleaner_StatSuspectLabel" ToolTipService.ToolTip="句柄数超过 5 万的进程（红色为 20 万以上）" />
-                                    <TextBlock x:Name="StatSuspectText" FontFamily="Consolas" FontSize="16" FontWeight="SemiBold" Text="--" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="疑似泄漏进程" l:Uids.Uid="HandleCleaner_StatSuspectLabel" ToolTipService.ToolTip="句柄数超过 5 万的进程（红色为 20 万以上）" />
+                                    <TextBlock x:Name="StatSuspectText" FontFamily="Consolas" FontSize="18" FontWeight="SemiBold" Text="--" />
                                 </StackPanel>
                             </StackPanel>
 
-                            <TextBlock x:Name="LastCleanText" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="还没有清理过" l:Uids.Uid="HandleCleaner_LastCleanNone" />
+                            <TextBlock x:Name="LastCleanText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Text="还没有清理过" l:Uids.Uid="HandleCleaner_LastCleanNone" />
                         </StackPanel>
 
-                        <StackPanel x:Name="HeroQuickCleanPanel" Grid.Column="2" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <StackPanel x:Name="HeroQuickCleanPanel" Grid.Column="2" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <Button
                                 x:Name="QuickCleanButton"
                                 Click="QuickClean_Click"
                                 CornerRadius="8"
-                                Padding="18,10"
+                                Padding="16,8"
                                 Style="{StaticResource AccentButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <FontIcon FontSize="13" Glyph="&#xE74D;" />
-                                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="一键安全清理" l:Uids.Uid="HandleCleaner_QuickCleanButton" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="一键安全清理" l:Uids.Uid="HandleCleaner_QuickCleanButton" />
                                 </StackPanel>
                             </Button>
                             <TextBlock
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 HorizontalAlignment="Right"
                                 MaxWidth="260"
@@ -331,9 +310,9 @@
                 <InfoBar x:Name="ResultBar" IsClosable="True" IsOpen="False" />
 
                 <!-- 扫描 / 清理进度 -->
-                <StackPanel x:Name="ProgressPanel" Spacing="6" Visibility="Collapsed">
+                <StackPanel x:Name="ProgressPanel" Spacing="8" Visibility="Collapsed">
                     <ProgressBar x:Name="ScanProgressBar" IsIndeterminate="True" />
-                    <Grid ColumnSpacing="10">
+                    <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -351,20 +330,15 @@
                 </StackPanel>
 
                 <!-- ═════════ 深度模式（安全模式时隐藏） ═════════ -->
-                <StackPanel x:Name="DeepPanel" Spacing="14" Visibility="Collapsed">
+                <StackPanel x:Name="DeepPanel" Spacing="16" Visibility="Collapsed">
                     <InfoBar IsClosable="False" IsOpen="True" Severity="Warning" l:Uids.Uid="HandleCleaner_DeepWarning" />
 
                     <!-- 解除文件占用 -->
-                    <Border
-                        Padding="16,14"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="14">
-                        <StackPanel Spacing="10">
+                    <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="8">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Border Width="3" Height="15" CornerRadius="2" Background="#C50F1F" VerticalAlignment="Center" />
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="解除文件占用" l:Uids.Uid="HandleCleaner_UnlockTitle" />
+                                <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="解除文件占用" l:Uids.Uid="HandleCleaner_UnlockTitle" />
                                 <TextBlock
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -381,19 +355,19 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="UnlockPathBox" MinWidth="240" PlaceholderText="输入或选择要解除占用的文件 / 目录路径" l:Uids.Uid="HandleCleaner_UnlockPlaceholder" />
                                 <Button x:Name="UnlockPickFileButton" Grid.Column="1" Click="UnlockPickFile_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontSize="12" Glyph="&#xE8E5;" />
                                         <TextBlock Text="选择文件" l:Uids.Uid="HandleCleaner_UnlockPickFile" />
                                     </StackPanel>
                                 </Button>
                                 <Button x:Name="UnlockPickFolderButton" Grid.Column="2" Click="UnlockPickFolder_Click">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontSize="12" Glyph="&#xE8B7;" />
                                         <TextBlock Text="选择目录" l:Uids.Uid="HandleCleaner_UnlockPickFolder" />
                                     </StackPanel>
                                 </Button>
                                 <Button x:Name="UnlockScanButton" Grid.Column="3" Click="UnlockScan_Click" Style="{StaticResource AccentButtonStyle}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontSize="12" Glyph="&#xE721;" />
                                         <TextBlock Text="扫描占用" l:Uids.Uid="HandleCleaner_UnlockScanButton" />
                                     </StackPanel>
@@ -410,11 +384,11 @@
                                 Visibility="Collapsed" />
 
                             <StackPanel x:Name="UnlockActionsPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
-                                <Button x:Name="UnlockCloseButton" Click="UnlockClose_Click" Padding="14,8" CornerRadius="8" Style="{StaticResource AccentButtonStyle}">
-                                    <TextBlock x:Name="UnlockCloseButtonText" FontSize="13" FontWeight="SemiBold" Text="关闭选中句柄" />
+                                <Button x:Name="UnlockCloseButton" Click="UnlockClose_Click" Padding="12,8" CornerRadius="8" Style="{StaticResource AccentButtonStyle}">
+                                    <TextBlock x:Name="UnlockCloseButtonText" FontSize="14" FontWeight="SemiBold" Text="关闭选中句柄" />
                                 </Button>
-                                <Button x:Name="UnlockCloseDeleteButton" Click="UnlockCloseDelete_Click" Padding="14,8" CornerRadius="8">
-                                    <TextBlock FontSize="13" Text="关闭并尝试删除" l:Uids.Uid="HandleCleaner_UnlockCloseDelete" />
+                                <Button x:Name="UnlockCloseDeleteButton" Click="UnlockCloseDelete_Click" Padding="12,8" CornerRadius="8">
+                                    <TextBlock FontSize="14" Text="关闭并尝试删除" l:Uids.Uid="HandleCleaner_UnlockCloseDelete" />
                                 </Button>
                             </StackPanel>
 
@@ -423,14 +397,9 @@
                     </Border>
 
                     <!-- 浏览器入口提示 -->
-                    <Border
-                        Padding="16,12"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="16" Foreground="#0F6CBD" Glyph="&#xE8A5;" VerticalAlignment="Center" />
+                    <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE8A5;" VerticalAlignment="Center" />
                             <TextBlock
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -443,21 +412,16 @@
                 </StackPanel>
 
                 <!-- ═════════ 进程句柄排行 ═════════ -->
-                <Border
-                    Padding="16,14"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="14">
-                    <StackPanel Spacing="10">
-                        <Grid ColumnSpacing="10">
+                <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Border Width="3" Height="15" CornerRadius="2" Background="#0F6CBD" VerticalAlignment="Center" />
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="进程句柄排行" l:Uids.Uid="HandleCleaner_RankingTitle" />
+                                <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="进程句柄排行" l:Uids.Uid="HandleCleaner_RankingTitle" />
                                 <TextBlock x:Name="RankingSummaryText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                             <AutoSuggestBox
@@ -467,12 +431,13 @@
                                 PlaceholderText="搜索进程名或 PID"
                                 QueryIcon="Find"
                                 l:Uids.Uid="HandleCleaner_RankingSearchPlaceholder"
-                                TextChanged="SearchBox_TextChanged" />
+                                TextChanged="SearchBox_TextChanged"
+                                QuerySubmitted="SearchBox_QuerySubmitted" />
                         </Grid>
 
                         <!-- 列标题 -->
-                        <Border Padding="12,5,12,5" CornerRadius="6,6,0,0">
-                            <Grid ColumnSpacing="10">
+                        <Border Padding="12,4" CornerRadius="8,8,0,0">
+                            <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="64" />
@@ -480,11 +445,11 @@
                                     <ColumnDefinition Width="84" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" FontSize="11" FontWeight="Bold" Text="进程" l:Uids.Uid="HandleCleaner_ColProcess" />
-                                <TextBlock Grid.Column="1" FontSize="11" FontWeight="Bold" Text="PID" l:Uids.Uid="HandleCleaner_ColPid" />
-                                <TextBlock Grid.Column="2" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" Text="句柄总数" l:Uids.Uid="HandleCleaner_ColTotal" />
-                                <TextBlock Grid.Column="3" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" Text="文件句柄" l:Uids.Uid="HandleCleaner_ColFile" />
-                                <TextBlock Grid.Column="4" FontSize="11" FontWeight="Bold" Text="主要类型" l:Uids.Uid="HandleCleaner_ColTypes" />
+                                <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="进程" l:Uids.Uid="HandleCleaner_ColProcess" />
+                                <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="PID" l:Uids.Uid="HandleCleaner_ColPid" />
+                                <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Text="句柄总数" l:Uids.Uid="HandleCleaner_ColTotal" />
+                                <TextBlock Grid.Column="3" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Text="文件句柄" l:Uids.Uid="HandleCleaner_ColFile" />
+                                <TextBlock Grid.Column="4" FontSize="12" FontWeight="SemiBold" Text="主要类型" l:Uids.Uid="HandleCleaner_ColTypes" />
                             </Grid>
                         </Border>
 
@@ -498,12 +463,12 @@
 
                         <StackPanel x:Name="RankingEmptyPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
                             <FontIcon FontSize="14" Glyph="&#xE946;" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
-                            <TextBlock FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="没有匹配的进程" l:Uids.Uid="HandleCleaner_SearchEmpty" VerticalAlignment="Center" />
+                            <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="没有匹配的进程" l:Uids.Uid="HandleCleaner_SearchEmpty" VerticalAlignment="Center" />
                         </StackPanel>
 
                         <TextBlock
                             x:Name="RankingHint"
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="点任意一行查看句柄类型分布，并可单独清理该进程的失效句柄。"
                             l:Uids.Uid="HandleCleaner_RankingHint"
@@ -512,16 +477,11 @@
                 </Border>
 
                 <!-- ═════════ 快速动作 ═════════ -->
-                <Border
-                    Padding="16,14"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="14">
-                    <StackPanel Spacing="10">
+                <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Border Width="3" Height="15" CornerRadius="2" Background="#038387" VerticalAlignment="Center" />
-                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="快速动作" l:Uids.Uid="HandleCleaner_QuickActionsTitle" />
+                            <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="快速动作" l:Uids.Uid="HandleCleaner_QuickActionsTitle" />
                         </StackPanel>
 
                         <Grid ColumnSpacing="12">
@@ -530,18 +490,18 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="3">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="重启资源管理器" l:Uids.Uid="HandleCleaner_RestartExplorerButton" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="重启资源管理器" l:Uids.Uid="HandleCleaner_RestartExplorerButton" />
                                 <TextBlock
-                                    FontSize="11"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="Wrap"
                                     Text="资源管理器是句柄泄漏的常客；重启外壳可立即释放它占用的全部句柄（桌面与任务栏会短暂消失后恢复）。"
                                     l:Uids.Uid="HandleCleaner_RestartExplorerDesc" />
                             </StackPanel>
-                            <Button x:Name="RestartExplorerButton" Grid.Column="1" Click="RestartExplorer_Click" Padding="14,8" CornerRadius="8" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button x:Name="RestartExplorerButton" Grid.Column="1" Click="RestartExplorer_Click" Padding="12,8" CornerRadius="8" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE72C;" />
-                                    <TextBlock FontSize="13" Text="重启资源管理器" l:Uids.Uid="HandleCleaner_RestartExplorerButton2" />
+                                    <TextBlock FontSize="14" Text="重启资源管理器" l:Uids.Uid="HandleCleaner_RestartExplorerButton2" />
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -552,18 +512,18 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="3">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="复制诊断报告" l:Uids.Uid="HandleCleaner_CopyReportButton" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="复制诊断报告" l:Uids.Uid="HandleCleaner_CopyReportButton" />
                                 <TextBlock
-                                    FontSize="11"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="Wrap"
                                     Text="把句柄总数、进程排行、失效句柄统计与运行环境整理成文本，方便粘贴给他人排查。"
                                     l:Uids.Uid="HandleCleaner_CopyReportDesc" />
                             </StackPanel>
-                            <Button x:Name="CopyReportButton" Grid.Column="1" Click="CopyReport_Click" Padding="14,8" CornerRadius="8" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button x:Name="CopyReportButton" Grid.Column="1" Click="CopyReport_Click" Padding="12,8" CornerRadius="8" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
-                                    <TextBlock FontSize="13" Text="复制报告" l:Uids.Uid="HandleCleaner_CopyReportButton2" />
+                                    <TextBlock FontSize="14" Text="复制报告" l:Uids.Uid="HandleCleaner_CopyReportButton2" />
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -571,14 +531,9 @@
                 </Border>
 
                 <!-- ═════════ 原理解释 ═════════ -->
-                <Border
-                    Padding="16,13"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="为什么清理句柄能缓解卡顿？" l:Uids.Uid="HandleCleaner_ExplainTitle" />
+                <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="为什么清理句柄能缓解卡顿？" l:Uids.Uid="HandleCleaner_ExplainTitle" />
                         <TextBlock
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -598,7 +553,7 @@
         </ScrollViewer>
 
         <!-- ═════════ 句柄浏览器（深度模式整页视图） ═════════ -->
-        <Grid x:Name="BrowserView" Padding="28,6,28,20" Visibility="Collapsed">
+        <Grid x:Name="BrowserView" Padding="24,8,24,24" Visibility="Collapsed">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -608,33 +563,33 @@
             </Grid.RowDefinitions>
 
             <!-- 头部 -->
-            <Grid Grid.Row="0" ColumnSpacing="10">
+            <Grid Grid.Row="0" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button x:Name="BrowserBackButton" Click="BrowserBack_Click" Padding="10,6" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="BrowserBackButton" Click="BrowserBack_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72B;" />
-                        <TextBlock FontSize="13" Text="返回" l:Uids.Uid="HandleCleaner_BrowserBack" />
+                        <TextBlock FontSize="14" Text="返回" l:Uids.Uid="HandleCleaner_BrowserBack" />
                     </StackPanel>
                 </Button>
-                <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="2" VerticalAlignment="Center">
-                    <TextBlock x:Name="BrowserTitleText" FontSize="16" FontWeight="SemiBold" Text="句柄浏览器" TextTrimming="CharacterEllipsis" />
-                    <TextBlock x:Name="BrowserSubtitleText" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
+                <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="2" VerticalAlignment="Center">
+                    <TextBlock x:Name="BrowserTitleText" FontSize="18" FontWeight="SemiBold" Text="句柄浏览器" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="BrowserSubtitleText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <Button x:Name="BrowserRefreshButton" Grid.Column="2" Click="BrowserRefresh_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="BrowserRefreshButton" Grid.Column="2" Click="BrowserRefresh_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72C;" />
-                        <TextBlock FontSize="13" Text="刷新" l:Uids.Uid="HandleCleaner_BrowserRefresh" />
+                        <TextBlock FontSize="14" Text="刷新" l:Uids.Uid="HandleCleaner_BrowserRefresh" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="BrowserCopyButton" Grid.Column="3" Click="BrowserCopy_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="BrowserCopyButton" Grid.Column="3" Click="BrowserCopy_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE8C8;" />
-                        <TextBlock FontSize="13" Text="复制列表" l:Uids.Uid="HandleCleaner_BrowserCopy" />
+                        <TextBlock FontSize="14" Text="复制列表" l:Uids.Uid="HandleCleaner_BrowserCopy" />
                     </StackPanel>
                 </Button>
             </Grid>
@@ -643,15 +598,15 @@
             <TextBlock
                 x:Name="BrowserHintText"
                 Grid.Row="1"
-                Margin="0,10,0,0"
-                FontSize="11"
+                Margin="0,8,0,0"
+                FontSize="12"
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                 TextWrapping="Wrap"
                 Text="勾选要关闭的句柄。关闭任意句柄都可能影响目标程序（报错 / 卡死），请谨慎操作；系统关键进程仅可查看。"
                 l:Uids.Uid="HandleCleaner_BrowserHint" />
 
             <!-- 工具栏 -->
-            <Grid Grid.Row="2" Margin="0,10,0,8" ColumnSpacing="8">
+            <Grid Grid.Row="2" Margin="0,8,0,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -668,7 +623,8 @@
                     PlaceholderText="搜索对象名 / 句柄值"
                     QueryIcon="Find"
                     l:Uids.Uid="HandleCleaner_BrowserSearch"
-                    TextChanged="BrowserSearchBox_TextChanged" />
+                    TextChanged="BrowserSearchBox_TextChanged"
+                    QuerySubmitted="BrowserSearchBox_QuerySubmitted" />
                 <CheckBox
                     x:Name="BrowserDeletedOnly"
                     Grid.Column="2"
@@ -677,10 +633,10 @@
                     Content="只看已删除文件（低风险）"
                     l:Uids.Uid="HandleCleaner_BrowserDeletedOnly"
                     Unchecked="BrowserDeletedOnly_Changed" />
-                <Button x:Name="BrowserSelectAllButton" Grid.Column="3" Click="BrowserSelectAll_Click" Padding="10,5">
+                <Button x:Name="BrowserSelectAllButton" Grid.Column="3" Click="BrowserSelectAll_Click" Padding="12,5">
                     <TextBlock FontSize="12" Text="全选当前结果" l:Uids.Uid="HandleCleaner_BrowserSelectAll" />
                 </Button>
-                <Button x:Name="BrowserClearButton" Grid.Column="4" Click="BrowserClear_Click" Padding="10,5">
+                <Button x:Name="BrowserClearButton" Grid.Column="4" Click="BrowserClear_Click" Padding="12,5">
                     <TextBlock FontSize="12" Text="清除选择" l:Uids.Uid="HandleCleaner_BrowserClear" />
                 </Button>
                 <TextBlock x:Name="BrowserCountText" Grid.Column="5" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
@@ -697,7 +653,7 @@
                     x:Name="BrowserEmptyText"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    FontSize="13"
+                    FontSize="14"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="没有匹配的句柄"
                     l:Uids.Uid="HandleCleaner_BrowserEmpty"
@@ -705,15 +661,15 @@
             </Grid>
 
             <!-- 底部操作 -->
-            <Grid Grid.Row="4" Margin="0,10,0,0" ColumnSpacing="10">
+            <Grid Grid.Row="4" Margin="0,8,0,0" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Button x:Name="BrowserCloseSelectedButton" Click="BrowserCloseSelected_Click" Padding="16,8" CornerRadius="8" Style="{StaticResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="7">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE74D;" />
-                        <TextBlock x:Name="BrowserCloseSelectedText" FontSize="13" FontWeight="SemiBold" Text="关闭选中" />
+                        <TextBlock x:Name="BrowserCloseSelectedText" FontSize="14" FontWeight="SemiBold" Text="关闭选中" />
                     </StackPanel>
                 </Button>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">

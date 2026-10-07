@@ -110,24 +110,24 @@ public sealed class TimeSyncIssueItem
 /// </summary>
 public sealed partial class TimeSyncPage : Page, ILocalizablePage
 {
-    // 品牌调色板（与其它内置工具页一致）
-    public static readonly Color AccentColor = Color.FromArgb(255, 91, 141, 239);
-    public static readonly Color SuccessColor = Color.FromArgb(255, 43, 182, 115);
-    public static readonly Color CautionColor = Color.FromArgb(255, 245, 166, 35);
-    public static readonly Color CriticalColor = Color.FromArgb(255, 242, 80, 59);
-    public static readonly Color NeutralColor = Color.FromArgb(255, 142, 142, 142);
+    // 语义调色板（跟随系统主题：品牌色统一取 ThemeColors 的官方语义色）
+    public static Color AccentColor => ThemeColors.AccentBlue;
+    public static Color SuccessColor => ThemeColors.AccentGreen;
+    public static Color CautionColor => ThemeColors.AccentOrange;
+    public static Color CriticalColor => ThemeColors.AccentRed;
+    public static Color NeutralColor => ThemeColors.Neutral;
 
-    public static readonly Brush AccentBrush = new SolidColorBrush(AccentColor);
-    public static readonly Brush SuccessBrush = new SolidColorBrush(SuccessColor);
-    public static readonly Brush CautionBrush = new SolidColorBrush(CautionColor);
-    public static readonly Brush CriticalBrush = new SolidColorBrush(CriticalColor);
-    public static readonly Brush NeutralBrush = new SolidColorBrush(NeutralColor);
-    public static readonly Brush CardStrokeBrush = new SolidColorBrush(Color.FromArgb(38, 128, 128, 128));
-    public static readonly Brush AccentBackground = TintFor(AccentColor);
-    public static readonly Brush SuccessBackground = TintFor(SuccessColor);
-    public static readonly Brush CautionBackground = TintFor(CautionColor);
-    public static readonly Brush CriticalBackground = TintFor(CriticalColor);
-    public static readonly Brush NeutralBackground = TintFor(NeutralColor);
+    public static readonly SolidColorBrush AccentBrush = new(ThemeColors.AccentBlue);
+    public static readonly SolidColorBrush SuccessBrush = new(ThemeColors.AccentGreen);
+    public static readonly SolidColorBrush CautionBrush = new(ThemeColors.AccentOrange);
+    public static readonly SolidColorBrush CriticalBrush = new(ThemeColors.AccentRed);
+    public static readonly SolidColorBrush NeutralBrush = new(ThemeColors.Neutral);
+    public static readonly SolidColorBrush CardStrokeBrush = new(ThemeColors.BorderColor);
+    public static readonly Brush AccentBackground = TintFor(ThemeColors.AccentBlue);
+    public static readonly Brush SuccessBackground = TintFor(ThemeColors.AccentGreen);
+    public static readonly Brush CautionBackground = TintFor(ThemeColors.AccentOrange);
+    public static readonly Brush CriticalBackground = TintFor(ThemeColors.AccentRed);
+    public static readonly Brush NeutralBackground = TintFor(ThemeColors.Neutral);
 
     private const string CustomCardId = "custom";
 
@@ -148,6 +148,23 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
     public TimeSyncPage()
     {
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前语义色重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            RefreshThemeBrushes();
+            if (_snapshot is not null) Render();
+        };
+    }
+
+    /// <summary>按当前主题刷新代码构建的语义色画刷（实例就地更新，已绑定的控件自动跟随）。</summary>
+    private static void RefreshThemeBrushes()
+    {
+        AccentBrush.Color = ThemeColors.AccentBlue;
+        SuccessBrush.Color = ThemeColors.AccentGreen;
+        CautionBrush.Color = ThemeColors.AccentOrange;
+        CriticalBrush.Color = ThemeColors.AccentRed;
+        NeutralBrush.Color = ThemeColors.Neutral;
+        CardStrokeBrush.Color = ThemeColors.BorderColor;
     }
 
     public static SolidColorBrush TintFor(Color color)
@@ -901,7 +918,7 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
             {
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 21,
-                FontSize = 13,
+                FontSize = 14,
                 Text = LocalizationService.L("TimeSync_HelpBody", """
                 为什么需要它
                 · 网页证书、账号登录、验证码、购票抢票都依赖准确的系统时间；系统时间偏得多了，网络明明是通的也会出错。
@@ -994,7 +1011,7 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
         dialog.Content = new ScrollViewer
         {
             MaxHeight = 360,
-            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 13 }
+            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 14 }
         };
         await dialog.ShowAsync();
     }
@@ -1004,7 +1021,7 @@ public sealed partial class TimeSyncPage : Page, ILocalizablePage
         var dialog = CreateDialog(title, LocalizationService.L("Common_Cancel", "取消"));
         dialog.PrimaryButtonText = primaryText;
         dialog.DefaultButton = ContentDialogButton.Primary;
-        dialog.Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 13 };
+        dialog.Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, LineHeight = 20, FontSize = 14 };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
     }
 }

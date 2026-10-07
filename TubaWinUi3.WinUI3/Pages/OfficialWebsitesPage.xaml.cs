@@ -19,6 +19,9 @@ public sealed partial class OfficialWebsitesPage : Page
         InitializeComponent();
 
         PopulateNav();
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前筛选重渲染站点行
+        ActualThemeChanged += (_, _) => RefreshSiteList();
     }
 
     private void PopulateNav()
@@ -34,7 +37,7 @@ public sealed partial class OfficialWebsitesPage : Page
 
     private Button CreateCategoryButton(OfficialWebsiteCategory category)
     {
-        var grid = new Grid { ColumnSpacing = 10 };
+        var grid = new Grid { ColumnSpacing = 8 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -48,7 +51,7 @@ public sealed partial class OfficialWebsitesPage : Page
         var name = new TextBlock
         {
             Text = category.Name,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
@@ -62,11 +65,11 @@ public sealed partial class OfficialWebsitesPage : Page
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
-            Padding = new Thickness(10, 8, 12, 8),
+            Padding = new Thickness(8, 8, 12, 8),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             Tag = category.Name,
             Style = Application.Current.Resources["SubtleButtonStyle"] as Style,
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(4),
             Content = grid
         };
 
@@ -145,7 +148,7 @@ public sealed partial class OfficialWebsitesPage : Page
 
     private ListViewItem CreateSiteItem(OfficialWebsite site)
     {
-        var grid = new Grid { Padding = new Thickness(12, 10, 12, 10), ColumnSpacing = 12 };
+        var grid = new Grid { Padding = new Thickness(12, 8, 12, 8), ColumnSpacing = 12 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -163,15 +166,15 @@ public sealed partial class OfficialWebsitesPage : Page
         {
             Text = site.Name,
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
         var url = new TextBlock
         {
             Text = site.Url,
-            FontSize = 11,
-            Opacity = 0.6,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
 
@@ -218,8 +221,8 @@ public sealed partial class OfficialWebsitesPage : Page
         var backdrop = new FontIcon
         {
             Glyph = "\uE774",
-            FontSize = 18,
-            Opacity = 0.55,
+            FontSize = 20,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -329,7 +332,13 @@ public sealed partial class OfficialWebsitesPage : Page
         }
     }
 
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        RefreshSiteList();
+    }
+
+    /// <summary>回车 / 点击搜索图标：与实时过滤等价，仅重新过滤一次。</summary>
+    private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
         RefreshSiteList();
     }

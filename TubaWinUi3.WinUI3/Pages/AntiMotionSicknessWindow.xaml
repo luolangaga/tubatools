@@ -25,17 +25,17 @@
                 <FontIcon FontSize="20" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Glyph="&#xE7FC;" />
             </Border>
             <StackPanel Grid.Column="1" Spacing="2">
-                <TextBlock FontSize="22" FontWeight="Bold" Text="游戏防晕3D" />
-                <TextBlock Opacity="1.0" FontSize="12" Text="一键帮你节约13块钱！（Steam某软件此功能居然收费！）" />
+                <TextBlock FontSize="20" FontWeight="SemiBold" Text="游戏防晕3D" />
+                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="一键帮你节约13块钱！（Steam某软件此功能居然收费！）" />
             </StackPanel>
         </Grid>
 
         <!-- Body -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,0">
-            <StackPanel Spacing="14">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
 
                 <!-- Status Card -->
-                <Border Padding="14,10,14,10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                <Border Style="{StaticResource FluentCardStyle}" Padding="12">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -44,25 +44,25 @@
                         </Grid.ColumnDefinitions>
                         <FontIcon x:Name="StatusIcon" FontSize="24" Glyph="&#xE894;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock x:Name="StatusTitle" FontWeight="Bold" Text="辅助器已关闭" />
-                            <TextBlock x:Name="StatusDesc" FontSize="12" Opacity="1.0" Text="点击下方按钮开启屏幕准星辅助" />
+                            <TextBlock x:Name="StatusTitle" FontWeight="SemiBold" Text="辅助器已关闭" />
+                            <TextBlock x:Name="StatusDesc" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="点击下方按钮开启屏幕准星辅助" />
                         </StackPanel>
                         <ToggleSwitch x:Name="OverlayToggle" Grid.Column="2" VerticalAlignment="Center" Toggled="OverlayToggle_Toggled" />
                     </Grid>
                 </Border>
 
                 <!-- Minimize to tray -->
-                <Border Padding="14,10,14,10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                <Border Style="{StaticResource FluentCardStyle}" Padding="12">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon FontSize="18" Glyph="&#xE73E;" Foreground="{ThemeResource SystemAccentColor}" />
+                        <FontIcon FontSize="20" Glyph="&#xE73E;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="Bold" Text="最小化的系统托盘" />
-                            <TextBlock FontSize="12" Opacity="1.0" TextWrapping="Wrap" Text="开启后隐藏主窗口，只保留准星覆盖层并驻留系统托盘" />
+                            <TextBlock FontWeight="SemiBold" Text="最小化的系统托盘" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="开启后隐藏主窗口，只保留准星覆盖层并驻留系统托盘" />
                         </StackPanel>
                         <Button x:Name="LiteModeButton" Grid.Column="2" VerticalAlignment="Center" Click="LiteModeButton_Click" Style="{ThemeResource AccentButtonStyle}">
                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -73,18 +73,18 @@
                     </Grid>
                 </Border>
 
-<!-- Force Topmost Mode -->
-                <Border Padding="14,10,14,10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                <!-- Force Topmost Mode -->
+                <Border Style="{StaticResource FluentCardStyle}" Padding="12">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon FontSize="18" Glyph="&#xE9A9;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <FontIcon FontSize="20" Glyph="&#xE9A9;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="Bold" Text="强制置顶模式" />
-                            <TextBlock FontSize="12" Opacity="1.0" Text="开启后持续置顶窗口，适用于部分全屏游戏" />
+                            <TextBlock FontWeight="SemiBold" Text="强制置顶模式" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="开启后持续置顶窗口，适用于部分全屏游戏" />
                         </StackPanel>
                         <ToggleSwitch x:Name="ForceTopmostToggle" Grid.Column="2" VerticalAlignment="Center" Toggled="ForceTopmostToggle_Toggled" />
                     </Grid>
@@ -93,20 +93,20 @@
                 <!-- Global Settings -->
                 <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xE790;" />
-                            <TextBlock FontWeight="Bold" Text="全局设置" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="20" Glyph="&#xE790;" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="全局设置" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /><ColumnDefinition Width="50" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="透明度：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="透明度：" />
                             <Slider x:Name="OpacitySlider" Grid.Column="1" Minimum="10" Maximum="100" Value="80" ValueChanged="Slider_Changed" />
-                            <TextBlock x:Name="OpacityText" Grid.Column="2" VerticalAlignment="Center" FontSize="13" Text="80%" />
+                            <TextBlock x:Name="OpacityText" Grid.Column="2" VerticalAlignment="Center" FontSize="12" Text="80%" />
                         </Grid>
 
-                        <TextBlock FontSize="13" FontWeight="Bold" Text="显示开关" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="显示开关" />
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <ToggleSwitch x:Name="ShowCenterToggle" Header="中央准星" IsOn="True" Toggled="Toggle_Changed" />
@@ -124,32 +124,32 @@
                 <!-- Crosshair Settings -->
                 <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xE7FC;" />
-                            <TextBlock FontWeight="Bold" Text="准星设置" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="20" Glyph="&#xE7FC;" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="准星设置" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="准星颜色：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="准星颜色：" />
                             <ColorPicker x:Name="CenterColorPicker" Grid.Column="1" IsAlphaEnabled="False" IsColorSliderVisible="True" IsColorChannelTextInputVisible="False" IsHexInputVisible="False" IsMoreButtonVisible="False" Color="Green" ColorChanged="Color_Changed" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /><ColumnDefinition Width="50" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="准星大小：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="准星大小：" />
                             <Slider x:Name="CenterSizeSlider" Grid.Column="1" Minimum="4" Maximum="120" Value="12" ValueChanged="Slider_Changed" />
-                            <TextBlock x:Name="CenterSizeText" Grid.Column="2" VerticalAlignment="Center" FontSize="13" Text="12" />
+                            <TextBlock x:Name="CenterSizeText" Grid.Column="2" VerticalAlignment="Center" FontSize="12" Text="12" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /><ColumnDefinition Width="50" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="准星粗细：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="准星粗细：" />
                             <Slider x:Name="CenterThicknessSlider" Grid.Column="1" Minimum="1" Maximum="24" Value="2" ValueChanged="Slider_Changed" />
-                            <TextBlock x:Name="CenterThicknessText" Grid.Column="2" VerticalAlignment="Center" FontSize="13" Text="2" />
+                            <TextBlock x:Name="CenterThicknessText" Grid.Column="2" VerticalAlignment="Center" FontSize="12" Text="2" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="准星样式：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="准星样式：" />
                             <ComboBox x:Name="CenterStyleCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="Combo_Changed">
                                 <ComboBoxItem Content="十字" />
                                 <ComboBoxItem Content="圆点" />
@@ -171,26 +171,26 @@
                 <!-- Edge Marker Settings -->
                 <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <FontIcon FontSize="18" Glyph="&#xE945;" />
-                            <TextBlock FontWeight="Bold" Text="边缘标记设置" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="20" Glyph="&#xE945;" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="边缘标记设置" />
                         </StackPanel>
                     </Expander.Header>
                     <StackPanel Spacing="12" Padding="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="标记颜色：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="标记颜色：" />
                             <ColorPicker x:Name="EdgeColorPicker" Grid.Column="1" IsAlphaEnabled="False" IsColorSliderVisible="True" IsColorChannelTextInputVisible="False" IsHexInputVisible="False" IsMoreButtonVisible="False" Color="Green" ColorChanged="Color_Changed" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /><ColumnDefinition Width="50" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="标记大小：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="标记大小：" />
                             <Slider x:Name="EdgeSizeSlider" Grid.Column="1" Minimum="4" Maximum="160" Value="10" ValueChanged="Slider_Changed" />
-                            <TextBlock x:Name="EdgeSizeText" Grid.Column="2" VerticalAlignment="Center" FontSize="13" Text="10" />
+                            <TextBlock x:Name="EdgeSizeText" Grid.Column="2" VerticalAlignment="Center" FontSize="12" Text="10" />
                         </Grid>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock VerticalAlignment="Center" FontSize="13" Text="标记形状：" />
+                            <TextBlock VerticalAlignment="Center" FontSize="14" Text="标记形状：" />
                             <ComboBox x:Name="EdgeShapeCombo" Grid.Column="1" HorizontalAlignment="Stretch" SelectedIndex="0" SelectionChanged="Combo_Changed">
                                 <ComboBoxItem Content="方块" />
                                 <ComboBoxItem Content="圆点" />
@@ -207,15 +207,15 @@
                 </Expander>
 
                 <!-- Hint -->
-                <Border Padding="14,10,14,10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="6">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="4">
-                        <TextBlock FontSize="13" Opacity="1.0" TextWrapping="Wrap" Text="使用说明：" FontWeight="Bold" />
-                        <TextBlock FontSize="12" Opacity="1.0" TextWrapping="Wrap" Text="开启辅助器后，屏幕中央会显示准星，四条边的中间会显示标记点。这些标记会帮助你在3D游戏中减少晕眩感。覆盖层不会影响鼠标点击和键盘操作。" />
-                        <TextBlock FontSize="12" Opacity="1.0" TextWrapping="Wrap" Text="关闭此窗口不会关闭覆盖层，如需关闭请关闭开关或再次打开此工具。" />
-                        <Border Margin="0,8,0,0" Padding="10,8,10,8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="4">
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" TextWrapping="Wrap" Text="使用说明：" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="开启辅助器后，屏幕中央会显示准星，四条边的中间会显示标记点。这些标记会帮助你在3D游戏中减少晕眩感。覆盖层不会影响鼠标点击和键盘操作。" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="关闭此窗口不会关闭覆盖层，如需关闭请关闭开关或再次打开此工具。" />
+                        <Border Margin="0,8,0,0" Padding="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="4">
                             <StackPanel Spacing="4">
-                                <TextBlock FontSize="12" FontWeight="Bold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Text="⚠ 全屏游戏提示" />
-                                <TextBlock FontSize="11" Opacity="1.0" TextWrapping="Wrap" Text="如果在全屏独占游戏中看不到准星，请将游戏设置为「无边框全屏」或「窗口化全屏」模式。大多数游戏都支持此显示模式，该模式下准星可正常显示。" />
+                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Text="⚠ 全屏游戏提示" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="如果在全屏独占游戏中看不到准星，请将游戏设置为「无边框全屏」或「窗口化全屏」模式。大多数游戏都支持此显示模式，该模式下准星可正常显示。" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -225,22 +225,22 @@
         </ScrollViewer>
 
         <!-- Footer -->
-        <Border Grid.Row="2" Padding="24,12,24,20" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Padding="24,12,24,16" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock VerticalAlignment="Center" FontSize="12" Opacity="1.0" Text="一键帮你节约13块钱！Steam某软件此功能居然收费！" />
+                <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="一键帮你节约13块钱！Steam某软件此功能居然收费！" />
                 <Button x:Name="ResetButton" Grid.Column="1" Click="ResetButton_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="重置默认" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="ToggleOverlayButton" Grid.Column="2" Click="ToggleOverlayButton_Click" Style="{ThemeResource AccentButtonStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon x:Name="ToggleOverlayIcon" FontSize="12" Glyph="&#xE73E;" />
                         <TextBlock x:Name="ToggleOverlayText" Text="开启防晕3D辅助" />
                     </StackPanel>

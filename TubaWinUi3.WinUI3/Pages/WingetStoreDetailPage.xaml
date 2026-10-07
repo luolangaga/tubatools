@@ -14,25 +14,24 @@
             </TransitionCollection>
         </Grid.Transitions>
 
-        <ScrollViewer>
+        <ScrollViewer Padding="24,8,24,24">
             <StackPanel
                 MaxWidth="860"
-                Margin="32,20,32,40"
                 HorizontalAlignment="Center"
-                Spacing="32">
+                Spacing="16">
 
                 <!-- 返回 -->
                 <Button
                     HorizontalAlignment="Left"
-                    Padding="10,6,12,6"
+                    Padding="12,8,12,8"
                     Click="BackButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon
-                            FontSize="13"
+                            FontSize="14"
                             Glyph="&#xE72B;"
                             VerticalAlignment="Center" />
                         <TextBlock
-                            FontSize="13"
+                            FontSize="14"
                             Text="返回商店"
                             VerticalAlignment="Center" />
                     </StackPanel>
@@ -42,19 +41,18 @@
                 <StackPanel Spacing="8">
                     <TextBlock
                         x:Name="NameText"
-                        FontSize="28"
-                        FontWeight="SemiBold"
+                        Style="{StaticResource PageTitleStyle}"
                         TextWrapping="Wrap" />
                     <TextBlock
                         x:Name="MetaText"
-                        FontSize="13"
+                        FontSize="12"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <Button
                         x:Name="InstallButton"
                         Height="40"
-                        Margin="0,14,0,0"
+                        Margin="0,16,0,0"
                         HorizontalAlignment="Left"
-                        Padding="28,0,28,0"
+                        Padding="24,0,24,0"
                         CornerRadius="8"
                         Click="InstallButton_Click"
                         Style="{StaticResource AccentButtonStyle}" />
@@ -63,11 +61,10 @@
                 <!-- 简介 -->
                 <StackPanel Spacing="12">
                     <TextBlock
-                        FontSize="16"
-                        FontWeight="SemiBold"
+                        Style="{StaticResource SectionHeaderStyle}"
                         Text="简介" />
                     <Border
-                        Padding="20,16"
+                        Padding="16"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
@@ -84,11 +81,10 @@
                 <!-- 包信息 -->
                 <StackPanel Spacing="12">
                     <TextBlock
-                        FontSize="16"
-                        FontWeight="SemiBold"
+                        Style="{StaticResource SectionHeaderStyle}"
                         Text="包信息" />
                     <Border
-                        Padding="20,16"
+                        Padding="16"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
@@ -101,13 +97,13 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
-                                    FontSize="13"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="包 ID" />
                                 <TextBlock
                                     x:Name="IdText"
                                     Grid.Column="1"
-                                    FontSize="13"
+                                    FontSize="14"
                                     TextWrapping="Wrap" />
                             </Grid>
                             <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
@@ -118,13 +114,13 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
-                                    FontSize="13"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="分类" />
                                 <TextBlock
                                     x:Name="CategoryText"
                                     Grid.Column="1"
-                                    FontSize="13" />
+                                    FontSize="14" />
                             </Grid>
                             <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                             <!-- 来源 -->
@@ -134,13 +130,13 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
-                                    FontSize="13"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="来源" />
                                 <TextBlock
                                     x:Name="SourceText"
                                     Grid.Column="1"
-                                    FontSize="13"
+                                    FontSize="14"
                                     Text="WinGet 官方源 · 正版直链下载" />
                             </Grid>
                         </StackPanel>

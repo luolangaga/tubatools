@@ -180,10 +180,10 @@ public sealed partial class DotnetCompletionPage : Page
         ToolTipService.SetToolTip(helpBtn, "查看 Runtime / SDK / Framework 区别说明");
         header.Actions.Add(helpBtn);
 
-        _archText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
-        _runtimeCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
-        _sdkCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentBlue) };
-        _missingCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentOrange) };
+        _archText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+        _runtimeCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
+        _sdkCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentBlue) };
+        _missingCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentOrange) };
 
         var statsGrid = new Grid { ColumnSpacing = 10 };
         statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -231,7 +231,7 @@ public sealed partial class DotnetCompletionPage : Page
         _itemsList = new StackPanel { Spacing = 4 };
 
         _loadingRing = new ProgressRing { Width = 40, Height = 40, IsActive = true };
-        _loadingText = new TextBlock { Text = "正在检测 .NET 环境...", FontSize = 13, Opacity = 0.68 };
+        _loadingText = new TextBlock { Text = "正在检测 .NET 环境...", FontSize = 14, Foreground = new SolidColorBrush(ThemeColors.SecondaryText) };
         _loadingPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, Spacing = 8, Padding = new Thickness(0, 40, 0, 40), Children = { _loadingRing, _loadingText } };
 
         _contentPanel = new StackPanel { Spacing = 14, Visibility = Visibility.Collapsed };
@@ -281,8 +281,8 @@ public sealed partial class DotnetCompletionPage : Page
     private static StackPanel MakeHelpSection(string title, string desc)
     {
         var stack = new StackPanel { Spacing = 4 };
-        stack.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText) });
-        stack.Children.Add(new TextBlock { Text = desc, FontSize = 12, Opacity = 0.78, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ThemeColors.SecondaryText) });
+        stack.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText) });
+        stack.Children.Add(new TextBlock { Text = desc, FontSize = 12, TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(ThemeColors.SecondaryText) });
         return stack;
     }
 
@@ -419,16 +419,16 @@ public sealed partial class DotnetCompletionPage : Page
             {
                 Padding = new Thickness(8, 2, 8, 2), CornerRadius = new CornerRadius(4),
                 Background = new SolidColorBrush(Color.FromArgb(30, phaseColor.R, phaseColor.G, phaseColor.B)),
-                Child = new TextBlock { Text = phaseLabel, FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(phaseColor) }
+                Child = new TextBlock { Text = phaseLabel, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(phaseColor) }
             };
 
             var headerText = new TextBlock
             {
                 Text = isFramework ? $".NET {group.Key}" : $".NET {group.Key}",
-                FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center
+                FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center
             };
 
-            var eolText = new TextBlock { FontSize = 11, Opacity = 0.68, VerticalAlignment = VerticalAlignment.Center };
+            var eolText = new TextBlock { FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.SecondaryText), VerticalAlignment = VerticalAlignment.Center };
             if (channel?.EolDate is not null)
                 eolText.Text = $"EOL: {channel.EolDate[..10]}";
 
@@ -469,8 +469,8 @@ public sealed partial class DotnetCompletionPage : Page
                 Spacing = 8,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE73E", FontSize = 32, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) },
-                    new TextBlock { Text = "所有 .NET 组件已安装", FontSize = 14, Opacity = 0.68 }
+                    new FontIcon { Glyph = "\uE73E", FontSize = 28, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) },
+                    new TextBlock { Text = "所有 .NET 组件已安装", FontSize = 14, Foreground = new SolidColorBrush(ThemeColors.SecondaryText) }
                 }
             });
         }
@@ -483,28 +483,43 @@ public sealed partial class DotnetCompletionPage : Page
         Color typeBg, typeFg;
         switch (item.ComponentType)
         {
-            case DotnetComponentType.Sdk: typeBg = Color.FromArgb(40, 96, 165, 250); typeFg = ThemeColors.AccentBlue; break;
-            case DotnetComponentType.AspNetCoreRuntime: typeBg = Color.FromArgb(40, 167, 139, 250); typeFg = ThemeColors.AccentPurple; break;
-            case DotnetComponentType.WindowsDesktopRuntime: typeBg = Color.FromArgb(40, 251, 191, 36); typeFg = ThemeColors.AccentOrange; break;
-            case DotnetComponentType.DotnetFramework: typeBg = Color.FromArgb(40, 167, 139, 250); typeFg = ThemeColors.AccentPurple; break;
-            default: typeBg = Color.FromArgb(40, 74, 222, 128); typeFg = ThemeColors.AccentGreen; break;
+            case DotnetComponentType.Sdk:
+                typeFg = ThemeColors.AccentBlue;
+                typeBg = Color.FromArgb(40, typeFg.R, typeFg.G, typeFg.B);
+                break;
+            case DotnetComponentType.AspNetCoreRuntime:
+                typeFg = ThemeColors.AccentPurple;
+                typeBg = Color.FromArgb(40, typeFg.R, typeFg.G, typeFg.B);
+                break;
+            case DotnetComponentType.WindowsDesktopRuntime:
+                typeFg = ThemeColors.AccentOrange;
+                typeBg = Color.FromArgb(40, typeFg.R, typeFg.G, typeFg.B);
+                break;
+            case DotnetComponentType.DotnetFramework:
+                typeFg = ThemeColors.AccentPurple;
+                typeBg = Color.FromArgb(40, typeFg.R, typeFg.G, typeFg.B);
+                break;
+            default:
+                typeFg = ThemeColors.AccentGreen;
+                typeBg = Color.FromArgb(40, typeFg.R, typeFg.G, typeFg.B);
+                break;
         }
 
         var typeBadge = new Border
         {
             Padding = new Thickness(8, 2, 8, 2), CornerRadius = new CornerRadius(4),
             Background = new SolidColorBrush(typeBg),
-            Child = new TextBlock { Text = typeLabel, FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(typeFg) }
+            Child = new TextBlock { Text = typeLabel, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(typeFg) }
         };
 
-        var nameText = new TextBlock { Text = item.DisplayName, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
+        var nameText = new TextBlock { Text = item.DisplayName, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center };
         var versionText = new TextBlock { Text = item.Version, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.SecondaryText), VerticalAlignment = VerticalAlignment.Center };
         var infoStack = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { nameText, versionText } };
 
-        var statusText = new TextBlock { FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
+        var statusText = new TextBlock { FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
         var statusBadge = new Border
         {
-            Padding = new Thickness(6, 1, 6, 1), CornerRadius = new CornerRadius(3),
+            Padding = new Thickness(6, 1, 6, 1), CornerRadius = new CornerRadius(4),
             Child = statusText
         };
         ApplyStatusBadge(statusBadge, statusText, item);
@@ -568,18 +583,18 @@ public sealed partial class DotnetCompletionPage : Page
         switch (item.Status)
         {
             case DotnetInstallStatus.Installed:
-                return (new TextBlock { Text = item.InstalledVersion is not null ? $"已装 {item.InstalledVersion}" : "已安装", FontSize = 11 }, false, 0.6);
+                return (new TextBlock { Text = item.InstalledVersion is not null ? $"已装 {item.InstalledVersion}" : "已安装", FontSize = 12 }, false, 0.6);
             case DotnetInstallStatus.Downloading:
                 {
                     var pct = item.DownloadProgress > 0 ? $" {item.DownloadProgress:F0}%" : "";
-                    return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new ProgressRing { Width = 14, Height = 14, IsActive = true }, new TextBlock { Text = $"下载中{pct}", FontSize = 11 } } }, false, 1);
+                    return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new ProgressRing { Width = 14, Height = 14, IsActive = true }, new TextBlock { Text = $"下载中{pct}", FontSize = 12 } } }, false, 1);
                 }
             case DotnetInstallStatus.Installing:
-                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new ProgressRing { Width = 14, Height = 14, IsActive = true }, new TextBlock { Text = "安装中", FontSize = 11 } } }, false, 1);
+                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new ProgressRing { Width = 14, Height = 14, IsActive = true }, new TextBlock { Text = "安装中", FontSize = 12 } } }, false, 1);
             case DotnetInstallStatus.Failed:
-                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new FontIcon { Glyph = "\uE783", FontSize = 11 }, new TextBlock { Text = "重试", FontSize = 11 } } }, true, 1);
+                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new FontIcon { Glyph = "\uE783", FontSize = 12 }, new TextBlock { Text = "重试", FontSize = 12 } } }, true, 1);
             default:
-                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new FontIcon { Glyph = "\uE896", FontSize = 11 }, new TextBlock { Text = "安装", FontSize = 11 } } }, true, 1);
+                return (new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { new FontIcon { Glyph = "\uE896", FontSize = 12 }, new TextBlock { Text = "安装", FontSize = 12 } } }, true, 1);
         }
     }
 
@@ -636,15 +651,15 @@ public sealed partial class DotnetCompletionPage : Page
         {
             Width = 36, Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, ThemeColors.PrimaryText.R, ThemeColors.PrimaryText.G, ThemeColors.PrimaryText.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Glyph = glyph }
         };
-        var stack = new StackPanel { Spacing = 2, Children = { new TextBlock { Text = label, FontSize = 11, Opacity = 0.68 }, value } };
+        var stack = new StackPanel { Spacing = 2, Children = { new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.SecondaryText) }, value } };
         var grid = new Grid { ColumnSpacing = 10 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.Children.Add(iconBorder);
         grid.Children.Add(stack); Grid.SetColumn(stack, 1);
-        return new Border { Padding = new Thickness(12), Background = new SolidColorBrush(ThemeColors.CardBg), BorderBrush = new SolidColorBrush(ThemeColors.BorderColor), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Child = grid };
+        return new Border { Padding = new Thickness(12), Background = new SolidColorBrush(ThemeColors.CardBg), BorderBrush = new SolidColorBrush(ThemeColors.BorderColor), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Child = grid };
     }
 }

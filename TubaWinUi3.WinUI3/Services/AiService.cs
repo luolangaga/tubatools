@@ -75,12 +75,21 @@ public static class AiService
 
     public static bool IsConfigured => true;
 
+    /// <summary>当前是否选中「本地模型」提供商（AI 助手走进程内推理，HTTP 功能回落默认网关）。</summary>
+    public static bool IsLocalProviderSelected => AiProviderStore.SelectedProvider.Kind == ProviderKind.Local;
+
     /// <summary>当前选中提供商/模型的请求配置（自定义提供商留空时回退自带默认）。</summary>
     public static (string Endpoint, string Model, string ApiKey) GetConfig()
     {
         var (endpoint, model, apiKey) = AiProviderStore.GetSelectedConfig();
 
         var provider = AiProviderStore.SelectedProvider;
+
+        // 本地模型提供商没有 HTTP 端点：仅 AI 助手（Agent 路径）走进程内推理，
+        // 其余 HTTP 调用（快捷提问 / 测试连接等）回落内置默认网关，保持可用、不报错。
+        if (provider.Kind == ProviderKind.Local)
+            return (DefaultEndpoint, DefaultModel, DefaultApiKey);
+
         if (provider.Id == AiProviderStore.CustomProviderId)
         {
             if (string.IsNullOrWhiteSpace(endpoint)) endpoint = DefaultEndpoint;

@@ -22,8 +22,8 @@
             Glyph="&#xE72E;"
             l:Uids.Uid="FileLock_PageHeader" />
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-            <StackPanel Spacing="14">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
                 <!-- 未以管理员身份运行时的操作条：受保护进程的占用读不到；一键提权重启并续扫当前路径。 -->
                 <InfoBar x:Name="AdminBar" IsClosable="True" IsOpen="False" Severity="Warning">
                     <InfoBar.ActionButton>
@@ -40,7 +40,7 @@
                 <InfoBar x:Name="ErrorBar" IsClosable="True" IsOpen="False" Severity="Error" />
 
                 <!-- 输入行 -->
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -80,41 +80,41 @@
                 <!-- 扫描进度 -->
                 <StackPanel x:Name="ProgressPanel" Spacing="6" Visibility="Collapsed">
                     <ProgressBar x:Name="ScanProgressBar" IsIndeterminate="True" />
-                    <TextBlock x:Name="ProgressText" FontSize="12" Opacity="1.0" />
+                    <TextBlock x:Name="ProgressText" FontSize="12" />
                 </StackPanel>
 
-                <TextBlock x:Name="SummaryText" FontSize="13" TextWrapping="Wrap" Visibility="Collapsed" />
+                <TextBlock x:Name="SummaryText" FontSize="14" TextWrapping="Wrap" Visibility="Collapsed" />
 
                 <!-- 列标题。左内边距 29 = 12(自身) + 1(ExpanderHeaderBorderThickness)
                      + 16(ExpanderHeaderPadding)：数据行在 Expander 表头里，比表头多这两段缩进。
                      右侧留白由 code-behind 的 SyncHeaderWidth 按实测差值补齐——数据行右边还被
                      展开箭头占掉一段，若不补，表头可用宽度更宽、星号列更宽，列名会整体右移。
                      操作列留 Auto，由 code-behind 塞透明按钮副本占位（RefreshActionHeaderMirror）。 -->
-                <Border x:Name="HeaderBorder" Padding="29,6,12,6" CornerRadius="6,6,0,0" Visibility="Collapsed">
-                    <Grid x:Name="HeaderGrid" ColumnSpacing="10">
+                <Border x:Name="HeaderBorder" Padding="29,6,12,6" CornerRadius="8,8,0,0" Visibility="Collapsed">
+                    <Grid x:Name="HeaderGrid" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="80" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" FontSize="11" FontWeight="Bold" Text="进程" l:Uids.Uid="FileLock_ColProcess" />
-                        <TextBlock Grid.Column="1" FontSize="11" FontWeight="Bold" Text="PID" l:Uids.Uid="FileLock_ColPid" />
-                        <TextBlock Grid.Column="2" FontSize="11" FontWeight="Bold" Text="进程 exe" l:Uids.Uid="FileLock_ColPath" />
+                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="进程" l:Uids.Uid="FileLock_ColProcess" />
+                        <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="PID" l:Uids.Uid="FileLock_ColPid" />
+                        <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="进程 exe" l:Uids.Uid="FileLock_ColPath" />
                         <Grid x:Name="ActionHeaderCell" Grid.Column="3">
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Text="操作" l:Uids.Uid="FileLock_ColAction" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="操作" l:Uids.Uid="FileLock_ColAction" />
                         </Grid>
                     </Grid>
                 </Border>
 
                 <!-- 结果列表 -->
-                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,6,6" Visibility="Collapsed">
+                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8" Visibility="Collapsed">
                     <StackPanel x:Name="ListContainer" />
                 </Border>
 
                 <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
                     <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
-                    <TextBlock FontSize="13" Opacity="1.0" Text="正在扫描..." l:Uids.Uid="FileLock_Scanning" />
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在扫描..." l:Uids.Uid="FileLock_Scanning" />
                 </StackPanel>
 
                 <!-- 资源管理器右键菜单集成：便携=经典菜单（显示更多选项）；MSIX+Win11=新版菜单。
@@ -123,10 +123,10 @@
                     <Expander.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xE8B7;" />
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Text="资源管理器右键菜单" l:Uids.Uid="FileLock_MenuSectionTitle" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="资源管理器右键菜单" l:Uids.Uid="FileLock_MenuSectionTitle" />
                         </StackPanel>
                     </Expander.Header>
-                    <StackPanel Spacing="10" Padding="0,12,0,0">
+                    <StackPanel Spacing="8" Padding="0,12,0,0">
                         <TextBlock x:Name="ShellMenuDescText" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
@@ -142,7 +142,7 @@
                             </Button>
                         </Grid>
                         <TextBlock
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="修改后如菜单未立即生效，可点右侧按钮重启资源管理器。"
                             TextWrapping="Wrap"

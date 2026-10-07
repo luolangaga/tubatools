@@ -8,16 +8,6 @@
     xmlns:controls="using:TubaWinUi3.Controls"
     mc:Ignorable="d">
 
-    <Page.Resources>
-        <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="BorderBrush" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-        </Style>
-    </Page.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -31,18 +21,23 @@
             Subtitle="解析游戏监控导出的 JSON / CSV，图表化回放 FPS、温度、负载等历史数据（Beta 测试中，部分数据可能有偏差）"
             Glyph="&#xE9F5;">
             <controls:ToolPageHeader.Actions>
-                <Border Background="#26E81123" BorderBrush="#66E81123" BorderThickness="1"
+                <Border Style="{StaticResource StatusPillStyle}"
+                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        BorderBrush="{ThemeResource SystemFillColorCriticalBrush}" BorderThickness="1"
                         CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
-                    <TextBlock FontSize="12" FontWeight="Bold" Foreground="#E81123" Text="Beta" />
+                    <TextBlock FontSize="12" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemFillColorCriticalBrush}" Text="Beta" />
                 </Border>
-                <Button Click="Refresh_Click" ToolTipService.ToolTip="重新扫描输出目录">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Click="Refresh_Click" Style="{StaticResource ToolHeaderActionButtonStyle}"
+                        ToolTipService.ToolTip="重新扫描输出目录">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE72C;" FontSize="12" />
                         <TextBlock Text="刷新" />
                     </StackPanel>
                 </Button>
-                <Button Click="OpenFolder_Click" ToolTipService.ToolTip="在资源管理器中打开记录目录">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button Click="OpenFolder_Click" Style="{StaticResource ToolHeaderActionButtonStyle}"
+                        ToolTipService.ToolTip="在资源管理器中打开记录目录">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE838;" FontSize="12" />
                         <TextBlock Text="打开文件夹" />
                     </StackPanel>
@@ -51,22 +46,23 @@
         </controls:ToolPageHeader>
 
         <!-- Body -->
-        <Grid Grid.Row="1" Padding="24,0,24,0" ColumnSpacing="12">
+        <Grid Grid.Row="1" Padding="24,8,24,24" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="262" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- Left: record files -->
-            <Border Style="{StaticResource CardBorder}" Padding="10">
+            <Border Style="{StaticResource FluentCardStyle}" Padding="12">
                 <Grid RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Spacing="2">
-                        <TextBlock Text="记录文件" FontWeight="SemiBold" FontSize="13" />
-                        <TextBlock x:Name="TxtDir" FontSize="11" Opacity="0.6" TextWrapping="Wrap" Text="—" />
+                        <TextBlock Text="记录文件" Style="{StaticResource SectionHeaderStyle}" />
+                        <TextBlock x:Name="TxtDir" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   TextWrapping="Wrap" Text="—" />
                     </StackPanel>
                     <ListView x:Name="FileList" Grid.Row="1" SelectionMode="Single"
                               SelectionChanged="FileList_SelectionChanged"
@@ -74,8 +70,9 @@
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Spacing="2" Margin="0,4">
-                                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{Binding Info}" FontSize="11" Opacity="0.6" />
+                                    <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Info}" FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -88,7 +85,7 @@
                           VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled"
                           HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
                           SizeChanged="RightScroll_SizeChanged">
-                <Grid RowSpacing="10">
+                <Grid RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -101,7 +98,7 @@
                     <!-- Meta chips -->
                     <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                   HorizontalScrollMode="Enabled" ZoomMode="Disabled">
-                        <StackPanel x:Name="PnlMeta" Orientation="Horizontal" Spacing="6" />
+                        <StackPanel x:Name="PnlMeta" Orientation="Horizontal" Spacing="8" />
                     </ScrollViewer>
 
                     <!-- Stat cards -->
@@ -113,11 +110,11 @@
                     <!-- Group tabs -->
                     <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                   HorizontalScrollMode="Enabled" ZoomMode="Disabled">
-                        <StackPanel x:Name="PnlTabs" Orientation="Horizontal" Spacing="6" />
+                        <StackPanel x:Name="PnlTabs" Orientation="Horizontal" Spacing="8" />
                     </ScrollViewer>
 
                     <!-- 指标选择 + 区间裁剪（作用于下方所有图表） -->
-                    <Border x:Name="ControlCard" Grid.Row="3" Style="{StaticResource CardBorder}">
+                    <Border x:Name="ControlCard" Grid.Row="3" Style="{StaticResource FluentCardStyle}">
                         <Grid RowSpacing="8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -125,16 +122,16 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <Grid ColumnSpacing="10">
+                            <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Spacing="1">
-                                    <TextBlock x:Name="TxtChartTitle" FontSize="13" FontWeight="SemiBold" Text="图表" />
-                                    <TextBlock x:Name="TxtChartHint" FontSize="11" Opacity="0.6" Text="" />
+                                    <TextBlock x:Name="TxtChartTitle" Style="{StaticResource SectionHeaderStyle}" Text="图表" />
+                                    <TextBlock x:Name="TxtChartHint" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <CheckBox x:Name="ChkFill" Content="面积" FontSize="12" MinWidth="0" IsChecked="True"
                                               Checked="ChartOption_Changed" Unchecked="ChartOption_Changed"
                                               ToolTipService.ToolTip="给每张图表的曲线填充面积色" />
@@ -143,7 +140,7 @@
                             </Grid>
 
                             <!-- 指标标签：点击增删对应图表；每个指标一张图，各自拥有独立的纵轴量程 -->
-                            <StackPanel x:Name="PnlLegend" Grid.Row="1" Spacing="6" SizeChanged="Legend_SizeChanged" />
+                            <StackPanel x:Name="PnlLegend" Grid.Row="1" Spacing="8" SizeChanged="Legend_SizeChanged" />
 
                             <Grid Grid.Row="2" RowSpacing="2">
                                 <Grid.RowDefinitions>
@@ -156,11 +153,13 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="起点" FontSize="11" VerticalAlignment="Center" Opacity="0.7" />
+                                    <TextBlock Text="起点" FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     <Slider x:Name="SliderFrom" Grid.Column="1" Minimum="0" Maximum="1" StepFrequency="1"
                                             ValueChanged="Range_Changed" />
-                                    <TextBlock x:Name="TxtFrom" Grid.Column="2" FontSize="11" VerticalAlignment="Center"
-                                               Width="60" TextAlignment="Right" Opacity="0.7" Text="—" />
+                                    <TextBlock x:Name="TxtFrom" Grid.Column="2" FontSize="12" VerticalAlignment="Center"
+                                               Width="60" TextAlignment="Right"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="—" />
                                 </Grid>
                                 <Grid Grid.Row="1" ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
@@ -168,11 +167,13 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="终点" FontSize="11" VerticalAlignment="Center" Opacity="0.7" />
+                                    <TextBlock Text="终点" FontSize="12" VerticalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     <Slider x:Name="SliderTo" Grid.Column="1" Minimum="0" Maximum="1" StepFrequency="1"
                                             ValueChanged="Range_Changed" />
-                                    <TextBlock x:Name="TxtTo" Grid.Column="2" FontSize="11" VerticalAlignment="Center"
-                                               Width="60" TextAlignment="Right" Opacity="0.7" Text="—" />
+                                    <TextBlock x:Name="TxtTo" Grid.Column="2" FontSize="12" VerticalAlignment="Center"
+                                               Width="60" TextAlignment="Right"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="—" />
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -180,17 +181,19 @@
 
                     <!-- 图表区：一个指标一张图，每条曲线都用自己的纵轴刻度尺（100 FPS 不会把 1 ms 压成直线） -->
                     <Grid Grid.Row="4">
-                        <StackPanel x:Name="PnlCharts" Spacing="10" />
+                        <StackPanel x:Name="PnlCharts" Spacing="8" />
                         <StackPanel x:Name="PnlChartEmpty" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Spacing="6" Visibility="Collapsed">
-                            <FontIcon x:Name="IcoEmpty" Glyph="&#xE9D2;" FontSize="28" Opacity="0.5" />
-                            <TextBlock x:Name="TxtEmpty" Text="没有可展示的数据" FontSize="13" Opacity="0.6"
+                                    Spacing="8" Visibility="Collapsed">
+                            <FontIcon x:Name="IcoEmpty" Glyph="&#xE9D2;" FontSize="28"
+                                      Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Name="TxtEmpty" Text="没有可展示的数据" FontSize="14"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        TextAlignment="Center" MaxWidth="320" TextWrapping="Wrap" />
                         </StackPanel>
                     </Grid>
 
                     <!-- 全量统计（基于全部样本，与图表显隐无关） -->
-                    <Border x:Name="StatsCard" Grid.Row="5" Style="{StaticResource CardBorder}">
+                    <Border x:Name="StatsCard" Grid.Row="5" Style="{StaticResource FluentCardStyle}">
                         <Grid RowSpacing="8">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -206,13 +209,13 @@
                                     <ColumnDefinition Width="76" />
                                     <ColumnDefinition Width="70" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="指标" FontSize="11" Opacity="0.6" />
-                                <TextBlock Grid.Column="1" Text="最小" FontSize="11" Opacity="0.6" TextAlignment="Right" />
-                                <TextBlock Grid.Column="2" Text="平均" FontSize="11" Opacity="0.6" TextAlignment="Right" />
-                                <TextBlock Grid.Column="3" Text="最大" FontSize="11" Opacity="0.6" TextAlignment="Right" />
-                                <TextBlock Grid.Column="4" Text="P1" FontSize="11" Opacity="0.6" TextAlignment="Right" />
-                                <TextBlock Grid.Column="5" Text="P99" FontSize="11" Opacity="0.6" TextAlignment="Right" />
-                                <TextBlock Grid.Column="6" Text="样本" FontSize="11" Opacity="0.6" TextAlignment="Right" />
+                                <TextBlock Text="指标" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="最小" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="2" Text="平均" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="3" Text="最大" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="4" Text="P1" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="5" Text="P99" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Grid.Column="6" Text="样本" FontSize="12" TextAlignment="Right" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             </Grid>
                             <ListView x:Name="StatsList" Grid.Row="1" MaxHeight="168" SelectionMode="None"
                                       Background="Transparent" BorderThickness="0" IsItemClickEnabled="False">
@@ -234,7 +237,8 @@
                                             <TextBlock Grid.Column="3" Text="{Binding Max}" FontSize="12" TextAlignment="Right" />
                                             <TextBlock Grid.Column="4" Text="{Binding P1}" FontSize="12" TextAlignment="Right" />
                                             <TextBlock Grid.Column="5" Text="{Binding P99}" FontSize="12" TextAlignment="Right" />
-                                            <TextBlock Grid.Column="6" Text="{Binding Count}" FontSize="12" TextAlignment="Right" Opacity="0.7" />
+                                            <TextBlock Grid.Column="6" Text="{Binding Count}" FontSize="12" TextAlignment="Right"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                         </Grid>
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
@@ -246,9 +250,9 @@
         </Grid>
 
         <!-- Status -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Padding="24,10,24,14">
-            <TextBlock x:Name="TxtStatus" FontSize="12" Opacity="0.7" Text="就绪" />
-            <TextBlock x:Name="TxtRecordedCount" FontSize="12" Opacity="0.7" Text="" />
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="16" Padding="24,8,24,16">
+            <TextBlock x:Name="TxtStatus" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="就绪" />
+            <TextBlock x:Name="TxtRecordedCount" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="" />
         </StackPanel>
 
         <!-- Loading -->
@@ -256,7 +260,7 @@
               Canvas.ZIndex="99">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <ProgressRing IsActive="True" Width="36" Height="36" />
-                <TextBlock x:Name="TxtLoading" FontSize="13" Opacity="0.8" Text="正在解析…" />
+                <TextBlock x:Name="TxtLoading" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在解析…" />
             </StackPanel>
         </Grid>
     </Grid>

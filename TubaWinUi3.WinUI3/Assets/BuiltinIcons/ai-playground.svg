@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- ai-playground 本地AI试炼场：NPU 芯片 + AI 火花 -->
+  <path fill="none" d="M7.75 4.75H16.25A3 3 0 0 1 19.25 7.75V16.25A3 3 0 0 1 16.25 19.25H7.75A3 3 0 0 1 4.75 16.25V7.75A3 3 0 0 1 7.75 4.75Z M8.5 2.75V4.75 M12 2.75V4.75 M15.5 2.75V4.75 M8.5 19.25V21.25 M12 19.25V21.25 M15.5 19.25V21.25 M2.75 8.5H4.75 M2.75 12H4.75 M2.75 15.5H4.75 M19.25 8.5H21.25 M19.25 12H21.25 M19.25 15.5H21.25" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 8.25L12.9 11.1L15.75 12L12.9 12.9L12 15.75L11.1 12.9L8.25 12L11.1 11.1Z" stroke="#9B7BD4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

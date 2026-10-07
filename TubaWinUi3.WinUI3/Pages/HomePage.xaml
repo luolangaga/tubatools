@@ -24,134 +24,12 @@
             <Setter Property="MinHeight" Value="28" />
             <Setter Property="MaxHeight" Value="32" />
             <Setter Property="Padding" Value="8,2,8,2" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-        <Style x:Key="ToolCardStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="0,0,12,12" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="RootGrid" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
-                            </Grid.RenderTransform>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.18">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Pressed" GeneratedDuration="0:0:0.08">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Normal" GeneratedDuration="0:0:0.25">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="1.03" />
-                                            <Setter Target="ItemScale.ScaleY" Value="1.03" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="0.97" />
-                                            <Setter Target="ItemScale.ScaleY" Value="0.97" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled" />
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="SelectionStates">
-                                    <VisualState x:Name="Unselected" />
-                                    <VisualState x:Name="Selected" />
-                                    <VisualState x:Name="SelectedUnfocused" />
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="CompactCardStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="0,0,10,10" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="RootGrid" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
-                            </Grid.RenderTransform>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.18">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Pressed" GeneratedDuration="0:0:0.08">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Normal" GeneratedDuration="0:0:0.25">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="1.04" />
-                                            <Setter Target="ItemScale.ScaleY" Value="1.04" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="0.96" />
-                                            <Setter Target="ItemScale.ScaleY" Value="0.96" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled" />
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="SelectionStates">
-                                    <VisualState x:Name="Unselected" />
-                                    <VisualState x:Name="Selected" />
-                                    <VisualState x:Name="SelectedUnfocused" />
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="FontSize" Value="14" />
         </Style>
     </Page.Resources>
 
     <Grid x:Name="RootLayout" AllowDrop="True">
-        <Grid Padding="28,18,28,24" RowSpacing="18">
+        <Grid Padding="24,8,24,24" RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -167,30 +45,27 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock
                         x:Name="CategoryTitle"
-                        FontSize="30"
-                        FontWeight="Bold" />
+                        Style="{StaticResource PageTitleStyle}" />
                     <TextBlock
                         x:Name="ToolCountText"
                         VerticalAlignment="Bottom"
                         Margin="0,0,0,4"
-                        FontSize="14"
-                        Opacity="1.0" />
+                        FontSize="14" />
                 </StackPanel>
                 <TextBlock
                     x:Name="CategorySubtitle"
-                    Opacity="1.0" />
+                    Style="{StaticResource PageSubtitleStyle}" />
             </StackPanel>
 
             <Button
                 x:Name="EditOrderButton"
                 Grid.Column="1"
-                VerticalAlignment="Center"
-                Padding="12,6"
+                Style="{StaticResource ToolHeaderActionButtonStyle}"
                 Click="EditOrderButton_Click"
                 ToolTipService.ToolTip="进入排序模式，按住卡片上下拖动调整顺序"
                 l:Uids.Uid="HomePage_EditOrderButton"
                 Visibility="Collapsed">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+                <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon x:Name="EditOrderIcon" FontSize="12" Glyph="&#xE70F;" />
                     <TextBlock x:Name="EditOrderButtonText" Text="编辑排序" l:Uids.Uid="HomePage_EditOrderButtonText" />
                 </StackPanel>
@@ -218,7 +93,7 @@
                 ItemClick="ToolsGrid_ItemClick"
                 DoubleTapped="ToolsGrid_DoubleTapped"
                 DragItemsCompleted="Grid_DragItemsCompleted"
-                ItemContainerStyle="{StaticResource ToolCardStyle}"
+                ItemContainerStyle="{StaticResource ToolCardItemStyle}"
                 Footer=""
                 SelectionMode="None"
                 SizeChanged="ToolsGrid_SizeChanged"
@@ -315,25 +190,21 @@
                                                      Visibility="{Binding IconGlyph, Converter={StaticResource NullToCollapse}}" />
                                              </Grid>
                                          </Border>
-                                         <StackPanel Grid.Column="1" Spacing="3">
+                                         <StackPanel Grid.Column="1" Spacing="4">
                                              <TextBlock
-
-                                                 FontSize="18"
-                                                 FontWeight="Bold"
+                                                 Style="{StaticResource CardTitleStyle}"
                                                  MaxLines="1"
                                                  Text="{Binding Name}"
                                                  TextTrimming="CharacterEllipsis" />
                                              <StackPanel Orientation="Horizontal" Spacing="4">
                                                  <TextBlock
-
                                                      FontSize="12"
-                                                     Opacity="1.0"
+                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                      Text="{Binding CategoryDisplay}"
                                                      TextTrimming="CharacterEllipsis" />
                                                  <TextBlock
-
                                                      FontSize="12"
-                                                     Opacity="1.0"
+                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                      Text="{Binding CategoriesDisplay}"
                                                      TextTrimming="CharacterEllipsis"
                                                      Visibility="{Binding CategoriesDisplay, Converter={StaticResource NullToCollapse}}" />
@@ -356,47 +227,37 @@
 
                                     <TextBlock
                                         Grid.Row="1"
-
                                         MaxLines="2"
-                                        Opacity="1.0"
                                         Text="{Binding Description}"
                                         TextTrimming="CharacterEllipsis"
                                         TextWrapping="Wrap" />
 
                                     <TextBlock
                                         Grid.Row="2"
-
-                                        FontSize="10"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         MaxLines="1"
-                                        Opacity="1.0"
                                         Text="{Binding TagsText}"
                                         TextTrimming="CharacterEllipsis"
                                         Visibility="{Binding TagsText, Converter={StaticResource NullToCollapse}}" />
 
-                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="6">
-                                        <Border
-                                            VerticalAlignment="Center"
-                                            Padding="8,3"
-                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                            CornerRadius="6">
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+                                        <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
                                             <TextBlock
-                                                FontSize="11"
-                                                FontWeight="Bold"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
                                                 Text="{Binding Extension}" />
                                         </Border>
-
                                     </StackPanel>
 
-                                    <Grid Grid.Row="4" ColumnSpacing="6">
+                                    <Grid Grid.Row="4" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="36" />
                                             <ColumnDefinition Width="36" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <Button
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Stretch"
-                                            Padding="0"
+                                            Style="{StaticResource ToolCardActionButtonStyle}"
                                             Click="SendToDesktopButton_Click"
                                             ToolTipService.ToolTip="发送到桌面快捷方式"
                                             l:Uids.Uid="HomePage_SendToDesktopButton"
@@ -405,9 +266,7 @@
                                         </Button>
                                         <Button
                                             Grid.Column="1"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Stretch"
-                                            Padding="0"
+                                            Style="{StaticResource ToolCardActionButtonStyle}"
                                             Click="RunAsAdminButton_Click"
                                             ToolTipService.ToolTip="以管理员身份运行"
                                             l:Uids.Uid="HomePage_RunAsAdminButton"
@@ -417,13 +276,11 @@
                                         <Button
                                             Grid.Column="2"
                                             MinWidth="88"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Stretch"
-                                            Padding="10,4"
+                                            Padding="8,4"
+                                            Style="{StaticResource ToolCardActionButtonStyle}"
                                             Click="LaunchButton_Click"
                                             IsEnabled="{Binding CanLaunch}">
                                             <TextBlock
-
                                                 Text="{Binding LaunchButtonText}"
                                                 TextAlignment="Center"
                                                 TextTrimming="CharacterEllipsis" />
@@ -437,7 +294,7 @@
                     <GridView.FooterTemplate>
                         <DataTemplate>
                             <TextBlock
-                                Margin="0,20,0,12"
+                                Margin="0,16,0,12"
                                 HorizontalAlignment="Center"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -453,7 +310,7 @@
                 ItemClick="CompactGrid_ItemClick"
                 DoubleTapped="CompactGrid_DoubleTapped"
                 DragItemsCompleted="Grid_DragItemsCompleted"
-                ItemContainerStyle="{StaticResource CompactCardStyle}"
+                ItemContainerStyle="{StaticResource CompactToolCardItemStyle}"
                 Footer=""
                 SelectionMode="None"
                 SizeChanged="CompactGrid_SizeChanged"
@@ -502,7 +359,7 @@
                     <GridView.ItemTemplate>
                         <DataTemplate>
                             <Border
-                                Padding="8,10,8,6"
+                                Padding="8"
                                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
@@ -511,28 +368,28 @@
                                 VerticalAlignment="Stretch"
                                 RightTapped="CompactItem_RightTapped"
                                 ToolTipService.ToolTip="{Binding Description}">
-                                <StackPanel HorizontalAlignment="Center" Spacing="6">
+                                <StackPanel HorizontalAlignment="Center" Spacing="8">
                                     <Border
-                                        Width="52"
-                                        Height="52"
+                                        Width="56"
+                                        Height="56"
                                         HorizontalAlignment="Center"
                                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="10">
+                                        CornerRadius="8">
                                         <Grid>
                                             <Image
-                                                Width="38"
-                                                Height="38"
+                                                Width="40"
+                                                Height="40"
                                                 Source="{Binding IconPath}"
                                                 Stretch="Uniform"
                                                 Visibility="{Binding IconPath, Converter={StaticResource NullToCollapse}}" />
                                             <Image
-                                                Width="38"
-                                                Height="38"
+                                                Width="40"
+                                                Height="40"
                                                 Source="{Binding IconSource}"
                                                 Stretch="Uniform"
                                                 Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
                                             <FontIcon
-                                                FontSize="26"
+                                                FontSize="28"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Glyph="{Binding IconGlyph}"
@@ -540,9 +397,8 @@
                                         </Grid>
                                     </Border>
                                     <TextBlock
-
                                         HorizontalAlignment="Center"
-                                        FontSize="13"
+                                        FontSize="14"
                                         MaxLines="2"
                                         Text="{Binding Name}"
                                         TextAlignment="Center"
@@ -572,7 +428,7 @@
                 Visibility="Collapsed">
                 <StackPanel Spacing="12" Margin="0,4,0,0">
                     <Border
-                        Padding="12,10"
+                        Padding="12,8"
                         HorizontalAlignment="Center"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -582,10 +438,8 @@
                             <FontIcon
                                 FontSize="14"
                                 Glyph="&#xE700;"
-                                VerticalAlignment="Center"
-                                Opacity="1.0" />
+                                VerticalAlignment="Center" />
                             <TextBlock
-                                Opacity="1.0"
                                 Text="按住任意行上下拖动即可调整顺序，完成后点击右上角“完成”。"
                                 l:Uids.Uid="HomePage_EditModeHint"
                                 VerticalAlignment="Center" />
@@ -607,19 +461,16 @@
                 Visibility="Collapsed">
                 <FontIcon
                     HorizontalAlignment="Center"
-                    FontSize="48"
-                    Glyph="&#xE721;"
-                    Opacity="1.0" />
+                    FontSize="28"
+                    Glyph="&#xE721;" />
                 <TextBlock
                     HorizontalAlignment="Center"
                     FontSize="18"
-                    Opacity="1.0"
                     l:Uids.Uid="HomePage_EmptyStateTitle"
                     Text="没有找到匹配的工具" />
                 <TextBlock
                     x:Name="EmptyStateText"
                     HorizontalAlignment="Center"
-                    Opacity="1.0"
                     Text="" />
                 <Button
                     x:Name="DownloadToolsButton"
@@ -640,9 +491,9 @@
                 PreferredPlacement="Right">
                 <StackPanel MaxWidth="420" Spacing="8">
                     <TextBlock x:Name="DetailDescriptionText" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailPublisherText" Opacity="1.0" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailVersionText" Opacity="1.0" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailPathText" Opacity="1.0" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailPublisherText" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailVersionText" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailPathText" TextWrapping="Wrap" />
                 </StackPanel>
             </TeachingTip>
 

@@ -8,15 +8,23 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class NetworkConnectionsPage : Page
 {
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方语义色）
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
 
     private DispatcherTimer? _refreshTimer;
+    private List<ConnectionEntry>? _lastConnections;
     private bool _loading;
 
     public NetworkConnectionsPage()
     {
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_lastConnections is not null)
+                RenderConnections(_lastConnections);
+        };
 
         _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _refreshTimer.Tick += async (_, _) =>
@@ -44,6 +52,7 @@ public sealed partial class NetworkConnectionsPage : Page
         var conns = await Task.Run(() => NetworkAdapterProxyService.GetActiveConnections());
         DispatcherQueue.TryEnqueue(() =>
         {
+            _lastConnections = conns;
             RenderConnections(conns);
             LoadingBar.Visibility = Visibility.Collapsed;
             _loading = false;
@@ -73,7 +82,7 @@ public sealed partial class NetworkConnectionsPage : Page
                 Padding = new Thickness(8, 4, 8, 4),
                 ColumnSpacing = 8,
                 CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0))
+                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent)
             };
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
@@ -90,11 +99,11 @@ public sealed partial class NetworkConnectionsPage : Page
 
             var typeTag = new Border
             {
-                Padding = new Thickness(6, 2, 6, 2), CornerRadius = new CornerRadius(4),
+                Style = (Style)Application.Current.Resources["StatusPillStyle"],
                 Background = new SolidColorBrush(Color.FromArgb(25, typeColor.R, typeColor.G, typeColor.B)),
                 Child = new TextBlock
                 {
-                    Text = c.AdapterType, FontSize = 11,
+                    Text = c.AdapterType, FontSize = 12,
                     Foreground = new SolidColorBrush(typeColor),
                     VerticalAlignment = VerticalAlignment.Center
                 }

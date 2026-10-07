@@ -131,6 +131,15 @@ public sealed partial class RogueCleanerPage : Page
         Logger.Initialize(_store);
         Loaded += OnLoaded;
 
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            BuildStatCards();
+            UpdateStatCards();
+            if (ResultsList.ItemsSource is not null) RenderFindings();
+            if (AiItemList.ItemsSource is not null) ApplyAiView();
+        };
+
         // MSIX 沙箱下不支持主动拦截后端，隐藏导航项
         if (RuntimeHelper.IsMsixPackaged)
         {
@@ -210,12 +219,14 @@ public sealed partial class RogueCleanerPage : Page
     /// <summary>拦截条目 UI 模型：包装后端 InterceptItemDto，提供显示属性与勾选状态。</summary>
     public sealed class AiItemVm : INotifyPropertyChanged
     {
-        private static readonly SolidColorBrush BrPending = new(Color.FromArgb(255, 79, 124, 255));
-        private static readonly SolidColorBrush BrBlocked = new(Color.FromArgb(255, 196, 43, 28));
-        private static readonly SolidColorBrush BrAllowed = new(Color.FromArgb(255, 15, 123, 15));
-        private static readonly SolidColorBrush BrIgnored = new(Color.FromArgb(255, 138, 143, 152));
-        private static readonly SolidColorBrush BrDeleted = new(Color.FromArgb(255, 110, 112, 120));
-        private static readonly SolidColorBrush BrNone = new(Color.FromArgb(255, 107, 107, 107));
+        // 语义状态色（跟随系统主题，经 ThemeColors 取官方 SystemFillColor* 语义色；
+        // 每次读取时重新构造，保证主题切换重渲染后颜色同步更新）
+        private static SolidColorBrush BrPending => new(ThemeColors.AccentBlue);
+        private static SolidColorBrush BrBlocked => new(ThemeColors.AccentRed);
+        private static SolidColorBrush BrAllowed => new(ThemeColors.AccentGreen);
+        private static SolidColorBrush BrIgnored => new(ThemeColors.Neutral);
+        private static SolidColorBrush BrDeleted => new(ThemeColors.Neutral);
+        private static SolidColorBrush BrNone => new(ThemeColors.Neutral);
 
         public AiItemVm(InterceptItemDto dto)
         {
@@ -419,7 +430,7 @@ public sealed partial class RogueCleanerPage : Page
             AiDisableBackendBtn.Visibility = Visibility.Visible;
             if (running)
             {
-                AiStatusDot.Fill = new SolidColorBrush(Color.FromArgb(255, 15, 157, 88));
+                AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentGreen);
                 AiRunningText.Text = "主动拦截后端：运行中";
                 CloseAiStatus();
                 // 后端已在运行但工作区未初始化（如开机自启场景），补初始化管道连接
@@ -427,14 +438,14 @@ public sealed partial class RogueCleanerPage : Page
             }
             else
             {
-                AiStatusDot.Fill = new SolidColorBrush(Color.FromArgb(255, 234, 88, 12));
+                AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentOrange);
                 AiRunningText.Text = "主动拦截后端：未运行";
                 ShowAiStatus("主动拦截后端未在运行，请点击「启用主动拦截」启动常驻后端。", InfoBarSeverity.Warning);
             }
         }
         else
         {
-            AiStatusDot.Fill = new SolidColorBrush(Color.FromArgb(255, 138, 143, 152));
+            AiStatusDot.Fill = new SolidColorBrush(ThemeColors.Neutral);
             AiRunningText.Text = "主动拦截后端：已关闭";
             AiDisableBackendBtn.Visibility = Visibility.Collapsed;
             AiEnableBackendBtn.Visibility = Visibility.Visible;
@@ -537,12 +548,12 @@ public sealed partial class RogueCleanerPage : Page
         if (connected)
         {
             CloseAiStatus();
-            AiStatusDot.Fill = new SolidColorBrush(Color.FromArgb(255, 15, 157, 88));
+            AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentGreen);
             AiRunningText.Text = "主动拦截后端：运行中";
         }
         else
         {
-            AiStatusDot.Fill = new SolidColorBrush(Color.FromArgb(255, 234, 88, 12));
+            AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentOrange);
             AiRunningText.Text = "主动拦截后端：连接中断";
         }
         _ = AiRefreshAllAsync(quiet: true);
@@ -1127,16 +1138,15 @@ public sealed partial class RogueCleanerPage : Page
         ApplyAiView();
     }
 
-    private void AiSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void AiSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) => ApplyAiSearch();
+
+    /// <summary>回车/查询提交：与输入过滤同一行为（原逻辑没有独立的回车动作）。</summary>
+    private void AiSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) => ApplyAiSearch();
+
+    private void ApplyAiSearch()
     {
         _aiSearch = AiSearchBox.Text;
-        AiSearchClearBtn.Visibility = string.IsNullOrEmpty(_aiSearch) ? Visibility.Collapsed : Visibility.Visible;
         ApplyAiView();
-    }
-
-    private void AiSearchClear_Click(object sender, RoutedEventArgs e)
-    {
-        AiSearchBox.Text = "";
     }
 
     // ================= 列表选中 / 右键 =================
@@ -1855,7 +1865,7 @@ public sealed partial class RogueCleanerPage : Page
 
         if (items.Count == 0)
         {
-            stack.Children.Add(new TextBlock { Text = "暂无已停止追踪的条目", Foreground = new SolidColorBrush(Color.FromArgb(255, 120, 120, 120)) });
+            stack.Children.Add(new TextBlock { Text = "暂无已停止追踪的条目", Foreground = new SolidColorBrush(ThemeColors.DimText) });
         }
         else
         {
@@ -1863,20 +1873,20 @@ public sealed partial class RogueCleanerPage : Page
             {
                 var border = new Border
                 {
-                    Padding = new Thickness(10, 8, 10, 8),
-                    CornerRadius = new CornerRadius(6),
-                    Background = new SolidColorBrush(Color.FromArgb(20, 128, 128, 128)),
+                    Padding = new Thickness(8),
+                    CornerRadius = new CornerRadius(8),
+                    Background = new SolidColorBrush(ThemeColors.SubtleBg),
                     Child = new Grid { ColumnSpacing = 8 },
                 };
                 var grid = (Grid)border.Child;
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
                 var info = new StackPanel { Spacing = 2 };
-                info.Children.Add(new TextBlock { Text = item.Name, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-                info.Children.Add(new TextBlock { Text = item.SubKey, FontSize = 11, Foreground = new SolidColorBrush(Color.FromArgb(255, 130, 130, 130)), TextTrimming = TextTrimming.CharacterEllipsis });
+                info.Children.Add(new TextBlock { Text = item.Name, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
+                info.Children.Add(new TextBlock { Text = item.SubKey, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), TextTrimming = TextTrimming.CharacterEllipsis });
                 grid.Children.Add(info);
                 var captured = item;
-                var btn = new Button { Content = "恢复追踪", VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(10, 4, 10, 4) };
+                var btn = new Button { Content = "恢复追踪", VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(8, 4, 8, 4) };
                 btn.Click += async (_, _) =>
                 {
                     try
@@ -2391,7 +2401,7 @@ public sealed partial class RogueCleanerPage : Page
             DetailPanel.Children.Add(new TextBlock
             {
                 Text = "在左侧选择一项查看详情。",
-                FontSize = 13,
+                FontSize = 14,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -2405,7 +2415,7 @@ public sealed partial class RogueCleanerPage : Page
         AddDetailRow("影响", f.UserImpact);
         AddDetailRow("处理方式", f.ActionText);
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 6, 0, 0) };
+        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Margin = new Thickness(0, 8, 0, 0) };
         var copy = new Button { Content = "复制详情" };
         copy.Click += (_, _) => CopyFindingDetail(f);
         buttons.Children.Add(copy);
@@ -2420,7 +2430,7 @@ public sealed partial class RogueCleanerPage : Page
 
     private void AddDetailRow(string label, string? value, bool bold = false)
     {
-        var grid = new Grid { ColumnSpacing = 10 };
+        var grid = new Grid { ColumnSpacing = 8 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(74) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.Children.Add(new TextBlock
@@ -2434,7 +2444,7 @@ public sealed partial class RogueCleanerPage : Page
         {
             Text = value ?? "",
             FontSize = bold ? 14 : 12,
-            FontWeight = bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
+            FontWeight = bold ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
             IsTextSelectionEnabled = true,
             TextWrapping = TextWrapping.Wrap,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
@@ -2557,9 +2567,10 @@ public sealed partial class RogueCleanerPage : Page
     /// <summary>行内「显示」列开关的文案与配色：已显示=开(绿)，已隐藏=关(灰)。</summary>
     private static void ApplyCmRowToggleVisual(Button btn, ContextMenuEntry entry)
     {
+        var color = entry.Enabled ? ThemeColors.AccentGreen : ThemeColors.Neutral;
         btn.Content = entry.Enabled ? "开" : "关";
-        btn.Background = new SolidColorBrush(entry.Enabled ? ParseHex("#16A34A") : ParseHex("#6B7280"));
-        btn.Foreground = new SolidColorBrush(ParseHex("#FFFFFF"));
+        btn.Background = new SolidColorBrush(Color.FromArgb(30, color.R, color.G, color.B));
+        btn.Foreground = new SolidColorBrush(color);
         btn.IsEnabled = !entry.ReadOnly;
     }
 
@@ -2610,23 +2621,23 @@ public sealed partial class RogueCleanerPage : Page
         StatCards.ColumnDefinitions.Clear();
         StatCards.Children.Clear();
         _statValueTexts.Clear();
-        var cards = new (string label, string glyph, string color)[]
+        var cards = new (string label, string glyph, Color color)[]
         {
-            ("发现项目", "\uE9D9", "#2563EB"),
-            ("建议处理", "\uE783", "#EA580C"),
-            ("可管理", "\uE74D", "#16A34A"),
-            ("仅提示·未知", "\uE9CE", "#6B7280")
+            ("发现项目", "\uE9D9", ThemeColors.AccentBlue),
+            ("建议处理", "\uE783", ThemeColors.AccentOrange),
+            ("可管理", "\uE74D", ThemeColors.AccentGreen),
+            ("仅提示·未知", "\uE9CE", ThemeColors.Neutral)
         };
         for (int i = 0; i < cards.Length; i++)
         {
             StatCards.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            var value = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), Text = "0" };
+            var value = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.PrimaryText), Text = "0" };
             var label = new TextBlock { FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText), Text = cards[i].label };
-            var icon = new FontIcon { Glyph = cards[i].glyph, FontSize = 18, Foreground = new SolidColorBrush(ParseHex(cards[i].color)) };
+            var icon = new FontIcon { Glyph = cards[i].glyph, FontSize = 20, Foreground = new SolidColorBrush(cards[i].color) };
             var border = new Border
             {
-                CornerRadius = new CornerRadius(10),
-                Padding = new Thickness(14, 10, 14, 10),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12, 8, 12, 8),
                 Background = new SolidColorBrush(ThemeColors.CardBg),
                 BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
                 BorderThickness = new Thickness(1),
@@ -2646,23 +2657,6 @@ public sealed partial class RogueCleanerPage : Page
         _statValueTexts[2].Text = _statManageable.ToString();
         _statValueTexts[3].Text = _statReportOnly.ToString();
     }
-
-    private static Color ParseHex(string hex)
-    {
-        try
-        {
-            return Color.FromArgb(255,
-                byte.Parse(hex.Substring(1, 2), NumberStyles.HexNumber),
-                byte.Parse(hex.Substring(3, 2), NumberStyles.HexNumber),
-                byte.Parse(hex.Substring(5, 2), NumberStyles.HexNumber));
-        }
-        catch
-        {
-            return Color.FromArgb(255, 100, 116, 139);
-        }
-    }
-
-    internal static SolidColorBrush HexBrush(string hex) => new(ParseHex(hex));
 
     #endregion
 
@@ -2700,7 +2694,7 @@ public sealed partial class RogueCleanerPage : Page
         types.SelectionChanged += (_, _) => UpdatePreview();
         expected.TextChanged += (_, _) => UpdatePreview();
 
-        var panel = new StackPanel { Spacing = 10, Width = 440, Children = { types, expected, new TextBlock { Text = "预览（会自动脱敏用户名、路径、邮箱、URL、令牌）：", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) }, preview } };
+        var panel = new StackPanel { Spacing = 8, Width = 440, Children = { types, expected, new TextBlock { Text = "预览（会自动脱敏用户名、路径、邮箱、URL、令牌）：", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) }, preview } };
         var dialog = new ContentDialog
         {
             Title = "反馈：" + finding.CompactTitle,
@@ -2835,10 +2829,14 @@ public sealed partial class RogueCleanerPage : Page
 
     // ---------- 跨视图搜索（主列表 / 更多位置 / 系统高级） ----------
 
-    private void CmSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void CmSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) => ApplyCmSearch();
+
+    /// <summary>回车/查询提交：与输入过滤同一行为（原逻辑没有独立的回车动作）。</summary>
+    private void CmSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) => ApplyCmSearch();
+
+    private void ApplyCmSearch()
     {
         _cmSearchKeyword = CmSearchBox.Text.Trim();
-        CmSearchClearBtn.Visibility = _cmSearchKeyword.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         // 专用/高级清单是懒加载的；搜索时后台补齐，保证跨视图计数与跳转准确
         if (_cmSearchKeyword.Length > 0 && _specialEntries.Count == 0) RefreshSpecial();
         if (_cmSearchKeyword.Length > 0 && _advancedEntries.Count == 0) RefreshAdvanced();
@@ -2847,8 +2845,6 @@ public sealed partial class RogueCleanerPage : Page
         else ApplyCmFilter();
         UpdateCmSearchHint();
     }
-
-    private void CmSearchClear_Click(object sender, RoutedEventArgs e) => CmSearchBox.Text = string.Empty;
 
     private void CmJumpSpecial_Click(object sender, RoutedEventArgs e)
     {
@@ -3224,7 +3220,7 @@ public sealed partial class RogueCleanerPage : Page
         var helpText = new TextBlock
         {
             Text = "普通菜单填写执行命令；级联子菜单填写 CommandStore 项名称，多个名称用分号分隔。\n图标和子菜单均可留空。添加操作默认写入当前用户，不影响其他账户。",
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextWrapping = TextWrapping.Wrap
         };
@@ -3866,12 +3862,12 @@ public sealed class RiskToBrushConverter : IValueConverter
         var risk = value as string;
         var color = risk switch
         {
-            "高" => "#C42B1C",
-            "中" => "#D97706",
-            "低" => "#2563EB",
-            _ => "#6B7280"
+            "高" => ThemeColors.AccentRed,
+            "中" => ThemeColors.AccentOrange,
+            "低" => ThemeColors.AccentBlue,
+            _ => ThemeColors.Neutral
         };
-        return RogueCleanerPage.HexBrush(color);
+        return new SolidColorBrush(color);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
@@ -3885,14 +3881,14 @@ public sealed class StatusToBrushConverter : IValueConverter
         var status = value as string;
         var color = status switch
         {
-            "已处理" or "已启用" or "Restored" or "Done" => "#16A34A",
-            "失败" or "恢复失败" or "RestoreFailed" or "Failed" => "#DC2626",
-            "已打开卸载窗口" or "Launched" => "#2563EB",
-            "已禁用" => "#EA580C",
-            "已白名单" => "#2563EB",
-            _ => "#6B7280"
+            "已处理" or "已启用" or "Restored" or "Done" => ThemeColors.AccentGreen,
+            "失败" or "恢复失败" or "RestoreFailed" or "Failed" => ThemeColors.AccentRed,
+            "已打开卸载窗口" or "Launched" => ThemeColors.AccentBlue,
+            "已禁用" => ThemeColors.AccentOrange,
+            "已白名单" => ThemeColors.AccentBlue,
+            _ => ThemeColors.Neutral
         };
-        return RogueCleanerPage.HexBrush(color);
+        return new SolidColorBrush(color);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
@@ -3914,12 +3910,12 @@ public sealed class ActionToBrushConverter : IValueConverter
         var action = value as string;
         var color = action switch
         {
-            "Blocked" or "Reblocked" => "#C42B1C",
-            "Allowed" or "Unblocked" => "#16A34A",
-            "BlockedFailed" => "#EA580C",
-            _ => "#6B7280"
+            "Blocked" or "Reblocked" => ThemeColors.AccentRed,
+            "Allowed" or "Unblocked" => ThemeColors.AccentGreen,
+            "BlockedFailed" => ThemeColors.AccentOrange,
+            _ => ThemeColors.Neutral
         };
-        return RogueCleanerPage.HexBrush(color);
+        return new SolidColorBrush(color);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();

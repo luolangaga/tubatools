@@ -677,8 +677,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             var totalW = pixelWidth + padding * 2;
             var totalH = pixelHeight + padding * 2;
 
-            var isDark = ThemeService.CurrentTheme == AppTheme.Dark ||
-                         (ThemeService.CurrentTheme == AppTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+            var isDark = ThemeService.IsDarkEffective;
 
             var outerBg1 = isDark
                 ? System.Drawing.Color.FromArgb(255, 32, 32, 32)

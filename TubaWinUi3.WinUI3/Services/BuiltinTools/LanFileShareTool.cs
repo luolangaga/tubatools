@@ -67,7 +67,7 @@ public sealed partial class LanFileSharePage : Page
             Glyph = "\uE8F1"
         };
 
-        _statusText = new TextBlock { FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold, VerticalAlignment = VerticalAlignment.Center };
+        _statusText = new TextBlock { FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
 
         _urlText = new TextBlock
         {
@@ -136,11 +136,11 @@ public sealed partial class LanFileSharePage : Page
         _controlBar = new StackPanel { Spacing = 4, Children = { header, controlRow } };
 
         _loadingRing = new ProgressRing { Width = 40, Height = 40, IsActive = true };
-        _loadingText = new TextBlock { Text = "正在启动服务...", FontSize = 13, Opacity = 0.68 };
+        _loadingText = new TextBlock { Text = "正在启动服务...", FontSize = 14, Opacity = 0.68 };
         _loadingPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 8, Visibility = Visibility.Collapsed, Children = { _loadingRing, _loadingText } };
 
-        _errorTitle = new TextBlock { Text = "启动失败", FontSize = 16, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
-        _errorMessage = new TextBlock { FontSize = 13, Opacity = 0.78, TextWrapping = TextWrapping.Wrap, MaxWidth = 400 };
+        _errorTitle = new TextBlock { Text = "启动失败", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+        _errorMessage = new TextBlock { FontSize = 14, Opacity = 0.78, TextWrapping = TextWrapping.Wrap, MaxWidth = 400 };
         _retryBtn = new Button { Content = "重试", Style = App.Current.Resources["AccentButtonStyle"] as Style };
         _retryBtn.Click += async (_, _) => await StartServerAsync();
         _errorPanel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Spacing = 12, Visibility = Visibility.Collapsed, Children = { new FontIcon { Glyph = "\uE783", FontSize = 48, Foreground = new SolidColorBrush(ThemeColors.AccentRed) }, _errorTitle, _errorMessage, _retryBtn } };

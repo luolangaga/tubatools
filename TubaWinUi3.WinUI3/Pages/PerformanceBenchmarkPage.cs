@@ -113,14 +113,15 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private List<KeyValuePair<string, int>> _winSortData = [];
 	private readonly List<WinPerformanceRunResult> _winRuns = [];
 
-	private static readonly Color AccentBlue = Color.FromArgb(byte.MaxValue, 0, 99, 177);
-	private static readonly Color ColorS = Color.FromArgb(byte.MaxValue, 74, 222, 128);
-	private static readonly Color ColorAPlus = Color.FromArgb(byte.MaxValue, 34, 197, 94);
-	private static readonly Color ColorA = Color.FromArgb(byte.MaxValue, 0, 99, 177);
-	private static readonly Color ColorBPlus = Color.FromArgb(byte.MaxValue, 251, 191, 36);
-	private static readonly Color ColorB = Color.FromArgb(byte.MaxValue, 251, 146, 60);
-	private static readonly Color ColorC = Color.FromArgb(byte.MaxValue, 248, 113, 113);
-	private static readonly Color ColorD = Color.FromArgb(byte.MaxValue, 220, 38, 38);
+	// 视觉色板（评分/等级用语义强调色与图表系列色，均取自 ThemeColors，随主题解析）
+	private static Color AccentBlue => ThemeColors.AccentBlue;
+	private static Color ColorS => ThemeColors.Series3;         // S
+	private static Color ColorAPlus => ThemeColors.AccentGreen; // A+
+	private static Color ColorA => ThemeColors.AccentBlue;      // A
+	private static Color ColorBPlus => ThemeColors.Series4;     // B+
+	private static Color ColorB => ThemeColors.AccentOrange;    // B
+	private static Color ColorC => ThemeColors.AccentRed;       // C
+	private static Color ColorD => ThemeColors.Neutral;         // D（最低，用中性灰与 C 可辨）
 
 	public PerformanceBenchmarkPage()
 	{
@@ -137,7 +138,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		Grid grid = new()
 		{
 			RowSpacing = 0.0,
-			Padding = new Thickness(28.0, 48.0, 28.0, 0.0)
+			Padding = new Thickness(24.0, 8.0, 24.0, 24.0)
 		};
 		grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 		grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
@@ -224,7 +225,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			BorderBrush = cardBorderBrush,
 			BorderThickness = new Thickness(1.0),
 			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(20.0, 16.0, 20.0, 16.0),
+			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
 			Child = BuildScoreCard("游戏性能", out _gamingScoreText, out _gamingGradeText, out _gamingBar)
 		};
 		obj.Children.Add(border);
@@ -235,7 +236,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			BorderBrush = cardBorderBrush,
 			BorderThickness = new Thickness(1.0),
 			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(20.0, 16.0, 20.0, 16.0),
+			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
 			Child = BuildScoreCard("办公性能", out _officeScoreText, out _officeGradeText, out _officeBar)
 		};
 		obj.Children.Add(border2);
@@ -246,7 +247,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			BorderBrush = cardBorderBrush,
 			BorderThickness = new Thickness(1.0),
 			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(20.0, 16.0, 20.0, 16.0),
+			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
 			Child = BuildScoreCard("Win性能", out _winScoreText, out _winGradeText, out _winBar)
 		};
 		obj.Children.Add(border3);
@@ -259,21 +260,21 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		TextBlock item = new()
 		{
 			Text = label,
-			FontSize = 13.0,
+			FontSize = 12.0,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		};
 		scoreText = new TextBlock
 		{
 			Text = "—",
-			FontSize = 36.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 28.0,
+			FontWeight = FontWeights.SemiBold,
 			Foreground = new SolidColorBrush(ThemeColors.DimText)
 		};
 		gradeText = new TextBlock
 		{
 			Text = "",
-			FontSize = 16.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 14.0,
+			FontWeight = FontWeights.SemiBold,
 			Foreground = new SolidColorBrush(ThemeColors.DimText),
 			VerticalAlignment = VerticalAlignment.Center,
 			Margin = new Thickness(8.0, 0.0, 0.0, 0.0)
@@ -319,8 +320,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = title,
-			FontSize = 15.0,
-			FontWeight = FontWeights.Bold
+			FontSize = 14.0,
+			FontWeight = FontWeights.SemiBold
 		});
 		StackPanel stackPanel2 = new() { Spacing = 8.0 };
 		stackPanel2.Children.Add(stackPanel);
@@ -360,8 +361,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		scoreText = new TextBlock
 		{
 			Text = "—",
-			FontSize = 13.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 14.0,
+			FontWeight = FontWeights.SemiBold,
 			VerticalAlignment = VerticalAlignment.Center,
 			Foreground = new SolidColorBrush(ThemeColors.DimText)
 		};
@@ -393,7 +394,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		{
 			Visibility = Visibility.Collapsed,
 			Padding = new Thickness(8.0),
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Background = cardBg,
 			Child = _latencyHeatmapImage
 		};
@@ -406,7 +407,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		_gpuNameText = new TextBlock
 		{
 			Text = "",
-			FontSize = 11.0,
+			FontSize = 12.0,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
 			TextWrapping = TextWrapping.Wrap
 		};
@@ -475,8 +476,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		scoreText = new TextBlock
 		{
 			Text = "—",
-			FontSize = 13.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 14.0,
+			FontWeight = FontWeights.SemiBold,
 			VerticalAlignment = VerticalAlignment.Center,
 			Foreground = new SolidColorBrush(ThemeColors.DimText)
 		};
@@ -485,7 +486,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		detailText = new TextBlock
 		{
 			Text = "",
-			FontSize = 11.0,
+			FontSize = 12.0,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
 			VerticalAlignment = VerticalAlignment.Center
 		};
@@ -586,7 +587,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				new TextBlock
 				{
 					Text = "勾选「WinUI」并点击「开始测试」后，将弹窗执行 5 轮（去掉最慢一轮），实时展示渲染过程。",
-					FontSize = 11.0,
+					FontSize = 12.0,
 					TextWrapping = TextWrapping.Wrap,
 					Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
 				}
@@ -605,10 +606,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue768", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "开始测试", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "开始测试", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(16.0, 8.0, 16.0, 8.0)
 		};
 		_startBtn.Click += OnStartClick;
@@ -621,10 +622,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue71a", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "停止", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "停止", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
 			IsEnabled = false
 		};
@@ -638,10 +639,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\uede1", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "导出 PDF", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "导出 PDF", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
 			IsEnabled = false
 		};
@@ -655,10 +656,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue81c", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "历史对比", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "历史对比", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 		_historyBtn.Click += OnHistoryClick;
@@ -671,10 +672,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue898", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "上传排行", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "上传排行", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 		_uploadBtn.Click += OnUploadClick;
@@ -687,10 +688,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue9d5", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "排行榜", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "排行榜", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 		_rankingBtn.Click += OnRankingClick;
@@ -703,10 +704,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Children =
 				{
 					(UIElement)new FontIcon { Glyph = "\ue9d9", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "单独测核间延迟", FontSize = 13.0 }
+					(UIElement)new TextBlock { Text = "单独测核间延迟", FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
+			CornerRadius = new CornerRadius(8.0),
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 		_latencyOnlyBtn.Click += OnLatencyOnlyClick;
@@ -1055,7 +1056,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		var statusText = new TextBlock
 		{
 			Text = "正在初始化...",
-			FontSize = 13.0,
+			FontSize = 14.0,
 			TextWrapping = TextWrapping.Wrap,
 			Margin = new Thickness(0.0, 4.0, 0.0, 0.0),
 			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
@@ -1063,7 +1064,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		var progressBar = new ProgressBar { Value = 0.0, Maximum = 100.0, Height = 4.0 };
 		var logText = new TextBlock
 		{
-			FontSize = 11.0,
+			FontSize = 12.0,
 			TextWrapping = TextWrapping.Wrap,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
 		};
@@ -1220,14 +1221,14 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Background = cardBg,
 				BorderBrush = cardBorderBrush,
 				BorderThickness = new Thickness(1.0),
-				CornerRadius = new CornerRadius(6.0),
-				Padding = new Thickness(10.0, 6.0, 10.0, 6.0),
+				CornerRadius = new CornerRadius(8.0),
+				Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
 				Child = new StackPanel
 				{
 					Spacing = 4.0,
 					Children =
 					{
-						new TextBlock { Text = title, FontSize = 11.0, Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
+						new TextBlock { Text = title, FontSize = 12.0, Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
 						content
 					}
 				}
@@ -1485,13 +1486,13 @@ public sealed partial class PerformanceBenchmarkPage : Page
 						(UIElement)new TextBlock
 						{
 							Text = gpu.Name,
-							FontSize = 13.0,
+							FontSize = 14.0,
 							TextWrapping = TextWrapping.Wrap
 						},
 						(UIElement)new TextBlock
 						{
 							Text = string.Join(" · ", detail),
-							FontSize = 11.0,
+							FontSize = 12.0,
 							Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
 							TextWrapping = TextWrapping.Wrap
 						}
@@ -1724,7 +1725,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		TextBlock item = new()
 		{
 			Text = "正在加载浏览器测试...",
-			FontSize = 13.0,
+			FontSize = 14.0,
 			Margin = new Thickness(0.0, 4.0, 0.0, 0.0),
 			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		};
@@ -2229,13 +2230,13 @@ public sealed partial class PerformanceBenchmarkPage : Page
 						new TextBlock
 						{
 							Text = $"{c.TestTime:yyyy-MM-dd HH:mm}  {c.CpuName}",
-							FontWeight = FontWeights.Bold
+							FontWeight = FontWeights.SemiBold
 						},
 						new TextBlock
 						{
 							Text = $"GPU: {c.GpuName}   游戏: {c.GamingScore} ({c.GamingGrade})   办公: {c.OfficeScore} ({c.OfficeGrade})   Win: {c.Win.FinalScore} ({c.Win.Grade})",
 							FontSize = 12.0,
-							Opacity = 0.7
+							Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 						}
 					}
 				}

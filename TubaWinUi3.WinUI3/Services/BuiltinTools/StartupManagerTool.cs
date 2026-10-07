@@ -208,7 +208,7 @@ public sealed class StartupManagerTool : IBuiltinTool
         return new Border
         {
             Background = new SolidColorBrush(ThemeColors.HeaderBg),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Padding = new Thickness(12, 10, 12, 10),
             Child = root
         };
@@ -323,7 +323,7 @@ public sealed class StartupManagerTool : IBuiltinTool
     {
         var btn = new Button
         {
-            Content = new FontIcon { Glyph = glyph, FontSize = 15 },
+            Content = new FontIcon { Glyph = glyph, FontSize = 16 },
             MinWidth = 40,
             MinHeight = 34,
             Padding = new Thickness(8, 4, 8, 4)
@@ -353,29 +353,29 @@ public sealed class StartupManagerTool : IBuiltinTool
                     <Grid Grid.Column="1" VerticalAlignment="Center">
                         <Image Source="{Binding Icon}" Width="30" Height="30"
                                Visibility="{Binding IconVisibility}" Stretch="Uniform"/>
-                        <Border Width="30" Height="30" CornerRadius="6"
+                        <Border Width="30" Height="30" CornerRadius="8"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 Visibility="{Binding FallbackVisibility}">
-                            <FontIcon Glyph="&#xE8C8;" FontSize="15"
+                            <FontIcon Glyph="&#xE8C8;" FontSize="16"
                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                         </Border>
                     </Grid>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="{Binding Entry}" FontSize="13.5" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding Entry}" FontSize="14" FontWeight="SemiBold"
                                    TextDecorations="{Binding NameDecorations}"
                                    MaxLines="1" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding PathText}" FontSize="11.5"
+                        <TextBlock Text="{Binding PathText}" FontSize="12"
                                    TextDecorations="{Binding NameDecorations}"
                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                    MaxLines="1" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="12.5"
+                    <TextBlock Grid.Column="3" VerticalAlignment="Center" FontSize="12"
                                Text="{Binding Description}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                MaxLines="1" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Grid.Column="4" VerticalAlignment="Center" FontSize="12"
                                Text="{Binding Publisher}" Foreground="{Binding SigningBrush}"
                                MaxLines="1" TextTrimming="CharacterEllipsis"/>
-                    <Border Grid.Column="5" Width="10" Height="10" CornerRadius="5"
+                    <Border Grid.Column="5" Width="10" Height="10" CornerRadius="4"
                             Background="{Binding StatusBrush}" VerticalAlignment="Center"
                             ToolTipService.ToolTip="{Binding StatusTip}"/>
                 </Grid>
@@ -769,14 +769,14 @@ public sealed class StartupManagerTool : IBuiltinTool
         var countText = new TextBlock
         {
             Text = count.ToString(),
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center
         };
         var nameText = new TextBlock
         {
             Text = name,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         };
         var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -1101,7 +1101,7 @@ public sealed class StartupManagerTool : IBuiltinTool
             stack.Children.Add(new TextBlock
             {
                 Text = e.Description,
-                FontSize = 12.5,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
                 TextWrapping = TextWrapping.Wrap
             });
@@ -1158,7 +1158,7 @@ public sealed class StartupManagerTool : IBuiltinTool
 
     private static void AddDetailPair(StackPanel host, string label, string value, bool mono = false)
     {
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var valueBlock = new TextBlock
         {
             Text = value,

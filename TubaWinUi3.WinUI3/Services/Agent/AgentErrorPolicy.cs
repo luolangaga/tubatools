@@ -65,6 +65,8 @@ public static class AgentErrorPolicy
     /// <summary>
     /// 模型 API 请求失败 → 面向用户的详细错误文本：
     /// HTTP 状态码 / 常见原因提示 / 完整异常链（便于定位 API Key、端点、模型问题）。
+    /// 若异常来自本地推理（ORT GenAI / 内存分配失败），给出本地相关排查建议（而不是端点/Key）。
+    /// 判定**只看异常本身**，不读全局提供商状态，保证错误格式化与调用顺序无关。
     /// </summary>
     public static string FormatApiError(Exception ex)
     {
@@ -72,13 +74,17 @@ public static class AgentErrorPolicy
         while (current is TargetInvocationException && current.InnerException is not null)
             current = current.InnerException;
 
+        var isLocal = IsLocalInferenceError(current);
+
         var hints = new List<string>();
-        if (current is HttpRequestException { StatusCode: { } code })
+        if (!isLocal && current is HttpRequestException { StatusCode: { } code })
             hints.Add($"HTTP {(int)code}（{code}）");
-        if (current is UnauthorizedAccessException)
+        if (!isLocal && current is UnauthorizedAccessException)
             hints.Add("API Key 无效或没有权限");
-        if (current is HttpRequestException { StatusCode: null })
+        if (!isLocal && current is HttpRequestException { StatusCode: null })
             hints.Add("网络连接失败（无法访问 AI 服务端点）");
+        if (isLocal && IsMemoryError(current))
+            hints.Add("本地模型显存/内存不足（上下文过长）");
 
         var chain = new List<string>();
         for (var e = current; e is not null; e = e.InnerException)
@@ -93,7 +99,47 @@ public static class AgentErrorPolicy
             : "AI 服务请求失败：";
         if (detail.Length > 0)
             head += $"\n{detail}";
-        head += "\n\n请检查 设置 → AI 服务 中的端点、模型名与 API Key，或稍后重试。";
+
+        head += isLocal
+            ? "\n\n本地模型推理失败，请检查：模型是否完整（本地 AI 试炼场）、内存是否充足、或换用更小的对话模型。"
+            : "\n\n请检查 设置 → AI 服务 中的端点、模型名与 API Key，或稍后重试。";
         return head;
     }
+
+    /// <summary>异常是否来自本地推理（ORT GenAI / 本地模型），用于给出对应的排查建议。</summary>
+    internal static bool IsLocalInferenceError(Exception ex)
+    {
+        for (var e = ex; e is not null; e = e.InnerException)
+        {
+            var m = e.Message;
+            if (string.IsNullOrEmpty(m)) continue;
+            if (IsMemoryErrorMessage(m) ||
+                m.Contains("onnxruntime", StringComparison.OrdinalIgnoreCase) ||
+                m.Contains("onnxruntime-genai", StringComparison.OrdinalIgnoreCase) ||
+                m.Contains("GroupQueryAttention", StringComparison.OrdinalIgnoreCase) ||
+                m.Contains("genai_config", StringComparison.OrdinalIgnoreCase) ||
+                m.Contains("模型尚未加载", StringComparison.Ordinal) ||
+                m.Contains("本地模型", StringComparison.Ordinal))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>识别内存分配失败（BFCArena / bad_alloc / 分配失败）。</summary>
+    private static bool IsMemoryError(Exception ex)
+    {
+        for (var e = ex; e is not null; e = e.InnerException)
+        {
+            if (!string.IsNullOrEmpty(e.Message) && IsMemoryErrorMessage(e.Message))
+                return true;
+        }
+        return false;
+    }
+
+    private static bool IsMemoryErrorMessage(string m)
+        => m.Contains("Failed to allocate", StringComparison.OrdinalIgnoreCase)
+           || m.Contains("BFCArena", StringComparison.OrdinalIgnoreCase)
+           || m.Contains("bad_alloc", StringComparison.OrdinalIgnoreCase)
+           || m.Contains("out of memory", StringComparison.OrdinalIgnoreCase)
+           || m.Contains("内存不足", StringComparison.Ordinal);
 }

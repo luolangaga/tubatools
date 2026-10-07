@@ -195,7 +195,7 @@ public sealed partial class StorageUsageDialog : ContentDialog
         {
             Width = 10,
             Height = 10,
-            CornerRadius = new CornerRadius(3),
+            CornerRadius = new CornerRadius(4),
             VerticalAlignment = VerticalAlignment.Center,
             Background = new SolidColorBrush(ParseColor(StorageUsageService.GroupColor(kind)))
         };
@@ -210,8 +210,8 @@ public sealed partial class StorageUsageDialog : ContentDialog
         var hint = new TextBlock
         {
             Text = StorageUsageService.GroupHint(kind),
-            FontSize = 11,
-            Opacity = 0.6,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
@@ -259,7 +259,7 @@ public sealed partial class StorageUsageDialog : ContentDialog
         {
             Text = item.Description,
             FontSize = 12,
-            Opacity = 0.75,
+            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             TextWrapping = TextWrapping.Wrap
         };
 
@@ -272,8 +272,8 @@ public sealed partial class StorageUsageDialog : ContentDialog
             texts.Children.Add(new TextBlock
             {
                 Text = item.DisplayPath,
-                FontSize = 11,
-                Opacity = 0.5,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(ThemeColors.DimText),
                 MaxLines = 1,
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
@@ -281,7 +281,7 @@ public sealed partial class StorageUsageDialog : ContentDialog
 
         var sizeText = new TextBlock
         {
-            FontSize = 13,
+            FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             Text = "…"
         };
@@ -393,7 +393,7 @@ public sealed partial class StorageUsageDialog : ContentDialog
         {
             var segment = new Border
             {
-                CornerRadius = new CornerRadius(3),
+                CornerRadius = new CornerRadius(4),
                 Margin = new Thickness(0, 0, 2, 0),
                 Background = new SolidColorBrush(ParseColor(StorageUsageService.GroupColor(visible[i].Kind)))
             };

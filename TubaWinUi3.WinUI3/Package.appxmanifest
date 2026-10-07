@@ -74,5 +74,7 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <!-- 本地AI试炼场「实时检测」的摄像头输入源（屏幕/窗口捕获走 runFullTrust + GDI，无需额外能力）。 -->
+    <DeviceCapability Name="webcam" />
   </Capabilities>
 </Package>

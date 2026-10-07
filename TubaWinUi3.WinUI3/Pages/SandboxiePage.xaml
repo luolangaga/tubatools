@@ -17,7 +17,7 @@
             Subtitle="开源沙盒工具（Sandboxie-Plus），可安全运行可疑程序与恶意样本，所有修改都隔离在沙盒中"
             Glyph="&#xEA18;" />
 
-        <ScrollViewer Grid.Row="1" Padding="24,0,24,24">
+        <ScrollViewer Grid.Row="1" Padding="24,8,24,24">
         <StackPanel Spacing="16" MaxWidth="920" HorizontalAlignment="Stretch">
 
             <!-- 顶部说明 -->
@@ -26,27 +26,24 @@
                      Message="沙盒能隔离绝大多数恶意行为（文件写入、注册表修改），但极少数内核级样本可能逃逸。分析高危样本建议配合虚拟机使用。"/>
 
             <!-- ============ 下载区域（上部） ============ -->
-            <Border CornerRadius="8" Padding="20"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1">
-                <StackPanel Spacing="14">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+            <Border Style="{StaticResource FluentCardStyle}">
+                <StackPanel Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE896;" FontSize="20"
                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="下载 Sandboxie-Plus" FontSize="18" FontWeight="SemiBold"
+                        <TextBlock Style="{StaticResource CardTitleStyle}" Text="下载 Sandboxie-Plus"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="开源沙盒工具（Sandboxie-Plus），可安全运行可疑程序与恶意样本。程序在沙盒中的所有修改都会被隔离，删除沙盒内容即可一键还原。"
-                               FontSize="13" TextWrapping="Wrap"
+                               FontSize="14" TextWrapping="Wrap"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
 
                     <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                        <TextBlock Text="安装包架构：" FontSize="13" VerticalAlignment="Center"
+                        <TextBlock Text="安装包架构：" FontSize="14" VerticalAlignment="Center"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <ComboBox x:Name="ArchCombo" Width="240" MinWidth="240"
                                   SelectionChanged="ArchCombo_SelectionChanged"/>
-                        <TextBlock x:Name="SizeText" FontSize="13" VerticalAlignment="Center"
+                        <TextBlock x:Name="SizeText" FontSize="14" VerticalAlignment="Center"
                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                     </StackPanel>
 
@@ -70,14 +67,14 @@
                     <!-- 文件夹背景右键菜单开关 -->
                     <Rectangle Height="1" Margin="0,6,0,2"
                                Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE8B7;" FontSize="16"
                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                         <StackPanel Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="文件夹背景右键菜单「在沙箱中运行」" FontSize="13"
+                            <TextBlock Text="文件夹背景右键菜单「在沙箱中运行」" FontSize="14"
                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                             <TextBlock Text="开启后，在文件夹空白处右键会多出「在沙箱中运行」选项，可快速用沙盒打开该文件夹（默认沙盒）"
-                                       FontSize="11" TextWrapping="Wrap"
+                                       FontSize="12" TextWrapping="Wrap"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                         </StackPanel>
                         <ToggleSwitch x:Name="ShellMenuToggle" OnContent="" OffContent=""
@@ -88,18 +85,17 @@
             </Border>
 
             <!-- ============ 教程区域（下部） ============ -->
-            <TextBlock Text="使用教程" FontSize="18" FontWeight="SemiBold" Margin="4,8,0,0"/>
+            <TextBlock Style="{StaticResource CardTitleStyle}" Text="使用教程" Margin="4,8,0,0"/>
 
             <!-- 什么是沙盒 -->
-            <Border CornerRadius="8" Padding="20" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            <Border Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE946;" FontSize="16"
                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="什么是沙盒？" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="什么是沙盒？"/>
                     </StackPanel>
-                    <TextBlock FontSize="13" TextWrapping="Wrap" LineHeight="22"
+                    <TextBlock FontSize="14" TextWrapping="Wrap" LineHeight="22"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}">
                         沙盒（Sandbox）是一个隔离的运行环境：程序在沙盒中运行时，它对系统做的一切修改
                         ——写入的文件、修改的注册表、释放的驱动、植入的自启动——<Bold>全部停留在沙盒内部</Bold>，
@@ -110,61 +106,60 @@
             </Border>
 
             <!-- 使用步骤 -->
-            <Border CornerRadius="8" Padding="20" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            <Border Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE9D5;" FontSize="16"
                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="六步上手：在沙盒中分析可疑程序" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="六步上手：在沙盒中分析可疑程序"/>
                     </StackPanel>
 
-                    <StackPanel Spacing="10">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="1" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="1" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="安装：在上方选择与系统匹配的安装包（下载完成后自动启动安装程序），安装时可勾选中文语言包。"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="2" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="2" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="启动 Sandboxie-Plus，在左侧沙盒列表中右键「默认沙盒」→「在此沙盒中运行」→「运行程序」，选择要分析的可疑文件。"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="3" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="3" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="观察行为：程序标题栏会出现 # 号表示正在沙盒中运行。所有文件写入被重定向到沙盒目录（默认 C:\Sandbox），可实时查看它释放了什么文件。"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="4" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="4" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="断网防外传：右键沙盒 →「沙盒选项」→「网络」分类，勾选「阻止访问网络」，防止样本回传数据或下载后续载荷。"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="5" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="5" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="清理现场：分析完毕后，右键沙盒 →「删除内容」，一键清空样本留下的所有文件与注册表修改。"/>
                             </TextBlock>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                                <TextBlock Text="6" Foreground="White" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="26" Height="26" CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                <TextBlock Text="6" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
+                            <TextBlock FontSize="14" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20">
                                 <Run Text="进阶：可创建多个沙盒做对比分析；用「强制文件夹」把下载目录设为强制入沙；用「强制运行程序」让指定程序始终在沙盒中启动。"/>
                             </TextBlock>
                         </StackPanel>
@@ -173,14 +168,13 @@
             </Border>
 
             <!-- 安全提示 -->
-            <Border CornerRadius="8" Padding="20" Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            <Border Style="{StaticResource FluentCardStyle}" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="{ThemeResource SystemFillColorCautionBrush}"/>
-                        <TextBlock Text="安全提示" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="安全提示"/>
                     </StackPanel>
-                    <TextBlock FontSize="13" LineHeight="24" TextWrapping="Wrap"
+                    <TextBlock FontSize="14" LineHeight="24" TextWrapping="Wrap"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}">
                         • 沙盒并非 100% 安全：极少数利用内核漏洞的样本可能逃逸，高危样本请使用虚拟机。&#x0a;•
                         在沙盒中运行程序时不要输入任何真实账号密码，键盘记录器仍然有效。&#x0a;•
@@ -191,7 +185,7 @@
             </Border>
 
             <!-- 相关链接 -->
-            <StackPanel Orientation="Horizontal" Spacing="20" Margin="4,0,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="16" Margin="4,0,0,0">
                 <HyperlinkButton NavigateUri="https://sandboxie-plus.com/" Content="Sandboxie-Plus 官网"/>
                 <HyperlinkButton NavigateUri="https://gitcode.com/luolangaga/sandboxieddd/releases" Content="安装包发布页（GitCode）"/>
             </StackPanel>

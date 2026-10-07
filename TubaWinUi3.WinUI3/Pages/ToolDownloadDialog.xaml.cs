@@ -155,11 +155,11 @@ public sealed partial class ToolDownloadDialog : ContentDialog
 
         var border = new Border
         {
-            Padding = new Thickness(20, 16, 20, 16),
+            Padding = new Thickness(16),
             Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
             BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(10)
+            CornerRadius = new CornerRadius(8)
         };
 
         var grid = new Grid { ColumnSpacing = 16 };
@@ -170,14 +170,14 @@ public sealed partial class ToolDownloadDialog : ContentDialog
         {
             Width = 48,
             Height = 48,
-            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green),
-            CornerRadius = new CornerRadius(12)
+            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(ThemeColors.AccentGreen),
+            CornerRadius = new CornerRadius(8)
         };
         iconBorder.Child = new FontIcon
         {
             Glyph = "\uE73E",
             FontSize = 24,
-            Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
+            Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"]
         };
         Grid.SetColumn(iconBorder, 0);
         grid.Children.Add(iconBorder);
@@ -186,8 +186,8 @@ public sealed partial class ToolDownloadDialog : ContentDialog
         infoStack.Children.Add(new TextBlock
         {
             Text = $"{_toolName} 下载完成！",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
         infoStack.Children.Add(new TextBlock
         {

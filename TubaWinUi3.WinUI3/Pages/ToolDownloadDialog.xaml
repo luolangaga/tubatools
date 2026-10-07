@@ -20,7 +20,7 @@
         </ResourceDictionary>
     </ContentDialog.Resources>
 
-    <Grid RowSpacing="14" MinWidth="420">
+    <Grid RowSpacing="12" MinWidth="420">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -28,13 +28,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border
-            Padding="18,14"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="10">
-            <Grid ColumnSpacing="14">
+        <Border Style="{StaticResource FluentCardStyle}">
+            <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -44,7 +39,7 @@
                     Width="48"
                     Height="48"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="12">
+                    CornerRadius="8">
                     <FontIcon
                         x:Name="ToolIcon"
                         FontSize="24"
@@ -52,15 +47,14 @@
                         Glyph="&#xE896;" />
                 </Border>
 
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                     <TextBlock
                         x:Name="ToolNameText"
-                        FontSize="18"
-                        FontWeight="Bold" />
+                        Style="{StaticResource CardTitleStyle}" />
                     <TextBlock
                         x:Name="ToolDescText"
                         FontSize="12"
-                        Opacity="1.0"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
                         MaxLines="2" />
                 </StackPanel>
@@ -74,14 +68,17 @@
             Visibility="Collapsed">
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <ProgressRing Width="18" Height="18" IsActive="True" />
-                <TextBlock FontSize="13" Opacity="1.0" Text="正在解析最新版下载地址..." />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="正在解析最新版下载地址..." />
             </StackPanel>
         </StackPanel>
 
         <StackPanel
             x:Name="ProgressSection"
             Grid.Row="2"
-            Spacing="10"
+            Spacing="8"
             Visibility="Collapsed">
 
             <ProgressBar
@@ -98,7 +95,7 @@
 
                 <StackPanel Orientation="Horizontal" Spacing="16">
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon FontSize="11" Glyph="&#xE921;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <FontIcon FontSize="12" Glyph="&#xE921;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <TextBlock
                             x:Name="SpeedText"
                             FontSize="12"
@@ -106,7 +103,7 @@
                             Text="--" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon FontSize="11" Glyph="&#xE8B7;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <FontIcon FontSize="12" Glyph="&#xE8B7;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <TextBlock
                             x:Name="SizeText"
                             FontSize="12"
@@ -114,7 +111,7 @@
                             Text="--" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon FontSize="11" Glyph="&#xE917;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <FontIcon FontSize="12" Glyph="&#xE917;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         <TextBlock
                             x:Name="TimeText"
                             FontSize="12"
@@ -127,7 +124,7 @@
                     x:Name="PercentText"
                     Grid.Column="1"
                     FontSize="12"
-                    FontWeight="Bold"
+                    FontWeight="SemiBold"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                     Text="0%" />
             </Grid>

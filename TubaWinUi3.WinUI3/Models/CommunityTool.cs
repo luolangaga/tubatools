@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
-using Windows.UI;
 
 namespace TubaWinUi3.Models;
 
@@ -27,14 +25,21 @@ public sealed class CommunityTool : INotifyPropertyChanged
     public string? File { get; init; }
     public string? FileSha { get; set; }
 
-    public string TagsText => string.Join(" ", Tags);
+    public string TagsText => string.Join("  ", Tags);
+
+    /// <summary>卡片上的分类显示名（本地化；Category 本身是数据键，不可翻译）。</summary>
+    public string CategoryDisplay => LocalizationService.GetCategoryDisplayName(Category);
 
     private CommunityToolInstallStatus _installStatus;
     public CommunityToolInstallStatus InstallStatus
     {
         get => _installStatus;
-        set { _installStatus = value; OnPropertyChanged(nameof(InstallStatus)); OnPropertyChanged(nameof(InstallStatusText)); OnPropertyChanged(nameof(CanInstall)); OnPropertyChanged(nameof(CanLaunch)); OnPropertyChanged(nameof(LaunchButtonText)); OnPropertyChanged(nameof(InstallStatusColor)); }
+        set { _installStatus = value; NotifyDerived(); }
     }
+
+    public bool CanInstall => InstallStatus is CommunityToolInstallStatus.NotInstalled or CommunityToolInstallStatus.UpdateAvailable;
+    public bool CanLaunch => InstallStatus == CommunityToolInstallStatus.Installed;
+    public bool CanUninstall => InstallStatus != CommunityToolInstallStatus.NotInstalled;
 
     public string InstallStatusText => InstallStatus switch
     {
@@ -44,33 +49,35 @@ public sealed class CommunityTool : INotifyPropertyChanged
         _ => "未知"
     };
 
-    public bool CanInstall => InstallStatus == CommunityToolInstallStatus.NotInstalled || InstallStatus == CommunityToolInstallStatus.UpdateAvailable;
-    public bool CanLaunch => InstallStatus == CommunityToolInstallStatus.Installed;
+    private bool _isBusy;
+    public bool IsBusy => _isBusy;
 
-    public string LaunchButtonText => InstallStatus switch
+    private string _busyText = "";
+    public string BusyText => _busyText;
+
+    /// <summary>由页面对接下载队列设置：忙碌时药丸与主按钮显示进度文本（下载中 45% / 安装中…）。</summary>
+    public void SetBusy(bool busy, string busyText = "")
     {
-        CommunityToolInstallStatus.NotInstalled => "下载",
-        CommunityToolInstallStatus.Installed => "打开",
-        CommunityToolInstallStatus.UpdateAvailable => "更新",
-        _ => "下载"
-    };
-
-    public Color InstallStatusColor => InstallStatus switch
-    {
-        CommunityToolInstallStatus.Installed => Color.FromArgb(255, 74, 222, 128),
-        CommunityToolInstallStatus.UpdateAvailable => Color.FromArgb(255, 251, 146, 60),
-        _ => Color.FromArgb(255, 160, 160, 160)
-    };
-
-    public SolidColorBrush InstallStatusBrush => new(InstallStatusColor);
-    public SolidColorBrush InstallStatusBrushFaint => new() { Color = InstallStatusColor, Opacity = 0.15 };
-
-    private string? _localPath;
-    public string? LocalPath
-    {
-        get => _localPath;
-        set { _localPath = value; OnPropertyChanged(nameof(LocalPath)); }
+        _isBusy = busy;
+        _busyText = busy ? busyText : "";
+        OnPropertyChanged(nameof(IsBusy));
+        OnPropertyChanged(nameof(BusyText));
+        NotifyDerived();
     }
+
+    /// <summary>卡片药丸文本：忙碌时显示进度，否则显示安装状态。</summary>
+    public string StatusText => IsBusy && !string.IsNullOrWhiteSpace(BusyText) ? BusyText : InstallStatusText;
+
+    public string LaunchButtonText => IsBusy
+        ? (string.IsNullOrWhiteSpace(BusyText) ? "处理中..." : BusyText)
+        : InstallStatus switch
+        {
+            CommunityToolInstallStatus.Installed => "打开",
+            CommunityToolInstallStatus.UpdateAvailable => "更新",
+            _ => "下载"
+        };
+
+    public bool CanPrimaryAct => !IsBusy && (CanInstall || CanLaunch);
 
     private string? _iconPath;
     public string? IconPath
@@ -83,12 +90,23 @@ public sealed class CommunityTool : INotifyPropertyChanged
     public bool IsAuthor
     {
         get => _isAuthor;
-        set { _isAuthor = value; OnPropertyChanged(nameof(IsAuthor)); OnPropertyChanged(nameof(CanDelete)); OnPropertyChanged(nameof(DeleteButtonVisibility)); }
+        set { if (_isAuthor != value) { _isAuthor = value; NotifyDerived(); } }
     }
 
-    public bool CanDelete => IsAuthor && GitHubAuthService.IsLoggedIn;
+    private bool _isFavorite;
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set { if (_isFavorite != value) { _isFavorite = value; OnPropertyChanged(nameof(IsFavorite)); } }
+    }
 
-    public Visibility DeleteButtonVisibility => CanDelete ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility UninstallButtonVisibility => !IsBusy && CanUninstall ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>申请下架（远程 PR，仅作者）。</summary>
+    public Visibility RemoveRequestButtonVisibility => IsAuthor ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>收藏星（仅已安装的工具可收藏：收藏键是本地工具路径）。</summary>
+    public Visibility FavoriteButtonVisibility => CanUninstall ? Visibility.Visible : Visibility.Collapsed;
 
     public string? IconGlyph
     {
@@ -109,10 +127,23 @@ public sealed class CommunityTool : INotifyPropertyChanged
         }
     }
 
-    public Visibility IconPathVisibility => string.IsNullOrEmpty(IconPath) ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility GlyphVisibility => string.IsNullOrEmpty(IconPath) ? Visibility.Visible : Visibility.Collapsed;
-
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void NotifyDerived()
+    {
+        OnPropertyChanged(nameof(InstallStatus));
+        OnPropertyChanged(nameof(InstallStatusText));
+        OnPropertyChanged(nameof(StatusText));
+        OnPropertyChanged(nameof(CanInstall));
+        OnPropertyChanged(nameof(CanLaunch));
+        OnPropertyChanged(nameof(CanUninstall));
+        OnPropertyChanged(nameof(CanPrimaryAct));
+        OnPropertyChanged(nameof(LaunchButtonText));
+        OnPropertyChanged(nameof(UninstallButtonVisibility));
+        OnPropertyChanged(nameof(RemoveRequestButtonVisibility));
+        OnPropertyChanged(nameof(FavoriteButtonVisibility));
+    }
+
     private void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
@@ -128,3 +159,19 @@ public enum CommunityToolInstallStatus
     Installed,
     UpdateAvailable
 }
+
+/// <summary>提交社区工具的表单数据（plugin.json 的唯一数据来源，提交上传与预览共用）。</summary>
+public sealed record CommunityPluginDraft(
+    string Name,
+    string Description,
+    string Category,
+    IReadOnlyList<string> Tags,
+    string? ZipFilePath,
+    string? LaunchTarget,
+    string? Publisher,
+    string? Homepage,
+    string? Version,
+    string? IconFilePath,
+    string? DownloadUrl,
+    string? DownloadFilter,
+    IReadOnlyList<ImportArchVariant> ArchVariants);

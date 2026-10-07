@@ -147,6 +147,22 @@ public sealed partial class GameOverlayPage : Page
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
         InitBackendMonitorToggle();
+
+        // 代码构建的画刷（组件调色板 / 画布组件 / 缩放手柄）不会随主题自动刷新，
+        // 切换主题后按当前布局重渲染（与 ApplyGlobalScale 的重建方式一致）
+        ActualThemeChanged += (_, _) =>
+        {
+            UpdateBackendMonitorStatus();
+            InitPalette();
+            var selected = _selectedWidget;
+            foreach (var widget in _widgets)
+            {
+                if (widget.Container is not null) DesignCanvas.Children.Remove(widget.Container);
+                if (widget.ResizeThumb is not null) DesignCanvas.Children.Remove(widget.ResizeThumb);
+            }
+            foreach (var widget in _widgets) CreateWidgetElement(widget);
+            if (selected is not null) SelectWidget(selected);
+        };
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -217,12 +233,12 @@ public sealed partial class GameOverlayPage : Page
         else if (ActiveInterceptService.IsRunning)
         {
             TxtBackendStatus.Text = "运行中";
-            TxtBackendStatus.Foreground = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+            TxtBackendStatus.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
         }
         else
         {
             TxtBackendStatus.Text = "未运行（后端缺失）";
-            TxtBackendStatus.Foreground = new SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+            TxtBackendStatus.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
     }
 
@@ -349,8 +365,8 @@ public sealed partial class GameOverlayPage : Page
             var card = new Border
             {
                 Background = new SolidColorBrush(Colors.Transparent),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8, 6, 8, 6),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(8),
                 Margin = new Thickness(0, 0, 0, 4),
                 Tag = type,
                 IsHitTestVisible = true,
@@ -494,7 +510,7 @@ public sealed partial class GameOverlayPage : Page
                 _ when info.IsChart => 60,
                 _ => 32
             },
-            FontSize = type == OverlayWidgetType.CpuNameText || type == OverlayWidgetType.GpuNameText ? 13 : 14,
+            FontSize = type == OverlayWidgetType.CpuNameText || type == OverlayWidgetType.GpuNameText ? 12 : 14,
             CustomText = type == OverlayWidgetType.CustomText ? "自定义文字" : "",
             ImagePath = type == OverlayWidgetType.CustomImage ? "" : "",
             ColorArgb = 0xFF00A0FF,
@@ -528,13 +544,13 @@ public sealed partial class GameOverlayPage : Page
 
         if (widget.IsChart)
         {
-            var chartCanvas = new Canvas { Background = new SolidColorBrush(Color.FromArgb(30, 255, 255, 255)) };
+            var chartCanvas = new Canvas { Background = new SolidColorBrush(ThemeColors.KeyDefault) };
             // Add chart label preview
             var chartLabel = new TextBlock
             {
                 Text = widget.Label,
                 FontSize = Math.Max(8, widget.FontSize),
-                Foreground = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
+                Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
                 VerticalAlignment = VerticalAlignment.Top,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(4, 2, 0, 0)
@@ -578,7 +594,7 @@ public sealed partial class GameOverlayPage : Page
             {
                 Text = preview,
                 FontSize = widget.FontSize,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(FromArgb(widget.TextColorArgb)),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(4, 0, 0, 0),
@@ -607,7 +623,7 @@ public sealed partial class GameOverlayPage : Page
             Height = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
-            Background = new SolidColorBrush(Color.FromArgb(180, 100, 100, 255)),
+            Background = new SolidColorBrush(ThemeColors.AccentBlue),
         };
         thumb.DragDelta += ResizeThumb_DragDelta;
         widget.ResizeThumb = thumb;
@@ -969,7 +985,7 @@ public sealed partial class GameOverlayPage : Page
             ("灰色", 0xFF808080), ("黑色", 0xFF202020), ("透明黑", 0xEE000000),
         };
 
-        var grid = new Grid { ColumnSpacing = 6, RowSpacing = 6 };
+        var grid = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         for (int i = 0; i < 3; i++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         for (int i = 0; i < 4; i++) grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
 
@@ -1006,7 +1022,7 @@ public sealed partial class GameOverlayPage : Page
         dialog = new ContentDialog
         {
             Title = title,
-            Content = new StackPanel { Spacing = 10, Children = { grid } },
+            Content = new StackPanel { Spacing = 8, Children = { grid } },
             CloseButtonText = "取消",
             XamlRoot = XamlRoot,
             RequestedTheme = ThemeService.CurrentElementTheme
@@ -1389,7 +1405,7 @@ public sealed partial class GameOverlayPage : Page
                 Spacing = 8,
                 Children =
                 {
-                    new TextBlock { Text = "输入游戏窗口标题（支持部分匹配）:", FontSize = 13 },
+                    new TextBlock { Text = "输入游戏窗口标题（支持部分匹配）:", FontSize = 14 },
                     inputBox
                 }
             },
@@ -1571,9 +1587,9 @@ public sealed partial class GameOverlayPage : Page
             var header = new TextBlock
             {
                 Text = group.Key,
-                FontSize = 11,
+                FontSize = 12,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Opacity = 0.75,
+                Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
                 Margin = new Thickness(0, 4, 0, 2)
             };
             Grid.SetRow(header, row);
@@ -1589,7 +1605,7 @@ public sealed partial class GameOverlayPage : Page
                 var cb = new CheckBox
                 {
                     Content = m.Label,
-                    FontSize = 11,
+                    FontSize = 12,
                     MinWidth = 0,
                     Padding = new Thickness(0),
                     Tag = m.Key,
@@ -1902,14 +1918,14 @@ public sealed partial class GameOverlayPage : Page
         _recordDialogOpen = true;
         try
         {
-            var body = new StackPanel { Spacing = 6 };
+            var body = new StackPanel { Spacing = 8 };
             body.Children.Add(new TextBlock
             {
                 Text = autoStop
                     ? $"记录已达 {GameMonitorRecorder.MaxDurationMinutes} 分钟上限，已自动停止并保存："
                     : "记录已保存：",
                 TextWrapping = TextWrapping.Wrap,
-                FontSize = 13
+                FontSize = 14
             });
             foreach (var p in paths)
             {
@@ -1943,14 +1959,14 @@ public sealed partial class GameOverlayPage : Page
             {
                 Text = stats.ToString().TrimEnd(),
                 FontSize = 12,
-                Opacity = 0.8,
+                Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
                 TextWrapping = TextWrapping.Wrap
             });
             body.Children.Add(new TextBlock
             {
                 Text = GetRecordDir(),
-                FontSize = 11,
-                Opacity = 0.6,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(ThemeColors.DimText),
                 IsTextSelectionEnabled = true,
                 TextWrapping = TextWrapping.Wrap
             });
@@ -2397,7 +2413,7 @@ public sealed partial class GameOverlayPage : Page
                 Spacing = 8,
                 Children =
                 {
-                    new TextBlock { Text = "将保存画布尺寸与全部组件布局，同名预设会被覆盖：", FontSize = 13, TextWrapping = TextWrapping.Wrap },
+                    new TextBlock { Text = "将保存画布尺寸与全部组件布局，同名预设会被覆盖：", FontSize = 14, TextWrapping = TextWrapping.Wrap },
                     input
                 }
             },

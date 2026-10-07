@@ -49,8 +49,7 @@ public static class BuiltinWindowHelper
 
     public static void ApplyTitleBarTheme(Window window)
     {
-        var isDark = ThemeService.CurrentTheme == AppTheme.Dark ||
-                     (ThemeService.CurrentTheme == AppTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+        var isDark = ThemeService.IsDarkEffective;
         TitleBarPalette.Apply(SafeTitleBar.Get(window), isDark);
     }
 }

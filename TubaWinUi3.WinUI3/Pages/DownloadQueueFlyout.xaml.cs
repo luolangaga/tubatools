@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 
@@ -28,6 +29,13 @@ public sealed partial class DownloadQueueFlyout : UserControl
 
         DownloadQueueService.Queue.CollectionChanged += OnQueueCollectionChanged;
         DownloadQueueService.QueueChanged += OnQueueChanged;
+
+        // 代码解析的状态色画刷不会随主题自动刷新，切换主题后重新广播所有队列项
+        ActualThemeChanged += (_, _) =>
+        {
+            foreach (var vm in Items)
+                vm.Rebind();
+        };
 
         UpdateEmptyState();
     }
@@ -172,6 +180,18 @@ public sealed class DownloadItemViewModel : INotifyPropertyChanged
         DownloadItemState.Cancelled => "已取消",
         _ => ""
     };
+
+    /// <summary>
+    /// 队列项状态语义色：排队/暂停/取消 = Neutral，解析/下载/处理中 = Accent，
+    /// 完成 = Success，失败 = Critical（与格式转换页同一套语义）。
+    /// </summary>
+    public SolidColorBrush StateBrush => new(State switch
+    {
+        DownloadItemState.Resolving or DownloadItemState.Downloading or DownloadItemState.Processing => ThemeColors.AccentBlue,
+        DownloadItemState.Completed => ThemeColors.AccentGreen,
+        DownloadItemState.Failed => ThemeColors.AccentRed,
+        _ => ThemeColors.Neutral
+    });
 
     public bool IsIndeterminate => State is DownloadItemState.Resolving or DownloadItemState.Processing or DownloadItemState.Queued;
     public double ProgressValue => _item.Progress?.Percentage ?? 0;

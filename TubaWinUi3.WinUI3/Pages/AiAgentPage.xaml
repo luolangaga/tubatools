@@ -14,18 +14,18 @@
         </Flyout>
     </UserControl.Resources>
 
-    <Grid x:Name="RootLayout" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid x:Name="RootLayout" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border x:Name="HeaderBar" Padding="20,12"
+        <Border x:Name="HeaderBar" Padding="16,12"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderThickness="0,0,0,1"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
-            <Grid ColumnSpacing="14">
+            <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -34,7 +34,7 @@
 
                 <Grid Width="42" Height="42" VerticalAlignment="Center">
                     <Border CornerRadius="12" Background="{ThemeResource AccentFillColorDefaultBrush}">
-                        <FontIcon Glyph="&#xE946;" FontSize="18"
+                        <FontIcon Glyph="&#xE946;" FontSize="20"
                                   Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                     </Border>
                     <InfoBadge x:Name="StateBadge" HorizontalAlignment="Right" VerticalAlignment="Bottom"
@@ -47,11 +47,11 @@
 
                 <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock x:Name="TitleText" Text="新对话" FontSize="18"
-                                   FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <Border CornerRadius="10" Padding="8,3"
-                                Background="{ThemeResource ControlFillColorSecondaryBrush}">
-                            <TextBlock Text="本机智能代理" FontSize="11"
+                        <TextBlock x:Name="TitleText" Text="新对话" Style="{StaticResource CardTitleStyle}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Border Style="{StaticResource StatusPillStyle}"
+                                Background="{ThemeResource ControlFillColorDefaultBrush}">
+                            <TextBlock Text="本机智能代理" FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </Border>
                     </StackPanel>
@@ -75,6 +75,10 @@
                     <ComboBox x:Name="ModelCombo" MinWidth="140" MaxWidth="190" FontSize="12"
                               DisplayMemberPath="DisplayText" SelectionChanged="ModelCombo_SelectionChanged"
                               ToolTipService.ToolTip="当前模型，下一条消息生效" />
+                    <Button x:Name="ManageProvidersButton" Width="36" Height="36" Padding="0"
+                            Click="ManageProvidersButton_Click" ToolTipService.ToolTip="管理 AI 提供商">
+                        <FontIcon Glyph="&#xE774;" FontSize="14" />
+                    </Button>
                     <ToggleSwitch x:Name="FullAccessToggle" MinWidth="0" Padding="0"
                                   OnContent="完全访问" OffContent="受控执行" FontSize="12"
                                   ToolTipService.ToolTip="危险操作在受控执行模式下需要逐项确认"
@@ -103,22 +107,22 @@
             <ScrollViewer x:Name="MsgScroll" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollMode="Disabled" ViewChanged="MsgScroll_ViewChanged">
                 <StackPanel x:Name="MsgPanel" MaxWidth="960" HorizontalAlignment="Center"
-                            Padding="24,24,24,20" />
+                            Padding="24,8,24,24" />
             </ScrollViewer>
             <Button x:Name="ScrollToBottomButton" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                    Margin="0,0,0,14" Padding="12,6" CornerRadius="16" Visibility="Collapsed"
+                    Margin="0,0,0,12" Padding="12,8" CornerRadius="12" Visibility="Collapsed"
                     Click="ScrollToBottomButton_Click" ToolTipService.ToolTip="回到最新消息">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <FontIcon Glyph="&#xE74B;" FontSize="11" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE74B;" FontSize="12" />
                     <TextBlock Text="回到最新" FontSize="12" />
                 </StackPanel>
             </Button>
         </Grid>
 
-        <Border Grid.Row="2" Padding="20,10,20,16"
+        <Border Grid.Row="2" Padding="16,8,16,16"
                 Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderThickness="0,1,0,0" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
-            <StackPanel MaxWidth="960" HorizontalAlignment="Center" Spacing="9">
+            <StackPanel MaxWidth="960" HorizontalAlignment="Center" Spacing="8">
                 <ScrollViewer HorizontalScrollBarVisibility="Hidden" HorizontalScrollMode="Enabled"
                               VerticalScrollMode="Disabled">
                     <StackPanel x:Name="QuickPillPanel" Orientation="Horizontal" Spacing="8" />
@@ -136,26 +140,26 @@
                                  PlaceholderText="描述目标，或直接要求助手诊断、执行操作…（Enter 发送，Shift+Enter 换行）"
                                  AcceptsReturn="True" TextWrapping="Wrap"
                                  BorderThickness="0" Background="Transparent"
-                                 Padding="6,8" KeyDown="InputBox_KeyDown"
+                                 Padding="8" KeyDown="InputBox_KeyDown"
                                  AutomationProperties.Name="向 AI 助手发送消息" />
-                        <Border x:Name="TokenUsageBubble" Grid.Column="1" CornerRadius="10"
-                                Padding="9,6" Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                        <Border x:Name="TokenUsageBubble" Grid.Column="1" CornerRadius="12"
+                                Padding="8" Background="{ThemeResource ControlFillColorDefaultBrush}"
                                 VerticalAlignment="Center" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE823;" FontSize="11"
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon Glyph="&#xE823;" FontSize="12"
                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                <TextBlock x:Name="TokenUsageText" FontSize="11"
+                                <TextBlock x:Name="TokenUsageText" FontSize="12"
                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             </StackPanel>
                         </Border>
                         <Button x:Name="SendButton" Grid.Column="2" Width="42" Height="42" Padding="0"
-                                CornerRadius="10" Click="SendButton_Click"
+                                CornerRadius="8" Click="SendButton_Click"
                                 Style="{StaticResource AccentButtonStyle}"
                                 AutomationProperties.Name="发送消息">
-                            <FontIcon Glyph="&#xE72A;" FontSize="15" />
+                            <FontIcon Glyph="&#xE72A;" FontSize="14" />
                         </Button>
                         <Button x:Name="StopButton" Grid.Column="2" Width="42" Height="42" Padding="0"
-                                CornerRadius="10" Visibility="Collapsed" Click="StopButton_Click"
+                                CornerRadius="8" Visibility="Collapsed" Click="StopButton_Click"
                                 AutomationProperties.Name="停止生成">
                             <FontIcon Glyph="&#xE71A;" FontSize="14" />
                         </Button>
@@ -175,8 +179,8 @@
                         <Setter Target="ProviderCombo.Visibility" Value="Collapsed" />
                         <Setter Target="ModelCombo.Visibility" Value="Collapsed" />
                         <Setter Target="FullAccessToggle.Visibility" Value="Collapsed" />
-                        <Setter Target="HeaderBar.Padding" Value="14,10" />
-                        <Setter Target="MsgPanel.Padding" Value="14,18,14,16" />
+                        <Setter Target="HeaderBar.Padding" Value="12,8" />
+                        <Setter Target="MsgPanel.Padding" Value="12,8,12,16" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>

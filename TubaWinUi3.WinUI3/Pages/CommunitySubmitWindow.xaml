@@ -7,14 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RowSpacing="0">
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Padding="32,28,32,20" ColumnSpacing="16"
+        <Grid Padding="24,24,24,16" ColumnSpacing="16"
               Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -22,55 +22,176 @@
             </Grid.ColumnDefinitions>
 
             <Border x:Name="IconBorder" Width="56" Height="56"
-                    Background="#330066CC"
-                    CornerRadius="14">
-                <FontIcon x:Name="HeaderIcon" FontSize="28" Foreground="#0066CC" Glyph="&#xE898;" />
+                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                    CornerRadius="12">
+                <FontIcon x:Name="HeaderIcon" FontSize="28" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Glyph="&#xE898;" />
             </Border>
 
             <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                <TextBlock x:Name="TitleText" FontSize="26" FontWeight="Bold" Text="正在提交" />
-                <TextBlock x:Name="SubtitleText" Opacity="1.0" FontSize="13" TextWrapping="Wrap"
-                           Text="正在将你的工具提交到社区仓库..." />
+                <TextBlock x:Name="TitleText" Style="{StaticResource PageTitleStyle}" Text="提交社区工具" />
+                <TextBlock x:Name="SubtitleText" Style="{StaticResource PageSubtitleStyle}" TextWrapping="Wrap"
+                           Text="填写工具信息后提交，审核通过后即可在社区中展示。" />
             </StackPanel>
         </Grid>
 
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="32,20,32,8">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
             <StackPanel x:Name="ContentPanel" Spacing="16" MaxWidth="860">
 
-                <Border x:Name="ProgressCard" Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <!-- ================= 表单 ================= -->
+                <StackPanel x:Name="FormPanel" Spacing="16">
+
+                    <InfoBar x:Name="FormErrorBar"
+                             IsOpen="False" IsClosable="True" Severity="Error"
+                             Title="请完善信息" />
+
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xEC61;" FontSize="14" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                            <TextBlock x:Name="AccountText" FontSize="14" VerticalAlignment="Center" Text="正在获取账号信息..." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="上传方式" />
+                            <RadioButtons x:Name="MethodRadio" SelectedIndex="0" SelectionChanged="MethodRadio_SelectionChanged">
+                                <RadioButton Content="上传压缩包" />
+                                <RadioButton Content="提供下载链接" />
+                            </RadioButtons>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="ZipPanel" Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="工具压缩包" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button x:Name="PickPackageButton" Content="选择压缩包（.zip，≤50 MB）" Click="PickPackageButton_Click" />
+                                <TextBlock x:Name="PackageInfoText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Text="未选择文件" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="UrlPanel" Visibility="Collapsed" Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="下载链接" />
+                            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                                     Title="支持 https 直链与 gh:owner/repo"
+                                     Message="gh: 链接读取 GitHub / GitCode 最新 Release，可在「下载筛选」里指定资产（如 *.exe）。链接需先「解析并检查」通过后才能提交。" />
+                            <TextBox x:Name="DownloadUrlBox" Header="下载链接"
+                                     PlaceholderText="https://example.com/tool.zip 或 gh:owner/repo" />
+                            <TextBox x:Name="DownloadFilterBox" Header="下载筛选（可选）"
+                                     PlaceholderText="例如 *.exe 或 *x64*" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button x:Name="VerifyButton" Content="解析并检查" Click="VerifyButton_Click" />
+                                <TextBlock x:Name="VerifyStatusText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" Visibility="Collapsed" />
+                            </StackPanel>
+                            <ProgressBar x:Name="VerifyProgress" IsIndeterminate="True" Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="主程序与多架构" />
+                            <ComboBox x:Name="PrimaryComboBox" Header="主程序（双击/打开时运行）" HorizontalAlignment="Stretch" />
+                            <ListView x:Name="VariantsList" Header="多架构文件（可选，按文件名自动识别 x64 / x86 / ARM64）"
+                                      SelectionMode="Multiple" MaxHeight="150" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="基本信息" />
+                            <TextBox x:Name="NameBox" Header="工具名称" PlaceholderText="例如 CPU-Z（必填）" />
+                            <ComboBox x:Name="CategoryComboBox" Header="分类" HorizontalAlignment="Stretch" />
+                            <TextBox x:Name="DescBox" Header="简介" AcceptsReturn="True" TextWrapping="Wrap"
+                                     MinHeight="80" PlaceholderText="输入工具用途、特点或注意事项" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="PublisherBox" Header="作者 / 发布者（可选）" PlaceholderText="原软件作者" />
+                                <TextBox x:Name="VersionBox" Grid.Column="1" Header="版本号（可选）" PlaceholderText="例如 2.09，默认 1.0" />
+                            </Grid>
+                            <TextBox x:Name="TagsBox" Header="标签（可选）"
+                                     PlaceholderText="用逗号分隔，例如 CPU, 跑分, 稳定性测试" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="LaunchTargetBox" Header="启动目标（可选）"
+                                         PlaceholderText="默认使用主程序文件名" />
+                                <TextBox x:Name="HomepageBox" Grid.Column="1" Header="官方网站（可选）" PlaceholderText="https://..." />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="工具图标（可选）" />
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border Width="48" Height="48"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="8">
+                                    <Grid>
+                                        <Image x:Name="IconPreviewImage" Width="40" Height="40" Stretch="Uniform" Visibility="Collapsed" />
+                                        <FontIcon x:Name="IconFallbackGlyph" Glyph="&#xE8B7;" FontSize="24" Opacity="0.5" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock x:Name="IconNameText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="未选择图标" />
+                                <Button x:Name="IconPickButton" Content="选择图标" Click="IconPickButton_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Expander x:Name="PreviewExpander" Header="预览 plugin.json（提交内容）" Expanding="PreviewExpander_Expanding">
+                        <Border Padding="12,10"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="PreviewJsonText"
+                                           FontFamily="Cascadia Code, Consolas" FontSize="12"
+                                           TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                                           Text="（填写必填信息后展开即可预览）" />
+                            </ScrollViewer>
+                        </Border>
+                    </Expander>
+                </StackPanel>
+
+                <!-- ================= 进度 / 结果 ================= -->
+                <Border x:Name="ProgressCard" Visibility="Collapsed" Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="14" Glyph="&#xE946;" Opacity="1.0" />
-                            <TextBlock FontSize="14" FontWeight="Bold" Opacity="1.0" Text="提交进度" />
+                            <FontIcon FontSize="14" Glyph="&#xE946;" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="提交进度" />
                         </StackPanel>
                         <ProgressBar x:Name="SubmitProgressBar" IsIndeterminate="True" />
-                        <TextBlock x:Name="ProgressText" FontSize="13" Opacity="1.0" Text="正在 Fork 仓库..." />
+                        <TextBlock x:Name="ProgressText" FontSize="14" Text="正在 Fork 仓库..." />
                     </StackPanel>
                 </Border>
 
-                <Border x:Name="SuccessCard" Padding="20" Visibility="Collapsed"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <Border x:Name="SuccessCard" Visibility="Collapsed" Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="14" Glyph="&#xE73E;" Foreground="#0F7B0F" />
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="提交成功" />
+                            <FontIcon FontSize="14" Glyph="&#xE73E;" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="提交成功" />
                         </StackPanel>
-                        <TextBlock FontSize="13" Opacity="1.0" TextWrapping="Wrap"
+                        <TextBlock FontSize="14" TextWrapping="Wrap"
                                    Text="你的工具已成功提交 Pull Request，审核通过后即可在社区中展示。" />
                         <HyperlinkButton x:Name="PrLink" Content="查看 Pull Request" Visibility="Collapsed" />
                     </StackPanel>
                 </Border>
 
-                <Border x:Name="ErrorCard" Padding="20" Visibility="Collapsed"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <Border x:Name="ErrorCard" Visibility="Collapsed" Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -78,14 +199,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="14" Glyph="&#xE783;" Foreground="#FF4444" />
-                                <TextBlock FontSize="14" FontWeight="Bold" Text="错误详情" />
+                                <FontIcon FontSize="14" Glyph="&#xE783;" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="错误详情" />
                             </StackPanel>
                             <Button x:Name="CopyErrorButton" Grid.Column="1"
-                                    Padding="10,4" Click="CopyErrorButton_Click"
+                                    Padding="8,4" Click="CopyErrorButton_Click"
                                     ToolTipService.ToolTip="复制错误信息"
-                                    CornerRadius="6">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    CornerRadius="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock x:Name="CopyErrorButtonText" FontSize="12" Text="复制" />
                                 </StackPanel>
@@ -95,7 +216,7 @@
                                       VerticalScrollBarVisibility="Auto">
                             <TextBlock x:Name="ErrorText"
                                        FontFamily="Cascadia Code, Consolas"
-                                       FontSize="12" Opacity="1.0"
+                                       FontSize="12"
                                        TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                         </ScrollViewer>
                     </StackPanel>
@@ -104,24 +225,32 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="32,16,32,20"
+        <Border Grid.Row="2" Padding="24,16,24,16"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
             <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
-                <Button x:Name="CancelButton" Padding="20,10" Click="CancelButton_Click"
+                <Button x:Name="CancelButton" Padding="16,8" Click="CancelButton_Click"
                         CornerRadius="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE711;" />
                         <TextBlock Text="取消" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="CloseButton" Padding="20,10" Click="CloseButton_Click"
+                <Button x:Name="SubmitButton" Padding="16,8" Click="SubmitButton_Click"
+                        CornerRadius="8"
+                        Style="{ThemeResource AccentButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE8A5;" />
+                        <TextBlock Text="提交" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="CloseButton" Padding="16,8" Click="CloseButton_Click"
                         Visibility="Collapsed" CornerRadius="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE711;" />
                         <TextBlock Text="关闭" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="RetryButton" Padding="20,10" Click="RetryButton_Click"
+                <Button x:Name="RetryButton" Padding="16,8" Click="RetryButton_Click"
                         Visibility="Collapsed" CornerRadius="8"
                         Style="{ThemeResource AccentButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">

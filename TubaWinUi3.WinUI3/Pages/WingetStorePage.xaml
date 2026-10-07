@@ -13,8 +13,8 @@
         <!-- 分类胶囊：选中强调色实底，未选中透明描边 -->
         <Style x:Key="StoreCategoryChipStyle" TargetType="RadioButton">
             <Setter Property="MinHeight" Value="32" />
-            <Setter Property="Padding" Value="14,5,14,6" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Template">
@@ -24,9 +24,9 @@
                             x:Name="RootBorder"
                             Padding="{TemplateBinding Padding}"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}"
+                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                             BorderThickness="1"
-                            CornerRadius="16">
+                            CornerRadius="12">
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualStateGroup.Transitions>
@@ -73,8 +73,8 @@
                                     </VisualState>
                                     <VisualState x:Name="CheckedPressed">
                                         <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
-                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorTertiaryBrush}" />
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
+                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
                                             <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                                         </VisualState.Setters>
                                     </VisualState>
@@ -156,7 +156,7 @@
             </TransitionCollection>
         </Grid.Transitions>
 
-        <Grid Padding="28,18,28,24" RowSpacing="18">
+        <Grid Padding="24,8,24,24" RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -220,7 +220,7 @@
                     <TextBlock
                         x:Name="LoadingText"
                         HorizontalAlignment="Center"
-                        FontSize="13"
+                        FontSize="12"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="正在加载..." />
                 </StackPanel>
@@ -233,10 +233,10 @@
                     Spacing="8"
                     Visibility="Collapsed">
                     <FontIcon
-                        FontSize="40"
+                        FontSize="28"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         Glyph="&#xE721;"
-                        HorizontalAlignment="Center"
-                        Opacity="0.3" />
+                        HorizontalAlignment="Center" />
                     <TextBlock
                         x:Name="EmptyText"
                         HorizontalAlignment="Center"
@@ -256,7 +256,7 @@
                             Title="在线搜索不可用" />
                         <StackPanel
                             x:Name="GroupsPanel"
-                            Spacing="28" />
+                            Spacing="16" />
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

@@ -25,21 +25,11 @@ public partial class App : Application
     /// <summary>是否已进入退出流程（托盘「退出」等明确退出请求）——窗口关闭拦截据此放行，不再隐藏到托盘。</summary>
     public static bool IsExiting => _exiting;
 
-    private const string MainInstanceMutexName = "TubaWinUi3.MainInstance";
-    private static Mutex? _mainInstanceMutex;
-
     private static readonly TaskCompletionSource<string?> _toolkitToastActivation =
         new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private static void OnToolkitToastActivated(Microsoft.Toolkit.Uwp.Notifications.ToastNotificationActivatedEventArgsCompat e)
         => _toolkitToastActivation.TrySetResult(e.Argument);
-
-    /// <summary>主实例是否在运行（仅用于连接手机通知点击的转发判定；不拦截普通双开）。</summary>
-    private static bool IsMainInstanceRunning()
-    {
-        try { return Mutex.TryOpenExisting(MainInstanceMutexName, out _); }
-        catch { return false; }
-    }
 
     public App()
     {
@@ -136,7 +126,10 @@ public partial class App : Application
         {
             try
             {
-                var arguments = string.Join(" ", extraArgs.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+                // 追加 --takeover：本方法由「当前实例」自己调用，提权子进程启动时旧实例仍在运行，
+                // 必须等旧实例退出后接管，否则会被自己的旧实例当成重复启动转发走。
+                var args = extraArgs.Append(LaunchIntent.TakeoverArg);
+                var arguments = string.Join(" ", args.Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
                 Process.Start(new ProcessStartInfo(exePath)
                 {
                     Arguments = arguments,
@@ -163,7 +156,11 @@ public partial class App : Application
                 return false;
             }
 
-            var arguments = new List<string>(extraArgs) { FileLockShellMenuContract.MsixAdminSessionArg };
+            var arguments = new List<string>(extraArgs)
+            {
+                FileLockShellMenuContract.MsixAdminSessionArg,
+                LaunchIntent.TakeoverArg,
+            };
             var script = FileLockShellMenuContract.BuildElevatedRelaunchScript(
                 target, RuntimeHelper.GetLocalAppDataRoot(), arguments);
 
@@ -232,6 +229,26 @@ public partial class App : Application
                 ClipboardService.TrySetText(cmdLine[copyPathIndex + 1], flush: true);
             }
             Exit();
+            return;
+        }
+
+        // 本地 AI 试炼场：EP/模型兼容性探测子进程模式。非 QNN 的 NPU（Intel OpenVINO NPU 等）
+        // 对不支持的模型会让原生 VPUX 编译器 abort（0xC0000409，托管拦不住）或卡死，
+        // 因此主进程先让本子进程（--ai-ep-probe）试编译一次，结果写 JSON 后立即退出，不显示窗口。
+        var aiProbeIndex = Array.FindIndex(cmdLine, a => string.Equals(a, Services.AiPlayground.AiEpProbe.ProbeArg, StringComparison.OrdinalIgnoreCase));
+        if (aiProbeIndex >= 0 && aiProbeIndex + 6 < cmdLine.Length)
+        {
+            try
+            {
+                Services.AiPlayground.AiEpProbe.RunChild(
+                    cmdLine[aiProbeIndex + 1], cmdLine[aiProbeIndex + 2], cmdLine[aiProbeIndex + 3],
+                    int.Parse(cmdLine[aiProbeIndex + 4]), int.Parse(cmdLine[aiProbeIndex + 5]),
+                    cmdLine[aiProbeIndex + 6]);
+            }
+            catch
+            {
+                Exit();
+            }
             return;
         }
 
@@ -315,7 +332,7 @@ public partial class App : Application
             var (action, target, jobId) = PhoneLinkNotifier.ParseHandlerArgs(cmdLine.Skip(phoneHandlerIndex + 1));
             if (action.Equals("phone-link", StringComparison.OrdinalIgnoreCase))
             {
-                if (IsMainInstanceRunning())
+                if (SingleInstanceService.IsRunning())
                 {
                     PhoneLinkActivation.WriteRequestFile(target, jobId);
                     Exit();
@@ -367,7 +384,7 @@ public partial class App : Application
             }
             if (toolkitAction.Equals("phone-link", StringComparison.OrdinalIgnoreCase))
             {
-                if (IsMainInstanceRunning())
+                if (SingleInstanceService.IsRunning())
                 {
                     PhoneLinkActivation.WriteRequestFile(toolkitTarget, toolkitJob);
                     Exit();
@@ -399,7 +416,22 @@ public partial class App : Application
             return;
         }
 
-        try { _mainInstanceMutex = new Mutex(true, MainInstanceMutexName); } catch { }
+        // ───────────────────────── 单实例闸门 ─────────────────────────
+        // 任何方式重复启动工具箱（双击 exe / 快捷方式 / 搜索 / 右键菜单 / 后端 Toast）都
+        // 不再开第二个实例：转发导航意图给已运行实例并退出。
+        // 闸门只能在自动提权块之后——留下窗口的进程一定是管理员；且此前的 --copy-path /
+        // --context-title-probe / --toast / --phone-toast-handler / --energystar-silent
+        // 等无窗口辅助模式都已 return，绝不能被误拦。
+        var intent = LaunchIntent.Parse(cmdLine);
+        if (!SingleInstanceService.TryEnter(LaunchIntent.HasTakeover(cmdLine)))
+        {
+            // 已有实例：写激活文件唤醒它（按本次启动的意图导航；--game-overlay-auto 会被内部
+            // 静默忽略，不抢游戏焦点），随后退出。
+            SingleInstanceService.Forward(intent);
+            Exit();
+            return;
+        }
+
         _window = new MainWindow();
         _window.Activate();
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
@@ -408,6 +440,8 @@ public partial class App : Application
         // 连接手机：订阅消息/任务事件弹原生通知、注册 Toast 点击回跳、监听激活请求。
         PhoneLinkNotifier.Initialize();
         PhoneLinkActivation.StartWatcher(req => _window?.DispatcherQueue.TryEnqueue(() => OpenPhoneLinkActivation(req)));
+        // 单实例激活转发：监听重复启动进程写入的意图文件，唤醒窗口并按意图导航。
+        SingleInstanceService.StartWatcher(req => _window?.DispatcherQueue.TryEnqueue(() => ActivateExisting(req)));
         if (PhoneLinkActivation.HasPending)
             _window.DispatcherQueue.TryEnqueue(() => OpenPhoneLinkActivation(null));
         // 首次连接授权：配对成功但是本机未批准过的设备时，弹窗请用户确认。
@@ -429,9 +463,7 @@ public partial class App : Application
 
         // 后端检测到游戏自动拉起主程序时（--game-overlay-auto）：
         // 用户在玩游戏，主界面不应抢焦点弹到游戏前面 —— 最小化到任务栏即可。
-        var gameOverlayAuto = cmdLine
-            .Any(a => string.Equals(a, "--game-overlay-auto", StringComparison.OrdinalIgnoreCase));
-        if (gameOverlayAuto)
+        if (intent.Kind == LaunchIntentKind.GameOverlayAuto)
         {
             Services.GameOverlayAutoService.Log($"后端自动拉起启动（exe={Environment.ProcessPath}），主窗口将延迟最小化");
             // 不要在 OnLaunched 里立即最小化：窗口尚未完成首次布局，此刻动窗口状态
@@ -456,33 +488,59 @@ public partial class App : Application
             });
         }
 
-        // 主动拦截 Toast 通知被点击时，后端以 --show-active-intercept 启动主程序，
-        // 直接跳转「流氓软件的克星 → 主动拦截」审核页。
-        var showActiveIntercept = cmdLine
-            .Any(a => string.Equals(a, "--show-active-intercept", StringComparison.OrdinalIgnoreCase));
-        if (showActiveIntercept)
-        {
-            _window.NavigateToToolPage(typeof(Pages.RogueCleanerPage), "activeintercept");
-        }
-
-        // Windows 搜索索引快捷方式启动内置工具：--open-builtin <toolId>
-        var openBuiltinIndex = Array.FindIndex(cmdLine, a => string.Equals(a, "--open-builtin", StringComparison.OrdinalIgnoreCase));
-        if (openBuiltinIndex >= 0 && openBuiltinIndex + 1 < cmdLine.Length)
-        {
-            var builtinId = cmdLine[openBuiltinIndex + 1];
-            _window.NavigateToToolPage(typeof(Pages.BuiltinToolsPage), builtinId);
-        }
-
-        // 右键菜单「检测文件占用」：--file-lock <路径> 直达工具页，预填路径并自动扫描一次。
-        // 打包版新版菜单经执行别名启动（保留包身份）；便携版经典菜单直接启动本程序。
-        // 放在 --open-builtin 之后：两者同时出现时以更具体的 --file-lock 为准。
-        var fileLockIndex = Array.FindIndex(cmdLine, a => string.Equals(a, FileLockShellMenuContract.FileLockArg, StringComparison.OrdinalIgnoreCase));
-        if (fileLockIndex >= 0 && fileLockIndex + 1 < cmdLine.Length && !string.IsNullOrWhiteSpace(cmdLine[fileLockIndex + 1]))
-        {
-            _window.NavigateToToolPage(typeof(Pages.FileLockPage), cmdLine[fileLockIndex + 1]);
-        }
+        // 首次启动按命令行意图导航（与重复启动转发共用同一分派逻辑）。
+        ApplyLaunchIntent(intent);
 
         _ = RunStartupSequenceAsync();
+    }
+
+    /// <summary>
+    /// 按启动意图导航主窗口。首次启动与「重复启动转发」都走这里，保证两条路径行为一致：
+    /// --show-active-intercept → 主动拦截审核页；--open-builtin &lt;id&gt; → 内置工具页并自动执行；
+    /// --file-lock &lt;路径&gt; → 文件占用查看并预填路径（更具体，最后判定）。
+    /// </summary>
+    private void ApplyLaunchIntent(LaunchIntent intent)
+    {
+        switch (intent.Kind)
+        {
+            case LaunchIntentKind.ActiveIntercept:
+                // 主动拦截 Toast 点击：跳转「流氓软件的克星 → 主动拦截」审核页。
+                _window?.NavigateToToolPage(typeof(Pages.RogueCleanerPage), "activeintercept");
+                break;
+
+            case LaunchIntentKind.OpenBuiltin:
+                // Windows 搜索索引 / 桌面快捷方式启动内置工具。
+                if (!string.IsNullOrWhiteSpace(intent.Arg))
+                    _window?.NavigateToToolPage(typeof(Pages.BuiltinToolsPage), intent.Arg);
+                break;
+
+            case LaunchIntentKind.FileLock:
+                // 右键菜单「检测文件占用」：直达工具页，预填路径并自动扫描一次。
+                if (!string.IsNullOrWhiteSpace(intent.Arg))
+                    _window?.NavigateToToolPage(typeof(Pages.FileLockPage), intent.Arg);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 收到另一个进程的激活请求：唤醒主窗口（从托盘恢复 + 置前），并按请求意图导航。
+    /// 在 UI 线程调用；GameOverlayAuto 已在 <see cref="SingleInstanceService.Forward"/> 处被过滤。
+    /// </summary>
+    private void ActivateExisting(LaunchIntent intent)
+    {
+        var window = _window;
+        if (window is null) return;
+
+        try
+        {
+            window.ActivateFromExternal();
+            if (intent.Kind != LaunchIntentKind.Normal)
+                ApplyLaunchIntent(intent);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[SingleInstance] 处理激活请求失败：{ex.Message}");
+        }
     }
 
     /// <summary>处理连接手机的通知点击：恢复窗口并打开连接手机页面（页面 Loaded 时消费待处理目标弹聊天/任务弹窗）。</summary>
@@ -726,6 +784,10 @@ public partial class App : Application
         _ = DelayThenRunAsync(TimeSpan.FromSeconds(15), () => Task.Run(() => ToolIconService.CleanExpiredCache()));
         _ = DelayThenRunAsync(TimeSpan.FromSeconds(10), () => { HardwareInfoService.PreloadAsync(); return Task.CompletedTask; });
         _ = Task.Run(() => ConfigManager.AutoMigratePathsIfNeeded());
+
+        // 加速包（NPU/GPU 执行提供程序）的注册是进程级的，进程结束即失效，导致每次启动都要手动
+        // 点一次。这里在后台静默注册「已安装」的加速包（绝不触发下载），用户无需再手动操作。
+        _ = DelayThenRunAsync(TimeSpan.FromSeconds(8), () => Services.AiPlayground.AiRuntimeService.RegisterInstalledProvidersAsync());
 
         // 规则：分类下没有工具就删除。启动时清理历史遗留的空白分类目录
         // （扫描放后台线程，删除与设置写入回 UI 线程）。

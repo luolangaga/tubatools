@@ -23,7 +23,7 @@
             l:Uids.Uid="EnvVars_PageHeader"
             BackRequested="OnBackRequested" />
 
-        <Grid Grid.Row="1" Padding="24,0,24,16" RowSpacing="10">
+        <Grid Grid.Row="1" Padding="24,8,24,24" RowSpacing="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -71,22 +71,22 @@
 
                     <TextBlock
                         Grid.Row="0"
-                        Margin="12,12,12,6"
+                        Margin="12,12,12,8"
                         FontSize="12"
-                        Opacity="0.7"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="变量名"
                         l:Uids.Uid="EnvVars_ColName" />
 
                     <StackPanel Grid.Row="1" Margin="12,0,12,8" Orientation="Horizontal" Spacing="8">
                         <Button x:Name="NewBtn" Click="NewBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="11" Glyph="&#xE710;" />
+                                <FontIcon FontSize="12" Glyph="&#xE710;" />
                                 <TextBlock Text="新建" l:Uids.Uid="EnvVars_New" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="DeleteBtn" Click="DeleteBtn_Click" IsEnabled="False">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="11" Glyph="&#xE74D;" />
+                                <FontIcon FontSize="12" Glyph="&#xE74D;" />
                                 <TextBlock Text="删除" l:Uids.Uid="EnvVars_Delete" />
                             </StackPanel>
                         </Button>
@@ -110,7 +110,7 @@
                     Width="1"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <Grid x:Name="EditorPanel" Grid.Column="2" Padding="16,12,16,12" RowSpacing="10">
+                <Grid x:Name="EditorPanel" Grid.Column="2" Padding="16,12,16,12" RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -119,7 +119,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" ColumnSpacing="10">
+                    <Grid Grid.Row="0" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -141,12 +141,12 @@
                             Grid.Column="0"
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Opacity="0.7"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="逐条编辑（分号分隔）"
                             l:Uids.Uid="EnvVars_PathListTitle" />
                         <Button x:Name="DedupeBtn" Grid.Column="1" Click="DedupeBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="11" Glyph="&#xE8EF;" />
+                                <FontIcon FontSize="12" Glyph="&#xE8EF;" />
                                 <TextBlock Text="去重" l:Uids.Uid="EnvVars_PathDedupe" />
                             </StackPanel>
                         </Button>
@@ -180,19 +180,19 @@
 
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                                         <Button Click="PathUp_Click" ToolTipService.ToolTip="上移" l:Uids.Uid="EnvVars_PathMoveUp">
-                                            <FontIcon FontSize="11" Glyph="&#xE74A;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74A;" />
                                         </Button>
                                         <Button Click="PathDown_Click" ToolTipService.ToolTip="下移" l:Uids.Uid="EnvVars_PathMoveDown">
-                                            <FontIcon FontSize="11" Glyph="&#xE74B;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74B;" />
                                         </Button>
                                         <Button Click="PathInsert_Click" ToolTipService.ToolTip="在其后插入" l:Uids.Uid="EnvVars_PathInsert">
-                                            <FontIcon FontSize="11" Glyph="&#xE710;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE710;" />
                                         </Button>
                                         <Button Click="PathCopy_Click" ToolTipService.ToolTip="复制该项" l:Uids.Uid="EnvVars_PathCopy">
-                                            <FontIcon FontSize="11" Glyph="&#xE8C8;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                         </Button>
                                         <Button Click="PathRemove_Click" ToolTipService.ToolTip="删除该项" l:Uids.Uid="EnvVars_PathRemove">
-                                            <FontIcon FontSize="11" Glyph="&#xE74D;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74D;" />
                                         </Button>
                                     </StackPanel>
                                 </Grid>
@@ -211,21 +211,21 @@
                     <TextBlock
                         x:Name="KindText"
                         Grid.Row="4"
-                        FontSize="11"
-                        Opacity="0.6" />
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
 
                     <TextBlock
                         x:Name="EmptyHint"
                         Grid.Row="4"
                         FontSize="12"
-                        Opacity="0.6"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         Text="从左侧选择一个变量，或点「新建」添加。"
                         l:Uids.Uid="EnvVars_EmptyHint"
                         Visibility="Collapsed" />
                 </Grid>
             </Grid>
 
-            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10">
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
                 <Button
                     x:Name="SaveBtn"
                     Click="SaveBtn_Click"
@@ -252,7 +252,7 @@
                     x:Name="DirtyText"
                     VerticalAlignment="Center"
                     FontSize="12"
-                    Opacity="0.7" />
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </Grid>
     </Grid>

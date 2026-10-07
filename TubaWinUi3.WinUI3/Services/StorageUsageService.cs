@@ -134,6 +134,8 @@ public static class StorageUsageService
             "运行库检测与修复过程中产生的下载缓存。", Path.Combine(dataDir, "RuntimeRepair")));
         items.Add(FileItem(StorageGroupKind.Component, "installers", "安装包暂存",
             "PawnIO 等驱动的安装包暂存，需要时重新下载。", Path.Combine(dataDir, "downloads")));
+        items.Add(FileItem(StorageGroupKind.Component, "ai-models", "本地 AI 模型",
+            "「本地AI试炼场」下载的模型与 NPU 编译缓存，删除后需要重新下载。", Path.Combine(dataDir, "ai-models")));
 
         // ── 下载的文件：默认不勾选 ───────────────────────────
         items.Add(new StorageItem

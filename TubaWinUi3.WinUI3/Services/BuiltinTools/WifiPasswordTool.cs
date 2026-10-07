@@ -15,8 +15,9 @@ public sealed class WifiPasswordTool : IBuiltinTool
     public string Category => "网络工具";
     public BuiltinToolKind Kind => BuiltinToolKind.BackgroundTask;
 
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
+    // 语义色改为 ThemeColors 同名映射（跟随系统强调色/语义色与明暗主题），不再维护本地品牌色调色板拷贝
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
 
     public Task ExecuteAsync(BuiltinToolContext context)
     {
@@ -79,7 +80,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
             Width = 36,
             Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, accentColor.R, accentColor.G, accentColor.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accentColor), Glyph = "\uE701" }
         };
 
@@ -87,7 +88,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
         {
             Text = network.Ssid,
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
@@ -96,7 +97,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
             Padding = new Thickness(6, 2, 6, 2),
             Background = new SolidColorBrush(Color.FromArgb(26, AccentGreen.R, AccentGreen.G, AccentGreen.B)),
             CornerRadius = new CornerRadius(4),
-            Child = new TextBlock { Text = "已连接", FontSize = 10, Foreground = new SolidColorBrush(AccentGreen), FontWeight = Microsoft.UI.Text.FontWeights.Bold },
+            Child = new TextBlock { Text = "已连接", FontSize = 12, Foreground = new SolidColorBrush(AccentGreen), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold },
             Visibility = network.IsConnected ? Visibility.Visible : Visibility.Collapsed
         };
 
@@ -107,7 +108,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
         var authText = new TextBlock
         {
             Text = string.IsNullOrEmpty(network.Authentication) ? "" : network.Authentication,
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
@@ -118,7 +119,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
         var passwordText = new TextBlock
         {
             Text = network.HasPassword ? network.Password : "开放网络",
-            FontSize = 13,
+            FontSize = 14,
             FontFamily = new FontFamily("Consolas"),
             Foreground = new SolidColorBrush(network.HasPassword ? ThemeColors.PrimaryText : ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
@@ -185,15 +186,15 @@ public sealed class WifiPasswordTool : IBuiltinTool
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = grid
         };
     }
 
     private ScrollViewer BuildDialogContent()
     {
-        var networkCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentBlue) };
-        var connectedCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentGreen) };
+        var networkCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentBlue) };
+        var connectedCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentGreen) };
 
         var networkCard = MakeStatCard("已保存网络", networkCountText, "\uE701", AccentBlue);
         var connectedCard = MakeStatCard("当前连接", connectedCountText, "\uE73E", AccentGreen);
@@ -238,7 +239,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
         };
 
         var loadingRing = new ProgressRing { Width = 36, Height = 36, IsActive = true };
-        var loadingText = new TextBlock { Text = "正在获取 WiFi 信息...", FontSize = 13, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var loadingText = new TextBlock { Text = "正在获取 WiFi 信息...", FontSize = 14, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var loadingPanel = new StackPanel
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -298,10 +299,10 @@ public sealed class WifiPasswordTool : IBuiltinTool
             Width = 36,
             Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph }
         };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText) };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
         var stack = new StackPanel { Spacing = 2 };
         stack.Children.Add(labelBlock);
         stack.Children.Add(value);
@@ -318,7 +319,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = grid
         };
     }

@@ -23,7 +23,7 @@ public static class StoreVisuals
         var icon = new FontIcon
         {
             Glyph = glyph,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         };
         if (foreground is not null)
@@ -33,7 +33,7 @@ public static class StoreVisuals
         panel.Children.Add(new TextBlock
         {
             Text = text,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         });
 
@@ -62,7 +62,7 @@ public static class StoreVisuals
         panel.Children.Add(new TextBlock
         {
             Text = text,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center
         });
 

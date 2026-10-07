@@ -1778,6 +1778,13 @@
       "categories": [
         "网络工具"
       ]
+    },
+    {
+      "match": "本地AI试炼场",
+      "builtin": "ai-playground",
+      "categories": [
+        "其他工具"
+      ]
     }
   ]
 }

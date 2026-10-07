@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Pages;
@@ -136,7 +137,7 @@ public sealed class CustomToolImportDialog : ContentDialog
             Width = 40,
             Height = 40,
             Background = Application.Current.Resources["SubtleFillColorSecondaryBrush"] as Microsoft.UI.Xaml.Media.Brush,
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = _glyphPreview,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -167,7 +168,7 @@ public sealed class CustomToolImportDialog : ContentDialog
             }
         };
 
-        var glyphInputRow = new Grid { ColumnSpacing = 10 };
+        var glyphInputRow = new Grid { ColumnSpacing = 8 };
         glyphInputRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
         glyphInputRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         Grid.SetColumn(glyphPreviewBorder, 0);
@@ -181,9 +182,9 @@ public sealed class CustomToolImportDialog : ContentDialog
             Visibility = Visibility.Collapsed,
             Children =
             {
-                new TextBlock { Text = "选择图标", Opacity = 0.68, FontSize = 12 },
+                new TextBlock { Text = "选择图标", FontSize = 12, Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
                 _iconGridView,
-                new TextBlock { Text = "或自定义输入", Opacity = 0.68, FontSize = 12 },
+                new TextBlock { Text = "或自定义输入", FontSize = 12, Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
                 glyphInputRow
             }
         };
@@ -265,7 +266,7 @@ public sealed class CustomToolImportDialog : ContentDialog
                     _categoryComboBox,
                     _categoryBox,
                     _newCategoryPanel,
-                    new TextBlock { Text = "主程序", Opacity = 0.68, FontSize = 12 },
+                    new TextBlock { Text = "主程序", FontSize = 12, Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"] },
                     _primaryComboBox,
                     _archComboBox,
                     _variantsList,
@@ -408,7 +409,7 @@ public sealed class CustomToolImportDialog : ContentDialog
         var xaml = """
             <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
                 <Border Width='48' Height='48' Background='{ThemeResource SubtleFillColorSecondaryBrush}' CornerRadius='8' Padding='8'>
-                    <FontIcon FontSize='22' Glyph='{Binding Glyph}' HorizontalAlignment='Center' VerticalAlignment='Center' />
+                    <FontIcon FontSize='24' Glyph='{Binding Glyph}' HorizontalAlignment='Center' VerticalAlignment='Center' />
                 </Border>
             </DataTemplate>
             """;

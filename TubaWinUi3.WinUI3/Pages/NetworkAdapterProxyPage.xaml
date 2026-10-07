@@ -16,14 +16,14 @@
 
         <controls:ToolPageHeader
             Grid.Row="0"
-            HeaderPadding="20,16,20,8"
+            HeaderPadding="24,16,24,8"
             Title="网络调度器"
             Subtitle="根据实时负载自动均衡多网络流量"
             Glyph="&#xE968;"
             BackRequested="OnBackRequested">
             <controls:ToolPageHeader.Actions>
                 <ToggleSwitch x:Name="MonitorToggle" IsOn="True" OnContent="监控中" OffContent="已暂停" FontSize="12" Toggled="MonitorToggle_Toggled" />
-                <Button x:Name="MinimizeToTrayButton" Click="MinimizeToTrayButton_Click" Padding="8,4" ToolTipService.ToolTip="隐藏主窗口并继续后台调度">
+                <Button x:Name="MinimizeToTrayButton" Click="MinimizeToTrayButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="隐藏主窗口并继续后台调度">
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <FontIcon Glyph="&#xE73E;" FontSize="12" />
                         <TextBlock Text="最小化的系统托盘" />
@@ -33,13 +33,13 @@
         </controls:ToolPageHeader>
 
         <!-- Main content -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="20,0,20,20">
-            <StackPanel Spacing="10">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
                 <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
 
                 <!-- Adapter cards -->
-                <TextBlock FontSize="13" FontWeight="Bold" Opacity="1.0" Text="网络适配器" Margin="0,2,0,0" />
-                <Grid x:Name="AdapterCardsGrid" ColumnSpacing="10">
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网络适配器" Margin="0,2,0,0" />
+                <Grid x:Name="AdapterCardsGrid" ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -47,27 +47,27 @@
                 </Grid>
 
                 <!-- Auto schedule -->
-                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="14" Margin="0,4,0,0">
-                    <StackPanel Spacing="10">
-                        <Grid ColumnSpacing="10">
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,4,0,0">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="&#xE9D9;" FontSize="18" VerticalAlignment="Center" Opacity="1.0" />
-                            <TextBlock Grid.Column="1" FontSize="14" FontWeight="Bold" Text="自动调度" VerticalAlignment="Center" />
+                            <FontIcon Glyph="&#xE9D9;" FontSize="16" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource SectionHeaderStyle}" Text="自动调度" VerticalAlignment="Center" />
                             <ToggleSwitch x:Name="AutoScheduleToggle" IsOn="True" OnContent="运行中" OffContent="已关闭" FontSize="12" Toggled="AutoScheduleToggle_Toggled" Grid.Column="2" />
                         </Grid>
-                        <TextBlock x:Name="ScheduleStatusText" FontSize="12" Opacity="1.0" Text="每 5 秒根据实时负载自动调整路由优先级" TextWrapping="Wrap" />
-                        <StackPanel x:Name="ScheduleEntriesPanel" Spacing="6" />
+                        <TextBlock x:Name="ScheduleStatusText" FontSize="12" Text="每 5 秒根据实时负载自动调整路由优先级" TextWrapping="Wrap" />
+                        <StackPanel x:Name="ScheduleEntriesPanel" Spacing="8" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="ScheduleSummaryText" FontSize="11" Opacity="1.0" Text="" VerticalAlignment="Center" TextWrapping="Wrap" />
-                            <Button x:Name="ResetBtn" Grid.Column="1" Click="ResetBtn_Click" CornerRadius="6" Padding="10,6" FontSize="12">
+                            <TextBlock x:Name="ScheduleSummaryText" FontSize="12" Text="" VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <Button x:Name="ResetBtn" Grid.Column="1" Click="ResetBtn_Click" CornerRadius="4" Padding="10,6" FontSize="12">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                     <FontIcon Glyph="&#xE72C;" FontSize="12" />
                                     <TextBlock Text="恢复默认" />
@@ -78,9 +78,9 @@
                 </Border>
 
                 <!-- Realtime speed -->
-                <TextBlock FontSize="13" FontWeight="Bold" Opacity="1.0" Text="实时速度" Margin="0,4,0,0" />
-                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="14">
-                    <Grid x:Name="SpeedGrid" ColumnSpacing="20">
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="实时速度" Margin="0,4,0,0" />
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <Grid x:Name="SpeedGrid" ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -94,17 +94,17 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock FontSize="13" FontWeight="Bold" Opacity="1.0" Text="活动连接" VerticalAlignment="Center" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="活动连接" VerticalAlignment="Center" />
                     <HyperlinkButton x:Name="ViewConnectionsBtn" Grid.Column="1" Click="ViewConnectionsBtn_Click" Padding="4,2" FontSize="12">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock Text="查看详情" />
-                            <FontIcon Glyph="&#xE76C;" FontSize="10" />
+                            <FontIcon Glyph="&#xE76C;" FontSize="12" />
                         </StackPanel>
                     </HyperlinkButton>
                 </Grid>
-                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="14,10,14,10">
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12,16,12">
                     <StackPanel Spacing="4">
-                        <TextBlock x:Name="ConnSummaryText" FontSize="13" Opacity="1.0" Text="加载中..." />
+                        <TextBlock x:Name="ConnSummaryText" FontSize="14" Text="加载中..." />
                         <ProgressBar x:Name="ConnLoadingBar" IsIndeterminate="True" Visibility="Collapsed" />
                     </StackPanel>
                 </Border>

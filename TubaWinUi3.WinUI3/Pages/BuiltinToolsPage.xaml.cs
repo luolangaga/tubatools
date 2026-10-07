@@ -250,7 +250,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         var grid = new GridView
         {
             ItemsSource = viewModels,
-            ItemContainerStyle = (Style)Resources[_compactMode ? "BuiltinCompactCardStyle" : "BuiltinToolCardStyle"],
+            ItemContainerStyle = (Style)Application.Current.Resources[_compactMode ? "CompactToolCardItemStyle" : "ToolCardItemStyle"],
             ItemTemplate = (DataTemplate)Resources[_compactMode ? "BuiltinCompactCardTemplate" : "BuiltinNormalCardTemplate"],
             IsItemClickEnabled = true,
             SelectionMode = ListViewSelectionMode.None,
@@ -367,18 +367,8 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
 
     private void UpdateItemWidth(GridView grid)
     {
-        var panel = grid.ItemsPanelRoot as ItemsWrapGrid;
-        if (panel is null) return;
-
-        // 与首页一致：普通模式最小宽度 280、间距 12；简洁模式最小宽度 100、间距 10
-        double minItemWidth = _compactMode ? 100 : 280;
-        double spacing = _compactMode ? 10 : 12;
-        double availableWidth = grid.ActualWidth - grid.Padding.Left - grid.Padding.Right;
-        if (availableWidth <= 0) return;
-
-        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
-        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
-        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+        // 与首页一致（普通 280/12，简洁 100/10），公式集中在 ToolCardLayout
+        ToolCardLayout.Apply(grid, _compactMode);
     }
 
     private async Task ExecuteToolAsync(BuiltinToolViewModel vm)
@@ -438,7 +428,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
                 Text = description,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = secondaryBrush,
-                FontSize = 13
+                FontSize = 12
             });
         }
 
@@ -449,7 +439,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
                 Text = $"文件大小：{size}",
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = secondaryBrush,
-                FontSize = 13
+                FontSize = 12
             });
         }
 

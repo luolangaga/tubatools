@@ -24,18 +24,11 @@
             Subtitle="SMART 健康度检测 · CrystalDiskInfo 判定方案 · 环形图仪表盘"
             Glyph="&#xEDA8;"
             l:Uids.Uid="DiskHealth_PageHeader">
-            <!-- 品牌渐变图标块 -->
-            <controls:ToolPageHeader.IconBackground>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#7C6CF0" />
-                    <GradientStop Offset="1" Color="#5B8DEF" />
-                </LinearGradientBrush>
-            </controls:ToolPageHeader.IconBackground>
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Padding="12,5" VerticalAlignment="Center">
+                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon x:Name="RefreshIcon" Glyph="&#xE72C;" FontSize="12" />
-                        <TextBlock x:Name="RefreshText" Text="重新检测" l:Uids.Uid="DiskHealth_Refresh" FontSize="13" />
+                        <TextBlock x:Name="RefreshText" Text="重新检测" l:Uids.Uid="DiskHealth_Refresh" />
                     </StackPanel>
                 </Button>
             </controls:ToolPageHeader.Actions>
@@ -43,7 +36,7 @@
 
         <!-- 正文 -->
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="28,6,28,28">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
             <StackPanel Spacing="16">
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="磁盘健康检测失败" l:Uids.Uid="DiskHealth_ErrorTitle" />
@@ -51,22 +44,18 @@
 
                 <!-- 加载中 -->
                 <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" Spacing="12" Padding="0,64">
-                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" Foreground="#7C6CF0" />
-                    <TextBlock FontSize="13" Opacity="0.7" HorizontalAlignment="Center" Text="正在扫描磁盘 SMART 信息…" l:Uids.Uid="DiskHealth_Scanning" />
+                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" />
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" Text="正在扫描磁盘 SMART 信息…" l:Uids.Uid="DiskHealth_Scanning" />
                 </StackPanel>
 
                 <!-- 加载失败 / 空结果 -->
-                <Border x:Name="ErrorPanel" Visibility="Collapsed" CornerRadius="22" Padding="24" BorderThickness="1" BorderBrush="#26F2503B">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Offset="0" Color="#14F2503B" />
-                            <GradientStop Offset="1" Color="#00000000" />
-                        </LinearGradientBrush>
-                    </Border.Background>
+                <Border x:Name="ErrorPanel" Visibility="Collapsed" CornerRadius="8" Padding="24" BorderThickness="1"
+                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        BorderBrush="{ThemeResource SystemFillColorCriticalBrush}">
                     <StackPanel Spacing="8" HorizontalAlignment="Center" Padding="0,18">
-                        <FontIcon Glyph="&#xE7BA;" FontSize="30" Foreground="#F2503B" HorizontalAlignment="Center" />
+                        <FontIcon Glyph="&#xE7BA;" FontSize="28" Foreground="{ThemeResource SystemFillColorCriticalBrush}" HorizontalAlignment="Center" />
                         <TextBlock FontSize="14" FontWeight="SemiBold" Text="磁盘健康信息加载失败" l:Uids.Uid="DiskHealth_LoadFailed" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="ErrorText" FontSize="12" Opacity="0.7" TextWrapping="Wrap" MaxWidth="520" TextAlignment="Center" />
+                        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" MaxWidth="520" TextAlignment="Center" />
                         <Button x:Name="RetryButton" Click="RetryButton_Click" Margin="0,8,0,0" HorizontalAlignment="Center" Content="重试" l:Uids.Uid="DiskHealth_Retry" />
                     </StackPanel>
                 </Border>
@@ -75,7 +64,7 @@
                 <StackPanel x:Name="ContentPanel" Visibility="Collapsed" Spacing="16">
 
                     <!-- ═════════ 概览统计（4 枚小圆角芯片） ═════════ -->
-                    <Grid ColumnSpacing="10">
+                    <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -83,53 +72,49 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#7C6CF0" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="TotalValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#7C6CF0" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="磁盘总数" l:Uids.Uid="DiskHealth_TotalDisks" />
+                                    <TextBlock x:Name="TotalValue" FontSize="20" FontWeight="SemiBold" Text="--" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="磁盘总数" l:Uids.Uid="DiskHealth_TotalDisks" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="1" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#2BB673" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource SystemFillColorSuccessBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="HealthyValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#2BB673" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="健康" l:Uids.Uid="DiskHealth_Healthy" />
+                                    <TextBlock x:Name="HealthyValue" FontSize="20" FontWeight="SemiBold" Text="--" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="健康" l:Uids.Uid="DiskHealth_Healthy" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="2" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="2" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#F5A623" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="WarningValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#F5A623" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="警告" l:Uids.Uid="DiskHealth_Warning" />
+                                    <TextBlock x:Name="WarningValue" FontSize="20" FontWeight="SemiBold" Text="--" Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="警告" l:Uids.Uid="DiskHealth_Warning" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="3" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="3" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#F2503B" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="UnhealthyValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#F2503B" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="异常" l:Uids.Uid="DiskHealth_Critical" />
+                                    <TextBlock x:Name="UnhealthyValue" FontSize="20" FontWeight="SemiBold" Text="--" Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="异常" l:Uids.Uid="DiskHealth_Critical" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
                     </Grid>
 
                     <!-- ═════════ 整体容量总览（大环图 + 分段条形图） ═════════ -->
-                    <Border x:Name="CapacityPanel" Visibility="Collapsed" CornerRadius="24" Padding="22,20" BorderThickness="1" BorderBrush="#267C6CF0">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Offset="0" Color="#147C6CF0" />
-                                <GradientStop Offset="1" Color="#00000000" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Grid ColumnSpacing="26">
+                    <Border x:Name="CapacityPanel" Visibility="Collapsed" CornerRadius="8" Padding="16" BorderThickness="1"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                        <Grid ColumnSpacing="24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -138,17 +123,17 @@
                             <!-- 总空间环图 -->
                             <Grid Width="148" Height="148">
                                 <controls:RingGauge x:Name="OverviewRing" GaugeSize="148" StrokeThickness="14"
-                                                    TrackBrush="#12000000" Stroke="#7C6CF0" />
+                                                    Stroke="{ThemeResource AccentFillColorDefaultBrush}" />
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="-1">
-                                    <TextBlock x:Name="OverviewPctText" FontSize="31" FontWeight="Bold" Foreground="#7C6CF0" HorizontalAlignment="Center" />
-                                    <TextBlock x:Name="OverviewUsedText" FontSize="12" Opacity="0.65" HorizontalAlignment="Center" />
-                                    <TextBlock x:Name="OverviewTotalText" FontSize="12" Opacity="0.65" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="OverviewPctText" FontSize="28" FontWeight="SemiBold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="OverviewUsedText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="OverviewTotalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- 分盘容量占用条形图 -->
                             <StackPanel Grid.Column="1" Spacing="12" VerticalAlignment="Center">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="各分区容量占用" l:Uids.Uid="DiskHealth_PartitionUsage" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="各分区容量占用" l:Uids.Uid="DiskHealth_PartitionUsage" />
                                 <StackPanel x:Name="OverviewDiskList" Spacing="12" />
                             </StackPanel>
                         </Grid>
@@ -158,18 +143,13 @@
                     <ItemsControl x:Name="DiskList" ItemsSource="{x:Bind DiskCards}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="local:DiskCardVm">
-                                <Border CornerRadius="24" Padding="22,20" BorderThickness="1" BorderBrush="#267C6CF0" Margin="0,0,0,2">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Offset="0" Color="#147C6CF0" />
-                                            <GradientStop Offset="0.6" Color="#0A5B8DEF" />
-                                            <GradientStop Offset="1" Color="#00000000" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                    <StackPanel Spacing="18">
+                                <Border CornerRadius="8" Padding="16" BorderThickness="1" Margin="0,0,0,2"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                    <StackPanel Spacing="16">
 
                                         <!-- 行 1：健康环 + 身份信息 + 温度环 -->
-                                        <Grid ColumnSpacing="22">
+                                        <Grid ColumnSpacing="24">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
@@ -179,20 +159,19 @@
                                             <!-- 健康度环图 -->
                                             <Grid Width="106" Height="106" VerticalAlignment="Center">
                                                 <controls:RingGauge GaugeSize="106" StrokeThickness="11"
-                                                                    Value="{x:Bind HealthRingValue}" Stroke="{x:Bind HealthRingBrush}"
-                                                                    TrackBrush="#12000000" />
+                                                                    Value="{x:Bind HealthRingValue}" Stroke="{x:Bind HealthRingBrush}" />
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="-2">
-                                                    <TextBlock FontSize="29" FontWeight="Bold" Text="{x:Bind HealthText}"
+                                                    <TextBlock FontSize="20" FontWeight="SemiBold" Text="{x:Bind HealthText}"
                                                                Foreground="{x:Bind HealthTextBrush}" HorizontalAlignment="Center" />
-                                                    <TextBlock FontSize="11" Opacity="0.55" Text="健康度" l:Uids.Uid="DiskHealth_HealthLabel" HorizontalAlignment="Center" />
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="健康度" l:Uids.Uid="DiskHealth_HealthLabel" HorizontalAlignment="Center" />
                                                 </StackPanel>
                                             </Grid>
 
                                             <!-- 模型 + 小圆角提示框 -->
                                             <StackPanel Grid.Column="1" Spacing="7" VerticalAlignment="Center">
-                                                <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind Model}"
+                                                <TextBlock Style="{StaticResource CardTitleStyle}" Text="{x:Bind Model}"
                                                            TextTrimming="CharacterEllipsis" MaxLines="1" ToolTipService.ToolTip="{x:Bind Model}" />
-                                                <TextBlock FontSize="13" Opacity="0.6" Text="{x:Bind SizeText}" />
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind SizeText}" />
                                                 <ItemsControl ItemsSource="{x:Bind Tags}" Margin="0,2,0,0">
                                                     <ItemsControl.ItemsPanel>
                                                         <ItemsPanelTemplate>
@@ -201,14 +180,14 @@
                                                     </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate x:DataType="local:DiskTagVm">
-                                                            <Border Background="{x:Bind Background}" BorderBrush="#26000000"
-                                                                    BorderThickness="1" CornerRadius="6" Padding="8,3">
+                                                            <Border Background="{x:Bind Background}" Style="{StaticResource StatusPillStyle}"
+                                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                                                                 <Grid ColumnSpacing="5">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="Auto" />
                                                                         <ColumnDefinition Width="Auto" />
                                                                     </Grid.ColumnDefinitions>
-                                                                    <FontIcon Glyph="{x:Bind Glyph}" FontSize="10" Foreground="{x:Bind Foreground}"
+                                                                    <FontIcon Glyph="{x:Bind Glyph}" FontSize="12" Foreground="{x:Bind Foreground}"
                                                                               Visibility="{x:Bind GlyphVisibility}" VerticalAlignment="Center" />
                                                                     <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold"
                                                                                Text="{x:Bind Text}" Foreground="{x:Bind Foreground}" />
@@ -218,7 +197,7 @@
                                                     </ItemsControl.ItemTemplate>
 </ItemsControl>
                                                 <!-- 单项读取失败：在卡片上标记该盘错误，不拖垮整页 -->
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#F2503B"
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                                            TextWrapping="Wrap" MaxLines="2" Text="{x:Bind ErrorDetail}"
                                                            Visibility="{x:Bind ErrorDetailVisibility}"
                                                            ToolTipService.ToolTip="{x:Bind ErrorDetail}" />
@@ -227,12 +206,11 @@
                                         <!-- 温度环图 -->
                                             <Grid Grid.Column="2" Width="64" Height="64" VerticalAlignment="Center">
                                                 <controls:RingGauge GaugeSize="64" StrokeThickness="7"
-                                                                    Value="{x:Bind TempRingValue}" Stroke="{x:Bind TempRingBrush}"
-                                                                    TrackBrush="#12000000" />
+                                                                    Value="{x:Bind TempRingValue}" Stroke="{x:Bind TempRingBrush}" />
                                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="-2">
-                                                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="{x:Bind TempText}"
+                                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind TempText}"
                                                                Foreground="{x:Bind TempRingBrush}" HorizontalAlignment="Center" />
-                                                    <TextBlock FontSize="10" Opacity="0.55" Text="温度" l:Uids.Uid="DiskHealth_TempLabel" HorizontalAlignment="Center" />
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="温度" l:Uids.Uid="DiskHealth_TempLabel" HorizontalAlignment="Center" />
                                                 </StackPanel>
                                             </Grid>
                                         </Grid>
@@ -246,23 +224,22 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="local:PartitionVm">
-                                                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1"
-                                                            CornerRadius="14" Padding="14,12" Margin="0,0,10,10">
+                                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                                            CornerRadius="8" Padding="12" Margin="0,0,8,8">
                                                         <StackPanel Spacing="10">
-                                                            <Grid ColumnSpacing="10">
+                                                            <Grid ColumnSpacing="8">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
                                                                 </Grid.ColumnDefinitions>
                                                                 <controls:RingGauge GaugeSize="46" StrokeThickness="5"
-                                                                                    Value="{x:Bind UsagePercent}" Stroke="{x:Bind UsageRingBrush}"
-                                                                                    TrackBrush="#12000000" />
+                                                                                    Value="{x:Bind UsagePercent}" Stroke="{x:Bind UsageRingBrush}" />
                                                                 <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                        <TextBlock FontSize="15" FontWeight="SemiBold" Text="{x:Bind DriveLetter}" />
-                                                                        <TextBlock FontSize="11" Opacity="0.55" Text="{x:Bind Filesystem}" VerticalAlignment="Bottom" />
+                                                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind DriveLetter}" />
+                                                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind Filesystem}" VerticalAlignment="Bottom" />
                                                                     </StackPanel>
-                                                                    <TextBlock FontSize="12" Opacity="0.7" Text="{x:Bind UsageText}" />
+                                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind UsageText}" />
                                                                 </StackPanel>
                                                             </Grid>
                                                             <Grid ColumnSpacing="8">
@@ -270,20 +247,19 @@
                                                                     <ColumnDefinition Width="*" />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <TextBlock FontSize="15" FontWeight="Bold" Text="{x:Bind PercentText}"
+                                                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind PercentText}"
                                                                            Foreground="{x:Bind UsageRingBrush}" VerticalAlignment="Center" />
-                                                                <Button Grid.Column="1" Padding="10,4" CornerRadius="7" Tag="{x:Bind Self}"
-                                                                        Background="#14FFFFFF" BorderBrush="#33FFFFFF" FontSize="12">
+                                                                <Button Grid.Column="1" Padding="10,4" Tag="{x:Bind Self}" FontSize="12">
                                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                        <FontIcon Glyph="{x:Bind OptimizeGlyph}" FontSize="11" />
+                                                                        <FontIcon Glyph="{x:Bind OptimizeGlyph}" FontSize="12" />
                                                                         <TextBlock Text="{x:Bind OptimizeText}" FontSize="12" />
                                                                     </StackPanel>
                                                                     <Button.Flyout>
                                                                         <Flyout Placement="BottomEdgeAlignedRight">
                                                                             <StackPanel Spacing="14" MaxWidth="300">
                                                                                 <StackPanel Spacing="5">
-                                                                                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="{x:Bind FlyoutTitle}" />
-                                                                                    <TextBlock FontSize="12" Opacity="0.75" TextWrapping="Wrap" Text="{x:Bind FlyoutDesc}" />
+                                                                                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind FlyoutTitle}" />
+                                                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="{x:Bind FlyoutDesc}" />
                                                                                 </StackPanel>
                                                                                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
                                                                                     <Button Content="取消" l:Uids.Uid="DiskHealth_Cancel" Click="CancelFlyout_Click" MinWidth="68" />
@@ -302,7 +278,7 @@
                                         </ItemsControl>
 
                                         <!-- 行 3：指标条（时间 / 次数 / 读写对比图 / 运行状态） -->
-                                        <Grid ColumnSpacing="10">
+                                        <Grid ColumnSpacing="8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="*" />
@@ -310,36 +286,36 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
-                                            <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="13,11">
+                                            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <FontIcon Glyph="&#xE823;" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
-                                                        <TextBlock FontSize="12" Opacity="0.6" Text="通电时间" l:Uids.Uid="DiskHealth_PowerOnHours" VerticalAlignment="Center" />
+                                                        <FontIcon Glyph="&#xE823;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="通电时间" l:Uids.Uid="DiskHealth_PowerOnHours" VerticalAlignment="Center" />
                                                     </StackPanel>
-                                                    <TextBlock FontSize="19" FontWeight="SemiBold" Text="{x:Bind PowerOnHoursText}" />
+                                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind PowerOnHoursText}" />
                                                 </StackPanel>
                                             </Border>
 
-                                            <Border Grid.Column="1" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="13,11">
+                                            <Border Grid.Column="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <FontIcon Glyph="&#xE7E8;" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
-                                                        <TextBlock FontSize="12" Opacity="0.6" Text="通电次数" l:Uids.Uid="DiskHealth_PowerOnCount" VerticalAlignment="Center" />
+                                                        <FontIcon Glyph="&#xE7E8;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="通电次数" l:Uids.Uid="DiskHealth_PowerOnCount" VerticalAlignment="Center" />
                                                     </StackPanel>
-                                                    <TextBlock FontSize="19" FontWeight="SemiBold" Text="{x:Bind PowerOnCountText}" />
+                                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind PowerOnCountText}" />
                                                 </StackPanel>
                                             </Border>
 
-                                            <Border Grid.Column="2" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="13,11">
+                                            <Border Grid.Column="2" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                                 <StackPanel Spacing="7">
-                                                    <TextBlock FontSize="12" Opacity="0.6" Text="数据读写对比" l:Uids.Uid="DiskHealth_RwCompare" />
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="数据读写对比" l:Uids.Uid="DiskHealth_RwCompare" />
                                                     <StackPanel Spacing="5">
                                                         <Grid ColumnSpacing="8">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*" />
                                                                 <ColumnDefinition Width="*" />
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock FontSize="12" Opacity="0.75" Text="{x:Bind DataReadText}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DataReadText}" TextTrimming="CharacterEllipsis" />
                                                             <ProgressBar Grid.Column="1" Height="6" VerticalAlignment="Center" Minimum="0"
                                                                          Maximum="{x:Bind ReadWriteMax}" Value="{x:Bind DataReadGb}"
                                                                          Foreground="{x:Bind ReadBarBrush}" />
@@ -349,7 +325,7 @@
                                                                 <ColumnDefinition Width="*" />
                                                                 <ColumnDefinition Width="*" />
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBlock FontSize="12" Opacity="0.75" Text="{x:Bind DataWrittenText}" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind DataWrittenText}" TextTrimming="CharacterEllipsis" />
                                                             <ProgressBar Grid.Column="1" Height="6" VerticalAlignment="Center" Minimum="0"
                                                                          Maximum="{x:Bind ReadWriteMax}" Value="{x:Bind DataWriteGb}"
                                                                          Foreground="{x:Bind WriteBarBrush}" />
@@ -358,13 +334,13 @@
                                                 </StackPanel>
                                             </Border>
 
-                                            <Border Grid.Column="3" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="13,11">
+                                            <Border Grid.Column="3" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <FontIcon Glyph="&#xE80F;" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
-                                                        <TextBlock FontSize="12" Opacity="0.6" Text="运行状态" l:Uids.Uid="DiskHealth_OperationalStatus" VerticalAlignment="Center" />
+                                                        <FontIcon Glyph="&#xE80F;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="运行状态" l:Uids.Uid="DiskHealth_OperationalStatus" VerticalAlignment="Center" />
                                                     </StackPanel>
-                                                    <TextBlock FontSize="19" FontWeight="SemiBold" Text="{x:Bind OperationalText}"
+                                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind OperationalText}"
                                                                Foreground="{x:Bind OperationalBrush}" />
                                                 </StackPanel>
                                             </Border>
@@ -375,7 +351,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock FontSize="12" Opacity="0.6"
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Text="SSD 执行 TRIM 优化（前台快速完成），机械盘碎片整理在后台低优先级运行，可继续正常使用电脑。" />
                 </StackPanel>
             </StackPanel>

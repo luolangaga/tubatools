@@ -71,6 +71,7 @@ public static class BuiltinToolRegistry
         Register(new FileLocksmithTool());
         Register(new HandleCleanerTool());
         Register(new EnvironmentVariablesTool());
+        Register(new AiPlaygroundTool());
     }
 
     public static IReadOnlyList<string> GetCategories()

@@ -739,7 +739,22 @@
     <value>New custom</value>
   </data>
   <data name="Settings_AiProvider_Desc.Text" xml:space="preserve">
-    <value>Built-in DeepSeek / Xiaomi MiMo / OpenCode Zen presets only need an API Key; custom providers are fully editable</value>
+    <value>Built-in DeepSeek / Xiaomi MiMo / OpenCode Zen / Local model presets; custom providers can be renamed and deleted</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteButton.Text" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteTitle" xml:space="preserve">
+    <value>Delete provider</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteConfirm" xml:space="preserve">
+    <value>Delete provider "{0}"? This cannot be undone.</value>
+  </data>
+  <data name="Settings_AiProvider_LocalHint" xml:space="preserve">
+    <value>Local model: download/import chat models in the "Local AI Playground" model library. Only the AI assistant uses local inference; other AI features still use the built-in gateway.</value>
+  </data>
+  <data name="Settings_AiProvider_NamePlaceholder.PlaceholderText" xml:space="preserve">
+    <value>Provider name</value>
   </data>
   <data name="Settings_AiProvider_ResetButton.Text" xml:space="preserve">
     <value>Reset to default</value>
@@ -4596,5 +4611,515 @@ Permissions
   </data>
   <data name="FileLock_ContextToolTip" xml:space="preserve">
     <value>See which process is locking this file</value>
+  </data>
+  <data name="Settings_ThemeCard_Title" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_ThemeCard_Desc" xml:space="preserve">
+    <value>Choose the app appearance. Changes take effect immediately.</value>
+  </data>
+  <data name="Settings_Theme_System" xml:space="preserve">
+    <value>Follow system</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Builtin_ai-playground_Name" xml:space="preserve">
+    <value>Local AI Playground</value>
+  </data>
+  <data name="Builtin_ai-playground_Desc" xml:space="preserve">
+    <value>Deploy and run AI models locally: LLM chat, image classification, object detection and image feature comparison, accelerated by NPU / GPU / CPU.</value>
+  </data>
+  <data name="AiPlayground_PageHeader.Title" xml:space="preserve">
+    <value>Local AI Playground</value>
+  </data>
+  <data name="AiPlayground_PageHeader.Subtitle" xml:space="preserve">
+    <value>Run AI models locally · NPU / GPU / CPU · Offline inference</value>
+  </data>
+  <data name="AiPlayground_TabLibrary.Header" xml:space="preserve">
+    <value>Model Library</value>
+  </data>
+  <data name="AiPlayground_TabPlayground.Header" xml:space="preserve">
+    <value>Playground</value>
+  </data>
+  <data name="AiPlayground_TabEngine.Header" xml:space="preserve">
+    <value>Engines &amp; Devices</value>
+  </data>
+  <data name="AiPlayground_Import" xml:space="preserve">
+    <value>Import local model</value>
+  </data>
+  <data name="AiPlayground_OpenFolder" xml:space="preserve">
+    <value>Open models folder</value>
+  </data>
+  <data name="AiPlayground_CurrentModel" xml:space="preserve">
+    <value>Current model</value>
+  </data>
+  <data name="AiPlayground_Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="AiPlayground_EmptyHint" xml:space="preserve">
+    <value>No model available yet. Download one in the Model Library first.</value>
+  </data>
+  <data name="AiPlayground_GoLibrary" xml:space="preserve">
+    <value>Go to Model Library</value>
+  </data>
+  <data name="AiPlayground_SystemPrompt" xml:space="preserve">
+    <value>System prompt (optional)</value>
+  </data>
+  <data name="AiPlayground_Send" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="AiPlayground_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="AiPlayground_PickImage" xml:space="preserve">
+    <value>Pick image</value>
+  </data>
+  <data name="AiPlayground_Run" xml:space="preserve">
+    <value>Run inference</value>
+  </data>
+  <data name="AiPlayground_ClearGallery" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="AiPlayground_Threshold" xml:space="preserve">
+    <value>Threshold</value>
+  </data>
+  <data name="AiPlayground_Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="AiPlayground_MaxTokens" xml:space="preserve">
+    <value>Max new tokens</value>
+  </data>
+  <data name="AiPlayground_ContextTokens" xml:space="preserve">
+    <value>Context</value>
+  </data>
+  <data name="AiPlayground_ContextTokensEffective" xml:space="preserve">
+    <value>Context {0}</value>
+  </data>
+  <data name="AiPlayground_DropHint" xml:space="preserve">
+    <value>Drop an image here, or click "Pick image"</value>
+  </data>
+  <data name="AiPlayground_DeviceSection" xml:space="preserve">
+    <value>Device information</value>
+  </data>
+  <data name="AiPlayground_EpSection" xml:space="preserve">
+    <value>Acceleration packages (execution providers)</value>
+  </data>
+  <data name="AiPlayground_InstallAll" xml:space="preserve">
+    <value>Install and register recommended packages</value>
+  </data>
+  <data name="AiPlayground_DeviceTable" xml:space="preserve">
+    <value>Registered devices (ONNX Runtime)</value>
+  </data>
+  <data name="AiPlayground_CacheSection" xml:space="preserve">
+    <value>NPU compilation cache</value>
+  </data>
+  <data name="AiPlayground_ClearCache" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="AiPlayground_Task_Chat" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="AiPlayground_Task_Classification" xml:space="preserve">
+    <value>Image classification</value>
+  </data>
+  <data name="AiPlayground_Task_Detection" xml:space="preserve">
+    <value>Object detection</value>
+  </data>
+  <data name="AiPlayground_Task_Embedding" xml:space="preserve">
+    <value>Image features</value>
+  </data>
+  <data name="AiPlayground_Tag_NpuCpu" xml:space="preserve">
+    <value>NPU/CPU recommended</value>
+  </data>
+  <data name="AiPlayground_Tag_Gpu" xml:space="preserve">
+    <value>GPU recommended</value>
+  </data>
+  <data name="AiPlayground_Tag_Quantized" xml:space="preserve">
+    <value>Quantized</value>
+  </data>
+  <data name="AiPlayground_Tag_QuantizedGpl" xml:space="preserve">
+    <value>Quantized · GPL</value>
+  </data>
+  <data name="AiPlayground_Tag_Gpl" xml:space="preserve">
+    <value>GPL license</value>
+  </data>
+  <data name="AiPlayground_Tag_Custom" xml:space="preserve">
+    <value>Imported</value>
+  </data>
+  <data name="AiPlayground_Tag_Advanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="AiPlayground_Mode_Auto" xml:space="preserve">
+    <value>Auto (NPU → GPU → CPU)</value>
+  </data>
+  <data name="AiPlayground_Mode_Npu" xml:space="preserve">
+    <value>Prefer NPU</value>
+  </data>
+  <data name="AiPlayground_Mode_Gpu" xml:space="preserve">
+    <value>Prefer GPU</value>
+  </data>
+  <data name="AiPlayground_Mode_Cpu" xml:space="preserve">
+    <value>CPU only</value>
+  </data>
+  <data name="AiPlayground_ModeHint_Device" xml:space="preserve">
+    <value>A specific device is selected (overrides the engine mode). Applies to models loaded afterwards.</value>
+  </data>
+  <data name="AiPlayground_ModeHint_Normal" xml:space="preserve">
+    <value>The engine mode applies to models loaded afterwards.</value>
+  </data>
+  <data name="AiPlayground_ModeHint_LowOs" xml:space="preserve">
+    <value>This system is below Windows 11 24H2: CPU and DirectML (GPU) are available; vendor NPU packages require a newer OS.</value>
+  </data>
+  <data name="AiPlayground_Device_Auto" xml:space="preserve">
+    <value>Auto (by engine mode)</value>
+  </data>
+  <data name="AiPlayground_NoNpu" xml:space="preserve">
+    <value>NPU: not detected</value>
+  </data>
+  <data name="AiPlayground_NoEp" xml:space="preserve">
+    <value>Acceleration: not loaded</value>
+  </data>
+  <data name="AiPlayground_EpReady" xml:space="preserve">
+    <value>Acceleration registered</value>
+  </data>
+  <data name="AiPlayground_LibraryFooter" xml:space="preserve">
+    <value>Model library size {0} · stored at {1}</value>
+  </data>
+  <data name="AiPlayground_ContinueDownload" xml:space="preserve">
+    <value>Resume download</value>
+  </data>
+  <data name="AiPlayground_Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="AiPlayground_OpenInPlayground" xml:space="preserve">
+    <value>Open in Playground</value>
+  </data>
+  <data name="AiPlayground_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="AiPlayground_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="AiPlayground_NotSupported" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="AiPlayground_DownloadConfirm" xml:space="preserve">
+    <value>Download "{0}" ({1}) from {2} ({3})?
+The download runs in the global download queue with pause and resume support.</value>
+  </data>
+  <data name="AiPlayground_DiskWarn" xml:space="preserve">
+    <value>⚠ The target disk has only {0} free space, which may not be enough.</value>
+  </data>
+  <data name="AiPlayground_DownloadTitle" xml:space="preserve">
+    <value>Download model</value>
+  </data>
+  <data name="AiPlayground_DownloadFailed" xml:space="preserve">
+    <value>Download failed</value>
+  </data>
+  <data name="AiPlayground_RemoveConfirm" xml:space="preserve">
+    <value>Remove "{0}" from the list? (The original folder on your disk will not be deleted.)</value>
+  </data>
+  <data name="AiPlayground_DeleteConfirm" xml:space="preserve">
+    <value>Delete local model files for "{0}" ({1})? You will need to download it again.</value>
+  </data>
+  <data name="AiPlayground_ImportHint" xml:space="preserve">
+    <value>A single .onnx file (image classification / object detection / image features) or an ONNX Runtime GenAI model folder (chat, must contain genai_config.json).</value>
+  </data>
+  <data name="AiPlayground_ImportFile" xml:space="preserve">
+    <value>Pick .onnx file</value>
+  </data>
+  <data name="AiPlayground_ImportFolder" xml:space="preserve">
+    <value>Pick GenAI folder</value>
+  </data>
+  <data name="AiPlayground_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AiPlayground_ImportTaskLabel" xml:space="preserve">
+    <value>Task type (labels prefer config.json id2label):</value>
+  </data>
+  <data name="AiPlayground_ImportDone" xml:space="preserve">
+    <value>Imported: {0}</value>
+  </data>
+  <data name="AiPlayground_ImportFailed" xml:space="preserve">
+    <value>Import failed</value>
+  </data>
+  <data name="AiPlayground_PromptPlain" xml:space="preserve">
+    <value>Plain text</value>
+  </data>
+  <data name="AiPlayground_ImportFormatLabel" xml:space="preserve">
+    <value>Prompt template for this model (different families use different chat markers):</value>
+  </data>
+  <data name="AiPlayground_RunningOn" xml:space="preserve">
+    <value>Running on</value>
+  </data>
+  <data name="AiPlayground_LowMemory" xml:space="preserve">
+    <value>Low memory: local LLMs recommend at least 8 GB available RAM</value>
+  </data>
+  <data name="AiPlayground_LoadingModel" xml:space="preserve">
+    <value>Loading model (slow on first run)…</value>
+  </data>
+  <data name="AiPlayground_ModelReady" xml:space="preserve">
+    <value>Model ready</value>
+  </data>
+  <data name="AiPlayground_LoadFailed" xml:space="preserve">
+    <value>Failed to load model</value>
+  </data>
+  <data name="AiPlayground_NoOutput" xml:space="preserve">
+    <value>(The model produced no output)</value>
+  </data>
+  <data name="AiPlayground_ChatStats" xml:space="preserve">
+    <value>~{0} tokens · {1:F1} tokens/s · {2} s</value>
+  </data>
+  <data name="AiPlayground_GenFailed" xml:space="preserve">
+    <value>Generation failed</value>
+  </data>
+  <data name="AiPlayground_ImageFailed" xml:space="preserve">
+    <value>Cannot open image</value>
+  </data>
+  <data name="AiPlayground_NeedImage" xml:space="preserve">
+    <value>Pick an image first</value>
+  </data>
+  <data name="AiPlayground_InferenceFailed" xml:space="preserve">
+    <value>Inference failed</value>
+  </data>
+  <data name="AiPlayground_Inferencing" xml:space="preserve">
+    <value>Running inference…</value>
+  </data>
+  <data name="AiPlayground_InferenceDone" xml:space="preserve">
+    <value>Done · {0:HH:mm:ss}</value>
+  </data>
+  <data name="AiPlayground_Top5" xml:space="preserve">
+    <value>Classification results (Top 5)</value>
+  </data>
+  <data name="AiPlayground_DetectCount" xml:space="preserve">
+    <value>{0} object(s) detected</value>
+  </data>
+  <data name="AiPlayground_EmbeddingDone" xml:space="preserve">
+    <value>Dimension {0} · added to comparison ({1} image(s))</value>
+  </data>
+  <data name="AiPlayground_Session" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="AiPlayground_NewSession" xml:space="preserve">
+    <value>New chat</value>
+  </data>
+  <data name="AiPlayground_DeleteSession" xml:space="preserve">
+    <value>Delete session</value>
+  </data>
+  <data name="AiPlayground_DeleteSessionConfirm" xml:space="preserve">
+    <value>Delete session "{0}" and all of its messages?</value>
+  </data>
+  <data name="AiPlayground_DefaultSessionTitle" xml:space="preserve">
+    <value>New chat</value>
+  </data>
+  <data name="AiPlayground_UsedDevice" xml:space="preserve">
+    <value>Ran on: {0}</value>
+  </data>
+  <data name="AiPlayground_Confidence" xml:space="preserve">
+    <value>Confidence</value>
+  </data>
+  <data name="AiPlayground_Iou" xml:space="preserve">
+    <value>IoU</value>
+  </data>
+  <data name="AiPlayground_ClassAwareNms" xml:space="preserve">
+    <value>Per-class NMS</value>
+  </data>
+  <data name="AiPlayground_ClassFilter" xml:space="preserve">
+    <value>Class filter</value>
+  </data>
+  <data name="AiPlayground_ClassFilterHint" xml:space="preserve">
+    <value>Unchecked classes will be filtered out (other classes are unaffected).</value>
+  </data>
+  <data name="AiPlayground_DrawRules" xml:space="preserve">
+    <value>Draw rules</value>
+  </data>
+  <data name="AiPlayground_DrawRulesHelp" xml:space="preserve">
+    <value>Style each detected box (leave empty to auto-color by class). Example:
+when label == "person" &amp;&amp; score &gt; 0.8 then stroke=#E81123 width=3 label="person {score:P0}"
+when class_id == 2 then stroke=#0F6CBD width=2
+when count(class_id) &gt;= 3 then stroke=#CA5010
+else then stroke=#888888 visible=true
+Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsWith/upper/lower</value>
+  </data>
+  <data name="AiPlayground_RulesError" xml:space="preserve">
+    <value>Rule has syntax errors</value>
+  </data>
+  <data name="AiPlayground_RulesReset" xml:space="preserve">
+    <value>Reset to default</value>
+  </data>
+  <data name="AiPlayground_RulesApplied" xml:space="preserve">
+    <value>Applied {0} draw rule(s)</value>
+  </data>
+  <data name="AiPlayground_PickWindow" xml:space="preserve">
+    <value>Select window</value>
+  </data>
+  <data name="AiPlayground_NoWindows" xml:space="preserve">
+    <value>No capturable window found.</value>
+  </data>
+  <data name="AiPlayground_WindowPicked" xml:space="preserve">
+    <value>Selected window: {0}</value>
+  </data>
+  <data name="AiPlayground_StartLive" xml:space="preserve">
+    <value>Start live</value>
+  </data>
+  <data name="AiPlayground_StopLive" xml:space="preserve">
+    <value>Stop live</value>
+  </data>
+  <data name="AiPlayground_LiveStarted" xml:space="preserve">
+    <value>Live detection started</value>
+  </data>
+  <data name="AiPlayground_LiveStopped" xml:space="preserve">
+    <value>Live detection stopped</value>
+  </data>
+  <data name="AiPlayground_SourceCameraHint" xml:space="preserve">
+    <value>Camera: click "Start live" for continuous detection.</value>
+  </data>
+  <data name="AiPlayground_SourceScreenHint" xml:space="preserve">
+    <value>Screen: click "Start live" for continuous detection (all monitors).</value>
+  </data>
+  <data name="AiPlayground_SourceWindowHint" xml:space="preserve">
+    <value>Window: pick a window first, then click "Start live".</value>
+  </data>
+  <data name="AiPlayground_LiveStats" xml:space="preserve">
+    <value>Live · {0:F1} FPS · inference {1:F0} ms · {2} target(s)</value>
+  </data>
+  <data name="AiPlayground_LiveNeedDetect" xml:space="preserve">
+    <value>Live detection only supports object-detection models.</value>
+  </data>
+  <data name="AiPlayground_InferenceDoneDevice" xml:space="preserve">
+    <value>Done · {0:HH:mm:ss} · {1}</value>
+  </data>
+  <data name="AiPlayground_GalleryCount" xml:space="preserve">
+    <value>Comparison images ({0})</value>
+  </data>
+  <data name="AiPlayground_EmbeddingHint" xml:space="preserve">
+    <value>Pick another image and run again to get the similarity.</value>
+  </data>
+  <data name="AiPlayground_Similarity" xml:space="preserve">
+    <value>Cosine similarity</value>
+  </data>
+  <data name="AiPlayground_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="AiPlayground_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="AiPlayground_Npu" xml:space="preserve">
+    <value>NPU</value>
+  </data>
+  <data name="AiPlayground_NoNpuShort" xml:space="preserve">
+    <value>Not detected</value>
+  </data>
+  <data name="AiPlayground_Ram" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="AiPlayground_Os" xml:space="preserve">
+    <value>OS</value>
+  </data>
+  <data name="AiPlayground_Runtime" xml:space="preserve">
+    <value>Inference runtime</value>
+  </data>
+  <data name="AiPlayground_EpLoadFailed" xml:space="preserve">
+    <value>Cannot read the EP catalog: {0}</value>
+  </data>
+  <data name="AiPlayground_EpNone" xml:space="preserve">
+    <value>No acceleration package information available.</value>
+  </data>
+  <data name="AiPlayground_EpReadyState" xml:space="preserve">
+    <value>Ready and registered</value>
+  </data>
+  <data name="AiPlayground_EpReadyNotRegistered" xml:space="preserve">
+    <value>Installed (not registered)</value>
+  </data>
+  <data name="AiPlayground_EpNotInstalled" xml:space="preserve">
+    <value>Not installed</value>
+  </data>
+  <data name="AiPlayground_EpRegistered" xml:space="preserve">
+    <value>Registered</value>
+  </data>
+  <data name="AiPlayground_EpEnable" xml:space="preserve">
+    <value>Enable &amp; register</value>
+  </data>
+  <data name="AiPlayground_EpInstall" xml:space="preserve">
+    <value>Download &amp; install</value>
+  </data>
+  <data name="AiPlayground_EpWorking" xml:space="preserve">
+    <value>Working on {0}…</value>
+  </data>
+  <data name="AiPlayground_DeviceTableEmpty" xml:space="preserve">
+    <value>No EP devices found (possible reasons: x86 build or OS too old).</value>
+  </data>
+  <data name="AiPlayground_CacheEmpty" xml:space="preserve">
+    <value>No cache yet (created automatically during NPU inference)</value>
+  </data>
+  <data name="AiPlayground_CacheInfo" xml:space="preserve">
+    <value>{0} file(s) · {1}</value>
+  </data>
+  <data name="AiPlayground_EpInstallingAll" xml:space="preserve">
+    <value>Downloading and registering recommended packages (may take minutes)…</value>
+  </data>
+  <data name="AiPlayground_ClearCacheConfirm" xml:space="preserve">
+    <value>Delete the NPU compilation cache? It will be recompiled on the next inference (may take minutes).</value>
+  </data>
+  <data name="AiPlayground_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="AiPlayground_EpHint" xml:space="preserve">
+    <value>Acceleration packages are downloaded on demand from the Microsoft Store (requires network). Once installed and registered into ONNX Runtime, inference can run on NPU / GPU.</value>
+  </data>
+  <data name="AiPlayground_EpHintLowOs" xml:space="preserve">
+    <value>This system is below Windows 11 24H2: built-in CPU and DirectML (GPU) are available; vendor NPU/GPU packages require a newer OS.</value>
+  </data>
+  <data name="AiPlayground_NpuNotEnabled" xml:space="preserve">
+    <value>{0} (NPU not enabled — install the acceleration package in "Engines &amp; Devices")</value>
+  </data>
+  <data name="AiPlayground_Device_Unstable" xml:space="preserve">
+    <value>unstable, may fall back to GPU/CPU</value>
+  </data>
+  <data name="AiPlayground_Device_Probe" xml:space="preserve">
+    <value>auto-probes compatibility on first use</value>
+  </data>
+  <data name="AiPlayground_NpuProbing" xml:space="preserve">
+    <value>Probing NPU compatibility (slow on first run)…</value>
+  </data>
+  <data name="AiPlayground_NpuProbeFailed" xml:space="preserve">
+    <value>NPU probe failed, fell back to GPU/CPU: {0}</value>
+  </data>
+  <data name="AiPlayground_NpuNeedEp" xml:space="preserve">
+    <value>not enabled (install the acceleration package to use it)</value>
+  </data>
+  <data name="AiPlayground_NpuUnregistered" xml:space="preserve">
+    <value>{0} · NPU · not enabled (appears here after installing the matching package)</value>
+  </data>
+  <data name="AiPlayground_DeviceTableCaption" xml:space="preserve">
+    <value>CPU and DirectML (GPU) are built in; NPU / vendor GPU packages appear here only after installation and registration.</value>
+  </data>
+  <data name="AiPlayground_RuntimeLoadFailed" xml:space="preserve">
+    <value>Failed to load the inference runtime: {0}</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_QNN" xml:space="preserve">
+    <value>Qualcomm Hexagon NPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_OpenVINO" xml:space="preserve">
+    <value>Intel NPU / GPU / CPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_VitisAI" xml:space="preserve">
+    <value>AMD Ryzen AI NPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_NvTensorRtRtx" xml:space="preserve">
+    <value>NVIDIA RTX GPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_MIGraphX" xml:space="preserve">
+    <value>AMD RDNA GPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_Dml" xml:space="preserve">
+    <value>Generic GPU (DirectML, built in)</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_Cpu" xml:space="preserve">
+    <value>CPU (built in)</value>
   </data>
 </root>

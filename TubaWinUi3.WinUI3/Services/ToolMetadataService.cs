@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 namespace TubaWinUi3.Services;
 
 public sealed record ToolMetadata(
+    string? Name,
     string? Description,
     string? Publisher,
     string? Version,
@@ -107,6 +108,7 @@ public static class ToolMetadataService
         }
 
         return new ToolMetadata(
+            jsonMetadata?.Name,
             description,
             publisher,
             version,
@@ -235,6 +237,116 @@ public static class ToolMetadataService
             _metadata = null; // 立即失效内存缓存，下次读取即为新顺序
         }
         catch { }
+    }
+
+    /// <summary>
+    /// 写入/更新 tools.json 中的一个工具条目（按 match 精确匹配替换，保留文件内其余条目与未知字段）。
+    /// 社区工具安装与自定义工具导入共用；写入失败抛 IOException（调用方决定如何呈现）。
+    /// 注意：不要写 "version" 字段（int，驱动远端工具库版本比较），社区工具的字符串版本号
+    /// 记录在 CommunityToolRegistry，不混进这里。
+    /// </summary>
+    internal static void UpsertToolMetadataEntry(
+        string match,
+        string? name = null,
+        string? description = null,
+        string? publisher = null,
+        IReadOnlyList<string>? tags = null,
+        string? launchTarget = null,
+        IReadOnlyList<JsonArchVariant>? archVariants = null)
+    {
+        if (string.IsNullOrWhiteSpace(match))
+            throw new ArgumentException("match 不能为空", nameof(match));
+
+        var metadataRoot = GetWritableMetadataDir();
+        Directory.CreateDirectory(metadataRoot);
+        var metadataPath = Path.Combine(metadataRoot, "tools.json");
+
+        JsonObject root;
+        JsonArray tools;
+
+        if (File.Exists(metadataPath))
+        {
+            try
+            {
+                root = JsonNode.Parse(File.ReadAllText(metadataPath)) as JsonObject ?? new JsonObject();
+            }
+            catch (Exception ex)
+            {
+                throw new IOException($"读取工具元数据失败：{ex.Message}", ex);
+            }
+            tools = root["tools"] as JsonArray ?? [];
+        }
+        else
+        {
+            root = new JsonObject();
+            tools = [];
+        }
+
+        root["tools"] = tools;
+
+        var existing = tools
+            .OfType<JsonObject>()
+            .FirstOrDefault(item =>
+                string.Equals(item["match"]?.GetValue<string>(), match.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (existing is not null)
+            tools.Remove(existing);
+
+        var entry = new JsonObject { ["match"] = match.Trim() };
+
+        if (!string.IsNullOrWhiteSpace(name)) entry["name"] = name.Trim();
+        if (!string.IsNullOrWhiteSpace(description)) entry["description"] = description.Trim();
+        if (!string.IsNullOrWhiteSpace(publisher)) entry["publisher"] = publisher.Trim();
+        if (!string.IsNullOrWhiteSpace(launchTarget)) entry["launchTarget"] = launchTarget.Trim();
+
+        if (tags is { Count: > 0 })
+        {
+            var tagArray = new JsonArray(tags
+                .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                .Select(tag => JsonValue.Create(tag.Trim()))
+                .ToArray<JsonNode?>());
+            if (tagArray.Count > 0) entry["tags"] = tagArray;
+        }
+
+        if (archVariants is { Count: > 0 })
+        {
+            var variantArray = new JsonArray(archVariants
+                .Where(v => !string.IsNullOrWhiteSpace(v.File) || !string.IsNullOrWhiteSpace(v.Dir))
+                .Select(v =>
+                {
+                    var item = new JsonObject();
+                    if (!string.IsNullOrWhiteSpace(v.File)) item["file"] = v.File!.Trim();
+                    if (!string.IsNullOrWhiteSpace(v.Dir)) item["dir"] = v.Dir!.Trim();
+                    if (!string.IsNullOrWhiteSpace(v.Arch)) item["arch"] = v.Arch!.Trim();
+                    return (JsonNode?)item;
+                })
+                .ToArray());
+            if (variantArray.Count > 0) entry["archVariants"] = variantArray;
+        }
+
+        tools.Add(entry);
+
+        WriteJsonAtomically(metadataPath, root);
+        _metadata = null;
+    }
+
+    /// <summary>临时文件 + 原子替换写入 JSON。tools.json 损坏会让全应用元数据失效，写入必须原子。</summary>
+    private static void WriteJsonAtomically(string path, JsonNode root)
+    {
+        var tempPath = path + ".tmp";
+        try
+        {
+            File.WriteAllText(tempPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            if (File.Exists(path))
+                File.Replace(tempPath, path, null);
+            else
+                File.Move(tempPath, path);
+        }
+        catch (Exception ex)
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+            throw new IOException($"写入工具元数据失败（{path}）：{ex.Message}", ex);
+        }
     }
 
     public static async Task<IReadOnlyList<RemoteToolVersion>?> FetchRemoteToolsJsonAsync(CancellationToken ct = default)
@@ -567,6 +679,10 @@ public static class ToolMetadataService
     internal sealed class JsonToolMetadata
     {
         public string? Match { get; set; }
+
+        /// <summary>显示名覆盖：卡片/搜索按此取名（为空时沿用目录/文件名）。社区工具与自定义工具写入。</summary>
+        public string? Name { get; set; }
+
         public string? Description { get; set; }
         public string? Publisher { get; set; }
         public string? DownloadUrl { get; set; }

@@ -8,11 +8,12 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class HostsEditorPage : Page
 {
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 146, 60);
-    private static readonly Color AccentPurple = Color.FromArgb(255, 167, 139, 250);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方语义色）
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentRed => ThemeColors.AccentRed;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
+    private static Color AccentPurple => ThemeColors.AccentPurple;
 
     private List<HostsEntry>? _entries;
     private bool _dirty;
@@ -23,6 +24,22 @@ public sealed partial class HostsEditorPage : Page
 
         PageHeader.Subtitle = HostsEditorService.HostsPath;
 
+        ApplyThemeVisuals();
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            ApplyThemeVisuals();
+            if (_entries is not null)
+                RenderEntries();
+        };
+
+        _ = LoadEntriesAsync();
+    }
+
+    /// <summary>应用与主题相关的卡片/表头画刷（构造与主题切换时调用）。</summary>
+    private void ApplyThemeVisuals()
+    {
         // Style stat cards
         StyleStatCard(ActiveCard, ActiveIcon, AccentGreen);
         StyleStatCard(DisabledCard, DisabledIcon, AccentOrange);
@@ -30,8 +47,6 @@ public sealed partial class HostsEditorPage : Page
 
         HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
         ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
-
-        _ = LoadEntriesAsync();
     }
 
     private static void StyleStatCard(Border card, Border icon, Color accent)
@@ -121,7 +136,7 @@ public sealed partial class HostsEditorPage : Page
         var addrText = new TextBlock
         {
             Text = entry.Address,
-            FontSize = 13,
+            FontSize = 14,
             FontFamily = new FontFamily("Consolas"),
             Foreground = new SolidColorBrush(entry.Enabled ? AccentBlue : ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
@@ -131,8 +146,8 @@ public sealed partial class HostsEditorPage : Page
         var hostText = new TextBlock
         {
             Text = entry.Hostname,
-            FontSize = 13,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             FontFamily = new FontFamily("Consolas"),
             Foreground = new SolidColorBrush(entry.Enabled ? ThemeColors.PrimaryText : ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center,
@@ -142,18 +157,17 @@ public sealed partial class HostsEditorPage : Page
         var commentText = new TextBlock
         {
             Text = string.IsNullOrEmpty(entry.Comment) ? "" : $"# {entry.Comment}",
-            FontSize = 11,
-            Foreground = new SolidColorBrush(ThemeColors.DimText),
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            Opacity = string.IsNullOrEmpty(entry.Comment) ? 0 : 0.8
+            TextTrimming = TextTrimming.CharacterEllipsis
         };
 
         var deleteBtn = new Button
         {
             Content = new FontIcon { Glyph = "\uE74D", FontSize = 12 },
             Padding = new Thickness(6, 2, 6, 2),
-            Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             Tag = entry
         };
@@ -168,7 +182,7 @@ public sealed partial class HostsEditorPage : Page
         {
             Content = new FontIcon { Glyph = "\uE70F", FontSize = 12 },
             Padding = new Thickness(6, 2, 6, 2),
-            Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             Tag = entry
         };
@@ -220,16 +234,16 @@ public sealed partial class HostsEditorPage : Page
         {
             if (child is TextBlock { FontFamily: not null } tb)
             {
-                if (tb.FontSize == 13 && tb.Text == entry.Address)
+                if (tb.FontSize == 14 && tb.Text == entry.Address)
                     tb.Foreground = new SolidColorBrush(entry.Enabled ? AccentBlue : ThemeColors.DimText);
-                else if (tb.FontSize == 13 && tb.Text == entry.Hostname)
+                else if (tb.FontSize == 14 && tb.Text == entry.Hostname)
                     tb.Foreground = new SolidColorBrush(entry.Enabled ? ThemeColors.PrimaryText : ThemeColors.DimText);
             }
         }
 
         border.Background = new SolidColorBrush(entry.Enabled
-            ? Color.FromArgb(0, 0, 0, 0)
-            : Color.FromArgb(30, 0, 0, 0));
+            ? Microsoft.UI.Colors.Transparent
+            : ThemeColors.SubtleBg);
     }
 
     private async Task EditEntryDialog(HostsEntry entry)

@@ -13,7 +13,7 @@
 
     <Page.Resources>
         <Style x:Key="SectionTitle" TargetType="Grid">
-            <Setter Property="Margin" Value="0,4,0,10" />
+            <Setter Property="Margin" Value="0,4,0,8" />
         </Style>
     </Page.Resources>
 
@@ -28,17 +28,11 @@
             Title="网络优化"
             Subtitle="TCP 参数 / DNS 延迟测速 / DHCP 修复 · 毫秒级状态扫描"
             Glyph="&#xE968;">
-            <controls:ToolPageHeader.IconBackground>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#7C6CF0" />
-                    <GradientStop Offset="1" Color="#5B8DEF" />
-                </LinearGradientBrush>
-            </controls:ToolPageHeader.IconBackground>
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="RescanButton" Click="RescanButton_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="RescanButton" Click="RescanButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE72C;" FontSize="12" />
-                        <TextBlock Text="重新扫描" FontSize="13" />
+                        <TextBlock Text="重新扫描" />
                     </StackPanel>
                 </Button>
             </controls:ToolPageHeader.Actions>
@@ -46,7 +40,7 @@
 
         <!-- 正文 -->
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="28,6,28,28">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
             <StackPanel Spacing="16">
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="操作失败" />
@@ -54,48 +48,42 @@
 
                 <!-- 加载中 -->
                 <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" Spacing="12" Padding="0,64">
-                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" Foreground="#7C6CF0" />
-                    <TextBlock FontSize="13" Opacity="0.7" HorizontalAlignment="Center" Text="正在扫描网络状态…" />
+                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" Foreground="{ThemeResource AccentFillColorDefaultBrush}" />
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" Text="正在扫描网络状态…" />
                 </StackPanel>
 
                 <!-- 主内容 -->
                 <StackPanel x:Name="ContentPanel" Visibility="Collapsed" Spacing="16">
 
                     <!-- ═════════ 公网 IP ═════════ -->
-                    <Border CornerRadius="16" BorderThickness="1" BorderBrush="#1F000000">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Offset="0" Color="#147C6CF0" />
-                                <GradientStop Offset="1" Color="#145B8DEF" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Grid Padding="16,14" ColumnSpacing="14">
+                    <Border Style="{StaticResource FluentCardStyle}">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="40" Height="40" CornerRadius="11" Background="#267C6CF0" VerticalAlignment="Center">
-                                <FontIcon Glyph="&#xE774;" FontSize="18" Foreground="#7C6CF0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource IconTileStyle}" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE774;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock FontSize="12" Opacity="0.6" Text="当前网络公网 IPv4 地址" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="当前网络公网 IPv4 地址" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock x:Name="PublicIpText" FontSize="24" FontWeight="Bold" FontFamily="Consolas" Text="--" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="PublicIpText" Style="{StaticResource StatValueStyle}" FontFamily="Consolas" Text="--" VerticalAlignment="Center" />
                                     <ProgressRing x:Name="IpLoadingRing" Width="16" Height="16" IsActive="False" Visibility="Collapsed" VerticalAlignment="Center" />
                                 </StackPanel>
                             </StackPanel>
-                            <Button Grid.Column="2" x:Name="CopyIpButton" Click="CopyIpButton_Click" Padding="10,6" CornerRadius="7" VerticalAlignment="Center" IsEnabled="False">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button Grid.Column="2" x:Name="CopyIpButton" Click="CopyIpButton_Click" Padding="12,5" CornerRadius="8" VerticalAlignment="Center" IsEnabled="False">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon Glyph="&#xE8C8;" FontSize="12" />
-                                    <TextBlock Text="复制" FontSize="13" />
+                                    <TextBlock Text="复制" FontSize="14" />
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="3" x:Name="RefreshIpButton" Click="RefreshIpButton_Click" Padding="10,6" CornerRadius="7" VerticalAlignment="Center" Margin="0,0,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Button Grid.Column="3" x:Name="RefreshIpButton" Click="RefreshIpButton_Click" Padding="12,5" CornerRadius="8" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon Glyph="&#xE72C;" FontSize="12" />
-                                    <TextBlock Text="刷新" FontSize="13" />
+                                    <TextBlock Text="刷新" FontSize="14" />
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -103,22 +91,22 @@
 
                     <!-- ═════════ 网络优化项（4 个开关卡片 + 批量） ═════════ -->
                     <StackPanel Spacing="8">
-                        <Grid>
+                        <Grid Style="{StaticResource SectionTitle}">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Border Width="3" Height="16" CornerRadius="2" Background="#7C6CF0" VerticalAlignment="Center" />
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="网络优化项" />
+                                <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网络优化项" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                <Button x:Name="BatchEnableButton" Click="BatchEnableButton_Click" CornerRadius="7" Padding="12,6">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button x:Name="BatchEnableButton" Click="BatchEnableButton_Click" CornerRadius="8" Padding="12,5">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE73E;" FontSize="12" />
-                                        <TextBlock Text="全部优化" FontSize="13" />
+                                        <TextBlock Text="全部优化" FontSize="14" />
                                     </StackPanel>
                                 </Button>
-                                <Button x:Name="BatchDisableButton" Click="BatchDisableButton_Click" CornerRadius="7" Padding="12,6" Background="Transparent" BorderBrush="#26000000">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button x:Name="BatchDisableButton" Click="BatchDisableButton_Click" CornerRadius="8" Padding="12,5" Background="Transparent" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE777;" FontSize="12" />
-                                        <TextBlock Text="全部恢复默认" FontSize="13" />
+                                        <TextBlock Text="全部恢复默认" FontSize="14" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -132,19 +120,19 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="local:OptimizeItemVm">
-                                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,11" Margin="0,0,0,8">
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,8">
                                         <Grid ColumnSpacing="12">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <Border Width="38" Height="38" CornerRadius="10" Background="{x:Bind IconBackground}" VerticalAlignment="Center">
-                                                <FontIcon Glyph="{x:Bind Glyph}" FontSize="17" Foreground="{x:Bind ColorBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            <Border Width="38" Height="38" CornerRadius="8" Background="{x:Bind IconBackground}" VerticalAlignment="Center">
+                                                <FontIcon Glyph="{x:Bind Glyph}" FontSize="16" Foreground="{x:Bind ColorBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Border>
                                             <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock FontSize="12" Opacity="0.65" Text="{x:Bind Description}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" />
+                                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="{x:Bind Title}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind Description}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" />
                                             </StackPanel>
                                             <ToggleSwitch Grid.Column="2" IsOn="{x:Bind IsOn, Mode=OneWay}" IsEnabled="{x:Bind CanToggle}" Toggled="OptimizeToggle_Toggled" MinWidth="0" VerticalAlignment="Center" />
                                         </Grid>
@@ -156,19 +144,19 @@
 
                     <!-- ═════════ DNS 设置 ═════════ -->
                     <StackPanel Spacing="8">
-                        <Grid>
+                        <Grid Style="{StaticResource SectionTitle}">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Border Width="3" Height="16" CornerRadius="2" Background="#5B8DEF" VerticalAlignment="Center" />
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="DNS 设置" />
+                                <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="DNS 设置" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <Border VerticalAlignment="Center" Padding="10,3">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock FontSize="12" Opacity="0.6" Text="当前 DNS" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="CurrentDnsText" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Text="使用自动获取" />
+                                <Border VerticalAlignment="Center" Padding="8,4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="当前 DNS" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="CurrentDnsText" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" Text="使用自动获取" />
                                     </StackPanel>
                                 </Border>
-                                <Button x:Name="RestoreDnsButton" Click="RestoreDnsButton_Click" CornerRadius="7" Padding="10,5" Background="Transparent" BorderBrush="#26000000" Content="恢复自动获取" FontSize="13" />
+                                <Button x:Name="RestoreDnsButton" Click="RestoreDnsButton_Click" CornerRadius="8" Padding="12,5" Background="Transparent" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Content="恢复自动获取" FontSize="14" />
                             </StackPanel>
                         </Grid>
 
@@ -181,8 +169,8 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="local:DnsPresetVm">
-                                    <Border Background="#0D000000" BorderBrush="{x:Bind CardBorderBrush, Mode=OneWay}" BorderThickness="1" CornerRadius="12" Padding="12,10" Margin="0,0,8,8">
-                                        <Grid RowSpacing="6">
+                                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{x:Bind CardBorderBrush, Mode=OneWay}" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,8,8">
+                                        <Grid RowSpacing="8">
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="Auto" />
@@ -198,13 +186,13 @@
                                                 <Border Width="30" Height="30" CornerRadius="8" Background="{x:Bind IconBackground}" VerticalAlignment="Center">
                                                     <FontIcon Glyph="&#xE774;" FontSize="14" Foreground="{x:Bind ColorBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                 </Border>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
-                                                    <Border Visibility="{x:Bind AppliedVisibility, Mode=OneWay}" CornerRadius="6" Padding="6,1" Background="#142BB673">
-                                                        <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#2BB673" Text="已应用" />
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+                                                    <Border Style="{StaticResource StatusPillStyle}" Visibility="{x:Bind AppliedVisibility, Mode=OneWay}" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}">
+                                                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Text="已应用" />
                                                     </Border>
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="2" FontSize="12" FontWeight="Bold" Text="{x:Bind LatencyText, Mode=OneWay}" Foreground="{x:Bind LatencyBrush, Mode=OneWay}" VerticalAlignment="Center">
+                                                <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="{x:Bind LatencyText, Mode=OneWay}" Foreground="{x:Bind LatencyBrush, Mode=OneWay}" VerticalAlignment="Center">
                                                     <ToolTipService.ToolTip>
                                                         <ToolTip Content="{x:Bind LatencyHint, Mode=OneWay}" />
                                                     </ToolTipService.ToolTip>
@@ -212,12 +200,12 @@
                                             </Grid>
 
                                             <StackPanel Grid.Row="1" Spacing="0" Padding="1,0">
-                                                <TextBlock FontSize="12" Opacity="0.75" Text="{x:Bind Primary}" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock FontSize="12" Opacity="0.75" Text="{x:Bind SecondaryLine}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Primary}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind SecondaryLine}" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
 
-                                            <Button Grid.Row="2" Content="应用" FontSize="13" CornerRadius="7" Padding="0,5" MinHeight="0"
-                                                    Background="{x:Bind ColorBrush}" Foreground="White"
+                                            <Button Grid.Row="2" Content="应用" FontSize="14" CornerRadius="8" Padding="0,4" MinHeight="0"
+                                                    Background="{x:Bind ColorBrush}" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                                     Tag="{x:Bind Self}" Click="ApplyDnsPreset_Click" HorizontalAlignment="Stretch" />
                                         </Grid>
                                     </Border>
@@ -226,8 +214,8 @@
                         </ItemsControl>
 
                         <!-- 自定义 DNS -->
-                        <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,12">
-                            <Grid ColumnSpacing="10" RowSpacing="6">
+                        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
+                            <Grid ColumnSpacing="8" RowSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -237,74 +225,74 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Grid.ColumnSpan="3" FontSize="13" FontWeight="SemiBold" Text="自定义 DNS" />
+                                <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Style="{StaticResource SectionHeaderStyle}" Text="自定义 DNS" />
                                 <TextBox x:Name="CustomPrimaryBox" Grid.Row="1" Grid.Column="0" PlaceholderText="首选 DNS，如 223.5.5.5" FontSize="14" />
                                 <TextBox x:Name="CustomSecondaryBox" Grid.Row="1" Grid.Column="1" PlaceholderText="备选 DNS（可留空）" FontSize="14" />
-                                <Button x:Name="ApplyCustomDnsButton" Grid.Row="1" Grid.Column="2" Click="ApplyCustomDnsButton_Click" CornerRadius="7" Padding="16,9" Content="应用" FontSize="13" />
+                                <Button x:Name="ApplyCustomDnsButton" Grid.Row="1" Grid.Column="2" Click="ApplyCustomDnsButton_Click" CornerRadius="8" Padding="16,8" Content="应用" FontSize="14" />
                             </Grid>
                         </Border>
 
                         <!-- 清理 DNS 缓存 -->
-                        <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,11">
+                        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Spacing="2">
-                                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="清理 DNS 缓存" />
-                                    <TextBlock FontSize="12" Opacity="0.65" Text="刷新系统 DNS 解析缓存，解决域名解析异常" />
+                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="清理 DNS 缓存" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="刷新系统 DNS 解析缓存，解决域名解析异常" />
                                 </StackPanel>
-                                <Button x:Name="ClearDnsCacheButton" Grid.Column="1" Click="ClearDnsCacheButton_Click" CornerRadius="7" Padding="12,6" VerticalAlignment="Center" Content="立即清理" FontSize="13" />
+                                <Button x:Name="ClearDnsCacheButton" Grid.Column="1" Click="ClearDnsCacheButton_Click" CornerRadius="8" Padding="12,5" VerticalAlignment="Center" Content="立即清理" FontSize="14" />
                             </Grid>
                         </Border>
                     </StackPanel>
 
                     <!-- ═════════ 网络重置 / 修复 DHCP ═════════ -->
                     <StackPanel Spacing="8">
-                        <Grid Margin="0,4,0,2">
+                        <Grid Style="{StaticResource SectionTitle}">
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Border Width="3" Height="16" CornerRadius="2" Background="#F2503B" VerticalAlignment="Center" />
-                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="网络修复" />
+                                <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网络修复" />
                             </StackPanel>
                         </Grid>
-                        <Grid ColumnSpacing="10">
+                        <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,11">
+                            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
                                 <Grid ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Spacing="2">
-                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="重置网络" />
-                                        <TextBlock FontSize="12" Opacity="0.65" Text="重置 Winsock 与 TCP/IP 协议栈，解决网络异常、连接问题" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="重置网络" />
+                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="重置 Winsock 与 TCP/IP 协议栈，解决网络异常、连接问题" TextWrapping="Wrap" />
                                     </StackPanel>
-                                    <Button x:Name="ResetNetworkButton" Grid.Column="1" Click="ResetNetworkButton_Click" CornerRadius="7" Padding="12,6" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <Button x:Name="ResetNetworkButton" Grid.Column="1" Click="ResetNetworkButton_Click" CornerRadius="8" Padding="12,5" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
                                             <FontIcon Glyph="&#xE777;" FontSize="12" />
-                                            <TextBlock Text="立即重置" FontSize="13" />
+                                            <TextBlock Text="立即重置" FontSize="14" />
                                         </StackPanel>
                                     </Button>
                                 </Grid>
                             </Border>
-                            <Border Grid.Column="1" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,11">
+                            <Border Grid.Column="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
                                 <Grid ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Spacing="2">
-                                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="修复 DHCP" />
-                                        <TextBlock FontSize="12" Opacity="0.65" Text="将启用网卡的 IP 与 DNS 恢复为自动获取，解决无法自动获取 IP 的问题" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="修复 DHCP" />
+                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="将启用网卡的 IP 与 DNS 恢复为自动获取，解决无法自动获取 IP 的问题" TextWrapping="Wrap" />
                                     </StackPanel>
-                                    <Button x:Name="FixDhcpButton" Grid.Column="1" Click="FixDhcpButton_Click" CornerRadius="7" Padding="12,6" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <Button x:Name="FixDhcpButton" Grid.Column="1" Click="FixDhcpButton_Click" CornerRadius="8" Padding="12,5" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
                                             <FontIcon Glyph="&#xE7BA;" FontSize="12" />
-                                            <TextBlock Text="立即修复" FontSize="13" />
+                                            <TextBlock Text="立即修复" FontSize="14" />
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -313,10 +301,10 @@
                     </StackPanel>
 
                     <!-- 使用说明 -->
-                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="16,12">
-                        <StackPanel Spacing="6">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Text="使用说明" />
-                            <TextBlock FontSize="12" Opacity="0.7" TextWrapping="Wrap" LineHeight="19">
+                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="使用说明" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="19">
                                 <Run Text="· 优化/恢复操作需要管理员权限（工具箱已自动提权）；DNS 延迟每秒实测一次，&lt;1ms 或应答来源不一致即判定为被本地代理劫持。" />
                                 <LineBreak />
                                 <Run Text="· 「Nagle 算法 / 网卡节能」直接写入注册表（Tcpip 参数与网卡类键 PnPCapabilities），「TCP 拥塞控制 / Chimney」走 netsh，均为原生实现。" />

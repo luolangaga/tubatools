@@ -39,216 +39,158 @@
                 </MenuFlyoutSubItem.Icon>
             </MenuFlyoutSubItem>
         </MenuFlyout>
-        <Style x:Key="FavCardStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="0,0,12,12" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="RootGrid" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
-                            </Grid.RenderTransform>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.18">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Pressed" GeneratedDuration="0:0:0.08">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Normal" GeneratedDuration="0:0:0.25">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="1.03" />
-                                            <Setter Target="ItemScale.ScaleY" Value="1.03" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="0.97" />
-                                            <Setter Target="ItemScale.ScaleY" Value="0.97" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled" />
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="SelectionStates">
-                                    <VisualState x:Name="Unselected" />
-                                    <VisualState x:Name="Selected" />
-                                    <VisualState x:Name="SelectedUnfocused" />
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter
-                                Content="{TemplateBinding Content}"
-                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Page.Resources>
 
-    <Grid>
+    <!--
+        单滚动面结构：页头 / 常用推荐 / 收藏统计条各自占一行（Auto），工具卡 GridView 独占 * 行并由自身滚动。
+        页面级 ScrollViewer 会给 GridView 无限高度、令虚拟化失效（WinUI 反模式）；
+        这里让 GridView 拿到确定高度，虚拟化恢复，同时编辑排序面板与空状态在 * 行内与网格互斥显示。
+    -->
+    <Grid Padding="24,16,24,24" RowSpacing="16">
         <Grid.Transitions>
             <TransitionCollection>
                 <EntranceThemeTransition FromVerticalOffset="16" FromHorizontalOffset="0" IsStaggeringEnabled="False" />
             </TransitionCollection>
         </Grid.Transitions>
-    <ScrollViewer Padding="28,18,28,24" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="18">
-            <StackPanel Spacing="4">
-                <TextBlock
-                    FontSize="30"
-                    FontWeight="Bold"
-                    Text="常用"
-                    l:Uids.Uid="Favorites_Title" />
-                <TextBlock
-                    x:Name="SubtitleText"
-                    Opacity="1.0"
-                    Text="你收藏的工具会显示在这里,可拖拽调整顺序。"
-                    l:Uids.Uid="Favorites_Subtitle" />
-            </StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <StackPanel
-                x:Name="FrequentSection"
-                Spacing="10"
-                Visibility="Collapsed">
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Border
-                            Width="28"
-                            Height="28"
-                            VerticalAlignment="Center"
-                            Background="{ThemeResource AccentFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <FontIcon
-                                FontSize="14"
-                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE734;"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock
-                            FontSize="18"
-                            FontWeight="Bold"
-                            VerticalAlignment="Center"
-                            Text="常用推荐"
-                            l:Uids.Uid="Favorites_FrequentTitle" />
-                        <TextBlock
-                            x:Name="FrequentSubtitle"
-                            VerticalAlignment="Center"
-                            FontSize="13"
-                            Opacity="1.0"
-                            Text="基于使用频率智能排序"
-                            l:Uids.Uid="Favorites_FrequentSubtitle" />
-                    </StackPanel>
-                    <Button
-                        x:Name="HideFrequentButton"
-                        Grid.Column="1"
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock
+                Style="{StaticResource PageTitleStyle}"
+                Text="常用"
+                l:Uids.Uid="Favorites_Title" />
+            <TextBlock
+                x:Name="SubtitleText"
+                Style="{StaticResource PageSubtitleStyle}"
+                Text="你收藏的工具会显示在这里,可拖拽调整顺序。"
+                l:Uids.Uid="Favorites_Subtitle" />
+        </StackPanel>
+
+        <StackPanel
+            x:Name="FrequentSection"
+            Grid.Row="1"
+            Spacing="8"
+            Visibility="Collapsed">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border
                         Width="28"
                         Height="28"
-                        Padding="0"
                         VerticalAlignment="Center"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Click="HideFrequentButton_Click"
-                        ToolTipService.ToolTip="不再显示常用推荐"
-                        l:Uids.Uid="Favorites_HideFrequentButton">
-                        <FontIcon FontSize="12" Glyph="&#xE711;" />
-                    </Button>
-                </Grid>
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Hidden"
-                    HorizontalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    VerticalScrollMode="Disabled">
-                    <StackPanel x:Name="FrequentPanel" Orientation="Horizontal" Spacing="10" />
-                </ScrollViewer>
-            </StackPanel>
-
-            <Border
-                Padding="18"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8">
-                <Grid ColumnSpacing="18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <Border
-                        Width="44"
-                        Height="44"
                         Background="{ThemeResource AccentFillColorDefaultBrush}"
                         CornerRadius="8">
                         <FontIcon
-                            FontSize="22"
+                            FontSize="14"
                             Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                            Glyph="&#xE735;" />
+                            Glyph="&#xE734;"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center" />
                     </Border>
+                    <TextBlock
+                        Style="{StaticResource CardTitleStyle}"
+                        VerticalAlignment="Center"
+                        Text="常用推荐"
+                        l:Uids.Uid="Favorites_FrequentTitle" />
+                    <TextBlock
+                        x:Name="FrequentSubtitle"
+                        Style="{StaticResource CaptionTextStyle}"
+                        VerticalAlignment="Center"
+                        Text="基于使用频率智能排序"
+                        l:Uids.Uid="Favorites_FrequentSubtitle" />
+                </StackPanel>
+                <Button
+                    x:Name="HideFrequentButton"
+                    Grid.Column="1"
+                    Width="28"
+                    Height="28"
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="HideFrequentButton_Click"
+                    ToolTipService.ToolTip="不再显示常用推荐"
+                    l:Uids.Uid="Favorites_HideFrequentButton">
+                    <FontIcon FontSize="12" Glyph="&#xE711;" />
+                </Button>
+            </Grid>
+            <ScrollViewer
+                HorizontalScrollBarVisibility="Hidden"
+                HorizontalScrollMode="Enabled"
+                VerticalScrollBarVisibility="Disabled"
+                VerticalScrollMode="Disabled">
+                <StackPanel x:Name="FrequentPanel" Orientation="Horizontal" Spacing="8" />
+            </ScrollViewer>
+        </StackPanel>
 
-                    <StackPanel Grid.Column="1" Spacing="2">
-                        <TextBlock
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Text="我的收藏"
-                            l:Uids.Uid="Favorites_MyFavorites" />
-                        <TextBlock
-                            x:Name="ToolCountText"
-                            Opacity="1.0" />
-                    </StackPanel>
+        <Border
+            Grid.Row="2"
+            Style="{StaticResource FluentCardStyle}">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                        <Button
-                            x:Name="EditOrderButton"
-                            Padding="12,6"
-                            Click="EditOrderButton_Click"
-                            Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon x:Name="EditOrderIcon" FontSize="12" Glyph="&#xE70F;" />
-                                <TextBlock x:Name="EditOrderButtonText" Text="编辑排序" l:Uids.Uid="Favorites_EditOrderButtonText" />
-                            </StackPanel>
-                        </Button>
-                        <Button
-                            x:Name="ClearAllButton"
-                            Padding="12,6"
-                            Click="ClearAllButton_Click"
-                            Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE74D;" />
-                                <TextBlock Text="清空全部" l:Uids.Uid="Favorites_ClearAll" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                <Border
+                    Style="{StaticResource IconTileStyle}"
+                    Width="44"
+                    Height="44"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}">
+                    <FontIcon
+                        FontSize="20"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Glyph="&#xE735;" />
+                </Border>
 
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock
+                        Style="{StaticResource CardTitleStyle}"
+                        Text="我的收藏"
+                        l:Uids.Uid="Favorites_MyFavorites" />
+                    <TextBlock x:Name="ToolCountText" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Name="EditOrderButton"
+                        Style="{StaticResource ToolHeaderActionButtonStyle}"
+                        Click="EditOrderButton_Click"
+                        Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon x:Name="EditOrderIcon" FontSize="12" Glyph="&#xE70F;" />
+                            <TextBlock x:Name="EditOrderButtonText" Text="编辑排序" l:Uids.Uid="Favorites_EditOrderButtonText" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        x:Name="ClearAllButton"
+                        Style="{StaticResource ToolHeaderActionButtonStyle}"
+                        Click="ClearAllButton_Click"
+                        Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                            <TextBlock Text="清空全部" l:Uids.Uid="Favorites_ClearAll" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="3">
             <GridView
                 x:Name="ToolsGrid"
                 IsItemClickEnabled="True"
                 ItemClick="ToolsGrid_ItemClick"
-                ItemContainerStyle="{StaticResource FavCardStyle}"
+                ItemContainerStyle="{StaticResource ToolCardItemStyle}"
                 SelectionMode="None"
                 SizeChanged="ToolsGrid_SizeChanged">
                 <GridView.ItemTemplate>
@@ -263,7 +205,7 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             RightTapped="FavItem_RightTapped">
-                            <Grid RowSpacing="7">
+                            <Grid RowSpacing="8">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="52" />
@@ -273,78 +215,64 @@
 
                                 <Grid ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition Width="56" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Border
-                                        Width="48"
-                                        Height="48"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="8">
+                                    <Border Style="{StaticResource IconTileStyle}" Width="56" Height="56">
                                         <Grid>
                                             <Image
-                                                Width="32"
-                                                Height="32"
+                                                Width="40"
+                                                Height="40"
                                                 Source="{Binding IconPath}"
                                                 Stretch="Uniform"
                                                 Visibility="{Binding IconPath, Converter={StaticResource NullToCollapse}}" />
                                             <Image
-                                                Width="32"
-                                                Height="32"
+                                                Width="40"
+                                                Height="40"
                                                 Source="{Binding IconSource}"
                                                 Stretch="Uniform"
                                                 Visibility="{Binding IconSource, Converter={StaticResource NullToCollapse}}" />
                                             <FontIcon
-                                                FontSize="24"
+                                                FontSize="28"
                                                 Glyph="{Binding IconGlyph}"
                                                 Visibility="{Binding IconGlyph, Converter={StaticResource NullToCollapse}}" />
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Column="1" Spacing="3">
                                         <TextBlock
-
-                                            FontSize="16"
-                                            FontWeight="Bold"
+                                            Style="{StaticResource CardTitleStyle}"
                                             MaxLines="1"
                                             Text="{Binding Name}"
                                             TextTrimming="CharacterEllipsis" />
                                         <TextBlock
-
                                             FontSize="12"
-                                            Opacity="1.0"
                                             Text="{Binding CategoryDisplay}"
                                             TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
                                 </Grid>
 
                                 <TextBlock
-
                                     Grid.Row="1"
                                     MaxLines="2"
-                                    Opacity="1.0"
                                     Text="{Binding Description}"
                                     TextTrimming="CharacterEllipsis"
                                     TextWrapping="Wrap" />
 
-                                <Grid Grid.Row="2" ColumnSpacing="6">
+                                <Grid Grid.Row="2" ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Border
-                                        Padding="8,3"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="6">
+                                    <Border Style="{StaticResource StatusPillStyle}">
                                         <TextBlock
-
-                                            FontSize="11"
-                                            FontWeight="Bold"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
                                             Text="{Binding Extension}" />
                                     </Border>
 
                                 </Grid>
 
-                                <Grid Grid.Row="3" ColumnSpacing="6">
+                                <Grid Grid.Row="3" ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="36" />
                                         <ColumnDefinition Width="36" />
@@ -352,9 +280,7 @@
                                         <ColumnDefinition Width="36" />
                                     </Grid.ColumnDefinitions>
                                     <Button
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch"
-                                        Padding="0"
+                                        Style="{StaticResource ToolCardActionButtonStyle}"
                                         Click="SendToDesktopButton_Click"
                                         ToolTipService.ToolTip="发送到桌面快捷方式"
                                         l:Uids.Uid="Favorites_SendToDesktopButton">
@@ -362,9 +288,7 @@
                                     </Button>
                                     <Button
                                         Grid.Column="1"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch"
-                                        Padding="0"
+                                        Style="{StaticResource ToolCardActionButtonStyle}"
                                         Click="RunAsAdminButton_Click"
                                         ToolTipService.ToolTip="以管理员身份运行"
                                         l:Uids.Uid="Favorites_RunAsAdminButton">
@@ -373,21 +297,17 @@
                                     <Button
                                         Grid.Column="2"
                                         MinWidth="88"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch"
-                                        Padding="10,4"
+                                        Padding="8,4"
+                                        Style="{StaticResource ToolCardActionButtonStyle}"
                                         Click="LaunchButton_Click">
                                         <TextBlock
-
                                             Text="{Binding LaunchButtonText}"
                                             TextAlignment="Center"
                                             TextTrimming="CharacterEllipsis" />
                                     </Button>
                                     <Button
                                         Grid.Column="3"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch"
-                                        Padding="0"
+                                        Style="{StaticResource ToolCardActionButtonStyle}"
                                         Click="RemoveFavoriteButton_Click"
                                         ToolTipService.ToolTip="取消收藏"
                                         l:Uids.Uid="Favorites_RemoveFavoriteButton">
@@ -401,51 +321,49 @@
             </GridView>
 
             <!-- 编辑排序模式:专用纵向列表,整行自实现拖拽,不依赖 GridView 原生拖拽 -->
-            <StackPanel
-                x:Name="EditModePanel"
-                Spacing="12"
-                Visibility="Collapsed">
-                <Border
-                    Padding="12,10"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon
-                            FontSize="14"
-                            Glyph="&#xE700;"
-                            VerticalAlignment="Center"
-                            Opacity="1.0" />
-                        <TextBlock
-                            Opacity="1.0"
-                            Text="按住任意卡片上下拖动即可调整顺序，完成后点击右上角“完成”。"
-                            l:Uids.Uid="Favorites_EditModeHint"
-                            VerticalAlignment="Center" />
-                    </StackPanel>
-                </Border>
-                <StackPanel x:Name="EditRowsPanel" Spacing="8" />
-            </StackPanel>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Visibility="{Binding Visibility, ElementName=EditModePanel}">
+                <StackPanel
+                    x:Name="EditModePanel"
+                    Spacing="12"
+                    Visibility="Collapsed">
+                    <Border
+                        Padding="12,8"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                FontSize="14"
+                                Glyph="&#xE700;"
+                                VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="按住任意卡片上下拖动即可调整顺序，完成后点击右上角“完成”。"
+                                l:Uids.Uid="Favorites_EditModeHint"
+                                VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                    <StackPanel x:Name="EditRowsPanel" Spacing="8" />
+                </StackPanel>
+            </ScrollViewer>
 
             <StackPanel
                 x:Name="EmptyState"
                 HorizontalAlignment="Center"
+                VerticalAlignment="Center"
                 Spacing="12"
                 Visibility="Collapsed">
                 <FontIcon
                     HorizontalAlignment="Center"
-                    FontSize="48"
-                    Glyph="&#xE735;"
-                    Opacity="1.0" />
+                    FontSize="28"
+                    Glyph="&#xE735;" />
                 <TextBlock
                     HorizontalAlignment="Center"
                     FontSize="18"
-                    Opacity="1.0"
                     Text="还没有收藏的工具"
                     l:Uids.Uid="Favorites_EmptyTitle" />
                 <TextBlock
                     HorizontalAlignment="Center"
-                    Opacity="1.0"
                     Text="在全部页面点击星标按钮即可收藏"
                     l:Uids.Uid="Favorites_EmptyHint" />
             </StackPanel>
@@ -457,18 +375,18 @@
                 PreferredPlacement="Right">
                 <StackPanel MaxWidth="420" Spacing="8">
                     <TextBlock x:Name="DetailDescriptionText" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailPublisherText" Opacity="1.0" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailVersionText" Opacity="1.0" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailPathText" Opacity="1.0" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailPublisherText" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailVersionText" TextWrapping="Wrap" />
+                    <TextBlock x:Name="DetailPathText" TextWrapping="Wrap" />
                 </StackPanel>
             </TeachingTip>
 
             <InfoBar
                 x:Name="StatusBar"
                 HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
                 IsClosable="True"
                 IsOpen="False" />
-        </StackPanel>
-    </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>

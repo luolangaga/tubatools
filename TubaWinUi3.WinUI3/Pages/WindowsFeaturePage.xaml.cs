@@ -51,11 +51,11 @@ public sealed class FeatureRowVm
 /// </summary>
 public sealed partial class WindowsFeaturePage : Page
 {
-    // 品牌调色板（与主题无关）
-    private static readonly Color SuccessGreen = Color.FromArgb(255, 43, 182, 115);
-    private static readonly Color CautionAmber = Color.FromArgb(255, 245, 166, 35);
-    private static readonly Color CriticalRed = Color.FromArgb(255, 242, 80, 59);
-    private static readonly Color NeutralGray = Color.FromArgb(255, 142, 142, 142);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方 SystemFillColor* 语义色）
+    private static Color SuccessGreen => ThemeColors.AccentGreen;
+    private static Color CautionAmber => ThemeColors.AccentOrange;
+    private static Color CriticalRed => ThemeColors.AccentRed;
+    private static Color NeutralGray => ThemeColors.Neutral;
 
     /// <summary>单次查询条数上限（nexbox QUERY_LIMIT）。</summary>
     private const int QueryLimit = WindowsFeatureService.DefaultQueryLimit;
@@ -78,13 +78,22 @@ public sealed partial class WindowsFeaturePage : Page
 
     /// <summary>当前查询返回的全部行（已含字典补充项）。</summary>
     private List<FeatureRowVm> _rows = new();
+    /// <summary>最近一次查询的原始条目，主题切换后按新主题重染色（代码构建的画刷不随主题刷新）。</summary>
+    private List<FeatureFlagEntry> _lastEntries = new();
     /// <summary>当前展示到的条数（nexbox visibleCount，从 PAGE_SIZE 起步）。</summary>
     private int _visibleCount = PageSize;
 
     public WindowsFeaturePage()
     {
         InitializeComponent();
-        SearchBox.KeyDown += SearchBox_KeyDown;
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存条目重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_lastEntries.Count == 0)
+                return;
+            _rows = _lastEntries.Select(BuildRow).ToList();
+            RenderRows();
+        };
         // 先置默认值再挂事件，避免初始化时触发 Toggled 引发多余刷新
         NamedOnlyToggle.IsOn = true;
         NamedOnlyToggle.Toggled += NamedOnlyToggle_Toggled;
@@ -166,7 +175,8 @@ public sealed partial class WindowsFeaturePage : Page
         DictMissingBar.Visibility = _dictionary.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         NotAdminBar.Visibility = _isAdmin ? Visibility.Collapsed : Visibility.Visible;
 
-        _rows = entries.Select(BuildRow).ToList();
+        _lastEntries = entries;
+        _rows = _lastEntries.Select(BuildRow).ToList();
         _visibleCount = PageSize;
         RenderRows();
     }
@@ -213,11 +223,13 @@ public sealed partial class WindowsFeaturePage : Page
 
     private void SearchButton_Click(object sender, RoutedEventArgs e) => SubmitSearch();
 
-    private void SearchBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    /// <summary>打字不触发查询（nexbox 同款：仅回车 / 点击搜索按钮提交），此处只保留事件占位。</summary>
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
-        if (e.Key == Windows.System.VirtualKey.Enter)
-            SubmitSearch();
     }
+
+    /// <summary>回车提交（AutoSuggestBox 无候选列表时回车即 QuerySubmitted）。</summary>
+    private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) => SubmitSearch();
 
     /// <summary>提交搜索：打字不触发查询，仅回车 / 点击搜索按钮时提交（nexbox 同款）。</summary>
     private async void SubmitSearch()
@@ -277,11 +289,17 @@ public sealed partial class WindowsFeaturePage : Page
         var state = entry.State;
         var display = entry.Name ?? $"功能 {entry.FeatureId}";
 
+        // 语义色按主题解析一次，浅色底纹由该基色派生（alpha 与主题无关）
+        var success = SuccessGreen;
+        var critical = CriticalRed;
+        var caution = CautionAmber;
+        var neutral = NeutralGray;
+
         var (stateText, stateBrush, stateBg) = state switch
         {
-            FeatureState.Enabled => ("已启用", Brush(SuccessGreen), Brush(Color.FromArgb(0x14, 43, 182, 115))),
-            FeatureState.Disabled => ("已禁用", Brush(CriticalRed), Brush(Color.FromArgb(0x16, 242, 80, 59))),
-            _ => ("未配置", Brush(NeutralGray), Brush(Color.FromArgb(0x16, 142, 142, 142)))
+            FeatureState.Enabled => ("已启用", Brush(success), Brush(Color.FromArgb(0x14, success.R, success.G, success.B))),
+            FeatureState.Disabled => ("已禁用", Brush(critical), Brush(Color.FromArgb(0x16, critical.R, critical.G, critical.B))),
+            _ => ("未配置", Brush(neutral), Brush(Color.FromArgb(0x16, neutral.R, neutral.G, neutral.B)))
         };
 
         return new FeatureRowVm
@@ -293,10 +311,10 @@ public sealed partial class WindowsFeaturePage : Page
             StateBrush = stateBrush,
             StateBackground = stateBg,
             ExperimentText = entry.IsExperiment ? "实验功能" : "系统覆盖",
-            ExperimentBrush = Brush(entry.IsExperiment ? CautionAmber : NeutralGray),
+            ExperimentBrush = Brush(entry.IsExperiment ? caution : neutral),
             ExperimentBackground = Brush(entry.IsExperiment
-                ? Color.FromArgb(0x16, 245, 166, 35)
-                : Color.FromArgb(0x14, 142, 142, 142)),
+                ? Color.FromArgb(0x16, caution.R, caution.G, caution.B)
+                : Color.FromArgb(0x14, neutral.R, neutral.G, neutral.B)),
             ExperimentVisibility = hasConfig ? Visibility.Visible : Visibility.Collapsed,
             PriorityText = entry.PriorityText,
             CanEnable = _isAdmin && state != FeatureState.Enabled,

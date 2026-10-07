@@ -19,7 +19,7 @@
         </ResourceDictionary>
     </ContentDialog.Resources>
 
-    <Grid RowSpacing="20" MinWidth="480">
+    <Grid RowSpacing="16" MinWidth="480">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -30,10 +30,10 @@
             <TextBlock
                 x:Name="StepTitleText"
                 FontSize="20"
-                FontWeight="Bold" />
+                FontWeight="SemiBold" />
             <TextBlock
                 x:Name="StepSubtitleText"
-                FontSize="13"
+                FontSize="14"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 TextWrapping="Wrap" />
         </StackPanel>
@@ -49,13 +49,13 @@
         <Grid Grid.Row="2" MinHeight="220">
             <StackPanel
                 x:Name="Step0Content"
-                Spacing="20"
+                Spacing="16"
                 Visibility="Visible"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
 
                 <FontIcon
-                    FontSize="48"
+                    FontSize="28"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                     Glyph="&#xE946;"
                     HorizontalAlignment="Center" />
@@ -83,15 +83,15 @@
                     BorderThickness="1"
                     CornerRadius="8"
                     HorizontalAlignment="Center">
-                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <StackPanel Spacing="8" HorizontalAlignment="Center">
                         <TextBlock
-                            FontSize="15"
-                            FontWeight="Bold"
+                            FontSize="14"
+                            FontWeight="SemiBold"
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             HorizontalAlignment="Center"
                             Text="⚠ 该软件开源免费！" />
                         <TextBlock
-                            FontSize="13"
+                            FontSize="14"
                             Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                             TextWrapping="Wrap"
                             TextAlignment="Center"
@@ -124,10 +124,10 @@
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                         BorderThickness="2"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Tapped="LayoutOption_Tapped"
                         AutomationProperties.Name="新卡牌模式">
-                        <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
                             <Border
                                 Width="56"
                                 Height="56"
@@ -140,8 +140,8 @@
                                     Glyph="&#xE8B7;" />
                             </Border>
                             <TextBlock
-                                FontSize="15"
-                                FontWeight="Bold"
+                                FontSize="14"
+                                FontWeight="SemiBold"
                                 HorizontalAlignment="Center"
                                 Text="新卡牌模式" />
                             <TextBlock
@@ -162,10 +162,10 @@
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
                         BorderThickness="2"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Tapped="LayoutOption_Tapped"
                         AutomationProperties.Name="简洁模式">
-                        <StackPanel Spacing="10" HorizontalAlignment="Center">
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
                             <Border
                                 Width="56"
                                 Height="56"
@@ -178,8 +178,8 @@
                                     Glyph="&#xE8FD;" />
                             </Border>
                             <TextBlock
-                                FontSize="15"
-                                FontWeight="Bold"
+                                FontSize="14"
+                                FontWeight="SemiBold"
                                 HorizontalAlignment="Center"
                                 Text="简洁模式" />
                             <TextBlock
@@ -204,7 +204,7 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="选择窗口背景材质效果：" />
 
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -218,41 +218,37 @@
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                         BorderThickness="2"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Tapped="BackdropOption_Tapped"
                         AutomationProperties.Name="Mica">
                         <StackPanel Spacing="8" HorizontalAlignment="Center">
                             <Border
                                 Width="80"
                                 Height="52"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
                                 CornerRadius="8"
                                 HorizontalAlignment="Center">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Offset="0" Color="#1a1a2e" />
-                                        <GradientStop Offset="0.5" Color="#16213e" />
-                                        <GradientStop Offset="1" Color="#0f3460" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
                                 <Border
-                                    Margin="6"
+                                    Margin="8"
                                     Padding="4"
-                                    Background="#99ffffff"
+                                    Background="{ThemeResource ControlFillColorDefaultBrush}"
                                     CornerRadius="4">
                                     <TextBlock
-                                        FontSize="9"
-                                        Foreground="#1a1a2e"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                         HorizontalAlignment="Center"
                                         Text="Mica" />
                                 </Border>
                             </Border>
                             <TextBlock
-                                FontSize="13"
-                                FontWeight="Bold"
+                                FontSize="14"
+                                FontWeight="SemiBold"
                                 HorizontalAlignment="Center"
                                 Text="Mica" />
                             <TextBlock
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 HorizontalAlignment="Center"
                                 TextAlignment="Center"
@@ -269,41 +265,37 @@
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
                         BorderThickness="2"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Tapped="BackdropOption_Tapped"
                         AutomationProperties.Name="Mica Alt">
                         <StackPanel Spacing="8" HorizontalAlignment="Center">
                             <Border
                                 Width="80"
                                 Height="52"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
                                 CornerRadius="8"
                                 HorizontalAlignment="Center">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Offset="0" Color="#2d1b69" />
-                                        <GradientStop Offset="0.5" Color="#11998e" />
-                                        <GradientStop Offset="1" Color="#38ef7d" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
                                 <Border
-                                    Margin="6"
+                                    Margin="8"
                                     Padding="4"
-                                    Background="#99ffffff"
+                                    Background="{ThemeResource ControlFillColorDefaultBrush}"
                                     CornerRadius="4">
                                     <TextBlock
-                                        FontSize="9"
-                                        Foreground="#2d1b69"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                         HorizontalAlignment="Center"
                                         Text="Mica Alt" />
                                 </Border>
                             </Border>
                             <TextBlock
-                                FontSize="13"
-                                FontWeight="Bold"
+                                FontSize="14"
+                                FontWeight="SemiBold"
                                 HorizontalAlignment="Center"
                                 Text="Mica Alt" />
                             <TextBlock
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 HorizontalAlignment="Center"
                                 TextAlignment="Center"
@@ -320,40 +312,37 @@
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}"
                         BorderThickness="2"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Tapped="BackdropOption_Tapped"
                         AutomationProperties.Name="亚克力">
                         <StackPanel Spacing="8" HorizontalAlignment="Center">
                             <Border
                                 Width="80"
                                 Height="52"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
                                 CornerRadius="8"
                                 HorizontalAlignment="Center">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Offset="0" Color="#667eea" />
-                                        <GradientStop Offset="1" Color="#764ba2" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
                                 <Border
-                                    Margin="6"
+                                    Margin="8"
                                     Padding="4"
-                                    Background="#88ffffff"
+                                    Background="{ThemeResource ControlFillColorDefaultBrush}"
                                     CornerRadius="4">
                                     <TextBlock
-                                        FontSize="9"
-                                        Foreground="#764ba2"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                         HorizontalAlignment="Center"
                                         Text="Acrylic" />
                                 </Border>
                             </Border>
                             <TextBlock
-                                FontSize="13"
-                                FontWeight="Bold"
+                                FontSize="14"
+                                FontWeight="SemiBold"
                                 HorizontalAlignment="Center"
                                 Text="亚克力" />
                             <TextBlock
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 HorizontalAlignment="Center"
                                 TextAlignment="Center"
@@ -372,7 +361,7 @@
                 VerticalAlignment="Center">
 
                 <FontIcon
-                    FontSize="48"
+                    FontSize="28"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                     Glyph="&#xE721;"
                     HorizontalAlignment="Center" />
@@ -403,8 +392,8 @@
                             <FontIcon FontSize="18" Glyph="&#xE721;" />
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="Bold" Text="注册到 Windows 搜索" />
-                            <TextBlock Opacity="1.0" FontSize="13" TextWrapping="Wrap" Text="按 Win 键搜索工具名直接启动，无需先打开工具箱" />
+                            <TextBlock FontWeight="SemiBold" Text="注册到 Windows 搜索" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="按 Win 键搜索工具名直接启动，无需先打开工具箱" />
                         </StackPanel>
                         <ToggleSwitch x:Name="WizardSearchIndexToggle" Grid.Column="2" VerticalAlignment="Center" IsOn="False" />
                     </Grid>
@@ -426,8 +415,8 @@
                             <FontIcon FontSize="18" Glyph="&#xE921;" />
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock FontWeight="Bold" Text="关闭主窗口时最小化到系统托盘" />
-                            <TextBlock Opacity="1.0" FontSize="13" TextWrapping="Wrap" Text="点关闭按钮不退出程序，留在托盘继续运行；默认关闭" />
+                            <TextBlock FontWeight="SemiBold" Text="关闭主窗口时最小化到系统托盘" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="点关闭按钮不退出程序，留在托盘继续运行；默认关闭" />
                         </StackPanel>
                         <ToggleSwitch x:Name="WizardCloseToTrayToggle" Grid.Column="2" VerticalAlignment="Center" IsOn="False" />
                     </Grid>

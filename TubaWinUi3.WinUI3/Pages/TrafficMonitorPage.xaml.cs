@@ -24,8 +24,11 @@ public sealed partial class TrafficMonitorPage : Page
 {
     private const int ChartMaxPoints = 120;
 
-    private static readonly SKColor DownloadC = new(74, 222, 128);
-    private static readonly SKColor UploadC = new(96, 165, 250);
+    /// <summary>折线配色（系统图表系列色板，跟随主题）：下载用成功色系、上传用强调色系。</summary>
+    private static SKColor DownloadC => ToSk(ThemeColors.Series3);
+    private static SKColor UploadC => ToSk(ThemeColors.Series1);
+
+    private static SKColor ToSk(Windows.UI.Color color) => new(color.R, color.G, color.B);
 
     private static readonly GridLength[] ColWidths =
     [
@@ -60,6 +63,18 @@ public sealed partial class TrafficMonitorPage : Page
 
         InitChart();
         ConnHeaderGrid.Children.Add(MakeHeaderGrid());
+
+        // 代码构建的画刷（图表系列色/行文本色）不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (!IsLoaded) return;
+            InitChart();
+            if (_reviewing || _lastSample is not { } sample) return;
+            ConnPanel.Children.Clear();
+            _rows.Clear();
+            UpdateCards(sample);
+            UpdateConnections(sample);
+        };
     }
 
     #region 生命周期
@@ -622,9 +637,9 @@ public sealed partial class TrafficMonitorPage : Page
             var cell = new TextBlock
             {
                 Text = cells[i],
-                FontSize = 11,
-                Opacity = 0.6,
-                FontWeight = FontWeights.Bold,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(ThemeColors.DimText),
+                FontWeight = FontWeights.SemiBold,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
             Grid.SetColumn(cell, i);
@@ -641,12 +656,17 @@ public sealed partial class TrafficMonitorPage : Page
         var procName = new TextBlock
         {
             Text = info.ProcessName,
-            FontSize = 12.5,
-            FontWeight = FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxWidth = 150
         };
-        var procPid = new TextBlock { Text = $"PID {info.ProcessId}", FontSize = 10.5, Opacity = 0.55 };
+        var procPid = new TextBlock
+        {
+            Text = $"PID {info.ProcessId}",
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText)
+        };
         var procPanel = new StackPanel { Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         procPanel.Children.Add(procName);
         procPanel.Children.Add(procPid);
@@ -654,16 +674,16 @@ public sealed partial class TrafficMonitorPage : Page
         var remoteText = new TextBlock
         {
             Text = RemoteMainText(info),
-            FontSize = 12.5,
-            FontWeight = FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxWidth = 240
         };
         var localText = new TextBlock
         {
             Text = RemoteSubText(info),
-            FontSize = 10.5,
-            Opacity = 0.55,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         var addrPanel = new StackPanel { Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
@@ -679,8 +699,8 @@ public sealed partial class TrafficMonitorPage : Page
         var pingBtn = new Button
         {
             Content = "测延迟",
-            FontSize = 11.5,
-            Padding = new Thickness(10, 3, 10, 3),
+            FontSize = 12,
+            Padding = new Thickness(8, 4, 8, 4),
             IsEnabled = !frozen,
             Tag = info.RemoteAddress
         };
@@ -727,7 +747,7 @@ public sealed partial class TrafficMonitorPage : Page
         return info.RemoteDomain.Length > 0 ? $"{info.DisplayRemote} · {local}" : local;
     }
 
-    private static TextBlock MakeValueText(string text) => new() { Text = text, FontSize = 12.5 };
+    private static TextBlock MakeValueText(string text) => new() { Text = text, FontSize = 12 };
 
     private string LatencyTextFor(string ip)
     {

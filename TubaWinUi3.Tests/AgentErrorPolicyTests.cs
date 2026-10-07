@@ -46,6 +46,35 @@ public class AgentErrorPolicyTests
         Assert.Contains("网络连接失败", text);
     }
 
+    // ---------- 本地模型推理错误：给出本地排查建议，而不是端点/Key ----------
+
+    [Fact]
+    public void FormatApiError_LocalOrtMemoryError_HintsLocalNotEndpoint()
+    {
+        // 复现真实事故：ORT GenAI 的 GroupQueryAttention / BFCArena 分配失败
+        var ex = new InvalidOperationException(
+            "Non-zero status code returned while running GroupQueryAttention node. " +
+            "Status Message: onnxruntime::BFCArena::AllocateRawInternal Failed to allocate memory " +
+            "for requested buffer of size 32731660544");
+
+        var text = AgentErrorPolicy.FormatApiError(ex);
+
+        Assert.Contains("本地模型", text);
+        Assert.Contains("内存不足", text);
+        Assert.DoesNotContain("设置 → AI 服务", text); // 不再误导去查端点/Key
+    }
+
+    [Fact]
+    public void IsLocalInferenceError_DetectsOrtMarkers()
+    {
+        Assert.True(AgentErrorPolicy.IsLocalInferenceError(
+            new InvalidOperationException("模型尚未加载。")));
+        Assert.True(AgentErrorPolicy.IsLocalInferenceError(
+            new Exception("outer", new Exception("onnxruntime-genai failure"))));
+        Assert.False(AgentErrorPolicy.IsLocalInferenceError(
+            new UnauthorizedAccessException("api key invalid")));
+    }
+
     // ---------- FormatToolError：区分可重试（参数）与系统性失败（勿重试） ----------
 
     /// <summary>系统性失败（非参数类异常）→ 明确"请勿重试"终态，防止模型对同一失败操作反复调用。</summary>

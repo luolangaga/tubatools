@@ -28,8 +28,8 @@
             Subtitle="手机端经局域网连接本机：查看配置与屏幕、执行命令、安装软件、互传文件"
             Glyph="&#xE8EA;" />
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-            <StackPanel Spacing="14">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16">
 
                 <!-- 服务状态 -->
                 <Border Style="{StaticResource FluentCardStyle}">
@@ -88,7 +88,7 @@
                             <Border
                                 Background="White"
                                 CornerRadius="8"
-                                Padding="10"
+                                Padding="8"
                                 VerticalAlignment="Top">
                                 <Image x:Name="QrImage" Width="180" Height="180" Stretch="Uniform" />
                             </Border>
@@ -99,7 +99,7 @@
                                     Text="配对码" />
                                 <TextBlock
                                     x:Name="PairCodeText"
-                                    FontSize="30"
+                                    FontSize="28"
                                     FontWeight="SemiBold"
                                     IsTextSelectionEnabled="True"
                                     Text="—" />
@@ -130,13 +130,13 @@
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button x:Name="RefreshCodeBtn" Click="RefreshCodeBtn_Click">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon FontSize="12" Glyph="&#xE72C;" />
                                             <TextBlock Text="刷新配对码" />
                                         </StackPanel>
                                     </Button>
                                     <Button x:Name="RevokeBtn" Click="RevokeBtn_Click">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon FontSize="12" Glyph="&#xE711;" />
                                             <TextBlock Text="断开所有手机" />
                                         </StackPanel>
@@ -208,7 +208,7 @@
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Text="查看命令与安装任务的实时输出，运行中可终止" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                     <TextBlock
                                         x:Name="JobsBadgeText"
                                         Style="{StaticResource CaptionTextStyle}"
@@ -262,7 +262,7 @@
                             Grid.Column="4"
                             VerticalAlignment="Center"
                             Click="OpenReceiveBtn_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE8B7;" />
                                 <TextBlock Text="打开文件夹" />
                             </StackPanel>

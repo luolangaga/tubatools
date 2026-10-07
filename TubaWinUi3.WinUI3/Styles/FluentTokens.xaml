@@ -3,11 +3,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
-        图吧工具箱 Fluent 设计令牌（基准：WinUI 3 XAML Controls Gallery）
+        图吧工具箱 Fluent 设计令牌（基准：Windows 11 设计规范 / WinUI 3）
         - 间距遵循 8px 网格：4 / 8 / 12 / 16 / 24 / 32
-        - 圆角令牌：控件 4 / 卡片与浮层 8 / 药丸 12
-        - 版式阶梯：Caption 12 / Body 14 / Subtitle 20 / Title 28（官方默认字体，不覆盖 FontFamily）
-        - 颜色一律使用官方 {ThemeResource} 语义画笔，禁止硬编码
+        - 圆角：控件 4 / 卡片与浮层 8 / 药丸 12（对齐官方 ControlsCornerRadius / OverlayCornerRadius）
+        - 版式阶梯派生自官方 TextBlock 样式：
+          Caption 12 / Body 14 / BodyStrong 14 / BodyLarge(+Strong) 18 / Subtitle 20 / Title 28
+          官方规范：强调用 Semibold，不用 Bold；正文不覆盖 FontFamily
+        - 颜色一律使用官方 {ThemeResource} 语义画刷，禁止硬编码字面量
+        官方依据：
+        - https://learn.microsoft.com/windows/apps/design/signature-experiences/typography
+        - https://learn.microsoft.com/windows/apps/develop/platform/xaml/xaml-theme-resources
     -->
 
     <!-- 数据可视化系列色板（图表/仪表盘专用，跟随主题） -->
@@ -32,7 +37,7 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
-    <!-- 间距令牌（8px 网格） -->
+    <!-- 间距令牌（8px 网格；double 型，用于 Spacing / Width 等 double 属性） -->
     <x:Double x:Key="SpaceXxSmall">4</x:Double>
     <x:Double x:Key="SpaceXSmall">8</x:Double>
     <x:Double x:Key="SpaceSmall">12</x:Double>
@@ -40,41 +45,26 @@
     <x:Double x:Key="SpaceLarge">24</x:Double>
     <x:Double x:Key="SpaceXLarge">32</x:Double>
 
-    <!-- 圆角令牌 -->
-    <x:Double x:Key="ControlCornerRadiusToken">4</x:Double>
-    <x:Double x:Key="CardCornerRadiusToken">8</x:Double>
-    <x:Double x:Key="DialogCornerRadiusToken">8</x:Double>
-    <x:Double x:Key="PillCornerRadiusToken">12</x:Double>
+    <!-- 圆角令牌（CornerRadius 型：可直接用于 CornerRadius 属性与 Style Setter） -->
+    <CornerRadius x:Key="ControlCornerRadiusToken">4</CornerRadius>
+    <CornerRadius x:Key="CardCornerRadiusToken">8</CornerRadius>
+    <CornerRadius x:Key="DialogCornerRadiusToken">8</CornerRadius>
+    <CornerRadius x:Key="PillCornerRadiusToken">12</CornerRadius>
 
-    <!-- 版式阶梯样式 -->
-    <Style x:Key="CaptionTextStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
-    </Style>
-    <Style x:Key="PageTitleStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="28" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-    <Style x:Key="PageSubtitleStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="14" />
+    <!-- 版式阶梯（派生自官方样式；页面文本一律用这些样式，不再手写 FontSize） -->
+    <Style x:Key="CaptionTextStyle" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}" />
+    <Style x:Key="PageTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}" />
+    <Style x:Key="PageSubtitleStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
     </Style>
-    <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-    <Style x:Key="CardTitleStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-    <Style x:Key="StatValueStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
+    <Style x:Key="SectionHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}" />
+    <Style x:Key="CardTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyLargeStrongTextBlockStyle}" />
+    <Style x:Key="StatValueStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}" />
 
     <!-- 卡片：官方 Card 背景 + 描边，圆角 8，内边距 16 -->
     <Style x:Key="FluentCardStyle" TargetType="Border">
         <Setter Property="Padding" Value="16" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="{StaticResource CardCornerRadiusToken}" />
         <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -85,7 +75,7 @@
         <Setter Property="Width" Value="40" />
         <Setter Property="Height" Value="40" />
         <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CornerRadius" Value="{StaticResource CardCornerRadiusToken}" />
     </Style>
 
     <!--

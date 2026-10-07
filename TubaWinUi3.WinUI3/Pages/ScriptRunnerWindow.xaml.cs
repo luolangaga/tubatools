@@ -14,17 +14,12 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class ScriptRunnerWindow : Window
 {
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 191, 36);
-    private static readonly Color DimGreen = Color.FromArgb(255, 80, 200, 120);
-
     private Process? _runningProcess;
     private CancellationTokenSource? _cts;
     private readonly DispatcherQueue _dq;
     private int _lineCount;
     private bool _isRunning;
+    private bool? _lastRunSucceeded;
     private readonly StringBuilder _allOutput = new();
     private string _selectedEncoding = "UTF-8";
     private Stopwatch? _durationStopwatch;
@@ -68,11 +63,15 @@ public sealed partial class ScriptRunnerWindow : Window
         }
 
         if (Content is FrameworkElement root)
+        {
             root.RequestedTheme = ThemeService.CurrentElementTheme;
+            // 代码构建的画刷不会随主题自动刷新，切换主题后按当前状态重新着色
+            root.ActualThemeChanged += (_, _) => ApplyStateBrushes();
+        }
 
         ApplyTitleBarTheme();
 
-        CmdBadge.Background = new SolidColorBrush(ThemeColors.SubtleBg);
+        ApplyStateBrushes();
         StatusText.Text = "就绪";
 
         _durationTimer = _dq.CreateTimer();
@@ -211,7 +210,7 @@ public sealed partial class ScriptRunnerWindow : Window
         var workDir = string.IsNullOrWhiteSpace(WorkDirBox.Text) ? null : WorkDirBox.Text.Trim();
         var runAsAdmin = AdminCheck.IsChecked ?? false;
 
-        AppendOutputLine($"> {command}", false, AccentBlue);
+        AppendOutputLine($"> {command}", false, ThemeColors.AccentBlue);
         AppendOutputLine("", false);
 
         await RunScriptAsync(fileName, args, workDir, runAsAdmin);
@@ -413,14 +412,41 @@ public sealed partial class ScriptRunnerWindow : Window
 
         if (running)
         {
-            StatusText.Foreground = new SolidColorBrush(AccentOrange);
+            _lastRunSucceeded = null;
         }
         else
         {
-            StatusText.Foreground = new SolidColorBrush(ThemeColors.DimText);
             _durationStopwatch?.Stop();
             _durationTimer?.Stop();
         }
+
+        ApplyStateBrushes();
+    }
+
+    /// <summary>
+    /// 按当前主题着色代码构建的画刷：命令徽标底、状态文字（运行中 = Caution、完成 = Success、
+    /// 失败 = Critical、就绪 = 三级文字）与退出码徽标，主题切换后重新调用即可。
+    /// </summary>
+    private void ApplyStateBrushes()
+    {
+        CmdBadge.Background = new SolidColorBrush(ThemeColors.SubtleBg);
+
+        var statusColor = _isRunning
+            ? ThemeColors.AccentOrange
+            : _lastRunSucceeded switch
+            {
+                true => ThemeColors.AccentGreen,
+                false => ThemeColors.AccentRed,
+                _ => ThemeColors.DimText
+            };
+        StatusText.Foreground = new SolidColorBrush(statusColor);
+
+        if (_lastRunSucceeded is not bool succeeded || ExitCodeBadge.Visibility != Visibility.Visible)
+            return;
+
+        var badgeColor = succeeded ? ThemeColors.AccentGreen : ThemeColors.AccentRed;
+        ExitCodeBadge.Background = new SolidColorBrush(Color.FromArgb(26, badgeColor.R, badgeColor.G, badgeColor.B));
+        ExitCodeText.Foreground = new SolidColorBrush(badgeColor);
     }
 
     private void AppendOutput(string line, ScriptOutputKind kind)
@@ -461,7 +487,7 @@ public sealed partial class ScriptRunnerWindow : Window
         var newRun = new Microsoft.UI.Xaml.Documents.Run
         {
             Text = FormatProgressText(text),
-            Foreground = new SolidColorBrush(DimGreen)
+            Foreground = new SolidColorBrush(ThemeColors.AccentGreen)
         };
         OutputText.Inlines.Add(newRun);
         _hasProgressLine = true;
@@ -547,7 +573,7 @@ public sealed partial class ScriptRunnerWindow : Window
         if (color.HasValue)
             run.Foreground = new SolidColorBrush(color.Value);
         else if (isError)
-            run.Foreground = new SolidColorBrush(AccentRed);
+            run.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
 
         OutputText.Inlines.Add(run);
 
@@ -586,23 +612,10 @@ public sealed partial class ScriptRunnerWindow : Window
         _dq.TryEnqueue(() =>
         {
             ExitCodeBadge.Visibility = Visibility.Visible;
-
-            if (result.Success)
-            {
-                ExitCodeBadge.Background = new SolidColorBrush(Color.FromArgb(26, AccentGreen.R, AccentGreen.G, AccentGreen.B));
-                ExitCodeText.Text = "EXIT 0";
-                ExitCodeText.Foreground = new SolidColorBrush(AccentGreen);
-                StatusText.Text = "完成";
-                StatusText.Foreground = new SolidColorBrush(AccentGreen);
-            }
-            else
-            {
-                ExitCodeBadge.Background = new SolidColorBrush(Color.FromArgb(26, AccentRed.R, AccentRed.G, AccentRed.B));
-                ExitCodeText.Text = $"EXIT {result.ExitCode}";
-                ExitCodeText.Foreground = new SolidColorBrush(AccentRed);
-                StatusText.Text = $"失败 (代码 {result.ExitCode})";
-                StatusText.Foreground = new SolidColorBrush(AccentRed);
-            }
+            _lastRunSucceeded = result.Success;
+            ExitCodeText.Text = result.Success ? "EXIT 0" : $"EXIT {result.ExitCode}";
+            StatusText.Text = result.Success ? "完成" : $"失败 (代码 {result.ExitCode})";
+            ApplyStateBrushes();
 
             var duration = result.Duration;
             DurationText.Text = duration.TotalSeconds >= 60

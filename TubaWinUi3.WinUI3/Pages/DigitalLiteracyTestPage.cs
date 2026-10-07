@@ -138,6 +138,18 @@ public sealed partial class DigitalLiteracyTestPage : Page
         for (int i = 0; i < TotalQuestions; i++)
             _selectedAnswers[i] = -1;
         Loaded += (_, _) => ShowWelcome();
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前进度重渲染
+        // （题目已作答时保留反馈状态，不重建题目界面）
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_currentQuestion < 0)
+                ShowWelcome();
+            else if (_currentQuestion >= TotalQuestions)
+                ShowResult();
+            else if (!_answered)
+                ShowQuestion();
+        };
     }
 
     #region Welcome Screen
@@ -149,7 +161,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         var stack = new StackPanel
         {
-            Spacing = 24,
+            Spacing = 16,
             HorizontalAlignment = HorizontalAlignment.Center,
             MaxWidth = 560
         };
@@ -159,15 +171,15 @@ public sealed partial class DigitalLiteracyTestPage : Page
         {
             Width = 120,
             Height = 120,
-            CornerRadius = new CornerRadius(28),
-            Background = new SolidColorBrush(Color.FromArgb(30, 96, 165, 250)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(80, 96, 165, 250)),
+            CornerRadius = new CornerRadius(12),
+            Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(80, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
             BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Center,
             Child = new TextBlock
             {
                 Text = "🖥️",
-                FontSize = 56,
+                FontSize = 28,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             }
@@ -178,8 +190,8 @@ public sealed partial class DigitalLiteracyTestPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = "电子文盲等级测试",
-            FontSize = 32,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 28,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 
@@ -187,7 +199,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = "只要连成一条线，说明你是电子文盲。\n共 25 道选择题，满分 100 分，测测你的电脑基础知识水平！",
-            FontSize = 15,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             HorizontalAlignment = HorizontalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -200,15 +212,15 @@ public sealed partial class DigitalLiteracyTestPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(24, 20, 24, 20)
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16)
         };
         var rulesStack = new StackPanel { Spacing = 12 };
         rulesStack.Children.Add(new TextBlock
         {
             Text = "📊 评分标准",
-            FontSize = 17,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
 
         var levels = new (string Emoji, string Label, string Range, Color Color)[]
@@ -220,7 +232,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         foreach (var (emoji, label, range, color) in levels)
         {
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             row.Children.Add(new TextBlock
             {
                 Text = emoji,
@@ -230,7 +242,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             row.Children.Add(new TextBlock
             {
                 Text = label,
-                FontSize = 15,
+                FontSize = 14,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = new SolidColorBrush(color)
@@ -238,7 +250,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             row.Children.Add(new TextBlock
             {
                 Text = range,
-                FontSize = 13,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(ThemeColors.DimText),
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -258,11 +270,11 @@ public sealed partial class DigitalLiteracyTestPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE768", FontSize = 16 },
-                    new TextBlock { Text = "开始测试", FontSize = 16 }
+                    new TextBlock { Text = "开始测试", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(40, 12, 40, 12),
+            Padding = new Thickness(32, 8, 32, 8),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         startBtn.Click += (_, _) =>
@@ -295,7 +307,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         var stack = new StackPanel
         {
-            Spacing = 20,
+            Spacing = 16,
             HorizontalAlignment = HorizontalAlignment.Center,
             MaxWidth = 600,
             Width = 600
@@ -316,7 +328,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         var progressText = new TextBlock
         {
             Text = $"第 {_currentQuestion + 1} 题 / 共 {TotalQuestions} 题  ·  当前得分 {_totalScore} 分",
-            FontSize = 13,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             HorizontalAlignment = HorizontalAlignment.Center
         };
@@ -327,7 +339,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         var questionHeader = new TextBlock
         {
             Text = $"第 {_currentQuestion + 1} 题（{PointsPerQuestion} 分）",
-            FontSize = 13,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.AccentBlue),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         };
@@ -337,12 +349,12 @@ public sealed partial class DigitalLiteracyTestPage : Page
         {
             Text = q.Question,
             FontSize = 20,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextWrapping = TextWrapping.Wrap
         });
 
         // Options（显示顺序已按洗牌结果排列，正确项不一定在 B）
-        var optionsPanel = new StackPanel { Spacing = 10 };
+        var optionsPanel = new StackPanel { Spacing = 8 };
         string[] labels = ["A", "B", "C", "D"];
         var order = _shuffledOrders![_currentQuestion];
 
@@ -358,16 +370,16 @@ public sealed partial class DigitalLiteracyTestPage : Page
         // Feedback card (hidden initially)
         var feedbackCard = new Border
         {
-            CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(18, 14, 18, 14),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16, 12, 16, 12),
             Visibility = Visibility.Collapsed,
             Name = "FeedbackCard"
         };
-        var feedbackStack = new StackPanel { Spacing = 6 };
+        var feedbackStack = new StackPanel { Spacing = 8 };
         var feedbackTitle = new TextBlock
         {
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Name = "FeedbackTitle"
         };
         var feedbackText = new TextBlock
@@ -387,7 +399,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         {
             Content = _currentQuestion < TotalQuestions - 1 ? "下一题" : "查看结果",
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(36, 10, 36, 10),
+            Padding = new Thickness(32, 8, 32, 8),
             HorizontalAlignment = HorizontalAlignment.Center,
             Visibility = Visibility.Collapsed,
             Name = "NextBtn"
@@ -416,16 +428,16 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         var card = new Border
         {
-            CornerRadius = new CornerRadius(10),
-            Padding = new Thickness(16, 14, 16, 14),
-            BorderThickness = new Thickness(1.5),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16, 12, 16, 12),
+            BorderThickness = new Thickness(1),
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             Tag = originalIndex
         };
 
         // 两列 Grid 约束宽度：横向 StackPanel 不约束子元素宽度，长选项文本会直接溢出卡片
-        var row = new Grid { ColumnSpacing = 14 };
+        var row = new Grid { ColumnSpacing = 12 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -435,13 +447,13 @@ public sealed partial class DigitalLiteracyTestPage : Page
             Width = 32,
             Height = 32,
             CornerRadius = new CornerRadius(8),
-            Background = new SolidColorBrush(Color.FromArgb(30, 96, 165, 250)),
+            Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
             VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
                 Text = label,
-                FontSize = 15,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 14,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ThemeColors.AccentBlue),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
@@ -464,7 +476,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             if (!_answered)
             {
                 card.BorderBrush = new SolidColorBrush(ThemeColors.AccentBlue);
-                card.Background = new SolidColorBrush(Color.FromArgb(15, 96, 165, 250));
+                card.Background = new SolidColorBrush(Color.FromArgb(15, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B));
             }
         };
         card.PointerExited += (_, _) =>
@@ -499,22 +511,22 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
                     if (thisCorrect)
                     {
-                        optCard.Background = new SolidColorBrush(Color.FromArgb(30, 74, 222, 128));
+                        optCard.Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentGreen.R, ThemeColors.AccentGreen.G, ThemeColors.AccentGreen.B));
                         optCard.BorderBrush = new SolidColorBrush(ThemeColors.AccentGreen);
                         if (optCard.Child is Grid sp && sp.Children[0] is Border lb)
                         {
-                            lb.Background = new SolidColorBrush(Color.FromArgb(40, 74, 222, 128));
+                            lb.Background = new SolidColorBrush(Color.FromArgb(40, ThemeColors.AccentGreen.R, ThemeColors.AccentGreen.G, ThemeColors.AccentGreen.B));
                             if (lb.Child is TextBlock lt)
                                 lt.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
                         }
                     }
                     else if (thisSelected && !thisCorrect)
                     {
-                        optCard.Background = new SolidColorBrush(Color.FromArgb(30, 248, 113, 113));
+                        optCard.Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentRed.R, ThemeColors.AccentRed.G, ThemeColors.AccentRed.B));
                         optCard.BorderBrush = new SolidColorBrush(ThemeColors.AccentRed);
                         if (optCard.Child is Grid sp && sp.Children[0] is Border lb)
                         {
-                            lb.Background = new SolidColorBrush(Color.FromArgb(40, 248, 113, 113));
+                            lb.Background = new SolidColorBrush(Color.FromArgb(40, ThemeColors.AccentRed.R, ThemeColors.AccentRed.G, ThemeColors.AccentRed.B));
                             if (lb.Child is TextBlock lt)
                                 lt.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
                         }
@@ -535,13 +547,13 @@ public sealed partial class DigitalLiteracyTestPage : Page
                     fb.Visibility = Visibility.Visible;
                     if (isCorrect)
                     {
-                        fb.Background = new SolidColorBrush(Color.FromArgb(25, 74, 222, 128));
+                        fb.Background = new SolidColorBrush(Color.FromArgb(25, ThemeColors.AccentGreen.R, ThemeColors.AccentGreen.G, ThemeColors.AccentGreen.B));
                         ((TextBlock)((StackPanel)fb.Child).Children[0]).Text = "✅ 回答正确！";
                         ((TextBlock)((StackPanel)fb.Child).Children[0]).Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
                     }
                     else
                     {
-                        fb.Background = new SolidColorBrush(Color.FromArgb(25, 248, 113, 113));
+                        fb.Background = new SolidColorBrush(Color.FromArgb(25, ThemeColors.AccentRed.R, ThemeColors.AccentRed.G, ThemeColors.AccentRed.B));
                         ((TextBlock)((StackPanel)fb.Child).Children[0]).Text = "❌ 回答错误";
                         ((TextBlock)((StackPanel)fb.Child).Children[0]).Foreground = new SolidColorBrush(ThemeColors.AccentRed);
                     }
@@ -596,7 +608,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
 
         var stack = new StackPanel
         {
-            Spacing = 24,
+            Spacing = 16,
             HorizontalAlignment = HorizontalAlignment.Center,
             MaxWidth = 560
         };
@@ -606,15 +618,15 @@ public sealed partial class DigitalLiteracyTestPage : Page
         {
             Width = 140,
             Height = 140,
-            CornerRadius = new CornerRadius(32),
+            CornerRadius = new CornerRadius(12),
             Background = new SolidColorBrush(Color.FromArgb(25, levelColor.R, levelColor.G, levelColor.B)),
             BorderBrush = new SolidColorBrush(Color.FromArgb(60, levelColor.R, levelColor.G, levelColor.B)),
-            BorderThickness = new Thickness(2),
+            BorderThickness = new Thickness(1),
             HorizontalAlignment = HorizontalAlignment.Center,
             Child = new TextBlock
             {
                 Text = emoji,
-                FontSize = 64,
+                FontSize = 28,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             }
@@ -625,8 +637,8 @@ public sealed partial class DigitalLiteracyTestPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = level,
-            FontSize = 32,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 28,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(levelColor),
             HorizontalAlignment = HorizontalAlignment.Center
         });
@@ -637,8 +649,8 @@ public sealed partial class DigitalLiteracyTestPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(14),
-            Padding = new Thickness(28, 24, 28, 24),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         var scoreStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
@@ -646,8 +658,8 @@ public sealed partial class DigitalLiteracyTestPage : Page
         var scoreNumber = new TextBlock
         {
             Text = $"{_totalScore}",
-            FontSize = 56,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 28,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(levelColor),
             HorizontalAlignment = HorizontalAlignment.Center
         };
@@ -656,7 +668,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         scoreStack.Children.Add(new TextBlock
         {
             Text = $"/ {MaxScore} 分",
-            FontSize = 16,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             HorizontalAlignment = HorizontalAlignment.Center
         });
@@ -688,7 +700,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = description,
-            FontSize = 15,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             HorizontalAlignment = HorizontalAlignment.Center,
             TextWrapping = TextWrapping.Wrap,
@@ -702,22 +714,22 @@ public sealed partial class DigitalLiteracyTestPage : Page
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(12),
-            Padding = new Thickness(20, 16, 20, 16)
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16)
         };
-        var summaryStack = new StackPanel { Spacing = 10 };
+        var summaryStack = new StackPanel { Spacing = 8 };
         summaryStack.Children.Add(new TextBlock
         {
             Text = "📋 答题详情",
-            FontSize = 16,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
 
         for (int i = 0; i < TotalQuestions; i++)
         {
             bool isCorrect = _selectedAnswers![i] == Questions[i].CorrectIndex;
 
-            var detailRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            var detailRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             detailRow.Children.Add(new TextBlock
             {
                 Text = isCorrect ? "✅" : "❌",
@@ -727,7 +739,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
             detailRow.Children.Add(new TextBlock
             {
                 Text = $"第 {i + 1} 题：{Questions[i].Question}",
-                FontSize = 13,
+                FontSize = 12,
                 Foreground = new SolidColorBrush(isCorrect ? ThemeColors.AccentGreen : ThemeColors.AccentRed),
                 TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -749,11 +761,11 @@ public sealed partial class DigitalLiteracyTestPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE72C", FontSize = 16 },
-                    new TextBlock { Text = "重新测试", FontSize = 15 }
+                    new TextBlock { Text = "重新测试", FontSize = 14 }
                 }
             },
             Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(36, 10, 36, 10),
+            Padding = new Thickness(32, 8, 32, 8),
             HorizontalAlignment = HorizontalAlignment.Center
         };
         retryBtn.Click += (_, _) => ShowWelcome();
@@ -816,7 +828,7 @@ public sealed partial class DigitalLiteracyTestPage : Page
     {
         private readonly TextBlock _inner = new()
         {
-            FontSize = 15,
+            FontSize = 14,
             TextWrapping = TextWrapping.NoWrap,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Center

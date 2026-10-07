@@ -26,18 +26,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
 
     private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var panel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
-        if (panel is null) return;
-
-        double minItemWidth = 280;
-        double spacing = 12;
-        double availableWidth = ToolsGrid.ActualWidth - ToolsGrid.Padding.Left - ToolsGrid.Padding.Right;
-
-        if (availableWidth <= 0) return;
-
-        int columns = Math.Max(1, (int)((availableWidth + spacing) / (minItemWidth + spacing)));
-        double itemWidth = (availableWidth - (columns - 1) * spacing) / columns;
-        panel.ItemWidth = Math.Max(minItemWidth, itemWidth);
+        ToolCardLayout.Apply(ToolsGrid);
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -145,7 +134,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
             Height = 48,
             HorizontalAlignment = HorizontalAlignment.Center,
             Background = (Microsoft.UI.Xaml.Media.Brush)Microsoft.UI.Xaml.Application.Current.Resources["SubtleFillColorSecondaryBrush"],
-            CornerRadius = new CornerRadius(10)
+            CornerRadius = new CornerRadius(8)
         };
 
         var iconGrid = new Grid();
@@ -399,7 +388,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
         });
         var fontIcon = new FontIcon
         {
-            FontSize = 22,
+            FontSize = 20,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Glyph = tool.IconGlyph ?? "",
@@ -435,7 +424,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
         textStack.Children.Add(new TextBlock
         {
             Text = tool.Name,
-            FontSize = 15,
+            FontSize = 14,
             FontWeight = FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis
         });

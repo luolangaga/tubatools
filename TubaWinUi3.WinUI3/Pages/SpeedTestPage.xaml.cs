@@ -212,17 +212,17 @@ public sealed partial class SpeedTestPage : Page
 
     private void InitColors()
     {
-        _dlColor = ColorRes("SystemFillColorSuccessBrush", Color.FromArgb(255, 22, 163, 74));
-        _ulColor = Color.FromArgb(255, 139, 92, 246); // 品牌紫，两套主题下均可读
-        _pingColor = ColorRes("SystemFillColorCautionBrush", Color.FromArgb(255, 234, 160, 0));
-        _primaryColor = ColorRes("TextFillColorPrimaryBrush", Color.FromArgb(255, 30, 30, 30));
-        _textSecondary = ColorRes("TextFillColorSecondaryBrush", Color.FromArgb(255, 90, 90, 90));
-        _trackColor = ColorRes("ControlStrokeColorDefaultBrush", Color.FromArgb(255, 190, 190, 190));
+        _dlColor = ThemeColors.AccentGreen;
+        _ulColor = ThemeColors.Series2; // 图表系列紫，两套主题下均可读
+        _pingColor = ThemeColors.AccentOrange;
+        _primaryColor = ThemeColors.PrimaryText;
+        _textSecondary = ThemeColors.SecondaryText;
+        _trackColor = ColorRes("ControlStrokeColorDefaultBrush", ThemeColors.BorderColor);
 
         StyleStatIcon(DlIconBg, "\uE896", _dlColor);
         StyleStatIcon(UlIconBg, "\uE898", _ulColor);
         StyleStatIcon(PingIconBg, "\uE823", _pingColor);
-        StyleStatIcon(JitIconBg, "\uE81E", ColorRes("SystemAccentColor", Color.FromArgb(255, 0, 120, 212)));
+        StyleStatIcon(JitIconBg, "\uE81E", ThemeColors.AccentBlue);
         DlDot.Fill = new SolidColorBrush(_dlColor);
         UlDot.Fill = new SolidColorBrush(_ulColor);
         IpIcon.Foreground = BrushRes("TextFillColorSecondaryBrush", _textSecondary);
@@ -529,16 +529,16 @@ public sealed partial class SpeedTestPage : Page
     private static (string Title, Color Color, string Comment) Evaluate(double dl, double ping)
     {
         if (double.IsNaN(dl))
-            return ("无法评定", Color.FromArgb(255, 160, 160, 160), "");
+            return ("无法评定", ThemeColors.Neutral, "");
         if (dl >= 800)
-            return ("极速", Color.FromArgb(255, 139, 92, 246), "带宽惊人，接近万兆级网络体验");
+            return ("极速", ThemeColors.Series2, "带宽惊人，接近万兆级网络体验");
         if (dl >= 200)
-            return ("优秀", Color.FromArgb(255, 22, 163, 74), "带宽充足，4K 流媒体与大型下载毫无压力");
+            return ("优秀", ThemeColors.AccentGreen, "带宽充足，4K 流媒体与大型下载毫无压力");
         if (dl >= 50)
-            return ("良好", Color.FromArgb(255, 0, 120, 212), "可满足高清视频与在线游戏需求");
+            return ("良好", ThemeColors.AccentBlue, "可满足高清视频与在线游戏需求");
         if (dl >= 10)
-            return ("一般", Color.FromArgb(255, 234, 160, 0), "适合网页浏览与标清视频，建议优化网络");
-        return ("较差", Color.FromArgb(255, 220, 53, 69), "网络较慢，建议检查设备或联系运营商");
+            return ("一般", ThemeColors.AccentOrange, "适合网页浏览与标清视频，建议优化网络");
+        return ("较差", ThemeColors.AccentRed, "网络较慢，建议检查设备或联系运营商");
     }
 
     // ───────────────────────────── 引擎实时回调（UI 线程） ─────────────────────────────
@@ -690,7 +690,7 @@ public sealed partial class SpeedTestPage : Page
         {
             case ChipState.Active:
             {
-                var accentBrush = BrushRes("AccentFillColorDefaultBrush", Color.FromArgb(255, 0, 120, 212));
+                var accentBrush = BrushRes("AccentFillColorDefaultBrush", ThemeColors.AccentBlue);
                 chip.Background = accentBrush;
                 icon.Foreground = onAccent;
                 text.Foreground = accentBrush;
@@ -711,7 +711,7 @@ public sealed partial class SpeedTestPage : Page
             }
             default:
             {
-                chip.Background = BrushRes("SubtleFillColorSecondaryBrush", Color.FromArgb(255, 240, 240, 240));
+                chip.Background = new SolidColorBrush(ThemeColors.SubtleBg);
                 icon.Foreground = dim;
                 text.Foreground = dim;
                 text.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
@@ -728,11 +728,11 @@ public sealed partial class SpeedTestPage : Page
     private void RefreshLinks()
     {
         StepLink1.Background = _doneChips.Contains(ChipPing)
-            ? BrushRes("SystemFillColorSuccessBrush", Color.FromArgb(255, 22, 163, 74))
-            : BrushRes("DividerStrokeColorDefaultBrush", Color.FromArgb(255, 200, 200, 200));
+            ? new SolidColorBrush(ThemeColors.AccentGreen)
+            : new SolidColorBrush(ThemeColors.Separator);
         StepLink2.Background = _doneChips.Contains(ChipDownload)
-            ? BrushRes("SystemFillColorSuccessBrush", Color.FromArgb(255, 22, 163, 74))
-            : BrushRes("DividerStrokeColorDefaultBrush", Color.FromArgb(255, 200, 200, 200));
+            ? new SolidColorBrush(ThemeColors.AccentGreen)
+            : new SolidColorBrush(ThemeColors.Separator);
     }
 
     private string OriginalGlyph(Border chip)
@@ -819,7 +819,7 @@ public sealed partial class SpeedTestPage : Page
     private void StyleStatIcon(Border bg, string glyph, Color color)
     {
         bg.Background = new SolidColorBrush(Color.FromArgb(34, color.R, color.G, color.B));
-        bg.Child = new FontIcon { Glyph = glyph, FontSize = 13, Foreground = new SolidColorBrush(color) };
+        bg.Child = new FontIcon { Glyph = glyph, FontSize = 14, Foreground = new SolidColorBrush(color) };
     }
 
     private void SetButtonReady()
@@ -839,7 +839,7 @@ public sealed partial class SpeedTestPage : Page
     {
         // 停止态：原生默认按钮样式 + 红色文字图标（不改 Background，保留系统悬停反馈）
         StartButton.Style = null;
-        var red = ColorRes("SystemFillColorCriticalBrush", Color.FromArgb(255, 220, 53, 69));
+        var red = ThemeColors.AccentRed;
         var redBrush = new SolidColorBrush(red);
         StartButton.Foreground = redBrush;
         StartIcon.Foreground = redBrush;
@@ -915,8 +915,8 @@ public sealed partial class SpeedTestPage : Page
             var def = SiteDefs[i];
             var row = new Border
             {
-                Background = BrushRes("SubtleFillColorSecondaryBrush", Color.FromArgb(255, 245, 245, 245)),
-                CornerRadius = new CornerRadius(10),
+                Background = new SolidColorBrush(ThemeColors.SubtleBg),
+                CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(10, 7, 12, 7)
             };
             ToolTipService.SetToolTip(row, $"{def.Name} · {def.Domain}");
@@ -931,15 +931,15 @@ public sealed partial class SpeedTestPage : Page
             nameCol.Children.Add(new TextBlock
             {
                 Text = def.Name,
-                FontSize = 13,
+                FontSize = 14,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
             nameCol.Children.Add(new TextBlock
             {
                 Text = def.Domain,
-                FontSize = 10.5,
-                Opacity = 0.55,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(ThemeColors.DimText),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
             Grid.SetColumn(nameCol, 1);
@@ -949,12 +949,12 @@ public sealed partial class SpeedTestPage : Page
             var lat = new TextBlock
             {
                 Text = "检测中…",
-                FontSize = 13,
+                FontSize = 14,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 MinWidth = 60,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            var dim = BrushRes("TextFillColorSecondaryBrush", Color.FromArgb(255, 120, 120, 120));
+            var dim = new SolidColorBrush(ThemeColors.SecondaryText);
             dot.Fill = dim;
             lat.Foreground = dim;
             var tail = new StackPanel
@@ -982,7 +982,7 @@ public sealed partial class SpeedTestPage : Page
             ? new TextBlock
             {
                 Text = letter,
-                FontSize = 15,
+                FontSize = 14,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Microsoft.UI.Colors.White),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -994,7 +994,7 @@ public sealed partial class SpeedTestPage : Page
         {
             Width = 34,
             Height = 34,
-            CornerRadius = new CornerRadius(9),
+            CornerRadius = new CornerRadius(8),
             VerticalAlignment = VerticalAlignment.Center,
             Background = new SolidColorBrush(BadgeColor(def.BadgeRgb)),
             Child = inner
@@ -1020,7 +1020,7 @@ public sealed partial class SpeedTestPage : Page
                 var cell = new Border
                 {
                     Margin = new Thickness(0.6),
-                    CornerRadius = new CornerRadius(1.2),
+                    CornerRadius = new CornerRadius(0),
                     Background = new SolidColorBrush(Color.FromArgb(255, rr, gg, bb))
                 };
                 Grid.SetRow(cell, r);
@@ -1031,9 +1031,9 @@ public sealed partial class SpeedTestPage : Page
         {
             Width = 34,
             Height = 34,
-            CornerRadius = new CornerRadius(9),
+            CornerRadius = new CornerRadius(8),
             VerticalAlignment = VerticalAlignment.Center,
-            Background = new SolidColorBrush(Color.FromArgb(255, 250, 250, 250)),
+            Background = new SolidColorBrush(ThemeColors.CardBg),
             Child = grid
         };
     }
@@ -1050,7 +1050,7 @@ public sealed partial class SpeedTestPage : Page
         _siteCts = new CancellationTokenSource();
         var ct = _siteCts.Token;
 
-        var dim = BrushRes("TextFillColorSecondaryBrush", Color.FromArgb(255, 120, 120, 120));
+        var dim = new SolidColorBrush(ThemeColors.SecondaryText);
         foreach (var view in _siteRows)
         {
             view.RttMs = null;
@@ -1099,22 +1099,22 @@ public sealed partial class SpeedTestPage : Page
         string text;
         if (double.IsNaN(rttMs))
         {
-            color = ColorRes("SystemFillColorCriticalBrush", Color.FromArgb(255, 220, 53, 69));
+            color = ThemeColors.AccentRed;
             text = "超时";
         }
         else if (rttMs < 150)
         {
-            color = ColorRes("SystemFillColorSuccessBrush", Color.FromArgb(255, 22, 163, 74));
+            color = ThemeColors.AccentGreen;
             text = $"{rttMs:0} ms";
         }
         else if (rttMs <= 400)
         {
-            color = ColorRes("SystemFillColorCautionBrush", Color.FromArgb(255, 234, 160, 0));
+            color = ThemeColors.AccentOrange;
             text = $"{rttMs:0} ms";
         }
         else
         {
-            color = ColorRes("SystemFillColorCriticalBrush", Color.FromArgb(255, 220, 53, 69));
+            color = ThemeColors.AccentRed;
             text = $"{rttMs:0} ms";
         }
 
@@ -1128,7 +1128,7 @@ public sealed partial class SpeedTestPage : Page
     private void RecolorSiteRows()
     {
         if (_siteRows.Count == 0) return;
-        var bg = BrushRes("SubtleFillColorSecondaryBrush", Color.FromArgb(255, 245, 245, 245));
+        var bg = new SolidColorBrush(ThemeColors.SubtleBg);
         foreach (var view in _siteRows)
         {
             view.Row.Background = bg;

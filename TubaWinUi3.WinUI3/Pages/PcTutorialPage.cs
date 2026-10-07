@@ -39,17 +39,18 @@ public sealed partial class PcTutorialPage : Page
     private LowLevelKeyboardProc? _hookProc;
     private string? _currentChallengeKey;
 
-    private static readonly Color ModuleColor1 = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color ModuleColor2 = Color.FromArgb(255, 167, 139, 250);
-    private static readonly Color ModuleColor3 = Color.FromArgb(255, 251, 191, 36);
-    private static readonly Color ModuleColor4 = Color.FromArgb(255, 248, 113, 113);
-    private static readonly Color ModuleColor5 = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color ModuleColor6 = Color.FromArgb(255, 244, 114, 182);
-    private static readonly Color ModuleColor7 = Color.FromArgb(255, 45, 212, 191);
+    // 模块强调色一律取语义/系列令牌（蓝→强调色、紫→系列色、琥珀→警示、红→错误、绿→成功）
+    private static readonly Color ModuleColor1 = ThemeColors.AccentBlue;
+    private static readonly Color ModuleColor2 = ThemeColors.AccentPurple;
+    private static readonly Color ModuleColor3 = ThemeColors.AccentOrange;
+    private static readonly Color ModuleColor4 = ThemeColors.AccentRed;
+    private static readonly Color ModuleColor5 = ThemeColors.AccentGreen;
+    private static readonly Color ModuleColor6 = ThemeColors.AccentPurple;
+    private static readonly Color ModuleColor7 = ThemeColors.AccentBlue;
 
-    private static readonly string[] ModuleColors =
+    private static readonly Color[] ModuleColors =
     [
-        "#60A5FA", "#A78BFA", "#FBBF24", "#F87171", "#4ADE80", "#F472B6", "#2DD4BF"
+        ModuleColor1, ModuleColor2, ModuleColor3, ModuleColor4, ModuleColor5, ModuleColor6, ModuleColor7
     ];
 
     private static readonly (string Glyph, string Title, string Subtitle, string Type)[] Modules =
@@ -76,6 +77,9 @@ public sealed partial class PcTutorialPage : Page
             Content = new TextBlock { Text = $"BuildUI error: {ex.Message}", FontSize = 20 };
             return;
         }
+        // 代码构建的画刷不会随主题自动刷新：切换主题后按当前模块重渲染（仅调用既有 ShowModule）
+        ActualThemeChanged += (_, _) => ShowModule(_currentModule);
+
         Loaded += (_, _) =>
         {
             try
@@ -119,14 +123,14 @@ public sealed partial class PcTutorialPage : Page
                     new TextBlock
                     {
                         Text = "🎉",
-                        FontSize = 72,
+                        FontSize = 28,
                         HorizontalAlignment = HorizontalAlignment.Center
                     },
                     new TextBlock
                     {
                         Text = "太强了！",
-                        FontSize = 40,
-                        FontWeight = FontWeights.Bold,
+                        FontSize = 28,
+                        FontWeight = FontWeights.SemiBold,
                         Foreground = new SolidColorBrush(Colors.White),
                         HorizontalAlignment = HorizontalAlignment.Center
                     },
@@ -134,7 +138,7 @@ public sealed partial class PcTutorialPage : Page
                     {
                         Text = "你已经掌握了这项操作！",
                         FontSize = 18,
-                        Foreground = new SolidColorBrush(Color.FromArgb(255, 180, 180, 180)),
+                        Foreground = new SolidColorBrush(Colors.White),
                         HorizontalAlignment = HorizontalAlignment.Center
                     }
                 }
@@ -168,7 +172,7 @@ public sealed partial class PcTutorialPage : Page
         {
             Text = "电脑使用教程",
             FontSize = 18,
-            FontWeight = FontWeights.Bold,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
         var headerSub = new TextBlock
@@ -188,7 +192,7 @@ public sealed partial class PcTutorialPage : Page
         {
             Width = 42, Height = 42,
             Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
-            CornerRadius = new CornerRadius(10),
+            CornerRadius = new CornerRadius(8),
             Child = headerIcon
         };
         headerGrid.Children.Add(iconBorder);
@@ -218,7 +222,7 @@ public sealed partial class PcTutorialPage : Page
             Minimum = 0,
             Maximum = 100,
             Height = 4,
-            CornerRadius = new CornerRadius(2),
+            CornerRadius = new CornerRadius(4),
             Margin = new Thickness(0, 12, 0, 4)
         };
 
@@ -267,7 +271,7 @@ public sealed partial class PcTutorialPage : Page
     private Border BuildNavItem(int index)
     {
         var m = Modules[index];
-        var color = HexToColor(ModuleColors[index]);
+        var color = ModuleColors[index];
         var glyphIcon = new FontIcon
         {
             Glyph = m.Glyph,
@@ -287,14 +291,14 @@ public sealed partial class PcTutorialPage : Page
         var title = new TextBlock
         {
             Text = m.Title,
-            FontSize = 13,
-            FontWeight = FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
         var sub = new TextBlock
         {
             Text = m.Subtitle,
-            FontSize = 11,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
         var textStack = new StackPanel { Spacing = 1 };
@@ -423,7 +427,7 @@ public sealed partial class PcTutorialPage : Page
 
     private void BuildModule_QnA(List<(string Q, string A, List<ActionLink>? Links)> data)
     {
-        var color = HexToColor(ModuleColors[_currentModule]);
+        var color = ModuleColors[_currentModule];
         for (var i = 0; i < data.Count; i++)
         {
             var item = data[i];
@@ -442,13 +446,13 @@ public sealed partial class PcTutorialPage : Page
         var numberBadge = new Border
         {
             Width = 28, Height = 28,
-            CornerRadius = new CornerRadius(14),
+            CornerRadius = new CornerRadius(12),
             Background = new SolidColorBrush(Color.FromArgb(20, accent.R, accent.G, accent.B)),
             Child = new TextBlock
             {
                 Text = (index).ToString(),
                 FontSize = 12,
-                FontWeight = FontWeights.Bold,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(accent),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
@@ -459,7 +463,7 @@ public sealed partial class PcTutorialPage : Page
         {
             Text = question,
             FontSize = 14,
-            FontWeight = FontWeights.Bold,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             TextWrapping = TextWrapping.Wrap
         };
@@ -473,7 +477,7 @@ public sealed partial class PcTutorialPage : Page
             Child = new TextBlock
             {
                 Text = "已读",
-                FontSize = 11,
+                FontSize = 12,
                 FontWeight = FontWeights.Medium,
                 Foreground = new SolidColorBrush(ThemeColors.AccentGreen)
             }
@@ -482,7 +486,7 @@ public sealed partial class PcTutorialPage : Page
         var expandIcon = new FontIcon
         {
             Glyph = isInitiallyExpanded ? "\uE70E" : "\uE70D",
-            FontSize = 10,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
@@ -499,7 +503,7 @@ public sealed partial class PcTutorialPage : Page
         var answerText = new TextBlock
         {
             Text = answer,
-            FontSize = 13,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 22,
@@ -532,7 +536,7 @@ public sealed partial class PcTutorialPage : Page
                         Spacing = 4,
                         Children =
                         {
-                            new FontIcon { Glyph = link.Glyph, FontSize = 11, Foreground = new SolidColorBrush(accent) },
+                            new FontIcon { Glyph = link.Glyph, FontSize = 12, Foreground = new SolidColorBrush(accent) },
                             new TextBlock { Text = link.Label, FontSize = 12, Foreground = new SolidColorBrush(accent) }
                         }
                     },
@@ -617,7 +621,7 @@ public sealed partial class PcTutorialPage : Page
 
     private Border BuildGuideCard(GuideStep guide)
     {
-        var color = HexToColor(ModuleColors[1]);
+        var color = ModuleColors[1];
         var stepIcon = new FontIcon
         {
             Glyph = guide.Icon,
@@ -629,7 +633,7 @@ public sealed partial class PcTutorialPage : Page
         var stepIconBorder = new Border
         {
             Width = 44, Height = 44,
-            CornerRadius = new CornerRadius(10),
+            CornerRadius = new CornerRadius(8),
             Background = new SolidColorBrush(Color.FromArgb(26, color.R, color.G, color.B)),
             Child = stepIcon
         };
@@ -637,15 +641,15 @@ public sealed partial class PcTutorialPage : Page
         var titleBlock = new TextBlock
         {
             Text = guide.Title,
-            FontSize = 16,
-            FontWeight = FontWeights.Bold,
+            FontSize = 18,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
         var descBlock = new TextBlock
         {
             Text = guide.Description,
-            FontSize = 13,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 20
@@ -654,8 +658,8 @@ public sealed partial class PcTutorialPage : Page
         var actionLabel = new TextBlock
         {
             Text = "👉 " + guide.ActionHint,
-            FontSize = 13,
-            FontWeight = FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(color),
             TextWrapping = TextWrapping.Wrap
         };
@@ -663,7 +667,7 @@ public sealed partial class PcTutorialPage : Page
         var checkIcon = new FontIcon
         {
             Glyph = "\uE73E",
-            FontSize = 18,
+            FontSize = 16,
             Foreground = new SolidColorBrush(ThemeColors.AccentGreen),
             Visibility = Visibility.Collapsed
         };
@@ -671,8 +675,8 @@ public sealed partial class PcTutorialPage : Page
         var completedText = new TextBlock
         {
             Text = "已完成！",
-            FontSize = 13,
-            FontWeight = FontWeights.Bold,
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.AccentGreen),
             Visibility = Visibility.Collapsed
         };
@@ -695,14 +699,14 @@ public sealed partial class PcTutorialPage : Page
                 Children =
                 {
                     new FontIcon { Glyph = "\uE768", FontSize = 12 },
-                    new TextBlock { Text = guide.ButtonText, FontSize = 12, FontWeight = FontWeights.Bold }
+                    new TextBlock { Text = guide.ButtonText, FontSize = 12, FontWeight = FontWeights.SemiBold }
                 }
             },
             Background = new SolidColorBrush(Color.FromArgb(26, color.R, color.G, color.B)),
             Foreground = new SolidColorBrush(color),
             BorderBrush = new SolidColorBrush(Color.FromArgb(50, color.R, color.G, color.B)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(4),
             Padding = new Thickness(14, 7, 14, 7),
             Tag = guide
         };
@@ -712,14 +716,14 @@ public sealed partial class PcTutorialPage : Page
             var shortcutHint = new Border
             {
                 Background = new SolidColorBrush(ThemeColors.SubtleBg),
-                CornerRadius = new CornerRadius(6),
+                CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(12, 8, 12, 8),
                 Margin = new Thickness(0, 6, 0, 0),
                 Child = new TextBlock
                 {
                     Text = "⌨ 请按下: " + guide.ShortcutDisplay,
                     FontSize = 14,
-                    FontWeight = FontWeights.Bold,
+                    FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
                     FontFamily = new FontFamily("Cascadia Code, Consolas")
                 }
@@ -755,7 +759,7 @@ public sealed partial class PcTutorialPage : Page
                 Background = new SolidColorBrush(ThemeColors.CardBg),
                 BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(10),
+                CornerRadius = new CornerRadius(8),
                 Child = topRow,
                 Tag = guide.Id
             };
@@ -794,7 +798,7 @@ public sealed partial class PcTutorialPage : Page
                 Background = new SolidColorBrush(ThemeColors.CardBg),
                 BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
                 BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(10),
+                CornerRadius = new CornerRadius(8),
                 Child = topRow,
                 Tag = guide.Id
             };
@@ -844,7 +848,7 @@ public sealed partial class PcTutorialPage : Page
                             UninstallKeyboardHook();
                             checkIcon.Visibility = Visibility.Visible;
                             completedText.Visibility = Visibility.Visible;
-                            actionBtn.Content = new TextBlock { Text = "✓ 已掌握", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
+                            actionBtn.Content = new TextBlock { Text = "✓ 已掌握", FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
 
                             shortcutHint.Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentGreen.R, ThemeColors.AccentGreen.G, ThemeColors.AccentGreen.B));
                             ((TextBlock)shortcutHint.Child).Text = "✓ 成功按下: " + guide.ShortcutDisplay;
@@ -988,7 +992,7 @@ public sealed partial class PcTutorialPage : Page
 
             checkIcon.Visibility = Visibility.Visible;
             completedText.Visibility = Visibility.Visible;
-            actionBtn.Content = new TextBlock { Text = "✓ 已完成", FontSize = 12, FontWeight = FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
+            actionBtn.Content = new TextBlock { Text = "✓ 已完成", FontSize = 12, FontWeight = FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
             actionBtn.IsEnabled = false;
 
             AnimateCardSuccess(card);
@@ -1008,22 +1012,20 @@ public sealed partial class PcTutorialPage : Page
 
     #region Intro Card
 
-    private Border BuildIntroCard(string title, string desc, string hexColor)
+    private Border BuildIntroCard(string title, string desc, Color color)
     {
-        var color = HexToColor(hexColor);
-
         var titleBlock = new TextBlock
         {
             Text = title,
-            FontSize = 16,
-            FontWeight = FontWeights.Bold,
+            FontSize = 18,
+            FontWeight = FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
         var descBlock = new TextBlock
         {
             Text = desc,
-            FontSize = 13,
+            FontSize = 14,
             Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
             TextWrapping = TextWrapping.Wrap,
             LineHeight = 20
@@ -1057,15 +1059,15 @@ public sealed partial class PcTutorialPage : Page
             var emoji = new TextBlock
             {
                 Text = RandomEmoji(),
-                FontSize = 72,
+                FontSize = 28,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
             var titleBlock = new TextBlock
             {
                 Text = RandomPraise(),
-                FontSize = 40,
-                FontWeight = FontWeights.Bold,
+                FontSize = 28,
+                FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Colors.White),
                 HorizontalAlignment = HorizontalAlignment.Center
             };
@@ -1074,7 +1076,7 @@ public sealed partial class PcTutorialPage : Page
             {
                 Text = message,
                 FontSize = 18,
-                Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)),
+                Foreground = new SolidColorBrush(Colors.White),
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
@@ -1139,7 +1141,7 @@ public sealed partial class PcTutorialPage : Page
             _particleCanvas.Child = canvas;
 
             var rnd = new Random();
-            var colors = new[] { ThemeColors.AccentBlue, ThemeColors.AccentGreen, ThemeColors.AccentOrange, ThemeColors.AccentPurple, ThemeColors.AccentRed, Color.FromArgb(255, 244, 114, 182), Color.FromArgb(255, 45, 212, 191) };
+            var colors = new[] { ThemeColors.AccentBlue, ThemeColors.AccentGreen, ThemeColors.AccentOrange, ThemeColors.AccentPurple, ThemeColors.AccentRed, ThemeColors.AccentPurple, ThemeColors.AccentBlue };
 
             var cx = _particleCanvas.ActualSize.X > 0 ? _particleCanvas.ActualSize.X / 2 : 400;
             var cy = _particleCanvas.ActualSize.Y > 0 ? _particleCanvas.ActualSize.Y / 2 : 300;
@@ -1631,16 +1633,6 @@ public sealed partial class PcTutorialPage : Page
          "错！核心数量只是其中一个指标。CPU 性能取决于：①单核性能（影响日常流畅度）②核心数和线程数（影响多任务）③频率（越高越快）④架构代数（13 代 i5 可能比 10 代 i7 快）⑤缓存大小。选 CPU 看天梯图比看核心数靠谱——工具箱里有 CPU 天梯图！",
          [new ActionLink("CPU 天梯图", "\uEEA1", "launch_builtin", "cpu-ranking"), new ActionLink("GPU 天梯图", "\uEEA1", "launch_builtin", "gpu-ranking")])
     ];
-
-    #endregion
-
-    #region Utilities
-
-    private static Color HexToColor(string hex)
-    {
-        var c = hex.StartsWith('#') ? hex[1..] : hex;
-        return Color.FromArgb(255, Convert.ToByte(c[..2], 16), Convert.ToByte(c[2..4], 16), Convert.ToByte(c[4..6], 16));
-    }
 
     #endregion
 

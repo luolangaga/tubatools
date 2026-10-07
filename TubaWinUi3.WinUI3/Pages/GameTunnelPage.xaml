@@ -22,23 +22,17 @@
             Title="游戏联机助手"
             Subtitle="把两台电脑接进同一个虚拟局域网 · 我的世界 / 泰拉瑞亚 / 帕鲁，不开路由器也能一起玩"
             Glyph="&#xE774;">
-            <controls:ToolPageHeader.IconBackground>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#2BB673" />
-                    <GradientStop Offset="1" Color="#5B8DEF" />
-                </LinearGradientBrush>
-            </controls:ToolPageHeader.IconBackground>
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="DiagnosticsButton" Click="Diagnostics_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="DiagnosticsButton" Click="Diagnostics_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE9D9;" />
-                        <TextBlock FontSize="13" Text="网络检测" />
+                        <TextBlock Text="网络检测" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="HelpButton" Click="Help_Click" Padding="12,5" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="HelpButton" Click="Help_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE897;" />
-                        <TextBlock FontSize="13" Text="教程" />
+                        <TextBlock Text="教程" />
                     </StackPanel>
                 </Button>
             </controls:ToolPageHeader.Actions>
@@ -46,25 +40,20 @@
 
         <ScrollViewer
             Grid.Row="1"
-            Padding="28,6,28,28"
+            Padding="24,8,24,24"
             HorizontalScrollMode="Disabled"
             HorizontalScrollBarVisibility="Disabled"
             VerticalScrollBarVisibility="Auto">
 
-            <StackPanel Spacing="14">
+            <StackPanel Spacing="12">
 
                 <!-- ═════════ 联机环境：我的地址 + 网里有谁 ═════════ -->
-                <Border Padding="18,16" BorderThickness="1" CornerRadius="16">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Offset="0" Color="#162BB673" />
-                            <GradientStop Offset="1" Color="#165B8DEF" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Border.BorderBrush>
-                        <SolidColorBrush Color="#332BB673" />
-                    </Border.BorderBrush>
-
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -72,32 +61,32 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <Border x:Name="StatusIconTile" Width="52" Height="52" CornerRadius="14" Background="#262BB673" VerticalAlignment="Top">
-                            <FontIcon x:Name="StatusIcon" FontSize="24" Glyph="&#xE9F5;" Foreground="#2BB673" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border x:Name="StatusIconTile" Width="52" Height="52" CornerRadius="8" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}" VerticalAlignment="Top">
+                            <FontIcon x:Name="StatusIcon" FontSize="24" Glyph="&#xE9F5;" Foreground="{ThemeResource SystemFillColorSuccessBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
 
-                        <StackPanel Grid.Column="1" Spacing="5" VerticalAlignment="Center">
-                            <TextBlock x:Name="StatusTitle" FontSize="17" FontWeight="Bold" Text="正在检查联机环境…" />
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="StatusTitle" Style="{StaticResource CardTitleStyle}" Text="正在检查联机环境…" />
                             <TextBlock x:Name="StatusDetail" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                            <StackPanel x:Name="AddressRow" Orientation="Horizontal" Spacing="10" Visibility="Collapsed">
-                                <TextBlock x:Name="MyAddressText" FontFamily="Consolas" FontSize="20" FontWeight="Bold" IsTextSelectionEnabled="True" VerticalAlignment="Center" />
-                                <Button x:Name="CopyAddressButton" Click="CopyAddress_Click" Padding="10,5" CornerRadius="7" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <FontIcon FontSize="11" Glyph="&#xE8C8;" />
+                            <StackPanel x:Name="AddressRow" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
+                                <TextBlock x:Name="MyAddressText" Style="{StaticResource StatValueStyle}" FontFamily="Consolas" IsTextSelectionEnabled="True" VerticalAlignment="Center" />
+                                <Button x:Name="CopyAddressButton" Click="CopyAddress_Click" Padding="8,4" CornerRadius="8" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                         <TextBlock FontSize="12" Text="复制" />
                                     </StackPanel>
                                 </Button>
-                                <Border x:Name="LiveBadge" Padding="8,3" CornerRadius="8" Background="#262BB673" VerticalAlignment="Center" Visibility="Collapsed">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <Ellipse Width="6" Height="6" Fill="#2BB673" VerticalAlignment="Center" />
-                                        <TextBlock FontSize="11" FontWeight="SemiBold" Text="游戏正在监听端口" />
+                                <Border x:Name="LiveBadge" Style="{StaticResource StatusPillStyle}" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Ellipse Width="6" Height="6" Fill="{ThemeResource SystemFillColorSuccessBrush}" VerticalAlignment="Center" />
+                                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="游戏正在监听端口" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
-                            <TextBlock x:Name="PeerLine" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+                            <TextBlock x:Name="PeerLine" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
                             <TextBlock
                                 x:Name="TrayHint"
-                                FontSize="11"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap"
                                 Visibility="Collapsed"
@@ -112,9 +101,9 @@
                             Padding="16,8"
                             CornerRadius="8"
                             VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="13" Glyph="&#xE896;" />
-                                <TextBlock x:Name="PrepareButtonText" FontSize="13" FontWeight="SemiBold" Text="准备联机环境" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE896;" />
+                                <TextBlock x:Name="PrepareButtonText" FontSize="14" FontWeight="SemiBold" Text="准备联机环境" />
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -123,7 +112,7 @@
                 <InfoBar x:Name="HealthBar" IsOpen="False" IsClosable="True" Severity="Warning" />
 
                 <!-- ═════════ 和朋友连起来 ═════════ -->
-                <Grid ColumnSpacing="14">
+                <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -131,18 +120,14 @@
 
                     <Border
                         x:Name="HostCard"
-                        Padding="18,16"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="16">
-                        <StackPanel Spacing="10">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="40" Height="40" CornerRadius="11" Background="#1F7C6CF0">
-                                    <FontIcon FontSize="18" Glyph="&#xE7FC;" Foreground="#7C6CF0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Style="{StaticResource IconTileStyle}">
+                                    <FontIcon FontSize="18" Glyph="&#xE7FC;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
-                                <StackPanel VerticalAlignment="Center" Spacing="1">
-                                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="我当主机，邀请朋友" />
+                                <StackPanel VerticalAlignment="Center" Spacing="4">
+                                    <TextBlock Style="{StaticResource CardTitleStyle}" Text="我当主机，邀请朋友" />
                                     <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="游戏跑在我这台，朋友一键进来" />
                                 </StackPanel>
                             </StackPanel>
@@ -152,17 +137,17 @@
                                 TextWrapping="Wrap"
                                 Text="选一个游戏 → 把邀请码发给朋友 → 他进的是同一个虚拟局域网，并拿到你的联机地址。端口和游戏里的操作都会自动准备好。" />
                             <Button x:Name="StartHostButton" Click="StartHost_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="8" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="选择游戏并邀请" />
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择游戏并邀请" />
                             </Button>
                             <Button
                                 x:Name="CurrentInviteButton"
                                 Click="ShowCurrentInvite_Click"
                                 CornerRadius="8"
-                                Padding="0,7"
+                                Padding="0,8"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
                                 Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon x:Name="CurrentInviteIcon" FontSize="12" Glyph="&#xE8F1;" />
                                     <ProgressRing x:Name="CurrentInviteRing" Width="12" Height="12" IsActive="False" Visibility="Collapsed" />
                                     <TextBlock x:Name="CurrentInviteText" FontSize="12" Text="查看当前邀请信息" />
@@ -174,18 +159,14 @@
                     <Border
                         Grid.Column="1"
                         x:Name="JoinCard"
-                        Padding="18,16"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="16">
-                        <StackPanel Spacing="10">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Border Width="40" Height="40" CornerRadius="11" Background="#1F5B8DEF">
-                                    <FontIcon FontSize="18" Glyph="&#xE8F1;" Foreground="#5B8DEF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        Style="{StaticResource FluentCardStyle}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Style="{StaticResource IconTileStyle}">
+                                    <FontIcon FontSize="18" Glyph="&#xE8F1;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
-                                <StackPanel VerticalAlignment="Center" Spacing="1">
-                                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="我加入朋友" />
+                                <StackPanel VerticalAlignment="Center" Spacing="4">
+                                    <TextBlock Style="{StaticResource CardTitleStyle}" Text="我加入朋友" />
                                     <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="朋友当主机，我进他的虚拟网络" />
                                 </StackPanel>
                             </StackPanel>
@@ -195,7 +176,7 @@
                                 TextWrapping="Wrap"
                                 Text="粘贴朋友发来的邀请码（连说明文字一起粘也行），没装 Tailscale 也会自动装好；进网络后照游戏卡上的端口，在游戏里用「通过 IP 加入」连他。" />
                             <Button x:Name="StartJoinButton" Click="StartJoin_Click" CornerRadius="8" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="粘贴邀请码加入" />
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="粘贴邀请码加入" />
                             </Button>
                         </StackPanel>
                     </Border>
@@ -205,13 +186,13 @@
                 <StackPanel x:Name="GamesSection" Spacing="8">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Border Width="3" Height="15" CornerRadius="2" Background="#2BB673" VerticalAlignment="Center" />
-                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="我要玩的游戏" />
+                            <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource SystemFillColorSuccessBrush}" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="我要玩的游戏" />
                         </StackPanel>
                         <TextBlock
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Text="点一下 = 选好端口并进入邀请流程" />
                     </Grid>
@@ -224,7 +205,7 @@
                         <ItemsControl x:Name="GamesList">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="10" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
@@ -233,11 +214,11 @@
                                         Click="GameChip_Click"
                                         Tag="{x:Bind Self}"
                                         Padding="0"
-                                        CornerRadius="12"
+                                        CornerRadius="8"
                                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="1">
-                                        <StackPanel Width="122" Padding="12,10" Spacing="6">
+                                        <StackPanel Width="122" Padding="12,8" Spacing="8">
                                             <Grid Height="34">
                                                 <FontIcon
                                                     FontSize="16"
@@ -254,14 +235,13 @@
                                                 Text="{x:Bind Name}"
                                                 MaxLines="1"
                                                 TextTrimming="CharacterEllipsis" />
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind PortText}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind PortText}" />
                                                 <Border
-                                                    Padding="5,0"
-                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                                    CornerRadius="5"
+                                                    Style="{StaticResource StatusPillStyle}"
+                                                    Padding="4,0"
                                                     Visibility="{x:Bind HasProtocolBadge}">
-                                                    <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ProtocolBadge}" />
+                                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ProtocolBadge}" />
                                                 </Border>
                                             </StackPanel>
                                         </StackPanel>
@@ -274,18 +254,13 @@
 
                 <!-- ═════════ 原理与说明 ═════════ -->
                 <Border
-                    Padding="16,13"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12">
-                    <StackPanel Spacing="6">
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="它是怎么把两台电脑连起来的？" />
+                    Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="它是怎么把两台电脑连起来的？" />
                         <TextBlock
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            TextWrapping="Wrap"
-                            LineHeight="19">
+                            TextWrapping="Wrap">
                             <Run Text="· Tailscale 把两台电脑接进同一个虚拟局域网：每台有一个 100 开头的固定地址，TCP / UDP 游戏都能跑，不用公网 IP、不用改路由器。" />
                             <LineBreak />
                             <Run Text="· 这个虚拟网络是「三层」的：局域网组播和子网广播跨不过去，所以能不能自动刷出对方的房间取决于游戏怎么找主机——刷不出来时，在游戏里选「直接连接 / 通过 IP 加入」填地址和端口，这一步任何游戏都有效。" />

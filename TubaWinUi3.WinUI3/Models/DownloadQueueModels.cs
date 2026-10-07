@@ -536,58 +536,48 @@ internal static class ZipExtractHelper
             }
         }
     }
-}
 
-public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
-{
-    private const int MaxAttempts = 3;      // 首次 + 自动重试 2 次
-    private const int RetryDelayMs = 500;
+    // ---------- 解压 + 原子目录替换（工具包 / 社区工具共用；文案按 profile 区分） ----------
+
+    private const int ReplaceMaxAttempts = 3;      // 首次 + 自动重试 2 次
+    private const int ReplaceRetryDelayMs = 500;
     private const int CleanupAttempts = 3;
 
-    private readonly string? _version;
-    private readonly string? _kind;
-
-    public string DisplayName => "解压工具包";
-
-    public ToolsBundleExtractProcessor(string? version = null, string? kind = null)
-    {
-        _version = version;
-        _kind = kind;
-    }
-
-    public async Task ExecuteAsync(string downloadedFilePath, string destinationPath,
-        IProgress<string>? statusProgress, CancellationToken ct)
-    {
-        statusProgress?.Report("正在解压工具包...");
-        await Task.Run(() => ExtractCore(downloadedFilePath, destinationPath, statusProgress), ct);
-    }
-
-    private void ExtractCore(string downloadedFilePath, string destinationPath,
-        IProgress<string>? statusProgress)
+    /// <summary>
+    /// 解压到临时目录后原子替换目标目录（临时解压 → 备份旧目录 → 移动新目录 → 删备份），
+    /// 失败自动重试（覆盖文件占用），最终以逐文件拷贝兜底；个别文件写入失败仅跳过并提示。
+    /// 成功后删除下载的压缩包并调用 <paramref name="onCompleted"/>。
+    /// </summary>
+    public static void ExtractTolerantAndReplace(
+        string archivePath,
+        string destinationDir,
+        ExtractReplaceProfile profile,
+        IProgress<string>? statusProgress = null,
+        Action? onCompleted = null)
     {
         Exception? lastError = null;
 
-        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
+        for (var attempt = 1; attempt <= ReplaceMaxAttempts; attempt++)
         {
             if (attempt > 1)
             {
-                statusProgress?.Report($"解压遇到文件占用，正在自动重试（第 {attempt}/{MaxAttempts} 次）...");
-                Thread.Sleep(RetryDelayMs * attempt);
+                statusProgress?.Report($"解压遇到文件占用，正在自动重试（第 {attempt}/{ReplaceMaxAttempts} 次）...");
+                Thread.Sleep(ReplaceRetryDelayMs * attempt);
             }
 
             var extractDir = Path.Combine(Path.GetTempPath(), $"TubaWinUi3_Extract_{Guid.NewGuid():N}");
             try
             {
-                ExtractOnce(downloadedFilePath, destinationPath, extractDir, statusProgress,
-                    allowCopyFallback: attempt == MaxAttempts);
+                ExtractOnce(archivePath, destinationDir, extractDir, profile, statusProgress,
+                    allowCopyFallback: attempt == ReplaceMaxAttempts, onCompleted);
                 return;
             }
             catch (Exception ex)
             {
                 lastError = ex;
                 TryDeleteDirectory(extractDir);
-                if (attempt >= MaxAttempts)
-                    throw new IOException(DescribeFailure(ex), ex);
+                if (attempt >= ReplaceMaxAttempts)
+                    throw new IOException(DescribeReplaceFailure(ex, profile), ex);
             }
         }
 
@@ -595,10 +585,10 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
     }
 
     /// <summary>
-    /// 失败文案：目标文件被占用/只读是内核安装最常见的失败原因（工具正在运行会锁住自身文件），
-    /// 单独给出可操作的中文提示；其余情况保留原始错误内容。
+    /// 失败文案：目标文件被占用/只读是最常见的失败原因（工具正在运行会锁住自身文件），
+    /// 单独给出可操作提示；其余情况保留原始错误内容。
     /// </summary>
-    private static string DescribeFailure(Exception ex)
+    private static string DescribeReplaceFailure(Exception ex, ExtractReplaceProfile profile)
     {
         for (var e = ex; e is not null; e = e.InnerException)
         {
@@ -606,12 +596,12 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
 
             var path = ExtractQuotedPath(e.Message);
             return string.IsNullOrEmpty(path)
-                ? "内核安装失败：目标文件被占用或只读，请关闭正在运行的工具（如 DirectX Repair）后重试。"
-                : $"内核安装失败：无法写入 {path}（文件被占用或只读）。请关闭正在运行的工具（如 DirectX Repair）后重试。";
+                ? profile.BusyHint
+                : string.Format(profile.BusyHintFormat, path);
         }
 
         var message = ex.InnerException?.Message ?? ex.Message;
-        return $"解压工具包失败（已自动重试 {MaxAttempts - 1} 次）：{message}";
+        return string.Format(profile.GenericFailureFormat, ReplaceMaxAttempts - 1, message);
     }
 
     private static string? ExtractQuotedPath(string message)
@@ -622,16 +612,17 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
         return end > start ? message[(start + 1)..end] : null;
     }
 
-    private void ExtractOnce(string downloadedFilePath, string destinationPath, string extractDir,
-        IProgress<string>? statusProgress, bool allowCopyFallback)
+    private static void ExtractOnce(string archivePath, string destinationDir, string extractDir,
+        ExtractReplaceProfile profile, IProgress<string>? statusProgress, bool allowCopyFallback,
+        Action? onCompleted)
     {
-        if (!File.Exists(downloadedFilePath))
-            throw new FileNotFoundException("下载的文件不存在", downloadedFilePath);
+        if (!File.Exists(archivePath))
+            throw new FileNotFoundException("下载的文件不存在", archivePath);
 
         try
         {
             statusProgress?.Report("正在解压文件...");
-            var skipped = ZipExtractHelper.ExtractTolerant(downloadedFilePath, extractDir, statusProgress);
+            var skipped = ExtractTolerant(archivePath, extractDir, statusProgress);
             if (skipped.Count > 0)
             {
                 statusProgress?.Report($"已跳过 {skipped.Count} 个无法解压的文件（可能被占用或只读）");
@@ -643,33 +634,33 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
             throw;
         }
 
-        var backupDir = destinationPath + "_bak";
+        var backupDir = destinationDir + "_bak";
 
         try
         {
-            if (Directory.Exists(destinationPath))
+            if (Directory.Exists(destinationDir))
             {
                 TryDeleteDirectory(backupDir);
-                Directory.Move(destinationPath, backupDir);
+                Directory.Move(destinationDir, backupDir);
             }
 
-            var destParent = Path.GetDirectoryName(destinationPath);
+            var destParent = Path.GetDirectoryName(destinationDir);
             if (!string.IsNullOrEmpty(destParent))
                 Directory.CreateDirectory(destParent);
 
             try
             {
-                Directory.Move(extractDir, destinationPath);
+                Directory.Move(extractDir, destinationDir);
             }
             catch
             {
-                TryRestoreDirectory(backupDir, destinationPath);
+                TryRestoreDirectory(backupDir, destinationDir);
                 throw;
             }
 
             TryDeleteDirectory(backupDir);
-            try { File.Delete(downloadedFilePath); } catch { }
-            ApplyCompletedState(destinationPath);
+            try { File.Delete(archivePath); } catch { }
+            onCompleted?.Invoke();
         }
         catch
         {
@@ -677,42 +668,21 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
 
             // 兜底：目录原子替换行不通（文件被占用）时，逐文件复制覆盖
             statusProgress?.Report("正在使用文件拷贝模式完成安装...");
-            TryRestoreDirectory(backupDir, destinationPath);
+            TryRestoreDirectory(backupDir, destinationDir);
             try
             {
-                var skippedCount = CopyDirectoryContents(extractDir, destinationPath, statusProgress);
+                var skippedCount = CopyDirectoryContents(extractDir, destinationDir, statusProgress);
                 if (skippedCount >= Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).Length)
                     throw new IOException("目标目录不可写，文件拷贝全部失败");
 
                 TryDeleteDirectory(extractDir);
-                try { File.Delete(downloadedFilePath); } catch { }
-                ApplyCompletedState(destinationPath);
+                try { File.Delete(archivePath); } catch { }
+                onCompleted?.Invoke();
             }
             catch (Exception fallbackEx)
             {
-                throw new IOException($"解压工具包失败：{fallbackEx.Message}", fallbackEx);
+                throw new IOException(string.Format(profile.CopyFailureFormat, fallbackEx.Message), fallbackEx);
             }
-        }
-    }
-
-    private void ApplyCompletedState(string destinationPath)
-    {
-        if (!string.IsNullOrEmpty(_version))
-        {
-            Services.AppSettings.Set("ToolsBundleVersion", _version);
-        }
-
-        if (!string.IsNullOrEmpty(_kind))
-        {
-            Services.ToolsBundleService.SetInstalledKind(_kind);
-        }
-
-        Services.ToolCatalog.RefreshToolsRoot();
-
-        // 强制刷新侧边栏 / 标签页的工具分类（MSIX 内核安装完成后立即生效）
-        if (App.MainWindow is MainWindow mainWindow)
-        {
-            mainWindow.DispatcherQueue.TryEnqueue(mainWindow.RefreshToolCategories);
         }
     }
 
@@ -723,7 +693,7 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
             try
             {
                 // 只读文件会导致 Directory.Delete 抛异常，先清除属性
-                ZipExtractHelper.TryClearReadOnlyAttributes(dir);
+                TryClearReadOnlyAttributes(dir);
                 Directory.Delete(dir, true);
                 return;
             }
@@ -734,33 +704,33 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
         }
     }
 
-    private static void TryRestoreDirectory(string backupDir, string destinationPath)
+    private static void TryRestoreDirectory(string backupDir, string destinationDir)
     {
-        if (Directory.Exists(destinationPath) && Directory.Exists(backupDir))
+        if (Directory.Exists(destinationDir) && Directory.Exists(backupDir))
         {
             try
             {
-                ZipExtractHelper.TryClearReadOnlyAttributes(destinationPath);
-                Directory.Delete(destinationPath, true);
+                TryClearReadOnlyAttributes(destinationDir);
+                Directory.Delete(destinationDir, true);
             }
             catch { }
         }
-        if (Directory.Exists(backupDir) && !Directory.Exists(destinationPath))
+        if (Directory.Exists(backupDir) && !Directory.Exists(destinationDir))
         {
-            try { Directory.Move(backupDir, destinationPath); } catch { }
+            try { Directory.Move(backupDir, destinationDir); } catch { }
         }
     }
 
-    private static int CopyDirectoryContents(string sourceDir, string destinationPath,
+    private static int CopyDirectoryContents(string sourceDir, string destinationDir,
         IProgress<string>? statusProgress = null)
     {
-        Directory.CreateDirectory(destinationPath);
+        Directory.CreateDirectory(destinationDir);
         var files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
         var skipped = 0;
         foreach (var file in files)
         {
             var relative = Path.GetRelativePath(sourceDir, file);
-            var target = Path.Combine(destinationPath, relative);
+            var target = Path.Combine(destinationDir, relative);
             var parent = Path.GetDirectoryName(target);
             if (!string.IsNullOrEmpty(parent))
                 Directory.CreateDirectory(parent);
@@ -783,7 +753,7 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
             try
             {
                 if (File.Exists(target))
-                    ZipExtractHelper.TryClearReadOnlyAttribute(target);
+                    TryClearReadOnlyAttribute(target);
 
                 File.Copy(source, target, true);
                 return true;
@@ -798,50 +768,156 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
     }
 }
 
-public sealed class CommunityToolInstallProcessor : IDownloadPostProcessor
+/// <summary>解压 + 原子替换的文案集合（工具包与社区工具各按上下文区分，行为逻辑共享）。</summary>
+public sealed record ExtractReplaceProfile(
+    string BusyHint,
+    string BusyHintFormat,        // {0} = 被占用/只读的路径
+    string GenericFailureFormat,  // {0} = 重试次数，{1} = 原始错误
+    string CopyFailureFormat)     // {0} = 原始错误
 {
-    private readonly string _toolId;
-    private readonly string _category;
-    private readonly bool _isArchive;
+    public static readonly ExtractReplaceProfile ToolsBundle = new(
+        "内核安装失败：目标文件被占用或只读，请关闭正在运行的工具（如 DirectX Repair）后重试。",
+        "内核安装失败：无法写入 {0}（文件被占用或只读）。请关闭正在运行的工具（如 DirectX Repair）后重试。",
+        "解压工具包失败（已自动重试 {0} 次）：{1}",
+        "解压工具包失败：{0}");
 
-    public string DisplayName => "安装社区工具";
+    public static readonly ExtractReplaceProfile CommunityTool = new(
+        "安装失败：目标文件被占用或只读，请关闭正在运行的工具后重试。",
+        "安装失败：无法写入 {0}（文件被占用或只读）。请关闭正在运行的工具后重试。",
+        "解压社区工具失败（已自动重试 {0} 次）：{1}",
+        "解压社区工具失败：{0}");
+}
 
-    public CommunityToolInstallProcessor(string toolId, string category, bool isArchive)
+public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
+{
+    private readonly string? _version;
+    private readonly string? _kind;
+
+    public string DisplayName => "解压工具包";
+
+    public ToolsBundleExtractProcessor(string? version = null, string? kind = null)
     {
-        _toolId = toolId;
-        _category = category;
-        _isArchive = isArchive;
+        _version = version;
+        _kind = kind;
     }
 
     public async Task ExecuteAsync(string downloadedFilePath, string destinationPath,
         IProgress<string>? statusProgress, CancellationToken ct)
     {
+        statusProgress?.Report("正在解压工具包...");
         await Task.Run(() =>
+            ZipExtractHelper.ExtractTolerantAndReplace(
+                downloadedFilePath, destinationPath, ExtractReplaceProfile.ToolsBundle,
+                statusProgress, onCompleted: ApplyCompletedState), ct);
+    }
+
+    private void ApplyCompletedState()
+    {
+        if (!string.IsNullOrEmpty(_version))
         {
-            var toolsRoot = Services.ToolCatalog.ToolsRoot;
-            var categoryDir = Path.Combine(toolsRoot, _category);
-            Directory.CreateDirectory(categoryDir);
-            var toolDir = Path.Combine(categoryDir, _toolId);
+            Services.AppSettings.Set("ToolsBundleVersion", _version);
+        }
 
-            if (Directory.Exists(toolDir))
-            {
-                try { Directory.Delete(toolDir, true); } catch { }
-            }
-            Directory.CreateDirectory(toolDir);
+        if (!string.IsNullOrEmpty(_kind))
+        {
+            Services.ToolsBundleService.SetInstalledKind(_kind);
+        }
 
-            if (_isArchive)
-            {
-                statusProgress?.Report("正在解压...");
-                System.IO.Compression.ZipFile.ExtractToDirectory(downloadedFilePath, toolDir, true);
-                try { File.Delete(downloadedFilePath); } catch { }
-            }
-            else
-            {
-                var destPath = Path.Combine(toolDir, Path.GetFileName(downloadedFilePath));
-                File.Move(downloadedFilePath, destPath, true);
-            }
+        Services.ToolCatalog.RefreshToolsRoot();
 
-            Services.ToolCatalog.InvalidateTagsCache();
-        }, ct);
+        // 强制刷新侧边栏 / 标签页的工具分类（MSIX 内核安装完成后立即生效）
+        if (App.MainWindow is MainWindow mainWindow)
+        {
+            mainWindow.DispatcherQueue.TryEnqueue(mainWindow.RefreshToolCategories);
+        }
+    }
+}
+
+/// <summary>社区工具安装所需的全部信息（队列后处理器使用；来自 plugin.json + 索引里的文件 sha）。</summary>
+public sealed record CommunityToolInstallRequest(
+    string ToolId,
+    string DisplayName,
+    string Category,
+    string? Description,
+    string? Publisher,
+    IReadOnlyList<string> Tags,
+    string? LaunchTarget,
+    string? Version,
+    string? Author,
+    string? RepoPath,
+    string? FileName,
+    string? Sha);
+
+/// <summary>
+/// 社区工具安装：解压/就位 → 写 tools.json（让 ToolCatalog 收录）→ 写安装记录（更新检测）→ 刷新界面。
+/// 目录原子替换 + 容错解压与工具包共用（ZipExtractHelper.ExtractTolerantAndReplace），
+/// 已有安装在失败时保持完好。参数化处理器不注册进 PostProcessorRegistry：
+/// 解析器型队列项重启后本来就不恢复，注册只会误导恢复语义。
+/// </summary>
+public sealed class CommunityToolInstallProcessor : IDownloadPostProcessor
+{
+    private readonly CommunityToolInstallRequest _request;
+
+    public string DisplayName => "安装社区工具";
+
+    public CommunityToolInstallProcessor(CommunityToolInstallRequest request)
+    {
+        _request = request;
+    }
+
+    public async Task ExecuteAsync(string downloadedFilePath, string destinationPath,
+        IProgress<string>? statusProgress, CancellationToken ct)
+    {
+        statusProgress?.Report("正在安装社区工具...");
+        await Task.Run(() => Install(downloadedFilePath, destinationPath, statusProgress), ct);
+    }
+
+    private void Install(string downloadedFilePath, string destinationPath, IProgress<string>? statusProgress)
+    {
+        var isArchive = downloadedFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+
+        if (isArchive)
+        {
+            ZipExtractHelper.ExtractTolerantAndReplace(
+                downloadedFilePath, destinationPath, ExtractReplaceProfile.CommunityTool, statusProgress);
+        }
+        else
+        {
+            Directory.CreateDirectory(destinationPath);
+            var targetPath = Path.Combine(destinationPath, Path.GetFileName(downloadedFilePath));
+            if (!string.Equals(Path.GetFullPath(downloadedFilePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+                File.Move(downloadedFilePath, targetPath, true);
+        }
+
+        // tools.json 条目：卡片名称/描述/标签/启动目标（ToolCatalog 收录的唯一依据）。
+        // 写入失败会抛 IOException → 队列项 Failed 并给出原因，不静默。
+        Services.ToolMetadataService.UpsertToolMetadataEntry(
+            _request.ToolId,
+            name: _request.DisplayName,
+            description: _request.Description,
+            publisher: _request.Publisher,
+            tags: _request.Tags,
+            launchTarget: _request.LaunchTarget);
+        Services.ToolMetadataService.InvalidateCache();
+
+        Services.CommunityToolRegistry.Upsert(new Services.CommunityInstallRecord(
+            _request.ToolId,
+            _request.Category,
+            _request.Sha,
+            _request.Version,
+            _request.Author,
+            _request.RepoPath,
+            _request.FileName,
+            _request.LaunchTarget,
+            DateTimeOffset.Now));
+
+        Services.ToolCatalog.RefreshToolsRoot();
+
+        if (App.MainWindow is MainWindow mainWindow)
+        {
+            mainWindow.DispatcherQueue.TryEnqueue(mainWindow.RefreshToolCategories);
+        }
+
+        statusProgress?.Report("安装完成");
     }
 }

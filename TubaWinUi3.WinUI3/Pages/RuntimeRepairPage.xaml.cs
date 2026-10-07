@@ -63,7 +63,12 @@ public sealed partial class RuntimeRepairPage : Page
     private void RuntimeRepairPage_Loaded(object sender, RoutedEventArgs e)
     {
         _cts = new CancellationTokenSource();
-        ActualThemeChanged += (_, _) => ApplyStateColors();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重新解析语义色并重着色
+        ActualThemeChanged += (_, _) =>
+        {
+            LoadColors();
+            ApplyStateColors();
+        };
         LoadColors();
         _ = RefreshStatusesAsync();
     }
@@ -87,10 +92,11 @@ public sealed partial class RuntimeRepairPage : Page
 
     private void LoadColors()
     {
-        _successColor = ColorRes("SystemFillColorSuccessBrush", Color.FromArgb(255, 15, 123, 15));
-        _cautionColor = ColorRes("SystemFillColorCautionBrush", Color.FromArgb(255, 157, 93, 0));
-        _accentColor = ColorRes("SystemAccentColor", Color.FromArgb(255, 0, 120, 212));
-        _secondaryColor = ColorRes("TextFillColorSecondaryBrush", Color.FromArgb(255, 96, 96, 96));
+        // 语义色统一取自 ThemeColors（跟随系统主题/强调色），不再写死品牌色回退值
+        _successColor = ColorRes("SystemFillColorSuccessBrush", ThemeColors.AccentGreen);
+        _cautionColor = ColorRes("SystemFillColorCautionBrush", ThemeColors.AccentOrange);
+        _accentColor = ColorRes("SystemAccentColor", ThemeColors.AccentBlue);
+        _secondaryColor = ColorRes("TextFillColorSecondaryBrush", ThemeColors.SecondaryText);
     }
 
     private static SolidColorBrush Brush(Color color) => new(color);

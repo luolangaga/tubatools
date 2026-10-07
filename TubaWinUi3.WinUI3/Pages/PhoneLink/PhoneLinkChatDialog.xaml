@@ -31,7 +31,7 @@
                     <DataTemplate x:DataType="local:PhoneChatBubbleVm">
                         <Grid HorizontalAlignment="{x:Bind Align}" MaxWidth="420" Margin="0,2">
                             <Border Background="{x:Bind BubbleBrush}" CornerRadius="8" Padding="12,8">
-                                <StackPanel Spacing="6">
+                                <StackPanel Spacing="8">
                                     <Image Source="{x:Bind Thumbnail, Mode=OneWay}" Visibility="{x:Bind ThumbnailVisibility, Mode=OneWay}"
                                            MaxHeight="200" Stretch="Uniform" HorizontalAlignment="Left"/>
                                     <TextBlock Text="{x:Bind Text}" TextWrapping="Wrap" Visibility="{x:Bind TextVisibility}"
@@ -40,9 +40,9 @@
                                         <TextBlock Text="{x:Bind FileName}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                                         <TextBlock Text="{x:Bind FileMeta}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"/>
                                         <Button Content="另存为" Tag="{x:Bind MessageId}" Click="SaveAs_Click"
-                                                Padding="10,2" Margin="0,4,0,0" Visibility="{x:Bind SaveVisibility}"/>
+                                                Padding="8,2" Margin="0,4,0,0" Visibility="{x:Bind SaveVisibility}"/>
                                     </StackPanel>
-                                    <TextBlock Text="{x:Bind TimeText}" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Text="{x:Bind TimeText}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -51,11 +51,12 @@
             </ListView>
             <TextBlock x:Name="EmptyHint" HorizontalAlignment="Center" VerticalAlignment="Center"
                        MaxWidth="320" TextAlignment="Center" TextWrapping="Wrap"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="14"
                        Text="还没有消息。手机连接后，这里可以互发文字、图片和文件。"/>
         </Grid>
 
-        <TextBlock x:Name="TransferText" Grid.Row="2" TextWrapping="Wrap" FontSize="12" Opacity="0.8"
+        <TextBlock x:Name="TransferText" Grid.Row="2" TextWrapping="Wrap" FontSize="12"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                    Visibility="Collapsed" Text=""/>
 
         <Grid Grid.Row="3" ColumnSpacing="8">

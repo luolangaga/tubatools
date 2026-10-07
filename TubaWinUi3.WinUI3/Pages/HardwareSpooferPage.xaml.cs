@@ -8,9 +8,10 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class HardwareSpooferPage : Page
 {
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 146, 60);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
+    // 语义状态色（警告 = Caution、成功 = Success、危险 = Critical）取自 ThemeColors，随主题解析
+    private static Color AccentOrange => ThemeColors.AccentOrange;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentRed => ThemeColors.AccentRed;
 
     private List<HardwareSpooferEntry>? _entries;
 
@@ -68,12 +69,28 @@ public sealed partial class HardwareSpooferPage : Page
     {
         InitializeComponent();
 
-        WarningBorder.Background = new SolidColorBrush(Color.FromArgb(30, 251, 146, 60));
-        WarningBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(80, 251, 146, 60));
-        WarningIcon.Foreground = new SolidColorBrush(AccentOrange);
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前状态重新着色
+        ActualThemeChanged += (_, _) => ApplyStatusColors(HardwareSpooferService.IsAdmin);
+
+        ApplyStatusColors(HardwareSpooferService.IsAdmin);
 
         PopulatePresets();
         LoadCurrentValues();
+    }
+
+    /// <summary>
+    /// 风险提示与管理员状态的语义色：警告用 Caution、成功/危险用 Success/Critical；
+    /// 浅底为基色的 alpha 派生（保留原 30/80 透明度）。
+    /// </summary>
+    private void ApplyStatusColors(bool isAdmin)
+    {
+        WarningBorder.Background = new SolidColorBrush(Color.FromArgb(30, AccentOrange.R, AccentOrange.G, AccentOrange.B));
+        WarningBorder.BorderBrush = new SolidColorBrush(Color.FromArgb(80, AccentOrange.R, AccentOrange.G, AccentOrange.B));
+        WarningIcon.Foreground = new SolidColorBrush(AccentOrange);
+
+        AdminStatusText.Foreground = isAdmin
+            ? new SolidColorBrush(AccentGreen)
+            : new SolidColorBrush(AccentRed);
     }
 
     private void PopulatePresets()
@@ -160,9 +177,7 @@ public sealed partial class HardwareSpooferPage : Page
 
         var isAdmin = HardwareSpooferService.IsAdmin;
         AdminStatusText.Text = isAdmin ? "是" : "否";
-        AdminStatusText.Foreground = isAdmin
-            ? new SolidColorBrush(AccentGreen)
-            : new SolidColorBrush(AccentRed);
+        ApplyStatusColors(isAdmin);
     }
 
     private void CollectChanges()

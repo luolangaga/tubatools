@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -27,16 +26,6 @@ public static class CommunityToolService
     public static CommunityDataSource CurrentSource { get; set; } = CommunityDataSource.GitCode;
 
     private static string ApiBase => CurrentSource == CommunityDataSource.GitCode ? GitCodeApiBase : GitHubApiBase;
-
-    private static readonly HttpClient _apiClient = new()
-    {
-        Timeout = TimeSpan.FromSeconds(30)
-    };
-
-    static CommunityToolService()
-    {
-        _apiClient.DefaultRequestHeaders.Add("User-Agent", "TubaWinUi3-Community");
-    }
 
     private static List<CommunityTool>? _cache;
     private static DateTimeOffset _cacheTime;
@@ -81,8 +70,7 @@ public static class CommunityToolService
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
         {
-            _cache = tools;
-            _cacheTime = DateTimeOffset.UtcNow;
+            // 失败不写缓存：否则接下来的 10 分钟都会把失败当"空社区"返回，页面无法重试
             throw new InvalidOperationException($"加载社区工具失败：{ex.Message}", ex);
         }
 
@@ -395,187 +383,6 @@ public static class CommunityToolService
         }
     }
 
-    public static async Task<List<string>> GetCategoriesAsync(CancellationToken ct = default)
-    {
-        var tools = await GetPluginsAsync(ct: ct);
-        return tools.Select(t => t.Category).Distinct().OrderBy(c => c).ToList();
-    }
-
-    public static async Task<List<CommunityTool>> GetPluginsByCategoryAsync(string category, int page = 1, int perPage = 30, CancellationToken ct = default)
-    {
-        var all = await GetPluginsAsync(ct: ct);
-        var filtered = all.Where(t => t.Category == category).ToList();
-        return filtered.Skip((page - 1) * perPage).Take(perPage).ToList();
-    }
-
-    public static async Task<List<CommunityTool>> SearchPluginsAsync(string query, CancellationToken ct = default)
-    {
-        var all = await GetPluginsAsync(ct: ct);
-        var q = query.Trim().ToLowerInvariant();
-        return all.Where(t =>
-            t.Name.ToLowerInvariant().Contains(q) ||
-            (t.Description?.ToLowerInvariant().Contains(q) == true) ||
-            t.Tags.Any(tag => tag.ToLowerInvariant().Contains(q)) ||
-            t.Category.ToLowerInvariant().Contains(q)
-        ).ToList();
-    }
-
-    public static CommunityToolInstallStatus CheckInstallStatus(CommunityTool tool)
-    {
-        var toolsRoot = ToolCatalog.ToolsRoot;
-        if (toolsRoot is null) return CommunityToolInstallStatus.NotInstalled;
-
-        var toolDir = Path.Combine(toolsRoot, tool.Category, tool.Id);
-        if (!Directory.Exists(toolDir)) return CommunityToolInstallStatus.NotInstalled;
-
-        return Directory.EnumerateFileSystemEntries(toolDir, "*", SearchOption.AllDirectories).Any()
-            ? CommunityToolInstallStatus.Installed
-            : CommunityToolInstallStatus.NotInstalled;
-    }
-
-    public static string? GetLocalPath(CommunityTool tool)
-    {
-        var toolsRoot = ToolCatalog.ToolsRoot;
-        if (toolsRoot is null) return null;
-
-        var toolDir = Path.Combine(toolsRoot, tool.Category, tool.Id);
-        if (!Directory.Exists(toolDir)) return null;
-
-        var launchTarget = tool.LaunchTarget;
-        if (!string.IsNullOrWhiteSpace(launchTarget))
-        {
-            var directPath = Path.Combine(toolDir, launchTarget);
-            if (File.Exists(directPath)) return directPath;
-
-            var found = Directory.GetFiles(toolDir, launchTarget, SearchOption.AllDirectories);
-            if (found.Length > 0) return found[0];
-        }
-
-        var exes = Directory.GetFiles(toolDir, "*.exe", SearchOption.AllDirectories);
-        return exes.Length > 0 ? exes[0] : null;
-    }
-
-    public static async Task<string> InstallPluginAsync(CommunityTool tool, IProgress<ToolDownloadProgress>? progress, CancellationToken ct = default)
-    {
-        return await InstallPluginAsync(tool, null, progress, ct);
-    }
-
-    public static async Task<string> InstallPluginAsync(CommunityTool tool, string? overrideSourceUrl, IProgress<ToolDownloadProgress>? progress, CancellationToken ct = default)
-    {
-        var toolsRoot = ToolCatalog.ToolsRoot;
-        if (toolsRoot is null) throw new InvalidOperationException("无法找到工具目录");
-
-        var categoryDir = Path.Combine(toolsRoot, tool.Category);
-        Directory.CreateDirectory(categoryDir);
-        var toolDir = Path.Combine(categoryDir, tool.Id);
-
-        if (Directory.Exists(toolDir))
-        {
-            try { Directory.Delete(toolDir, true); } catch { }
-        }
-        Directory.CreateDirectory(toolDir);
-
-        var downloadSource = !string.IsNullOrWhiteSpace(tool.DownloadUrl) ? tool.DownloadUrl : "";
-        var communityFile = !string.IsNullOrWhiteSpace(tool.File) ? tool.File : "";
-
-        if (!string.IsNullOrWhiteSpace(overrideSourceUrl))
-        {
-            var tempDir = Path.Combine(Path.GetTempPath(), $"TubaCommunity_{tool.Id}");
-            var fileName = communityFile;
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                try { fileName = new Uri(overrideSourceUrl).Segments.Last(); }
-                catch { fileName = "download"; }
-            }
-            var archivePath = await ToolDownloaderService.DownloadToFileAsync(
-                overrideSourceUrl, tempDir, fileName, progress, ct);
-            await ToolDownloaderService.ExtractArchiveAsync(archivePath, toolDir, ct);
-        }
-        else if (!string.IsNullOrWhiteSpace(communityFile) && string.IsNullOrWhiteSpace(downloadSource))
-        {
-            var bestUrl = await ResolveCommunityFileUrlAsync(tool, communityFile, ct);
-            var tempDir = Path.Combine(Path.GetTempPath(), $"TubaCommunity_{tool.Id}");
-            var archivePath = await ToolDownloaderService.DownloadToFileAsync(
-                bestUrl, tempDir, communityFile, progress, ct);
-            await ToolDownloaderService.ExtractArchiveAsync(archivePath, toolDir, ct);
-        }
-        else if (ToolDownloaderService.IsGitCodeDir(downloadSource))
-        {
-            var result = await ToolDownloaderService.SyncToolFromGitCodeDirAsync(
-                downloadSource[3..], toolDir, null,
-                progress: new Progress<GitCodeDirProgress>(p =>
-                    progress?.Report(new ToolDownloadProgress(0, 0, p.Percentage, 0, null))),
-                ct);
-            if (!result.Success) throw new InvalidOperationException(result.ErrorMessage ?? "下载失败");
-        }
-        else if (!string.IsNullOrWhiteSpace(downloadSource))
-        {
-            var downloadInfo = await ToolDownloaderService.ResolveDownloadUrlAsync(
-                downloadSource, tool.DownloadFilter, ct);
-
-            var tempDir = Path.Combine(Path.GetTempPath(), $"TubaCommunity_{tool.Id}");
-            var archivePath = await ToolDownloaderService.DownloadToFileAsync(
-                downloadInfo!.DownloadUrl, tempDir, downloadInfo.FileName, progress, ct);
-
-            if (downloadInfo.IsArchive)
-            {
-                await ToolDownloaderService.ExtractArchiveAsync(archivePath, toolDir, ct);
-            }
-            else
-            {
-                var destPath = Path.Combine(toolDir, downloadInfo.FileName);
-                File.Move(archivePath, destPath, true);
-                try { Directory.Delete(tempDir, true); } catch { }
-            }
-        }
-        else
-        {
-            throw new InvalidOperationException("该工具没有提供下载源");
-        }
-
-        ToolCatalog.InvalidateTagsCache();
-        return toolDir;
-    }
-
-    private static async Task<string> ResolveCommunityFileUrlAsync(CommunityTool tool, string communityFile, CancellationToken ct)
-    {
-        // 列表/详情已预取文件 sha：直接用 GitCode blob 直链，零探测零额外请求
-        if (!string.IsNullOrWhiteSpace(tool.FileSha))
-        {
-            return $"https://raw.gitcode.com/{GitCodeOwner}/{GitCodeRepo}/blobs/{tool.FileSha}/{Uri.EscapeDataString(communityFile)}";
-        }
-
-        // 无 sha（老数据/映射缺失）：回退原逻辑——HEAD 探测 GitCode raw，失败回 GitHub raw
-        var rawUrl = $"https://raw.githubusercontent.com/{UpstreamOwner}/{UpstreamRepo}/main/{tool.RepoPath}/{communityFile}";
-        return await ResolveCommunityFileUrlAsync(rawUrl, ct);
-    }
-
-    private static async Task<string> ResolveCommunityFileUrlAsync(string rawUrl, CancellationToken ct)
-    {
-        var prefix = $"https://raw.githubusercontent.com/{UpstreamOwner}/{UpstreamRepo}/main/";
-        string gitCodeUrl;
-        if (rawUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            var relativePath = rawUrl[prefix.Length..];
-            gitCodeUrl = BuildGitCodeRawUrl(relativePath);
-        }
-        else
-        {
-            gitCodeUrl = rawUrl;
-        }
-
-        try
-        {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-            client.DefaultRequestHeaders.Add("User-Agent", "TubaWinUi3-Community");
-            using var resp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, gitCodeUrl), ct);
-            if (resp.IsSuccessStatusCode) return gitCodeUrl;
-        }
-        catch { }
-
-        return rawUrl;
-    }
-
     private static string BuildGitCodeRawUrl(string relativePath)
     {
         var segments = relativePath.Split('/');
@@ -608,29 +415,12 @@ public static class CommunityToolService
         return urls;
     }
 
-    public static void LaunchPlugin(CommunityTool tool)
-    {
-        var localPath = GetLocalPath(tool);
-        if (localPath is null) return;
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = localPath,
-            UseShellExecute = true,
-            WorkingDirectory = Path.GetDirectoryName(localPath)
-        });
-
-        LaunchHistoryService.RecordLaunch(localPath);
-    }
-
     public const long MaxUploadSizeBytes = 50 * 1024 * 1024;
 
     public static async Task<string> SubmitPluginAsync(
-        string name, string description, string category, string tags,
-        string? zipFilePath, string launchTarget,
-        string publisher, string homepage, string version,
-        IProgress<string>? progress, string? iconFilePath = null, CancellationToken ct = default,
-        string? downloadUrl = null, string? downloadFilter = null)
+        CommunityPluginDraft draft,
+        IProgress<string>? progress,
+        CancellationToken ct = default)
     {
         var token = GitHubAuthService.GetToken();
         if (string.IsNullOrWhiteSpace(token))
@@ -640,52 +430,8 @@ public static class CommunityToolService
         if (user is null)
             throw new InvalidOperationException("无法获取用户信息");
 
-        var toolId = GenerateToolId(name);
-        var tagList = tags.Split(',', '，', ';', '；')
-            .Select(t => t.Trim())
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .ToList();
-
-        var pluginObj = new Dictionary<string, object?>
-        {
-            ["id"] = toolId,
-            ["name"] = name,
-            ["version"] = string.IsNullOrWhiteSpace(version) ? "1.0" : version,
-            ["description"] = description,
-            ["category"] = category,
-            ["publisher"] = string.IsNullOrWhiteSpace(publisher) ? null : publisher,
-            ["tags"] = tagList,
-            ["launchTarget"] = string.IsNullOrWhiteSpace(launchTarget) ? null : launchTarget,
-            ["author"] = user.Login,
-            ["submittedAt"] = DateTimeOffset.UtcNow.ToString("o"),
-            ["homepage"] = string.IsNullOrWhiteSpace(homepage) ? null : homepage
-        };
-
-        if (!string.IsNullOrWhiteSpace(zipFilePath))
-        {
-            pluginObj["file"] = Path.GetFileName(zipFilePath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(downloadUrl))
-        {
-            pluginObj["downloadUrl"] = downloadUrl;
-        }
-
-        if (!string.IsNullOrWhiteSpace(downloadFilter))
-        {
-            pluginObj["downloadFilter"] = downloadFilter;
-        }
-
-        if (!string.IsNullOrWhiteSpace(iconFilePath))
-        {
-            pluginObj["icon"] = Path.GetFileName(iconFilePath);
-        }
-
-        var jsonText = JsonSerializer.Serialize(pluginObj, new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        });
+        var toolId = GenerateToolId(draft.Name);
+        var jsonText = BuildPluginJson(draft, user.Login);
 
         progress?.Report("正在 Fork 仓库...");
 
@@ -706,35 +452,84 @@ public static class CommunityToolService
 
         progress?.Report("正在上传文件...");
 
-        if (!string.IsNullOrWhiteSpace(zipFilePath) && File.Exists(zipFilePath))
+        if (!string.IsNullOrWhiteSpace(draft.ZipFilePath) && File.Exists(draft.ZipFilePath))
         {
-            var zipFileName = Path.GetFileName(zipFilePath);
-            var zipRepoPath = $"{PluginsPath}/{category}/{toolId}/{zipFileName}";
-            await CreateBinaryFileAsync(forkOwner, UpstreamRepo, zipRepoPath, branchName, zipFilePath, token, ct);
+            var zipFileName = Path.GetFileName(draft.ZipFilePath);
+            var zipRepoPath = $"{PluginsPath}/{draft.Category}/{toolId}/{zipFileName}";
+            await CreateBinaryFileAsync(forkOwner, UpstreamRepo, zipRepoPath, branchName, draft.ZipFilePath, token, ct);
         }
 
-        if (!string.IsNullOrWhiteSpace(iconFilePath) && File.Exists(iconFilePath))
+        if (!string.IsNullOrWhiteSpace(draft.IconFilePath) && File.Exists(draft.IconFilePath))
         {
-            var iconFileName = Path.GetFileName(iconFilePath);
-            var iconRepoPath = $"{PluginsPath}/{category}/{toolId}/{iconFileName}";
-            await CreateBinaryFileAsync(forkOwner, UpstreamRepo, iconRepoPath, branchName, iconFilePath, token, ct);
+            var iconFileName = Path.GetFileName(draft.IconFilePath);
+            var iconRepoPath = $"{PluginsPath}/{draft.Category}/{toolId}/{iconFileName}";
+            await CreateBinaryFileAsync(forkOwner, UpstreamRepo, iconRepoPath, branchName, draft.IconFilePath, token, ct);
         }
 
         progress?.Report("正在提交插件信息...");
 
-        var pluginRepoPath = $"{PluginsPath}/{category}/{toolId}/plugin.json";
+        var pluginRepoPath = $"{PluginsPath}/{draft.Category}/{toolId}/plugin.json";
         await CreateFileAsync(forkOwner, UpstreamRepo, pluginRepoPath, branchName, jsonText, token, ct);
 
         progress?.Report("正在创建 Pull Request...");
 
         var prUrl = await CreatePullRequestAsync(
-            branchName, forkOwner, toolId, name, description, category, user.Login, token, ct);
+            branchName, forkOwner, toolId, draft.Name, draft.Description, draft.Category, user.Login, token, ct);
 
         progress?.Report("提交成功！");
 
         InvalidateCache();
         return prUrl;
     }
+
+    /// <summary>plugin.json 的唯一构建入口：提交上传与界面预览共用同一份内容。</summary>
+    public static string BuildPluginJson(CommunityPluginDraft draft, string author)
+    {
+        var plugin = new Dictionary<string, object?>
+        {
+            ["id"] = GenerateToolId(draft.Name),
+            ["name"] = draft.Name,
+            ["version"] = string.IsNullOrWhiteSpace(draft.Version) ? "1.0" : draft.Version,
+            ["description"] = draft.Description,
+            ["category"] = draft.Category,
+            ["tags"] = draft.Tags,
+            ["launchTarget"] = string.IsNullOrWhiteSpace(draft.LaunchTarget) ? null : draft.LaunchTarget,
+            ["author"] = author,
+            ["submittedAt"] = DateTimeOffset.UtcNow.ToString("o")
+        };
+
+        if (!string.IsNullOrWhiteSpace(draft.Publisher)) plugin["publisher"] = draft.Publisher;
+        if (!string.IsNullOrWhiteSpace(draft.Homepage)) plugin["homepage"] = draft.Homepage;
+        if (!string.IsNullOrWhiteSpace(draft.IconFilePath)) plugin["icon"] = Path.GetFileName(draft.IconFilePath);
+        if (!string.IsNullOrWhiteSpace(draft.ZipFilePath)) plugin["file"] = Path.GetFileName(draft.ZipFilePath);
+        if (!string.IsNullOrWhiteSpace(draft.DownloadUrl)) plugin["downloadUrl"] = draft.DownloadUrl;
+        if (!string.IsNullOrWhiteSpace(draft.DownloadFilter)) plugin["downloadFilter"] = draft.DownloadFilter;
+
+        if (draft.ArchVariants.Count > 0)
+        {
+            plugin["archVariants"] = draft.ArchVariants
+                .Where(v => !string.IsNullOrWhiteSpace(v.EntryPath) && !string.IsNullOrWhiteSpace(v.Arch))
+                .Select(v => new Dictionary<string, object?>
+                {
+                    ["file"] = v.EntryPath.Replace('\\', '/').TrimStart('/'),
+                    ["arch"] = v.Arch
+                })
+                .ToList();
+        }
+
+        return JsonSerializer.Serialize(plugin, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
+    }
+
+    /// <summary>标签输入解析（中英文逗号/分号分隔）。</summary>
+    public static List<string> ParseTagList(string tags) =>
+        tags.Split(',', '，', ';', '；')
+            .Select(t => t.Trim())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .ToList();
 
     public static async Task<string> DeletePluginAsync(CommunityTool tool, IProgress<string>? progress, CancellationToken ct = default)
     {

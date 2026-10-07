@@ -23,6 +23,9 @@ public sealed partial class AntiMotionSicknessWindow : Page
 
         _suppressEvents = false;
 
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前状态重渲染
+        ActualThemeChanged += (_, _) => UpdateOverlayStatus(AntiMotionSicknessOverlay.IsRunning);
+
         Unloaded += OnPageUnloaded;
     }
 
@@ -172,7 +175,7 @@ public sealed partial class AntiMotionSicknessWindow : Page
         if (running)
         {
             StatusIcon.Glyph = "\uE73E";
-            StatusIcon.Foreground = new SolidColorBrush(Color.FromArgb(255, 74, 222, 128));
+            StatusIcon.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
             StatusTitle.Text = "辅助器运行中";
             StatusDesc.Text = "屏幕准星和标记已开启，不影响鼠标键盘操作";
             ToggleOverlayIcon.Glyph = "\uE71A";
@@ -181,7 +184,7 @@ public sealed partial class AntiMotionSicknessWindow : Page
         else
         {
             StatusIcon.Glyph = "\uE894";
-            StatusIcon.Foreground = new SolidColorBrush(Color.FromArgb(255, 128, 128, 128));
+            StatusIcon.Foreground = new SolidColorBrush(ThemeColors.Neutral);
             StatusTitle.Text = "辅助器已关闭";
             StatusDesc.Text = "点击下方按钮开启屏幕准星辅助";
             ToggleOverlayIcon.Glyph = "\uE73E";

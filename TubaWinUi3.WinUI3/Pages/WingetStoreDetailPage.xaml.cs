@@ -63,7 +63,7 @@ public sealed partial class WingetStoreDetailPage : Page
                 {
                     InstallButton.IsEnabled = false;
                     InstallButton.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                        (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]);
+                        new SolidColorBrush(ThemeColors.AccentGreen));
                     pkg.InstallState = "queued";
                 }
                 else
@@ -82,7 +82,7 @@ public sealed partial class WingetStoreDetailPage : Page
                 pkg.InstallState = "queued";
                 InstallButton.IsEnabled = false;
                 InstallButton.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                    (Brush)Application.Current.Resources["SystemFillColorSuccessBrush"]);
+                    new SolidColorBrush(ThemeColors.AccentGreen));
             }
             else
             {

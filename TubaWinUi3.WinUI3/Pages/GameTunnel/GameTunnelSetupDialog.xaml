@@ -21,7 +21,7 @@
         </ResourceDictionary>
     </ContentDialog.Resources>
 
-    <Grid MinWidth="480" RowSpacing="10">
+    <Grid MinWidth="480" RowSpacing="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -40,26 +40,22 @@
         <!-- 步骤 1：客户端 -->
         <Border
             Grid.Row="1"
-            Padding="14,12"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="10">
+            Style="{StaticResource FluentCardStyle}">
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="Step1Badge" Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                <Border x:Name="Step1Badge" Width="28" Height="28" CornerRadius="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
                     <FontIcon x:Name="Step1Icon" FontSize="12" Glyph="&#xE9F5;" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="安装 Tailscale 客户端" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="安装 Tailscale 客户端" />
                     <TextBlock x:Name="Step1Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="检测中…" />
                     <ProgressBar x:Name="Step1Progress" Visibility="Collapsed" Margin="0,4,0,0" />
-                    <TextBlock x:Name="Step1ProgressText" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" />
+                    <TextBlock x:Name="Step1ProgressText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -67,46 +63,42 @@
         <!-- 步骤 2：登录 -->
         <Border
             Grid.Row="2"
-            Padding="14,12"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="10">
+            Style="{StaticResource FluentCardStyle}">
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="Step2Badge" Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                <Border x:Name="Step2Badge" Width="28" Height="28" CornerRadius="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
                     <FontIcon x:Name="Step2Icon" FontSize="12" Glyph="&#xE77B;" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="登录 Tailscale" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="登录 Tailscale" />
                     <TextBlock x:Name="Step2Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="等待客户端就绪…" />
 
-                    <StackPanel x:Name="AuthUrlPanel" Visibility="Collapsed" Spacing="6" Margin="0,4,0,0">
+                    <StackPanel x:Name="AuthUrlPanel" Visibility="Collapsed" Spacing="8" Margin="0,4,0,0">
                         <TextBlock
                             FontSize="12"
                             TextWrapping="Wrap"
                             Text="浏览器没有自动打开的话，复制下面这个地址，在浏览器里完成登录：" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBox x:Name="AuthUrlBox" IsReadOnly="True" FontSize="12" FontFamily="Consolas" MinWidth="300" />
-                            <Button x:Name="CopyAuthUrlButton" Click="CopyAuthUrl_Click" CornerRadius="7" Padding="10,6" Content="复制" FontSize="13" />
-                            <Button x:Name="OpenAuthUrlButton" Click="OpenAuthUrl_Click" CornerRadius="7" Padding="10,6" Content="打开浏览器" FontSize="13" />
+                            <Button x:Name="CopyAuthUrlButton" Click="CopyAuthUrl_Click" CornerRadius="8" Padding="8,8" Content="复制" FontSize="14" />
+                            <Button x:Name="OpenAuthUrlButton" Click="OpenAuthUrl_Click" CornerRadius="8" Padding="8,8" Content="打开浏览器" FontSize="14" />
                         </StackPanel>
                     </StackPanel>
 
                     <!-- 后端还在启动 / 卡在启动：这里给出实时进度与自救入口 -->
-                    <StackPanel x:Name="WaitingPanel" Visibility="Collapsed" Spacing="6" Margin="0,4,0,0">
+                    <StackPanel x:Name="WaitingPanel" Visibility="Collapsed" Spacing="8" Margin="0,4,0,0">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <ProgressRing x:Name="WaitingRing" Width="16" Height="16" IsActive="True" VerticalAlignment="Center" />
                             <TextBlock x:Name="WaitingText" VerticalAlignment="Center" FontSize="12" Text="正在等待 Tailscale 就绪…" />
                         </StackPanel>
                         <TextBlock
                             x:Name="StuckHintText"
-                            FontSize="11"
+                            FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             TextWrapping="Wrap"
                             Visibility="Collapsed" />
@@ -118,25 +110,21 @@
         <!-- 步骤 3：就绪 -->
         <Border
             Grid.Row="3"
-            Padding="14,12"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="10">
+            Style="{StaticResource FluentCardStyle}">
             <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <Border x:Name="Step3Badge" Width="28" Height="28" CornerRadius="14" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
+                <Border x:Name="Step3Badge" Width="28" Height="28" CornerRadius="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
                     <FontIcon x:Name="Step3Icon" FontSize="12" Glyph="&#xE774;" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock FontSize="14" FontWeight="SemiBold" Text="拿到联机地址" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="拿到联机地址" />
                     <TextBlock x:Name="Step3Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="登录后自动获取" />
-                    <TextBlock x:Name="IpText" FontSize="20" FontWeight="Bold" FontFamily="Consolas" Visibility="Collapsed" IsTextSelectionEnabled="True" />
+                    <TextBlock x:Name="IpText" Style="{StaticResource StatValueStyle}" FontFamily="Consolas" Visibility="Collapsed" IsTextSelectionEnabled="True" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -145,7 +133,7 @@
 
         <TextBlock
             Grid.Row="5"
-            FontSize="11"
+            FontSize="12"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
             TextWrapping="Wrap"
             Text="Tailscale 是免费的个人组网工具，登录用 Google / Microsoft / GitHub 账号都可以。它不会改变你的上网方式，也不会把游戏端口暴露到公网。" />

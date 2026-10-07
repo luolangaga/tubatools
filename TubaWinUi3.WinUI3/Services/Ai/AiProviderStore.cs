@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using TubaWinUi3.Services;
+using TubaWinUi3.Services.AiPlayground;
 
 namespace TubaWinUi3.Services.Ai;
 
@@ -15,6 +16,12 @@ public static class AiProviderStore
     public const string DeepSeekProviderId = "deepseek";
     public const string MiMoProviderId = "mimo";
     public const string OpenCodeZenProviderId = "opencode";
+    /// <summary>进程内本地 ONNX 模型提供商（模型列表由「本地 AI 试炼场」模型库派生）。</summary>
+    public const string LocalProviderId = "local";
+
+    /// <summary>内置预设提供商 Id（不可删除、名称由「恢复默认」复位）。</summary>
+    public static bool IsPresetProviderId(string id) =>
+        id is CustomProviderId or DeepSeekProviderId or MiMoProviderId or OpenCodeZenProviderId or LocalProviderId;
 
     /// <summary>OpenCode Zen 免费模型的兜底种子列表（首次使用、未登录刷新时也能选）。</summary>
     public static readonly string[] OpenCodeZenSeedFreeModels =
@@ -142,6 +149,87 @@ public static class AiProviderStore
         }
     }
 
+    /// <summary>
+    /// 删除一个自定义提供商（预设不可删）。若删除的是当前选中项则回退到「小图吧自带模型」，
+    /// 且永远至少保留一个提供商。返回是否删除成功。
+    /// </summary>
+    public static bool DeleteProvider(string providerId)
+    {
+        lock (_lock)
+        {
+            EnsureLoaded();
+            if (IsPresetProviderId(providerId)) return false;
+
+            var provider = GetProvider(providerId);
+            if (provider is null) return false;
+
+            _cache!.Providers.Remove(provider);
+            if (_cache.Providers.Count == 0)
+            {
+                if (CreatePreset(CustomProviderId) is { } fallback)
+                    _cache.Providers.Add(fallback);
+            }
+
+            if (_cache.SelectedProviderId == providerId)
+            {
+                var target = GetProvider(CustomProviderId) ?? _cache.Providers[0];
+                _cache.SelectedProviderId = target.Id;
+                _cache.SelectedModelId = target.DefaultModel;
+            }
+
+            _cache.SelectedModelId = ResolveSelectedModel(_cache.SelectedProviderId, _cache.SelectedModelId);
+            Save();
+            return true;
+        }
+    }
+
+    /// <summary>重命名一个自定义提供商（预设名称由「恢复默认」复位，不允许改名）。返回是否成功。</summary>
+    public static bool RenameProvider(string providerId, string name)
+    {
+        lock (_lock)
+        {
+            EnsureLoaded();
+            if (IsPresetProviderId(providerId)) return false;
+
+            var provider = GetProvider(providerId);
+            var trimmed = name.Trim();
+            if (provider is null || trimmed.Length == 0) return false;
+
+            provider.Name = trimmed;
+            Save();
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// 同步「本地模型」提供商的模型列表（单一事实来源 = AiModelLibrary 的对话模型）。
+    /// 无可用模型时列表为空。返回该提供商的可用模型数。
+    /// </summary>
+    public static int SyncLocalProviderModels()
+    {
+        lock (_lock)
+        {
+            EnsureLoaded();
+            var local = GetProvider(LocalProviderId);
+            if (local is null) return 0;
+
+            var models = AiModelLibrary.GetAllEntries()
+                .Where(e => e.Task == AiTaskKind.Chat && AiModelLibrary.GetStatus(e).AllReady)
+                .Select(e => new AiModelOption(e.Id, e.DisplayName))
+                .ToList();
+
+            local.Kind = ProviderKind.Local;
+            local.Models = models;
+
+            if (!models.Any(m => m.Id.Equals(local.DefaultModel, StringComparison.OrdinalIgnoreCase)))
+                local.DefaultModel = models.FirstOrDefault()?.Id ?? "";
+
+            _cache!.SelectedModelId = ResolveSelectedModel(_cache.SelectedProviderId, _cache.SelectedModelId);
+            Save();
+            return models.Count;
+        }
+    }
+
     /// <summary>恢复提供商的预设默认（模型列表/默认模型/地址），保留 API Key。</summary>
     public static void ResetProviderDefaults(string providerId)
     {
@@ -227,6 +315,7 @@ public static class AiProviderStore
     {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter() },
     };
 
     private static void EnsureLoaded()
@@ -244,6 +333,14 @@ public static class AiProviderStore
         if (file is not null && file.Providers.Count > 0)
         {
             _cache = file;
+
+            // 老配置补入「本地模型」提供商（此前版本没有此项）
+            if (_cache.Providers.All(p => p.Id != LocalProviderId))
+            {
+                if (CreatePreset(LocalProviderId) is { } localPreset)
+                    _cache.Providers.Add(localPreset);
+                Save();
+            }
 
             var fileCustom = _cache.Providers.FirstOrDefault(p => p.Id == CustomProviderId);
 
@@ -296,7 +393,7 @@ public static class AiProviderStore
         }
 
         _cache = new StoreFile();
-        foreach (var id in new[] { CustomProviderId, DeepSeekProviderId, MiMoProviderId, OpenCodeZenProviderId })
+        foreach (var id in new[] { CustomProviderId, DeepSeekProviderId, MiMoProviderId, OpenCodeZenProviderId, LocalProviderId })
         {
             if (CreatePreset(id) is { } preset)
                 _cache.Providers.Add(preset);
@@ -393,6 +490,18 @@ public static class AiProviderStore
                     KeyHintUrl = "",
                     DefaultModel = OpenCodeZenSeedFreeModels[0],
                     Models = seed,
+                };
+            case LocalProviderId:
+                return new AiProvider
+                {
+                    Id = id,
+                    Name = "本地模型",
+                    Kind = ProviderKind.Local,
+                    IsPreset = true,
+                    EndpointLocked = true,
+                    KeyHintUrl = "",
+                    DefaultModel = "",
+                    Models = [],
                 };
             default:
                 return null;

@@ -1,6 +1,4 @@
 using System.IO.Compression;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace TubaWinUi3.Services;
 
@@ -31,11 +29,6 @@ public static class CustomToolPackageService
     [
         ".exe"
     ];
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true
-    };
 
     public static IReadOnlyList<ImportableExecutable> GetExecutables(string packagePath)
     {
@@ -76,7 +69,7 @@ public static class CustomToolPackageService
         if (!File.Exists(primaryPath))
             throw new FileNotFoundException("导入后没有找到所选主程序。", primaryPath);
 
-        await UpsertMetadataAsync(request, Path.GetFileName(toolDirectory));
+        UpsertMetadata(request, Path.GetFileName(toolDirectory));
 
         ToolMetadataService.InvalidateCache();
         ToolCatalog.InvalidateTagsCache();
@@ -156,7 +149,7 @@ public static class CustomToolPackageService
             tags,
             []);
 
-        await UpsertMetadataAsync(request, Path.GetFileName(toolDirectory));
+        UpsertMetadata(request, Path.GetFileName(toolDirectory));
 
         ToolMetadataService.InvalidateCache();
         ToolCatalog.InvalidateTagsCache();
@@ -184,68 +177,22 @@ public static class CustomToolPackageService
         }
     }
 
-    private static async Task UpsertMetadataAsync(CustomToolImportRequest request, string metadataMatch)
+    private static void UpsertMetadata(CustomToolImportRequest request, string metadataMatch)
     {
-        var metadataRoot = ToolMetadataService.GetWritableMetadataDir();
-        Directory.CreateDirectory(metadataRoot);
-        var metadataPath = Path.Combine(metadataRoot, "tools.json");
-
-        JsonObject root;
-        JsonArray tools;
-
-        if (File.Exists(metadataPath))
-        {
-            await using var readStream = File.OpenRead(metadataPath);
-            root = await JsonNode.ParseAsync(readStream) as JsonObject ?? new JsonObject();
-            tools = root["tools"] as JsonArray ?? [];
-        }
-        else
-        {
-            root = new JsonObject();
-            tools = [];
-        }
-
-        root["tools"] = tools;
-
-        var existing = tools
-            .OfType<JsonObject>()
-            .FirstOrDefault(item =>
-                string.Equals(item["match"]?.GetValue<string>(), metadataMatch, StringComparison.CurrentCultureIgnoreCase));
-
-        if (existing is not null)
-            tools.Remove(existing);
-
-        var metadata = new JsonObject
-        {
-            ["match"] = metadataMatch,
-            ["description"] = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
-            ["publisher"] = string.IsNullOrWhiteSpace(request.Publisher) ? null : request.Publisher.Trim()
-        };
-
-        if (request.Tags.Count > 0)
-        {
-            metadata["tags"] = new JsonArray(request.Tags
-                .Where(tag => !string.IsNullOrWhiteSpace(tag))
-                .Select(tag => JsonValue.Create(tag.Trim()))
-                .ToArray<JsonNode?>());
-        }
-
-        var variants = request.ArchVariants
-            .Where(variant => !string.IsNullOrWhiteSpace(variant.EntryPath) && !string.IsNullOrWhiteSpace(variant.Arch))
-            .Select(variant => new JsonObject
-            {
-                ["file"] = NormalizeEntryPath(variant.EntryPath).Replace('/', '\\'),
-                ["arch"] = variant.Arch.Trim()
-            })
-            .ToArray<JsonNode?>();
-
-        if (variants.Length > 0)
-            metadata["archVariants"] = new JsonArray(variants);
-
-        tools.Add(metadata);
-
-        await using var writeStream = File.Create(metadataPath);
-        await JsonSerializer.SerializeAsync(writeStream, root, JsonOptions);
+        ToolMetadataService.UpsertToolMetadataEntry(
+            metadataMatch,
+            name: request.ToolName,
+            description: request.Description,
+            publisher: request.Publisher,
+            tags: request.Tags,
+            archVariants: request.ArchVariants
+                .Where(variant => !string.IsNullOrWhiteSpace(variant.EntryPath) && !string.IsNullOrWhiteSpace(variant.Arch))
+                .Select(variant => new ToolMetadataService.JsonArchVariant
+                {
+                    File = NormalizeEntryPath(variant.EntryPath).Replace('/', '\\'),
+                    Arch = variant.Arch.Trim()
+                })
+                .ToList());
     }
 
     private static string GetUniqueDirectory(string desiredDirectory)

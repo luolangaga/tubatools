@@ -739,7 +739,22 @@
     <value>新建自定义</value>
   </data>
   <data name="Settings_AiProvider_Desc.Text" xml:space="preserve">
-    <value>内置 DeepSeek / 小米 MiMo / OpenCode Zen 预设，只需填写 API Key；自定义提供商可完全编辑</value>
+    <value>内置 DeepSeek / 小米 MiMo / OpenCode Zen / 本地模型预设；自定义提供商可编辑名称、删除</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteButton.Text" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteTitle" xml:space="preserve">
+    <value>删除提供商</value>
+  </data>
+  <data name="Settings_AiProvider_DeleteConfirm" xml:space="preserve">
+    <value>确定删除提供商「{0}」？此操作不可恢复。</value>
+  </data>
+  <data name="Settings_AiProvider_LocalHint" xml:space="preserve">
+    <value>本地模型：对话在「本地 AI 试炼场」的模型库中下载/导入；仅 AI 助手使用本地推理，其他 AI 功能仍走自带网关。</value>
+  </data>
+  <data name="Settings_AiProvider_NamePlaceholder.PlaceholderText" xml:space="preserve">
+    <value>提供商名称</value>
   </data>
   <data name="Settings_AiProvider_ResetButton.Text" xml:space="preserve">
     <value>恢复默认</value>
@@ -4612,5 +4627,515 @@
   </data>
   <data name="FileLock_ContextToolTip" xml:space="preserve">
     <value>查看是哪个进程占用了此文件</value>
+  </data>
+  <data name="Settings_ThemeCard_Title" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="Settings_ThemeCard_Desc" xml:space="preserve">
+    <value>选择应用的显示主题，切换后立即生效</value>
+  </data>
+  <data name="Settings_Theme_System" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="Builtin_ai-playground_Name" xml:space="preserve">
+    <value>本地AI试炼场</value>
+  </data>
+  <data name="Builtin_ai-playground_Desc" xml:space="preserve">
+    <value>本地部署并运行 AI 模型：LLM 对话、图像分类、目标检测、图像特征对比，支持 NPU / GPU / CPU 加速。</value>
+  </data>
+  <data name="AiPlayground_PageHeader.Title" xml:space="preserve">
+    <value>本地AI试炼场</value>
+  </data>
+  <data name="AiPlayground_PageHeader.Subtitle" xml:space="preserve">
+    <value>本地部署并运行 AI 模型 · NPU / GPU / CPU · 离线推理</value>
+  </data>
+  <data name="AiPlayground_TabLibrary.Header" xml:space="preserve">
+    <value>模型库</value>
+  </data>
+  <data name="AiPlayground_TabPlayground.Header" xml:space="preserve">
+    <value>试炼场</value>
+  </data>
+  <data name="AiPlayground_TabEngine.Header" xml:space="preserve">
+    <value>引擎与设备</value>
+  </data>
+  <data name="AiPlayground_Import" xml:space="preserve">
+    <value>导入本地模型</value>
+  </data>
+  <data name="AiPlayground_OpenFolder" xml:space="preserve">
+    <value>打开模型目录</value>
+  </data>
+  <data name="AiPlayground_CurrentModel" xml:space="preserve">
+    <value>当前模型</value>
+  </data>
+  <data name="AiPlayground_Reload" xml:space="preserve">
+    <value>重新加载</value>
+  </data>
+  <data name="AiPlayground_EmptyHint" xml:space="preserve">
+    <value>还没有可用的模型：请先在「模型库」下载一个模型。</value>
+  </data>
+  <data name="AiPlayground_GoLibrary" xml:space="preserve">
+    <value>去模型库</value>
+  </data>
+  <data name="AiPlayground_SystemPrompt" xml:space="preserve">
+    <value>系统提示词（可选）</value>
+  </data>
+  <data name="AiPlayground_Send" xml:space="preserve">
+    <value>发送</value>
+  </data>
+  <data name="AiPlayground_Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="AiPlayground_PickImage" xml:space="preserve">
+    <value>选择图片</value>
+  </data>
+  <data name="AiPlayground_Run" xml:space="preserve">
+    <value>开始推理</value>
+  </data>
+  <data name="AiPlayground_ClearGallery" xml:space="preserve">
+    <value>清空对比</value>
+  </data>
+  <data name="AiPlayground_Threshold" xml:space="preserve">
+    <value>阈值</value>
+  </data>
+  <data name="AiPlayground_Temperature" xml:space="preserve">
+    <value>温度</value>
+  </data>
+  <data name="AiPlayground_MaxTokens" xml:space="preserve">
+    <value>最大生成</value>
+  </data>
+  <data name="AiPlayground_ContextTokens" xml:space="preserve">
+    <value>上下文</value>
+  </data>
+  <data name="AiPlayground_ContextTokensEffective" xml:space="preserve">
+    <value>上下文 {0}</value>
+  </data>
+  <data name="AiPlayground_DropHint" xml:space="preserve">
+    <value>把图片拖到这里，或点击「选择图片」</value>
+  </data>
+  <data name="AiPlayground_DeviceSection" xml:space="preserve">
+    <value>设备信息</value>
+  </data>
+  <data name="AiPlayground_EpSection" xml:space="preserve">
+    <value>加速包（执行提供程序）</value>
+  </data>
+  <data name="AiPlayground_InstallAll" xml:space="preserve">
+    <value>一键下载并注册推荐加速包</value>
+  </data>
+  <data name="AiPlayground_DeviceTable" xml:space="preserve">
+    <value>已注册设备（ONNX Runtime）</value>
+  </data>
+  <data name="AiPlayground_CacheSection" xml:space="preserve">
+    <value>NPU 编译缓存</value>
+  </data>
+  <data name="AiPlayground_ClearCache" xml:space="preserve">
+    <value>清理缓存</value>
+  </data>
+  <data name="AiPlayground_Task_Chat" xml:space="preserve">
+    <value>对话</value>
+  </data>
+  <data name="AiPlayground_Task_Classification" xml:space="preserve">
+    <value>图像分类</value>
+  </data>
+  <data name="AiPlayground_Task_Detection" xml:space="preserve">
+    <value>目标检测</value>
+  </data>
+  <data name="AiPlayground_Task_Embedding" xml:space="preserve">
+    <value>图像特征</value>
+  </data>
+  <data name="AiPlayground_Tag_NpuCpu" xml:space="preserve">
+    <value>推荐 NPU/CPU</value>
+  </data>
+  <data name="AiPlayground_Tag_Gpu" xml:space="preserve">
+    <value>推荐 GPU</value>
+  </data>
+  <data name="AiPlayground_Tag_Quantized" xml:space="preserve">
+    <value>量化版</value>
+  </data>
+  <data name="AiPlayground_Tag_QuantizedGpl" xml:space="preserve">
+    <value>量化版 · GPL</value>
+  </data>
+  <data name="AiPlayground_Tag_Gpl" xml:space="preserve">
+    <value>GPL 许可</value>
+  </data>
+  <data name="AiPlayground_Tag_Custom" xml:space="preserve">
+    <value>本地导入</value>
+  </data>
+  <data name="AiPlayground_Tag_Advanced" xml:space="preserve">
+    <value>进阶</value>
+  </data>
+  <data name="AiPlayground_Mode_Auto" xml:space="preserve">
+    <value>自动（NPU → GPU → CPU）</value>
+  </data>
+  <data name="AiPlayground_Mode_Npu" xml:space="preserve">
+    <value>优先 NPU</value>
+  </data>
+  <data name="AiPlayground_Mode_Gpu" xml:space="preserve">
+    <value>优先 GPU</value>
+  </data>
+  <data name="AiPlayground_Mode_Cpu" xml:space="preserve">
+    <value>仅 CPU</value>
+  </data>
+  <data name="AiPlayground_ModeHint_Device" xml:space="preserve">
+    <value>已指定执行设备（优先于引擎模式），对之后加载的模型生效。</value>
+  </data>
+  <data name="AiPlayground_ModeHint_Normal" xml:space="preserve">
+    <value>引擎模式对之后加载的模型生效。</value>
+  </data>
+  <data name="AiPlayground_ModeHint_LowOs" xml:space="preserve">
+    <value>当前系统低于 Win11 24H2：CPU 与 DirectML(GPU) 可用，NPU 加速包需更高系统版本。</value>
+  </data>
+  <data name="AiPlayground_Device_Auto" xml:space="preserve">
+    <value>自动（按引擎模式）</value>
+  </data>
+  <data name="AiPlayground_NoNpu" xml:space="preserve">
+    <value>NPU：未检测到</value>
+  </data>
+  <data name="AiPlayground_NoEp" xml:space="preserve">
+    <value>加速：未加载</value>
+  </data>
+  <data name="AiPlayground_EpReady" xml:space="preserve">
+    <value>已注册加速</value>
+  </data>
+  <data name="AiPlayground_LibraryFooter" xml:space="preserve">
+    <value>模型库占用 {0} · 模型存放于 {1}</value>
+  </data>
+  <data name="AiPlayground_ContinueDownload" xml:space="preserve">
+    <value>继续下载</value>
+  </data>
+  <data name="AiPlayground_Download" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="AiPlayground_OpenInPlayground" xml:space="preserve">
+    <value>在试炼场打开</value>
+  </data>
+  <data name="AiPlayground_Remove" xml:space="preserve">
+    <value>移除</value>
+  </data>
+  <data name="AiPlayground_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="AiPlayground_NotSupported" xml:space="preserve">
+    <value>不可用</value>
+  </data>
+  <data name="AiPlayground_DownloadConfirm" xml:space="preserve">
+    <value>将下载「{0}」（{1}），来自 {2}（{3}）。
+下载在全局下载队列中进行，支持暂停与断点续传。</value>
+  </data>
+  <data name="AiPlayground_DiskWarn" xml:space="preserve">
+    <value>⚠ 目标磁盘可用空间仅 {0}，可能不足。</value>
+  </data>
+  <data name="AiPlayground_DownloadTitle" xml:space="preserve">
+    <value>下载模型</value>
+  </data>
+  <data name="AiPlayground_DownloadFailed" xml:space="preserve">
+    <value>下载失败</value>
+  </data>
+  <data name="AiPlayground_RemoveConfirm" xml:space="preserve">
+    <value>将从列表中移除「{0}」（不会删除你磁盘上的原始目录）。</value>
+  </data>
+  <data name="AiPlayground_DeleteConfirm" xml:space="preserve">
+    <value>将删除「{0}」的本地模型文件（{1}），删除后需要重新下载。</value>
+  </data>
+  <data name="AiPlayground_ImportHint" xml:space="preserve">
+    <value>单个 .onnx 文件（图像分类 / 目标检测 / 图像特征）或 ONNX Runtime GenAI 模型目录（对话，需含 genai_config.json）。</value>
+  </data>
+  <data name="AiPlayground_ImportFile" xml:space="preserve">
+    <value>选择 .onnx 文件</value>
+  </data>
+  <data name="AiPlayground_ImportFolder" xml:space="preserve">
+    <value>选择 GenAI 目录</value>
+  </data>
+  <data name="AiPlayground_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="AiPlayground_ImportTaskLabel" xml:space="preserve">
+    <value>选择任务类型（标签优先取模型 config.json 的 id2label）：</value>
+  </data>
+  <data name="AiPlayground_ImportDone" xml:space="preserve">
+    <value>已导入：{0}</value>
+  </data>
+  <data name="AiPlayground_ImportFailed" xml:space="preserve">
+    <value>导入失败</value>
+  </data>
+  <data name="AiPlayground_PromptPlain" xml:space="preserve">
+    <value>纯文本</value>
+  </data>
+  <data name="AiPlayground_ImportFormatLabel" xml:space="preserve">
+    <value>选择该模型的提示词模板（不同模型家族使用不同的对话标记）：</value>
+  </data>
+  <data name="AiPlayground_RunningOn" xml:space="preserve">
+    <value>运行</value>
+  </data>
+  <data name="AiPlayground_LowMemory" xml:space="preserve">
+    <value>内存紧张：本地大模型建议至少 8 GB 可用内存</value>
+  </data>
+  <data name="AiPlayground_LoadingModel" xml:space="preserve">
+    <value>正在加载模型（首次较慢）…</value>
+  </data>
+  <data name="AiPlayground_ModelReady" xml:space="preserve">
+    <value>模型已就绪</value>
+  </data>
+  <data name="AiPlayground_LoadFailed" xml:space="preserve">
+    <value>加载模型失败</value>
+  </data>
+  <data name="AiPlayground_NoOutput" xml:space="preserve">
+    <value>（模型没有输出任何内容）</value>
+  </data>
+  <data name="AiPlayground_ChatStats" xml:space="preserve">
+    <value>约 {0} tokens · {1:F1} tokens/s · {2} 秒</value>
+  </data>
+  <data name="AiPlayground_GenFailed" xml:space="preserve">
+    <value>生成失败</value>
+  </data>
+  <data name="AiPlayground_ImageFailed" xml:space="preserve">
+    <value>无法打开图片</value>
+  </data>
+  <data name="AiPlayground_NeedImage" xml:space="preserve">
+    <value>请先选择图片</value>
+  </data>
+  <data name="AiPlayground_InferenceFailed" xml:space="preserve">
+    <value>推理失败</value>
+  </data>
+  <data name="AiPlayground_Inferencing" xml:space="preserve">
+    <value>正在推理…</value>
+  </data>
+  <data name="AiPlayground_InferenceDone" xml:space="preserve">
+    <value>完成 · {0:HH:mm:ss}</value>
+  </data>
+  <data name="AiPlayground_Top5" xml:space="preserve">
+    <value>分类结果（Top 5）</value>
+  </data>
+  <data name="AiPlayground_DetectCount" xml:space="preserve">
+    <value>检测到 {0} 个目标</value>
+  </data>
+  <data name="AiPlayground_EmbeddingDone" xml:space="preserve">
+    <value>特征维度 {0} · 已加入对比（{1} 张）</value>
+  </data>
+  <data name="AiPlayground_Session" xml:space="preserve">
+    <value>会话</value>
+  </data>
+  <data name="AiPlayground_NewSession" xml:space="preserve">
+    <value>新建对话</value>
+  </data>
+  <data name="AiPlayground_DeleteSession" xml:space="preserve">
+    <value>删除会话</value>
+  </data>
+  <data name="AiPlayground_DeleteSessionConfirm" xml:space="preserve">
+    <value>将删除会话「{0}」及其全部消息？</value>
+  </data>
+  <data name="AiPlayground_DefaultSessionTitle" xml:space="preserve">
+    <value>新对话</value>
+  </data>
+  <data name="AiPlayground_UsedDevice" xml:space="preserve">
+    <value>本次运行：{0}</value>
+  </data>
+  <data name="AiPlayground_Confidence" xml:space="preserve">
+    <value>置信度</value>
+  </data>
+  <data name="AiPlayground_Iou" xml:space="preserve">
+    <value>IoU</value>
+  </data>
+  <data name="AiPlayground_ClassAwareNms" xml:space="preserve">
+    <value>类别内 NMS</value>
+  </data>
+  <data name="AiPlayground_ClassFilter" xml:space="preserve">
+    <value>类别过滤</value>
+  </data>
+  <data name="AiPlayground_ClassFilterHint" xml:space="preserve">
+    <value>取消勾选的类别将被过滤（不影响其他类别）。</value>
+  </data>
+  <data name="AiPlayground_DrawRules" xml:space="preserve">
+    <value>绘制规则</value>
+  </data>
+  <data name="AiPlayground_DrawRulesHelp" xml:space="preserve">
+    <value>为每个检测框设置绘制样式（不写则自动按类别配色）。示例：
+when label == "person" &amp;&amp; score &gt; 0.8 then stroke=#E81123 width=3 label="人 {score:P0}"
+when class_id == 2 then stroke=#0F6CBD width=2
+when count(class_id) &gt;= 3 then stroke=#CA5010
+else then stroke=#888888 visible=true
+字段：label(英文) class_id score x y w h；函数：count/contains/startsWith/endsWith/upper/lower</value>
+  </data>
+  <data name="AiPlayground_RulesError" xml:space="preserve">
+    <value>规则有语法错误</value>
+  </data>
+  <data name="AiPlayground_RulesReset" xml:space="preserve">
+    <value>恢复默认</value>
+  </data>
+  <data name="AiPlayground_RulesApplied" xml:space="preserve">
+    <value>已应用 {0} 条绘制规则</value>
+  </data>
+  <data name="AiPlayground_PickWindow" xml:space="preserve">
+    <value>选择窗口</value>
+  </data>
+  <data name="AiPlayground_NoWindows" xml:space="preserve">
+    <value>没有找到可捕获的窗口。</value>
+  </data>
+  <data name="AiPlayground_WindowPicked" xml:space="preserve">
+    <value>已选择窗口：{0}</value>
+  </data>
+  <data name="AiPlayground_StartLive" xml:space="preserve">
+    <value>开始实时</value>
+  </data>
+  <data name="AiPlayground_StopLive" xml:space="preserve">
+    <value>停止实时</value>
+  </data>
+  <data name="AiPlayground_LiveStarted" xml:space="preserve">
+    <value>实时检测已开始</value>
+  </data>
+  <data name="AiPlayground_LiveStopped" xml:space="preserve">
+    <value>实时检测已停止</value>
+  </data>
+  <data name="AiPlayground_SourceCameraHint" xml:space="preserve">
+    <value>摄像头：点「开始实时」连续检测。</value>
+  </data>
+  <data name="AiPlayground_SourceScreenHint" xml:space="preserve">
+    <value>屏幕：点「开始实时」连续检测（含多屏）。</value>
+  </data>
+  <data name="AiPlayground_SourceWindowHint" xml:space="preserve">
+    <value>窗口：先「选择窗口」，再点「开始实时」。</value>
+  </data>
+  <data name="AiPlayground_LiveStats" xml:space="preserve">
+    <value>实时 · {0:F1} FPS · 推理 {1:F0} ms · {2} 个目标</value>
+  </data>
+  <data name="AiPlayground_LiveNeedDetect" xml:space="preserve">
+    <value>实时检测仅支持「目标检测」模型。</value>
+  </data>
+  <data name="AiPlayground_InferenceDoneDevice" xml:space="preserve">
+    <value>完成 · {0:HH:mm:ss} · {1}</value>
+  </data>
+  <data name="AiPlayground_GalleryCount" xml:space="preserve">
+    <value>对比图（{0}）</value>
+  </data>
+  <data name="AiPlayground_EmbeddingHint" xml:space="preserve">
+    <value>再选择另一张图片并运行，即可得到相似度。</value>
+  </data>
+  <data name="AiPlayground_Similarity" xml:space="preserve">
+    <value>余弦相似度</value>
+  </data>
+  <data name="AiPlayground_Cpu" xml:space="preserve">
+    <value>处理器</value>
+  </data>
+  <data name="AiPlayground_Gpu" xml:space="preserve">
+    <value>显卡</value>
+  </data>
+  <data name="AiPlayground_Npu" xml:space="preserve">
+    <value>NPU</value>
+  </data>
+  <data name="AiPlayground_NoNpuShort" xml:space="preserve">
+    <value>未检测到</value>
+  </data>
+  <data name="AiPlayground_Ram" xml:space="preserve">
+    <value>内存</value>
+  </data>
+  <data name="AiPlayground_Os" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="AiPlayground_Runtime" xml:space="preserve">
+    <value>推理运行时</value>
+  </data>
+  <data name="AiPlayground_EpLoadFailed" xml:space="preserve">
+    <value>无法读取加速包列表：{0}</value>
+  </data>
+  <data name="AiPlayground_EpNone" xml:space="preserve">
+    <value>未发现可用的加速包信息。</value>
+  </data>
+  <data name="AiPlayground_EpReadyState" xml:space="preserve">
+    <value>已就绪并已注册</value>
+  </data>
+  <data name="AiPlayground_EpReadyNotRegistered" xml:space="preserve">
+    <value>已安装（未注册）</value>
+  </data>
+  <data name="AiPlayground_EpNotInstalled" xml:space="preserve">
+    <value>未安装</value>
+  </data>
+  <data name="AiPlayground_EpRegistered" xml:space="preserve">
+    <value>已注册</value>
+  </data>
+  <data name="AiPlayground_EpEnable" xml:space="preserve">
+    <value>启用并注册</value>
+  </data>
+  <data name="AiPlayground_EpInstall" xml:space="preserve">
+    <value>下载并安装</value>
+  </data>
+  <data name="AiPlayground_EpWorking" xml:space="preserve">
+    <value>正在处理 {0}…</value>
+  </data>
+  <data name="AiPlayground_DeviceTableEmpty" xml:space="preserve">
+    <value>尚未获取到 EP 设备（可能原因：x86 版本或系统版本过低）。</value>
+  </data>
+  <data name="AiPlayground_CacheEmpty" xml:space="preserve">
+    <value>暂无缓存（NPU 推理时自动生成）</value>
+  </data>
+  <data name="AiPlayground_CacheInfo" xml:space="preserve">
+    <value>{0} 个文件 · {1}</value>
+  </data>
+  <data name="AiPlayground_EpInstallingAll" xml:space="preserve">
+    <value>正在下载并注册推荐加速包（可能需要几分钟）…</value>
+  </data>
+  <data name="AiPlayground_ClearCacheConfirm" xml:space="preserve">
+    <value>将删除 NPU 编译缓存（下次推理时会重新编译，可能需要几分钟）。</value>
+  </data>
+  <data name="AiPlayground_OK" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="AiPlayground_EpHint" xml:space="preserve">
+    <value>加速包从微软商店按需下载（需要网络），安装后注册到 ONNX Runtime 即可在 NPU / GPU 上推理。</value>
+  </data>
+  <data name="AiPlayground_EpHintLowOs" xml:space="preserve">
+    <value>当前系统低于 Windows 11 24H2：内置 CPU 与 DirectML(GPU) 可用；厂商 NPU/GPU 加速包需要更高系统版本。</value>
+  </data>
+  <data name="AiPlayground_NpuNotEnabled" xml:space="preserve">
+    <value>{0}（NPU 未启用 — 请在「引擎与设备」安装加速包）</value>
+  </data>
+  <data name="AiPlayground_Device_Unstable" xml:space="preserve">
+    <value>不稳定，可能回退 GPU/CPU</value>
+  </data>
+  <data name="AiPlayground_Device_Probe" xml:space="preserve">
+    <value>首次自动探测兼容性</value>
+  </data>
+  <data name="AiPlayground_NpuProbing" xml:space="preserve">
+    <value>正在探测 NPU 兼容性（首次较慢）…</value>
+  </data>
+  <data name="AiPlayground_NpuProbeFailed" xml:space="preserve">
+    <value>NPU 探测未通过，已回退 GPU/CPU：{0}</value>
+  </data>
+  <data name="AiPlayground_NpuNeedEp" xml:space="preserve">
+    <value>未启用（安装加速包后可用于推理）</value>
+  </data>
+  <data name="AiPlayground_NpuUnregistered" xml:space="preserve">
+    <value>{0} · NPU · 未启用（安装对应加速包后出现在这里）</value>
+  </data>
+  <data name="AiPlayground_DeviceTableCaption" xml:space="preserve">
+    <value>CPU 与 DirectML（GPU）为内置；NPU / 厂商 GPU 的加速包安装并注册后才会出现在这里。</value>
+  </data>
+  <data name="AiPlayground_RuntimeLoadFailed" xml:space="preserve">
+    <value>无法加载推理运行时：{0}</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_QNN" xml:space="preserve">
+    <value>高通 Hexagon NPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_OpenVINO" xml:space="preserve">
+    <value>Intel NPU / GPU / CPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_VitisAI" xml:space="preserve">
+    <value>AMD Ryzen AI NPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_NvTensorRtRtx" xml:space="preserve">
+    <value>NVIDIA RTX GPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_MIGraphX" xml:space="preserve">
+    <value>AMD RDNA GPU</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_Dml" xml:space="preserve">
+    <value>通用 GPU（DirectML，内置）</value>
+  </data>
+  <data name="AiPlayground_EpPurpose_Cpu" xml:space="preserve">
+    <value>CPU（内置）</value>
   </data>
 </root>

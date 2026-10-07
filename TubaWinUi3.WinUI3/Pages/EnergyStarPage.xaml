@@ -25,30 +25,30 @@
             Title="后台节流省电神器"
             Glyph="&#xE83F;">
             <controls:ToolPageHeader.Actions>
-                <Border x:Name="StatusBadge" Padding="8,2" CornerRadius="10" VerticalAlignment="Center">
-                    <TextBlock x:Name="StatusBadgeText" FontSize="11" FontWeight="Bold" />
+                <Border x:Name="StatusBadge" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusBadgeText" FontSize="12" FontWeight="SemiBold" />
                 </Border>
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-            <StackPanel Spacing="14" MaxWidth="780">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16" MaxWidth="780">
 
                 <!-- 概述卡片 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                    <StackPanel Spacing="6">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="16" Glyph="&#xE83F;" />
-                            <TextBlock FontSize="15" FontWeight="Bold" Text="EcoQoS 效率模式 (Energy Star X 内核)" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="EcoQoS 效率模式 (Energy Star X 内核)" />
                         </StackPanel>
-                        <TextBlock Opacity="0.8" FontSize="13" TextWrapping="Wrap">
+                        <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap">
                             通过 Windows 11 Process Power Throttling API 节流后台进程以提升电池续航与散热；前台应用不会被节流以保证体验。任务管理器的“状态”列会对节流的后台进程显示绿色叶子图标。
                         </TextBlock>
                         <TextBlock x:Name="AdminWarningText" FontSize="12" Foreground="{ThemeResource SystemFillColorCautionBrush}" Visibility="Collapsed" IsTextSelectionEnabled="True" />
                         <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
-                            <FontIcon FontSize="11" Glyph="&#xE71B;" Opacity="0.6" />
-                            <TextBlock FontSize="11" Opacity="0.6">
-                                <Run Text="源自开源项目 " /><Run FontWeight="Bold" Text="EnergyStarX" />
+                            <FontIcon FontSize="12" Glyph="&#xE71B;" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}">
+                                <Run Text="源自开源项目 " /><Run FontWeight="SemiBold" Text="EnergyStarX" />
                                 <Hyperlink NavigateUri="https://github.com/JasonWei512/EnergyStarX">
                                     <Run Text="github.com/JasonWei512/EnergyStarX" />
                                 </Hyperlink>
@@ -59,12 +59,12 @@
                 </Border>
 
                 <!-- 开关 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="6">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <ToggleSwitch x:Name="MainToggle" Header="启用效率模式" OnContent="开启" OffContent="停止" Toggled="MainToggle_Toggled" />
                             <Button x:Name="PauseButton" Click="PauseButton_Click" Margin="16,0,0,0" ToolTipService.ToolTip="暂停节流但保持进程列表加载与启动项设置">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon x:Name="PauseButtonIcon" Glyph="&#xE769;" FontSize="12" />
                                     <TextBlock x:Name="PauseButtonText" Text="暂停节流" />
                                 </StackPanel>
@@ -75,9 +75,9 @@
                 </Border>
 
                 <!-- 选项 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="12">
-                        <TextBlock FontSize="14" FontWeight="Bold" Text="节流选项" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="节流选项" />
 
                         <ToggleSwitch x:Name="ThrottleWhenPluggedInToggle"
                                       Header="插电时也节流所有后台进程"
@@ -91,14 +91,14 @@
                                           OnContent="已启用"
                                           OffContent="未启用"
                                           Toggled="RunAtStartupToggle_Toggled" />
-                            <TextBlock x:Name="RunAtStartupHint" Opacity="0.6" FontSize="11" Margin="0,-4,0,0" IsTextSelectionEnabled="True" />
+                            <TextBlock x:Name="RunAtStartupHint" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,-4,0,0" IsTextSelectionEnabled="True" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
                 <!-- 白名单编辑器 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="6">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -107,14 +107,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="14" FontWeight="Bold" Text="进程白名单" />
-                                <TextBlock Opacity="0.7" FontSize="11" Text="白名单中的进程绝不会被节流 (一行一个)" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="进程白名单" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="白名单中的进程绝不会被节流 (一行一个)" />
                             </StackPanel>
                             <Button Grid.Column="1" Click="ToggleWhitelistEdit_Click" x:Name="ToggleWhitelistEditButton">
                                 <TextBlock x:Name="ToggleWhitelistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveWhitelist_Click" x:Name="SaveWhitelistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreWhitelist_Click" ToolTipService.ToolTip="还原为默认白名单">
                                 <FontIcon Glyph="&#xE72C;" FontSize="12" />
@@ -134,8 +134,8 @@
                 </Border>
 
                 <!-- 黑名单编辑器 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="6">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -144,14 +144,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="14" FontWeight="Bold" Text="进程黑名单" />
-                                <TextBlock Opacity="0.7" FontSize="11" Text="黑名单中的进程始终被节流, 即使在插电时 (一行一个)" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="进程黑名单" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="黑名单中的进程始终被节流, 即使在插电时 (一行一个)" />
                             </StackPanel>
                             <Button Grid.Column="1" Click="ToggleBlacklistEdit_Click" x:Name="ToggleBlacklistEditButton">
                                 <TextBlock x:Name="ToggleBlacklistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveBlacklist_Click" x:Name="SaveBlacklistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreBlacklist_Click" ToolTipService.ToolTip="还原为默认黑名单">
                                 <FontIcon Glyph="&#xE72C;" FontSize="12" />
@@ -171,19 +171,19 @@
                 </Border>
 
                 <!-- 活动日志 -->
-                <Border BorderThickness="1" CornerRadius="6" Padding="16" BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                    <StackPanel Spacing="6">
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="8">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock FontSize="14" FontWeight="Bold" Text="活动日志" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="活动日志" />
                             <Button Grid.Column="1" Click="ClearLog_Click" ToolTipService.ToolTip="清空日志"><FontIcon Glyph="&#xE74D;" FontSize="12" /></Button>
                         </Grid>
-                        <Border BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" BorderThickness="1" Padding="8" CornerRadius="4">
+                        <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="8" CornerRadius="4">
                             <ScrollViewer x:Name="LogScrollViewer" Height="140" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" />
+                                <TextBlock x:Name="LogText" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" />
                             </ScrollViewer>
                         </Border>
                     </StackPanel>

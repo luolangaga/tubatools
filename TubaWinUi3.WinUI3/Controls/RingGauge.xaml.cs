@@ -3,8 +3,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using TubaWinUi3.Services;
 using Windows.Foundation;
-using Windows.UI;
 using Path = Microsoft.UI.Xaml.Shapes.Path;
 
 namespace TubaWinUi3.Controls;
@@ -26,11 +26,11 @@ public sealed partial class RingGauge : UserControl
 
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
         nameof(Stroke), typeof(Brush), typeof(RingGauge),
-        new PropertyMetadata(new SolidColorBrush(Color.FromArgb(255, 124, 108, 240)), OnVisualPropertyChanged));
+        new PropertyMetadata(null, OnVisualPropertyChanged));
 
     public static readonly DependencyProperty TrackBrushProperty = DependencyProperty.Register(
         nameof(TrackBrush), typeof(Brush), typeof(RingGauge),
-        new PropertyMetadata(new SolidColorBrush(Color.FromArgb(0x18, 0x00, 0x00, 0x00)), OnVisualPropertyChanged));
+        new PropertyMetadata(null, OnVisualPropertyChanged));
 
     /// <summary>仪表数值 0-100。</summary>
     public double Value
@@ -53,17 +53,17 @@ public sealed partial class RingGauge : UserControl
         set => SetValue(StrokeThicknessProperty, value);
     }
 
-    /// <summary>进度环颜色。</summary>
-    public Brush Stroke
+    /// <summary>进度环颜色；未设置时使用系统强调色。</summary>
+    public Brush? Stroke
     {
-        get => (Brush)GetValue(StrokeProperty);
+        get => (Brush?)GetValue(StrokeProperty);
         set => SetValue(StrokeProperty, value);
     }
 
-    /// <summary>底色轨道颜色。</summary>
-    public Brush TrackBrush
+    /// <summary>底色轨道颜色；未设置时使用淡雅填充色。</summary>
+    public Brush? TrackBrush
     {
-        get => (Brush)GetValue(TrackBrushProperty);
+        get => (Brush?)GetValue(TrackBrushProperty);
         set => SetValue(TrackBrushProperty, value);
     }
 
@@ -86,15 +86,19 @@ public sealed partial class RingGauge : UserControl
         var cx = size / 2;
         var r = (size - thickness) / 2;
 
+        // 未显式指定时使用主题语义色（强调色 / 淡雅填充），避免固定品牌色残留
+        var stroke = Stroke ?? new SolidColorBrush(ThemeColors.AccentBlue);
+        var track = TrackBrush ?? new SolidColorBrush(ThemeColors.SubtleBg);
+
         // 底色轨道
-        RootCanvas.Children.Add(Circle(cx, r, TrackBrush, thickness));
+        RootCanvas.Children.Add(Circle(cx, r, track, thickness));
 
         var value = Math.Clamp(Value, 0, 100);
         if (value <= 0.01)
             return;
         if (value >= 99.99)
         {
-            RootCanvas.Children.Add(Circle(cx, r, Stroke, thickness));
+            RootCanvas.Children.Add(Circle(cx, r, stroke, thickness));
             return;
         }
 
@@ -119,7 +123,7 @@ public sealed partial class RingGauge : UserControl
         RootCanvas.Children.Add(new Path
         {
             Data = geometry,
-            Stroke = Stroke,
+            Stroke = stroke,
             StrokeThickness = thickness,
             StrokeStartLineCap = PenLineCap.Round,
             StrokeEndLineCap = PenLineCap.Round,

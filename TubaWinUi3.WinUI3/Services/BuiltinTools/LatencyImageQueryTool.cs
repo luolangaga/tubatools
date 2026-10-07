@@ -123,7 +123,7 @@ public sealed partial class LatencyImageQueryPage : Page
 		};
 
 		var loadingRing = new ProgressRing { Width = 40, Height = 40, IsActive = true };
-		var loadingText = new TextBlock { Text = "正在加载图片列表...", FontSize = 13, Opacity = 0.68 };
+		var loadingText = new TextBlock { Text = "正在加载图片列表...", FontSize = 14, Opacity = 0.68 };
 		_loadingPanel = new StackPanel
 		{
 			HorizontalAlignment = HorizontalAlignment.Center,
@@ -133,8 +133,8 @@ public sealed partial class LatencyImageQueryPage : Page
 			Children = { loadingRing, loadingText }
 		};
 
-		var errorTitle = new TextBlock { Text = "加载失败", FontSize = 16, FontWeight = FontWeights.Bold };
-		_errorMessage = new TextBlock { FontSize = 13, Opacity = 0.78, TextWrapping = TextWrapping.Wrap, MaxWidth = 400 };
+		var errorTitle = new TextBlock { Text = "加载失败", FontSize = 18, FontWeight = FontWeights.SemiBold };
+		_errorMessage = new TextBlock { FontSize = 14, Opacity = 0.78, TextWrapping = TextWrapping.Wrap, MaxWidth = 400 };
 		var retryBtn = new Button { Content = "重试", Style = App.Current.Resources["AccentButtonStyle"] as Style };
 		retryBtn.Click += async (_, _) => await LoadImagesAsync();
 		_errorPanel = new StackPanel
@@ -278,7 +278,7 @@ public sealed partial class LatencyImageQueryPage : Page
 		{
 			Text = string.IsNullOrEmpty(cpu) ? info.Name : cpu,
 			FontSize = 14.0,
-			FontWeight = FontWeights.Bold,
+			FontWeight = FontWeights.SemiBold,
 			MaxWidth = 190,
 			TextWrapping = TextWrapping.Wrap,
 			MaxLines = 2,
@@ -296,7 +296,7 @@ public sealed partial class LatencyImageQueryPage : Page
 		{
 			Orientation = Orientation.Horizontal,
 			Spacing = 6.0,
-			Children = { new FontIcon { Glyph = "\ue91b", FontSize = 12, Opacity = 0.6 }, new TextBlock { Text = "点击查看热力图", FontSize = 11, Opacity = 0.6 } }
+			Children = { new FontIcon { Glyph = "\ue91b", FontSize = 12, Opacity = 0.6 }, new TextBlock { Text = "点击查看热力图", FontSize = 12, Opacity = 0.6 } }
 		};
 		var border = new Border
 		{
@@ -318,7 +318,7 @@ public sealed partial class LatencyImageQueryPage : Page
 	{
 		var (cpu, author, _) = ParseImageName(info.Name);
 		var loadingRing = new ProgressRing { Width = 32, Height = 32, IsActive = true };
-		var loadingText = new TextBlock { Text = "正在加载图片...", FontSize = 13, Opacity = 0.68 };
+		var loadingText = new TextBlock { Text = "正在加载图片...", FontSize = 14, Opacity = 0.68 };
 		var loadingPanel = new StackPanel
 		{
 			HorizontalAlignment = HorizontalAlignment.Center,
@@ -354,7 +354,7 @@ public sealed partial class LatencyImageQueryPage : Page
 			Visibility = Visibility.Collapsed,
 			Children =
 			{
-				new TextBlock { Text = "CPU: " + (string.IsNullOrEmpty(cpu) ? "未知" : cpu), FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap },
+				new TextBlock { Text = "CPU: " + (string.IsNullOrEmpty(cpu) ? "未知" : cpu), FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap },
 				new TextBlock { Text = "发布者: @" + author, FontSize = 12, Opacity = 0.78 },
 				new TextBlock { Text = "文件名: " + info.Name, FontSize = 12, Opacity = 0.68, TextWrapping = TextWrapping.Wrap },
 				imageScroll

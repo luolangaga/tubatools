@@ -367,7 +367,7 @@ public static class ToolCatalog
 
     private static bool RootsMatch(string? a, string? b)
         => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
-    private static int _cacheVersion = 6; // v6: 多分类副本/内置挂载来自 tools.json（category/categories/builtin 字段），link.json 链路删除
+    private static int _cacheVersion = 7; // v7: tools.json 支持 name 覆盖（社区/自定义工具写入）与社区安装记录；v6: 多分类副本/内置挂载来自 tools.json
 
     public static int CacheVersion => _cacheVersion;
 
@@ -613,9 +613,13 @@ public static class ToolCatalog
             });
         }
 
-        var cleanName = CleanupName(StripArchSuffix(name));
-        if (string.IsNullOrWhiteSpace(cleanName) || cleanName.Length < 3)
-            cleanName = CleanupName(dirName);
+        var cleanName = metadata.Name?.Trim();
+        if (string.IsNullOrWhiteSpace(cleanName))
+        {
+            cleanName = CleanupName(StripArchSuffix(name));
+            if (string.IsNullOrWhiteSpace(cleanName) || cleanName.Length < 3)
+                cleanName = CleanupName(dirName);
+        }
 
         var remoteUrl = DetectRemoteUrl(path);
 
@@ -661,9 +665,13 @@ public static class ToolCatalog
         var hasArchVariants = primaryArch is not null;
         var name = hasArchVariants ? dirName : rawFileName;
 
-        var cleanName = CleanupName(StripArchSuffix(name));
-        if (string.IsNullOrWhiteSpace(cleanName) || cleanName.Length < 3)
-            cleanName = CleanupName(dirName);
+        var cleanName = metadata.Name?.Trim();
+        if (string.IsNullOrWhiteSpace(cleanName))
+        {
+            cleanName = CleanupName(StripArchSuffix(name));
+            if (string.IsNullOrWhiteSpace(cleanName) || cleanName.Length < 3)
+                cleanName = CleanupName(dirName);
+        }
 
         var item = new ToolItem
         {

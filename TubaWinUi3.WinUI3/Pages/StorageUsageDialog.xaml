@@ -20,9 +20,9 @@
         </Grid.RowDefinitions>
 
         <!-- 总览与扫描状态 -->
-        <StackPanel Grid.Row="0" Spacing="10">
+        <StackPanel Grid.Row="0" Spacing="8">
             <StackPanel x:Name="ScanPanel" Spacing="8">
-                <TextBlock x:Name="ScanText" FontSize="13" Opacity="0.85" Text="正在统计占用…" />
+                <TextBlock x:Name="ScanText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在统计占用…" />
                 <ProgressBar x:Name="ScanBar" IsIndeterminate="True" />
             </StackPanel>
 
@@ -33,12 +33,13 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
-                        <TextBlock x:Name="TotalText" FontSize="26" FontWeight="SemiBold" Text="—" />
-                        <TextBlock x:Name="TotalHintText" Margin="0,0,0,5" VerticalAlignment="Bottom" FontSize="12" Opacity="0.75" />
+                        <TextBlock x:Name="TotalText" Style="{StaticResource StatValueStyle}" Text="—" />
+                        <TextBlock x:Name="TotalHintText" Margin="0,0,0,4" VerticalAlignment="Bottom" FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock x:Name="SelectionText" Grid.Column="1" Margin="0,0,0,5" VerticalAlignment="Bottom" FontSize="13" />
+                    <TextBlock x:Name="SelectionText" Grid.Column="1" Margin="0,0,0,4" VerticalAlignment="Bottom" FontSize="12" />
                 </Grid>
-                <Border Height="8" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                <Border Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                     <Grid x:Name="UsageBarGrid" />
                 </Border>
             </StackPanel>
@@ -51,13 +52,13 @@
             MaxHeight="420"
             HorizontalScrollMode="Disabled"
             VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="GroupsPanel" Spacing="10" />
+            <StackPanel x:Name="GroupsPanel" Spacing="8" />
         </ScrollViewer>
 
         <!-- 提示与结果 -->
         <StackPanel Grid.Row="2" Spacing="8">
             <InfoBar x:Name="WarningBar" IsClosable="False" IsOpen="False" Severity="Warning" />
-            <TextBlock x:Name="StatusText" FontSize="12" Opacity="0.8" TextWrapping="Wrap" />
+            <TextBlock x:Name="StatusText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
         </StackPanel>
     </Grid>
 </ContentDialog>

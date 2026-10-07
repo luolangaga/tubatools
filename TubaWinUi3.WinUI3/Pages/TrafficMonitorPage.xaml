@@ -10,17 +10,7 @@
     xmlns:controls="using:TubaWinUi3.Controls"
     mc:Ignorable="d">
 
-    <Page.Resources>
-        <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="BorderBrush" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-        </Style>
-    </Page.Resources>
-
-    <Grid Padding="24,16,24,16" RowSpacing="12">
+    <Grid Padding="24,8,24,24" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -37,8 +27,10 @@
             Subtitle="选择网卡实时查看各连接的流量、速度与延迟，整卡吞吐折线统计，支持快照录制回放"
             Glyph="&#xE774;">
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="MinimizeToTrayButton" Click="MinimizeToTrayButton_Click" ToolTipService.ToolTip="隐藏主窗口并继续后台监控">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
+                <Button x:Name="MinimizeToTrayButton" Click="MinimizeToTrayButton_Click"
+                        Style="{StaticResource ToolHeaderActionButtonStyle}"
+                        ToolTipService.ToolTip="隐藏主窗口并继续后台监控">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE73E;" FontSize="12" />
                         <TextBlock Text="最小化的系统托盘" />
                     </StackPanel>
@@ -47,7 +39,7 @@
         </controls:ToolPageHeader>
 
         <!-- 网卡选择 -->
-        <Grid Grid.Row="1" ColumnSpacing="10">
+        <Grid Grid.Row="1" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -57,78 +49,88 @@
             <TextBlock Text="网卡" VerticalAlignment="Center" />
             <ComboBox x:Name="AdapterCombo" Grid.Column="1" MinWidth="420" SelectionChanged="AdapterCombo_SelectionChanged" />
             <Button x:Name="RefreshAdaptersBtn" Grid.Column="2" Content="刷新网卡" Click="RefreshAdapters_Click" />
-            <TextBlock x:Name="AdapterStatusText" Grid.Column="3" VerticalAlignment="Center" FontSize="12" Opacity="0.65" TextTrimming="CharacterEllipsis" Text="正在启动监控…" />
+            <TextBlock x:Name="AdapterStatusText" Grid.Column="3" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       TextTrimming="CharacterEllipsis" Text="正在启动监控…" />
         </Grid>
 
         <!-- 统计卡片 -->
-        <Grid Grid.Row="2" ColumnSpacing="10">
+        <Grid Grid.Row="2" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Border Style="{StaticResource CardBorder}">
+            <Border Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE896;" FontSize="13" Opacity="0.7" />
-                        <TextBlock Text="总下载" FontSize="12" Opacity="0.7" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE896;" FontSize="12" VerticalAlignment="Center"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="总下载" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock x:Name="TotalInText" FontSize="20" FontWeight="Bold" Text="0 B" />
-                    <TextBlock Text="本次监控累计" FontSize="11" Opacity="0.5" />
+                    <TextBlock x:Name="TotalInText" Style="{StaticResource StatValueStyle}" Text="0 B" />
+                    <TextBlock Text="本次监控累计" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
             </Border>
-            <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+            <Border Grid.Column="1" Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE898;" FontSize="13" Opacity="0.7" />
-                        <TextBlock Text="总上传" FontSize="12" Opacity="0.7" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE898;" FontSize="12" VerticalAlignment="Center"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="总上传" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock x:Name="TotalOutText" FontSize="20" FontWeight="Bold" Text="0 B" />
-                    <TextBlock Text="本次监控累计" FontSize="11" Opacity="0.5" />
+                    <TextBlock x:Name="TotalOutText" Style="{StaticResource StatValueStyle}" Text="0 B" />
+                    <TextBlock Text="本次监控累计" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
             </Border>
-            <Border Grid.Column="2" Style="{StaticResource CardBorder}">
+            <Border Grid.Column="2" Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE774;" FontSize="13" Opacity="0.7" />
-                        <TextBlock Text="下载速度" FontSize="12" Opacity="0.7" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE774;" FontSize="12" VerticalAlignment="Center"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="下载速度" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock x:Name="SpeedInText" FontSize="20" FontWeight="Bold" Text="0 B/s" />
-                    <TextBlock Text="整卡实时速率" FontSize="11" Opacity="0.5" />
+                    <TextBlock x:Name="SpeedInText" Style="{StaticResource StatValueStyle}" Text="0 B/s" />
+                    <TextBlock Text="整卡实时速率" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
             </Border>
-            <Border Grid.Column="3" Style="{StaticResource CardBorder}">
+            <Border Grid.Column="3" Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon Glyph="&#xE774;" FontSize="13" Opacity="0.7" />
-                        <TextBlock Text="上传速度" FontSize="12" Opacity="0.7" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE774;" FontSize="12" VerticalAlignment="Center"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="上传速度" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock x:Name="SpeedOutText" FontSize="20" FontWeight="Bold" Text="0 B/s" />
-                    <TextBlock Text="整卡实时速率" FontSize="11" Opacity="0.5" />
+                    <TextBlock x:Name="SpeedOutText" Style="{StaticResource StatValueStyle}" Text="0 B/s" />
+                    <TextBlock Text="整卡实时速率" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- 连接列表 -->
-        <Border Grid.Row="3" Style="{StaticResource CardBorder}" Padding="14,10,14,10">
-            <Grid RowSpacing="6">
+        <Border Grid.Row="3" Style="{StaticResource FluentCardStyle}" Padding="12,8">
+            <Grid RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Grid ColumnSpacing="10">
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock FontSize="14" FontWeight="Bold" Text="在线连接" />
-                    <TextBlock x:Name="ConnCountText" Grid.Column="1" VerticalAlignment="Center" FontSize="12" Opacity="0.6" Text="0 条" />
-                    <TextBlock x:Name="ReviewBannerText" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12" Opacity="0.8" Visibility="Collapsed" Text="快照查看中 — 拖动下方滑条浏览历史，点「返回实时」恢复" />
-                    <Button x:Name="ConnPopOutBtn" Grid.Column="3" Padding="8,3" FontSize="11.5" Click="ConnPopOut_Click" ToolTipService.ToolTip="弹出到独立窗口">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="在线连接" VerticalAlignment="Center" />
+                    <TextBlock x:Name="ConnCountText" Grid.Column="1" VerticalAlignment="Center" FontSize="12"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="0 条" />
+                    <TextBlock x:Name="ReviewBannerText" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed"
+                               Text="快照查看中 — 拖动下方滑条浏览历史，点「返回实时」恢复" />
+                    <Button x:Name="ConnPopOutBtn" Grid.Column="3" Padding="8,4" FontSize="12" Click="ConnPopOut_Click"
+                            ToolTipService.ToolTip="弹出到独立窗口">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE8A7;" FontSize="12" />
                             <TextBlock Text="弹出" />
                         </StackPanel>
@@ -146,40 +148,44 @@
                         </ScrollViewer>
                     </Grid>
                     <StackPanel x:Name="ConnPopoutPlaceholder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                        <FontIcon Glyph="&#xE8A7;" FontSize="28" Opacity="0.4" HorizontalAlignment="Center" />
-                        <TextBlock FontSize="12" Opacity="0.6" Text="连接列表已弹出到独立窗口" HorizontalAlignment="Center" />
-                        <Button Content="收回" FontSize="11.5" HorizontalAlignment="Center" Click="RestoreConnections_Click" />
+                        <FontIcon Glyph="&#xE8A7;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                  HorizontalAlignment="Center" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   Text="连接列表已弹出到独立窗口" HorizontalAlignment="Center" />
+                        <Button Content="收回" FontSize="12" HorizontalAlignment="Center" Click="RestoreConnections_Click" />
                     </StackPanel>
                 </Grid>
             </Grid>
         </Border>
 
         <!-- 整卡折线图 -->
-        <Border Grid.Row="4" Style="{StaticResource CardBorder}">
-            <Grid RowSpacing="6">
+        <Border Grid.Row="4" Style="{StaticResource FluentCardStyle}" Padding="12">
+            <Grid RowSpacing="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Grid>
+                <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock FontSize="14" FontWeight="Bold" Text="整卡吞吐折线（MB/s）" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <Ellipse Width="8" Height="8" Fill="#4ADE80" VerticalAlignment="Center" />
-                            <TextBlock Text="下载" FontSize="12" Opacity="0.7" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="整卡吞吐折线（MB/s）" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="8" Height="8" Fill="{ThemeResource DataSeries3Brush}" VerticalAlignment="Center" />
+                            <TextBlock Text="下载" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <Ellipse Width="8" Height="8" Fill="#60A5FA" VerticalAlignment="Center" />
-                            <TextBlock Text="上传" FontSize="12" Opacity="0.7" />
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <Ellipse Width="8" Height="8" Fill="{ThemeResource DataSeries1Brush}" VerticalAlignment="Center" />
+                            <TextBlock Text="上传" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </StackPanel>
-                    <Button x:Name="ChartPopOutBtn" Grid.Column="2" Padding="8,3" FontSize="11.5" Margin="10,0,0,0" Click="ChartPopOut_Click" ToolTipService.ToolTip="弹出到独立窗口">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Button x:Name="ChartPopOutBtn" Grid.Column="2" Padding="8,4" FontSize="12" Margin="8,0,0,0"
+                            Click="ChartPopOut_Click"
+                            ToolTipService.ToolTip="弹出到独立窗口">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE8A7;" FontSize="12" />
                             <TextBlock Text="弹出" />
                         </StackPanel>
@@ -189,20 +195,22 @@
                     <Grid x:Name="ChartListContent">
                         <lvc:CartesianChart x:Name="TrafficChart" Background="Transparent" />
                         <Canvas x:Name="MarkerCanvas" Visibility="Collapsed" IsHitTestVisible="False" SizeChanged="MarkerCanvas_SizeChanged">
-                            <Rectangle x:Name="MarkerLine" Width="2" Fill="#3B82F6" Opacity="0.65" />
+                            <Rectangle x:Name="MarkerLine" Width="2" Fill="{ThemeResource AccentFillColorDefaultBrush}" Opacity="0.65" />
                         </Canvas>
                     </Grid>
                     <StackPanel x:Name="ChartPopoutPlaceholder" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                        <FontIcon Glyph="&#xE8A7;" FontSize="28" Opacity="0.4" HorizontalAlignment="Center" />
-                        <TextBlock FontSize="12" Opacity="0.6" Text="折线图已弹出到独立窗口" HorizontalAlignment="Center" />
-                        <Button Content="收回" FontSize="11.5" HorizontalAlignment="Center" Click="RestoreChart_Click" />
+                        <FontIcon Glyph="&#xE8A7;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                  HorizontalAlignment="Center" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   Text="折线图已弹出到独立窗口" HorizontalAlignment="Center" />
+                        <Button Content="收回" FontSize="12" HorizontalAlignment="Center" Click="RestoreChart_Click" />
                     </StackPanel>
                 </Grid>
             </Grid>
         </Border>
 
         <!-- 录制回放 -->
-        <Grid Grid.Row="5" ColumnSpacing="10">
+        <Grid Grid.Row="5" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -216,7 +224,8 @@
             <Button x:Name="ClearRecordBtn" Grid.Column="2" Content="清除记录" IsEnabled="False" Click="ClearRecord_Click" />
             <Button x:Name="BackLiveBtn" Grid.Column="3" Content="返回实时" Visibility="Collapsed" Click="BackLive_Click" />
             <Slider x:Name="SnapshotSlider" Grid.Column="4" Minimum="0" Maximum="0" StepFrequency="1" IsEnabled="False" ValueChanged="SnapshotSlider_ValueChanged" VerticalAlignment="Center" />
-            <TextBlock x:Name="RecStatusText" Grid.Column="5" VerticalAlignment="Center" FontSize="12" Opacity="0.7" MinWidth="160" Text="未开始记录" />
+            <TextBlock x:Name="RecStatusText" Grid.Column="5" VerticalAlignment="Center" FontSize="12"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" MinWidth="160" Text="未开始记录" />
         </Grid>
     </Grid>
 </Page>

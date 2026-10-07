@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="48" RowSpacing="0">
+    <Grid Padding="24,8,24,24" RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -18,7 +18,7 @@
             Grid.Row="1"
             HorizontalAlignment="Center"
             MaxWidth="640"
-            Spacing="24">
+            Spacing="16">
 
             <Image
                 x:Name="ErrorGifImage"
@@ -27,42 +27,38 @@
                 Height="180"
                 Stretch="UniformToFill" />
 
-            <StackPanel HorizontalAlignment="Center" Spacing="6">
+            <StackPanel HorizontalAlignment="Center" Spacing="8">
                 <TextBlock
                     HorizontalAlignment="Center"
-                    FontSize="28"
-                    FontWeight="Bold"
+                    Style="{StaticResource PageTitleStyle}"
                     Text="出现了意外错误" />
                 <TextBlock
                     HorizontalAlignment="Center"
-                    FontSize="16"
-                    Opacity="1.0"
+                    Style="{StaticResource PageSubtitleStyle}"
                     Text="应用遇到了一个未处理的异常，你可以复制详细信息并提交 Issue。"
                     TextAlignment="Center"
                     TextWrapping="Wrap" />
             </StackPanel>
 
             <Border
-                Padding="20"
+                Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="10">
+                CornerRadius="8">
                 <StackPanel Spacing="12">
                     <Grid>
                         <TextBlock
                             VerticalAlignment="Center"
-                            FontSize="14"
-                            FontWeight="Bold"
-                            Opacity="1.0"
+                            Style="{StaticResource SectionHeaderStyle}"
                             Text="异常详情" />
                         <Button
                             x:Name="CopyButton"
                             HorizontalAlignment="Right"
-                            Padding="10,4"
+                            Padding="8,4"
                             Click="CopyButton_Click"
                             ToolTipService.ToolTip="复制到剪贴板">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                 <TextBlock FontSize="12" Text="复制" />
                             </StackPanel>
@@ -72,33 +68,32 @@
                         <TextBlock
                             x:Name="ErrorText"
                             FontFamily="Cascadia Code, Consolas"
-                            FontSize="13"
-                            Opacity="1.0"
+                            FontSize="12"
                             TextWrapping="Wrap" />
                     </ScrollViewer>
                 </StackPanel>
             </Border>
 
             <Border
-                Padding="20"
+                Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="10">
+                CornerRadius="8">
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <FontIcon FontSize="14" Glyph="&#xE8BD;" />
-                        <TextBlock FontSize="14" FontWeight="Bold" Opacity="1.0" Text="复现步骤" />
-                        <TextBlock FontSize="12" Foreground="#FF4444" Text="*必填" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="复现步骤" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Text="*必填" />
                     </StackPanel>
-                    <TextBlock Opacity="1.0" FontSize="12" TextWrapping="Wrap"
+                    <TextBlock FontSize="12" TextWrapping="Wrap"
                                Text="请描述你遇到此错误时的操作步骤，帮助我们定位问题。" />
                     <TextBox x:Name="ReproStepsBox"
                              PlaceholderText="例如：1. 打开硬件信息页&#x0a;2. 点击刷新按钮&#x0a;3. 应用崩溃"
                              AcceptsReturn="True"
                              TextWrapping="Wrap"
                              MinHeight="80" MaxHeight="160"
-                             FontSize="13"
+                             FontSize="14"
                              CornerRadius="8" />
                 </StackPanel>
             </Border>
@@ -109,7 +104,7 @@
                 Spacing="12">
                 <Button
                     x:Name="ReportButton"
-                    Padding="20,10"
+                    Padding="16,8"
                     Click="ReportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE8F1;" />
@@ -118,7 +113,7 @@
                 </Button>
                 <Button
                     x:Name="RestartButton"
-                    Padding="20,10"
+                    Padding="16,8"
                     Click="RestartButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE72C;" />

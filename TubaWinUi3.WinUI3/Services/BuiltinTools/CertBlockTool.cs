@@ -46,10 +46,10 @@ public sealed class CertBlockTool : IBuiltinTool
 
     private ScrollViewer BuildDialogContent()
     {
-        var vendorCountText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
-        var totalCertsText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
-        var blockedCertsText = new TextBlock { FontSize = 22, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
-        var adminText = new TextBlock { FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.Bold };
+        var vendorCountText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+        var totalCertsText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+        var blockedCertsText = new TextBlock { FontSize = 20, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(ThemeColors.AccentGreen) };
+        var adminText = new TextBlock { FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
 
         var vendorCard = MakeStatCard("厂商", vendorCountText, "\uE7F4");
         var certCard = MakeStatCard("证书", totalCertsText, "\uE72E");
@@ -97,7 +97,7 @@ public sealed class CertBlockTool : IBuiltinTool
         };
 
         var loadingRing = new ProgressRing { Width = 40, Height = 40, IsActive = true };
-        var loadingText = new TextBlock { Text = "正在加载证书...", FontSize = 13, Opacity = 0.68 };
+        var loadingText = new TextBlock { Text = "正在加载证书...", FontSize = 14, Opacity = 0.68 };
         var loadingPanel = new StackPanel
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -194,7 +194,7 @@ public sealed class CertBlockTool : IBuiltinTool
         var indicator = new Border
         {
             Width = 4,
-            CornerRadius = new CornerRadius(2),
+            CornerRadius = new CornerRadius(4),
             Margin = new Thickness(0, 0, 10, 0),
             VerticalAlignment = VerticalAlignment.Stretch
         };
@@ -204,12 +204,12 @@ public sealed class CertBlockTool : IBuiltinTool
         {
             Text = vendor.DisplayName,
             FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextAlignment = TextAlignment.Left
         };
         var countText = new TextBlock
         {
-            FontSize = 11,
+            FontSize = 12,
             Opacity = 0.68,
             TextAlignment = TextAlignment.Left
         };
@@ -270,7 +270,7 @@ public sealed class CertBlockTool : IBuiltinTool
             {
                 foreach (var item in panel.Children)
                 {
-                    if (item is TextBlock { FontSize: 11 } countText)
+                    if (item is TextBlock { FontSize: 12 } countText)
                         UpdateCountText(countText, vendor);
                 }
             }
@@ -304,10 +304,10 @@ public sealed class CertBlockTool : IBuiltinTool
             Width = 36,
             Height = 36,
             Background = new SolidColorBrush(Color.FromArgb(26, ThemeColors.PrimaryText.R, ThemeColors.PrimaryText.G, ThemeColors.PrimaryText.B)),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = new FontIcon { FontSize = 16, Glyph = glyph }
         };
-        var labelBlock = new TextBlock { Text = label, FontSize = 11, Opacity = 0.68 };
+        var labelBlock = new TextBlock { Text = label, FontSize = 12, Opacity = 0.68 };
         var stack = new StackPanel { Spacing = 2 };
         stack.Children.Add(labelBlock);
         stack.Children.Add(value);
@@ -324,7 +324,7 @@ public sealed class CertBlockTool : IBuiltinTool
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
+            CornerRadius = new CornerRadius(8),
             Child = grid
         };
     }

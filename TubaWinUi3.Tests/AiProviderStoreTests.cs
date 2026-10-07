@@ -49,11 +49,11 @@ public class AiProviderStoreTests : IDisposable
     }
 
     [Fact]
-    public void Defaults_ContainFourPresets()
+    public void Defaults_ContainFivePresets()
     {
         var providers = AiProviderStore.GetProviders();
 
-        Assert.Equal(4, providers.Count);
+        Assert.Equal(5, providers.Count);
         AssertProvider(providers[0], "custom", "小图吧自带模型", "", locked: false);
         Assert.Equal("auto", providers[0].DefaultModel);
         Assert.Single(providers[0].Models);
@@ -74,6 +74,78 @@ public class AiProviderStoreTests : IDisposable
         AssertProvider(zen, "opencode", "OpenCode Zen", "https://opencode.ai/zen/v1", locked: true);
         Assert.True(zen.Models.Count >= 4);
         Assert.All(zen.Models, m => Assert.True(AiProviderStore.IsFreeModelId(m.Id)));
+
+        var local = providers[4];
+        AssertProvider(local, "local", "本地模型", "", locked: true);
+        Assert.Equal(ProviderKind.Local, local.Kind);
+    }
+
+    [Fact]
+    public void LegacyFile_MissingLocal_AddsLocalPreset()
+    {
+        // 老配置没有「本地模型」项 → 加载时补入
+        File.WriteAllText(_path, """
+            {"version":1,"selectedProviderId":"custom","selectedModelId":"auto","defaultTubaMigrated":true,"providers":[
+              {"id":"custom","name":"小图吧自带模型","baseUrl":"","apiKey":"","isPreset":true,"endpointLocked":false,"defaultModel":"auto","models":[{"id":"auto","label":"自动"}]}
+            ]}
+            """);
+        ResetStore(_path, legacy: null);
+
+        var local = AiProviderStore.GetProvider("local");
+        Assert.NotNull(local);
+        Assert.Equal(ProviderKind.Local, local!.Kind);
+    }
+
+    [Fact]
+    public void DeleteProvider_RemovesCustom_AndFallsBackWhenSelected()
+    {
+        var extra = AiProviderStore.AddCustomProvider();
+        Assert.Equal(extra.Id, AiProviderStore.SelectedProviderId);
+
+        Assert.True(AiProviderStore.DeleteProvider(extra.Id));
+        Assert.Null(AiProviderStore.GetProvider(extra.Id));
+        // 删除当前选中项 → 回退到小图吧自带模型
+        Assert.Equal(AiProviderStore.CustomProviderId, AiProviderStore.SelectedProviderId);
+    }
+
+    [Fact]
+    public void DeleteProvider_PresetIsRejected()
+    {
+        Assert.False(AiProviderStore.DeleteProvider("deepseek"));
+        Assert.NotNull(AiProviderStore.GetProvider("deepseek"));
+        Assert.False(AiProviderStore.DeleteProvider("local"));
+    }
+
+    [Fact]
+    public void RenameProvider_OnlyCustom()
+    {
+        var extra = AiProviderStore.AddCustomProvider();
+        Assert.True(AiProviderStore.RenameProvider(extra.Id, "  我的网关  "));
+        Assert.Equal("我的网关", AiProviderStore.GetProvider(extra.Id)!.Name);
+
+        // 预设不可改名
+        Assert.False(AiProviderStore.RenameProvider("deepseek", "改名试试"));
+        Assert.Equal("DeepSeek", AiProviderStore.GetProvider("deepseek")!.Name);
+    }
+
+    [Fact]
+    public void SyncLocalProviderModels_SetsLocalKindAndKeepsOptionList()
+    {
+        // 同步不抛异常；本地提供商恒为 Local 种类（模型列表来自真实模型库，测试不臆断其内容）
+        var count = AiProviderStore.SyncLocalProviderModels();
+        Assert.True(count >= 0);
+        Assert.Equal(ProviderKind.Local, AiProviderStore.GetProvider("local")!.Kind);
+    }
+
+    [Fact]
+    public void GetConfig_LocalProvider_FallsBackToBuiltinGateway()
+    {
+        AiProviderStore.SetSelected("local");
+        var (endpoint, model, apiKey) = AiService.GetConfig();
+        Assert.Equal(AiService.DefaultEndpoint, endpoint);
+        Assert.Equal(AiService.DefaultModel, model);
+        Assert.Equal(AiService.DefaultApiKey, apiKey);
+        Assert.True(AiService.IsLocalProviderSelected);
     }
 
     [Fact]
@@ -309,7 +381,7 @@ public class AiProviderStoreTests : IDisposable
         var second = AiProviderStore.AddCustomProvider();
         Assert.NotEqual(first.Id, second.Id);
         Assert.Equal(second.Id, AiProviderStore.SelectedProviderId);
-        Assert.Equal(6, AiProviderStore.GetProviders().Count);
+        Assert.Equal(7, AiProviderStore.GetProviders().Count);
     }
 
     [Fact]

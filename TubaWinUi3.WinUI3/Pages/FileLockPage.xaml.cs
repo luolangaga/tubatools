@@ -18,9 +18,10 @@ namespace TubaWinUi3.Pages;
 /// </summary>
 public sealed partial class FileLockPage : Page, ILocalizablePage
 {
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 146, 60);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方 SystemFillColor* 语义色）
+    private static Color AccentRed => ThemeColors.AccentRed;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
 
     /// <summary>PID 列宽（表头与数据行必须一致，否则两边的星号列宽度不同、整行错位）。</summary>
     private const double PidColumnWidth = 80;
@@ -53,6 +54,15 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
         ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
         RefreshActionHeaderMirror();
+
+        // 代码构建的画刷不会随主题自动刷新，切换主题后重建表头占位并按缓存结果重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            HeaderBorder.Background = new SolidColorBrush(ThemeColors.HeaderBg);
+            ListBorder.BorderBrush = new SolidColorBrush(ThemeColors.BorderColor);
+            RefreshActionHeaderMirror();
+            if (_lastResult is { } result) RenderResult(result);
+        };
 
         Loaded += OnPageLoaded;
         UpdateAdminBarTexts();
@@ -518,7 +528,7 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         var nameText = new TextBlock
         {
             Text = entry.ProcessName,
-            FontSize = 13,
+            FontSize = 14,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
             VerticalAlignment = VerticalAlignment.Center,
@@ -537,8 +547,8 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
             Child = new TextBlock
             {
                 Text = entry.ProcessId.ToString(),
-                FontSize = 11,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontSize = 12,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(AccentGreen)
             }
         };
@@ -582,8 +592,8 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         content.Children.Add(new TextBlock
         {
             Text = L("FileLock_ProcessImage", "进程 exe"),
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         });
         content.Children.Add(new TextBlock
@@ -601,8 +611,8 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
             Text = string.Format(
                 L("FileLock_ColLocked", "持有路径（{0}）"),
                 entry.LockedPaths.Count),
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         });
 
@@ -675,8 +685,8 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
                 Spacing = 6,
                 Children =
                 {
-                    new FontIcon { Glyph = glyph, FontSize = 11 },
-                    new TextBlock { Text = label, FontSize = 11 }
+                    new FontIcon { Glyph = glyph, FontSize = 12 },
+                    new TextBlock { Text = label, FontSize = 12 }
                 }
             }
         };

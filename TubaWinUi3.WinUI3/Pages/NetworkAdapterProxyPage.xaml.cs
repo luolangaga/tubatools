@@ -29,10 +29,11 @@ public sealed partial class NetworkAdapterProxyPage : Page
         public ProgressBar? UlBar;
     }
 
-    private static readonly Color AccentBlue = Color.FromArgb(255, 96, 165, 250);
-    private static readonly Color AccentGreen = Color.FromArgb(255, 74, 222, 128);
-    private static readonly Color AccentOrange = Color.FromArgb(255, 251, 191, 36);
-    private static readonly Color AccentRed = Color.FromArgb(255, 248, 113, 113);
+    // 语义状态色（跟随系统主题，经 ThemeColors 取官方语义色）
+    private static Color AccentBlue => ThemeColors.AccentBlue;
+    private static Color AccentGreen => ThemeColors.AccentGreen;
+    private static Color AccentOrange => ThemeColors.AccentOrange;
+    private static Color AccentRed => ThemeColors.AccentRed;
 
     private List<AdapterInfo> _adapters = [];
     private DispatcherTimer? _refreshTimer;
@@ -46,6 +47,16 @@ public sealed partial class NetworkAdapterProxyPage : Page
     public NetworkAdapterProxyPage()
     {
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_cardsBuilt)
+            {
+                BuildAdapterCards();
+                BuildSpeedPanel();
+                UpdateAdapterCards();
+            }
+        };
 
         NetworkAdapterProxyService.StatsUpdated += OnStatsUpdated;
         NetworkAdapterProxyService.ScheduleUpdated += OnScheduleUpdated;
@@ -140,20 +151,20 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
             var nameText = new TextBlock
             {
-                Text = entry.Name, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                Text = entry.Name, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
                 VerticalAlignment = VerticalAlignment.Center
             };
 
             var loadBadge = new Border
             {
-                Padding = new Thickness(6, 2, 6, 2), CornerRadius = new CornerRadius(4),
+                Style = (Style)Application.Current.Resources["StatusPillStyle"],
                 Background = new SolidColorBrush(Color.FromArgb(25, accent.R, accent.G, accent.B)),
                 Child = new TextBlock
                 {
-                    Text = $"{entry.LoadPercent:0.0}%", FontSize = 11,
+                    Text = $"{entry.LoadPercent:0.0}%", FontSize = 12,
                     Foreground = new SolidColorBrush(accent),
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
                 }
             };
 
@@ -253,7 +264,11 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
         if (_adapters.Count == 0)
         {
-            var hint = new TextBlock { Text = "未检测到 Wi-Fi 或以太网适配器", Opacity = 0.5, FontSize = 13 };
+            var hint = new TextBlock
+            {
+                Text = "未检测到 Wi-Fi 或以太网适配器", FontSize = 14,
+                Foreground = new SolidColorBrush(ThemeColors.DimText)
+            };
             grid.Children.Add(hint);
             Grid.SetColumn(hint, 0);
             Grid.SetColumnSpan(hint, 2);
@@ -294,7 +309,7 @@ public sealed partial class NetworkAdapterProxyPage : Page
             if (refs.StatusBadge != null)
                 refs.StatusBadge.Background = new SolidColorBrush(Color.FromArgb(30, statusColor.R, statusColor.G, statusColor.B));
             if (refs.LeftBar != null)
-                refs.LeftBar.Background = new SolidColorBrush(isUp ? accent : Color.FromArgb(255, 120, 120, 120));
+                refs.LeftBar.Background = new SolidColorBrush(isUp ? accent : ThemeColors.Neutral);
             if (refs.Icon != null)
                 refs.Icon.Foreground = new SolidColorBrush(isUp ? accent : ThemeColors.DimText);
             if (refs.IconBg != null)
@@ -319,14 +334,14 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
         var iconBg = new Border
         {
-            Width = 40, Height = 40, CornerRadius = new CornerRadius(10),
+            Width = 40, Height = 40, CornerRadius = new CornerRadius(8),
             Background = new SolidColorBrush(Color.FromArgb((byte)(isUp ? 30 : 15), accent.R, accent.G, accent.B)),
             Child = icon
         };
 
         var name = new TextBlock
         {
-            Text = a.Name, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            Text = a.Name, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText)
         };
 
@@ -335,14 +350,14 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
         var statusTextBlock = new TextBlock
         {
-            Text = statusText, FontSize = 10,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            Text = statusText, FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(statusColor)
         };
 
         var statusBadge = new Border
         {
-            Padding = new Thickness(6, 1, 6, 1), CornerRadius = new CornerRadius(4),
+            Style = (Style)Application.Current.Resources["StatusPillStyle"],
             Background = new SolidColorBrush(Color.FromArgb(30, statusColor.R, statusColor.G, statusColor.B)),
             Child = statusTextBlock
         };
@@ -354,27 +369,27 @@ public sealed partial class NetworkAdapterProxyPage : Page
         var ip = new TextBlock
         {
             Text = a.Addresses.Count > 0 ? string.Join(", ", a.Addresses.Select(x => x.ToString())) : "无 IP",
-            FontSize = 11, FontFamily = new FontFamily("Consolas"),
+            FontSize = 12, FontFamily = new FontFamily("Consolas"),
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
         var gw = new TextBlock
         {
             Text = a.Gateways.Count > 0 ? $"网关 {a.Gateways[0]}" : "无网关",
-            FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText)
+            FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
         var speedLabel = new TextBlock
         {
             Text = a.Speed > 0 ? NetworkAdapterProxyService.FormatSpeed(a.Speed / 8) : "",
-            FontSize = 10, Opacity = 0.5,
+            FontSize = 12,
             Foreground = new SolidColorBrush(ThemeColors.DimText)
         };
 
         var leftBar = new Border
         {
-            Width = 3, CornerRadius = new CornerRadius(2),
-            Background = new SolidColorBrush(isUp ? accent : Color.FromArgb(255, 120, 120, 120))
+            Width = 3, CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(isUp ? accent : ThemeColors.Neutral)
         };
 
         var info = new StackPanel { Spacing = 2 };
@@ -426,22 +441,22 @@ public sealed partial class NetworkAdapterProxyPage : Page
             var a = _adapters[i];
             var accent = a.AccentColor;
 
-            var dlText = new TextBlock { Text = "0 B/s", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentBlue) };
-            var ulText = new TextBlock { Text = "0 B/s", FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(AccentOrange) };
+            var dlText = new TextBlock { Text = "0 B/s", FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentBlue) };
+            var ulText = new TextBlock { Text = "0 B/s", FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(AccentOrange) };
             var dlBar = new ProgressBar { Height = 3, Foreground = new SolidColorBrush(AccentBlue), Background = new SolidColorBrush(Color.FromArgb(20, AccentBlue.R, AccentBlue.G, AccentBlue.B)) };
             var ulBar = new ProgressBar { Height = 3, Foreground = new SolidColorBrush(AccentOrange), Background = new SolidColorBrush(Color.FromArgb(20, AccentOrange.R, AccentOrange.G, AccentOrange.B)) };
 
             _speedRefs[a.Index] = new SpeedRefs { DlText = dlText, UlText = ulText, DlBar = dlBar, UlBar = ulBar };
 
             var panel = new StackPanel { Spacing = 4 };
-            var header = new TextBlock { Text = a.Name, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(accent) };
+            var header = new TextBlock { Text = a.Name, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(accent) };
 
             var dlRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            dlRow.Children.Add(new TextBlock { Text = "↓", FontSize = 12, Opacity = 0.5 });
+            dlRow.Children.Add(new TextBlock { Text = "↓", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
             dlRow.Children.Add(dlText);
 
             var ulRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            ulRow.Children.Add(new TextBlock { Text = "↑", FontSize = 12, Opacity = 0.5 });
+            ulRow.Children.Add(new TextBlock { Text = "↑", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
             ulRow.Children.Add(ulText);
 
             panel.Children.Add(header);

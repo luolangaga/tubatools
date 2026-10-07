@@ -11,7 +11,7 @@
 
     <Page.Resources>
         <Style x:Key="MetricCardStyle" TargetType="Border">
-            <Setter Property="Padding" Value="20" />
+            <Setter Property="Padding" Value="16" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
@@ -198,7 +198,7 @@
                 x:Name="LayoutRoot"
                 Width="1100"
                 MaxWidth="1100"
-                Padding="32,20,32,20"
+                Padding="24,8,24,24"
                 RowSpacing="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -223,31 +223,26 @@
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock
                                 x:Name="TitleText"
-                                FontSize="34"
-                                FontWeight="Bold"
+                                Style="{StaticResource PageTitleStyle}"
                                 Text="硬件信息" l:Uids.Uid="Hw_Title"
                                 IsTapEnabled="True"
                                 Tapped="TitleText_Tapped" />
                             <Border
                                 x:Name="CpuzBadge"
                                 Visibility="Collapsed"
-                                Padding="8,2"
-                                CornerRadius="4"
-                                VerticalAlignment="Center"
-                                Margin="0,6,0,0">
-                                <Border.Background>
-                                    <SolidColorBrush Color="#2600C864" />
-                                </Border.Background>
+                                Style="{StaticResource StatusPillStyle}"
+                                Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,0,4">
                                 <TextBlock
                                     FontSize="12"
-                                    FontWeight="Bold"
-                                    Foreground="#FF00C864"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource SystemFillColorSuccessBrush}"
                                     Text="CPU-Z" />
                             </Border>
                         </StackPanel>
                         <TextBlock
-                            FontSize="16"
-                            Opacity="1.0"
+                            Style="{StaticResource PageSubtitleStyle}"
                             Text="汇总本机型号、系统和关键硬件参数。" l:Uids.Uid="Hw_Subtitle" />
                     </StackPanel>
 
@@ -258,7 +253,7 @@
                             Click="DetailButton_Click">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="16" Glyph="&#xE946;" />
-                                <TextBlock FontSize="16" Text="详细信息" l:Uids.Uid="Hw_DetailButton" />
+                                <TextBlock FontSize="14" Text="详细信息" l:Uids.Uid="Hw_DetailButton" />
                             </StackPanel>
                         </Button>
                         <Button
@@ -266,14 +261,14 @@
                             Click="RefreshButton_Click">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon x:Name="RefreshIcon" FontSize="16" Glyph="&#xE72C;" />
-                                <TextBlock FontSize="16" Text="刷新" l:Uids.Uid="Hw_Refresh" />
+                                <TextBlock FontSize="14" Text="刷新" l:Uids.Uid="Hw_Refresh" />
                             </StackPanel>
                         </Button>
                         <DropDownButton
                             Padding="16,8">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="16" Glyph="&#xE8B9;" />
-                                <TextBlock FontSize="16" Text="分享" l:Uids.Uid="Hw_Share" />
+                                <TextBlock FontSize="14" Text="分享" l:Uids.Uid="Hw_Share" />
                             </StackPanel>
                             <DropDownButton.Flyout>
                                 <MenuFlyout Placement="Bottom">
@@ -301,7 +296,7 @@
                 <Grid
                     x:Name="MetricsPanel"
                     Grid.Row="1"
-                    ColumnSpacing="14"
+                    ColumnSpacing="16"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
                     <Grid.RenderTransform>
@@ -314,7 +309,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Border x:Name="Card1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card1_Tapped" IsTapEnabled="True">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
@@ -326,19 +321,19 @@
                                 CornerRadius="8">
                                 <FontIcon FontSize="24" Glyph="&#xE772;" />
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock FontSize="15" Opacity="1.0" Text="型号信息" l:Uids.Uid="Hw_ModelCard" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="型号信息" l:Uids.Uid="Hw_ModelCard" />
                                 <TextBlock
                                     x:Name="ModelText"
                                     FontSize="20"
-                                    FontWeight="Bold"
+                                    FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
                     <Border x:Name="Card2" Grid.Column="1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card2_Tapped" IsTapEnabled="True">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
@@ -350,19 +345,19 @@
                                 CornerRadius="8">
                                 <FontIcon FontSize="24" Glyph="&#xE770;" />
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock FontSize="15" Opacity="1.0" Text="系统信息" l:Uids.Uid="Hw_SystemCard" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="系统信息" l:Uids.Uid="Hw_SystemCard" />
                                 <TextBlock
                                     x:Name="SystemText"
                                     FontSize="20"
-                                    FontWeight="Bold"
+                                    FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Grid>
                     </Border>
 
                     <Border x:Name="Card3" Grid.Column="2" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card3_Tapped" IsTapEnabled="True">
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="*" />
@@ -374,14 +369,14 @@
                                 CornerRadius="8">
                                 <FontIcon FontSize="24" Glyph="&#xE917;" />
                             </Border>
-                            <StackPanel Grid.Column="1" Spacing="5">
-                                <TextBlock FontSize="15" Opacity="1.0" Text="运行时间" l:Uids.Uid="Hw_UptimeCard" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="运行时间" l:Uids.Uid="Hw_UptimeCard" />
                                 <TextBlock
                                     x:Name="UptimeText"
                                     Width="220"
                                     HorizontalAlignment="Left"
                                     FontSize="20"
-                                    FontWeight="Bold"
+                                    FontWeight="SemiBold"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </Grid>
@@ -398,22 +393,17 @@
                         <TranslateTransform Y="20" />
                     </StackPanel.RenderTransform>
                     <TextBlock
-                        FontSize="22"
-                        FontWeight="Bold"
+                        FontSize="20"
+                        FontWeight="SemiBold"
                         Text="详细信息" l:Uids.Uid="Hw_DetailsHeader" />
 
-                    <Border
-                        Padding="16"
-                        CornerRadius="8"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1">
+                    <Border Style="{StaticResource FluentCardStyle}">
                         <ItemsRepeater x:Name="DetailsRepeater" ElementPrepared="DetailsRepeater_ElementPrepared">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate>
                                     <Grid
-                                        Padding="16,9"
-                                        ColumnSpacing="14"
+                                        Padding="16,8"
+                                        ColumnSpacing="12"
                                         PointerPressed="DetailItem_PointerPressed"
                                         IsTapEnabled="True"
                                         Tapped="DetailItem_Tapped"
@@ -427,8 +417,8 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock
 
-                                            FontSize="15"
-                                            Opacity="1.0"
+                                            FontSize="14"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             Text="{Binding DisplayLabel}"
                                             VerticalAlignment="Center" />
                                         <Border
@@ -441,8 +431,8 @@
                                             x:Name="ValueText"
 
                                             Grid.Column="2"
-                                            FontSize="15"
-                                            FontWeight="Bold"
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
                                             Text="{Binding Value}"
                                             TextWrapping="Wrap"
                                             VerticalAlignment="Center"
@@ -454,18 +444,15 @@
                                         <Border
                                             x:Name="VerifiedBadge"
                                             Grid.Column="3"
-                                            Padding="6,1"
-                                            CornerRadius="3"
+                                            Style="{StaticResource StatusPillStyle}"
+                                            Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}"
                                             Visibility="Collapsed"
                                             VerticalAlignment="Center">
-                                            <Border.Background>
-                                                <SolidColorBrush Color="#2600C864" />
-                                            </Border.Background>
                                             <TextBlock
 
-                                                FontSize="11"
-                                                FontWeight="Bold"
-                                                Foreground="#FF00C864"
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
                                                 Text="真" l:Uids.Uid="Hw_VerifiedBadge" />
                                         </Border>
                                         <Image
@@ -496,7 +483,7 @@
 
         <InfoBar
             x:Name="StatusBar"
-            Margin="28"
+            Margin="24"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             IsClosable="True"

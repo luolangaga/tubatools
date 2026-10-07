@@ -35,7 +35,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE770;" FontSize="14" />
-                                        <TextBlock FontWeight="Bold" Text="{Binding}" />
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </Expander.HeaderTemplate>
@@ -47,7 +47,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE774;" FontSize="14" />
-                                        <TextBlock FontWeight="Bold" Text="{Binding}" />
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </Expander.HeaderTemplate>
@@ -59,7 +59,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon Glyph="&#xE7FD;" FontSize="14" />
-                                        <TextBlock FontWeight="Bold" Text="{Binding}" />
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </Expander.HeaderTemplate>
@@ -84,8 +84,8 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE71B;" FontSize="14" Opacity="0.6" />
-                        <TextBlock x:Name="UrlText" Grid.Column="1" FontSize="12" Opacity="0.7" Text="请从左侧选择品牌" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <FontIcon Grid.Column="0" Glyph="&#xE71B;" FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                        <TextBlock x:Name="UrlText" Grid.Column="1" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="请从左侧选择品牌" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <HyperlinkButton x:Name="OpenExternalBtn" Grid.Column="2" Click="OpenExternalBtn_Click" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal" Spacing="4">
                                 <FontIcon Glyph="&#xE7A6;" FontSize="12" />
@@ -97,17 +97,17 @@
 
                 <Grid Grid.Row="1">
                     <WebView2 x:Name="WebView" Visibility="Collapsed" />
-                    
+
                     <Grid x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.OpacityTransition>
                             <ScalarTransition />
                         </Grid.OpacityTransition>
                         <StackPanel Spacing="16">
-                            <FontIcon Glyph="&#xE80F;" FontSize="64" Opacity="0.3" />
-                            <TextBlock FontSize="15" Opacity="0.6" Text="选择左侧品牌查看服务网点" TextAlignment="Center" />
+                            <FontIcon Glyph="&#xE80F;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="选择左侧品牌查看服务网点" TextAlignment="Center" />
                         </StackPanel>
                     </Grid>
-                    
+
                     <Grid x:Name="LoadingState" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" Opacity="0">
                         <Grid.OpacityTransition>
                             <ScalarTransition />
@@ -115,8 +115,8 @@
                         <StackPanel Spacing="12">
                             <ProgressRing Width="40" Height="40" IsActive="True" />
                             <StackPanel Spacing="4">
-                                <TextBlock x:Name="LoadingBrandText" FontSize="14" Opacity="0.8" TextAlignment="Center" />
-                                <TextBlock FontSize="12" Opacity="0.5" Text="正在加载服务网点..." TextAlignment="Center" />
+                                <TextBlock x:Name="LoadingBrandText" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextAlignment="Center" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="正在加载服务网点..." TextAlignment="Center" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>

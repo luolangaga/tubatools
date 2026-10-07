@@ -15,7 +15,7 @@
 
         <!-- 扫描结果行模板：复选框 / 风险 / 图标+项目 / 软件 / 影响 / 行内操作按钮 -->
         <DataTemplate x:Key="FindingRowTemplate">
-            <Grid Padding="2,6" ColumnSpacing="10">
+            <Grid Padding="2,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="36"/>
                     <ColumnDefinition Width="64"/>
@@ -26,16 +26,16 @@
                 </Grid.ColumnDefinitions>
                 <CheckBox Grid.Column="0" IsChecked="{Binding Selected, Mode=TwoWay}"
                           MinWidth="0" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <Border Grid.Column="1" CornerRadius="4" Padding="6,3" VerticalAlignment="Center" HorizontalAlignment="Left"
+                <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" HorizontalAlignment="Left"
                         Background="{Binding RiskDisplay, Converter={StaticResource RiskBrush}}">
-                    <TextBlock Text="{Binding RiskDisplay}" FontSize="11" Foreground="White"/>
+                    <TextBlock Text="{Binding RiskDisplay}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                     <Image Width="28" Height="28" Source="{Binding IconDisplay}"/>
                     <StackPanel VerticalAlignment="Center" Spacing="1">
-                        <TextBlock Text="{Binding CompactTitle}" FontSize="13" TextTrimming="CharacterEllipsis"
+                        <TextBlock Text="{Binding CompactTitle}" FontSize="14" TextTrimming="CharacterEllipsis"
                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                        <TextBlock Text="{Binding CompactLocation}" FontSize="11" TextTrimming="CharacterEllipsis"
+                        <TextBlock Text="{Binding CompactLocation}" FontSize="12" TextTrimming="CharacterEllipsis"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                 </StackPanel>
@@ -43,7 +43,7 @@
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <TextBlock Grid.Column="4" Text="{Binding CompactImpact}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <Button Grid.Column="5" Content="{Binding CompactAction}" FontSize="12" Padding="10,4"
+                <Button Grid.Column="5" Content="{Binding CompactAction}" FontSize="12" Padding="8,4"
                         VerticalAlignment="Center" HorizontalAlignment="Left"
                         Visibility="{Binding CanClean, Converter={StaticResource BoolToVis}}"
                         Click="RowAction_Click"/>
@@ -65,14 +65,14 @@
                         Padding="0" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
                         CornerRadius="4"/>
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding NameReadStatus}" FontSize="11" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding NameReadStatus}" FontSize="12" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{Binding NameReadStatus, Converter={StaticResource StringToVisibilityConverter}}"/>
                 </StackPanel>
                 <TextBlock Grid.Column="3" Text="{Binding SoftwareName}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <TextBlock Grid.Column="4" Text="{Binding Scope}" FontSize="11" VerticalAlignment="Center"
+                <TextBlock Grid.Column="4" Text="{Binding Scope}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>
         </DataTemplate>
@@ -88,36 +88,36 @@
                     <ColumnDefinition Width="110"/>
                 </Grid.ColumnDefinitions>
                 <Image Grid.Column="0" Width="28" Height="28" VerticalAlignment="Center" Source="{Binding IconDisplay}"/>
-                <Border Grid.Column="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" HorizontalAlignment="Left"
+                <Border Grid.Column="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center" HorizontalAlignment="Left"
                         Background="{Binding Status, Converter={StaticResource StatusBrush}}">
-                    <TextBlock Text="{Binding Status}" FontSize="11" Foreground="White"/>
+                    <TextBlock Text="{Binding Status}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding Detail}" FontSize="11" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Detail}" FontSize="12" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="{Binding Detail, Converter={StaticResource StringToVisibilityConverter}}"/>
                 </StackPanel>
                 <TextBlock Grid.Column="3" Text="{Binding ModuleDisplay}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <TextBlock Grid.Column="4" Text="{Binding Scope}" FontSize="11" VerticalAlignment="Center"
+                <TextBlock Grid.Column="4" Text="{Binding Scope}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </Grid>
         </DataTemplate>
 
         <!-- 全部启动项（只读）行模板 -->
         <DataTemplate x:Key="StartupRowTemplate">
-            <Grid Padding="2,6" ColumnSpacing="10">
+            <Grid Padding="2,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1.4*"/>
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="1.2*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"
+                <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
                            Foreground="{ThemeResource TextFillColorPrimaryBrush}" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1" Text="{Binding Command}" FontSize="12" TextTrimming="CharacterEllipsis"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="2" Text="{Binding Location}" FontSize="11" TextTrimming="CharacterEllipsis"
+                <TextBlock Grid.Column="2" Text="{Binding Location}" FontSize="12" TextTrimming="CharacterEllipsis"
                            Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center"/>
             </Grid>
         </DataTemplate>
@@ -125,40 +125,40 @@
         <!-- 恢复批次模板 -->
         <DataTemplate x:Key="BatchRowTemplate">
             <StackPanel Spacing="2" Padding="0,4">
-                <TextBlock Text="{Binding CreatedAt}" FontSize="13" FontWeight="Bold"
+                <TextBlock Text="{Binding CreatedAt}" Style="{StaticResource SectionHeaderStyle}"
                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="{Binding Results.Count}" FontSize="11"
+                    <TextBlock Text="{Binding Results.Count}" FontSize="12"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Text="项" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="项" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </StackPanel>
-                <TextBlock Text="{Binding Path}" FontSize="10" TextTrimming="CharacterEllipsis"
+                <TextBlock Text="{Binding Path}" FontSize="12" TextTrimming="CharacterEllipsis"
                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
             </StackPanel>
         </DataTemplate>
 
         <!-- 恢复对象模板 -->
         <DataTemplate x:Key="BatchItemTemplate">
-            <Grid Padding="4,6" ColumnSpacing="10">
+            <Grid Padding="4,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="110"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Spacing="1">
-                    <TextBlock Text="{Binding Title}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Title}" FontSize="14" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <StackPanel Orientation="Horizontal" Spacing="5">
-                        <TextBlock Text="{Binding Category}" FontSize="11"
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="{Binding Category}" FontSize="12"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                        <TextBlock Text="{Binding TechnicalLocation}" FontSize="11" TextTrimming="CharacterEllipsis"
+                        <TextBlock Text="{Binding TechnicalLocation}" FontSize="12" TextTrimming="CharacterEllipsis"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Message}" FontSize="11" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Message}" FontSize="12" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                 </StackPanel>
                 <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" HorizontalAlignment="Right"
                         Background="{Binding Status, Converter={StaticResource StatusBrush}}">
-                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusTextConverter}}" FontSize="11" Foreground="White"/>
+                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusTextConverter}}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
             </Grid>
         </DataTemplate>
@@ -166,7 +166,7 @@
 <!-- 主动拦截事件行模板：复选框 / 动作标签 / 名称+位置 / 程序 / 时间 -->
         <local:ActionToBrushConverter x:Key="ActionBrush"/>
         <DataTemplate x:Key="AiEventRowTemplate">
-            <Grid Padding="2,6" ColumnSpacing="10">
+            <Grid Padding="2,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="36"/>
                     <ColumnDefinition Width="76"/>
@@ -178,12 +178,12 @@
                           MinWidth="0" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <Border Grid.Column="1" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" HorizontalAlignment="Left"
                         Background="{Binding Action, Converter={StaticResource ActionBrush}}">
-                    <TextBlock Text="{Binding ActionText}" FontSize="11" Foreground="White"/>
+                    <TextBlock Text="{Binding ActionText}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding SubKeyShort}" FontSize="11" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding SubKeyShort}" FontSize="12" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                 </StackPanel>
                 <TextBlock Grid.Column="3" Text="{Binding ExeFileName}" FontSize="12" VerticalAlignment="Center"
@@ -197,7 +197,7 @@
 
 <!-- 主动拦截条目行模板：复选框 / 状态 / 名称+位置 / 程序 / 时间 -->
         <DataTemplate x:Key="AiItemRowTemplate">
-            <Grid Padding="2,6" ColumnSpacing="10">
+            <Grid Padding="2,8" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="36"/>
                     <ColumnDefinition Width="30"/>
@@ -209,10 +209,10 @@
                 <CheckBox Grid.Column="0" IsChecked="{Binding Selected, Mode=TwoWay}"
                           MinWidth="0" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
                           Visibility="{Binding CheckVisibility}"/>
-                <Border Grid.Column="1" Width="30" Height="30" CornerRadius="6" VerticalAlignment="Center"
-                        Background="{ThemeResource ControlFillColorTertiaryBrush}"
+                <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8" VerticalAlignment="Center"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="1"
-                        Padding="5">
+                        Padding="4">
                     <Grid>
                         <!-- 占位图标：现代菜单等无法提取 logo 时兜底显示 -->
                         <FontIcon Glyph="&#xE8F1;" FontSize="14"
@@ -223,21 +223,21 @@
                 </Border>
                 <Border Grid.Column="2" CornerRadius="4" Padding="8,3" VerticalAlignment="Center" HorizontalAlignment="Left"
                         Background="{Binding StateBrush}">
-                    <TextBlock Text="{Binding StateText}" FontSize="11" Foreground="White"/>
+                    <TextBlock Text="{Binding StateText}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
                 <StackPanel Grid.Column="3" VerticalAlignment="Center" Spacing="1">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="{Binding Name}" FontSize="13" TextTrimming="CharacterEllipsis"
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                        <Border CornerRadius="4" Padding="6,1" VerticalAlignment="Center"
-                                Background="#1F6A3BFF" Visibility="{Binding PendingChipVisibility}">
-                            <TextBlock Text="{Binding PendingChipText}" FontSize="10" Foreground="White"/>
+                        <Border CornerRadius="4" Padding="8,1" VerticalAlignment="Center"
+                                Background="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{Binding PendingChipVisibility}">
+                            <TextBlock Text="{Binding PendingChipText}" FontSize="12" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                         </Border>
                     </StackPanel>
-                    <TextBlock Text="{Binding SubKeyShort}" FontSize="11" FontFamily="Consolas" TextTrimming="CharacterEllipsis"
+                    <TextBlock Text="{Binding SubKeyShort}" FontSize="12" FontFamily="Consolas" TextTrimming="CharacterEllipsis"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                    <TextBlock Text="{Binding ConsistencyIssue}" FontSize="11" TextTrimming="CharacterEllipsis"
-                               Foreground="#C22736" Visibility="{Binding IssueVisibility}"/>
+                    <TextBlock Text="{Binding ConsistencyIssue}" FontSize="12" TextTrimming="CharacterEllipsis"
+                               Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="{Binding IssueVisibility}"/>
                 </StackPanel>
                 <TextBlock Grid.Column="4" Text="{Binding ExeFileName}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"
@@ -258,7 +258,7 @@
                 </Grid.ColumnDefinitions>
                 <Rectangle Grid.Column="0" Height="1" VerticalAlignment="Center"
                            Fill="{ThemeResource ControlStrokeColorDefaultBrush}"/>
-                <TextBlock Grid.Column="1" Margin="10,0" Text="{Binding Text}" FontSize="12" FontWeight="SemiBold"
+                <TextBlock Grid.Column="1" Margin="8,0" Text="{Binding Text}" FontSize="12" FontWeight="SemiBold"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <Rectangle Grid.Column="2" Height="1" VerticalAlignment="Center"
                            Fill="{ThemeResource ControlStrokeColorDefaultBrush}"/>
@@ -270,7 +270,7 @@
 
         <!-- 右键菜单主列表：场景分区标题模板 -->
         <DataTemplate x:Key="CmSectionHeaderTemplate">
-            <Grid Padding="2,13,2,5" IsHitTestVisible="False">
+            <Grid Padding="2,12,2,4" IsHitTestVisible="False">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -279,11 +279,11 @@
                 <Rectangle Grid.Column="0" Height="1" VerticalAlignment="Center"
                            Fill="{ThemeResource ControlStrokeColorDefaultBrush}"/>
                 <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="{Binding Key}" FontSize="13" FontWeight="SemiBold"
+                    <TextBlock Text="{Binding Key}" Style="{StaticResource SectionHeaderStyle}"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                    <Border CornerRadius="8" Padding="6,1" VerticalAlignment="Center"
+                    <Border CornerRadius="8" Padding="8,1" VerticalAlignment="Center"
                             Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                        <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
                             <Run Text="{Binding Count}"/><Run Text=" 项"/>
                         </TextBlock>
                     </Border>
@@ -330,7 +330,7 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <Grid Padding="24,10,24,12">
+            <Grid Padding="24,8,24,24">
                 <!-- ============ 总览 / 启动项 / 弹窗诊断 ============ -->
                 <Grid x:Name="ScanPanel">
                     <Grid.RowDefinitions>
@@ -355,18 +355,18 @@
                     </ScrollViewer>
 
                     <!-- 统计卡片 -->
-                    <Grid x:Name="StatCards" Grid.Row="1" Margin="0,10,0,0" ColumnSpacing="10"/>
+                    <Grid x:Name="StatCards" Grid.Row="1" Margin="0,8,0,0" ColumnSpacing="8"/>
 
                     <!-- 扫描进度 -->
-                    <StackPanel x:Name="ProgressPanel" Grid.Row="2" Orientation="Horizontal" Spacing="10"
-                                Visibility="Collapsed" Margin="0,10,0,0">
+                    <StackPanel x:Name="ProgressPanel" Grid.Row="2" Orientation="Horizontal" Spacing="8"
+                                Visibility="Collapsed" Margin="0,8,0,0">
                         <ProgressRing x:Name="ScanRing" IsActive="True" Width="18" Height="18"/>
-                        <TextBlock x:Name="StageText" VerticalAlignment="Center" FontSize="13"
+                        <TextBlock x:Name="StageText" VerticalAlignment="Center" FontSize="12"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- 结果列表 + 详情 -->
-                    <Grid Grid.Row="3" Margin="0,10,0,0" ColumnSpacing="12">
+                    <Grid Grid.Row="3" Margin="0,8,0,0" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="320"/>
@@ -380,8 +380,8 @@
                             </Grid.RowDefinitions>
 
                             <!-- 标题行 -->
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock x:Name="FilterTitle" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock x:Name="FilterTitle" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                                 <TextBlock x:Name="CountText" FontSize="12" VerticalAlignment="Center"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
@@ -392,7 +392,7 @@
                             </StackPanel>
 
                             <!-- 表头 -->
-                            <Grid Grid.Row="1" Margin="0,8,0,0" Padding="2,0" ColumnSpacing="10">
+                            <Grid Grid.Row="1" Margin="0,8,0,0" Padding="2,0" ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="36"/>
                                     <ColumnDefinition Width="64"/>
@@ -401,15 +401,15 @@
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="84"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="1" Text="风险" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="1" Text="风险" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="2" Text="项目" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="2" Text="项目" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="3" Text="软件" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="3" Text="软件" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="4" Text="影响" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="4" Text="影响" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="5" Text="处理" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="5" Text="处理" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </Grid>
 
@@ -428,8 +428,8 @@
                                 </ListView.ContextFlyout>
                                 <ListView.Footer>
                                     <!-- 列表底部「展示全部」：显示被当前筛选器隐藏的其他分类 -->
-                                    <StackPanel x:Name="FindingsFooter" Orientation="Horizontal" Spacing="10"
-                                                HorizontalAlignment="Center" Padding="0,10" Visibility="Collapsed">
+                                    <StackPanel x:Name="FindingsFooter" Orientation="Horizontal" Spacing="8"
+                                                HorizontalAlignment="Center" Padding="0,8" Visibility="Collapsed">
                                         <TextBlock x:Name="FindingsHiddenHint" FontSize="12" VerticalAlignment="Center"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         <HyperlinkButton x:Name="FindingsToggleBtn" FontSize="12" Click="FindingsToggle_Click"/>
@@ -443,16 +443,14 @@
 
                             <StackPanel Grid.Row="2" x:Name="EmptyPanel" VerticalAlignment="Top" Margin="0,24,0,0">
                                 <TextBlock x:Name="EmptyText" HorizontalAlignment="Center" TextWrapping="Wrap"
-                                           Text="正在扫描…" FontSize="13"
+                                           Text="正在扫描…" FontSize="12"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
                         </Grid>
 
                         <!-- 详情面板 -->
                         <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                            <Border Padding="14" CornerRadius="8" BorderThickness="1"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                            <Border Style="{StaticResource FluentCardStyle}">
                                 <StackPanel x:Name="DetailPanel" Spacing="8"/>
                             </Border>
                         </ScrollViewer>
@@ -467,7 +465,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- 搜索条：跨主列表 / 更多位置 / 系统高级三个视图搜索并定位 -->
-                    <Grid Grid.Row="0" RowSpacing="6">
+                    <Grid Grid.Row="0" RowSpacing="8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -476,16 +474,12 @@
                         <Grid Grid.Row="0" ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox x:Name="CmSearchBox" Grid.Column="0"
-                                     PlaceholderText="搜索全部右键项目：名称、软件、命令、位置、组件编号…"
-                                     TextChanged="CmSearchBox_TextChanged"/>
-                            <Button x:Name="CmSearchClearBtn" Grid.Column="1" Content="&#xE711;" FontSize="12"
-                                    Width="34" Padding="0" Click="CmSearchClear_Click" Visibility="Collapsed"
-                                    ToolTipService.ToolTip="清空搜索" VerticalAlignment="Stretch"/>
+                            <AutoSuggestBox x:Name="CmSearchBox" Grid.Column="0" MinWidth="240" QueryIcon="Find"
+                                            PlaceholderText="搜索全部右键项目：名称、软件、命令、位置、组件编号…"
+                                            TextChanged="CmSearchBox_TextChanged" QuerySubmitted="CmSearchBox_QuerySubmitted"/>
                         </Grid>
-                        <StackPanel x:Name="CmSearchHintPanel" Grid.Row="1" Orientation="Horizontal" Spacing="10"
+                        <StackPanel x:Name="CmSearchHintPanel" Grid.Row="1" Orientation="Horizontal" Spacing="8"
                                     Visibility="Collapsed">
                             <TextBlock x:Name="CmSearchHintText" FontSize="12" VerticalAlignment="Center"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
@@ -494,7 +488,7 @@
                         </StackPanel>
 
                         <!-- 生效提示：右键菜单改动需要重启资源管理器（三个视图共用，改动后就地可见） -->
-                        <Grid Grid.Row="2" ColumnSpacing="10">
+                        <Grid Grid.Row="2" ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -544,26 +538,24 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- 场景分类（参考 ContextMenuManager：点选场景，列表只显示该场景） -->
-                            <Border Grid.Column="0" CornerRadius="8" BorderThickness="1"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                            <Border Grid.Column="0" Style="{StaticResource FluentCardStyle}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <StackPanel Margin="12,10,12,4" Spacing="1">
+                                    <StackPanel Margin="12,8,12,4" Spacing="1">
                                         <TextBlock Text="场景分类" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                        <TextBlock Text="点选场景过滤下方列表" FontSize="10"
+                                        <TextBlock Text="点选场景过滤下方列表" FontSize="12"
                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                                     </StackPanel>
-                                    <ListView x:Name="CmSceneNavList" Grid.Row="1" Margin="4,2,4,6"
+                                    <ListView x:Name="CmSceneNavList" Grid.Row="1" Margin="4,2,4,8"
                                               SelectionMode="Single"
                                               SelectionChanged="CmSceneNav_SelectionChanged">
                                         <ListView.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid Padding="8,6" ColumnSpacing="8">
+                                                <Grid Padding="8" ColumnSpacing="8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
@@ -571,10 +563,10 @@
                                                     <TextBlock Text="{Binding Key}" FontSize="12" VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"
                                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                                    <Border Grid.Column="1" CornerRadius="7" Padding="6,0"
+                                                        <Border Grid.Column="1" CornerRadius="8" Padding="8,0"
                                                             VerticalAlignment="Center"
                                                             Background="{ThemeResource SubtleFillColorSecondaryBrush}">
-                                                        <TextBlock Text="{Binding Count}" FontSize="10"
+                                                        <TextBlock Text="{Binding Count}" FontSize="12"
                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                                     </Border>
                                                 </Grid>
@@ -597,11 +589,11 @@
                                         <ColumnDefinition Width="150"/>
                                         <ColumnDefinition Width="110"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="2" Text="右键里显示的名称" FontSize="11" FontWeight="Bold"
+                                    <TextBlock Grid.Column="2" Text="右键里显示的名称" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                    <TextBlock Grid.Column="3" Text="关联软件" FontSize="11" FontWeight="Bold"
+                                    <TextBlock Grid.Column="3" Text="关联软件" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                    <TextBlock Grid.Column="4" Text="影响范围" FontSize="11" FontWeight="Bold"
+                                    <TextBlock Grid.Column="4" Text="影响范围" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </Grid>
                                 <ListView x:Name="CmList" Grid.Row="1" Margin="0,4,0,0"
@@ -610,31 +602,29 @@
                                           SelectionChanged="CmList_SelectionChanged">
                                     <ListView.Footer>
                                         <!-- 列表底部「展示全部」：显示被隐藏的系统内置 / 未识别 / 技术记录条目 -->
-                                        <StackPanel x:Name="CmFooter" Orientation="Horizontal" Spacing="10"
-                                                    HorizontalAlignment="Center" Padding="0,10" Visibility="Collapsed">
+                                        <StackPanel x:Name="CmFooter" Orientation="Horizontal" Spacing="8"
+                                                    HorizontalAlignment="Center" Padding="0,8" Visibility="Collapsed">
                                             <TextBlock x:Name="CmHiddenHint" FontSize="12" VerticalAlignment="Center"
                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                             <HyperlinkButton x:Name="CmToggleBtn" FontSize="12" Click="CmToggle_Click"/>
                                         </StackPanel>
                                     </ListView.Footer>
                                 </ListView>
-                                <TextBlock x:Name="CmEmptyText" Grid.Row="1" Margin="0,30,0,0" HorizontalAlignment="Center"
-                                           Text="正在加载右键菜单清单…" FontSize="13"
+                                <TextBlock x:Name="CmEmptyText" Grid.Row="1" Margin="0,24,0,0" HorizontalAlignment="Center"
+                                           Text="正在加载右键菜单清单…" FontSize="12"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </Grid>
 
                             <!-- 项目详情 -->
-                            <Border Grid.Column="2" Padding="12,10,10,10" CornerRadius="8" BorderThickness="1"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                            <Border Grid.Column="2" Style="{StaticResource FluentCardStyle}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    <TextBlock Text="项目详情" FontSize="13" FontWeight="Bold"
+                                    <TextBlock Text="项目详情" Style="{StaticResource SectionHeaderStyle}"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                    <ScrollViewer Grid.Row="1" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto">
+                                    <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
                                         <TextBlock x:Name="CmDetailsText" FontSize="12" TextWrapping="Wrap" IsTextSelectionEnabled="True"
                                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                                     </ScrollViewer>
@@ -643,7 +633,7 @@
                         </Grid>
 
                         <!-- 状态栏 -->
-                        <TextBlock x:Name="CmStatusText" Grid.Row="3" Margin="0,6,0,0" FontSize="11" TextWrapping="Wrap"
+                        <TextBlock x:Name="CmStatusText" Grid.Row="3" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在准备枚举。"/>
                     </Grid>
 
@@ -657,12 +647,12 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="‹ 返回" FontSize="12" Click="CmBack_Click"/>
                             <StackPanel Spacing="1">
-                                <TextBlock Text="更多右键位置" FontSize="15" FontWeight="Bold"
+                                <TextBlock Text="更多右键位置" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                <TextBlock Text="管理“新建”“发送到”“打开方式”以及组件屏蔽等扩展入口" FontSize="11"
+                                <TextBlock Text="管理“新建”“发送到”“打开方式”以及组件屏蔽等扩展入口" FontSize="12"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
                         </StackPanel>
@@ -685,7 +675,7 @@
                                   ItemTemplate="{StaticResource CmSimpleRowTemplate}"
                                   ContainerContentChanging="CmList_ContainerContentChanging"
                                   SelectionChanged="SpecialList_SelectionChanged"/>
-                        <TextBlock x:Name="SpecialStatusText" Grid.Row="4" Margin="0,6,0,0" FontSize="11"
+                        <TextBlock x:Name="SpecialStatusText" Grid.Row="4" Margin="0,8,0,0" FontSize="12"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </Grid>
 
@@ -699,12 +689,12 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button Content="‹ 返回" FontSize="12" Click="CmBack_Click"/>
                             <StackPanel Spacing="1">
-                                <TextBlock Text="系统右键高级功能" FontSize="15" FontWeight="Bold"
+                                <TextBlock Text="系统右键高级功能" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                <TextBlock Text="管理系统快捷菜单、Windows 11 现代菜单、IE 旧式菜单和安全增强入口" FontSize="11"
+                                <TextBlock Text="管理系统快捷菜单、Windows 11 现代菜单、IE 旧式菜单和安全增强入口" FontSize="12"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
                         </StackPanel>
@@ -736,13 +726,13 @@
                                   ItemTemplate="{StaticResource CmSimpleRowTemplate}"
                                   ContainerContentChanging="CmList_ContainerContentChanging"
                                   SelectionChanged="AdvancedList_SelectionChanged"/>
-                        <TextBlock x:Name="AdvancedStatusText" Grid.Row="4" Margin="0,6,0,0" FontSize="11" TextWrapping="Wrap"
+                        <TextBlock x:Name="AdvancedStatusText" Grid.Row="4" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </Grid>
                 </Grid>
 
 <!-- ============ 主动拦截（后端审核） ============ -->
-                <Grid x:Name="ActiveInterceptPanel" Visibility="Collapsed" RowSpacing="10">
+                <Grid x:Name="ActiveInterceptPanel" Visibility="Collapsed" RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -755,7 +745,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- 状态 / 统计 -->
-                    <Grid Grid.Row="0" ColumnSpacing="14">
+                    <Grid Grid.Row="0" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -763,7 +753,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                             <Ellipse x:Name="AiStatusDot" Width="10" Height="10" VerticalAlignment="Center" Fill="Gray"/>
-                            <TextBlock x:Name="AiRunningText" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
+                            <TextBlock x:Name="AiRunningText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="主动拦截后端：检测中…"/>
                         </StackPanel>
                         <TextBlock x:Name="AiCountText" Grid.Column="1" FontSize="12" VerticalAlignment="Center"
@@ -771,7 +761,7 @@
                         <Border x:Name="AiSelectionPill" Grid.Column="2" CornerRadius="12" Padding="12,3"
                                 Background="{ThemeResource AccentFillColorDefaultBrush}" Visibility="Collapsed"
                                 VerticalAlignment="Center">
-                            <TextBlock x:Name="AiSelectionText" FontSize="12" FontWeight="SemiBold" Foreground="White" Text="已选 0 项"/>
+                            <TextBlock x:Name="AiSelectionText" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" Text="已选 0 项"/>
                         </Border>
                     </Grid>
 
@@ -801,17 +791,16 @@
                     <InfoBar x:Name="AiStatusBar" Grid.Row="2" IsOpen="False" IsClosable="True" IsIconVisible="True"/>
 
                     <!-- 开机自启 -->
-                    <Border Grid.Row="3" BorderThickness="1" CornerRadius="6" Padding="14,8"
-                            BorderBrush="{ThemeResource SubtleFillColorSecondaryBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                    <Border Grid.Row="3" Style="{StaticResource FluentCardStyle}">
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock FontSize="13" FontWeight="SemiBold" Text="开机自启主动拦截后端"/>
-                                <TextBlock x:Name="AiStartupHint" FontSize="11" Opacity="0.6" TextWrapping="Wrap"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="开机自启主动拦截后端"/>
+                                <TextBlock x:Name="AiStartupHint" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             </StackPanel>
                             <ToggleSwitch x:Name="AiStartupToggle" Grid.Column="1" VerticalAlignment="Center"
                                           OnContent="已启用" OffContent="未启用" Toggled="AiStartupToggle_Toggled"/>
@@ -842,18 +831,14 @@
                     <Grid Grid.Row="6" Margin="0,4,0,0" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="AiSearchBox" Grid.Column="0"
-                                 PlaceholderText="搜索拦截项 / 操作记录：名称、注册表位置、程序路径…"
-                                 TextChanged="AiSearchBox_TextChanged"/>
-                        <Button x:Name="AiSearchClearBtn" Grid.Column="1" Content="&#xE711;" FontSize="12"
-                                Width="34" Padding="0" Click="AiSearchClear_Click" Visibility="Collapsed"
-                                ToolTipService.ToolTip="清空搜索" VerticalAlignment="Stretch"/>
+                        <AutoSuggestBox x:Name="AiSearchBox" Grid.Column="0" MinWidth="240" QueryIcon="Find"
+                                        PlaceholderText="搜索拦截项 / 操作记录：名称、注册表位置、程序路径…"
+                                        TextChanged="AiSearchBox_TextChanged" QuerySubmitted="AiSearchBox_QuerySubmitted"/>
                     </Grid>
 
                     <!-- 列表 + 详情 -->
-                    <Grid Grid.Row="7" Margin="0,6,0,0" ColumnSpacing="12">
+                    <Grid Grid.Row="7" Margin="0,8,0,0" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="320"/>
@@ -866,7 +851,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <!-- 表头 -->
-                            <Grid Padding="2,0" ColumnSpacing="10">
+                            <Grid Padding="2,0" ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="36"/>
                                     <ColumnDefinition Width="30"/>
@@ -878,13 +863,13 @@
                                 <CheckBox x:Name="AiMasterCheck" Grid.Column="0" IsThreeState="True"
                                           MinWidth="0" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center"
                                           ToolTipService.ToolTip="全选 / 取消全选当前列表" Click="AiMasterCheck_Click"/>
-                                <TextBlock x:Name="AiStateHeader" Grid.Column="2" Text="状态" FontSize="11" FontWeight="Bold"
+                                <TextBlock x:Name="AiStateHeader" Grid.Column="2" Text="状态" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock x:Name="AiNameHeader" Grid.Column="3" Text="名称 / 注册表位置" FontSize="11" FontWeight="Bold"
+                                <TextBlock x:Name="AiNameHeader" Grid.Column="3" Text="名称 / 注册表位置" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="4" Text="所属程序" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="4" Text="所属程序" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="5" Text="时间" FontSize="11" FontWeight="Bold"
+                                <TextBlock Grid.Column="5" Text="时间" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </Grid>
 
@@ -930,15 +915,13 @@
                                 </ListView.ContextFlyout>
                             </ListView>
 
-                            <TextBlock x:Name="AiEmptyText" Grid.Row="1" Margin="0,30,0,0" HorizontalAlignment="Center"
-                                       Text="暂无拦截记录" FontSize="13"
+                            <TextBlock x:Name="AiEmptyText" Grid.Row="1" Margin="0,24,0,0" HorizontalAlignment="Center"
+                                       Text="暂无拦截记录" FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         </Grid>
 
                         <!-- 详情面板 -->
-                        <Border Grid.Column="1" Padding="12,10,10,10" CornerRadius="8" BorderThickness="1"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                        <Border Grid.Column="1" Style="{StaticResource FluentCardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -946,42 +929,42 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="详情" FontSize="13" FontWeight="Bold"
+                                <TextBlock Text="详情" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                <ScrollViewer Grid.Row="1" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
                                     <TextBlock x:Name="AiDetailsText" FontSize="12" TextWrapping="Wrap"
                                                IsTextSelectionEnabled="True"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                                Text="选中一条记录查看详情"/>
                                 </ScrollViewer>
                                 <!-- 详情区操作按钮 -->
-                                <StackPanel x:Name="AiDetailActions" Grid.Row="2" Margin="0,10,0,0" Spacing="6" Visibility="Collapsed">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel x:Name="AiDetailActions" Grid.Row="2" Margin="0,8,0,0" Spacing="8" Visibility="Collapsed">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button x:Name="AiAllowBtn" Content="放行" Style="{ThemeResource AccentButtonStyle}" Click="AiAllow_Click"/>
                                         <Button x:Name="AiAllowTrustBtn" Content="放行并信任" Click="AiAllowTrust_Click"/>
                                         <Button x:Name="AiReblockBtn" Content="保持拦截" Click="AiReblock_Click"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button x:Name="AiDeleteItemBtn" Content="删除条目" Click="AiDeleteItem_Click"/>
                                         <Button x:Name="AiUndoBtn" Content="撤销删除" Click="AiUndo_Click"/>
                                         <Button x:Name="AiPurgeBtn" Content="永久清除" Click="AiPurge_Click"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button x:Name="AiIgnoreBtn" Content="停止追踪" Click="AiIgnore_Click"/>
                                         <Button x:Name="AiResumeBtn" Content="恢复追踪" Click="AiResume_Click"/>
                                         <Button x:Name="AiOpenLocationBtn" Content="打开位置" Click="AiOpenLocation_Click"/>
                                         <Button x:Name="AiOpenRegistryBtn" Content="打开注册表" Click="AiOpenRegistry_Click"/>
                                     </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
                                         <Button x:Name="AiCopyBtn" Content="复制详情" Click="AiCopyDetail_Click"/>
                                     </StackPanel>
                                 </StackPanel>
                                 <!-- 信任策略 -->
-                                <StackPanel x:Name="AiPolicySection" Grid.Row="3" Spacing="6" Margin="0,10,0,0" Visibility="Collapsed">
+                                <StackPanel x:Name="AiPolicySection" Grid.Row="3" Spacing="8" Margin="0,8,0,0" Visibility="Collapsed">
                                     <TextBlock FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="程序信任策略"/>
                                     <ComboBox x:Name="AiPolicyComboBox" MinWidth="200"/>
-                                    <Button x:Name="AiSavePolicyBtn" Content="保存策略" FontSize="12" Padding="10,4"
+                                    <Button x:Name="AiSavePolicyBtn" Content="保存策略" FontSize="12" Padding="8,4"
                                             Click="AiSavePolicy_Click"/>
                                 </StackPanel>
                             </Grid>
@@ -992,11 +975,11 @@
                     <Grid x:Name="AiAdminMask" Grid.RowSpan="7" Visibility="Collapsed"
                           Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" Opacity="0.92">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
-                            <FontIcon Glyph="&#xE730;" FontSize="48"
+                            <FontIcon Glyph="&#xE730;" FontSize="28"
                                       Foreground="{ThemeResource SystemFillColorCriticalBrush}" HorizontalAlignment="Center"/>
                             <TextBlock Text="请用管理员打开本软件再使用该功能！" FontSize="18" FontWeight="SemiBold"
                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="右键菜单管理-顽固软件版需要管理员权限才能正常运行" FontSize="13"
+                            <TextBlock Text="右键菜单管理-顽固软件版需要管理员权限才能正常运行" FontSize="14"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Grid>
@@ -1015,7 +998,7 @@
                         <Button Content="刷新" Click="RecoveryRefresh_Click"/>
                     </StackPanel>
 
-                    <Grid Grid.Row="1" Margin="0,10,0,0" ColumnSpacing="12">
+                    <Grid Grid.Row="1" Margin="0,8,0,0" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="300"/>
                             <ColumnDefinition Width="*"/>
@@ -1029,9 +1012,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock x:Name="BatchItemsTitle" FontSize="14" FontWeight="Bold"
+                            <TextBlock x:Name="BatchItemsTitle" Style="{StaticResource SectionHeaderStyle}"
                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="恢复对象"/>
-                            <ListView x:Name="BatchItemsList" Grid.Row="1" Margin="0,6,0,0"
+                            <ListView x:Name="BatchItemsList" Grid.Row="1" Margin="0,8,0,0"
                                       ItemTemplate="{StaticResource BatchItemTemplate}"/>
                         </Grid>
                     </Grid>

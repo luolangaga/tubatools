@@ -13,9 +13,9 @@
             <!-- 菜单项在代码中按工具分类动态构建 -->
         </NavigationView.MenuItems>
 
-        <Grid Padding="32,20,32,28">
+        <Grid Padding="24,8,24,24">
             <ScrollViewer x:Name="ContentScroll" VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ContentHost" MaxWidth="880" HorizontalAlignment="Left" Spacing="14" />
+                <StackPanel x:Name="ContentHost" MaxWidth="880" HorizontalAlignment="Left" Spacing="16" />
             </ScrollViewer>
         </Grid>
     </NavigationView>

@@ -36,17 +36,18 @@ public sealed class BenchmarkHistoryWindow : Window
 	private Button _deleteBtn = null!;
 	private Button _clearBtn = null!;
 
-	private static readonly Color AccentBlue = Color.FromArgb(byte.MaxValue, 0, 99, 177);
-	private static readonly Color ColorS = Color.FromArgb(byte.MaxValue, 74, 222, 128);
-	private static readonly Color ColorAPlus = Color.FromArgb(byte.MaxValue, 34, 197, 94);
-	private static readonly Color ColorA = Color.FromArgb(byte.MaxValue, 0, 99, 177);
-	private static readonly Color ColorBPlus = Color.FromArgb(byte.MaxValue, 251, 191, 36);
-	private static readonly Color ColorB = Color.FromArgb(byte.MaxValue, 251, 146, 60);
-	private static readonly Color ColorC = Color.FromArgb(byte.MaxValue, 248, 113, 113);
-	private static readonly Color ColorD = Color.FromArgb(byte.MaxValue, 220, 38, 38);
-	private static readonly Color UpColor = Color.FromArgb(byte.MaxValue, 34, 197, 94);
-	private static readonly Color DownColor = Color.FromArgb(byte.MaxValue, 248, 113, 113);
-	private static readonly Color ColorsGray = Color.FromArgb(byte.MaxValue, 128, 128, 128);
+	// 语义等级/涨跌色（跟随系统主题，经 ThemeColors 取官方主题资源，不再维护独立调色板）
+	private static Color AccentBlue => ThemeColors.AccentBlue;
+	private static Color ColorS => ThemeColors.AccentGreen;
+	private static Color ColorAPlus => ThemeColors.AccentGreen;
+	private static Color ColorA => ThemeColors.AccentBlue;
+	private static Color ColorBPlus => ThemeColors.AccentOrange;
+	private static Color ColorB => ThemeColors.AccentOrange;
+	private static Color ColorC => ThemeColors.AccentRed;
+	private static Color ColorD => ThemeColors.AccentRed;
+	private static Color UpColor => ThemeColors.AccentGreen;
+	private static Color DownColor => ThemeColors.AccentRed;
+	private static Color ColorsGray => ThemeColors.Neutral;
 
 	public BenchmarkHistoryWindow(List<PerformanceBenchmarkResult> entriesChronological, Action<PerformanceBenchmarkResult> loadToMainPage)
 	{
@@ -68,7 +69,15 @@ public sealed class BenchmarkHistoryWindow : Window
 
 		Content = BuildRoot();
 		if (Content is FrameworkElement root)
+		{
 			root.RequestedTheme = ThemeService.CurrentElementTheme;
+			// 代码构建的画刷不会随主题自动刷新，切换主题后按当前记录重渲染
+			root.ActualThemeChanged += (_, _) =>
+			{
+				if (_selectedIndex >= 0 && _selectedIndex < _entries.Count)
+					ShowDetail(_selectedIndex);
+			};
+		}
 
 		// 打开即回顾最近一次测试结果
 		SelectEntry(_entries.Count - 1);
@@ -78,8 +87,8 @@ public sealed class BenchmarkHistoryWindow : Window
 	{
 		Grid root = new()
 		{
-			Padding = new Thickness(16.0, 14.0, 16.0, 14.0),
-			RowSpacing = 10.0,
+			Padding = new Thickness(24.0, 8.0, 24.0, 24.0),
+			RowSpacing = 8.0,
 			RowDefinitions =
 			{
 				new RowDefinition { Height = GridLength.Auto },
@@ -88,12 +97,11 @@ public sealed class BenchmarkHistoryWindow : Window
 			}
 		};
 
-		StackPanel header = new() { Spacing = 2.0 };
+		StackPanel header = new() { Spacing = 4.0 };
 		header.Children.Add(new TextBlock
 		{
 			Text = "历史对比",
-			FontSize = 20.0,
-			FontWeight = FontWeights.Bold
+			Style = (Style)Application.Current.Resources["PageTitleStyle"]
 		});
 		header.Children.Add(new TextBlock
 		{
@@ -109,8 +117,8 @@ public sealed class BenchmarkHistoryWindow : Window
 		_listHeader = new TextBlock
 		{
 			Text = $"测试记录 · {_entries.Count} 条",
-			FontSize = 13.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 14.0,
+			FontWeight = FontWeights.SemiBold,
 			Margin = new Thickness(0.0, 0.0, 0.0, 8.0)
 		};
 		_list = new ListView
@@ -207,15 +215,15 @@ public sealed class BenchmarkHistoryWindow : Window
 			Content = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
-					(UIElement)new FontIcon { Glyph = glyph, FontSize = 13.0 },
-					(UIElement)new TextBlock { Text = text, FontSize = 13.0 }
+					(UIElement)new FontIcon { Glyph = glyph, FontSize = 14.0 },
+					(UIElement)new TextBlock { Text = text, FontSize = 14.0 }
 				}
 			},
-			CornerRadius = new CornerRadius(6.0),
-			Padding = new Thickness(12.0, 7.0, 12.0, 7.0)
+			CornerRadius = new CornerRadius(4.0),
+			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 	}
 
@@ -231,22 +239,22 @@ public sealed class BenchmarkHistoryWindow : Window
 			_list.Items.Add(new ListViewItem
 			{
 				Tag = i,
-				Padding = new Thickness(10.0, 8.0, 10.0, 8.0),
+				Padding = new Thickness(8.0),
 				Content = new StackPanel
 				{
-					Spacing = 3.0,
+					Spacing = 4.0,
 					Children =
 					{
 						(UIElement)new TextBlock
 						{
 							Text = r.TestTime.ToString("yyyy-MM-dd HH:mm"),
-							FontSize = 13.0,
-							FontWeight = FontWeights.Bold
+							FontSize = 14.0,
+							FontWeight = FontWeights.SemiBold
 						},
 						(UIElement)new TextBlock
 						{
 							Text = $"游戏 {r.GamingScore} · 办公 {r.OfficeScore}" + (r.Win.FinalScore > 0 ? $" · Win {r.Win.FinalScore}" : ""),
-							FontSize = 11.0,
+							FontSize = 12.0,
 							Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 						}
 					}
@@ -304,14 +312,14 @@ public sealed class BenchmarkHistoryWindow : Window
 		if (r.TotalDuration > TimeSpan.Zero) subtitle += $" · 总耗时 {r.TotalDuration:mm\\mss\\s}";
 		_detailPanel.Children.Add(new StackPanel
 		{
-			Spacing = 2.0,
+			Spacing = 4.0,
 			Children =
 			{
 				(UIElement)new TextBlock
 				{
 					Text = r.TestTime.ToString("yyyy-MM-dd HH:mm:ss"),
 					FontSize = 18.0,
-					FontWeight = FontWeights.Bold
+					FontWeight = FontWeights.SemiBold
 				},
 				(UIElement)new TextBlock
 				{
@@ -333,7 +341,7 @@ public sealed class BenchmarkHistoryWindow : Window
 			_detailPanel.Children.Add(new TextBlock
 			{
 				Text = string.Join("　", hw),
-				FontSize = 11.0,
+				FontSize = 12.0,
 				TextWrapping = TextWrapping.Wrap,
 				Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 			});
@@ -342,7 +350,7 @@ public sealed class BenchmarkHistoryWindow : Window
 		// 三大总分卡片（含与上一次的对比）
 		Grid scores = new()
 		{
-			ColumnSpacing = 10.0,
+			ColumnSpacing = 8.0,
 			ColumnDefinitions =
 			{
 				new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) },
@@ -365,7 +373,7 @@ public sealed class BenchmarkHistoryWindow : Window
 		_detailPanel.Children.Add(scores);
 
 		// 分区明细
-		StackPanel sections = new() { Spacing = 10.0 };
+		StackPanel sections = new() { Spacing = 8.0 };
 
 		if (r.Cpu.SingleCoreScore > 0 || r.Cpu.MultiCoreScore > 0 || r.Cpu.LatencyScore > 0)
 		{
@@ -457,20 +465,20 @@ public sealed class BenchmarkHistoryWindow : Window
 			{
 				Visibility = Visibility.Collapsed,
 				Padding = new Thickness(8.0),
-				CornerRadius = new CornerRadius(6.0),
+				CornerRadius = new CornerRadius(8.0),
 				Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
 				Child = img
 			};
 			_detailPanel.Children.Add(new StackPanel
 			{
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
 					(UIElement)new TextBlock
 					{
 						Text = "核间延迟热力图",
-						FontSize = 13.0,
-						FontWeight = FontWeights.Bold
+						FontSize = 14.0,
+						FontWeight = FontWeights.SemiBold
 					},
 					(UIElement)container
 				}
@@ -487,9 +495,9 @@ public sealed class BenchmarkHistoryWindow : Window
 		_detailPanel.Children.Add(new TextBlock
 		{
 			Text = message,
-			FontSize = 13.0,
+			FontSize = 14.0,
 			HorizontalAlignment = HorizontalAlignment.Center,
-			Margin = new Thickness(0.0, 40.0, 0.0, 0.0),
+			Margin = new Thickness(0.0, 32.0, 0.0, 0.0),
 			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
 		});
 	}
@@ -498,7 +506,7 @@ public sealed class BenchmarkHistoryWindow : Window
 	{
 		TextBlock deltaText = new()
 		{
-			FontSize = 11.0,
+			FontSize = 12.0,
 			VerticalAlignment = VerticalAlignment.Center,
 			Margin = new Thickness(8.0, 0.0, 0.0, 0.0)
 		};
@@ -540,8 +548,8 @@ public sealed class BenchmarkHistoryWindow : Window
 		scoreRow.Children.Add(new TextBlock
 		{
 			Text = score > 0 ? score.ToString() : "—",
-			FontSize = 26.0,
-			FontWeight = FontWeights.Bold,
+			FontSize = 20.0,
+			FontWeight = FontWeights.SemiBold,
 			Foreground = new SolidColorBrush(scoreColor),
 			VerticalAlignment = VerticalAlignment.Center
 		});
@@ -549,7 +557,7 @@ public sealed class BenchmarkHistoryWindow : Window
 		{
 			Text = grade,
 			FontSize = 14.0,
-			FontWeight = FontWeights.Bold,
+			FontWeight = FontWeights.SemiBold,
 			Foreground = new SolidColorBrush(scoreColor),
 			VerticalAlignment = VerticalAlignment.Center
 		});
@@ -560,11 +568,11 @@ public sealed class BenchmarkHistoryWindow : Window
 			Background = (Brush)Application.Current.Resources["CardBackgroundFillColorSecondaryBrush"],
 			BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
 			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(6.0),
-			Padding = new Thickness(12.0, 10.0, 12.0, 10.0),
+			CornerRadius = new CornerRadius(8.0),
+			Padding = new Thickness(12.0),
 			Child = new StackPanel
 			{
-				Spacing = 2.0,
+				Spacing = 4.0,
 				Children =
 				{
 					(UIElement)new TextBlock
@@ -586,12 +594,11 @@ public sealed class BenchmarkHistoryWindow : Window
 			Background = (Brush)Application.Current.Resources["CardBackgroundFillColorSecondaryBrush"],
 			BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
 			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(6.0),
-			Padding = new Thickness(12.0, 10.0, 12.0, 10.0),
-			Opacity = 0.6,
+			CornerRadius = new CornerRadius(8.0),
+			Padding = new Thickness(12.0),
 			Child = new StackPanel
 			{
-				Spacing = 2.0,
+				Spacing = 4.0,
 				Children =
 				{
 					(UIElement)new TextBlock
@@ -609,14 +616,14 @@ public sealed class BenchmarkHistoryWindow : Window
 							(UIElement)new TextBlock
 							{
 								Text = "—",
-								FontSize = 26.0,
-								FontWeight = FontWeights.Bold,
+								FontSize = 20.0,
+								FontWeight = FontWeights.SemiBold,
 								Foreground = new SolidColorBrush(ColorsGray)
 							},
 							(UIElement)new TextBlock
 							{
 								Text = "未测试",
-								FontSize = 11.0,
+								FontSize = 12.0,
 								VerticalAlignment = VerticalAlignment.Center,
 								Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
 							}
@@ -629,7 +636,7 @@ public sealed class BenchmarkHistoryWindow : Window
 
 	private Border BuildSectionCard(string glyph, string title, List<(string Label, string Detail, int Score)> rows)
 	{
-		StackPanel content = new() { Spacing = 6.0 };
+		StackPanel content = new() { Spacing = 8.0 };
 		content.Children.Add(new StackPanel
 		{
 			Orientation = Orientation.Horizontal,
@@ -637,7 +644,7 @@ public sealed class BenchmarkHistoryWindow : Window
 			Children =
 			{
 				(UIElement)new FontIcon { Glyph = glyph, FontSize = 14.0, Foreground = new SolidColorBrush(AccentBlue) },
-				(UIElement)new TextBlock { Text = title, FontSize = 14.0, FontWeight = FontWeights.Bold }
+				(UIElement)new TextBlock { Text = title, FontSize = 14.0, FontWeight = FontWeights.SemiBold }
 			}
 		});
 		foreach (var (label, detail, score) in rows)
@@ -664,8 +671,8 @@ public sealed class BenchmarkHistoryWindow : Window
 			TextBlock scoreBlock = new()
 			{
 				Text = score > 0 ? score.ToString() : "—",
-				FontSize = 13.0,
-				FontWeight = FontWeights.Bold,
+				FontSize = 14.0,
+				FontWeight = FontWeights.SemiBold,
 				VerticalAlignment = VerticalAlignment.Center,
 				Foreground = new SolidColorBrush(score > 0 ? ScoreColor(score) : ColorsGray)
 			};
@@ -674,7 +681,7 @@ public sealed class BenchmarkHistoryWindow : Window
 			TextBlock detailBlock = new()
 			{
 				Text = detail,
-				FontSize = 11.0,
+				FontSize = 12.0,
 				VerticalAlignment = VerticalAlignment.Center,
 				Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
 			};
@@ -749,11 +756,11 @@ public sealed class BenchmarkHistoryWindow : Window
 			_clearBtn.Content = new StackPanel
 			{
 				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
+				Spacing = 8.0,
 				Children =
 				{
-					(UIElement)new FontIcon { Glyph = "\ued60", FontSize = 13.0 },
-					(UIElement)new TextBlock { Text = "再点一次确认清空", FontSize = 13.0 }
+					(UIElement)new FontIcon { Glyph = "\ued60", FontSize = 14.0 },
+					(UIElement)new TextBlock { Text = "再点一次确认清空", FontSize = 14.0 }
 				}
 			};
 			var timer = DispatcherQueue.CreateTimer();
@@ -779,11 +786,11 @@ public sealed class BenchmarkHistoryWindow : Window
 		_clearBtn.Content = new StackPanel
 		{
 			Orientation = Orientation.Horizontal,
-			Spacing = 6.0,
+			Spacing = 8.0,
 			Children =
 			{
-				(UIElement)new FontIcon { Glyph = "\ued60", FontSize = 13.0 },
-				(UIElement)new TextBlock { Text = "清空全部", FontSize = 13.0 }
+				(UIElement)new FontIcon { Glyph = "\ued60", FontSize = 14.0 },
+				(UIElement)new TextBlock { Text = "清空全部", FontSize = 14.0 }
 			}
 		};
 	}

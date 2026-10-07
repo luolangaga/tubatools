@@ -33,6 +33,16 @@ public sealed partial class WhatsNewWindow : Page
     {
         _window = window;
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按当前版本列表重渲染（保留选中项）
+        ActualThemeChanged += (_, _) =>
+        {
+            if (_releases.Count == 0) return;
+
+            var selected = VersionListView.SelectedIndex;
+            PopulateVersionList();
+            if (selected >= 0 && selected < _releases.Count)
+                VersionListView.SelectedIndex = selected;
+        };
         _ = LoadReleasesAsync();
     }
 
@@ -80,8 +90,7 @@ public sealed partial class WhatsNewWindow : Page
 
     private static void ApplyTitleBarTheme(Window window)
     {
-        var isDark = ThemeService.CurrentTheme == AppTheme.Dark ||
-                     (ThemeService.CurrentTheme == AppTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);
+        var isDark = ThemeService.IsDarkEffective;
         TitleBarPalette.Apply(SafeTitleBar.Get(window), isDark);
     }
 
@@ -139,20 +148,20 @@ public sealed partial class WhatsNewWindow : Page
 
         foreach (var release in _releases)
         {
-            var sp = new StackPanel { Spacing = 2 };
+            var sp = new StackPanel { Spacing = 4 };
 
             var titleText = new TextBlock
             {
                 Text = release.Name ?? release.TagName,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 FontSize = 14,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
 
             var dateText = new TextBlock
             {
-                FontSize = 11,
-                Opacity = 0.6,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(ThemeColors.DimText),
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
 

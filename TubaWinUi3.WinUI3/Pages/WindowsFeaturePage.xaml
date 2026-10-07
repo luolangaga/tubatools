@@ -13,9 +13,9 @@
     <Page.Resources>
         <!-- 小圆角提示标签的通用底框 -->
         <Style x:Key="TagBorder" TargetType="Border">
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="7,2" />
-            <Setter Property="Background" Value="#14000000" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,2" />
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <!-- 列表项去毛边 -->
@@ -23,11 +23,11 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
         <!-- 功能卡片模板（浏览列表与搜索结果共用） -->
         <DataTemplate x:Key="FeatureCardTemplate" x:DataType="local:FeatureRowVm">
-            <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="14,10">
+            <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8">
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -35,10 +35,10 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Style="{StaticResource CardTitleStyle}" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <Border Style="{StaticResource TagBorder}">
-                                <TextBlock FontSize="12" Opacity="0.85" Text="{x:Bind IdText}" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind IdText}" />
                             </Border>
                             <Border Style="{StaticResource TagBorder}" Background="{x:Bind StateBackground}">
                                 <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{x:Bind StateBrush}" Text="{x:Bind StateText}" />
@@ -47,61 +47,61 @@
                                 <TextBlock FontSize="12" Foreground="{x:Bind ExperimentBrush}" Text="{x:Bind ExperimentText}" />
                             </Border>
                             <Border Style="{StaticResource TagBorder}">
-                                <TextBlock FontSize="12" Opacity="0.7" Text="{x:Bind PriorityText}" />
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind PriorityText}" />
                             </Border>
                         </StackPanel>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanEnable}" Click="FeatureButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button CornerRadius="4" Padding="12,8" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanEnable}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
                                 <FontIcon Glyph="&#xE73E;" FontSize="12" />
-                                <TextBlock Text="启用" FontSize="13" />
+                                <TextBlock Text="启用" FontSize="14" />
                             </StackPanel>
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="10" Padding="4,0">
-                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                    <StackPanel Spacing="8" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                            <Button Content="确认启用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                            <Button Content="取消" CornerRadius="4" Click="CancelFlyout_Click" />
+                                            <Button Content="确认启用" CornerRadius="4" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
-                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanDisable}" Click="FeatureButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button CornerRadius="4" Padding="12,8" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanDisable}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
                                 <FontIcon Glyph="&#xE71A;" FontSize="12" />
-                                <TextBlock Text="禁用" FontSize="13" />
+                                <TextBlock Text="禁用" FontSize="14" />
                             </StackPanel>
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="10" Padding="4,0">
-                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                    <StackPanel Spacing="8" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                            <Button Content="确认禁用" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                            <Button Content="取消" CornerRadius="4" Click="CancelFlyout_Click" />
+                                            <Button Content="确认禁用" CornerRadius="4" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
-                        <Button CornerRadius="7" Padding="12,6" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanReset}" Click="FeatureButton_Click">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Button CornerRadius="4" Padding="12,8" Tag="{x:Bind Self}" IsEnabled="{x:Bind CanReset}" Click="FeatureButton_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
                                 <FontIcon Glyph="&#xE777;" FontSize="12" />
-                                <TextBlock Text="重置" FontSize="13" />
+                                <TextBlock Text="重置" FontSize="14" />
                             </StackPanel>
                             <Button.Flyout>
                                 <Flyout>
-                                    <StackPanel Spacing="10" Padding="4,0">
-                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Opacity="0.7" TextWrapping="Wrap" />
+                                    <StackPanel Spacing="8" Padding="4,0">
+                                        <TextBlock Text="{x:Bind FlyoutTitle}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{x:Bind FlyoutDesc}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                                            <Button Content="取消" CornerRadius="7" Click="CancelFlyout_Click" />
-                                            <Button Content="确认重置" CornerRadius="7" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
+                                            <Button Content="取消" CornerRadius="4" Click="CancelFlyout_Click" />
+                                            <Button Content="确认重置" CornerRadius="4" Style="{StaticResource AccentButtonStyle}" Tag="{x:Bind Self}" Click="ConfirmFeature_Click" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Flyout>
@@ -124,18 +124,11 @@
             Title="Windows 隐藏功能"
             Subtitle="系统功能配置 API 直读（ViVe 引擎移植）· 查询 / 启用 / 禁用 / 重置实验性功能开关"
             Glyph="&#xE950;">
-            <!-- 品牌渐变图标块 -->
-            <controls:ToolPageHeader.IconBackground>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#7C6CF0" />
-                    <GradientStop Offset="1" Color="#5B8DEF" />
-                </LinearGradientBrush>
-            </controls:ToolPageHeader.IconBackground>
             <controls:ToolPageHeader.Actions>
-                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Padding="12,5" VerticalAlignment="Center">
+                <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon x:Name="RefreshIcon" Glyph="&#xE72C;" FontSize="12" />
-                        <TextBlock x:Name="RefreshText" Text="重新加载" FontSize="13" />
+                        <TextBlock x:Name="RefreshText" Text="重新加载" />
                     </StackPanel>
                 </Button>
             </controls:ToolPageHeader.Actions>
@@ -143,7 +136,7 @@
 
         <!-- 正文 -->
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="28,6,28,28">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
             <StackPanel Spacing="16">
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="操作失败" />
@@ -158,22 +151,18 @@
 
                 <!-- 加载中 -->
                 <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" Spacing="12" Padding="0,64">
-                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" Foreground="#7C6CF0" />
-                    <TextBlock FontSize="13" Opacity="0.7" HorizontalAlignment="Center" Text="正在读取功能配置存储…" />
+                    <ProgressRing Width="42" Height="42" IsActive="True" HorizontalAlignment="Center" Foreground="{ThemeResource AccentFillColorDefaultBrush}" />
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" Text="正在读取功能配置存储…" />
                 </StackPanel>
 
                 <!-- 系统不支持 -->
-                <Border x:Name="MissingPanel" Visibility="Collapsed" CornerRadius="22" Padding="24" BorderThickness="1" BorderBrush="#26F5A623">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Offset="0" Color="#14F5A623" />
-                            <GradientStop Offset="1" Color="#00000000" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <StackPanel Spacing="8" HorizontalAlignment="Center" Padding="0,18">
-                        <FontIcon Glyph="&#xE7BA;" FontSize="30" Foreground="#F5A623" HorizontalAlignment="Center" />
+                <Border x:Name="MissingPanel" Visibility="Collapsed" CornerRadius="8" Padding="24" BorderThickness="1"
+                        Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+                        BorderBrush="{ThemeResource SystemFillColorCautionBrush}">
+                    <StackPanel Spacing="8" HorizontalAlignment="Center" Padding="0,16">
+                        <FontIcon Glyph="&#xE7BA;" FontSize="28" Foreground="{ThemeResource SystemFillColorCautionBrush}" HorizontalAlignment="Center" />
                         <TextBlock FontSize="14" FontWeight="SemiBold" Text="当前系统不支持功能配置 API" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="MissingText" FontSize="12" Opacity="0.7" TextWrapping="Wrap" MaxWidth="560" TextAlignment="Center" />
+                        <TextBlock x:Name="MissingText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" MaxWidth="560" TextAlignment="Center" />
                     </StackPanel>
                 </Border>
 
@@ -181,7 +170,7 @@
                 <StackPanel x:Name="ContentPanel" Visibility="Collapsed" Spacing="16">
 
                     <!-- ═════════ 状态统计（4 枚小圆角芯片） ═════════ -->
-                    <Grid ColumnSpacing="10">
+                    <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -189,39 +178,39 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#7C6CF0" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="BuildValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#7C6CF0" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="系统版本" />
+                                    <TextBlock x:Name="BuildValue" Style="{StaticResource StatValueStyle}" Text="--" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="系统版本" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="1" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#5B8DEF" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="DictValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#5B8DEF" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="功能字典" />
+                                    <TextBlock x:Name="DictValue" Style="{StaticResource StatValueStyle}" Text="--" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="功能字典" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="2" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="2" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#2BB673" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource SystemFillColorSuccessBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="ConfiguredValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#2BB673" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="已配置功能" />
+                                    <TextBlock x:Name="ConfiguredValue" Style="{StaticResource StatValueStyle}" Text="--" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="已配置功能" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
-                        <Border Grid.Column="3" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                        <Border Grid.Column="3" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="14,10">
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Ellipse Width="8" Height="8" Fill="#F5A623" VerticalAlignment="Center" />
+                                <Ellipse Width="8" Height="8" Fill="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center" />
                                 <StackPanel Spacing="0">
-                                    <TextBlock x:Name="EnabledValue" FontSize="25" FontWeight="Bold" Text="--" Foreground="#F5A623" />
-                                    <TextBlock FontSize="12" Opacity="0.6" Text="已启用" />
+                                    <TextBlock x:Name="EnabledValue" Style="{StaticResource StatValueStyle}" Text="--" Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="已启用" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -230,8 +219,8 @@
                     <!-- ═════════ 功能列表（浏览 + 搜索，nexbox 单列表逻辑） ═════════ -->
                     <StackPanel Spacing="8">
                         <Grid>
-                            <TextBlock FontSize="15" FontWeight="SemiBold" Text="功能列表" />
-                            <TextBlock x:Name="ListStats" FontSize="12" Opacity="0.55" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="功能列表" />
+                            <TextBlock x:Name="ListStats" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </Grid>
 
                         <!-- 搜索框：打字不触发查询，回车 / 点击搜索按钮才提交（nexbox 同款） -->
@@ -240,11 +229,12 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBox x:Name="SearchBox" PlaceholderText="输入功能名称或 ID（回车或点击搜索提交），如 TIFE、48433719…" FontSize="14" />
-                            <Button x:Name="SearchButton" Grid.Column="1" CornerRadius="7" Padding="16,10" Click="SearchButton_Click">
+                            <AutoSuggestBox x:Name="SearchBox" PlaceholderText="输入功能名称或 ID（回车或点击搜索提交），如 TIFE、48433719…" QueryIcon="Find"
+                                            TextChanged="SearchBox_TextChanged" QuerySubmitted="SearchBox_QuerySubmitted" />
+                            <Button x:Name="SearchButton" Grid.Column="1" CornerRadius="4" Padding="16,8" Click="SearchButton_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon Glyph="&#xE721;" FontSize="13" />
-                                    <TextBlock Text="搜索" FontSize="13" />
+                                    <FontIcon Glyph="&#xE721;" FontSize="12" />
+                                    <TextBlock Text="搜索" FontSize="14" />
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -255,19 +245,19 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <ToggleButton x:Name="RuntimeStoreButton" Click="StoreButton_Click" Padding="12,5" CornerRadius="7"
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <ToggleButton x:Name="RuntimeStoreButton" Click="StoreButton_Click" Padding="12,4" CornerRadius="4"
                                               ToolTipService.ToolTip="运行时存储：本次开机有效的功能配置">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
                                         <FontIcon Glyph="&#xE770;" FontSize="12" />
-                                        <TextBlock Text="运行时" FontSize="13" />
+                                        <TextBlock Text="运行时" FontSize="14" />
                                     </StackPanel>
                                 </ToggleButton>
-                                <ToggleButton x:Name="BootStoreButton" Click="StoreButton_Click" Padding="12,5" CornerRadius="7"
+                                <ToggleButton x:Name="BootStoreButton" Click="StoreButton_Click" Padding="12,4" CornerRadius="4"
                                               ToolTipService.ToolTip="引导存储：重启后依然生效的持久化配置">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
                                         <FontIcon Glyph="&#xE7E8;" FontSize="12" />
-                                        <TextBlock Text="引导（重启生效）" FontSize="13" />
+                                        <TextBlock Text="引导（重启生效）" FontSize="14" />
                                     </StackPanel>
                                 </ToggleButton>
                             </StackPanel>
@@ -285,31 +275,31 @@
                                   ItemTemplate="{StaticResource FeatureCardTemplate}" />
 
                         <!-- 空状态 / 无结果 -->
-                        <Border x:Name="NoResultsPanel" Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1"
-                                CornerRadius="12" Padding="20,18" Visibility="Collapsed">
+                        <Border x:Name="NoResultsPanel" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="24,16" Visibility="Collapsed">
                             <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                <FontIcon Glyph="&#xE721;" FontSize="20" Opacity="0.4" HorizontalAlignment="Center" />
-                                <TextBlock x:Name="NoResultsText" FontSize="13" Opacity="0.6" HorizontalAlignment="Center" />
+                                <FontIcon Glyph="&#xE721;" FontSize="20" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" />
+                                <TextBlock x:Name="NoResultsText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Border>
 
                         <!-- 分批加载：每批 100 条（nexbox PAGE_SIZE） -->
-                        <Button x:Name="LoadMoreButton" HorizontalAlignment="Center" Padding="20,8" CornerRadius="7"
+                        <Button x:Name="LoadMoreButton" HorizontalAlignment="Center" Padding="16,8" CornerRadius="4"
                                 Click="LoadMoreButton_Click" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon Glyph="&#xE72C;" FontSize="12" />
-                                <TextBlock Text="加载更多" FontSize="13" />
+                                <TextBlock Text="加载更多" FontSize="14" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
 
                     <!-- 使用说明 -->
-                    <Border Background="#0D000000" BorderBrush="#1F000000" BorderThickness="1" CornerRadius="12" Padding="16,12">
-                        <StackPanel Spacing="6">
+                    <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="16,12">
+                        <StackPanel Spacing="8">
                             <TextBlock FontSize="14" FontWeight="SemiBold">
-                                <Run Text="使用说明" /><Run Text="　" /><Run Text="(需求 Windows 10 1903+ 系统)" FontSize="11" Foreground="#808080" />
+                                <Run Text="使用说明" /><Run Text="　" /><Run Text="(需求 Windows 10 1903+ 系统)" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             </TextBlock>
-                            <TextBlock FontSize="12" Opacity="0.7" TextWrapping="Wrap" LineHeight="19">
+                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" LineHeight="19">
                                 <Run Text="· 总列表按功能 ID 升序分批展示（单次最多 500 条，点击「加载更多」继续），默认仅显示字典可识别名称的条目，可关闭「仅显示有名称」查看系统内部 servicing 配置；「运行时 / 引导」切换查看两种存储。" />
                                 <LineBreak />
                                 <Run Text="· 搜索按名称或数字 ID 匹配系统配置与内置功能字典（17000 条），字典命中但系统未配置的条目会以「未配置」状态一并展示，可直接启用。" />

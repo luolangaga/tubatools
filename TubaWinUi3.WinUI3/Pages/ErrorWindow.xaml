@@ -7,14 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" RowSpacing="0">
+    <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Padding="32,28,32,20" ColumnSpacing="16"
+        <Grid Padding="24,24,24,16" ColumnSpacing="16"
               Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -22,26 +22,23 @@
             </Grid.ColumnDefinitions>
 
             <Border Width="56" Height="56"
-                    Background="#33FF4444"
-                    CornerRadius="14">
-                <FontIcon FontSize="28" Foreground="#FF4444" Glyph="&#xE783;" />
+                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                    CornerRadius="12">
+                <FontIcon FontSize="28" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Glyph="&#xE783;" />
             </Border>
 
             <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                <TextBlock FontSize="26" FontWeight="Bold" Text="出现了意外错误" />
-                <TextBlock Opacity="1.0" FontSize="13" TextWrapping="Wrap"
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="出现了意外错误" />
+                <TextBlock Style="{StaticResource PageSubtitleStyle}" TextWrapping="Wrap"
                            Text="应用遇到了一个未处理的异常，你可以复制详细信息并提交 Issue 帮助我们改进。" />
             </StackPanel>
         </Grid>
 
         <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="32,20,32,8">
-            <StackPanel Spacing="12" MaxWidth="860">
+                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
+            <StackPanel Spacing="16" MaxWidth="860">
 
-                <Border Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -49,14 +46,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <FontIcon FontSize="14" Glyph="&#xE946;" Opacity="1.0" />
-                                <TextBlock FontSize="14" FontWeight="Bold" Opacity="1.0" Text="异常详情" />
+                                <FontIcon FontSize="14" Glyph="&#xE946;" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="异常详情" />
                             </StackPanel>
                             <Button x:Name="CopyButton" Grid.Column="1"
-                                    Padding="10,4" Click="CopyButton_Click"
+                                    Padding="8,4" Click="CopyButton_Click"
                                     ToolTipService.ToolTip="复制到剪贴板"
-                                    CornerRadius="6">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    CornerRadius="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock x:Name="CopyButtonText" FontSize="12" Text="复制" />
                                 </StackPanel>
@@ -66,18 +63,15 @@
                                       VerticalScrollBarVisibility="Auto">
                             <TextBlock x:Name="ErrorText"
                                        FontFamily="Cascadia Code, Consolas"
-                                       FontSize="12" Opacity="1.0"
+                                       FontSize="12"
                                        TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                         </ScrollViewer>
                     </StackPanel>
                 </Border>
 
-                <Border Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="8">
-                        <Grid x:Name="SysInfoHeader" ColumnSpacing="8" Padding="0,2"
+                        <Grid x:Name="SysInfoHeader" ColumnSpacing="8" Padding="0,4"
                               PointerPressed="SysInfoHeader_Click">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -85,17 +79,17 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <FontIcon x:Name="SysInfoChevron" FontSize="10" Glyph="&#xE70D;" Opacity="1.0" />
-                                <FontIcon FontSize="14" Glyph="&#xE950;" Opacity="1.0" />
-                                <TextBlock FontSize="14" FontWeight="Bold" Opacity="1.0" Text="系统信息" />
-                                <TextBlock x:Name="SysInfoSummary" FontSize="12" Opacity="1.0"
+                                <FontIcon x:Name="SysInfoChevron" FontSize="12" Glyph="&#xE70D;" />
+                                <FontIcon FontSize="14" Glyph="&#xE950;" />
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="系统信息" />
+                                <TextBlock x:Name="SysInfoSummary" FontSize="12"
                                            VerticalAlignment="Center" />
                             </StackPanel>
                             <Button x:Name="CopySysInfoButton" Grid.Column="1"
-                                    Padding="10,4" Click="CopySysInfoButton_Click"
+                                    Padding="8,4" Click="CopySysInfoButton_Click"
                                     ToolTipService.ToolTip="复制系统信息"
-                                    CornerRadius="6">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    CornerRadius="8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock x:Name="CopySysInfoButtonText" FontSize="12" Text="复制" />
                                 </StackPanel>
@@ -107,30 +101,27 @@
                                       Visibility="Collapsed">
                             <TextBlock x:Name="SysInfoText"
                                        FontFamily="Cascadia Code, Consolas"
-                                       FontSize="12" Opacity="1.0"
+                                       FontSize="12"
                                        TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                         </ScrollViewer>
                     </StackPanel>
                 </Border>
 
-                <Border Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="10">
+                <Border Style="{StaticResource FluentCardStyle}">
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <FontIcon FontSize="14" Glyph="&#xE8BD;" Opacity="1.0" />
-                            <TextBlock FontSize="14" FontWeight="Bold" Opacity="1.0" Text="复现步骤" />
-                            <TextBlock FontSize="12" Foreground="#FF4444" Text="*必填" />
+                            <FontIcon FontSize="14" Glyph="&#xE8BD;" />
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="复现步骤" />
+                            <TextBlock FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Text="*必填" />
                         </StackPanel>
-                        <TextBlock Opacity="1.0" FontSize="12" TextWrapping="Wrap"
+                        <TextBlock FontSize="12" TextWrapping="Wrap"
                                    Text="请描述你遇到此错误时的操作步骤，帮助我们定位问题。" />
                         <TextBox x:Name="ReproStepsBox"
                                  PlaceholderText="例如：1. 打开硬件信息页&#x0a;2. 点击刷新按钮&#x0a;3. 应用崩溃"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  MinHeight="80" MaxHeight="160"
-                                 FontSize="13"
+                                 FontSize="14"
                                  CornerRadius="8" />
                     </StackPanel>
                 </Border>
@@ -138,24 +129,24 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Padding="32,16,32,20"
+        <Border Grid.Row="2" Padding="24,16,24,16"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
             <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
-                <Button x:Name="CloseWindowButton" Padding="20,10" Click="CloseWindowButton_Click"
+                <Button x:Name="CloseWindowButton" Padding="16,8" Click="CloseWindowButton_Click"
                         CornerRadius="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE711;" />
                         <TextBlock Text="关闭" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="RestartButton" Padding="20,10" Click="RestartButton_Click"
+                <Button x:Name="RestartButton" Padding="16,8" Click="RestartButton_Click"
                         CornerRadius="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE72C;" />
                         <TextBlock Text="重启应用" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="PackageLogsButton" Padding="20,10" Click="PackageLogsButton_Click"
+                <Button x:Name="PackageLogsButton" Padding="16,8" Click="PackageLogsButton_Click"
                         CornerRadius="8"
                         ToolTipService.ToolTip="收集 Windows 事件日志中与本程序相关的崩溃报告和应用日志，打包为 zip 供提交 Issue 时上传">
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -163,7 +154,7 @@
                         <TextBlock x:Name="PackageLogsButtonText" Text="打包日志" />
                     </StackPanel>
                 </Button>
-                <Button x:Name="ReportButton" Padding="20,10" Click="ReportButton_Click"
+                <Button x:Name="ReportButton" Padding="16,8" Click="ReportButton_Click"
                         CornerRadius="8"
                         Style="{ThemeResource AccentButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">

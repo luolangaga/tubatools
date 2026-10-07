@@ -27,19 +27,13 @@ public sealed partial class GameMonitorRecordsPage : Page
     /// <summary>同屏最多绘制的图表数量（一个指标一张图）。</summary>
     private const int MaxCharts = 6;
 
-    /// <summary>曲线配色（在浅色/深色背景下都可辨识）。</summary>
-    private static readonly Color[] Palette =
+    /// <summary>曲线配色（系统图表系列色板，跟随主题；在浅色/深色背景下都可辨识）。</summary>
+    private static Color[] Palette =>
     [
-        Color.FromArgb(255, 0x0F, 0x7A, 0xE8), // 蓝
-        Color.FromArgb(255, 0xE8, 0x5D, 0x2A), // 橙
-        Color.FromArgb(255, 0x1F, 0xA8, 0x5C), // 绿
-        Color.FromArgb(255, 0xC7, 0x3A, 0x8E), // 品红
-        Color.FromArgb(255, 0x7B, 0x5C, 0xE0), // 紫
-        Color.FromArgb(255, 0x00, 0x9E, 0xA8), // 青
-        Color.FromArgb(255, 0xD1, 0x8A, 0x00), // 琥珀
-        Color.FromArgb(255, 0x5A, 0x6A, 0x7A), // 灰蓝
-        Color.FromArgb(255, 0x9C, 0x27, 0x2B), // 深红
-        Color.FromArgb(255, 0x2E, 0x6B, 0x3E), // 墨绿
+        ThemeColors.Series1,
+        ThemeColors.Series2,
+        ThemeColors.Series3,
+        ThemeColors.Series4,
     ];
 
     private string? _initialFile;
@@ -70,9 +64,10 @@ public sealed partial class GameMonitorRecordsPage : Page
     {
         ChartInitializer.EnsureConfigured();
         InitializeComponent();
+        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
         ActualThemeChanged += (_, _) =>
         {
-            if (_ready && _view is not null) RenderCharts();
+            if (_ready && _view is not null) RenderAll();
         };
         Loaded += OnLoaded;
     }
@@ -256,7 +251,7 @@ public sealed partial class GameMonitorRecordsPage : Page
             {
                 Content = group,
                 FontSize = 12,
-                Padding = new Thickness(12, 5, 12, 5),
+                Padding = new Thickness(12, 4, 12, 4),
                 Tag = group
             };
             if (selected && Application.Current.Resources.TryGetValue("AccentButtonStyle", out var style)
@@ -336,10 +331,10 @@ public sealed partial class GameMonitorRecordsPage : Page
             ? meta.DurationSeconds
             : _view.Data.Samples.Count > 0 ? _view.Data.Samples[^1].Seconds : 0;
 
-        AddCard("记录时长", GameMonitorRecorder.FormatDuration(duration), Palette[0]);
+        AddCard("记录时长", GameMonitorRecorder.FormatDuration(duration), ThemeColors.Series1);
         AddCard("采样点", _view.Data.Samples.Count.ToString("N0", CultureInfo.InvariantCulture),
-            Palette[1], $"抽稀步长 {_view.Step}");
-        AddCard("采样间隔", meta.IntervalMs > 0 ? $"{meta.IntervalMs:0} ms" : "—", Palette[5]);
+            ThemeColors.Series2, $"抽稀步长 {_view.Step}");
+        AddCard("采样间隔", meta.IntervalMs > 0 ? $"{meta.IntervalMs:0} ms" : "—", ThemeColors.Series1);
 
         // 当前分组的关键指标（取第一个有数据的指标作为头条）
         var metrics = VisibleMetrics();
@@ -347,11 +342,11 @@ public sealed partial class GameMonitorRecordsPage : Page
         if (headline is not null)
         {
             var unit = string.IsNullOrEmpty(headline.Metric.Unit) ? "" : " " + headline.Metric.Unit;
-            AddCard(headline.Metric.Label, headline.Avg.Trim() + unit, Palette[2], $"最大 {headline.Max.Trim()}{unit}");
+            AddCard(headline.Metric.Label, headline.Avg.Trim() + unit, ThemeColors.Series3, $"最大 {headline.Max.Trim()}{unit}");
         }
 
         var count = metrics.Count;
-        AddCard("本组指标", count.ToString(CultureInfo.InvariantCulture), Palette[7]);
+        AddCard("本组指标", count.ToString(CultureInfo.InvariantCulture), ThemeColors.Series2);
     }
 
     private void RenderCharts()
@@ -436,8 +431,7 @@ public sealed partial class GameMonitorRecordsPage : Page
 
     private void RenderSlot(ChartSlot slot, GameMonitorRecordReader.MonitorMetricView mv, Color color, int from, int to)
     {
-        var dark = ActualTheme == ElementTheme.Dark;
-        var text = dark ? Color.FromArgb(255, 0xC8, 0xC8, 0xC8) : Color.FromArgb(255, 0x5A, 0x5A, 0x5A);
+        var text = ThemeColors.SecondaryText;
         var grid = new SolidColorPaint(SkA(text, 40));
         var unit = string.IsNullOrEmpty(mv.Metric.Unit) ? "" : " " + mv.Metric.Unit;
 
@@ -469,21 +463,21 @@ public sealed partial class GameMonitorRecordsPage : Page
     {
         var title = new TextBlock
         {
-            FontSize = 12.5,
+            FontSize = 14,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
         };
         var stats = new TextBlock
         {
-            FontSize = 11,
-            Opacity = 0.62,
+            FontSize = 12,
+            Foreground = new SolidColorBrush(ThemeColors.DimText),
             TextTrimming = TextTrimming.CharacterEllipsis,
             TextAlignment = TextAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        var header = new Grid { ColumnSpacing = 10 };
+        var header = new Grid { ColumnSpacing = 8 };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         header.Children.Add(title);
@@ -499,7 +493,7 @@ public sealed partial class GameMonitorRecordsPage : Page
             EasingFunction = null
         };
 
-        var body = new Grid { RowSpacing = 6 };
+        var body = new Grid { RowSpacing = 8 };
         body.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         body.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         body.Children.Add(header);
@@ -508,11 +502,12 @@ public sealed partial class GameMonitorRecordsPage : Page
 
         var card = new Border
         {
-            Style = (Style)Resources["CardBorder"],
-            Padding = new Thickness(10, 8, 10, 6),
+            Padding = new Thickness(12, 8, 12, 8),
             Height = 180,
             Child = body
         };
+        if (Application.Current.Resources.TryGetValue("FluentCardStyle", out var cardStyle) && cardStyle is Style fluentCard)
+            card.Style = fluentCard;
 
         return new ChartSlot { Card = card, Title = title, Stats = stats, Chart = chart };
     }
@@ -550,30 +545,26 @@ public sealed partial class GameMonitorRecordsPage : Page
     private void BuildLegend(List<LegendItem> items)
     {
         _legendChips.Clear();
-        var dark = ActualTheme == ElementTheme.Dark;
-        var borderTint = dark ? Color.FromArgb(60, 0xFF, 0xFF, 0xFF) : Color.FromArgb(38, 0, 0, 0);
 
         foreach (var item in items)
         {
             var chip = new Border
             {
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8, 4, 10, 4),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(8, 4, 12, 4),
                 BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush(borderTint),
-                Background = new SolidColorBrush(item.On
-                    ? (dark ? Color.FromArgb(34, 0xFF, 0xFF, 0xFF) : Color.FromArgb(16, 0, 0, 0))
-                    : (dark ? Color.FromArgb(14, 0xFF, 0xFF, 0xFF) : Color.FromArgb(8, 0, 0, 0))),
+                BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
+                Background = new SolidColorBrush(item.On ? ThemeColors.SubtleBg : ThemeColors.SubtleBgHover),
                 Opacity = item.Enabled ? item.On ? 1 : 0.55 : 0.25,
                 Tag = item.Key
             };
 
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             row.Children.Add(new Border
             {
                 Width = 10,
                 Height = 10,
-                CornerRadius = new CornerRadius(3),
+                CornerRadius = new CornerRadius(4),
                 Background = new SolidColorBrush(item.Color),
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -616,7 +607,7 @@ public sealed partial class GameMonitorRecordsPage : Page
             PnlLegend.Children.Clear();
             if (_legendChips.Count == 0) return;
 
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             double used = 0;
             foreach (var chip in _legendChips)
             {
@@ -629,11 +620,11 @@ public sealed partial class GameMonitorRecordsPage : Page
                 if (used > 0 && used + width > available)
                 {
                     PnlLegend.Children.Add(row);
-                    row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                    row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
                     used = 0;
                 }
                 row.Children.Add(chip);
-                used += width + 6;
+                used += width + 8;
             }
             if (row.Children.Count > 0) PnlLegend.Children.Add(row);
         }
@@ -832,38 +823,35 @@ public sealed partial class GameMonitorRecordsPage : Page
 
     private void AddChip(string glyph, string label, string value, bool warn = false)
     {
-        var dark = ActualTheme == ElementTheme.Dark;
-        var accent = warn ? Color.FromArgb(255, 0xD1, 0x8A, 0x00) : default;
+        var accent = warn ? ThemeColors.AccentOrange : default;
 
         var chip = new Border
         {
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(9, 4, 11, 4),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(8, 4, 12, 4),
             BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(warn
-                ? Color.FromArgb(90, accent.R, accent.G, accent.B)
-                : dark ? Color.FromArgb(55, 0xFF, 0xFF, 0xFF) : Color.FromArgb(32, 0, 0, 0)),
-            Background = new SolidColorBrush(dark
-                ? Color.FromArgb(18, 0xFF, 0xFF, 0xFF)
-                : Color.FromArgb(10, 0, 0, 0))
+            BorderBrush = warn
+                ? new SolidColorBrush(Color.FromArgb(90, accent.R, accent.G, accent.B))
+                : new SolidColorBrush(ThemeColors.BorderColor),
+            Background = new SolidColorBrush(warn
+                ? Color.FromArgb(22, accent.R, accent.G, accent.B)
+                : ThemeColors.SubtleBg)
         };
 
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         row.Children.Add(new FontIcon
         {
             Glyph = glyph,
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
-            Foreground = new SolidColorBrush(warn ? accent : (dark
-                ? Color.FromArgb(255, 0xB0, 0xB0, 0xB0)
-                : Color.FromArgb(255, 0x60, 0x60, 0x60)))
+            Foreground = new SolidColorBrush(warn ? accent : ThemeColors.DimText)
         });
         row.Children.Add(new TextBlock
         {
             Text = label,
-            FontSize = 11,
-            Opacity = 0.65,
-            VerticalAlignment = VerticalAlignment.Center
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            Foreground = new SolidColorBrush(ThemeColors.DimText)
         });
         row.Children.Add(new TextBlock
         {
@@ -881,7 +869,7 @@ public sealed partial class GameMonitorRecordsPage : Page
         var card = new Border
         {
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(12, 8, 14, 8),
+            Padding = new Thickness(12, 8, 12, 8),
             BorderThickness = new Thickness(1),
             MinWidth = 108,
             BorderBrush = new SolidColorBrush(Color.FromArgb(70, accent.R, accent.G, accent.B)),
@@ -892,8 +880,7 @@ public sealed partial class GameMonitorRecordsPage : Page
         stack.Children.Add(new TextBlock
         {
             Text = label,
-            FontSize = 11,
-            Opacity = 0.7,
+            FontSize = 12,
             Foreground = new SolidColorBrush(accent)
         });
         stack.Children.Add(new TextBlock
@@ -903,7 +890,7 @@ public sealed partial class GameMonitorRecordsPage : Page
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
         if (!string.IsNullOrEmpty(detail))
-            stack.Children.Add(new TextBlock { Text = detail, FontSize = 10.5, Opacity = 0.6 });
+            stack.Children.Add(new TextBlock { Text = detail, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
         card.Child = stack;
         PnlCards.Children.Add(card);
     }
