@@ -82,6 +82,8 @@ public sealed partial class RuntimeRepairPage : Page
 
     private static Color ColorRes(string key, Color fallback)
     {
+        if (key.EndsWith("Brush", StringComparison.Ordinal))
+            return ThemeColors.ResolveBrush(key, fallback) is SolidColorBrush resolved ? resolved.Color : fallback;
         if (Application.Current.Resources.TryGetValue(key, out var v))
         {
             if (v is Color c) return c;
@@ -184,16 +186,8 @@ public sealed partial class RuntimeRepairPage : Page
             var color = installed ? _successColor : _cautionColor;
             card.StatusIcon.Foreground = Brush(color);
             card.StatusText.Foreground = Brush(color);
-            if (installed)
-            {
-                card.IconBg.Background = Brush(_successColor);
-                card.Icon.Foreground = new SolidColorBrush(Colors.White);
-            }
-            else
-            {
-                card.IconBg.Background = Brush(Color.FromArgb(0x22, color.R, color.G, color.B));
-                card.Icon.Foreground = Brush(color);
-            }
+            card.IconBg.Background = Brush(Color.FromArgb(0x22, color.R, color.G, color.B));
+            card.Icon.Foreground = Brush(color);
         }
     }
 

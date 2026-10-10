@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -390,19 +390,18 @@ public sealed partial class HomePage : Page, ILocalizablePage
         _tools.Clear();
 
         var query = _searchQuery;
+        var category = _category;
+        var selectedTag = _selectedTag;
 
         try
         {
-            IReadOnlyList<ToolItem> tools = await Task.Run(async () =>
+            IReadOnlyList<ToolItem> tools = await Task.Run(() =>
             {
-                // single-flight 扫描：与 MainWindow 预热共享同一次并行扫描，
-                // 并发调用不会重复扫全量
-                await ToolCatalog.GetAllToolsAsync();
-
-                if (query.Length > 0 || _selectedTag is not null)
-                    return ToolCatalog.Search(query, _selectedTag);
-                if (_category is not null)
-                    return ToolCatalog.GetTools(_category);
+                // 分类视图只扫当前分类；搜索/全部视图通过 single-flight 获取全量。
+                if (query.Length > 0 || selectedTag is not null)
+                    return ToolCatalog.Search(query, selectedTag);
+                if (category is not null)
+                    return ToolCatalog.GetTools(category);
                 return ToolCatalog.GetAllToolsCached();
             }, cts.Token);
 
@@ -488,7 +487,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         var orderedDirs = _tools
             .Select(t => t.IsBuiltinLink
                 ? t.Path
-                : (System.IO.Directory.Exists(t.Path) ? t.Path : System.IO.Path.GetDirectoryName(t.Path)))
+                : (System.IO.Directory.Exists(t.Path) ? t.Path : ToolCatalog.GetToolDirectory(t.Path)))
             .Where(d => !string.IsNullOrWhiteSpace(d))
             .Select(d => d!)
             .ToList();
@@ -1041,7 +1040,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
 
         try
         {
-            var toolDir = System.IO.Path.GetDirectoryName(tool.Path);
+            var toolDir = ToolCatalog.GetToolDirectory(tool.Path);
             if (!string.IsNullOrWhiteSpace(toolDir) && System.IO.Directory.Exists(toolDir))
             {
                 var categoryDir = System.IO.Path.GetDirectoryName(toolDir);
@@ -1654,6 +1653,62 @@ public sealed partial class HomePage : Page, ILocalizablePage
                     mainWindow.RefreshToolCategories();
             }
             ShowStatus(LocalizationService.L("Common_ImportFailed", "导入失败"), ex.Message, InfoBarSeverity.Error);
+        }
+    }
+
+    private async void RecoverToolsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button) button.IsEnabled = false;
+        try
+        {
+            var candidates = await Task.Run(ToolRecoveryService.FindUnregistered);
+            if (candidates.Count == 0)
+            {
+                await ShowMessageAsync(LocalizationService.L("Recovery_Title", "恢复工具"),
+                    LocalizationService.L("Recovery_None", "未找到需要恢复登记的工具。文件已经删除的工具需要重新导入。"));
+                return;
+            }
+            var list = new ListView { ItemsSource = candidates, SelectionMode = ListViewSelectionMode.Single,
+                MaxHeight = 320, SelectedIndex = 0 };
+            var content = new StackPanel { Spacing = 12 };
+            content.Children.Add(new TextBlock { Text = LocalizationService.L("Recovery_ChooseTool",
+                "找到以下未登记工具。请选择要恢复的工具，确认名称和主程序后加入列表。"), TextWrapping = TextWrapping.Wrap });
+            content.Children.Add(list);
+            var dialog = new ContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
+                Content = content, PrimaryButtonText = LocalizationService.L("Recovery_Next", "下一步"),
+                CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
+                DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot,
+                RequestedTheme = ThemeService.CurrentElementTheme };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary || list.SelectedItem is not RecoverableTool selected) return;
+            var name = new TextBox { Header = LocalizationService.L("Recovery_Name", "工具名称"), Text = Path.GetFileName(selected.Directory) };
+            var executable = new ComboBox { Header = LocalizationService.L("Recovery_Executable", "主程序"),
+                ItemsSource = selected.Executables.Select(p => Path.GetRelativePath(selected.Directory, p)).ToList(),
+                SelectedIndex = 0, HorizontalAlignment = HorizontalAlignment.Stretch };
+            var fields = new StackPanel { Spacing = 12 };
+            fields.Children.Add(name);
+            fields.Children.Add(executable);
+            var confirm = new ContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
+                Content = fields, PrimaryButtonText = LocalizationService.L("Recovery_Register", "恢复登记"),
+                CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
+                DefaultButton = ContentDialogButton.Primary, XamlRoot = XamlRoot,
+                RequestedTheme = ThemeService.CurrentElementTheme };
+            confirm.PrimaryButtonClick += (_, args) =>
+            {
+                if (string.IsNullOrWhiteSpace(name.Text)) { args.Cancel = true; name.Focus(FocusState.Programmatic); }
+            };
+            if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
+            ToolRecoveryService.Register(selected, name.Text, selected.Executables[executable.SelectedIndex]);
+            if (App.MainWindow is MainWindow window) window.RefreshToolCategories();
+            await LoadToolsAsync();
+            ShowStatus(LocalizationService.L("Recovery_Done", "已恢复工具登记"), name.Text, InfoBarSeverity.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus(LocalizationService.L("Recovery_Failed", "恢复失败"), ex.Message, InfoBarSeverity.Error);
+        }
+        finally
+        {
+            if (sender is Button finishedButton) finishedButton.IsEnabled = true;
         }
     }
 

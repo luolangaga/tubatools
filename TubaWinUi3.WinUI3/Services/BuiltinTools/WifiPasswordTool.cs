@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Pages;
@@ -25,6 +25,7 @@ public sealed class WifiPasswordTool : IBuiltinTool
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
+            ToolId = Id,
             Title = "WiFi 密码查看",
             Description = "查看本机已连接过的 WiFi 网络名称和密码，密码默认隐藏，点击眼睛图标显示",
             Glyph = Glyph,

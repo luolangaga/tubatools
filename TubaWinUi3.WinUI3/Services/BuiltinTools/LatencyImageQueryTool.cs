@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -57,6 +57,7 @@ public sealed partial class LatencyImageQueryPage : Page
 	{
 		var header = new ToolPageHeader
 		{
+            ToolId = "latency-image-query",
 			Title = "核间延迟查询",
 			Subtitle = "查看社区上传的 CPU 核间延迟热力图（reports/latency-images）",
 			Glyph = "\ue9d9"

@@ -23,7 +23,7 @@
             </TransitionCollection>
         </Grid.Transitions>
 
-        <Grid Padding="24,8,24,24" RowSpacing="16">
+        <Grid Padding="24,4,24,32" RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -31,7 +31,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <controls:ToolPageHeader
+            <controls:ToolPageHeader ToolId="community-tools"
                 x:Name="PageHeader"
                 Grid.Row="0"
                 HeaderPadding="0"

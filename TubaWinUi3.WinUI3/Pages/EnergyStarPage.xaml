@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
     EnergyStarWindow — standalone window UI for the EcoQoS efficiency-mode tool.
     UI design ported from EnergyStarX (https://github.com/JasonWei512/EnergyStarX)
@@ -11,6 +11,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d">
 
     <Grid>
@@ -19,7 +20,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="energy-star"
             x:Name="PageHeader"
             Grid.Row="0"
             Title="后台节流省电神器"
@@ -31,8 +32,13 @@
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16" MaxWidth="780">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch">
+            <StackPanel Spacing="24" MaxWidth="1040">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- 概述卡片 -->
                 <Border Style="{StaticResource FluentCardStyle}">
@@ -58,43 +64,31 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 开关 -->
-                <Border Style="{StaticResource FluentCardStyle}">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <ToggleSwitch x:Name="MainToggle" Header="启用效率模式" OnContent="开启" OffContent="停止" Toggled="MainToggle_Toggled" />
-                            <Button x:Name="PauseButton" Click="PauseButton_Click" Margin="16,0,0,0" ToolTipService.ToolTip="暂停节流但保持进程列表加载与启动项设置">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon x:Name="PauseButtonIcon" Glyph="&#xE769;" FontSize="12" />
-                                    <TextBlock x:Name="PauseButtonText" Text="暂停节流" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                        <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
+                <toolkit:SettingsCard Header="效率模式" Description="自动降低后台进程的功耗，让前台应用保持流畅。">
+                    <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE83F;" /></toolkit:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button x:Name="PauseButton" Click="PauseButton_Click" ToolTipService.ToolTip="暂停节流但保留进程列表和启动设置">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon x:Name="PauseButtonIcon" Glyph="&#xE769;" FontSize="16" />
+                                <TextBlock x:Name="PauseButtonText" Text="暂停节流" />
+                            </StackPanel>
+                        </Button>
+                        <ToggleSwitch x:Name="MainToggle" AutomationProperties.Name="效率模式" OnContent="开启" OffContent="停止" Toggled="MainToggle_Toggled" />
                     </StackPanel>
-                </Border>
-
-                <!-- 选项 -->
-                <Border Style="{StaticResource FluentCardStyle}">
-                    <StackPanel Spacing="12">
-                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="节流选项" />
-
-                        <ToggleSwitch x:Name="ThrottleWhenPluggedInToggle"
-                                      Header="插电时也节流所有后台进程"
-                                      OffContent="仅节流黑名单"
-                                      OnContent="节流除白名单外全部"
-                                      Toggled="ThrottleWhenPluggedInToggle_Toggled" />
-
-                        <StackPanel Spacing="4">
-                            <ToggleSwitch x:Name="RunAtStartupToggle"
-                                          Header="开机自启 (管理员计划任务)"
-                                          OnContent="已启用"
-                                          OffContent="未启用"
-                                          Toggled="RunAtStartupToggle_Toggled" />
-                            <TextBlock x:Name="RunAtStartupHint" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,-4,0,0" IsTextSelectionEnabled="True" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+                </toolkit:SettingsCard>
+                <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
+                <StackPanel Spacing="8">
+                    <TextBlock Text="节流选项" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,4" />
+                    <toolkit:SettingsCard Header="接通电源时继续节流" Description="关闭时仅节流黑名单；开启时节流所有不在白名单中的后台进程。">
+                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE945;" /></toolkit:SettingsCard.HeaderIcon>
+                        <ToggleSwitch x:Name="ThrottleWhenPluggedInToggle" AutomationProperties.Name="接通电源时继续节流" OffContent="关" OnContent="开" Toggled="ThrottleWhenPluggedInToggle_Toggled" />
+                    </toolkit:SettingsCard>
+                    <toolkit:SettingsCard Header="登录时启动" Description="通过管理员计划任务自动启用效率模式。">
+                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE7E8;" /></toolkit:SettingsCard.HeaderIcon>
+                        <ToggleSwitch x:Name="RunAtStartupToggle" AutomationProperties.Name="登录时启动效率模式" OnContent="已启用" OffContent="未启用" Toggled="RunAtStartupToggle_Toggled" />
+                    </toolkit:SettingsCard>
+                    <TextBlock x:Name="RunAtStartupHint" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                </StackPanel>
 
                 <!-- 白名单编辑器 -->
                 <Border Style="{StaticResource FluentCardStyle}">
@@ -122,7 +116,7 @@
                         </Grid>
                         <TextBox x:Name="WhitelistEditor"
                                  FontFamily="Consolas"
-                                 FontSize="12"
+                                 FontSize="14"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  IsSpellCheckEnabled="False"
@@ -159,7 +153,7 @@
                         </Grid>
                         <TextBox x:Name="BlacklistEditor"
                                  FontFamily="Consolas"
-                                 FontSize="12"
+                                 FontSize="14"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  IsSpellCheckEnabled="False"

@@ -174,6 +174,8 @@ public sealed partial class FormatConverterPage : Page
     public FormatConverterPage()
     {
         InitializeComponent();
+        QueuePanel.RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => UpdateWorkspaceLayout());
+        UpdateWorkspaceLayout();
         StatusBrushes.Init(this);
         // 代码解析的状态色画刷不会随主题自动刷新，切换主题后按当前状态回填队列
         ActualThemeChanged += (_, _) =>
@@ -188,6 +190,26 @@ public sealed partial class FormatConverterPage : Page
     }
 
     // ══════════════ 生命周期与拖放 ══════════════
+
+    private void ConverterWorkspace_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // 以页面可用宽度切换，导航栏和独立工具窗口都不会挤压主操作区。
+        var wide = e.NewSize.Width >= 1100;
+        InspectorColumn.Width = new GridLength(wide ? 300 : 0);
+        Grid.SetColumn(EngineInspector, wide ? 1 : 0);
+        Grid.SetRow(EngineInspector, wide ? 0 : 1);
+        EngineInspector.MaxHeight = wide ? double.PositiveInfinity : 240;
+        if (wide) EngineExpander.IsExpanded = true;
+        else EngineExpander.IsExpanded = false;
+    }
+
+    private void UpdateWorkspaceLayout()
+    {
+        var hasQueue = QueuePanel.Visibility == Visibility.Visible;
+        IntakeRow.Height = hasQueue ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
+        QueueRow.Height = hasQueue ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+        DropZone.MinHeight = hasQueue ? 132 : 220;
+    }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {

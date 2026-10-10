@@ -1161,6 +1161,10 @@
                                     </Grid>
                                 </Border>
 
+                                <Button Click="ManageToolVisibility_Click" HorizontalAlignment="Stretch"
+                                        Content="管理内置工具与开始菜单展示" l:Uids.Uid="Settings_ManageToolVisibility"
+                                        AutomationProperties.AutomationId="ManageToolVisibility" />
+
                                 <Border x:Name="SettingsActiveInterceptCard" Style="{StaticResource SettingsCardStyle}">
                                     <Grid ColumnSpacing="16">
                                         <Grid.ColumnDefinitions>

@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Controls;
@@ -42,6 +42,7 @@ public sealed class KeyboardTestTool : IBuiltinTool
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
+            ToolId = Id,
             Title = "键盘测试",
             Description = "依次按下键盘上的按键，检测每个键位是否正常工作",
             Glyph = Glyph,

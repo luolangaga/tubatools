@@ -154,7 +154,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="handle-cleaner"
             Grid.Row="0"
             Title="句柄清理"
             Subtitle="安全清理失效文件句柄 · 句柄占用排行 · 缓解长期开机卡顿"
@@ -180,12 +180,17 @@
         <Grid Grid.Row="1">
         <ScrollViewer
             x:Name="MainScroll"
-            Padding="24,8,24,24"
+            Padding="24,4,24,32"
             HorizontalScrollBarVisibility="Disabled"
             HorizontalScrollMode="Disabled"
-            VerticalScrollBarVisibility="Auto">
+            VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
 
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="24" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- 使用模式 -->
                 <Border Padding="16,12" Style="{StaticResource FluentCardStyle}">
@@ -286,7 +291,7 @@
                             <Button
                                 x:Name="QuickCleanButton"
                                 Click="QuickClean_Click"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 Padding="16,8"
                                 Style="{StaticResource AccentButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -384,10 +389,10 @@
                                 Visibility="Collapsed" />
 
                             <StackPanel x:Name="UnlockActionsPanel" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
-                                <Button x:Name="UnlockCloseButton" Click="UnlockClose_Click" Padding="12,8" CornerRadius="8" Style="{StaticResource AccentButtonStyle}">
+                                <Button x:Name="UnlockCloseButton" Click="UnlockClose_Click" Padding="12,8" CornerRadius="4" Style="{StaticResource AccentButtonStyle}">
                                     <TextBlock x:Name="UnlockCloseButtonText" FontSize="14" FontWeight="SemiBold" Text="关闭选中句柄" />
                                 </Button>
-                                <Button x:Name="UnlockCloseDeleteButton" Click="UnlockCloseDelete_Click" Padding="12,8" CornerRadius="8">
+                                <Button x:Name="UnlockCloseDeleteButton" Click="UnlockCloseDelete_Click" Padding="12,8" CornerRadius="4">
                                     <TextBlock FontSize="14" Text="关闭并尝试删除" l:Uids.Uid="HandleCleaner_UnlockCloseDelete" />
                                 </Button>
                             </StackPanel>
@@ -498,7 +503,7 @@
                                     Text="资源管理器是句柄泄漏的常客；重启外壳可立即释放它占用的全部句柄（桌面与任务栏会短暂消失后恢复）。"
                                     l:Uids.Uid="HandleCleaner_RestartExplorerDesc" />
                             </StackPanel>
-                            <Button x:Name="RestartExplorerButton" Grid.Column="1" Click="RestartExplorer_Click" Padding="12,8" CornerRadius="8" VerticalAlignment="Center">
+                            <Button x:Name="RestartExplorerButton" Grid.Column="1" Click="RestartExplorer_Click" Padding="12,8" CornerRadius="4" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE72C;" />
                                     <TextBlock FontSize="14" Text="重启资源管理器" l:Uids.Uid="HandleCleaner_RestartExplorerButton2" />
@@ -520,7 +525,7 @@
                                     Text="把句柄总数、进程排行、失效句柄统计与运行环境整理成文本，方便粘贴给他人排查。"
                                     l:Uids.Uid="HandleCleaner_CopyReportDesc" />
                             </StackPanel>
-                            <Button x:Name="CopyReportButton" Grid.Column="1" Click="CopyReport_Click" Padding="12,8" CornerRadius="8" VerticalAlignment="Center">
+                            <Button x:Name="CopyReportButton" Grid.Column="1" Click="CopyReport_Click" Padding="12,8" CornerRadius="4" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock FontSize="14" Text="复制报告" l:Uids.Uid="HandleCleaner_CopyReportButton2" />
@@ -553,7 +558,7 @@
         </ScrollViewer>
 
         <!-- ═════════ 句柄浏览器（深度模式整页视图） ═════════ -->
-        <Grid x:Name="BrowserView" Padding="24,8,24,24" Visibility="Collapsed">
+        <Grid x:Name="BrowserView" Padding="24,4,24,32" Visibility="Collapsed">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -666,7 +671,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Button x:Name="BrowserCloseSelectedButton" Click="BrowserCloseSelected_Click" Padding="16,8" CornerRadius="8" Style="{StaticResource AccentButtonStyle}">
+                <Button x:Name="BrowserCloseSelectedButton" Click="BrowserCloseSelected_Click" Padding="16,8" CornerRadius="4" Style="{StaticResource AccentButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE74D;" />
                         <TextBlock x:Name="BrowserCloseSelectedText" FontSize="14" FontWeight="SemiBold" Text="关闭选中" />

@@ -43,7 +43,7 @@
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 <TextBlock Grid.Column="4" Text="{Binding CompactImpact}" FontSize="12" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <Button Grid.Column="5" Content="{Binding CompactAction}" FontSize="12" Padding="8,4"
+                <Button Grid.Column="5" Content="{Binding CompactAction}" FontSize="14" Padding="8,4"
                         VerticalAlignment="Center" HorizontalAlignment="Left"
                         Visibility="{Binding CanClean, Converter={StaticResource BoolToVis}}"
                         Click="RowAction_Click"/>
@@ -62,7 +62,7 @@
                 </Grid.ColumnDefinitions>
                 <Image Grid.Column="0" Width="28" Height="28" VerticalAlignment="Center" Source="{Binding IconDisplay}"/>
                 <Button x:Name="ToggleBtn" Grid.Column="1" Click="CmRowToggle_Click" Width="44" Height="26"
-                        Padding="0" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Padding="0" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"
                         CornerRadius="4"/>
                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="1">
                     <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
@@ -305,7 +305,7 @@
         </Grid.RowDefinitions>
 
         <!-- 页头 -->
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="rogue-cleaner"
             Grid.Row="0"
             HeaderPadding="24,16,24,8"
             Title="流氓软件的克星"
@@ -330,7 +330,7 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <Grid Padding="24,8,24,24">
+            <Grid Padding="24,4,24,32">
                 <!-- ============ 总览 / 启动项 / 弹窗诊断 ============ -->
                 <Grid x:Name="ScanPanel">
                     <Grid.RowDefinitions>
@@ -342,8 +342,13 @@
 
                     <!-- 操作栏 -->
                     <ScrollViewer Grid.Row="0" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled"
-                                  HorizontalScrollBarVisibility="Hidden">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                  HorizontalScrollBarVisibility="Hidden" controls:ToolViewport.ConstrainContent="True">
+                        <StackPanel Orientation="Horizontal" Spacing="8" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
                             <Button x:Name="ScanBtn" Content="刷新" Style="{ThemeResource AccentButtonStyle}" Click="Scan_Click"/>
                             <Button x:Name="CleanBtn" Content="清理勾选" IsEnabled="False" Click="Clean_Click"/>
                             <Button x:Name="SelectAllBtn" Content="勾选可清理" IsEnabled="False" Click="SelectAll_Click"/>
@@ -385,9 +390,9 @@
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                                 <TextBlock x:Name="CountText" FontSize="12" VerticalAlignment="Center"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <Button x:Name="ShowAllStartupBtn" Content="查看全部启动项（只读）" FontSize="12"
+                                <Button x:Name="ShowAllStartupBtn" Content="查看全部启动项（只读）" FontSize="14"
                                         Visibility="Collapsed" Click="ShowAllStartup_Click"/>
-                                <Button x:Name="BackToFindingsBtn" Content="返回可疑项" FontSize="12"
+                                <Button x:Name="BackToFindingsBtn" Content="返回可疑项" FontSize="14"
                                         Visibility="Collapsed" Click="BackToFindings_Click"/>
                             </StackPanel>
 
@@ -497,7 +502,7 @@
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                        Text="提示：显示、隐藏或修改右键菜单后，必须重启资源管理器才会生效（已打开的文件夹窗口会被关闭，任务栏与桌面会短暂消失后自动恢复）。" />
                             <Button Grid.Column="1" x:Name="CmRestartExplorerBtn" Content="重启资源管理器"
-                                    FontSize="12" Click="CmRestartExplorer_Click"
+                                    FontSize="14" Click="CmRestartExplorer_Click"
                                     ToolTipService.ToolTip="结束并重新启动 explorer.exe，让右键菜单改动立即生效"/>
                         </Grid>
                     </Grid>
@@ -624,7 +629,7 @@
                                     </Grid.RowDefinitions>
                                     <TextBlock Text="项目详情" Style="{StaticResource SectionHeaderStyle}"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                    <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                                    <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch">
                                         <TextBlock x:Name="CmDetailsText" FontSize="12" TextWrapping="Wrap" IsTextSelectionEnabled="True"
                                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                                     </ScrollViewer>
@@ -648,7 +653,7 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="‹ 返回" FontSize="12" Click="CmBack_Click"/>
+                            <Button Content="‹ 返回" FontSize="14" Click="CmBack_Click"/>
                             <StackPanel Spacing="1">
                                 <TextBlock Text="更多右键位置" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
@@ -690,7 +695,7 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button Content="‹ 返回" FontSize="12" Click="CmBack_Click"/>
+                            <Button Content="‹ 返回" FontSize="14" Click="CmBack_Click"/>
                             <StackPanel Spacing="1">
                                 <TextBlock Text="系统右键高级功能" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
@@ -767,7 +772,7 @@
 
                     <!-- 工具栏 -->
                     <ScrollViewer Grid.Row="1" HorizontalScrollMode="Auto" VerticalScrollMode="Disabled"
-                                  HorizontalScrollBarVisibility="Hidden">
+                                  HorizontalScrollBarVisibility="Hidden" HorizontalContentAlignment="Stretch">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button x:Name="AiRefreshBtn" Content="刷新" Style="{ThemeResource AccentButtonStyle}" Click="AiRefresh_Click"/>
                             <Button x:Name="AiSelectAllBtn" Content="全选" Click="AiSelectAll_Click"/>
@@ -798,7 +803,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="开机自启主动拦截后端"/>
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="主动拦截流氓软件（含开机自启）"/>
                                 <TextBlock x:Name="AiStartupHint" FontSize="12" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             </StackPanel>
@@ -931,7 +936,7 @@
                                 </Grid.RowDefinitions>
                                 <TextBlock Text="详情" Style="{StaticResource SectionHeaderStyle}"
                                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                                <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                                <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch">
                                     <TextBlock x:Name="AiDetailsText" FontSize="12" TextWrapping="Wrap"
                                                IsTextSelectionEnabled="True"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
@@ -964,7 +969,7 @@
                                     <TextBlock FontSize="12" FontWeight="SemiBold"
                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}" Text="程序信任策略"/>
                                     <ComboBox x:Name="AiPolicyComboBox" MinWidth="200"/>
-                                    <Button x:Name="AiSavePolicyBtn" Content="保存策略" FontSize="12" Padding="8,4"
+                                    <Button x:Name="AiSavePolicyBtn" Content="保存策略" FontSize="14" Padding="8,4"
                                             Click="AiSavePolicy_Click"/>
                                 </StackPanel>
                             </Grid>

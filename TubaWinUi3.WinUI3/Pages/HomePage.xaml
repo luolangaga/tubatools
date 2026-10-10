@@ -57,9 +57,12 @@
                     Style="{StaticResource PageSubtitleStyle}" />
             </StackPanel>
 
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button Click="RecoverToolsButton_Click" Content="恢复工具"
+                    Style="{StaticResource ToolHeaderActionButtonStyle}"
+                    l:Uids.Uid="HomePage_RecoverToolsButton" />
             <Button
                 x:Name="EditOrderButton"
-                Grid.Column="1"
                 Style="{StaticResource ToolHeaderActionButtonStyle}"
                 Click="EditOrderButton_Click"
                 ToolTipService.ToolTip="进入排序模式，按住卡片上下拖动调整顺序"
@@ -70,6 +73,7 @@
                     <TextBlock x:Name="EditOrderButtonText" Text="编辑排序" l:Uids.Uid="HomePage_EditOrderButtonText" />
                 </StackPanel>
             </Button>
+            </StackPanel>
 
         </Grid>
 

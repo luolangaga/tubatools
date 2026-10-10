@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace TubaWinUi3.Services;
 
@@ -14,6 +15,7 @@ public static class ConfigManager
 {
     private static readonly object _lock = new();
     private static string? _cachedDataDir;
+    internal static string? DataDirectoryOverride;
     private static ConfigLocation? _cachedLocation;
 
     private static readonly string AppDataDir = Path.Combine(
@@ -30,6 +32,7 @@ public static class ConfigManager
     {
         lock (_lock)
         {
+            if (DataDirectoryOverride is not null) return DataDirectoryOverride;
             if (_cachedDataDir is not null) return _cachedDataDir;
 
             var location = GetConfigLocation();
@@ -168,6 +171,7 @@ public static class ConfigManager
 
     public static bool MigrateData(ConfigLocation targetLocation, bool migrate, string? customPath = null)
     {
+        _ = ToolMetadataService.GetUserTools(); // 迁移旧混合元数据后再搬数据目录。
         var sourceDir = GetDataDir();
         var oldDataDir = sourceDir;
 
@@ -183,7 +187,8 @@ public static class ConfigManager
             targetDir = targetLocation == ConfigLocation.AppRoot ? AppRootDir : AppDataDir;
         }
 
-        if (string.Equals(sourceDir, targetDir, StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(Path.GetFullPath(sourceDir), Path.GetFullPath(targetDir), StringComparison.OrdinalIgnoreCase)) return true;
+        if (UserToolLibrary.IsWithin(targetDir, sourceDir) || UserToolLibrary.IsWithin(sourceDir, targetDir)) return false;
 
         try
         {
@@ -191,7 +196,7 @@ public static class ConfigManager
             {
                 Directory.CreateDirectory(targetDir);
 
-                var excludeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IconCache", "Metadata" };
+                var excludeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IconCache" };
                 var excludeFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "sensor_dump.txt" };
 
                 foreach (var file in Directory.EnumerateFiles(sourceDir))
@@ -210,15 +215,16 @@ public static class ConfigManager
                     CopyDirectory(dir, destDir);
                 }
 
-                try { Directory.Delete(sourceDir, true); } catch { }
             }
 
             if (!SetConfigLocation(targetLocation, customPath)) return false;
 
             if (migrate)
             {
-                try { RewritePathsInDataDir(targetDir, oldDataDir); } catch { }
+                RewritePathsInDataDir(targetDir, oldDataDir);
+                try { Directory.Delete(sourceDir, true); } catch { }
             }
+            InvalidateAllCaches();
 
             return true;
         }
@@ -315,11 +321,14 @@ public static class ConfigManager
     {
         try
         {
+            _ = ToolMetadataService.GetUserTools();
             var dataDir = GetDataDir();
             if (!Directory.Exists(dataDir)) return false;
 
             var excludeDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "IconCache", "Metadata" };
             var excludeFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "sensor_dump.txt" };
+
+            var userSnapshot = UserToolLibrary.CreateExportSnapshot();
 
             if (File.Exists(outputPath)) File.Delete(outputPath);
 
@@ -329,8 +338,13 @@ public static class ConfigManager
                 foreach (var file in Directory.EnumerateFiles(dataDir))
                 {
                     var name = Path.GetFileName(file);
-                    if (excludeFiles.Contains(name)) continue;
-                    zip.CreateEntryFromFile(file, name, CompressionLevel.Optimal);
+                    if (name.Equals("user-tools.json", StringComparison.OrdinalIgnoreCase) || excludeFiles.Contains(name) || Path.GetFullPath(file).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase)) continue;
+                    if (name is "favorites.json" or "launch_history.json" or "settings.json")
+                    {
+                        using var writer = new StreamWriter(zip.CreateEntry(name).Open());
+                        writer.Write(UserToolLibrary.RewriteExportReferences(File.ReadAllText(file), userSnapshot.Directories));
+                    }
+                    else zip.CreateEntryFromFile(file, name, CompressionLevel.Optimal);
                 }
                 foreach (var dir in Directory.EnumerateDirectories(dataDir))
                 {
@@ -338,9 +352,18 @@ public static class ConfigManager
                     if (excludeDirs.Contains(dirName)) continue;
                     foreach (var file in Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories))
                     {
+                        if (Path.GetFullPath(file).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase)) continue;
                         var relative = file.Substring(dataDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                         zip.CreateEntryFromFile(file, relative, CompressionLevel.Optimal);
                     }
+                }
+                foreach (var (entry, source) in userSnapshot.Files)
+                    if (!Path.GetFullPath(source).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase))
+                        zip.CreateEntryFromFile(source, entry, CompressionLevel.Optimal);
+                if (userSnapshot.Catalog["tools"] is JsonArray)
+                {
+                    using var writer = new StreamWriter(zip.CreateEntry("user-tools.json").Open());
+                    writer.Write(userSnapshot.Catalog.ToJsonString());
                 }
             });
 
@@ -361,7 +384,8 @@ public static class ConfigManager
                 using var archive = ZipFile.OpenRead(zipPath);
                 foreach (var entry in archive.Entries)
                 {
-                    var destPath = Path.Combine(dataDir, entry.FullName);
+                    var destPath = Path.GetFullPath(Path.Combine(dataDir, entry.FullName));
+                    if (!UserToolLibrary.IsWithin(destPath, dataDir)) throw new IOException("配置备份中包含无效路径。");
                     if (string.IsNullOrEmpty(entry.Name))
                     {
                         Directory.CreateDirectory(destPath);
@@ -384,7 +408,8 @@ public static class ConfigManager
         AppSettings.InvalidateCache();
         FavoritesService.InvalidateCache();
         LaunchHistoryService.InvalidateCache();
-        ToolCatalog.OnToolsChanged();
+        ToolMetadataService.InvalidateCache();
+        ToolCatalog.InvalidateTagsCache();
     }
 
     private const int CurrentPathMigrationVersion = 1;

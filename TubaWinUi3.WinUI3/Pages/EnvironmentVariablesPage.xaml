@@ -1,258 +1,162 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Page
-    x:Class="TubaWinUi3.Pages.EnvironmentVariablesPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:TubaWinUi3.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:l="using:WinUI3Localizer"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
-
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:TubaWinUi3.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:l="using:WinUI3Localizer" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Class="TubaWinUi3.Pages.EnvironmentVariablesPage" mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <controls:ToolPageHeader
-            Grid.Row="0"
-            Title="环境变量"
-            Subtitle="查看与编辑用户 / 系统环境变量，PATH 支持逐条可视化编辑，保存后自动广播刷新"
-            Glyph="&#xE756;"
-            l:Uids.Uid="EnvVars_PageHeader"
-            BackRequested="OnBackRequested" />
-
-        <Grid Grid.Row="1" Padding="24,8,24,24" RowSpacing="8">
+        <controls:ToolPageHeader ToolId="environment-variables" Grid.Row="0" Title="环境变量" Subtitle="查看与编辑用户 / 系统环境变量，PATH 支持逐条可视化编辑，保存后自动广播刷新" Glyph="&#xE756;" l:Uids.Uid="EnvVars_PageHeader" BackRequested="OnBackRequested"/>
+        <Grid Grid.Row="1" Padding="24,4,24,32" RowSpacing="8">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-
             <!-- 提示区：操作结果 + 外部改动提醒（不进 Tab，两个作用域共用） -->
             <StackPanel Grid.Row="0" Spacing="8">
-                <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
+                <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False"/>
                 <InfoBar x:Name="ExternalChangeBar" IsClosable="True" IsOpen="False" Severity="Informational">
                     <InfoBar.ActionButton>
                         <Button Click="ReloadBtn_Click">
-                            <TextBlock Text="重新加载" l:Uids.Uid="EnvVars_Reload" />
+                            <TextBlock Text="重新加载" l:Uids.Uid="EnvVars_Reload"/>
                         </Button>
                     </InfoBar.ActionButton>
                 </InfoBar>
-                <InfoBar x:Name="AdminBar" IsClosable="False" IsOpen="False" Severity="Warning" />
+                <InfoBar x:Name="AdminBar" IsClosable="False" IsOpen="False" Severity="Warning"/>
             </StackPanel>
-
             <!-- 作用域切换：Tab 的 Tag 承载数据值，Header 只做显示 -->
-            <Pivot
-                x:Name="ScopePivot"
-                Grid.Row="1"
-                SelectedIndex="0"
-                SelectionChanged="ScopePivot_SelectionChanged">
-                <PivotItem Header="用户变量" l:Uids.Uid="EnvVars_TabUser" Tag="User" />
-                <PivotItem Header="系统变量" l:Uids.Uid="EnvVars_TabSystem" Tag="System" />
+            <Pivot x:Name="ScopePivot" Grid.Row="1" SelectedIndex="0" SelectionChanged="ScopePivot_SelectionChanged">
+                <PivotItem Header="用户变量" l:Uids.Uid="EnvVars_TabUser" Tag="User"/>
+                <PivotItem Header="系统变量" l:Uids.Uid="EnvVars_TabSystem" Tag="System"/>
             </Pivot>
-
             <!-- 主从两栏：左列变量名，右侧编辑区 -->
-            <Grid Grid.Row="2" ColumnSpacing="0">
+            <Grid Grid.Row="2" ColumnSpacing="0" CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" x:Name="VariableWorkspace" SizeChanged="VariableWorkspace_SizeChanged">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="0"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="280" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="280"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-
-                <Grid Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}" x:Name="VariableListPane">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Margin="12,12,12,8"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="变量名"
-                        l:Uids.Uid="EnvVars_ColName" />
-
+                    <TextBlock Grid.Row="0" Margin="12,12,12,8" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="变量名" l:Uids.Uid="EnvVars_ColName"/>
                     <StackPanel Grid.Row="1" Margin="12,0,12,8" Orientation="Horizontal" Spacing="8">
                         <Button x:Name="NewBtn" Click="NewBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE710;" />
-                                <TextBlock Text="新建" l:Uids.Uid="EnvVars_New" />
+                                <FontIcon FontSize="12" Glyph="&#xE710;"/>
+                                <TextBlock Text="新建" l:Uids.Uid="EnvVars_New"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="DeleteBtn" Click="DeleteBtn_Click" IsEnabled="False">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE74D;" />
-                                <TextBlock Text="删除" l:Uids.Uid="EnvVars_Delete" />
+                                <FontIcon FontSize="12" Glyph="&#xE74D;"/>
+                                <TextBlock Text="删除" l:Uids.Uid="EnvVars_Delete"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
-
-                    <ListView
-                        x:Name="VarList"
-                        Grid.Row="2"
-                        SelectionMode="Single"
-                        SelectionChanged="VarList_SelectionChanged">
+                    <ListView x:Name="VarList" Grid.Row="2" SelectionMode="Single" SelectionChanged="VarList_SelectionChanged">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
-
-                <Border
-                    Grid.Column="1"
-                    Width="1"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                <Grid x:Name="EditorPanel" Grid.Column="2" Padding="16,12,16,12" RowSpacing="8">
+                <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" x:Name="VariableDivider"/>
+                <Grid x:Name="EditorPanel" Grid.Column="2" Padding="24" RowSpacing="16">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
                     <Grid Grid.Row="0" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            Text="变量名"
-                            l:Uids.Uid="EnvVars_FieldName" />
-                        <TextBox x:Name="NameBox" Grid.Column="1" TextChanged="NameBox_TextChanged" />
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="变量名" l:Uids.Uid="EnvVars_FieldName"/>
+                        <TextBox x:Name="NameBox" Grid.Column="1" TextChanged="NameBox_TextChanged"/>
                     </Grid>
-
                     <Grid x:Name="ListHeaderRow" Grid.Row="1" ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Grid.Column="0"
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="逐条编辑（分号分隔）"
-                            l:Uids.Uid="EnvVars_PathListTitle" />
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="逐条编辑（分号分隔）" l:Uids.Uid="EnvVars_PathListTitle"/>
                         <Button x:Name="DedupeBtn" Grid.Column="1" Click="DedupeBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE8EF;" />
-                                <TextBlock Text="去重" l:Uids.Uid="EnvVars_PathDedupe" />
+                                <FontIcon FontSize="12" Glyph="&#xE8EF;"/>
+                                <TextBlock Text="去重" l:Uids.Uid="EnvVars_PathDedupe"/>
                             </StackPanel>
                         </Button>
                     </Grid>
-
-                    <TextBox
-                        x:Name="ValueBox"
-                        Grid.Row="2"
-                        MinHeight="160"
-                        AcceptsReturn="True"
-                        FontFamily="Consolas"
-                        PlaceholderText="变量值"
-                        TextChanged="ValueBox_TextChanged"
-                        TextWrapping="Wrap"
-                        l:Uids.Uid="EnvVars_ValuePlaceholder" />
-
+                    <TextBox x:Name="ValueBox" Grid.Row="2" MinHeight="160" AcceptsReturn="True" FontFamily="Consolas" PlaceholderText="变量值" TextChanged="ValueBox_TextChanged" TextWrapping="Wrap" l:Uids.Uid="EnvVars_ValuePlaceholder"/>
                     <ListView x:Name="PathList" Grid.Row="2" SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid ColumnSpacing="6">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        Grid.Column="0"
-                                        FontSize="12"
-                                        Text="{Binding Value, Mode=OneWay}"
-                                        TextChanged="PathEntryBox_TextChanged" />
-
+                                    <TextBox Grid.Column="0" FontSize="14" Text="{Binding Value, Mode=OneWay}" TextChanged="PathEntryBox_TextChanged"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                                         <Button Click="PathUp_Click" ToolTipService.ToolTip="上移" l:Uids.Uid="EnvVars_PathMoveUp">
-                                            <FontIcon FontSize="12" Glyph="&#xE74A;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74A;"/>
                                         </Button>
                                         <Button Click="PathDown_Click" ToolTipService.ToolTip="下移" l:Uids.Uid="EnvVars_PathMoveDown">
-                                            <FontIcon FontSize="12" Glyph="&#xE74B;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74B;"/>
                                         </Button>
                                         <Button Click="PathInsert_Click" ToolTipService.ToolTip="在其后插入" l:Uids.Uid="EnvVars_PathInsert">
-                                            <FontIcon FontSize="12" Glyph="&#xE710;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE710;"/>
                                         </Button>
                                         <Button Click="PathCopy_Click" ToolTipService.ToolTip="复制该项" l:Uids.Uid="EnvVars_PathCopy">
-                                            <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE8C8;"/>
                                         </Button>
                                         <Button Click="PathRemove_Click" ToolTipService.ToolTip="删除该项" l:Uids.Uid="EnvVars_PathRemove">
-                                            <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                                            <FontIcon FontSize="12" Glyph="&#xE74D;"/>
                                         </Button>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
-
                     <!-- 不支持的注册表类型（非 REG_SZ / REG_EXPAND_SZ）：只读提示，文案在代码里按语言设置 -->
-                    <InfoBar
-                        x:Name="UnsupportedKindBar"
-                        Grid.Row="3"
-                        IsClosable="False"
-                        IsOpen="False"
-                        Severity="Warning" />
-
-                    <TextBlock
-                        x:Name="KindText"
-                        Grid.Row="4"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-
-                    <TextBlock
-                        x:Name="EmptyHint"
-                        Grid.Row="4"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="从左侧选择一个变量，或点「新建」添加。"
-                        l:Uids.Uid="EnvVars_EmptyHint"
-                        Visibility="Collapsed" />
+                    <InfoBar x:Name="UnsupportedKindBar" Grid.Row="3" IsClosable="False" IsOpen="False" Severity="Warning"/>
+                    <TextBlock x:Name="KindText" Grid.Row="4" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <TextBlock x:Name="EmptyHint" Grid.Row="4" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="从左侧选择一个变量，或点「新建」添加。" l:Uids.Uid="EnvVars_EmptyHint" Visibility="Collapsed"/>
                 </Grid>
             </Grid>
-
-            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
-                <Button
-                    x:Name="SaveBtn"
-                    Click="SaveBtn_Click"
-                    IsEnabled="False"
-                    Style="{StaticResource AccentButtonStyle}">
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                <Button x:Name="SaveBtn" Click="SaveBtn_Click" IsEnabled="False" Style="{StaticResource AccentButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="12" Glyph="&#xE74E;" />
-                        <TextBlock Text="保存" l:Uids.Uid="EnvVars_Save" />
+                        <FontIcon FontSize="12" Glyph="&#xE74E;"/>
+                        <TextBlock Text="保存" l:Uids.Uid="EnvVars_Save"/>
                     </StackPanel>
                 </Button>
                 <Button x:Name="RevertBtn" Click="RevertBtn_Click" IsEnabled="False">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="12" Glyph="&#xE7A7;" />
-                        <TextBlock Text="放弃更改" l:Uids.Uid="EnvVars_Revert" />
+                        <FontIcon FontSize="12" Glyph="&#xE7A7;"/>
+                        <TextBlock Text="放弃更改" l:Uids.Uid="EnvVars_Revert"/>
                     </StackPanel>
                 </Button>
                 <Button x:Name="RestoreBtn" Click="RestoreBtn_Click">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="12" Glyph="&#xE777;" />
-                        <TextBlock Text="恢复上次备份" l:Uids.Uid="EnvVars_RestoreLastBackup" />
+                        <FontIcon FontSize="12" Glyph="&#xE777;"/>
+                        <TextBlock Text="恢复上次备份" l:Uids.Uid="EnvVars_RestoreLastBackup"/>
                     </StackPanel>
                 </Button>
-                <TextBlock
-                    x:Name="DirtyText"
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="DirtyText" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>
         </Grid>
     </Grid>

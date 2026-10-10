@@ -23,10 +23,36 @@ public sealed partial class ToolPageHeader : UserControl
         InitializeComponent();
         _defaultIconBackground = IconTile.Background;
         _defaultIconForeground = IconGlyph.Foreground;
+        ActualThemeChanged += (_, _) => ApplyIcon();
     }
 
     /// <summary>右侧操作区（刷新/重新检测等页面级按钮）。</summary>
     public UIElementCollection Actions => ActionsPanel.Children;
+
+    public static readonly DependencyProperty ToolIdProperty =
+        DependencyProperty.Register(nameof(ToolId), typeof(string), typeof(ToolPageHeader),
+            new PropertyMetadata("", OnToolIdChanged));
+
+    /// <summary>稳定的内置工具 id；与列表共用彩色 SVG，不依赖标题或当前语言。</summary>
+    public string ToolId
+    {
+        get => (string)GetValue(ToolIdProperty);
+        set => SetValue(ToolIdProperty, value);
+    }
+
+    private static void OnToolIdChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        => ((ToolPageHeader)d).ApplyIcon();
+
+    private void ApplyIcon()
+    {
+        // 高对比度使用可跟随系统前景的字体图标。
+        var source = ThemeColors.IsSystemHighContrast()
+            ? null : BuiltinIconService.Get(ToolId);
+        ColorIcon.Source = source;
+        ColorIcon.Visibility = source is null ? Visibility.Collapsed : Visibility.Visible;
+        IconGlyph.Visibility = source is null ? Visibility.Visible : Visibility.Collapsed;
+        IconTile.Background = source is null ? IconBackground ?? _defaultIconBackground : _defaultIconBackground;
+    }
 
     /// <summary>页面自定义返回逻辑（如未保存更改确认）；未订阅时默认调用 MainWindow.NavigateBack()。</summary>
     public event EventHandler? BackRequested;
@@ -86,7 +112,7 @@ public sealed partial class ToolPageHeader : UserControl
     /// <summary>页头内边距；页面自身已有整页 Padding 时可设为 0 避免双重缩进。</summary>
     public static readonly DependencyProperty HeaderPaddingProperty =
         DependencyProperty.Register(nameof(HeaderPadding), typeof(Thickness), typeof(ToolPageHeader),
-            new PropertyMetadata(new Thickness(24, 16, 24, 12), OnHeaderPaddingChanged));
+            new PropertyMetadata(new Thickness(24, 24, 24, 20), OnHeaderPaddingChanged));
 
     public Thickness HeaderPadding
     {
@@ -131,7 +157,7 @@ public sealed partial class ToolPageHeader : UserControl
     private static void OnIconBackgroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var header = (ToolPageHeader)d;
-        header.IconTile.Background = e.NewValue as Brush ?? header._defaultIconBackground;
+        header.ApplyIcon();
     }
 
     private static void OnIconForegroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -146,7 +172,35 @@ public sealed partial class ToolPageHeader : UserControl
     private static void OnShowBackButtonChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         => ((ToolPageHeader)d).ApplyHostLayout();
 
-    private void OnLoaded(object sender, RoutedEventArgs e) => ApplyHostLayout();
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        ApplyHostLayout();
+        ApplyIcon();
+    }
+
+    private void OnColorIconFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        ColorIcon.Visibility = Visibility.Collapsed;
+        IconGlyph.Visibility = Visibility.Visible;
+    }
+
+    private void OnLogoEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        => FluentMotion.AnimateIcon(IconTile, true);
+
+    private void OnLogoExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        => FluentMotion.AnimateIcon(IconTile, false);
+
+    private void OnLogoClick(object sender, RoutedEventArgs e)
+        => FluentMotion.AnimateIcon(IconTile, false, celebrate: true);
+
+    private void OnHeaderSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var compact = e.NewSize.Width < 900;
+        Grid.SetRow(ActionsPanel, compact ? 1 : 0);
+        Grid.SetColumn(ActionsPanel, compact ? 0 : 3);
+        Grid.SetColumnSpan(ActionsPanel, compact ? 4 : 1);
+        ActionsPanel.Margin = compact && Actions.Count > 0 ? new Thickness(0, 16, 0, 0) : new Thickness(0);
+    }
 
     /// <summary>
     /// 按宿主调整页头：独立工具窗口隐藏返回按钮（交给窗口标题栏），

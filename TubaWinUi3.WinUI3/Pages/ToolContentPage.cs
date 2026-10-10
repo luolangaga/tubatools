@@ -7,6 +7,7 @@ namespace TubaWinUi3.Pages;
 
 public sealed class ToolContentPageParam
 {
+    public string ToolId { get; init; } = "";
     public required string Title { get; init; }
     public string Description { get; init; } = "";
     public string Glyph { get; init; } = "";
@@ -54,6 +55,7 @@ public sealed partial class ToolContentPage : Page
         if (e.Parameter is ToolContentPageParam param)
         {
             _onClose = param.OnClose;
+            _header.ToolId = param.ToolId;
             _header.Title = param.Title;
             _header.Subtitle = param.Description;
             _header.Glyph = param.Glyph;

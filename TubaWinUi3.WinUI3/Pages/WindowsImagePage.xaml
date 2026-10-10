@@ -1,85 +1,60 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Page
-    x:Class="TubaWinUi3.Pages.WindowsImagePage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:l="using:WinUI3Localizer"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:services="using:TubaWinUi3.Services"
-    xmlns:controls="using:TubaWinUi3.Controls"
-    mc:Ignorable="d">
-
+<?xml version="1.0" encoding="utf-8" ?>
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:l="using:WinUI3Localizer" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:services="using:TubaWinUi3.Services" xmlns:controls="using:TubaWinUi3.Controls" x:Class="TubaWinUi3.Pages.WindowsImagePage" mc:Ignorable="d">
     <Grid RowSpacing="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <controls:ToolPageHeader
-            Grid.Row="0"
-            Title="Windows 镜像下载"
-            Subtitle="原版系统镜像下载，支持 ESD 转 ISO（需 UltraISO）"
-            Glyph="&#xE896;"
-            l:Uids.Uid="WindowsImage_PageHeader" />
-
-        <TeachingTip x:Name="QueueTeachingTip"
-                      IsLightDismissEnabled="True"
-                      PreferredPlacement="Bottom"
-                      CloseButtonContent="知道了" l:Uids.Uid="WindowsImage_Known" />
-
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
-                <InfoBar x:Name="StatusInfoBar" IsClosable="True" IsOpen="False" />
-
+        <controls:ToolPageHeader ToolId="windows-image" Grid.Row="0" Title="Windows 镜像下载" Subtitle="原版系统镜像下载，支持 ESD 转 ISO（需 UltraISO）" Glyph="&#xE896;" l:Uids.Uid="WindowsImage_PageHeader"/>
+        <TeachingTip x:Name="QueueTeachingTip" IsLightDismissEnabled="True" PreferredPlacement="Bottom" CloseButtonContent="知道了" l:Uids.Uid="WindowsImage_Known"/>
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
+            <StackPanel Spacing="24" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True"/>
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
+                <InfoBar x:Name="StatusInfoBar" IsClosable="True" IsOpen="False"/>
                 <Pivot x:Name="SourcePivot" SelectedIndex="0" SelectionChanged="SourcePivot_SelectionChanged">
                     <PivotItem Header="微软官方下载" l:Uids.Uid="WindowsImage_TabMicrosoft">
                         <StackPanel Spacing="16" Padding="0,8,0,0">
                             <InfoBar IsOpen="True" IsClosable="False" Title="微软官方下载说明" l:Uids.Uid="WindowsImage_MsNoticeTitle" Severity="Informational">
-                                <TextBlock Text="从微软官方服务器获取 ISO 下载链接。需选择版本和语言后获取链接，链接 24 小时内有效。部分地区可能需要 VPN。&#x0a;注意：LTSC、企业版、教育版、IoT、Server 等版本请使用「UUP Dump」标签页获取。" l:Uids.Uid="WindowsImage_MsNoticeBody" TextWrapping="Wrap" />
+                                <TextBlock Text="从微软官方服务器获取 ISO 下载链接。需选择版本和语言后获取链接，链接 24 小时内有效。部分地区可能需要 VPN。&#10;注意：LTSC、企业版、教育版、IoT、Server 等版本请使用「UUP Dump」标签页获取。" l:Uids.Uid="WindowsImage_MsNoticeBody" TextWrapping="Wrap"/>
                             </InfoBar>
-
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox x:Name="MsEditionCombo" MinWidth="320" PlaceholderText="选择 Windows 版本..." l:Uids.Uid="WindowsImage_MsEditionPlaceholder" HorizontalAlignment="Stretch" SelectionChanged="MsEditionCombo_SelectionChanged" />
-                                <ComboBox x:Name="MsLangCombo" Grid.Column="1" MinWidth="180" PlaceholderText="选择语言..." l:Uids.Uid="WindowsImage_MsLangPlaceholder" IsEnabled="False" />
-                            </Grid>
-
-                            <Button x:Name="MsFetchBtn" HorizontalAlignment="Stretch" Click="MsFetchBtn_Click" IsEnabled="False">
+                            <StackPanel Spacing="12">
+                                <ComboBox x:Name="MsEditionCombo" PlaceholderText="选择 Windows 版本..." l:Uids.Uid="WindowsImage_MsEditionPlaceholder" HorizontalAlignment="Stretch" SelectionChanged="MsEditionCombo_SelectionChanged" Header="Windows 版本"/>
+                                <ComboBox x:Name="MsLangCombo" PlaceholderText="选择语言..." l:Uids.Uid="WindowsImage_MsLangPlaceholder" IsEnabled="False" Header="语言" HorizontalAlignment="Stretch"/>
+                            </StackPanel>
+                            <Button x:Name="MsFetchBtn" HorizontalAlignment="Left" Click="MsFetchBtn_Click" IsEnabled="False" Style="{StaticResource AccentButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                    <FontIcon Glyph="&#xE896;" FontSize="14" />
-                                    <TextBlock Text="获取官方下载链接" l:Uids.Uid="WindowsImage_MsFetch" />
+                                    <FontIcon Glyph="&#xE896;" FontSize="14"/>
+                                    <TextBlock Text="获取官方下载链接" l:Uids.Uid="WindowsImage_MsFetch"/>
                                 </StackPanel>
                             </Button>
-
-                            <ProgressRing x:Name="MsProgressRing" Width="28" Height="28" HorizontalAlignment="Center" Visibility="Collapsed" IsActive="True" />
-                            <TextBlock x:Name="MsStatusText" HorizontalAlignment="Center" FontSize="12" Visibility="Collapsed" Text="" />
-
+                            <ProgressRing x:Name="MsProgressRing" Width="28" Height="28" HorizontalAlignment="Center" Visibility="Collapsed" IsActive="True"/>
+                            <TextBlock x:Name="MsStatusText" HorizontalAlignment="Center" FontSize="12" Visibility="Collapsed" Text=""/>
                             <StackPanel x:Name="MsResultPanel" Spacing="8" Visibility="Collapsed">
                                 <Border Padding="16" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                                     <StackPanel Spacing="8">
-                                        <TextBlock x:Name="MsResultTitle" Style="{StaticResource SectionHeaderStyle}" />
-                                        <TextBlock x:Name="MsResultInfo" FontSize="12" />
+                                        <TextBlock x:Name="MsResultTitle" Style="{StaticResource SectionHeaderStyle}"/>
+                                        <TextBlock x:Name="MsResultInfo" FontSize="12"/>
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <Button x:Name="MsDownloadBtn" Click="MsDownloadBtn_Click">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <FontIcon Glyph="&#xE896;" FontSize="12" />
-                                                    <TextBlock Text="加入下载队列" l:Uids.Uid="WindowsImage_AddToQueue" />
+                                                    <FontIcon Glyph="&#xE896;" FontSize="12"/>
+                                                    <TextBlock Text="加入下载队列" l:Uids.Uid="WindowsImage_AddToQueue"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="MsOpenBrowserBtn" Click="MsOpenBrowserBtn_Click">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <FontIcon Glyph="&#xE774;" FontSize="12" />
-                                                    <TextBlock Text="浏览器下载" l:Uids.Uid="WindowsImage_OpenInBrowser" />
+                                                    <FontIcon Glyph="&#xE774;" FontSize="12"/>
+                                                    <TextBlock Text="浏览器下载" l:Uids.Uid="WindowsImage_OpenInBrowser"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="MsCopyLinkBtn" Click="MsCopyLinkBtn_Click">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <FontIcon Glyph="&#xE8C8;" FontSize="12" />
-                                                    <TextBlock Text="复制链接" l:Uids.Uid="WindowsImage_CopyLink" />
+                                                    <FontIcon Glyph="&#xE8C8;" FontSize="12"/>
+                                                    <TextBlock Text="复制链接" l:Uids.Uid="WindowsImage_CopyLink"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -88,193 +63,172 @@
                             </StackPanel>
                         </StackPanel>
                     </PivotItem>
-
                     <PivotItem Header="社区镜像源" l:Uids.Uid="WindowsImage_TabCommunity">
                         <StackPanel Spacing="16" Padding="0,8,0,0">
                             <InfoBar IsOpen="True" IsClosable="False" Title="社区镜像风险提醒" l:Uids.Uid="WindowsImage_CommunityNoticeTitle" Severity="Warning">
                                 <TextBlock x:Name="CommunityRiskText" TextWrapping="Wrap">
-                                    <Run x:Name="CommunitySourceRun" FontWeight="SemiBold" /><LineBreak />
-                                    <Run x:Name="CommunityRiskRun" FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorCriticalBrush}" /><Run x:Name="CommunityRiskBodyRun" />
+                                    <Run x:Name="CommunitySourceRun" FontWeight="SemiBold"/>
+                                    <LineBreak/>
+                                    <Run x:Name="CommunityRiskRun" FontWeight="SemiBold" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                                    <Run x:Name="CommunityRiskBodyRun"/>
                                 </TextBlock>
                             </InfoBar>
-
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <AutoSuggestBox x:Name="SearchBox" PlaceholderText="搜索 Windows 版本、语言..." l:Uids.Uid="WindowsImage_SearchPlaceholder" MinWidth="240" QueryIcon="Find" TextChanged="SearchBox_TextChanged" />
-                                <ComboBox x:Name="CategoryCombo" Grid.Column="1" MinWidth="140" SelectedIndex="0" SelectionChanged="CategoryCombo_SelectionChanged">
-                                    <ComboBoxItem Content="全部" l:Uids.Uid="WindowsImage_FilterAll" Tag="全部" />
-                                    <ComboBoxItem Content="Desktop Windows" Tag="Desktop Windows" />
-                                    <ComboBoxItem Content="Windows Server" Tag="Windows Server" />
+                            <StackPanel Spacing="12">
+                                <AutoSuggestBox x:Name="SearchBox" PlaceholderText="搜索 Windows 版本、语言..." l:Uids.Uid="WindowsImage_SearchPlaceholder" MinWidth="240" QueryIcon="Find" TextChanged="SearchBox_TextChanged"/>
+                                <ComboBox x:Name="CategoryCombo" SelectedIndex="0" SelectionChanged="CategoryCombo_SelectionChanged" Header="选择版本" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="全部" l:Uids.Uid="WindowsImage_FilterAll" Tag="全部"/>
+                                    <ComboBoxItem Content="Desktop Windows" Tag="Desktop Windows"/>
+                                    <ComboBoxItem Content="Windows Server" Tag="Windows Server"/>
                                 </ComboBox>
-                                <ComboBox x:Name="LangCombo" Grid.Column="2" MinWidth="120" SelectedIndex="0" SelectionChanged="LangCombo_SelectionChanged">
-                                    <ComboBoxItem Content="全部语言" l:Uids.Uid="WindowsImage_FilterAllLanguages" Tag="全部语言" />
-                                    <ComboBoxItem Content="简体中文" l:Uids.Uid="WindowsImage_LangChinese" Tag="简体中文" />
-                                    <ComboBoxItem Content="English" Tag="English" />
+                                <ComboBox x:Name="LangCombo" SelectedIndex="0" SelectionChanged="LangCombo_SelectionChanged" Header="选择版本" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="全部语言" l:Uids.Uid="WindowsImage_FilterAllLanguages" Tag="全部语言"/>
+                                    <ComboBoxItem Content="简体中文" l:Uids.Uid="WindowsImage_LangChinese" Tag="简体中文"/>
+                                    <ComboBoxItem Content="English" Tag="English"/>
                                 </ComboBox>
-                                <Button x:Name="RefreshBtn" Grid.Column="3" Click="RefreshBtn_Click">
+                                <Button x:Name="RefreshBtn" Click="RefreshBtn_Click">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE72C;" FontSize="12" />
-                                        <TextBlock Text="刷新" l:Uids.Uid="WindowsImage_Refresh" />
+                                        <FontIcon Glyph="&#xE72C;" FontSize="12"/>
+                                        <TextBlock Text="刷新" l:Uids.Uid="WindowsImage_Refresh"/>
                                     </StackPanel>
                                 </Button>
-                            </Grid>
-
+                            </StackPanel>
                             <Border x:Name="HeaderBorder" Padding="12,8,12,8" CornerRadius="8,8,0,0">
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="版本" MinWidth="60" l:Uids.Uid="WindowsImage_ColEdition" />
-                                    <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="文件名" l:Uids.Uid="WindowsImage_ColFile" />
-                                    <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="大小" MinWidth="60" l:Uids.Uid="WindowsImage_ColSize" />
-                                    <TextBlock Grid.Column="3" FontSize="12" FontWeight="SemiBold" Text="语言" MinWidth="70" l:Uids.Uid="WindowsImage_ColLanguage" />
-                                    <TextBlock Grid.Column="4" FontSize="12" FontWeight="SemiBold" Text="架构" MinWidth="44" l:Uids.Uid="WindowsImage_ColArch" />
-                                    <TextBlock Grid.Column="5" FontSize="12" FontWeight="SemiBold" Text="操作" MinWidth="120" l:Uids.Uid="WindowsImage_ColAction" />
+                                    <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="版本" MinWidth="60" l:Uids.Uid="WindowsImage_ColEdition"/>
+                                    <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="文件名" l:Uids.Uid="WindowsImage_ColFile"/>
+                                    <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="大小" MinWidth="60" l:Uids.Uid="WindowsImage_ColSize"/>
+                                    <TextBlock Grid.Column="3" FontSize="12" FontWeight="SemiBold" Text="语言" MinWidth="70" l:Uids.Uid="WindowsImage_ColLanguage"/>
+                                    <TextBlock Grid.Column="4" FontSize="12" FontWeight="SemiBold" Text="架构" MinWidth="44" l:Uids.Uid="WindowsImage_ColArch"/>
+                                    <TextBlock Grid.Column="5" FontSize="12" FontWeight="SemiBold" Text="操作" MinWidth="120" l:Uids.Uid="WindowsImage_ColAction"/>
                                 </Grid>
                             </Border>
-
                             <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8">
-                                <StackPanel x:Name="ListContainer" />
+                                <StackPanel x:Name="ListContainer"/>
                             </Border>
-
                             <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
-                                <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
-                                <TextBlock FontSize="14" Text="正在加载镜像列表..." l:Uids.Uid="WindowsImage_LoadingList" />
+                                <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True"/>
+                                <TextBlock FontSize="14" Text="正在加载镜像列表..." l:Uids.Uid="WindowsImage_LoadingList"/>
                             </StackPanel>
-
                             <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
-                                <FontIcon Glyph="&#xE894;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                                <TextBlock FontSize="14" Text="没有找到匹配的镜像" l:Uids.Uid="WindowsImage_EmptyList" />
+                                <FontIcon Glyph="&#xE894;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                <TextBlock FontSize="14" Text="没有找到匹配的镜像" l:Uids.Uid="WindowsImage_EmptyList"/>
                             </StackPanel>
                         </StackPanel>
                     </PivotItem>
                     <PivotItem Header="UUP Dump">
                         <StackPanel Spacing="16" Padding="0,8,0,0">
                             <InfoBar IsOpen="True" IsClosable="False" Title="UUP Dump 说明" l:Uids.Uid="WindowsImage_UupNoticeTitle" Severity="Informational">
-                                <TextBlock Text="从微软官方 Windows Update 服务器下载系统原始文件并自动转换为 ISO，文件直链全部来自微软官方 CDN。适合获取 Insider 预览版、指定版本号、企业版 / LTSC、Server 等官方下载页没有的镜像。" l:Uids.Uid="WindowsImage_UupNoticeBody" TextWrapping="Wrap" />
+                                <TextBlock Text="从微软官方 Windows Update 服务器下载系统原始文件并自动转换为 ISO，文件直链全部来自微软官方 CDN。适合获取 Insider 预览版、指定版本号、企业版 / LTSC、Server 等官方下载页没有的镜像。" l:Uids.Uid="WindowsImage_UupNoticeBody" TextWrapping="Wrap"/>
                             </InfoBar>
-
                             <!-- 第 1 步：选择系统版本 -->
                             <Border Padding="16,12,16,12" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                                 <StackPanel Spacing="8">
-                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="1. 选择系统版本" l:Uids.Uid="WindowsImage_Step1" />
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox x:Name="UupChannelCombo" MinWidth="116" SelectedIndex="1" SelectionChanged="UupChannelCombo_SelectionChanged">
-                                            <ComboBoxItem Content="全部" l:Uids.Uid="WindowsImage_ChannelAll" Tag="全部" />
-                                            <ComboBoxItem Content="正式版" l:Uids.Uid="WindowsImage_ChannelRetail" Tag="正式版" />
-                                            <ComboBoxItem Content="预览体验版" l:Uids.Uid="WindowsImage_ChannelInsider" Tag="预览体验版" />
-                                            <ComboBoxItem Content="Server" Tag="Server" />
+                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="1. 选择系统版本" l:Uids.Uid="WindowsImage_Step1"/>
+                                    <StackPanel Spacing="12">
+                                        <ComboBox x:Name="UupChannelCombo" SelectedIndex="1" SelectionChanged="UupChannelCombo_SelectionChanged" Header="选择版本" HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="全部" l:Uids.Uid="WindowsImage_ChannelAll" Tag="全部"/>
+                                            <ComboBoxItem Content="正式版" l:Uids.Uid="WindowsImage_ChannelRetail" Tag="正式版"/>
+                                            <ComboBoxItem Content="预览体验版" l:Uids.Uid="WindowsImage_ChannelInsider" Tag="预览体验版"/>
+                                            <ComboBoxItem Content="Server" Tag="Server"/>
                                         </ComboBox>
-                                        <ComboBox x:Name="UupArchCombo" Grid.Column="1" MinWidth="110" SelectedIndex="0" SelectionChanged="UupArchCombo_SelectionChanged" />
-                                        <AutoSuggestBox x:Name="UupSearchBox" Grid.Column="2" PlaceholderText="搜索版本号或关键词，如 26100、24H2、LTSC" l:Uids.Uid="WindowsImage_UupSearchPlaceholder" QueryIcon="Find" QuerySubmitted="UupSearchBox_QuerySubmitted" />
-                                        <Button x:Name="UupSearchBtn" Grid.Column="3" Click="UupSearchBtn_Click">
+                                        <ComboBox x:Name="UupArchCombo" SelectedIndex="0" SelectionChanged="UupArchCombo_SelectionChanged" Header="选择版本" HorizontalAlignment="Stretch"/>
+                                        <AutoSuggestBox x:Name="UupSearchBox" PlaceholderText="搜索版本号或关键词，如 26100、24H2、LTSC" l:Uids.Uid="WindowsImage_UupSearchPlaceholder" QueryIcon="Find" QuerySubmitted="UupSearchBox_QuerySubmitted"/>
+                                        <Button x:Name="UupSearchBtn" Click="UupSearchBtn_Click">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE721;" FontSize="12" />
-                                                <TextBlock Text="搜索" l:Uids.Uid="WindowsImage_UupSearchButton" />
+                                                <FontIcon Glyph="&#xE721;" FontSize="12"/>
+                                                <TextBlock Text="搜索" l:Uids.Uid="WindowsImage_UupSearchButton"/>
                                             </StackPanel>
                                         </Button>
-                                    </Grid>
+                                    </StackPanel>
                                     <ListView x:Name="UupBuildList" MaxHeight="232" SelectionMode="Single" SelectionChanged="UupBuildList_SelectionChanged">
                                         <ListView.ItemTemplate>
                                             <DataTemplate x:DataType="services:UupBuildInfo">
                                                 <StackPanel Spacing="2" Padding="2,4,2,4">
-                                                    <TextBlock Text="{x:Bind Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{x:Bind DetailsDisplay}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{x:Bind Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{x:Bind DetailsDisplay}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
                                     </ListView>
                                     <StackPanel x:Name="UupBuildLoadingPanel" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" Visibility="Collapsed">
-                                        <ProgressRing x:Name="UupBuildLoadingRing" Width="20" Height="20" IsActive="True" />
-                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Text="正在获取构建列表..." l:Uids.Uid="WindowsImage_UupBuildLoading" />
+                                        <ProgressRing x:Name="UupBuildLoadingRing" Width="20" Height="20" IsActive="True"/>
+                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Text="正在获取构建列表..." l:Uids.Uid="WindowsImage_UupBuildLoading"/>
                                     </StackPanel>
-                                    <TextBlock x:Name="UupBuildStatusText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="UupBuildStatusText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Visibility="Collapsed" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
-
                             <!-- 第 2 步：选择语言和版本 -->
                             <Border Padding="16,12,16,12" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                                 <StackPanel Spacing="8">
-                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="2. 选择语言和版本" l:Uids.Uid="WindowsImage_Step2" />
-                                    <TextBlock x:Name="UupSelectedBuildText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="请先在上方第 1 步中选择一个系统版本" l:Uids.Uid="WindowsImage_UupSelectBuildHint" />
+                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="2. 选择语言和版本" l:Uids.Uid="WindowsImage_Step2"/>
+                                    <TextBlock x:Name="UupSelectedBuildText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="请先在上方第 1 步中选择一个系统版本" l:Uids.Uid="WindowsImage_UupSelectBuildHint"/>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="语言" VerticalAlignment="Center" FontSize="14" l:Uids.Uid="WindowsImage_LabelLanguage" />
-                                        <ComboBox x:Name="UupLangCombo" MinWidth="280" DisplayMemberPath="DisplayName" SelectionChanged="UupLangCombo_SelectionChanged" IsEnabled="False" />
-                                        <ProgressRing x:Name="UupLangProgress" Width="20" Height="20" Visibility="Collapsed" IsActive="True" />
+                                        <TextBlock Text="语言" VerticalAlignment="Center" FontSize="14" l:Uids.Uid="WindowsImage_LabelLanguage"/>
+                                        <ComboBox x:Name="UupLangCombo" DisplayMemberPath="DisplayName" SelectionChanged="UupLangCombo_SelectionChanged" IsEnabled="False" Header="选择版本" HorizontalAlignment="Stretch"/>
+                                        <ProgressRing x:Name="UupLangProgress" Width="20" Height="20" Visibility="Collapsed" IsActive="True"/>
                                     </StackPanel>
-                                    <TextBlock Text="版本" FontSize="14" l:Uids.Uid="WindowsImage_LabelEdition" />
-                                    <ProgressRing x:Name="UupEditionProgress" Width="20" Height="20" HorizontalAlignment="Left" Visibility="Collapsed" IsActive="True" />
+                                    <TextBlock Text="版本" FontSize="14" l:Uids.Uid="WindowsImage_LabelEdition"/>
+                                    <ProgressRing x:Name="UupEditionProgress" Width="20" Height="20" HorizontalAlignment="Left" Visibility="Collapsed" IsActive="True"/>
                                     <RadioButtons x:Name="UupEditionRadio" MaxColumns="3" SelectionChanged="UupEditionRadio_SelectionChanged">
                                         <RadioButtons.ItemTemplate>
                                             <DataTemplate x:DataType="services:UupEditionInfo">
-                                                <TextBlock Text="{x:Bind DisplayName}" FontSize="14" />
+                                                <TextBlock Text="{x:Bind DisplayName}" FontSize="14"/>
                                             </DataTemplate>
                                         </RadioButtons.ItemTemplate>
                                     </RadioButtons>
                                     <Expander x:Name="UupVirtualEditionExpander" Header="附加版本（虚拟版本，可选）" l:Uids.Uid="WindowsImage_VirtualEditionsHeader" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Visibility="Collapsed">
                                         <StackPanel Spacing="8">
-                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
-                                                       Text="附加版本由所选基础版本的文件直接合成，同一次下载即可获得（无需额外流量）。例如需要企业版镜像：基础版本选「Windows 专业版」，再在这里勾选「企业版」。" l:Uids.Uid="WindowsImage_VirtualEditionsHint" />
-                                            <StackPanel x:Name="UupVirtualEditionPanel" Spacing="4" />
+                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="附加版本由所选基础版本的文件直接合成，同一次下载即可获得（无需额外流量）。例如需要企业版镜像：基础版本选「Windows 专业版」，再在这里勾选「企业版」。" l:Uids.Uid="WindowsImage_VirtualEditionsHint"/>
+                                            <StackPanel x:Name="UupVirtualEditionPanel" Spacing="4"/>
                                         </StackPanel>
                                     </Expander>
                                 </StackPanel>
                             </Border>
-
                             <!-- 第 3 步：下载并转换为 ISO -->
                             <Border Padding="16,12,16,12" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                                 <StackPanel Spacing="8">
-                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="3. 下载并转换为 ISO" l:Uids.Uid="WindowsImage_Step3" />
-                                    <TextBlock x:Name="UupSummaryText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="完成前两步后，这里会显示下载内容摘要。" l:Uids.Uid="WindowsImage_UupSummaryHint" />
+                                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="3. 下载并转换为 ISO" l:Uids.Uid="WindowsImage_Step3"/>
+                                    <TextBlock x:Name="UupSummaryText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="完成前两步后，这里会显示下载内容摘要。" l:Uids.Uid="WindowsImage_UupSummaryHint"/>
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="保存位置" l:Uids.Uid="WindowsImage_SaveLocation" FontSize="14" VerticalAlignment="Center" />
-                                        <TextBlock x:Name="UupSaveLocationText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="360" />
+                                        <TextBlock Text="保存位置" l:Uids.Uid="WindowsImage_SaveLocation" FontSize="14" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="UupSaveLocationText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="360"/>
                                         <Button x:Name="UupBrowseDirBtn" Click="UupBrowseDirBtn_Click" Padding="8,4,8,4">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE8B7;" FontSize="12" />
-                                                <TextBlock Text="更改" l:Uids.Uid="WindowsImage_Change" FontSize="12" />
+                                                <FontIcon Glyph="&#xE8B7;" FontSize="12"/>
+                                                <TextBlock Text="更改" l:Uids.Uid="WindowsImage_Change" FontSize="12"/>
                                             </StackPanel>
                                         </Button>
                                         <Button x:Name="UupResetDirBtn" Click="UupResetDirBtn_Click" Padding="8,4,8,4" Visibility="Collapsed">
-                                            <TextBlock Text="恢复默认" l:Uids.Uid="WindowsImage_ResetDefault" FontSize="12" />
+                                            <TextBlock Text="恢复默认" l:Uids.Uid="WindowsImage_ResetDefault" FontSize="12"/>
                                         </Button>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Button x:Name="UupStartBtn" Style="{StaticResource AccentButtonStyle}" Click="UupStartBtn_Click" IsEnabled="False" Padding="16,8,16,8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE896;" FontSize="14" />
-                                                <TextBlock Text="开始下载并转换为 ISO" l:Uids.Uid="WindowsImage_StartDownload" />
+                                                <FontIcon Glyph="&#xE896;" FontSize="14"/>
+                                                <TextBlock Text="开始下载并转换为 ISO" l:Uids.Uid="WindowsImage_StartDownload"/>
                                             </StackPanel>
                                         </Button>
-                                        <CheckBox x:Name="UupNoConvertCheck" Content="仅下载文件集，不转换 ISO" l:Uids.Uid="WindowsImage_NoConvert" VerticalAlignment="Center" Checked="UupNoConvertCheck_Changed" Unchecked="UupNoConvertCheck_Changed" />
+                                        <CheckBox x:Name="UupNoConvertCheck" Content="仅下载文件集，不转换 ISO" l:Uids.Uid="WindowsImage_NoConvert" VerticalAlignment="Center" Checked="UupNoConvertCheck_Changed" Unchecked="UupNoConvertCheck_Changed"/>
                                     </StackPanel>
                                     <Expander Header="转换选项（高级）" l:Uids.Uid="WindowsImage_ConvertOptionsHeader" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                                         <StackPanel Spacing="8">
-                                            <CheckBox x:Name="UupOptAddUpdates" Content="集成更新（官网默认，推荐）" l:Uids.Uid="WindowsImage_OptAddUpdates" IsChecked="True" />
-                                            <CheckBox x:Name="UupOptCleanup" Content="运行组件清理（减小体积，转换明显变慢）" l:Uids.Uid="WindowsImage_OptCleanup" />
-                                            <CheckBox x:Name="UupOptNetFx3" Content="集成 .NET Framework 3.5" l:Uids.Uid="WindowsImage_OptNetFx3" />
-                                            <CheckBox x:Name="UupOptEsd" Content="使用 solid (ESD) 压缩（生成 install.esd，体积更小）" l:Uids.Uid="WindowsImage_OptEsd" />
-                                            <CheckBox x:Name="UupOptApps" Content="集成商店应用完整版（额外下载数百 MB，转换更慢）" l:Uids.Uid="WindowsImage_OptApps" />
+                                            <CheckBox x:Name="UupOptAddUpdates" Content="集成更新（官网默认，推荐）" l:Uids.Uid="WindowsImage_OptAddUpdates" IsChecked="True"/>
+                                            <CheckBox x:Name="UupOptCleanup" Content="运行组件清理（减小体积，转换明显变慢）" l:Uids.Uid="WindowsImage_OptCleanup"/>
+                                            <CheckBox x:Name="UupOptNetFx3" Content="集成 .NET Framework 3.5" l:Uids.Uid="WindowsImage_OptNetFx3"/>
+                                            <CheckBox x:Name="UupOptEsd" Content="使用 solid (ESD) 压缩（生成 install.esd，体积更小）" l:Uids.Uid="WindowsImage_OptEsd"/>
+                                            <CheckBox x:Name="UupOptApps" Content="集成商店应用完整版（额外下载数百 MB，转换更慢）" l:Uids.Uid="WindowsImage_OptApps"/>
                                         </StackPanel>
                                     </Expander>
-                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
-                                               Text="下载进度可在主页搜索框旁的下载按钮中查看；下载完成后自动弹出官方转换脚本窗口（DISM 过程约需 10~30 分钟），生成的 ISO 保存在上方保存位置的对应目录中。加入队列时会按上方选项生成包目录中的 ConvertConfig.ini，下载期间可随时手动编辑微调全部转换参数，转换脚本启动时以该文件为准。" l:Uids.Uid="WindowsImage_DownloadNote" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="下载进度可在主页搜索框旁的下载按钮中查看；下载完成后自动弹出官方转换脚本窗口（DISM 过程约需 10~30 分钟），生成的 ISO 保存在上方保存位置的对应目录中。加入队列时会按上方选项生成包目录中的 ConvertConfig.ini，下载期间可随时手动编辑微调全部转换参数，转换脚本启动时以该文件为准。" l:Uids.Uid="WindowsImage_DownloadNote"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -282,6 +236,5 @@
                 </Pivot>
             </StackPanel>
         </ScrollViewer>
-
     </Grid>
 </Page>

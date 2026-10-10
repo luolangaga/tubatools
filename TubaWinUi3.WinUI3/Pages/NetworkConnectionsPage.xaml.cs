@@ -61,7 +61,7 @@ public sealed partial class NetworkConnectionsPage : Page
 
     private void RenderConnections(List<ConnectionEntry> connections)
     {
-        ConnectionPanel.Children.Clear();
+        ConnectionPanel.Items.Clear();
 
         if (connections.Count == 0)
         {
@@ -79,7 +79,7 @@ public sealed partial class NetworkConnectionsPage : Page
 
             var row = new Grid
             {
-                Padding = new Thickness(8, 4, 8, 4),
+                Padding = new Thickness(12, 8, 12, 8),
                 ColumnSpacing = 8,
                 CornerRadius = new CornerRadius(4),
                 Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent)
@@ -136,7 +136,7 @@ public sealed partial class NetworkConnectionsPage : Page
             row.Children.Add(port); Grid.SetColumn(port, 3);
             row.Children.Add(adapter); Grid.SetColumn(adapter, 4);
 
-            ConnectionPanel.Children.Add(row);
+            ConnectionPanel.Items.Add(row);
         }
     }
 

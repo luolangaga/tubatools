@@ -44,6 +44,18 @@ public static class ToolCatalog
     /// <summary>Tools 根是否处于「构建工具缓存 / 测试」覆盖模式（与正常解析缓存的根区分）。</summary>
     private static bool _toolsRootOverridden;
 
+    public static string UserToolsRoot => UserToolLibrary.ToolsRoot;
+
+    public static string GetToolDirectory(string path)
+    {
+        var registered = ToolMetadataService.FindJsonMetadata(path);
+        if (registered?.Directory is { Length: > 0 } stored) return UserToolLibrary.ResolveDirectory(stored);
+        var relative = Path.GetRelativePath(ToolsRoot, path);
+        var parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return parts.Length >= 3 && parts[0] != ".."
+            ? Path.Combine(ToolsRoot, parts[0], parts[1]) : Path.GetDirectoryName(path)!;
+    }
+
     public static string ToolsRoot
     {
         get
@@ -96,10 +108,11 @@ public static class ToolCatalog
 
         try
         {
-            if (GetTools(category).Count > 0)
+            // 未登记/损坏的工具仍是用户文件，卡片数量不能作为删除依据。
+            if (Directory.EnumerateFileSystemEntries(dir).Any() || GetTools(category).Count > 0)
                 return false;
 
-            Directory.Delete(dir, recursive: true);
+            Directory.Delete(dir, recursive: false);
 
             AppSettings.Remove($"CategoryGlyph_{category}");
 
@@ -135,16 +148,10 @@ public static class ToolCatalog
 
     public static IReadOnlyList<string> GetCategories()
     {
-        if (!Directory.Exists(ToolsRoot))
-        {
-            return [];
-        }
-
-        var dirs = Directory.GetDirectories(ToolsRoot)
-            .Select(Path.GetFileName)
+        var dirs = (Directory.Exists(ToolsRoot) ? Directory.GetDirectories(ToolsRoot).Select(Path.GetFileName) : [])
+            .Concat(ToolMetadataService.GetUserTools().Select(t => t.Category))
             .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Cast<string>()
-            .ToList();
+            .Cast<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
         var ordered = LoadCategoryOrder();
 
@@ -165,7 +172,7 @@ public static class ToolCatalog
 
     public static IReadOnlyList<ToolItem> GetTools(string? category)
     {
-        if (string.IsNullOrWhiteSpace(category) || !Directory.Exists(ToolsRoot))
+        if (string.IsNullOrWhiteSpace(category))
         {
             return [];
         }
@@ -178,6 +185,10 @@ public static class ToolCatalog
 
         var categoryRoot = Path.Combine(ToolsRoot, category);
         var items = new ConcurrentBag<ToolItem>();
+        var userEntries = ToolMetadataService.GetUserTools(category);
+        var userDirectories = userEntries.Select(t => UserToolLibrary.ResolveDirectory(t.Directory!))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
 
         // tools.json 副本/内置挂载声明：物理扫描需避让同名目录（构建残留的空壳目录
         // 否则会经 HasDownloadUrl 生成无图标占位条目，与下方合成条目重复）
@@ -193,28 +204,41 @@ public static class ToolCatalog
         // 物理目录扫描（分类目录可能不存在：纯 tools.json 副本的分类也要能出列表）
         if (Directory.Exists(categoryRoot))
         {
-            var toolDirs = Directory.GetDirectories(categoryRoot).ToList();
+            var toolDirs = Directory.GetDirectories(categoryRoot).Where(d => !userDirectories.Contains(d)).ToList();
             var merged = MergeArchDirectories(toolDirs);
 
             // 并行扫描各工具目录（递归枚举 + FileVersionInfo 是主要 I/O 开销）
             Parallel.ForEach(merged, toolDir =>
             {
+                if (userDirectories.Contains(toolDir)) return;
                 var dirKey = Path.GetFileName(toolDir).Replace(" ", "").Replace("-", "").Replace("_", "");
                 if (declaredDirKeys.Contains(dirKey))
                     return; // 已由 tools.json 副本/内置挂载声明，物理占位跳过避免重复
 
-                var launchable = FindPrimaryLaunchable(toolDir);
+                var launchables = EnumerateLaunchables(toolDir);
+                var launchable = FindPrimaryLaunchable(toolDir, launchables);
                 var hasDownloadUrl = ToolMetadataService.HasDownloadUrl(category, toolDir);
                 if (launchable is null && !hasDownloadUrl)
                     return;
 
                 // 列表以 tools.json 为准：目录本身或目录内任一可执行文件命中条目才算收录。
                 // Tools 文件夹里未收录的目录（如 ViveTool）不再出现在列表。
-                if (launchable is not null && !IsCataloguedToolDir(toolDir))
+                if (launchable is not null && !IsCataloguedToolDir(toolDir, launchables))
                     return;
 
-                items.Add(CreateToolItemWithVariants(category, categoryRoot, launchable ?? CreatePlaceholderPath(toolDir), toolDir));
+                items.Add(CreateToolItemWithVariants(category, categoryRoot, launchable ?? CreatePlaceholderPath(toolDir), toolDir, launchables));
             });
+        }
+
+        // 用户工具按登记的真实目录读取，不与官方工具做模糊匹配或跨目录合并。
+        foreach (var entry in userEntries)
+        {
+            var directory = UserToolLibrary.ResolveDirectory(entry.Directory!);
+            if (!Directory.Exists(directory)) continue;
+            var launchables = EnumerateLaunchables(directory);
+            var launchable = FindPrimaryLaunchable(directory, launchables);
+            if (launchable is null) continue;
+            items.Add(CreateToolItemWithVariants(category, Path.GetDirectoryName(directory)!, launchable, directory, launchables));
         }
 
         // tools.json 多分类副本与内置挂载：由 category+categories / builtin 字段声明（无 link.json）
@@ -398,9 +422,6 @@ public static class ToolCatalog
     /// <summary>真实扫描整个 Tools 树（各分类并行），供 single-flight 使用。</summary>
     private static IReadOnlyList<ToolItem> ScanAllTools()
     {
-        if (!Directory.Exists(ToolsRoot))
-            return [];
-
         var categories = GetCategories();
         var perCategory = new List<ToolItem>[categories.Count];
         Parallel.For(0, categories.Count, i => perCategory[i] = GetTools(categories[i]).ToList());
@@ -416,10 +437,11 @@ public static class ToolCatalog
         var nameToCategories = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in allItems)
         {
-            if (!nameToCategories.TryGetValue(item.Name, out var set))
+            var identity = item.LibraryId ?? item.Name;
+            if (!nameToCategories.TryGetValue(identity, out var set))
             {
                 set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                nameToCategories[item.Name] = set;
+                nameToCategories[identity] = set;
             }
             set.Add(item.Category);
             if (item.PrimaryCategory is not null)
@@ -432,10 +454,10 @@ public static class ToolCatalog
         var deduped = new List<ToolItem>();
         foreach (var item in allItems)
         {
-            var key = (item.PrimaryCategory ?? item.Category) + "|" + item.Name;
+            var key = item.LibraryId ?? (item.PrimaryCategory ?? item.Category) + "|" + item.Name;
             if (seen.Add(key))
             {
-                if (nameToCategories.TryGetValue(item.Name, out var cats) && cats.Count > 1)
+                if (nameToCategories.TryGetValue(item.LibraryId ?? item.Name, out var cats) && cats.Count > 1)
                     item.SetCategories(cats.ToList());
                 deduped.Add(item);
             }
@@ -524,7 +546,8 @@ public static class ToolCatalog
             .ToList();
     }
 
-    private static ToolItem CreateToolItemWithVariants(string category, string categoryRoot, string path, string toolDir)
+    private static ToolItem CreateToolItemWithVariants(string category, string categoryRoot, string path, string toolDir,
+        IReadOnlyList<string>? launchables = null)
     {
         var extension = Path.GetExtension(path);
         var rawFileName = GetDisplayName(path);
@@ -535,14 +558,14 @@ public static class ToolCatalog
         var primaryArch = DetectArch(Path.GetFileNameWithoutExtension(path));
         var archDisplay = FormatArchDisplay(primaryArch);
 
-        var alternates = FindAllArchVariants(toolDir, path);
+        var alternates = FindAllArchVariants(toolDir, path, launchables);
 
         var dirName = Path.GetFileName(toolDir);
         var hasArchVariants = alternates.Count > 0 || primaryArch is not null;
         var name = hasArchVariants ? dirName : rawFileName;
 
-        var categoryRootDir = Path.Combine(ToolsRoot, category);
-        if (Directory.Exists(categoryRootDir))
+        var categoryRootDir = categoryRoot;
+        if (ToolMetadataService.FindJsonMetadataByDir(toolDir)?.Directory is null && Directory.Exists(categoryRootDir))
         {
             var strippedDir = StripArchSuffix(dirName);
             foreach (var otherDir in Directory.GetDirectories(categoryRootDir))
@@ -645,7 +668,8 @@ public static class ToolCatalog
             IsFavorite = isPlaceholder ? false : FavoritesService.IsFavorite(path),
             PrimaryArch = archDisplay.Length > 0 ? archDisplay : null,
             AlternateVersions = alternates,
-            SortOrder = metadata.Order
+            SortOrder = metadata.Order,
+            LibraryId = ToolMetadataService.FindJsonMetadata(path)?.Id
         };
         item.InitArchOptions();
         return item;
@@ -692,7 +716,8 @@ public static class ToolCatalog
             TutorialUrl = metadata.TutorialUrl,
             Tags = metadata.Tags ?? [],
             IsFavorite = isPlaceholder ? false : FavoritesService.IsFavorite(path),
-            SortOrder = metadata.Order
+            SortOrder = metadata.Order,
+            LibraryId = ToolMetadataService.FindJsonMetadata(path)?.Id
         };
         item.InitArchOptions();
         return item;
@@ -820,16 +845,15 @@ public static class ToolCatalog
         };
     }
 
-    private static List<ArchVariant> FindAllArchVariants(string toolDir, string? primaryPath)
+    private static List<ArchVariant> FindAllArchVariants(string toolDir, string? primaryPath,
+        IReadOnlyList<string>? launchables = null)
     {
         var variants = new List<ArchVariant>();
         var dirName = Path.GetFileName(toolDir);
         var primaryExt = primaryPath is not null ? Path.GetExtension(primaryPath) : null;
 
         // 1. 同目录内的架构变体
-        var allLaunchables = Directory.EnumerateFiles(toolDir, "*", SearchOption.AllDirectories)
-            .Where(IsLaunchable)
-            .ToList();
+        var allLaunchables = launchables ?? EnumerateLaunchables(toolDir);
 
         foreach (var filePath in allLaunchables)
         {
@@ -859,7 +883,7 @@ public static class ToolCatalog
         }
 
         // 2. 使用已知多架构工具映射表查找跨目录变体
-        if (primaryPath is not null)
+        if (primaryPath is not null && ToolMetadataService.FindJsonMetadataByDir(toolDir)?.Directory is null)
         {
             var primaryFileName = Path.GetFileName(primaryPath);
             var primaryBaseName = Path.GetFileNameWithoutExtension(primaryPath);
@@ -919,17 +943,19 @@ public static class ToolCatalog
     /// 目录是否被 tools.json 收录：目录名/路径命中条目，或目录内任一可执行文件命中条目
     /// （条目可能按目录名（如 "Geek Uninstaller"）或按文件名（如 fptw64 → fptw64.exe）匹配）。
     /// </summary>
-    private static bool IsCataloguedToolDir(string toolDir)
+    private static bool IsCataloguedToolDir(string toolDir, IReadOnlyList<string> launchables)
     {
         if (ToolMetadataService.FindJsonMetadataByDir(toolDir) is not null)
             return true;
 
-        return Directory.EnumerateFiles(toolDir, "*", SearchOption.AllDirectories)
-            .Where(IsLaunchable)
-            .Any(file => ToolMetadataService.FindJsonMetadata(file) is not null);
+        return launchables.Any(file => ToolMetadataService.FindJsonMetadata(file) is not null);
     }
 
-    private static string? FindPrimaryLaunchable(string toolDir)
+    // 扫描结果仅在本次目录扫描内共享，不落盘也不跨刷新缓存，避免工具更新后入口过期。
+    private static IReadOnlyList<string> EnumerateLaunchables(string toolDir)
+        => Directory.EnumerateFiles(toolDir, "*", SearchOption.AllDirectories).Where(IsLaunchable).ToList();
+
+    internal static string? FindPrimaryLaunchable(string toolDir, IReadOnlyList<string>? launchables = null)
     {
         var dirName = Path.GetFileName(toolDir);
 
@@ -940,15 +966,17 @@ public static class ToolCatalog
             if (File.Exists(targetPath) && IsLaunchable(targetPath))
                 return targetPath;
 
-            var deepTarget = Directory.EnumerateFiles(toolDir, launchTarget, SearchOption.AllDirectories)
-                .FirstOrDefault(f => IsLaunchable(f));
+            // 声明通常是文件名；含通配符的历史条目保持 Directory 原有匹配语义。
+            var deepTarget = launchables is not null && launchTarget.IndexOfAny(['*', '?']) < 0 &&
+                Path.GetFileName(launchTarget) == launchTarget
+                ? launchables.FirstOrDefault(f => Path.GetFileName(f).Equals(launchTarget, StringComparison.OrdinalIgnoreCase))
+                : Directory.EnumerateFiles(toolDir, launchTarget, SearchOption.AllDirectories)
+                    .FirstOrDefault(IsLaunchable);
             if (deepTarget is not null)
                 return deepTarget;
         }
 
-        var allLaunchables = Directory.EnumerateFiles(toolDir, "*", SearchOption.AllDirectories)
-            .Where(IsLaunchable)
-            .ToList();
+        var allLaunchables = launchables ?? EnumerateLaunchables(toolDir);
 
         if (allLaunchables.Count == 0)
             return null;
@@ -956,8 +984,8 @@ public static class ToolCatalog
         if (allLaunchables.Count == 1)
             return allLaunchables[0];
 
-        var directLaunchables = Directory.EnumerateFiles(toolDir)
-            .Where(IsLaunchable)
+        var directLaunchables = allLaunchables
+            .Where(f => string.Equals(Path.GetDirectoryName(f), Path.TrimEndingDirectorySeparator(toolDir), StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var match = directLaunchables.FirstOrDefault(f =>
@@ -1224,7 +1252,8 @@ public static class ToolCatalog
             .FirstOrDefault();
         if (toolDir is null) return null;
 
-        var launchable = FindPrimaryLaunchable(toolDir);
+        var launchables = EnumerateLaunchables(toolDir);
+        var launchable = FindPrimaryLaunchable(toolDir, launchables);
         if (launchable is null && !ToolMetadataService.HasDownloadUrl(primaryCategory, toolDir))
             return null;
 
@@ -1232,7 +1261,8 @@ public static class ToolCatalog
             primaryCategory,
             categoryRoot,
             launchable ?? CreatePlaceholderPath(toolDir),
-            toolDir);
+            toolDir,
+            launchables);
 
         var categories = placement.Categories
             .Concat([primaryCategory])

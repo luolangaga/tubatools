@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -98,11 +98,13 @@ public sealed partial class BatteryAnalyzerPage : Page
 
     private Grid BuildUI()
     {
-        var mainStack = new StackPanel { Spacing = 16, Padding = new Thickness(24, 8, 24, 24) };
+        var mainStack = new StackPanel { Spacing = 24, MaxWidth = 1120, Padding = new Thickness(24, 4, 24, 32) };
 
         _chartLoading = new ProgressBar { IsIndeterminate = true, Visibility = Visibility.Collapsed };
         _infoBar = new InfoBar { Severity = InfoBarSeverity.Error, IsOpen = false, IsClosable = true };
 
+        mainStack.ChildrenTransitions = new Microsoft.UI.Xaml.Media.Animation.TransitionCollection
+        { new Microsoft.UI.Xaml.Media.Animation.EntranceThemeTransition { IsStaggeringEnabled = true } };
         mainStack.Children.Add(_chartLoading);
         mainStack.Children.Add(_infoBar);
         mainStack.Children.Add(BuildOverviewCards());
@@ -129,6 +131,7 @@ public sealed partial class BatteryAnalyzerPage : Page
     {
         var header = new ToolPageHeader
         {
+            ToolId = "battery-analyzer",
             Title = "电池消耗分析",
             Subtitle = "分析电池消耗趋势、高耗电进程排行，比 Windows 设置更强大的电池分析工具",
             Glyph = "\uE85E"

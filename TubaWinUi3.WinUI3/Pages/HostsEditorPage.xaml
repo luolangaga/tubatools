@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="hosts-editor"
             x:Name="PageHeader"
             Grid.Row="0"
             Title="Hosts 编辑"
@@ -22,8 +22,13 @@
             BackRequested="OnBackRequested" />
 
         <!-- Main content -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
+        <Grid Grid.Row="1" Padding="24,4,24,24" RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Spacing="16">
+
                 <!-- Stat cards -->
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -86,7 +91,7 @@
                             <TextBlock Text="添加规则" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="SaveBtn" Click="SaveBtn_Click">
+                    <Button Style="{StaticResource AccentButtonStyle}" x:Name="SaveBtn" Click="SaveBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE74E;" FontSize="12" />
                             <TextBlock Text="保存" />
@@ -114,8 +119,9 @@
 
                 <InfoBar x:Name="ToastBar" IsClosable="True" IsOpen="False" />
 
+            </StackPanel>
                 <!-- Column headers -->
-                <Border x:Name="HeaderBorder" Padding="12,8,12,8" CornerRadius="8,8,0,0">
+                <Border Grid.Row="1" Margin="0,0,0,-16" x:Name="HeaderBorder" Padding="12,8,12,8" CornerRadius="8,8,0,0">
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -132,17 +138,18 @@
                     </Grid>
                 </Border>
 
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch">
                 <!-- List -->
-                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8">
+                <Border x:Name="ListBorder" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderThickness="1" CornerRadius="0,0,8,8">
                     <StackPanel x:Name="ListContainer" />
                 </Border>
 
+            </ScrollViewer>
                 <!-- Loading -->
-                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,32,0,32" Visibility="Collapsed">
+                <StackPanel Grid.Row="2" x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,32,0,32" Visibility="Collapsed">
                     <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
                     <TextBlock FontSize="14" Text="正在加载 Hosts 文件..." />
                 </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>

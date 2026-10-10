@@ -13,65 +13,11 @@
         <Setter Property="Margin" Value="0,0,12,12" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="GridViewItem">
-                    <Grid x:Name="RootGrid" RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
-                        </Grid.RenderTransform>
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.18">
-                                        <VisualTransition.GeneratedEasingFunction>
-                                            <CubicEase EasingMode="EaseOut" />
-                                        </VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                    <VisualTransition To="Pressed" GeneratedDuration="0:0:0.08">
-                                        <VisualTransition.GeneratedEasingFunction>
-                                            <CubicEase EasingMode="EaseOut" />
-                                        </VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                    <VisualTransition To="Normal" GeneratedDuration="0:0:0.25">
-                                        <VisualTransition.GeneratedEasingFunction>
-                                            <CubicEase EasingMode="EaseOut" />
-                                        </VisualTransition.GeneratedEasingFunction>
-                                    </VisualTransition>
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="PointerOver">
-                                    <VisualState.Setters>
-                                        <Setter Target="ItemScale.ScaleX" Value="1.03" />
-                                        <Setter Target="ItemScale.ScaleY" Value="1.03" />
-                                    </VisualState.Setters>
-                                </VisualState>
-                                <VisualState x:Name="Pressed">
-                                    <VisualState.Setters>
-                                        <Setter Target="ItemScale.ScaleX" Value="0.97" />
-                                        <Setter Target="ItemScale.ScaleY" Value="0.97" />
-                                    </VisualState.Setters>
-                                </VisualState>
-                                <VisualState x:Name="Disabled" />
-                            </VisualStateGroup>
-                            <VisualStateGroup x:Name="SelectionStates">
-                                <VisualState x:Name="Unselected" />
-                                <VisualState x:Name="Selected" />
-                                <VisualState x:Name="SelectedUnfocused" />
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
-                        <ContentPresenter
-                            Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}"
-                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
-    <!-- 简洁模式卡片容器（间距略小，动效与常规卡一致） -->
+    <!-- 简洁模式卡片容器（间距略小，原生反馈与常规卡一致） -->
     <Style x:Key="CompactToolCardItemStyle" TargetType="GridViewItem" BasedOn="{StaticResource ToolCardItemStyle}">
         <Setter Property="Margin" Value="0,0,10,10" />
     </Style>

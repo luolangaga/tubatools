@@ -19,6 +19,10 @@ public class CommunityToolRegistryTests : IDisposable
         _tools = Path.Combine(_root, "Tools");
         _registryRoot = Path.Combine(_root, "CommunityTools");
 
+        var metadata = Path.Combine(_root, "Metadata");
+        Directory.CreateDirectory(metadata);
+        File.WriteAllText(Path.Combine(metadata, "tools.json"), "{\"tools\":[]}");
+        ToolMetadataService.SetMetadataRootForTests(metadata);
         ToolCatalog.SetToolsRootForBuild(_tools);
         CommunityToolRegistry.SetRootForTests(_registryRoot);
     }
@@ -26,6 +30,7 @@ public class CommunityToolRegistryTests : IDisposable
     public void Dispose()
     {
         CommunityToolRegistry.SetRootForTests(null);
+        ToolMetadataService.SetMetadataRootForTests(null);
         ToolCatalog.SetToolsRootForBuild(null);
         ToolCatalog.OnToolsChanged();
         try { Directory.Delete(_root, true); } catch { }
@@ -186,19 +191,17 @@ public class ToolMetadataCommunityTests : IDisposable
     [Fact]
     public void Upsert_PreservesUnknownFields_AndExistingEntries()
     {
+        var officialPath = Path.Combine(_metadata, "tools.json");
+        var official = File.ReadAllText(officialPath);
         ToolMetadataService.UpsertToolMetadataEntry("litemonitor", name: "LiteMonitor");
-        ToolMetadataService.UpsertToolMetadataEntry("litemonitor", name: "LiteMonitor 2"); // 同 match 替换不重复
-
-        using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(_metadata, "tools.json")));
-        var tools = doc.RootElement.GetProperty("tools").EnumerateArray().ToList();
-
-        Assert.Equal(2, tools.Count); // existing + litemonitor
-
-        var existing = tools.Single(t => t.GetProperty("match").GetString() == "existing");
-        Assert.Equal("keep-me", existing.GetProperty("customField").GetString()); // 未知字段保留
-
-        var upserted = tools.Single(t => t.GetProperty("match").GetString() == "litemonitor");
-        Assert.Equal("LiteMonitor 2", upserted.GetProperty("name").GetString());
+        var userRoot = UserToolLibrary.ReadObject(UserToolLibrary.CatalogPath);
+        userRoot["tools"]![0]!["customField"] = "keep-me";
+        UserToolLibrary.WriteObject(UserToolLibrary.CatalogPath, userRoot);
+        ToolMetadataService.UpsertToolMetadataEntry("litemonitor", name: "LiteMonitor 2");
+        Assert.Equal(official, File.ReadAllText(officialPath));
+        var tool = Assert.Single(UserToolLibrary.GetEntries());
+        Assert.Equal("LiteMonitor 2", tool["name"]!.GetValue<string>());
+        Assert.Equal("keep-me", tool["customField"]!.GetValue<string>());
     }
 
     [Fact]

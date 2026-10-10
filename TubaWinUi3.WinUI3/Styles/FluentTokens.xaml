@@ -70,6 +70,22 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- 工具概览采用连续状态带，避免指标卡片重复嵌套。 -->
+    <Style x:Key="ToolSummaryStyle" TargetType="Grid">
+        <Setter Property="Padding" Value="24,16" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style x:Key="ToolResultItemStyle" TargetType="ListViewItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+
     <!-- 图标瓦片 -->
     <Style x:Key="IconTileStyle" TargetType="Border">
         <Setter Property="Width" Value="40" />
@@ -92,15 +108,12 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="0" />
     </Style>
-    <Style x:Key="ToolPageTitleTextStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+    <Style x:Key="ToolPageTitleTextStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
-    <Style x:Key="ToolPageSubtitleTextStyle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
+    <Style x:Key="ToolPageSubtitleTextStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyTextBlockStyle}">
         <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
-        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
 </ResourceDictionary>

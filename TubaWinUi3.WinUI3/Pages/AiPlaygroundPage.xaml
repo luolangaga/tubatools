@@ -6,7 +6,7 @@
     xmlns:l="using:WinUI3Localizer">
 
     <Grid RowDefinitions="Auto,*">
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="ai-playground"
             x:Name="Header"
             Grid.Row="0"
             Title="本地AI试炼场"
@@ -82,8 +82,14 @@
                             </Button>
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" Margin="0,8,0,0">
-                            <StackPanel x:Name="LibraryList" Spacing="8" />
+                        <ScrollViewer Grid.Row="1" Margin="0,8,0,0" HorizontalContentAlignment="Stretch">
+                            <StackPanel x:Name="LibraryList" Spacing="8">
+<StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
+</StackPanel>
                         </ScrollViewer>
 
                         <TextBlock
@@ -271,7 +277,7 @@
                                         HorizontalScrollMode="Enabled"
                                         VerticalScrollBarVisibility="Disabled"
                                         VerticalScrollMode="Disabled"
-                                        Visibility="Collapsed">
+                                        Visibility="Collapsed" HorizontalContentAlignment="Stretch">
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                 <TextBlock x:Name="ThresholdLabel" Text="置信度" VerticalAlignment="Center" Style="{ThemeResource CaptionTextBlockStyle}" />

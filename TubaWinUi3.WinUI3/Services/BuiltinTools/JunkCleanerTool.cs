@@ -1,4 +1,4 @@
-﻿using FluentCleaner.Models;
+using FluentCleaner.Models;
 using FluentCleaner.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -55,6 +55,7 @@ public sealed class JunkCleanerTool : IBuiltinTool
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
+            ToolId = Id,
             Title = "垃圾清理",
             Description = "基于 Winapp2 规则库扫描并清理应用缓存、临时文件与注册表残留",
             Glyph = Glyph,

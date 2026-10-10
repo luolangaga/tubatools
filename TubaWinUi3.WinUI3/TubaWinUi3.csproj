@@ -106,6 +106,17 @@
     </Content>
   </ItemGroup>
 
+  <Target Name="PrepareOfficialToolCatalog" BeforeTargets="PrepareForBuild">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Metadata\tools.json" DestinationFiles="$(IntermediateOutputPath)tools.default.json" />
+  </Target>
+  <ItemGroup>
+    <Content Include="$(IntermediateOutputPath)tools.default.json" Link="Metadata\tools.default.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="Metadata\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -144,6 +155,7 @@
     <PropertyGroup> above to opt out.
   -->
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="Downloader" Version="5.9.6" />
     <PackageReference Include="FieldCure.AssistStudio.Controls.WinUI" Version="0.21.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
@@ -159,6 +171,10 @@
 
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4022.49" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinUIAnalyzer" Version="0.7.1">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
@@ -180,8 +196,7 @@
     <!-- 本地 AI 试炼场：ONNX Runtime GenAI（LLM 生成循环 / KV Cache / 采样），WinML 变体经
          Windows ML 自动选择硬件（NPU → GPU → CPU）。不要同时引用其它 GenAI 变体（原生库同名冲突）。
          该包自带 targets 明确拒绝 x86 平台，故 x86 RID 下排除引用，改用编译桩。 -->
-    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.WinML" Version="0.17.1"
-                      Condition="'$(RuntimeIdentifier)' != 'win-x86'" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntimeGenAI.WinML" Version="0.17.1" Condition="'$(RuntimeIdentifier)' != 'win-x86'" />
 
     <PackageReference Include="WinUI3Localizer" Version="2.3.0" />
 
@@ -262,19 +277,14 @@
          self-contained 产物被复用导致 hostpolicy.dll 找不到。
          Targets 带 Restore：后端不是主项目的 ProjectReference，dotnet publish 的隐式
          restore 不会覆盖它；在干净的检出（CI）上必须先 restore 才有 project.assets.json。 -->
-    <MSBuild Projects="$(MSBuildProjectDirectory)\..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj"
-             Targets="Restore;Build"
-             Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=false" />
+    <MSBuild Projects="$(MSBuildProjectDirectory)\..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=false" />
     <!-- apphost exe 只是薄壳，实际代码在同名 .dll，需要把后端产物 TubaWinUI3.BackEnd.* 全部拷贝。
          ContinueOnError=WarnAndContinue：后端正在运行时文件被锁，跳过拷贝不阻断 build。 -->
     <ItemGroup>
       <_BackEndBuildFiles Include="$(_BackEndHostDir)\TubaWinUI3.BackEnd.*" Condition="Exists('$(_BackEndHostExe)')" />
     </ItemGroup>
-    <Copy SourceFiles="@(_BackEndBuildFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true"
-          ContinueOnError="WarnAndContinue"
-          Condition="Exists('$(_BackEndHostExe)')" />
-    <Message Importance="High" Text="已拷贝开发后端: $(TargetDir)TubaWinUI3.BackEnd.exe"
-             Condition="Exists('$(TargetDir)TubaWinUI3.BackEnd.exe')" />
+    <Copy SourceFiles="@(_BackEndBuildFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" ContinueOnError="WarnAndContinue" Condition="Exists('$(_BackEndHostExe)')" />
+    <Message Importance="High" Text="已拷贝开发后端: $(TargetDir)TubaWinUI3.BackEnd.exe" Condition="Exists('$(TargetDir)TubaWinUI3.BackEnd.exe')" />
   </Target>
 
   <!--

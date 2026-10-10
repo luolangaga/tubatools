@@ -137,10 +137,27 @@ public static class ActiveInterceptStartupService
 
     public static async Task<StartupTaskResult> SetStartupEnabledAsync(bool enabled)
     {
-        if (enabled)
+        await _settingGate.WaitAsync();
+        try
         {
-            return await CreateAdminScheduleTaskAsync();
+            var result = enabled
+                ? await CreateAdminScheduleTaskAsync()
+                : await GetAdminScheduleTaskExistsAsync()
+                    ? await DeleteAdminScheduleTaskAsync()
+                    : StartupTaskResult.Ok();
+            if (result.Success)
+            {
+                AppSettings.Set("ActiveInterceptEnabled", enabled);
+                AppSettings.Flush();
+                // 保留游戏后台监控对后端的独立需求。
+                // 登录任务启动的后端没有本进程句柄，也要重新加载功能配置。
+                if (ActiveInterceptService.IsRunning) ActiveInterceptService.RestartBackend();
+                ActiveInterceptService.SyncBackend();
+            }
+            return result;
         }
-        return await DeleteAdminScheduleTaskAsync();
+        finally { _settingGate.Release(); }
     }
+
+    private static readonly SemaphoreSlim _settingGate = new(1, 1);
 }

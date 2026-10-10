@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Models;
@@ -30,6 +30,7 @@ public sealed class CertBlockTool : IBuiltinTool
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
+            ToolId = Id,
             Title = "恶意软件拦截器",
             Description = "通过将软件厂商证书加入系统不信任列表，阻止流氓软件安装和运行",
             Glyph = Glyph,

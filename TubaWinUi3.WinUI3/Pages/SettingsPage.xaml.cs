@@ -212,6 +212,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitNavLayoutComboBox();
         InitDefaultPageComboBox();
         InitShowFrequentToggle();
+        InitActiveInterceptToggle();
         InitLanguageComboBox();
         InitThemeSelector();
         InitFastModeToggle();
@@ -235,6 +236,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitActiveInterceptNotifyModeComboBox();
         InitSearchIndexToggle();
         InitTelemetryToggle();
+        Loaded += (_, _) => AppSettings.SettingChanged += OnInterceptSettingChanged;
+        Unloaded += (_, _) => AppSettings.SettingChanged -= OnInterceptSettingChanged;
 
         if (RuntimeHelper.IsPackagedContext)
         {
@@ -1279,22 +1282,110 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         UpdateActiveInterceptStatus();
     }
 
-    private void ActiveInterceptToggle_Toggled(object sender, RoutedEventArgs e)
+    private void OnInterceptSettingChanged(string key)
+    {
+        if (key == "ActiveInterceptEnabled")
+            DispatcherQueue.TryEnqueue(InitActiveInterceptToggle);
+    }
+
+    private async void ActiveInterceptToggle_Toggled(object sender, RoutedEventArgs e)
     {
         if (_activeInterceptInitializing) return;
         var enabled = ActiveInterceptToggle.IsOn;
-        AppSettings.Set("ActiveInterceptEnabled", enabled);
+        ActiveInterceptToggle.IsEnabled = false;
+        try
+        {
+            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(enabled);
+            if (!result.Success)
+                ActiveInterceptStatusText.Text = result.Error ?? "操作失败";
+            _activeInterceptInitializing = true;
+            ActiveInterceptToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
+            _activeInterceptInitializing = false;
+            if (result.Success) UpdateActiveInterceptStatus();
+        }
+        catch (Exception ex)
+        {
+            InitActiveInterceptToggle();
+            ActiveInterceptStatusText.Text = ex.Message;
+        }
+        finally { ActiveInterceptToggle.IsEnabled = true; }
+    }
 
-        if (enabled)
+    private async void ManageToolVisibility_Click(object sender, RoutedEventArgs e)
+    {
+        var button = (Button)sender;
+        button.IsEnabled = false;
+        try
         {
-            ActiveInterceptService.SyncBackend();
+            var tools = await ToolCatalog.GetAllToolsAsync();
+            var disabled = ToolVisibilityService.Parse(AppSettings.Get(ToolVisibilityService.DisabledBuiltinsKey));
+            var excluded = ToolVisibilityService.Parse(AppSettings.Get(ToolVisibilityService.SearchExcludedKey));
+            var rows = new ListView { SelectionMode = ListViewSelectionMode.None, MaxHeight = 480 };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(rows, "ToolVisibilityList");
+            rows.Header = new TextBlock
+            {
+                Text = LocalizationService.L("Settings_ToolVisibility_Hint", "取消启用会隐藏内置工具并禁用启动入口；开始菜单选项仅在 Windows 搜索索引开启时生效。"),
+                TextWrapping = TextWrapping.Wrap
+            };
+            var choices = new List<(string Key, string? Id, CheckBox? Enabled, CheckBox Search)>();
+            void AddRow(string name, string key, string? id)
+            {
+                var row = new StackPanel { Spacing = 4 };
+                row.Children.Add(new TextBlock { Text = name, TextWrapping = TextWrapping.Wrap });
+                CheckBox? enabled = null;
+                if (id is not null)
+                {
+                    enabled = new CheckBox { Content = LocalizationService.L("Settings_ToolVisibility_Enabled", "启用内置工具"), IsChecked = !disabled.Contains(id) };
+                    row.Children.Add(enabled);
+                }
+                var search = new CheckBox { Content = LocalizationService.L("Settings_ToolVisibility_Search", "显示在开始菜单与 Windows 搜索"), IsChecked = !excluded.Contains(key) };
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(search, name + " " + search.Content);
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(search, "SearchVisibility_" + key);
+                if (enabled is not null)
+                {
+                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(enabled, name + " " + enabled.Content);
+                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(enabled, "BuiltinEnabled_" + id);
+                }
+                row.Children.Add(search);
+                rows.Items.Add(row);
+                choices.Add((key, id, enabled, search));
+            }
+            foreach (var builtin in BuiltinToolRegistry.AllTools.OrderBy(t => t.Name))
+                AddRow(builtin.Name, "builtin:" + builtin.Id, builtin.Id);
+            foreach (var tool in tools.Where(t => !t.IsBuiltinLink).DistinctBy(ToolVisibilityService.SearchKey).OrderBy(t => t.Name))
+                AddRow(tool.Name, ToolVisibilityService.SearchKey(tool), null);
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot, RequestedTheme = ThemeService.CurrentElementTheme,
+                Title = LocalizationService.L("Settings_ToolVisibility_Title", "管理内置工具与开始菜单展示"),
+                Content = rows,
+                PrimaryButtonText = LocalizationService.L("Settings_ToolVisibility_Save", "保存"),
+                CloseButtonText = LocalizationService.L("Settings_ToolVisibility_Cancel", "取消")
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            foreach (var choice in choices)
+            {
+                if (choice.Id is not null)
+                {
+                    if (choice.Enabled?.IsChecked == true) disabled.Remove(choice.Id); else disabled.Add(choice.Id);
+                }
+                if (choice.Search.IsChecked == true) excluded.Remove(choice.Key); else excluded.Add(choice.Key);
+            }
+            ToolVisibilityService.Save(disabled, excluded);
+            if (AppSettings.GetBool("WindowsSearchIndex", false)) await WindowsSearchIndexService.RefreshAsync();
         }
-        else
+        catch (Exception ex)
         {
-            // 同步而非裸停止：游戏后台监控仍开着时后端必须继续常驻
-            ActiveInterceptService.SyncBackend();
+            System.Diagnostics.Debug.WriteLine($"[ToolVisibility] {ex}");
+            var error = new ContentDialog
+            {
+                XamlRoot = XamlRoot, RequestedTheme = ThemeService.CurrentElementTheme,
+                Title = LocalizationService.L("Settings_ToolVisibility_Title", "管理内置工具与开始菜单展示"),
+                Content = ex.Message, CloseButtonText = LocalizationService.L("Settings_ToolVisibility_Cancel", "取消")
+            };
+            await error.ShowAsync();
         }
-        UpdateActiveInterceptStatus();
+        finally { button.IsEnabled = true; }
     }
 
     private void UpdateActiveInterceptStatus()

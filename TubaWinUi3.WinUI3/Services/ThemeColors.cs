@@ -12,8 +12,33 @@ namespace TubaWinUi3.Services;
 /// </summary>
 internal static class ThemeColors
 {
+    // C# 的 Application.Resources 索引不会按窗口 RequestedTheme 解析 ThemeResource。
+    // 用原生 XAML 解析器保留资源表达式，再令探针跟随窗口的实际主题。
+    // 每个语义画刷只创建一个探针，主题/高对比切换由框架重求值。
+    private static readonly Dictionary<string, Microsoft.UI.Xaml.Controls.Border> BrushProbes = new();
+
+    internal static Brush ResolveBrush(string key, Color fallback)
+    {
+        try
+        {
+            if (Application.Current is null) return new SolidColorBrush(fallback);
+            if (!BrushProbes.TryGetValue(key, out var probe))
+            {
+                probe = (Microsoft.UI.Xaml.Controls.Border)Microsoft.UI.Xaml.Markup.XamlReader.Load(
+                    $"<Border xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Background='{{ThemeResource {key}}}' />");
+                BrushProbes[key] = probe;
+            }
+            probe.RequestedTheme = App.MainWindow?.Content is FrameworkElement root
+                ? root.ActualTheme : ThemeService.CurrentElementTheme;
+            return probe.Background ?? new SolidColorBrush(fallback);
+        }
+        catch { return new SolidColorBrush(fallback); }
+    }
+
     private static Color GetColor(string key, Color fallback)
     {
+        if (key.EndsWith("Brush", StringComparison.Ordinal) && Application.Current is not null)
+            return ResolveBrush(key, fallback) is SolidColorBrush resolved ? resolved.Color : fallback;
         var value = ResolveForEffectiveTheme(key) ?? ResolveByAppTheme(key);
         if (value is Color color) return color;
         if (value is SolidColorBrush brush) return brush.Color;
@@ -83,7 +108,7 @@ internal static class ThemeColors
             catch { return null; }
         });
 
-    private static bool IsSystemHighContrast()
+    internal static bool IsSystemHighContrast()
     {
         try { return _accessibility.Value?.HighContrast == true; }
         catch { return false; }

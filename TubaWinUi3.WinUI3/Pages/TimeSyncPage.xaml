@@ -15,60 +15,20 @@
     <Page.Resources>
         <!-- 时间服务器卡片（预设 + 自定义入口） -->
         <DataTemplate x:Key="ServerCardTemplate" x:DataType="local:TimeSyncServerCard">
-            <Button
-                Click="ServerCard_Click"
-                Tag="{x:Bind Self}"
-                Padding="0"
-                Margin="0,0,8,0"
-                CornerRadius="8"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{x:Bind BorderBrush, Mode=OneWay}"
-                BorderThickness="{x:Bind BorderThickness, Mode=OneWay}"
-                ToolTipService.ToolTip="{x:Bind Tooltip}">
-                <StackPanel Width="200" Padding="12" Spacing="8">
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Style="{StaticResource SectionHeaderStyle}"
-                            Text="{x:Bind Name}"
-                            TextTrimming="CharacterEllipsis"
-                            VerticalAlignment="Center" />
-                        <FontIcon
-                            Grid.Column="1"
-                            FontSize="12"
-                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                            Glyph="&#xE73E;"
-                            Visibility="{x:Bind CheckVisibility, Mode=OneWay}" />
-                    </Grid>
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Height="32"
-                        MaxLines="2"
-                        Text="{x:Bind Summary}"
-                        TextTrimming="CharacterEllipsis"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        FontFamily="Consolas"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="{x:Bind HostText}"
-                        TextTrimming="CharacterEllipsis" />
-                    <Border
-                        Style="{StaticResource StatusPillStyle}"
-                        Background="{x:Bind StatusBackground, Mode=OneWay}"
-                        HorizontalAlignment="Left"
-                        Visibility="{x:Bind StatusVisibility, Mode=OneWay}">
-                        <TextBlock
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="{x:Bind StatusBrush, Mode=OneWay}"
-                            Text="{x:Bind StatusText, Mode=OneWay}" />
-                    </Border>
-                </StackPanel>
+            <Button Click="ServerCard_Click" Tag="{x:Bind Self}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                    Padding="16" Margin="0,0,0,8" CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{x:Bind BorderBrush, Mode=OneWay}"
+                    BorderThickness="{x:Bind BorderThickness, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Tooltip}" AutomationProperties.Name="{x:Bind Name}">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="24" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE73E;" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Visibility="{x:Bind CheckVisibility, Mode=OneWay}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="{x:Bind Summary}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <TextBlock Text="{x:Bind HostText}" FontFamily="Consolas" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{x:Bind StatusText, Mode=OneWay}" Foreground="{x:Bind StatusBrush, Mode=OneWay}" Visibility="{x:Bind StatusVisibility, Mode=OneWay}" VerticalAlignment="Center" />
+                </Grid>
             </Button>
         </DataTemplate>
 
@@ -109,7 +69,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="time-sync"
             Grid.Row="0"
             Title="时间同步"
             Subtitle="切换系统 NTP 时间服务器 · 服务器测速 · 立即校时 · 时间服务修复"
@@ -133,12 +93,17 @@
 
         <ScrollViewer
             Grid.Row="1"
-            Padding="24,8,24,24"
+            Padding="24,4,24,32"
             HorizontalScrollMode="Disabled"
             HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
+            VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
 
-            <StackPanel Spacing="16">
+            <StackPanel Spacing="24" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- ═════════ 当前状态 ═════════ -->
                 <Border
@@ -187,7 +152,7 @@
                                     FontWeight="SemiBold"
                                     IsTextSelectionEnabled="True"
                                     VerticalAlignment="Center" />
-                                <Button Click="CopySourceButton_Click" Padding="8,4" CornerRadius="8" VerticalAlignment="Center">
+                                <Button Click="CopySourceButton_Click" Padding="8,4" CornerRadius="4" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                         <TextBlock FontSize="12" Text="复制" l:Uids.Uid="TimeSync_CopyButton" />
@@ -218,7 +183,6 @@
                 <StackPanel Spacing="8">
                     <Grid>
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <Border Width="3" Height="16" CornerRadius="4" Background="{ThemeResource AccentFillColorDefaultBrush}" VerticalAlignment="Center" />
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="时间服务器" l:Uids.Uid="TimeSync_ServersSectionTitle" />
                         </StackPanel>
                         <TextBlock
@@ -231,19 +195,7 @@
                             l:Uids.Uid="TimeSync_PresetHint" />
                     </Grid>
 
-                    <ScrollViewer
-                        HorizontalScrollBarVisibility="Auto"
-                        HorizontalScrollMode="Auto"
-                        VerticalScrollBarVisibility="Disabled"
-                        VerticalScrollMode="Disabled">
-                        <ItemsControl x:Name="ServerList" ItemTemplate="{StaticResource ServerCardTemplate}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <ItemsControl x:Name="ServerList" ItemTemplate="{StaticResource ServerCardTemplate}" />
 
                     <!-- 自定义地址 -->
                     <Grid x:Name="CustomPanel" ColumnSpacing="8" Visibility="Collapsed">
@@ -258,7 +210,7 @@
                             PlaceholderText="自定义 NTP 地址，例如 ntp.aliyun.com 或 203.107.6.88（多个用空格/逗号分隔，不要带端口）"
                             l:Uids.Uid="TimeSync_CustomHostPlaceholder"
                             TextChanged="CustomHostBox_TextChanged" />
-                        <Button x:Name="CustomProbeButton" Grid.Column="1" Click="CustomProbeButton_Click" Padding="12,8" CornerRadius="8">
+                        <Button x:Name="CustomProbeButton" Grid.Column="1" Click="CustomProbeButton_Click" Padding="12,8" CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE9D9;" />
                                 <TextBlock FontSize="14" Text="测速" l:Uids.Uid="TimeSync_ProbeCustomButton" />
@@ -285,19 +237,19 @@
                             Click="ApplyButton_Click"
                             Style="{StaticResource AccentButtonStyle}"
                             Padding="16,8"
-                            CornerRadius="8">
+                            CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon x:Name="ApplyIcon" FontSize="14" Glyph="&#xE895;" />
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="应用并立即同步" l:Uids.Uid="TimeSync_ApplyButton" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ResyncButton" Grid.Column="1" Click="ResyncButton_Click" Padding="12,8" CornerRadius="8">
+                        <Button x:Name="ResyncButton" Grid.Column="1" Click="ResyncButton_Click" Padding="12,8" CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon x:Name="ResyncIcon" FontSize="12" Glyph="&#xE72C;" />
                                 <TextBlock FontSize="14" Text="立即校时" l:Uids.Uid="TimeSync_ResyncButton" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="RestoreButton" Grid.Column="2" Click="RestoreButton_Click" Padding="12,8" CornerRadius="8">
+                        <Button x:Name="RestoreButton" Grid.Column="2" Click="RestoreButton_Click" Padding="12,8" CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE777;" />
                                 <TextBlock FontSize="14" Text="恢复系统默认" l:Uids.Uid="TimeSync_RestoreButton" />
@@ -330,7 +282,7 @@
                                 <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="体检结果" l:Uids.Uid="TimeSync_HealthSectionTitle" />
                                 <TextBlock x:Name="IssueSummaryText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
-                            <Button x:Name="RepairButton" Grid.Column="1" Click="RepairButton_Click" Padding="12,8" CornerRadius="8" Visibility="Collapsed">
+                            <Button x:Name="RepairButton" Grid.Column="1" Click="RepairButton_Click" Padding="12,8" CornerRadius="4" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon x:Name="RepairIcon" FontSize="12" Glyph="&#xE90F;" />
                                     <TextBlock FontSize="14" Text="一键修复" l:Uids.Uid="TimeSync_RepairButton" />
@@ -364,7 +316,7 @@
                                     l:Uids.Uid="TimeSync_IntervalDesc" />
                                 <ComboBox x:Name="IntervalCombo" MinWidth="220" Margin="0,4,0,0" SelectionChanged="IntervalCombo_SelectionChanged" />
                             </StackPanel>
-                            <Button x:Name="ApplyIntervalButton" Grid.Column="1" Click="ApplyIntervalButton_Click" Padding="12,8" CornerRadius="8" VerticalAlignment="Bottom" Content="应用频率" l:Uids.Uid="TimeSync_ApplyIntervalButton" />
+                            <Button x:Name="ApplyIntervalButton" Grid.Column="1" Click="ApplyIntervalButton_Click" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Content="应用频率" l:Uids.Uid="TimeSync_ApplyIntervalButton" />
                         </Grid>
 
                         <Grid ColumnSpacing="12">
@@ -392,25 +344,25 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="ResetServiceButton" Click="ResetServiceButton_Click" Padding="12,8" CornerRadius="8">
+                            <Button x:Name="ResetServiceButton" Click="ResetServiceButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE777;" />
                                     <TextBlock FontSize="14" Text="重置时间服务" l:Uids.Uid="TimeSync_ResetServiceButton" />
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="1" Click="CopyReportButton_Click" Padding="12,8" CornerRadius="8">
+                            <Button Grid.Column="1" Click="CopyReportButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock FontSize="14" Text="复制诊断报告" l:Uids.Uid="TimeSync_CopyReportButton" />
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="2" Click="OpenTimeSettingsButton_Click" Padding="12,8" CornerRadius="8">
+                            <Button Grid.Column="2" Click="OpenTimeSettingsButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE713;" />
                                     <TextBlock FontSize="14" Text="系统时间设置" l:Uids.Uid="TimeSync_OpenTimeSettings" />
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="ElevateButton" Grid.Column="3" Click="ElevateButton_Click" Padding="12,8" CornerRadius="8" Visibility="Collapsed">
+                            <Button x:Name="ElevateButton" Grid.Column="3" Click="ElevateButton_Click" Padding="12,8" CornerRadius="4" Visibility="Collapsed">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="12" Glyph="&#xE7EF;" />
                                     <TextBlock FontSize="14" Text="以管理员身份重启" l:Uids.Uid="TimeSync_ElevateButton" />

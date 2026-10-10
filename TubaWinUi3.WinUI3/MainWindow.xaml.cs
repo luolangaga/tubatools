@@ -180,15 +180,21 @@ public sealed partial class MainWindow : Window
         }
 
         SplashVersionText.Text = UpdateService.CurrentVersion.ToString();
+        // 命令行可能在 Loaded 前直接执行内置工具，下载队列须先具备 UI dispatcher。
+        DownloadQueueService.Initialize(DispatcherQueue);
+        DownloadQueueService.QueueChanged += OnDownloadQueueChanged;
+        ToolUpdateService.Initialize(DispatcherQueue);
+        UpdateDownloadBadge();
+        AppSettings.SettingChanged += OnBackgroundSettingChanged;
         NavView.Loaded += NavView_Loaded;
         LocalizationService.LanguageChanged += OnLanguageChanged;
-        _ = InitializeAfterSplashAsync();
     }
 
     private void NavView_Loaded(object sender, RoutedEventArgs e)
     {
         NavView.Loaded -= NavView_Loaded;
         ApplyLocalizedShellText();
+        _ = InitializeAfterSplashAsync();
     }
 
     private void OnLanguageChanged()
@@ -222,47 +228,28 @@ public sealed partial class MainWindow : Window
     {
         _initialized = true;
 
-        NavigateToDefaultPage();
-
         // 仅应用本地自定义背景（品牌壁纸彩蛋已移除：不再自动检测主板品牌、下载或加载壁纸）
         ApplyBackground();
 
-        _ = Task.Run(async () =>
+        // 分类菜单只依赖目录名/元数据，不必等待所有可执行文件扫描。
+        // Loaded 后初始化也让 App 先设置 UI dispatcher、处理命令行导航，
+        // 避免 --open-builtin 等启动先创建并扫描一个马上被替换的首页。
+        try
         {
-            try
-            {
-                _ = ToolCatalog.ToolsRoot;
-                var categories = ToolCatalog.GetCategories().ToList();
+            var categories = await Task.Run(() => ToolCatalog.GetCategories().ToList());
+            if (App.IsExiting) return;
+            PopulateCategories(categories);
+            ApplyNavLayoutMode();
+            NavLayoutModeService.NavLayoutModeChanged += OnNavLayoutModeChanged;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Startup] 分类加载失败: {ex.Message}");
+        }
 
-                if (!ToolCatalog.IsCacheReady)
-                {
-                    await ToolCatalog.GetAllToolsAsync();
-                }
-
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    PopulateCategories(categories);
-                    ApplyNavLayoutMode();
-
-                    // 仅在「默认页 = 动态分类」时补一次导航：首次导航时分类菜单
-                    // 尚未填充无法选中，需要填充后重新定位；默认页为静态项（如"全部
-                    // 工具"）时首次导航已生效，跳过以免 HomePage 重复实例化
-                    var defaultPage = AppSettings.Get("DefaultPage") ?? "all";
-                    if (categories.Any(c => c.Equals(defaultPage, StringComparison.OrdinalIgnoreCase)))
-                        NavigateToDefaultPage();
-
-                    NavLayoutModeService.NavLayoutModeChanged += OnNavLayoutModeChanged;
-                });
-            }
-            catch { }
-        });
-
-        DownloadQueueService.Initialize(DispatcherQueue);
-        DownloadQueueService.QueueChanged += OnDownloadQueueChanged;
-        ToolUpdateService.Initialize(DispatcherQueue);
-        UpdateDownloadBadge();
-
-        AppSettings.SettingChanged += OnBackgroundSettingChanged;
+        // 命令行激活或用户已导航时不覆盖当前页面。
+        if (NavFrame.Content is null)
+            NavigateToDefaultPage();
 
         await FadeOutSplashAsync();
     }

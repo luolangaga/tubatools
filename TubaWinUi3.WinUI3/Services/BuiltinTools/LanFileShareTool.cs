@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Controls;
@@ -62,6 +62,7 @@ public sealed partial class LanFileSharePage : Page
     {
         var header = new ToolPageHeader
         {
+            ToolId = "lan-file-share",
             Title = "局域网文件分享",
             Subtitle = "在局域网内创建HTTP文件分享服务，其他设备可通过浏览器访问和下载文件",
             Glyph = "\uE8F1"

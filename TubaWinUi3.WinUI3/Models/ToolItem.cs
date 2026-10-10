@@ -23,6 +23,8 @@ public sealed class ToolItem : INotifyPropertyChanged
         init => _categories = value;
     }
 
+    public string? LibraryId { get; init; }
+
     public bool IsLinked { get; init; }
 
     public bool IsBuiltinLink { get; init; }

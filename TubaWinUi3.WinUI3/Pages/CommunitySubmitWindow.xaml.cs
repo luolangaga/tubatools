@@ -115,33 +115,59 @@ public sealed partial class CommunitySubmitWindow : Window
         UrlPanel.Visibility = isZip ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private void PickPackageButton_Click(object sender, RoutedEventArgs e)
+    private async void PickPackageButton_Click(object sender, RoutedEventArgs e)
     {
         var picked = Win32Dialogs.PickOpen("压缩包\0*.zip\0所有文件\0*.*\0\0", "选择工具压缩包");
         if (string.IsNullOrWhiteSpace(picked)) return;
 
-        var fi = new FileInfo(picked);
-        if (fi.Length > CommunityToolService.MaxUploadSizeBytes)
+        PickPackageButton.IsEnabled = false;
+        _packagePath = null;
+        SetExecutables([]);
+        PackageInfoText.Text = "";
+        try
         {
-            ShowFormError($"压缩包大小不能超过 {CommunityToolService.MaxUploadSizeBytes / 1024 / 1024} MB（当前 {FormatSize(fi.Length)}）");
-            return;
-        }
+            var fi = new FileInfo(picked);
+            if (fi.Length > CommunityToolService.MaxUploadSizeBytes)
+            {
+                ShowFormError($"压缩包大小不能超过 {CommunityToolService.MaxUploadSizeBytes / 1024 / 1024} MB（当前 {FormatSize(fi.Length)}）");
+                return;
+            }
 
-        var exes = CustomToolPackageService.GetExecutables(picked);
-        if (exes.Count == 0)
+            var inspection = await Task.Run(() =>
+            {
+                var success = CustomToolPackageService.TryGetExecutables(picked, out var files, out var error);
+                return (success, files, error);
+            });
+            if (!inspection.success)
+            {
+                ShowFormError(inspection.error!);
+                return;
+            }
+            var exes = inspection.files;
+            if (exes.Count == 0)
+            {
+                ShowFormError("压缩包里需要至少包含一个 .exe 文件。");
+                return;
+            }
+
+            _packagePath = picked;
+            SetExecutables(exes);
+            PackageInfoText.Text = $"{Path.GetFileName(picked)}  ·  {FormatSize(fi.Length)}  ·  {exes.Count} 个可执行文件";
+
+            if (string.IsNullOrWhiteSpace(NameBox.Text))
+                NameBox.Text = Path.GetFileNameWithoutExtension(exes[0].FileName);
+
+            ClearFormError();
+        }
+        catch (InvalidDataException)
         {
-            ShowFormError("压缩包里需要至少包含一个 .exe 文件。");
-            return;
+            ShowFormError("无法读取 ZIP 压缩包：文件可能损坏、下载不完整，或并非 ZIP 格式。请重新下载或重新打包后选择。");
         }
-
-        _packagePath = picked;
-        SetExecutables(exes);
-        PackageInfoText.Text = $"{Path.GetFileName(picked)}  ·  {FormatSize(fi.Length)}  ·  {exes.Count} 个可执行文件";
-
-        if (string.IsNullOrWhiteSpace(NameBox.Text))
-            NameBox.Text = Path.GetFileNameWithoutExtension(exes[0].FileName);
-
-        ClearFormError();
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            ShowFormError($"无法读取压缩包，请确认文件仍存在且有读取权限：{ex.Message}");
+        }
+        finally { PickPackageButton.IsEnabled = true; }
     }
 
     private async void VerifyButton_Click(object sender, RoutedEventArgs e)

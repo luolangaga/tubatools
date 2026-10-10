@@ -9,6 +9,21 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class NetworkAdapterProxyPage : Page
 {
+    private void AdapterPanels_SizeChanged(object sender, SizeChangedEventArgs e)
+        => LayoutAdapterPanel((Grid)sender);
+
+    private static void LayoutAdapterPanel(Grid grid)
+    {
+        var wide = grid.ActualWidth >= 640;
+        grid.ColumnDefinitions[1].Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        for (var i = 0; i < grid.Children.Count; i++)
+        {
+            if (grid.Children[i] is not FrameworkElement child) continue;
+            Grid.SetColumn(child, wide ? i : 0);
+            Grid.SetRow(child, wide ? 0 : i);
+        }
+    }
+
     private sealed class AdapterCardRefs
     {
         public TextBlock? IpText;
@@ -281,6 +296,7 @@ public sealed partial class NetworkAdapterProxyPage : Page
             _cardRefs[_adapters[i].Index] = refs;
             grid.Children.Add(card);
             Grid.SetColumn(card, i);
+            LayoutAdapterPanel(grid);
         }
     }
 
@@ -388,7 +404,7 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
         var leftBar = new Border
         {
-            Width = 3, CornerRadius = new CornerRadius(4),
+            Visibility = Visibility.Collapsed, Width = 3, CornerRadius = new CornerRadius(4),
             Background = new SolidColorBrush(isUp ? accent : ThemeColors.Neutral)
         };
 
@@ -409,7 +425,7 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
         var card = new Border
         {
-            Padding = new Thickness(12, 10, 12, 10), CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16), CornerRadius = new CornerRadius(8),
             Background = new SolidColorBrush(ThemeColors.CardBg),
             BorderThickness = new Thickness(1),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
@@ -467,6 +483,7 @@ public sealed partial class NetworkAdapterProxyPage : Page
 
             grid.Children.Add(panel);
             Grid.SetColumn(panel, i);
+            LayoutAdapterPanel(grid);
         }
     }
 

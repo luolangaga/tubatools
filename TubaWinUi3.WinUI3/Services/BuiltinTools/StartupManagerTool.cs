@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -100,6 +100,7 @@ public sealed class StartupManagerTool : IBuiltinTool
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
+            ToolId = Id,
             Title = "启动项管理",
             Description = "扫描开机自启动项目（登记于注册表、启动文件夹、计划任务等），隐藏微软条目，快速定位异常启动项（基于 Sysinternals Autoruns）",
             Glyph = Glyph,

@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="official-websites"
             Grid.Row="0"
             Title="常用官网"
             Subtitle="常用软件官方网站直达"

@@ -57,13 +57,9 @@ namespace TubaWinUi3.Compatible.Services
 
         public static IReadOnlyList<string> GetCategories()
         {
-            if (!Directory.Exists(ToolsRoot))
-                return new List<string>();
-
-            var dirs = Directory.GetDirectories(ToolsRoot)
-                .Select(Path.GetFileName)
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .ToList();
+            var dirs = (Directory.Exists(ToolsRoot) ? Directory.GetDirectories(ToolsRoot).Select(Path.GetFileName) : Enumerable.Empty<string>())
+                .Concat(ToolMetadataService.GetUserCategories())
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
             var orderJson = AppSettings.Get("CategoryOrder");
             List<string> ordered = null;
@@ -93,12 +89,14 @@ namespace TubaWinUi3.Compatible.Services
 
         public static IReadOnlyList<ToolItem> GetTools(string category)
         {
-            if (string.IsNullOrWhiteSpace(category) || !Directory.Exists(ToolsRoot))
+            if (string.IsNullOrWhiteSpace(category))
                 return new List<ToolItem>();
 
             var categoryRoot = Path.Combine(ToolsRoot, category);
 
             var items = new List<ToolItem>();
+            var userDirectories = ToolMetadataService.GetUserDirectories(category);
+
 
             // tools.json 副本声明：物理扫描需避让同名目录（构建残留的空壳目录
             // 否则会经 HasDownloadUrl 生成无图标占位条目，与下方合成条目重复）。
@@ -118,11 +116,12 @@ namespace TubaWinUi3.Compatible.Services
             // 物理目录扫描（分类目录可能不存在：纯 tools.json 副本的分类也要能出列表）
             if (Directory.Exists(categoryRoot))
             {
-                var toolDirs = Directory.GetDirectories(categoryRoot).ToList();
+                var toolDirs = Directory.GetDirectories(categoryRoot).Where(d => !userDirectories.Contains(d, StringComparer.OrdinalIgnoreCase)).ToList();
                 var merged = MergeArchDirectories(toolDirs);
 
                 foreach (var toolDir in merged)
                 {
+                    if (userDirectories.Contains(toolDir, StringComparer.OrdinalIgnoreCase) || ToolMetadataService.IsHiddenDirectory(toolDir)) continue;
                     var dirKey = Path.GetFileName(toolDir).Replace(" ", "").Replace("-", "").Replace("_", "");
                     if (declaredDirKeys.Contains(dirKey))
                         continue; // 已由 tools.json 副本/内置挂载声明，物理占位跳过避免重复
@@ -131,6 +130,13 @@ namespace TubaWinUi3.Compatible.Services
                     if (launchable != null || ToolMetadataService.HasDownloadUrl(category, toolDir))
                         items.AddRange(CreateToolItems(category, categoryRoot, launchable ?? CreatePlaceholderPath(toolDir), toolDir));
                 }
+            }
+
+            foreach (var directory in userDirectories)
+            {
+                if (!Directory.Exists(directory)) continue;
+                var launchable = FindPrimaryLaunchable(directory);
+                if (launchable != null) items.AddRange(CreateToolItems(category, Path.GetDirectoryName(directory), launchable, directory));
             }
 
             // tools.json 多分类副本：由 category+categories 字段声明（旧 link.json 链路已删除）。
@@ -175,7 +181,8 @@ namespace TubaWinUi3.Compatible.Services
             }
 
             return items
-                .OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
+                .OrderBy(item => item.SortOrder ?? int.MaxValue)
+                .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
                 .ThenBy(item => item.RelativePath, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
         }
@@ -238,6 +245,8 @@ namespace TubaWinUi3.Compatible.Services
             return new ToolItem
             {
                 Name = baseName + " " + variant.Arch,
+                LibraryId = baseItem.LibraryId,
+                SortOrder = baseItem.SortOrder,
                 Category = baseItem.Category,
                 PrimaryCategory = baseItem.PrimaryCategory,
                 Categories = baseItem.Categories,
@@ -358,10 +367,11 @@ namespace TubaWinUi3.Compatible.Services
             foreach (var item in allItems)
             {
                 HashSet<string> set;
-                if (!nameToCategories.TryGetValue(item.Name, out set))
+                var identity = item.LibraryId ?? item.Name;
+                if (!nameToCategories.TryGetValue(identity, out set))
                 {
                     set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    nameToCategories[item.Name] = set;
+                    nameToCategories[identity] = set;
                 }
                 set.Add(item.Category);
                 if (!string.IsNullOrEmpty(item.PrimaryCategory))
@@ -374,10 +384,11 @@ namespace TubaWinUi3.Compatible.Services
             var deduped = new List<ToolItem>();
             foreach (var item in allItems)
             {
-                var key = (item.PrimaryCategory ?? item.Category) + "|" + item.Name;
+                var key = item.LibraryId is null ? (item.PrimaryCategory ?? item.Category) + "|" + item.Name
+                    : item.LibraryId + "|" + item.PrimaryArch;
                 if (seen.Add(key))
                 {
-                    if (nameToCategories.TryGetValue(item.Name, out var cats) && cats.Count > 1)
+                    if (nameToCategories.TryGetValue(item.LibraryId ?? item.Name, out var cats) && cats.Count > 1)
                         item.SetCategories(cats.ToList());
                     deduped.Add(item);
                 }
@@ -388,16 +399,12 @@ namespace TubaWinUi3.Compatible.Services
         /// <summary>全部工具（跨分类去重、合并多分类）。</summary>
         public static IReadOnlyList<ToolItem> GetAllToolsDeduped()
         {
-            if (!Directory.Exists(ToolsRoot))
-                return new List<ToolItem>();
 
             return DeduplicateAllTools(GetCategories().SelectMany(GetTools).ToList());
         }
 
         public static IReadOnlyList<ToolItem> GetAllToolsLazy(int skip, int take)
         {
-            if (!Directory.Exists(ToolsRoot))
-                return new List<ToolItem>();
 
             return GetCategories()
                 .SelectMany(GetTools)
@@ -408,7 +415,6 @@ namespace TubaWinUi3.Compatible.Services
 
         public static int GetAllToolsCount()
         {
-            if (!Directory.Exists(ToolsRoot)) return 0;
             return GetCategories().Sum(c => GetTools(c).Count);
         }
 
@@ -418,11 +424,6 @@ namespace TubaWinUi3.Compatible.Services
         private static IReadOnlyList<ToolItem> GetAllToolsCached()
         {
             if (_cachedAllTools != null) return _cachedAllTools;
-            if (!Directory.Exists(ToolsRoot))
-            {
-                _cachedAllTools = new List<ToolItem>();
-                return _cachedAllTools;
-            }
             _cachedAllTools = DeduplicateAllTools(GetCategories().SelectMany(GetTools).ToList());
             return _cachedAllTools;
         }
@@ -450,8 +451,6 @@ namespace TubaWinUi3.Compatible.Services
 
         public static IReadOnlyList<ToolItem> Search(string query, string tag = null)
         {
-            if (!Directory.Exists(ToolsRoot))
-                return new List<ToolItem>();
 
             var normalizedQuery = (query ?? "").Trim();
             if (normalizedQuery.Length == 0 && string.IsNullOrEmpty(tag))
@@ -490,8 +489,8 @@ namespace TubaWinUi3.Compatible.Services
 
             var alternates = FindAllArchVariants(toolDir, path);
 
-            var categoryRootDir = Path.Combine(ToolsRoot, category);
-            if (Directory.Exists(categoryRootDir))
+            var categoryRootDir = categoryRoot;
+            if (!ToolMetadataService.IsUserDirectory(toolDir) && Directory.Exists(categoryRootDir))
             {
                 var dirName = Path.GetFileName(toolDir);
                 var strippedDir = StripArchSuffix(dirName);
@@ -559,13 +558,15 @@ namespace TubaWinUi3.Compatible.Services
             var hasArchVariants = alternates.Count > 0 || primaryArch != null;
             var name = hasArchVariants ? toolDirName : rawName;
 
-            var cleanName = CleanupName(StripArchSuffix(name));
+            var cleanName = metadata.Name ?? CleanupName(StripArchSuffix(name));
             if (string.IsNullOrWhiteSpace(cleanName) || cleanName.Length < 3)
                 cleanName = CleanupName(toolDirName);
 
             var item = new ToolItem
             {
                 Name = cleanName,
+                LibraryId = metadata.LibraryId,
+                SortOrder = metadata.Order,
                 Category = category,
                 Path = path,
                 RelativePath = relativePath,

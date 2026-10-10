@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
@@ -346,6 +346,7 @@ public sealed partial class PcTutorialPage : Page
     {
         _contentHeader = new ToolPageHeader
         {
+            ToolId = "pc-tutorial",
             HeaderPadding = new Thickness(0, 16, 0, 0),
             Glyph = "\uE8D7"
         };

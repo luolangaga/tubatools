@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -164,6 +164,7 @@ public sealed partial class DotnetCompletionPage : Page
     {
         var header = new ToolPageHeader
         {
+            ToolId = "dotnet-completion",
             Title = ".NET 环境补全",
             Subtitle = "检测已安装的 .NET Runtime/SDK/Framework，从官网获取最新版本，一键补全缺失组件",
             Glyph = "\uE950"

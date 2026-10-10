@@ -4,7 +4,8 @@ public static class BuiltinToolRegistry
 {
     private static readonly List<IBuiltinTool> _tools = [];
 
-    public static IReadOnlyList<IBuiltinTool> Tools => _tools;
+    public static IReadOnlyList<IBuiltinTool> AllTools => _tools;
+    public static IReadOnlyList<IBuiltinTool> Tools => _tools.Where(t => ToolVisibilityService.IsBuiltinEnabled(t.Id)).ToList();
 
     public static void Register(IBuiltinTool tool)
     {
@@ -76,7 +77,7 @@ public static class BuiltinToolRegistry
 
     public static IReadOnlyList<string> GetCategories()
     {
-        return _tools
+        return Tools
             .Select(t => t.Category)
             .Distinct()
             .OrderBy(c => c, StringComparer.CurrentCultureIgnoreCase)
@@ -85,7 +86,7 @@ public static class BuiltinToolRegistry
 
     public static IReadOnlyList<IBuiltinTool> GetByCategory(string category)
     {
-        return _tools
+        return Tools
             .Where(t => t.Category == category)
             .OrderBy(t => t.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
@@ -93,6 +94,6 @@ public static class BuiltinToolRegistry
 
     public static IBuiltinTool? GetById(string id)
     {
-        return _tools.FirstOrDefault(t => t.Id == id);
+        return Tools.FirstOrDefault(t => t.Id == id);
     }
 }

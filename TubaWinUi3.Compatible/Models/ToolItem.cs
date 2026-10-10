@@ -9,6 +9,8 @@ namespace TubaWinUi3.Compatible.Models
 {
     public sealed class ToolItem : INotifyPropertyChanged
     {
+        public string LibraryId { get; set; }
+        public int? SortOrder { get; set; }
         public string Name { get; set; }
         public string Category { get; set; }
         public string Path { get; set; }

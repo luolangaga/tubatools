@@ -41,6 +41,11 @@ public static class CommunityToolRegistry
 
     private static string GetFilePath() => Path.Combine(GetDirectory(), "installed.json");
 
+    internal static IReadOnlyList<CommunityInstallRecord> GetInstalledRecords()
+    {
+        lock (_lock) return LoadAllLocked().ToList();
+    }
+
     public static CommunityInstallRecord? TryGet(string toolId)
     {
         if (string.IsNullOrWhiteSpace(toolId)) return null;
@@ -77,21 +82,17 @@ public static class CommunityToolRegistry
     /// <summary>清理工具目录已不存在的记录（工具被外部删除后不留脏数据），返回清理数量。</summary>
     public static int PruneStale()
     {
+        // 目录解析会读取元数据；不要持有登记锁再进入元数据锁（加载元数据反向读取登记）。
+        var snapshot = GetInstalledRecords();
+        var stale = snapshot.Where(r =>
+        {
+            try { return !Directory.Exists(CommunityToolInstallService.GetToolDirectory(r.ToolId, r.Category)); }
+            catch { return false; }
+        }).ToList();
         lock (_lock)
         {
             var list = LoadAllLocked();
-            var removed = list.RemoveAll(r =>
-            {
-                try
-                {
-                    var dir = Path.Combine(ToolCatalog.ToolsRoot, r.Category, r.ToolId);
-                    return !Directory.Exists(dir);
-                }
-                catch
-                {
-                    return false;
-                }
-            });
+            var removed = list.RemoveAll(r => stale.Contains(r));
             if (removed > 0) SaveLocked(list);
             return removed;
         }

@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     NavigationCacheMode="Disabled">
 
     <Grid>
@@ -11,14 +12,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="sandboxie"
             Grid.Row="0"
             Title="沙盒分析"
             Subtitle="开源沙盒工具（Sandboxie-Plus），可安全运行可疑程序与恶意样本，所有修改都隔离在沙盒中"
             Glyph="&#xEA18;" />
 
-        <ScrollViewer Grid.Row="1" Padding="24,8,24,24">
-        <StackPanel Spacing="16" MaxWidth="920" HorizontalAlignment="Stretch">
+        <ScrollViewer Grid.Row="1" Padding="24,4,24,32" HorizontalContentAlignment="Stretch">
+        <StackPanel Spacing="24" MaxWidth="920" HorizontalAlignment="Stretch">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
             <!-- 顶部说明 -->
             <InfoBar IsOpen="True" IsClosable="True" Severity="Warning"
@@ -64,23 +70,10 @@
                     <TextBlock x:Name="DownloadHint" FontSize="12" TextWrapping="Wrap" Opacity="0"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
 
-                    <!-- 文件夹背景右键菜单开关 -->
-                    <Rectangle Height="1" Margin="0,6,0,2"
-                               Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE8B7;" FontSize="16"
-                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                        <StackPanel Spacing="2" VerticalAlignment="Center">
-                            <TextBlock Text="文件夹背景右键菜单「在沙箱中运行」" FontSize="14"
-                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                            <TextBlock Text="开启后，在文件夹空白处右键会多出「在沙箱中运行」选项，可快速用沙盒打开该文件夹（默认沙盒）"
-                                       FontSize="12" TextWrapping="Wrap"
-                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                        </StackPanel>
-                        <ToggleSwitch x:Name="ShellMenuToggle" OnContent="" OffContent=""
-                                      Margin="12,0,0,0" MinWidth="0" VerticalAlignment="Center"
-                                      Toggled="ShellMenuToggle_Toggled"/>
-                    </StackPanel>
+                    <toolkit:SettingsCard Header="文件夹右键菜单" Description="在文件夹空白处右键，快速在默认沙盒中打开这个文件夹。">
+                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE8B7;" /></toolkit:SettingsCard.HeaderIcon>
+                        <ToggleSwitch x:Name="ShellMenuToggle" OnContent="" OffContent="" AutomationProperties.Name="文件夹右键菜单中显示在沙箱中运行" Toggled="ShellMenuToggle_Toggled" />
+                    </toolkit:SettingsCard>
                 </StackPanel>
             </Border>
 

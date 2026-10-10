@@ -1,4 +1,4 @@
-#define MyAppName "图吧工具箱CE"
+﻿#define MyAppName "图吧工具箱CE"
 #define MyAppVersion "1.0.2"
 #define MyAppPublisher "罗澜嘎嘎"
 #define MyAppExeName "TubaWinUi3.exe"
@@ -83,9 +83,10 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}"
+Type: dirifempty; Name: "{app}"
 
 [Code]
+#include "installer-user-tools.iss"
 function IsX64: Boolean;
 begin
   Result := Is64BitInstallMode and (ProcessorArchitecture = paX64);
@@ -148,7 +149,7 @@ begin
     Exit;
   end;
 
-  Result := '';
+  Result := TubaBackupLegacyToolMetadata;
 end;
 
 // === 卸载：询问是否删除用户数据（默认保留；静默卸载自动取默认"否"） ===
@@ -171,13 +172,14 @@ begin
   UninstallDeleteData := False;
   UninstallCustomDataDir := '';
 
-  if DirExists(ExpandConstant('{localappdata}\TubaWinUi3')) or
+  if DirExists(ExpandConstant('{app}\Data')) or
+     DirExists(ExpandConstant('{localappdata}\TubaWinUi3')) or
      FileExists(ExpandConstant('{app}\Data\.config_location')) then
   begin
     if SuppressibleMsgBox('是否同时删除本软件的用户数据？' + #13#10 + #13#10 +
               '删除内容包括：' + #13#10 +
               '· 设置与配置' + #13#10 +
-              '· 收藏与自定义工具信息' + #13#10 +
+              '· 收藏、自定义与社区工具（含文件）' + #13#10 +
               '· AI 助手聊天记录与记忆' + #13#10 +
               '· 图标缓存、WebView2 缓存等' + #13#10 + #13#10 +
               '默认数据位于 ' + ExpandConstant('{localappdata}\TubaWinUi3') + '；' + #13#10 +
@@ -188,7 +190,7 @@ begin
     begin
       UninstallDeleteData := True;
 
-      // 数据位置标记：AppRoot=安装目录内（随程序删除）；Custom:=外部自定义目录
+      // 数据位置标记：AppRoot=安装目录内（仅同意删除用户数据时清理）；Custom:=外部自定义目录
       MarkerPath := ExpandConstant('{app}\Data\.config_location');
       if FileExists(MarkerPath) and LoadStringFromFile(MarkerPath, MarkerContent) then
       begin
@@ -214,6 +216,8 @@ begin
     if UninstallDeleteData then
     begin
       DelTree(ExpandConstant('{localappdata}\TubaWinUi3'), True, True, True);
+      DelTree(ExpandConstant('{app}\Data'), True, True, True);
+      DelTree(ExpandConstant('{app}\Tools'), True, True, True);
       if (UninstallCustomDataDir <> '') and
          (LowerCase(UninstallCustomDataDir) <>
           LowerCase(ExpandConstant('{localappdata}\TubaWinUi3'))) then

@@ -3,7 +3,7 @@ using TubaWinUi3.Models;
 namespace TubaWinUi3.Services;
 
 /// <summary>
-/// 社区工具的本地安装管线：队列安装（下载 → 原子安装 → 写 tools.json/安装记录）、
+/// 社区工具的本地安装管线：队列安装（下载 → 原子安装 → 写用户工具库/安装记录）、
 /// 状态与更新检测、卸载、启动。页面只与这里打交道，不再自己拼下载/解压逻辑。
 /// </summary>
 public static class CommunityToolInstallService
@@ -23,7 +23,19 @@ public static class CommunityToolInstallService
     }
 
     public static string GetToolDirectory(CommunityTool tool) =>
-        Path.Combine(ToolCatalog.ToolsRoot, tool.Category, tool.Id);
+        GetToolDirectory(tool.Id, tool.Category);
+
+    internal static string GetToolDirectory(string id, string category)
+    {
+        var entry = ToolMetadataService.GetUserTools(category).FirstOrDefault(t =>
+            t.Id?.Equals("community:" + id, StringComparison.OrdinalIgnoreCase) == true ||
+            t.Match?.Equals(id, StringComparison.OrdinalIgnoreCase) == true &&
+            (t.Source == "legacy" || t.Source == "community"));
+        if (entry?.Directory is { } stored) return UserToolLibrary.ResolveDirectory(stored);
+        var legacy = Path.Combine(ToolCatalog.ToolsRoot, category, id);
+        if (CommunityToolRegistry.TryGet(id) is not null && Directory.Exists(legacy)) return legacy;
+        return Path.Combine(ToolCatalog.UserToolsRoot, "Community", category, id);
+    }
 
     public static bool IsInstalledOnDisk(CommunityTool tool)
     {
@@ -55,9 +67,7 @@ public static class CommunityToolInstallService
         if (existing is not null)
             return existing;
 
-        var toolsRoot = ToolCatalog.ToolsRoot
-            ?? throw new InvalidOperationException("无法找到工具目录");
-        var toolDir = Path.Combine(toolsRoot, tool.Category, tool.Id);
+        var toolDir = GetToolDirectory(tool);
 
         var sources = CommunityToolService.GetAllDownloadUrls(tool);
         if (sources.Count == 0)
@@ -134,13 +144,12 @@ public static class CommunityToolInstallService
     }
 
     /// <summary>
-    /// 卸载：删除工具目录（重试 + 清只读）、收藏、tools.json 条目与安装记录，并刷新分类。
+    /// 卸载：删除工具目录（重试 + 清只读）、收藏、用户工具登记与安装记录，并刷新分类。
     /// 目录被占用时抛 IOException（调用方展示原因）。
     /// </summary>
     public static async Task UninstallAsync(CommunityTool tool)
     {
-        var toolsRoot = ToolCatalog.ToolsRoot;
-        var toolDir = Path.Combine(toolsRoot, tool.Category, tool.Id);
+        var toolDir = GetToolDirectory(tool);
         var launchPath = ResolveLaunchPath(tool);
 
         if (Directory.Exists(toolDir))
@@ -166,7 +175,7 @@ public static class CommunityToolInstallService
         if (!string.IsNullOrWhiteSpace(launchPath))
             FavoritesService.RemoveFavorite(launchPath);
 
-        // RemoveMetadataAsync 按路径所在目录名匹配条目；目录已删除也安全（只取名字）
+        // 用户登记按精确目录匹配；目录已删除也可移除登记。
         await ToolMetadataService.RemoveMetadataAsync(Path.Combine(toolDir, tool.Id + ".exe"));
         CommunityToolRegistry.Remove(tool.Id);
 

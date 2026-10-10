@@ -132,51 +132,6 @@ public static class BenchmarkCloudService
 		SaveLocalCache(reports);
 	}
 
-	public static async Task<string> UploadReportAsync(PerformanceBenchmarkResult result, IProgress<string>? progress, CancellationToken ct, string? latencyImagePath = null)
-	{
-		if (!GitHubAuthService.IsLoggedIn)
-		{
-			throw new InvalidOperationException("请先登录 GitHub 账号");
-		}
-		string token = GitHubAuthService.GetToken() ?? throw new InvalidOperationException("GitHub Token 无效");
-		var user = (await GitHubAuthService.GetCurrentUserAsync(ct)) ?? throw new InvalidOperationException("无法获取 GitHub 用户信息");
-		var entry = ToReportEntry(result, user.Login);
-		string json = JsonSerializer.Serialize(entry, new JsonSerializerOptions
-		{
-			WriteIndented = false,
-			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-		});
-		progress?.Report("正在 Fork 仓库...");
-		string forkOwner = await EnsureForkAsync(token, ct);
-		progress?.Report("正在同步 Fork...");
-		await SyncForkWithUpstreamAsync(forkOwner, token, ct);
-		string branchName = "report/" + entry.Id;
-		progress?.Report("正在创建分支...");
-		string mainSha = (await GetRefShaAsync(forkOwner, "tubatoolsPlugin", "heads/main", token, ct))!;
-		if (mainSha == null)
-		{
-			throw new InvalidOperationException("无法获取 main 分支 SHA");
-		}
-		if (await CheckRefExistsAsync(forkOwner, "tubatoolsPlugin", "heads/" + branchName, token, ct))
-		{
-			branchName = $"report/{entry.Id}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-		}
-		await CreateRefAsync(forkOwner, "tubatoolsPlugin", "refs/heads/" + branchName, mainSha, token, ct);
-		progress?.Report("正在上传报告...");
-		string path = $"{ReportsPath}/{entry.Author}/{entry.Id}.json";
-		await CreateFileAsync(forkOwner, "tubatoolsPlugin", path, branchName, json, token, ct);
-		string? latencyImageName = null;
-		if (!string.IsNullOrEmpty(latencyImagePath) && File.Exists(latencyImagePath))
-		{
-			progress?.Report("正在上传核间延迟热力图...");
-			string safeCpu = SanitizeFileName(result.CpuName);
-			if (string.IsNullOrEmpty(safeCpu)) safeCpu = "Unknown-CPU";
-			string prefix = $"{safeCpu}-{entry.Author}";
-			latencyImageName = await UploadLatencyImageWithRetryAsync(forkOwner, branchName, prefix, latencyImagePath, token, ct);
-		}
-		progress?.Report("正在创建 PR...");
-		return await CreatePullRequestAsync(branchName, forkOwner, entry, token, ct, latencyImageName);
-	}
 
 	public sealed class LatencyImageInfo
 	{
@@ -186,13 +141,11 @@ public static class BenchmarkCloudService
 		public string Sha { get; init; } = "";
 	}
 
-	/// <summary>Uploads only a core-to-core latency heatmap image (no benchmark report), for the standalone latency test.</summary>
+	/// <summary>Uploads a standalone core-to-core latency heatmap image.</summary>
 	public static async Task<string> UploadLatencyImageOnlyAsync(string cpuName, string latencyImagePath, IProgress<string>? progress, CancellationToken ct)
 	{
 		if (!GitHubAuthService.IsLoggedIn)
-		{
 			throw new InvalidOperationException("请先登录 GitHub 账号");
-		}
 		string token = GitHubAuthService.GetToken() ?? throw new InvalidOperationException("GitHub Token 无效");
 		var user = (await GitHubAuthService.GetCurrentUserAsync(ct)) ?? throw new InvalidOperationException("无法获取 GitHub 用户信息");
 		progress?.Report("正在 Fork 仓库...");
@@ -203,18 +156,16 @@ public static class BenchmarkCloudService
 		progress?.Report("正在创建分支...");
 		string mainSha = (await GetRefShaAsync(forkOwner, "tubatoolsPlugin", "heads/main", token, ct))!;
 		if (mainSha == null)
-		{
 			throw new InvalidOperationException("无法获取 main 分支 SHA");
-		}
 		await CreateRefAsync(forkOwner, "tubatoolsPlugin", "refs/heads/" + branchName, mainSha, token, ct);
 		progress?.Report("正在上传核间延迟热力图...");
 		string safeCpu = SanitizeFileName(cpuName);
 		if (string.IsNullOrEmpty(safeCpu)) safeCpu = "Unknown-CPU";
-		string prefix = $"{safeCpu}-{user.Login}";
-		string imgName = await UploadLatencyImageWithRetryAsync(forkOwner, branchName, prefix, latencyImagePath, token, ct);
+		string imgName = await UploadLatencyImageWithRetryAsync(forkOwner, branchName, $"{safeCpu}-{user.Login}", latencyImagePath, token, ct);
 		progress?.Report("正在创建 PR...");
 		return await CreateLatencyPullRequestAsync(branchName, forkOwner, cpuName, user.Login, imgName, token, ct);
 	}
+
 
 	/// <summary>Lists all uploaded core-to-core latency heatmap images, following the current data source (GitHub / GitCode). Results are cached for 10 minutes.</summary>
 	public static async Task<List<LatencyImageInfo>> GetLatencyImagesAsync(CancellationToken ct, bool refresh = false)

@@ -8,7 +8,8 @@ namespace TubaWinUi3.Compatible.Services
     public enum ConfigLocation
     {
         AppData,
-        AppRoot
+        AppRoot,
+        Custom
     }
 
     public static class ConfigManager
@@ -22,7 +23,7 @@ namespace TubaWinUi3.Compatible.Services
 
         private static string AppRootDir
         {
-            get { return Path.Combine(ToolCatalog.AppDirectory, "Data"); }
+            get { return Path.Combine(Path.GetDirectoryName(ToolCatalog.ToolsRoot), "Data"); }
         }
 
         public static string GetDataDir()
@@ -30,7 +31,16 @@ namespace TubaWinUi3.Compatible.Services
             lock (_lock)
             {
                 if (_cachedDataDir != null) return _cachedDataDir;
-                _cachedDataDir = GetConfigLocation() == ConfigLocation.AppRoot ? AppRootDir : AppDataDir;
+                var location = GetConfigLocation();
+                _cachedDataDir = location == ConfigLocation.AppRoot ? AppRootDir : AppDataDir;
+                if (location == ConfigLocation.Custom)
+                {
+                    var stored = File.ReadAllText(Path.Combine(AppRootDir, ".config_location")).Trim().Substring(7);
+                    var expanded = stored.Replace("{AppDir}", Path.GetDirectoryName(ToolCatalog.ToolsRoot))
+                        .Replace("{ToolsRoot}", ToolCatalog.ToolsRoot).Replace("{AppDataDir}", AppDataDir);
+                    _cachedDataDir = Path.IsPathRooted(expanded) ? expanded
+                        : Path.Combine(Path.GetDirectoryName(ToolCatalog.ToolsRoot), expanded);
+                }
                 return _cachedDataDir;
             }
         }
@@ -40,7 +50,12 @@ namespace TubaWinUi3.Compatible.Services
             try
             {
                 var markerPath = Path.Combine(AppRootDir, ".config_location");
-                if (File.Exists(markerPath)) return ConfigLocation.AppRoot;
+                if (File.Exists(markerPath))
+                {
+                    var marker = File.ReadAllText(markerPath).Trim();
+                    if (marker.StartsWith("Custom:", StringComparison.OrdinalIgnoreCase)) return ConfigLocation.Custom;
+                    if (marker.Equals("AppRoot", StringComparison.OrdinalIgnoreCase)) return ConfigLocation.AppRoot;
+                }
             }
             catch { }
             return ConfigLocation.AppData;

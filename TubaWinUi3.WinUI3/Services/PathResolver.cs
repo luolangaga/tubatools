@@ -7,6 +7,7 @@ public static class PathResolver
         ("{AppDir}", () => ToolCatalog.AppDirectory),
         ("{ParentDir}", () => Path.GetDirectoryName(ToolCatalog.AppDirectory) ?? ToolCatalog.AppDirectory),
         ("{ToolsRoot}", () => ToolCatalog.ToolsRoot),
+        ("{UserToolsRoot}", () => ToolCatalog.UserToolsRoot),
         ("{DataDir}", () => ConfigManager.GetDataDir()),
         ("{AppDataDir}", () => Path.Combine(
             RuntimeHelper.GetLocalAppDataRoot(),
@@ -124,6 +125,7 @@ public static class PathResolver
         "{AppDir}" => "程序所在目录",
         "{ParentDir}" => "程序上一级目录",
         "{ToolsRoot}" => "工具目录 (Tools/)",
+        "{UserToolsRoot}" => "用户工具目录 (UserTools/)",
         "{DataDir}" => "当前配置数据目录",
         "{AppDataDir}" => "AppData 目录 (%LocalAppData%\\TubaWinUi3\\)",
         _ => placeholder
@@ -134,6 +136,7 @@ public static class PathResolver
         "{AppDir}" => "{AppDir}\\Data",
         "{ParentDir}" => "{ParentDir}\\TubaConfig",
         "{ToolsRoot}" => "{ToolsRoot}\\..\\Config",
+        "{UserToolsRoot}" => "{UserToolsRoot}\\其他工具",
         "{DataDir}" => "{DataDir}\\Backgrounds",
         "{AppDataDir}" => "{AppDataDir}\\settings.json",
         _ => placeholder

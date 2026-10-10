@@ -6,13 +6,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Loaded="OnLoaded">
+    Loaded="OnLoaded" SizeChanged="OnHeaderSizeChanged">
 
     <!-- 内置工具页统一页头：返回按钮（左上角）→ 图标瓦片 → 标题/副标题 → 右侧操作区 -->
     <Grid
         x:Name="RootGrid"
-        Padding="24,16,24,12"
-        ColumnSpacing="12"
+        Padding="24,24,24,20"
+        ColumnSpacing="16"
         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
         BorderThickness="0">
 
@@ -22,6 +22,10 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
         <!-- WinUI 3 官方独立返回按钮规范（TitleBarBackButtonStyle） -->
         <Button
@@ -32,23 +36,33 @@
             AutomationProperties.Name="返回"
             ToolTipService.ToolTip="返回" />
 
+        <Button x:Name="LogoButton" Grid.Column="1" Style="{StaticResource SubtleButtonStyle}"
+                Padding="0" Width="52" Height="52" VerticalAlignment="Center"
+                PointerEntered="OnLogoEntered" PointerExited="OnLogoExited" Click="OnLogoClick"
+                AutomationProperties.AutomationId="ToolHeaderLogo"
+                AutomationProperties.Name="播放工具图标动画" ToolTipService.ToolTip="点一下，让图标动起来">
         <Border
             x:Name="IconTile"
-            Grid.Column="1"
-            Width="40"
-            Height="40"
+            Width="48"
+            Height="48"
             CornerRadius="8"
             VerticalAlignment="Center"
-            Background="{ThemeResource AccentFillColorDefaultBrush}">
+            Background="{ThemeResource SubtleFillColorTransparentBrush}">
+            <Grid>
+            <Image x:Name="ColorIcon" Width="40" Height="40" Stretch="Uniform" Visibility="Collapsed"
+                   ImageFailed="OnColorIconFailed"
+                   AutomationProperties.AccessibilityView="Raw" />
             <FontIcon
                 x:Name="IconGlyph"
                 FontSize="20"
-                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+            </Grid>
         </Border>
+        </Button>
 
         <StackPanel
             Grid.Column="2"
-            Spacing="2"
+            Spacing="4"
             VerticalAlignment="Center">
             <TextBlock x:Name="TitleText" Style="{StaticResource ToolPageTitleTextStyle}" />
             <TextBlock x:Name="SubtitleText" Style="{StaticResource ToolPageSubtitleTextStyle}" />

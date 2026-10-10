@@ -130,6 +130,8 @@ public sealed partial class RogueCleanerPage : Page
         _store.Ensure();
         Logger.Initialize(_store);
         Loaded += OnLoaded;
+        Loaded += (_, _) => AppSettings.SettingChanged += OnInterceptSettingChanged;
+        Unloaded += (_, _) => AppSettings.SettingChanged -= OnInterceptSettingChanged;
 
         // 代码构建的画刷不会随主题自动刷新，切换主题后按当前数据重渲染
         ActualThemeChanged += (_, _) =>
@@ -155,6 +157,15 @@ public sealed partial class RogueCleanerPage : Page
         RefreshRecovery();
         // 进入页面自动扫描一次；之后点「刷新」重新扫描
         ScanNow();
+    }
+
+    private void OnInterceptSettingChanged(string key)
+    {
+        if (key == "ActiveInterceptEnabled")
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (ActiveInterceptPanel.Visibility == Visibility.Visible) RefreshActiveIntercept();
+            });
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -463,11 +474,11 @@ public sealed partial class RogueCleanerPage : Page
         try
         {
             var type = await ActiveInterceptStartupService.GetStartupTypeAsync();
-            var on = type != ActiveInterceptStartupService.StartupType.None;
+            var on = AppSettings.GetBool("ActiveInterceptEnabled", false);
             _aiStartupInitializing = true;
             AiStartupToggle.IsOn = on;
             _aiStartupInitializing = false;
-            AiStartupHint.Text = on
+            AiStartupHint.Text = type != ActiveInterceptStartupService.StartupType.None
                 ? $"计划任务：{ActiveInterceptStartupService.ScheduleTaskName}"
                 : "未配置开机自启";
         }
@@ -487,6 +498,7 @@ public sealed partial class RogueCleanerPage : Page
             var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(desired);
             if (result.Success)
             {
+                RefreshActiveIntercept();
                 AiStartupHint.Text = desired
                     ? $"计划任务：{ActiveInterceptStartupService.ScheduleTaskName}"
                     : "未配置开机自启";
@@ -494,7 +506,9 @@ public sealed partial class RogueCleanerPage : Page
             }
             else
             {
-                AiStartupToggle.IsOn = !desired;
+                _aiStartupInitializing = true;
+                AiStartupToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
+                _aiStartupInitializing = false;
                 // 显示 schtasks 的真实报错（XML 解析失败 / 后端缺失 / 提权被拒都有各自的文案）
                 var reason = result.Error ?? "未知原因";
                 AiStartupHint.Text = (desired ? "开机自启设置失败：" : "取消开机自启失败：") + reason;
@@ -503,7 +517,9 @@ public sealed partial class RogueCleanerPage : Page
         }
         catch (Exception ex)
         {
-            AiStartupToggle.IsOn = !desired;
+            _aiStartupInitializing = true;
+            AiStartupToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
+            _aiStartupInitializing = false;
             AiStartupHint.Text = $"操作失败：{ex.Message}";
             ShowAiStatus("操作开机自启失败。", InfoBarSeverity.Error);
         }
@@ -1937,20 +1953,27 @@ public sealed partial class RogueCleanerPage : Page
         App.MainWindow?.NavigateToSettings("ActiveInterceptNotifyMode");
     }
 
-    private void AiEnableBackend_Click(object sender, RoutedEventArgs e)
+    private async void AiEnableBackend_Click(object sender, RoutedEventArgs e)
     {
-        AppSettings.Set("ActiveInterceptEnabled", true);
-        // 同步而非裸启动：若游戏后台监控开着，后端已在运行，只需换配置重启装配
-        ActiveInterceptService.SyncBackend();
+        await SetInterceptEnabledAsync(true);
         RefreshActiveIntercept();
     }
 
-    private void AiDisableBackend_Click(object sender, RoutedEventArgs e)
+    private async void AiDisableBackend_Click(object sender, RoutedEventArgs e)
     {
-        AppSettings.Set("ActiveInterceptEnabled", false);
-        // 同步而非裸停止：游戏后台监控仍开着时后端必须继续常驻（只是卸掉拦截子系统）
-        ActiveInterceptService.SyncBackend();
+        await SetInterceptEnabledAsync(false);
         RefreshActiveIntercept();
+    }
+
+    private async Task SetInterceptEnabledAsync(bool enabled)
+    {
+        try
+        {
+            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(enabled);
+            if (!result.Success) ShowAiStatus(result.Error ?? "操作失败", InfoBarSeverity.Error);
+            await AiRefreshStartupStateAsync();
+        }
+        catch (Exception ex) { ShowAiStatus(ex.Message, InfoBarSeverity.Error); }
     }
 
     // ================= 反馈条 =================

@@ -9,43 +9,36 @@
     mc:Ignorable="d">
 
     <Grid RowSpacing="0">
-        <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16" MaxWidth="960" HorizontalAlignment="Center">
+        <ScrollViewer HorizontalContentAlignment="Stretch" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32">
+            <StackPanel Spacing="24" MaxWidth="1120">
+<StackPanel.ChildrenTransitions><TransitionCollection><EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" /></TransitionCollection></StackPanel.ChildrenTransitions>
 
-                <Border Padding="12,8,12,8" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <Grid ColumnSpacing="12" RowSpacing="16">
+<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+<Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                         <CheckBox x:Name="CpuSelBox" IsChecked="True" Content="CPU 烤机" MinWidth="96" />
                         <CheckBox x:Name="GpuSelBox" Grid.Column="1" IsChecked="True" Content="GPU 烤机" MinWidth="96" />
                         <CheckBox x:Name="NetSelBox" Grid.Column="2" IsChecked="False" Content="网卡烤机" MinWidth="96" />
-                        <Button x:Name="TripleStressBtn" Grid.Column="3" Click="TripleStress_Click">
+                        <Button x:Name="TripleStressBtn" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Click="TripleStress_Click">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xECAD;" />
                                 <TextBlock Text="一键三烤" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="StartStressBtn" Grid.Column="4" Click="StartStress_Click" Style="{StaticResource AccentButtonStyle}">
+                        <Button x:Name="StartStressBtn" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Click="StartStress_Click" Style="{StaticResource AccentButtonStyle}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE768;" />
                                 <TextBlock Text="开始烤机" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="ExportBtn" Grid.Column="6" Click="Export_Click" IsEnabled="False">
+                        <Button x:Name="ExportBtn" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" Click="Export_Click" IsEnabled="False">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xEDE1;" />
                                 <TextBlock Text="导出报告" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="StopBtn" Grid.Column="7" Click="Stop_Click" IsEnabled="False">
+                        <Button x:Name="StopBtn" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Left" Click="Stop_Click" IsEnabled="False">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="12" Glyph="&#xE71A;" />
                                 <TextBlock Text="停止" />
@@ -61,21 +54,21 @@
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="烤机时长设置" />
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="4">
                                 <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="CPU 烤机时长 (分钟)" />
-                                <NumberBox x:Name="CpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
+                                <NumberBox x:Name="CpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" HorizontalAlignment="Stretch" MinWidth="120" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="GPU 烤机时长 (分钟)" />
-                                <NumberBox x:Name="GpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
+                                <NumberBox x:Name="GpuDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" HorizontalAlignment="Stretch" MinWidth="120" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="4">
                                 <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="网卡烤机时长 (分钟)" />
-                                <NumberBox x:Name="NetDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" Width="140" />
+                                <NumberBox x:Name="NetDurationBox" Value="15" Minimum="1" Maximum="1440" SpinButtonPlacementMode="Compact" HorizontalAlignment="Stretch" MinWidth="120" />
                             </StackPanel>
                         </Grid>
                         <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap">

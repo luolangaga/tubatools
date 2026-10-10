@@ -30,51 +30,24 @@ public static class ToolMetadataService
 
     public static void InvalidateCache()
     {
-        _metadata = null;
+        lock (MetadataGate) _metadata = null;
     }
 
-    public static async Task RemoveMetadataAsync(string toolPath)
+    public static Task RemoveMetadataAsync(string toolPath)
     {
-        var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
-        if (string.IsNullOrWhiteSpace(dirName)) return;
-
-        var metadataRoot = GetWritableMetadataDir();
-        var metadataPath = Path.Combine(metadataRoot, "tools.json");
-        if (!File.Exists(metadataPath)) return;
-
-        JsonObject root;
-        JsonArray tools;
-
-        await using (var readStream = File.OpenRead(metadataPath))
-        {
-            root = await JsonNode.ParseAsync(readStream) as JsonObject ?? new JsonObject();
-        }
-
-        tools = root["tools"] as JsonArray ?? [];
-        var existing = tools
-            .OfType<JsonObject>()
-            .FirstOrDefault(item =>
-                string.Equals(item["match"]?.GetValue<string>(), dirName, StringComparison.CurrentCultureIgnoreCase));
-
-        if (existing is null) return;
-
-        tools.Remove(existing);
-        root["tools"] = tools;
-
-        await using var writeStream = File.Create(metadataPath);
-        await JsonSerializer.SerializeAsync(writeStream, root, new JsonSerializerOptions { WriteIndented = true });
-        _metadata = null;
+        var entry = FindJsonMetadata(toolPath);
+        var directory = entry?.Directory is { Length: > 0 } stored
+            ? UserToolLibrary.ResolveDirectory(stored) : Path.GetDirectoryName(toolPath);
+        if (directory is not null && !UserToolLibrary.Remove(directory) && entry?.Match is { } match)
+            UserToolLibrary.SetStates([("official:" + match, "hidden", JsonValue.Create(true))]);
+        InvalidateCache();
+        return Task.CompletedTask;
     }
 
     public static bool HasDownloadUrl(string category, string toolDir)
     {
-        var dirName = Path.GetFileName(toolDir);
-        var metadata = LoadMetadata();
-
-        return metadata.Any(item =>
-            !string.IsNullOrWhiteSpace(item.Match) &&
-            (!string.IsNullOrWhiteSpace(item.DownloadUrl) || !string.IsNullOrWhiteSpace(item.WingetId)) &&
-            dirName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase));
+        var metadata = FindJsonMetadataByDir(toolDir);
+        return !string.IsNullOrWhiteSpace(metadata?.DownloadUrl) || !string.IsNullOrWhiteSpace(metadata?.WingetId);
     }
 
     public static ToolMetadata GetMetadata(string category, string toolPath)
@@ -144,8 +117,12 @@ public static class ToolMetadataService
         var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolPath);
         var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
 
+        var registered = metadata.FirstOrDefault(item => item.Directory is { Length: > 0 } stored &&
+            UserToolLibrary.IsWithin(toolPath, UserToolLibrary.ResolveDirectory(stored)));
+        if (registered is not null) return registered;
+        if (UserToolLibrary.IsWithin(toolPath, UserToolLibrary.ToolsRoot)) return null;
         return metadata
-            .Where(item =>
+            .Where(item => item.Directory is null &&
                 !string.IsNullOrWhiteSpace(item.Match) &&
                 (fileName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
                  relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
@@ -180,67 +157,27 @@ public static class ToolMetadataService
 
     public static void UpdateToolVersion(string match, int newVersion)
     {
-        try
-        {
-            var metadataPath = Path.Combine(GetWritableMetadataDir(), "tools.json");
-            if (!File.Exists(metadataPath)) return;
-
-            var jsonText = File.ReadAllText(metadataPath);
-            var doc = JsonNode.Parse(jsonText);
-            if (doc?["tools"] is not JsonArray tools) return;
-
-            foreach (var tool in tools)
-            {
-                var m = tool?["match"]?.ToString();
-                if (m is not null && m.Equals(match, StringComparison.OrdinalIgnoreCase))
-                {
-                    tool!["version"] = newVersion;
-                }
-            }
-
-            File.WriteAllText(metadataPath, doc.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-            _metadata = null;
-        }
-        catch { }
+        UserToolLibrary.SetStates([("official:" + match, "version", JsonValue.Create(newVersion))]);
+        InvalidateCache();
     }
 
-    /// <summary>
-    /// 把卡片拖拽排序结果写回 tools.json 的 order 字段。
-    /// orderedToolDirs 为工具目录（按期望顺序）；未收录进 tools.json 的自定义工具自动跳过。
-    /// 读取侧（FindJsonMetadataByDir → Order）与写入侧使用同一套匹配规则，保证读写一致。
-    /// </summary>
+    /// <summary>排序只写用户状态，发布的工具定义始终只读。</summary>
     public static void SaveToolOrder(IReadOnlyList<string> orderedToolDirs)
     {
-        try
+        var changes = new List<(string Id, string Field, JsonNode? Value)>();
+        var order = 0;
+        foreach (var directory in orderedToolDirs)
         {
-            var metadataPath = Path.Combine(GetWritableMetadataDir(), "tools.json");
-            if (!File.Exists(metadataPath) || orderedToolDirs.Count == 0) return;
-
-            var doc = JsonNode.Parse(File.ReadAllText(metadataPath));
-            if (doc?["tools"] is not JsonArray tools) return;
-
-            var order = 0;
-            foreach (var dir in orderedToolDirs)
-            {
-                var match = FindJsonMetadataByDir(dir)?.Match;
-                if (string.IsNullOrWhiteSpace(match)) continue;
-
-                var entry = tools
-                    .OfType<JsonObject>()
-                    .FirstOrDefault(item => string.Equals(item["match"]?.GetValue<string>(), match, StringComparison.CurrentCultureIgnoreCase));
-                if (entry is null) continue;
-
-                entry["order"] = order++;
-            }
-
-            File.WriteAllText(metadataPath, doc.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-            _metadata = null; // 立即失效内存缓存，下次读取即为新顺序
+            var entry = FindJsonMetadataByDir(directory);
+            if (entry?.Match is null) continue;
+            changes.Add((entry.Id ?? "official:" + entry.Match, "order", JsonValue.Create(order++)));
         }
-        catch { }
+        if (changes.Count > 0) UserToolLibrary.SetStates(changes);
+        InvalidateCache();
     }
 
     /// <summary>
-    /// 写入/更新 tools.json 中的一个工具条目（按 match 精确匹配替换，保留文件内其余条目与未知字段）。
+    /// 写入/更新用户工具库中的一个工具条目（按真实目录定位，保留未知字段）。
     /// 社区工具安装与自定义工具导入共用；写入失败抛 IOException（调用方决定如何呈现）。
     /// 注意：不要写 "version" 字段（int，驱动远端工具库版本比较），社区工具的字符串版本号
     /// 记录在 CommunityToolRegistry，不混进这里。
@@ -252,46 +189,23 @@ public static class ToolMetadataService
         string? publisher = null,
         IReadOnlyList<string>? tags = null,
         string? launchTarget = null,
-        IReadOnlyList<JsonArchVariant>? archVariants = null)
+        IReadOnlyList<JsonArchVariant>? archVariants = null,
+        string? toolDirectory = null,
+        string? category = null,
+        string? communityId = null)
     {
         if (string.IsNullOrWhiteSpace(match))
             throw new ArgumentException("match 不能为空", nameof(match));
 
-        var metadataRoot = GetWritableMetadataDir();
-        Directory.CreateDirectory(metadataRoot);
-        var metadataPath = Path.Combine(metadataRoot, "tools.json");
-
-        JsonObject root;
-        JsonArray tools;
-
-        if (File.Exists(metadataPath))
-        {
-            try
-            {
-                root = JsonNode.Parse(File.ReadAllText(metadataPath)) as JsonObject ?? new JsonObject();
-            }
-            catch (Exception ex)
-            {
-                throw new IOException($"读取工具元数据失败：{ex.Message}", ex);
-            }
-            tools = root["tools"] as JsonArray ?? [];
-        }
-        else
-        {
-            root = new JsonObject();
-            tools = [];
-        }
-
-        root["tools"] = tools;
-
-        var existing = tools
-            .OfType<JsonObject>()
-            .FirstOrDefault(item =>
-                string.Equals(item["match"]?.GetValue<string>(), match.Trim(), StringComparison.OrdinalIgnoreCase));
-
-        if (existing is not null)
-            tools.Remove(existing);
-
+        // 先迁移旧库，再登记新工具；旧路径保留以保护已有快捷方式。
+        _ = LoadMetadata();
+        toolDirectory ??= Directory.Exists(ToolCatalog.ToolsRoot)
+            ? Directory.GetDirectories(ToolCatalog.ToolsRoot)
+                .SelectMany(Directory.GetDirectories)
+                .FirstOrDefault(d => Path.GetFileName(d).Equals(match.Trim(), StringComparison.OrdinalIgnoreCase))
+            : null;
+        if (toolDirectory is null) throw new IOException("找不到工具目录，无法登记。");
+        category ??= Path.GetFileName(Path.GetDirectoryName(toolDirectory));
         var entry = new JsonObject { ["match"] = match.Trim() };
 
         if (!string.IsNullOrWhiteSpace(name)) entry["name"] = name.Trim();
@@ -324,29 +238,9 @@ public static class ToolMetadataService
             if (variantArray.Count > 0) entry["archVariants"] = variantArray;
         }
 
-        tools.Add(entry);
-
-        WriteJsonAtomically(metadataPath, root);
-        _metadata = null;
-    }
-
-    /// <summary>临时文件 + 原子替换写入 JSON。tools.json 损坏会让全应用元数据失效，写入必须原子。</summary>
-    private static void WriteJsonAtomically(string path, JsonNode root)
-    {
-        var tempPath = path + ".tmp";
-        try
-        {
-            File.WriteAllText(tempPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-            if (File.Exists(path))
-                File.Replace(tempPath, path, null);
-            else
-                File.Move(tempPath, path);
-        }
-        catch (Exception ex)
-        {
-            try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
-            throw new IOException($"写入工具元数据失败（{path}）：{ex.Message}", ex);
-        }
+        entry["category"] = category;
+        UserToolLibrary.Upsert(entry, toolDirectory, communityId);
+        InvalidateCache();
     }
 
     public static async Task<IReadOnlyList<RemoteToolVersion>?> FetchRemoteToolsJsonAsync(CancellationToken ct = default)
@@ -416,8 +310,12 @@ public static class ToolMetadataService
         var dirName = Path.GetFileName(toolDir);
         var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolDir);
 
+        var registered = metadata.FirstOrDefault(item => item.Directory is { Length: > 0 } stored &&
+            Path.GetFullPath(UserToolLibrary.ResolveDirectory(stored)).Equals(Path.GetFullPath(toolDir), StringComparison.OrdinalIgnoreCase));
+        if (registered is not null) return registered;
+        if (UserToolLibrary.IsWithin(toolDir, UserToolLibrary.ToolsRoot)) return null;
         return metadata
-            .Where(item =>
+            .Where(item => item.Directory is null &&
                 !string.IsNullOrWhiteSpace(item.Match) &&
                 (relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
                  MatchesFlexible(dirName, item.Match)))
@@ -476,33 +374,63 @@ public static class ToolMetadataService
         string? BuiltinId,
         int? Order);
 
+    private static readonly object MetadataGate = new();
+    private static string? _loadedDataDirectory;
+
+    internal static IReadOnlyList<JsonToolMetadata> GetUserTools(string? category = null) =>
+        LoadMetadata().Where(t => t.Directory is not null &&
+            (category is null || string.Equals(t.Category, category, StringComparison.OrdinalIgnoreCase))).ToList();
+
     private static IReadOnlyList<JsonToolMetadata> LoadMetadata()
     {
-        if (_metadata is not null)
+        lock (MetadataGate)
         {
-            return _metadata;
-        }
-
-        var metadataDir = GetWritableMetadataDir();
-        var path = Path.Combine(metadataDir, "tools.json");
-        if (!File.Exists(path))
-        {
-            _metadata = [];
-            return _metadata;
-        }
-
-        using (var stream = File.OpenRead(path))
-        {
-            var database = JsonSerializer.Deserialize<JsonToolDatabase>(stream, new JsonSerializerOptions
+            if (_metadata is not null && _loadedDataDirectory == UserToolLibrary.DataDirectory) return _metadata;
+            var metadataDirectory = FindRoot("Metadata");
+            var baseline = Path.Combine(metadataDirectory, "tools.default.json");
+            var current = Path.Combine(metadataDirectory, "tools.json");
+            var official = UserToolLibrary.ReadObject(File.Exists(baseline) ? baseline : current);
+            var legacy = new List<string> { Path.Combine(UserToolLibrary.DataDirectory, "Metadata", "tools.json") };
+            if (File.Exists(baseline)) legacy.Add(current);
+            if (RuntimeHelper.IsPackagedContext)
+                legacy.Add(Path.Combine(RuntimeHelper.GetLocalAppDataRoot(), "TubaWinUi3", "Metadata", "tools.json"));
+            var backups = Path.Combine(ToolCatalog.AppDirectory, "Data", "LegacyToolMetadata");
+            if (Directory.Exists(backups)) legacy.AddRange(Directory.GetFiles(backups, "*.json").OrderBy(File.GetLastWriteTimeUtc));
+            var migratedBackups = Path.Combine(UserToolLibrary.DataDirectory, "LegacyToolMetadata");
+            if (Directory.Exists(migratedBackups)) legacy.AddRange(Directory.GetFiles(migratedBackups, "*.json").OrderBy(File.GetLastWriteTimeUtc));
+            try
             {
-                PropertyNameCaseInsensitive = true
-            });
-
-            _metadata = database?.Tools ?? [];
+                var merged = UserToolLibrary.Load(official, legacy);
+                // 即使旧 tools.json 已被覆盖，社区安装记录仍能恢复启动目标与分类。
+                foreach (var record in CommunityToolRegistry.GetInstalledRecords())
+                {
+                    if (merged.Any(t => t["directory"] is not null &&
+                        (t["source"]?.GetValue<string>() is "community" or "legacy") &&
+                        string.Equals(t["match"]?.GetValue<string>(), record.ToolId, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(t["category"]?.GetValue<string>(), record.Category, StringComparison.OrdinalIgnoreCase))) continue;
+                    var directory = Path.Combine(ToolCatalog.ToolsRoot, record.Category, record.ToolId);
+                    if (!System.IO.Directory.Exists(directory)) continue;
+                    UserToolLibrary.Upsert(new JsonObject
+                    {
+                        ["match"] = record.ToolId, ["name"] = record.ToolId,
+                        ["category"] = record.Category, ["launchTarget"] = record.LaunchTarget,
+                        ["publisher"] = record.Author
+                    }, directory, record.ToolId);
+                }
+                _metadata = UserToolLibrary.Load(official, legacy)
+                    .Select(t => t.Deserialize<JsonToolMetadata>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                // 用户库损坏不覆盖原文件、不阻断官方工具；刷新时仍会重试。
+                Debug.WriteLine($"[ToolMetadata] 用户工具库读取失败，原文件保留: {ex.Message}");
+                return official["tools"]?.Deserialize<List<JsonToolMetadata>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+            }
+            _loadedDataDirectory = UserToolLibrary.DataDirectory;
+            ApplyLanguageOverlay(metadataDirectory);
+            return _metadata;
         }
-
-        ApplyLanguageOverlay(metadataDir);
-        return _metadata;
     }
 
     /// <summary>
@@ -538,7 +466,7 @@ public static class ToolMetadataService
                     continue;
                 }
 
-                var target = _metadata!.FirstOrDefault(t =>
+                var target = _metadata!.FirstOrDefault(t => t.Directory is null &&
                     string.Equals(t.Match, over.Match, StringComparison.OrdinalIgnoreCase));
                 if (target is null)
                 {
@@ -636,40 +564,8 @@ public static class ToolMetadataService
         return outputRoot;
     }
 
-    public static string GetWritableMetadataDir()
-    {
-        if (!RuntimeHelper.IsPackagedContext)
-            return FindRoot("Metadata");
-
-        var writableDir = Path.Combine(
-            RuntimeHelper.GetLocalAppDataRoot(),
-            "TubaWinUi3", "Metadata");
-
-        if (!Directory.Exists(writableDir))
-        {
-            var installDir = FindRoot("Metadata");
-            if (Directory.Exists(installDir))
-            {
-                Directory.CreateDirectory(writableDir);
-                foreach (var file in Directory.EnumerateFiles(installDir))
-                {
-                    try
-                    {
-                        var dest = Path.Combine(writableDir, Path.GetFileName(file));
-                        if (!File.Exists(dest))
-                            File.Copy(file, dest, false);
-                    }
-                    catch { }
-                }
-            }
-            else
-            {
-                Directory.CreateDirectory(writableDir);
-            }
-        }
-
-        return writableDir;
-    }
+    /// <summary>用户数据目录。官方 Metadata 从 FindRoot 读取，永不作为运行时写入目标。</summary>
+    public static string GetWritableMetadataDir() => UserToolLibrary.DataDirectory;
 
     private sealed class JsonToolDatabase
     {
@@ -679,6 +575,9 @@ public static class ToolMetadataService
     internal sealed class JsonToolMetadata
     {
         public string? Match { get; set; }
+        public string? Id { get; set; }
+        public string? Directory { get; set; }
+        public string? Source { get; set; }
 
         /// <summary>显示名覆盖：卡片/搜索按此取名（为空时沿用目录/文件名）。社区工具与自定义工具写入。</summary>
         public string? Name { get; set; }

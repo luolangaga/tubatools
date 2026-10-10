@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="ai-assistant"
             x:Name="PageHeader"
             Grid.Row="0"
             HeaderPadding="16,16,16,8"

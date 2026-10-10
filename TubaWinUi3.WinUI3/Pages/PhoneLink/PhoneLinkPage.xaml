@@ -22,14 +22,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="phone-link"
             Grid.Row="0"
             Title="连接手机"
             Subtitle="手机端经局域网连接本机：查看配置与屏幕、执行命令、安装软件、互传文件"
             Glyph="&#xE8EA;" />
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
+            <StackPanel Spacing="24" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- 服务状态 -->
                 <Border Style="{StaticResource FluentCardStyle}">

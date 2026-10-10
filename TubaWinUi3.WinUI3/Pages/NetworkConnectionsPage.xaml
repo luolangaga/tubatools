@@ -1,62 +1,47 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Page
-    x:Class="TubaWinUi3.Pages.NetworkConnectionsPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="using:TubaWinUi3.Controls"
-    mc:Ignorable="d">
-
+<?xml version="1.0" encoding="utf-8" ?>
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:TubaWinUi3.Controls" x:Class="TubaWinUi3.Pages.NetworkConnectionsPage" mc:Ignorable="d">
     <Grid RowSpacing="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <controls:ToolPageHeader
-            x:Name="PageHeader"
-            Grid.Row="0"
-            Title="活动连接详情"
-            Subtitle="TCP 连接实时监控"
-            Glyph="&#xE8BD;"
-            BackRequested="OnBackRequested">
+        <controls:ToolPageHeader ToolId="network-adapter-proxy" x:Name="PageHeader" Grid.Row="0" Title="活动连接详情" Subtitle="TCP 连接实时监控" Glyph="&#xE8BD;" BackRequested="OnBackRequested">
             <controls:ToolPageHeader.Actions>
                 <Button x:Name="RefreshBtn" Click="RefreshBtn_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="4">
-                        <FontIcon Glyph="&#xE72C;" FontSize="12" />
-                        <TextBlock Text="刷新" />
+                        <FontIcon Glyph="&#xE72C;" FontSize="12"/>
+                        <TextBlock Text="刷新"/>
                     </StackPanel>
                 </Button>
-                <ToggleSwitch x:Name="AutoRefreshToggle" IsOn="True" OnContent="自动" OffContent="手动" FontSize="12" />
+                <ToggleSwitch x:Name="AutoRefreshToggle" IsOn="True" OnContent="自动" OffContent="手动" FontSize="12"/>
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
-
-        <ProgressBar x:Name="LoadingBar" Grid.Row="1" IsIndeterminate="True" Visibility="Collapsed" />
-
-        <ScrollViewer Grid.Row="2" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
-                <Grid Padding="8,4" ColumnSpacing="8" x:Name="HeaderGrid">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="140" />
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="60" />
-                        <ColumnDefinition Width="100" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock FontSize="12" FontWeight="SemiBold" Text="进程" />
-                    <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="1" Text="类型" />
-                    <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="2" Text="远程地址" />
-                    <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="3" Text="端口" />
-                    <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="4" Text="适配器" />
-                </Grid>
-                <StackPanel x:Name="ConnectionPanel" Spacing="2" />
-                <StackPanel x:Name="EmptyPanel" Visibility="Collapsed" HorizontalAlignment="Center" Spacing="4" Padding="0,32,0,32">
-                    <FontIcon Glyph="&#xE8BD;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
-                    <TextBlock Text="暂无已建立的 TCP 连接" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
-                </StackPanel>
+        <ProgressBar x:Name="LoadingBar" Grid.Row="1" IsIndeterminate="True" Visibility="Collapsed"/>
+        <Grid Grid.Row="2" Padding="24,4,24,24" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Padding="8,4" ColumnSpacing="8" x:Name="HeaderGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="60"/>
+                    <ColumnDefinition Width="100"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Text="进程"/>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="1" Text="类型"/>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="2" Text="远程地址"/>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="3" Text="端口"/>
+                <TextBlock FontSize="12" FontWeight="SemiBold" Grid.Column="4" Text="适配器"/>
+            </Grid>
+            <ListView x:Name="ConnectionPanel" Grid.Row="1" SelectionMode="None" ItemContainerStyle="{StaticResource ToolResultItemStyle}"/>
+            <StackPanel x:Name="EmptyPanel" Visibility="Collapsed" HorizontalAlignment="Center" Spacing="4" Padding="0,32,0,32" Grid.Row="1" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE8BD;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="暂无已建立的 TCP 连接" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
             </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>

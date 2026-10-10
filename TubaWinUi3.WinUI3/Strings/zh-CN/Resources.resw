@@ -685,7 +685,7 @@
     <value>知道了</value>
   </data>
   <data name="Settings_ActiveIntercept_Desc.Text" xml:space="preserve">
-    <value>后台常驻监控右键菜单注册项，自动屏蔽新增的第三方右键菜单（先拦截再审核），可在「流氓软件的克星 - 主动拦截」中审核放行</value>
+    <value>开启时同时启用主动拦截并设置开机自启，关闭时同时取消。后台自动屏蔽新增的第三方右键菜单，可在「流氓软件的克星 - 右键菜单管理-顽固软件版」中审核放行。</value>
   </data>
   <data name="Settings_ActiveIntercept_Title.Text" xml:space="preserve">
     <value>主动拦截流氓软件</value>
@@ -2188,7 +2188,7 @@
     <value>电池消耗分析</value>
   </data>
   <data name="Builtin_benchmark-cloud_Desc" xml:space="preserve">
-    <value>上传测试报告到社区，查看全球排行榜，与同硬件用户对比性能。</value>
+    <value>查看全球排行榜，与同硬件用户对比性能。</value>
   </data>
   <data name="Builtin_benchmark-cloud_Name" xml:space="preserve">
     <value>跑分排行</value>
@@ -5137,5 +5137,42 @@ else then stroke=#888888 visible=true
   </data>
   <data name="AiPlayground_EpPurpose_Cpu" xml:space="preserve">
     <value>CPU（内置）</value>
+  </data>
+  <data name="HomePage_RecoverToolsButton.Content" xml:space="preserve"><value>恢复工具</value></data>
+  <data name="Recovery_Title" xml:space="preserve"><value>恢复工具</value></data>
+  <data name="Recovery_None" xml:space="preserve"><value>未找到需要恢复登记的工具。文件已经删除的工具需要重新导入。</value></data>
+  <data name="Recovery_ChooseTool" xml:space="preserve"><value>找到以下未登记工具。请选择要恢复的工具，确认名称和主程序后加入列表。</value></data>
+  <data name="Recovery_Next" xml:space="preserve"><value>下一步</value></data>
+  <data name="Recovery_Name" xml:space="preserve"><value>工具名称</value></data>
+  <data name="Recovery_Executable" xml:space="preserve"><value>主程序</value></data>
+  <data name="Recovery_Register" xml:space="preserve"><value>恢复登记</value></data>
+  <data name="Recovery_Done" xml:space="preserve"><value>已恢复工具登记</value></data>
+  <data name="Recovery_Failed" xml:space="preserve"><value>恢复失败</value></data>
+  <data name="Community_InvalidZip" xml:space="preserve">
+    <value>无法读取 ZIP 压缩包：文件可能损坏、下载不完整，或并非 ZIP 格式。请重新下载或重新打包后选择。</value>
+  </data>
+  <data name="Community_UnreadableZip" xml:space="preserve">
+    <value>无法读取压缩包，请确认文件仍存在且有读取权限：{0}</value>
+  </data>
+  <data name="Settings_ManageToolVisibility.Content" xml:space="preserve">
+    <value>管理内置工具与开始菜单展示</value>
+  </data>
+  <data name="Settings_ToolVisibility_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Settings_ToolVisibility_Enabled" xml:space="preserve">
+    <value>启用内置工具</value>
+  </data>
+  <data name="Settings_ToolVisibility_Hint" xml:space="preserve">
+    <value>取消启用会隐藏内置工具并禁用启动入口；开始菜单选项仅在 Windows 搜索索引开启时生效。</value>
+  </data>
+  <data name="Settings_ToolVisibility_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="Settings_ToolVisibility_Search" xml:space="preserve">
+    <value>显示在开始菜单与 Windows 搜索</value>
+  </data>
+  <data name="Settings_ToolVisibility_Title" xml:space="preserve">
+    <value>管理内置工具与开始菜单展示</value>
   </data>
 </root>

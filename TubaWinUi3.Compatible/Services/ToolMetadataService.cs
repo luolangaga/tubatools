@@ -11,6 +11,9 @@ namespace TubaWinUi3.Compatible.Services
 {
     public sealed class ToolMetadata
     {
+        public string Name { get; set; }
+        public string LibraryId { get; set; }
+        public int? Order { get; set; }
         public string Description { get; set; }
         public string Publisher { get; set; }
         public string Version { get; set; }
@@ -74,6 +77,9 @@ namespace TubaWinUi3.Compatible.Services
 
             return new ToolMetadata
             {
+                Name = jsonMetadata != null ? jsonMetadata.Name : null,
+                LibraryId = jsonMetadata != null ? jsonMetadata.Id : null,
+                Order = jsonMetadata != null ? jsonMetadata.Order : null,
                 Description = description,
                 Publisher = FirstUseful(
                     jsonMetadata != null ? jsonMetadata.Publisher : null,
@@ -117,6 +123,9 @@ namespace TubaWinUi3.Compatible.Services
         private static JsonToolMetadata FindJsonMetadata(string toolPath)
         {
             var metadata = LoadMetadata();
+            var registered = metadata.FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.Directory) && Path.GetFullPath(toolPath).StartsWith(Path.GetFullPath(ResolveUserDirectory(t.Directory)).TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));
+            if (registered != null) return registered;
+
             var fileName = Path.GetFileNameWithoutExtension(toolPath);
             var relativePath = PathHelper.GetRelativePath(ToolCatalog.ToolsRoot, toolPath);
             var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
@@ -126,7 +135,7 @@ namespace TubaWinUi3.Compatible.Services
 
             foreach (var item in metadata)
             {
-                if (string.IsNullOrWhiteSpace(item.Match)) continue;
+                if (!string.IsNullOrWhiteSpace(item.Directory) || string.IsNullOrWhiteSpace(item.Match)) continue;
                 if (fileName.IndexOf(item.Match, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                     relativePath.IndexOf(item.Match, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                     MatchesFlexible(dirName, item.Match))
@@ -144,6 +153,9 @@ namespace TubaWinUi3.Compatible.Services
         private static JsonToolMetadata FindJsonMetadataByDir(string toolDir)
         {
             var metadata = LoadMetadata();
+            var registered = metadata.FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.Directory) && Path.GetFullPath(toolDir).Equals(Path.GetFullPath(ResolveUserDirectory(t.Directory)), StringComparison.OrdinalIgnoreCase));
+            if (registered != null) return registered;
+
             var dirName = Path.GetFileName(toolDir);
             var relativePath = PathHelper.GetRelativePath(ToolCatalog.ToolsRoot, toolDir);
 
@@ -152,7 +164,7 @@ namespace TubaWinUi3.Compatible.Services
 
             foreach (var item in metadata)
             {
-                if (string.IsNullOrWhiteSpace(item.Match)) continue;
+                if (!string.IsNullOrWhiteSpace(item.Directory) || string.IsNullOrWhiteSpace(item.Match)) continue;
                 if (relativePath.IndexOf(item.Match, StringComparison.CurrentCultureIgnoreCase) >= 0 ||
                     MatchesFlexible(dirName, item.Match))
                 {
@@ -192,7 +204,7 @@ namespace TubaWinUi3.Compatible.Services
                 var result = new List<CategoryPlacement>();
                 foreach (var item in LoadMetadata())
                 {
-                    if (item.Categories == null) continue;
+                    if (item.Hidden || item.Categories == null) continue;
                     bool hit = false;
                     foreach (var c in item.Categories)
                     {
@@ -239,7 +251,9 @@ namespace TubaWinUi3.Compatible.Services
             if (_metadata != null)
                 return _metadata;
 
-            var path = Path.Combine(FindRoot("Metadata"), "tools.json");
+            var metadataDirectory = FindRoot("Metadata");
+            var path = Path.Combine(metadataDirectory, "tools.default.json");
+            if (!File.Exists(path)) path = Path.Combine(metadataDirectory, "tools.json");
             if (!File.Exists(path))
             {
                 _metadata = new List<JsonToolMetadata>();
@@ -257,6 +271,27 @@ namespace TubaWinUi3.Compatible.Services
                     return _metadata;
                 }
 
+                // 与主应用共享用户库协议；旧/PE 版本只读用户数据，不改官方发布文件。
+                try
+                {
+                    var users = Path.Combine(ConfigManager.GetDataDir(), "user-tools.json");
+                    if (File.Exists(users) && JObject.Parse(File.ReadAllText(users))["tools"] is JArray userTools)
+                        foreach (var tool in userTools) toolsArray.Add(tool.DeepClone());
+                    var statesPath = Path.Combine(ConfigManager.GetDataDir(), "tool-state.json");
+                    if (File.Exists(statesPath) && JObject.Parse(File.ReadAllText(statesPath))["tools"] is JArray states)
+                    {
+                        foreach (var tool in toolsArray)
+                        {
+                            var id = tool.Value<string>("id") ?? "official:" + tool.Value<string>("match");
+                            var state = states.FirstOrDefault(t => string.Equals(t.Value<string>("id"), id, StringComparison.OrdinalIgnoreCase));
+                            if (state == null) continue;
+                            foreach (var field in new[] { "order", "version", "hidden" })
+                                if (state[field] != null) tool[field] = state[field].DeepClone();
+                        }
+                    }
+                }
+                catch (Exception ex) { Debug.WriteLine("[ToolMetadata] 用户工具数据读取失败：" + ex.Message); }
+
                 var result = new List<JsonArchVariant>();
                 var list = new List<JsonToolMetadata>();
                 foreach (var item in toolsArray)
@@ -264,6 +299,11 @@ namespace TubaWinUi3.Compatible.Services
                     var meta = new JsonToolMetadata
                     {
                         Match = item.Value<string>("match"),
+                        Name = item.Value<string>("name"),
+                        Id = item.Value<string>("id"),
+                        Directory = item.Value<string>("directory"),
+                        Order = item.Value<int?>("order"),
+                        Hidden = item.Value<bool?>("hidden") == true,
                         Description = item.Value<string>("description"),
                         Publisher = item.Value<string>("publisher"),
                         DownloadUrl = item.Value<string>("downloadUrl"),
@@ -393,9 +433,33 @@ namespace TubaWinUi3.Compatible.Services
             return outputRoot;
         }
 
+        internal static bool IsHiddenDirectory(string directory) => FindJsonMetadataByDir(directory)?.Hidden == true;
+        internal static bool IsUserDirectory(string directory) => FindJsonMetadataByDir(directory)?.Directory != null;
+
+        internal static string ResolveUserDirectory(string stored) => Path.GetFullPath(stored
+            .Replace("{UserToolsRoot}", Path.Combine(ConfigManager.GetDataDir(), "UserTools"))
+            .Replace("{ToolsRoot}", ToolCatalog.ToolsRoot)
+            .Replace("{DataDir}", ConfigManager.GetDataDir())
+            .Replace("{AppDir}", Path.GetDirectoryName(ToolCatalog.ToolsRoot))
+            .Replace("{ParentDir}", Path.GetDirectoryName(Path.GetDirectoryName(ToolCatalog.ToolsRoot)))
+            .Replace("{AppDataDir}", Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TubaWinUi3")));
+
+        internal static IReadOnlyList<string> GetUserCategories() => LoadMetadata()
+            .Where(t => !t.Hidden && !string.IsNullOrWhiteSpace(t.Directory) && !string.IsNullOrWhiteSpace(t.Category))
+            .Select(t => t.Category).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        internal static IReadOnlyList<string> GetUserDirectories(string category) => LoadMetadata()
+            .Where(t => !t.Hidden && !string.IsNullOrWhiteSpace(t.Directory) && string.Equals(t.Category, category, StringComparison.OrdinalIgnoreCase))
+            .Select(t => ResolveUserDirectory(t.Directory)).ToList();
+
         private sealed class JsonToolMetadata
         {
             public string Match { get; set; }
+            public string Name { get; set; }
+            public string Id { get; set; }
+            public string Directory { get; set; }
+            public int? Order { get; set; }
+            public bool Hidden { get; set; }
             public string Description { get; set; }
             public string Publisher { get; set; }
             public string DownloadUrl { get; set; }

@@ -106,7 +106,6 @@ public sealed partial class BenchmarkCloudPage : Page
 
 	private Button RefreshButton = null!;
 
-	private Button UploadButton = null!;
 
 	private ComboBox SourceCombo = null!;
 
@@ -142,13 +141,14 @@ public sealed partial class BenchmarkCloudPage : Page
 		Grid root = new()
 		{
 			RowSpacing = 0.0,
-			Padding = new Thickness(24.0, 8.0, 24.0, 24.0)
+			Padding = new Thickness(24.0, 4.0, 24.0, 32.0)
 		};
 		root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 		root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
 
 		ToolPageHeader header = new()
 		{
+            ToolId = "benchmark-cloud",
 			HeaderPadding = new Thickness(0.0, 0.0, 0.0, 12.0),
 			Title = "跑分排行",
 			Glyph = "\uE9D5"
@@ -180,22 +180,6 @@ public sealed partial class BenchmarkCloudPage : Page
 		SourceCombo.SelectionChanged += SourceCombo_SelectionChanged;
 		header.Actions.Add(SourceCombo);
 
-		UploadButton = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 8.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue898", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "上传报告" }
-				}
-			},
-			Style = (Style)Application.Current.Resources["ToolHeaderActionButtonStyle"]
-		};
-		UploadButton.Click += UploadButton_Click;
-		header.Actions.Add(UploadButton);
 
 		ReportCountText = new TextBlock
 		{
@@ -1399,120 +1383,6 @@ public sealed partial class BenchmarkCloudPage : Page
 		};
 
 		return Task.CompletedTask;
-	}
-
-	private async void UploadButton_Click(object sender, RoutedEventArgs e)
-	{
-		List<PerformanceBenchmarkResult> localHistory = PerformanceBenchmarkService.LoadHistory();
-		if (localHistory.Count == 0)
-		{
-			await new ContentDialog
-			{
-				Title = "无测试报告",
-				Content = "请先运行一次性能测试，再上传报告。",
-				CloseButtonText = "确定",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync();
-			return;
-		}
-		if (!GitHubAuthService.IsLoggedIn)
-		{
-			try
-			{
-				await GitHubAuthService.EnsureAuthenticatedAsync(XamlRoot, CancellationToken.None);
-			}
-			catch
-			{
-				await new ContentDialog
-				{
-					Title = "需要登录",
-					Content = "上传报告需要 GitHub 账号，请先在设置中登录。",
-					CloseButtonText = "确定",
-					XamlRoot = XamlRoot,
-					RequestedTheme = ThemeService.CurrentElementTheme
-				}.ShowAsync();
-				return;
-			}
-		}
-		PerformanceBenchmarkResult latest = localHistory[0];
-		if (await new ContentDialog
-		{
-			Title = "上传测试报告",
-			Content = $"将上传最新的测试报告：\n\nCPU: {latest.CpuName}\nGPU: {latest.GpuName}\n游戏: {latest.GamingScore} ({latest.GamingGrade})\n办公: {latest.OfficeScore} ({latest.OfficeGrade})\n\n报告将通过 PR 提交到社区仓库。",
-			PrimaryButtonText = "上传",
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		}.ShowAsync() != ContentDialogResult.Primary)
-		{
-			return;
-		}
-		ContentDialog progressDlg = new ContentDialog
-		{
-			Title = "正在上传",
-			Content = new ProgressBar
-			{
-				IsIndeterminate = true
-			},
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		var progressShowTask = progressDlg.ShowAsync().AsTask();
-		try
-		{
-			Progress<string> progress = new Progress<string>(delegate(string msg)
-			{
-				DispatcherQueue.TryEnqueue(delegate
-				{
-					progressDlg.Content = new StackPanel
-					{
-						Spacing = 8.0,
-						Children = 
-						{
-							(UIElement)new TextBlock
-							{
-								Text = msg
-							},
-							(UIElement)new ProgressBar
-							{
-								IsIndeterminate = true
-							}
-						}
-					};
-				});
-			});
-			string prUrl = await BenchmarkCloudService.UploadReportAsync(latest, progress, CancellationToken.None);
-			progressDlg.Hide();
-			try { await progressShowTask; } catch { }
-			if (await new ContentDialog
-			{
-				Title = "上传成功",
-				Content = "报告已通过 PR 提交，合并后将出现在排行榜。\n\nPR 链接：" + prUrl,
-				PrimaryButtonText = "打开 PR",
-				CloseButtonText = "关闭",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync() == ContentDialogResult.Primary)
-			{
-				await Launcher.LaunchUriAsync(new Uri(prUrl));
-			}
-			BenchmarkCloudService.InvalidateCache();
-			await LoadDataAsync();
-		}
-		catch (Exception ex)
-		{
-			progressDlg.Hide();
-			try { await progressShowTask; } catch { }
-			await new ContentDialog
-			{
-				Title = "上传失败",
-				Content = ex.Message,
-				CloseButtonText = "确定",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync();
-		}
 	}
 
 	private async void ShowReportDetailDialog(BenchmarkReportEntry report)

@@ -7,6 +7,19 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class ServiceCenterPage : Page
 {
+    private void ServiceWorkspace_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var wide = e.NewSize.Width >= 880;
+        ServiceWorkspace.ColumnDefinitions[0].Width = wide ? new GridLength(220) : new GridLength(1, GridUnitType.Star);
+        ServiceWorkspace.ColumnDefinitions[1].Width = new GridLength(wide ? 1 : 0);
+        ServiceWorkspace.ColumnDefinitions[2].Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        ServiceWorkspace.RowDefinitions[0].Height = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(180);
+        ServiceWorkspace.RowDefinitions[1].Height = wide ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        ServiceDivider.Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
+        Grid.SetColumn(ServiceContent, wide ? 2 : 0);
+        Grid.SetRow(ServiceContent, wide ? 0 : 1);
+    }
+
     private ServiceCenterBrand? _currentBrand;
     private Button? _selectedButton;
 

@@ -28,7 +28,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private CancellationTokenSource _cts;
 	private PerformanceBenchmarkResult? _result;
 	private bool _isRunning;
-	private bool _uploadInProgress;
 	private bool _historyInProgress;
 	// 每次开始新测试/载入历史记录时自增，用于丢弃仍在途的异步回填（恢复热力图等）
 	private int _uiGeneration;
@@ -89,7 +88,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private Button _stopBtn = null!;
 	private Button _exportBtn = null!;
 	private Button _historyBtn = null!;
-	private Button _uploadBtn = null!;
 	private Button _rankingBtn = null!;
 	private Button _latencyOnlyBtn = null!;
 	private ProgressBar _globalProgress = null!;
@@ -663,22 +661,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
 		};
 		_historyBtn.Click += OnHistoryClick;
-		_uploadBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue898", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "上传排行", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
-		};
-		_uploadBtn.Click += OnUploadClick;
 		_rankingBtn = new Button
 		{
 			Content = new StackPanel
@@ -757,7 +739,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		stackPanel2.Children.Add(_stopBtn);
 		stackPanel2.Children.Add(_exportBtn);
 		stackPanel2.Children.Add(_historyBtn);
-		stackPanel2.Children.Add(_uploadBtn);
 		stackPanel2.Children.Add(_rankingBtn);
 		stackPanel2.Children.Add(_latencyOnlyBtn);
 		return new StackPanel
@@ -900,7 +881,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			_exportBtn.IsEnabled = true;
 			_statusText.Text = $"测试完成！总耗时: {result.TotalDuration:mm\\mss\\s}";
 			_globalProgress.Value = 100.0;
-			DispatcherQueue.TryEnqueue(() => _ = ShowPostBenchmarkDialogAsync());
 		}
 		catch (OperationCanceledException)
 		{
@@ -1529,42 +1509,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		return (selIdx, name);
 	}
 
-	private async Task ShowPostBenchmarkDialogAsync()
-	{
-		if (AppSettings.GetBool("BenchmarkPostPromptDisabled")) return;
-
-		var chkDontShow = new CheckBox
-		{
-			Content = "下次不再提示",
-			FontSize = 12,
-			Margin = new Thickness(0, 8, 0, 0)
-		};
-		var content = new StackPanel
-		{
-			Spacing = 4,
-			Children =
-			{
-				new TextBlock { Text = "测试已经跑完了，你可以上传你的跑分。", TextWrapping = TextWrapping.Wrap },
-				chkDontShow
-			}
-		};
-		var dialog = new ContentDialog
-		{
-			Title = "测试完成",
-			Content = content,
-			PrimaryButtonText = "上传跑分",
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		var result = await dialog.ShowAsync();
-		if (chkDontShow.IsChecked == true)
-			AppSettings.Set("BenchmarkPostPromptDisabled", true);
-		if (result == ContentDialogResult.Primary)
-			// 延迟到下一帧再打开上传流程，确保"测试完成"对话框已完全关闭
-			DispatcherQueue.TryEnqueue(() => OnUploadClick(this, null!));
-	}
-
 	private void OnStopClick(object sender, RoutedEventArgs e)
 	{
 		PerformanceBenchmarkService.Cancel();
@@ -2055,210 +1999,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		}
 	}
 
-	private async void OnUploadClick(object sender, RoutedEventArgs e)
-	{
-		// 防止重复触发导致两个 ContentDialog 同时打开（WinUI 3 只允许一个对话框）
-		if (_uploadInProgress) return;
-		_uploadInProgress = true;
-		_uploadBtn.IsEnabled = false;
-		try
-		{
-			await OnUploadClickCoreAsync();
-		}
-		finally
-		{
-			_uploadInProgress = false;
-			_uploadBtn.IsEnabled = true;
-		}
-	}
-
-	private async Task OnUploadClickCoreAsync()
-	{
-		List<PerformanceBenchmarkResult> candidates = PerformanceBenchmarkService.LoadHistory()
-			.OrderByDescending(h => h.TestTime)
-			.ToList();
-		if (_result != null && !candidates.Any(c => c.TestTime == _result.TestTime))
-			candidates.Insert(0, _result);
-		if (candidates.Count == 0)
-		{
-			await new ContentDialog
-			{
-				Title = "无测试报告",
-				Content = "请先运行一次性能测试，再上传报告。",
-				CloseButtonText = "确定",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync();
-			return;
-		}
-		if (!GitHubAuthService.IsLoggedIn)
-		{
-			try
-			{
-				await GitHubAuthService.EnsureAuthenticatedAsync(XamlRoot, CancellationToken.None);
-			}
-			catch
-			{
-				await new ContentDialog
-				{
-					Title = "需要登录",
-					Content = "上传报告需要 GitHub 账号，请先在设置中登录。",
-					CloseButtonText = "确定",
-					XamlRoot = XamlRoot,
-					RequestedTheme = ThemeService.CurrentElementTheme
-				}.ShowAsync();
-				return;
-			}
-		}
-		// 若刚完成登录，等登录对话框完全关闭后再弹下一个对话框，避免 "Only a single ContentDialog can be open"
-		await Task.Yield();
-		PerformanceBenchmarkResult? selected = candidates.Count == 1
-			? candidates[0]
-			: await PickReportToUploadAsync(candidates);
-		if (selected == null) return;
-		var confirmContent = new StackPanel
-		{
-			Spacing = 8.0,
-			Children =
-			{
-				new TextBlock
-				{
-						Text = $"将上传以下测试报告：\n\nCPU: {selected.CpuName}\nGPU: {selected.GpuName}\n游戏: {selected.GamingScore} ({selected.GamingGrade})\n办公: {selected.OfficeScore} ({selected.OfficeGrade})\nWin性能: {selected.Win.FinalScore} ({selected.Win.Grade})\n测试时间: {selected.TestTime:yyyy-MM-dd HH:mm}\n\n报告将通过 PR 提交到社区仓库，合并后出现在排行榜。",
-					TextWrapping = TextWrapping.Wrap
-				}
-			}
-		};
-		CheckBox? chkHeatmap = null;
-		if (selected.Cpu.LatencyMatrix != null)
-		{
-			chkHeatmap = new CheckBox
-			{
-				Content = "同时上传核间延迟热力图（可在核间延迟查询工具中查看）",
-				IsChecked = true
-			};
-			confirmContent.Children.Add(chkHeatmap);
-		}
-		if (await new ContentDialog
-		{
-			Title = "上传测试报告",
-			Content = confirmContent,
-			PrimaryButtonText = "上传",
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		}.ShowAsync() != ContentDialogResult.Primary)
-		{
-			return;
-		}
-		ContentDialog progressDlg = new()
-		{
-			Title = "正在上传",
-			Content = new ProgressBar { IsIndeterminate = true },
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		var progressShowTask = progressDlg.ShowAsync().AsTask();
-		try
-		{
-			var progress = new Progress<string>(msg =>
-			{
-				DispatcherQueue.TryEnqueue(() =>
-				{
-					progressDlg.Content = new StackPanel
-					{
-						Spacing = 8.0,
-						Children =
-						{
-							(UIElement)new TextBlock { Text = msg },
-							(UIElement)new ProgressBar { IsIndeterminate = true }
-						}
-					};
-				});
-			});
-			string? heatmapPath = null;
-			if (chkHeatmap?.IsChecked == true && selected.Cpu.LatencyMatrix != null)
-			{
-				heatmapPath = PerformanceBenchmarkService.GenerateLatencyHeatmap(selected.Cpu.LatencyMatrix);
-			}
-			string prUrl = await BenchmarkCloudService.UploadReportAsync(selected, progress, CancellationToken.None, heatmapPath);
-			progressDlg.Hide();
-			try { await progressShowTask; } catch { }
-			if (await new ContentDialog
-			{
-				Title = "上传成功",
-				Content = "报告已通过 PR 提交，合并后将出现在排行榜。\n\nPR 链接：" + prUrl,
-				PrimaryButtonText = "打开 PR",
-				CloseButtonText = "关闭",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync() == ContentDialogResult.Primary)
-			{
-				await Launcher.LaunchUriAsync(new Uri(prUrl));
-			}
-		}
-		catch (Exception ex)
-		{
-			progressDlg.Hide();
-			try { await progressShowTask; } catch { }
-			await new ContentDialog
-			{
-				Title = "上传失败",
-				Content = ex.Message,
-				CloseButtonText = "确定",
-				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
-			}.ShowAsync();
-		}
-	}
-
-	private async Task<PerformanceBenchmarkResult?> PickReportToUploadAsync(List<PerformanceBenchmarkResult> candidates)
-	{
-		ListView listView = new()
-		{
-			MaxHeight = 360.0,
-			SelectionMode = ListViewSelectionMode.Single
-		};
-		foreach (PerformanceBenchmarkResult c in candidates)
-		{
-			listView.Items.Add(new ListViewItem
-			{
-				Content = new StackPanel
-				{
-					Spacing = 2.0,
-					Children =
-					{
-						new TextBlock
-						{
-							Text = $"{c.TestTime:yyyy-MM-dd HH:mm}  {c.CpuName}",
-							FontWeight = FontWeights.SemiBold
-						},
-						new TextBlock
-						{
-							Text = $"GPU: {c.GpuName}   游戏: {c.GamingScore} ({c.GamingGrade})   办公: {c.OfficeScore} ({c.OfficeGrade})   Win: {c.Win.FinalScore} ({c.Win.Grade})",
-							FontSize = 12.0,
-							Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-						}
-					}
-				}
-			});
-		}
-		if (listView.Items.Count > 0) listView.SelectedIndex = 0;
-		ContentDialog dialog = new()
-		{
-			Title = "选择要上传的报告",
-			Content = listView,
-			PrimaryButtonText = "下一步",
-			CloseButtonText = "取消",
-			IsPrimaryButtonEnabled = listView.Items.Count > 0,
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		listView.SelectionChanged += (_, _) => dialog.IsPrimaryButtonEnabled = listView.SelectedIndex >= 0;
-		if (await dialog.ShowAsync() != ContentDialogResult.Primary) return null;
-		int idx = listView.SelectedIndex;
-		return idx >= 0 && idx < candidates.Count ? candidates[idx] : null;
-	}
-
 	private void OnRankingClick(object sender, RoutedEventArgs e)
 	{
 		var tool = new BenchmarkCloudTool();
@@ -2319,50 +2059,29 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				_statusText.Text = "核间延迟测试完成，热力图已生成（未上传）";
 				return;
 			}
-			// 等询问对话框完全关闭后再继续，避免紧接着弹出的对话框发生冲突
 			await Task.Yield();
 			if (!GitHubAuthService.IsLoggedIn)
 			{
-				try
-				{
-					await GitHubAuthService.EnsureAuthenticatedAsync(XamlRoot, CancellationToken.None);
-				}
-				catch
-				{
-					_statusText.Text = "未登录，取消上传";
-					return;
-				}
+				try { await GitHubAuthService.EnsureAuthenticatedAsync(XamlRoot, CancellationToken.None); }
+				catch { _statusText.Text = "未登录，取消上传"; return; }
 			}
-			var tmp = new PerformanceBenchmarkResult();
-			await PerformanceBenchmarkService.PopulateHardwareInfoAsync(tmp);
-			ContentDialog progressDlg = new()
+			var hardware = new PerformanceBenchmarkResult();
+			await PerformanceBenchmarkService.PopulateHardwareInfoAsync(hardware);
+			ContentDialog progressDialog = new()
 			{
 				Title = "正在上传",
 				Content = new ProgressBar { IsIndeterminate = true },
 				XamlRoot = XamlRoot,
 				RequestedTheme = ThemeService.CurrentElementTheme
 			};
-			var progressShowTask = progressDlg.ShowAsync().AsTask();
+			var progressTask = progressDialog.ShowAsync().AsTask();
 			try
 			{
-				var progress = new Progress<string>(msg =>
-				{
-					DispatcherQueue.TryEnqueue(() =>
-					{
-						progressDlg.Content = new StackPanel
-						{
-							Spacing = 8.0,
-							Children =
-							{
-								(UIElement)new TextBlock { Text = msg },
-								(UIElement)new ProgressBar { IsIndeterminate = true }
-							}
-						};
-					});
-				});
-				string prUrl = await BenchmarkCloudService.UploadLatencyImageOnlyAsync(tmp.CpuName, heatmapPath!, progress, CancellationToken.None);
-				progressDlg.Hide();
-				try { await progressShowTask; } catch { }
+				var progress = new Progress<string>(message => DispatcherQueue.TryEnqueue(() =>
+					progressDialog.Content = new TextBlock { Text = message }));
+				string prUrl = await BenchmarkCloudService.UploadLatencyImageOnlyAsync(hardware.CpuName, heatmapPath!, progress, CancellationToken.None);
+				progressDialog.Hide();
+				try { await progressTask; } catch { }
 				_statusText.Text = "核间延迟热力图上传成功";
 				if (await new ContentDialog
 				{
@@ -2373,14 +2092,12 @@ public sealed partial class PerformanceBenchmarkPage : Page
 					XamlRoot = XamlRoot,
 					RequestedTheme = ThemeService.CurrentElementTheme
 				}.ShowAsync() == ContentDialogResult.Primary)
-				{
 					await Launcher.LaunchUriAsync(new Uri(prUrl));
-				}
 			}
 			catch (Exception ex)
 			{
-				progressDlg.Hide();
-				try { await progressShowTask; } catch { }
+				progressDialog.Hide();
+				try { await progressTask; } catch { }
 				await new ContentDialog
 				{
 					Title = "上传失败",

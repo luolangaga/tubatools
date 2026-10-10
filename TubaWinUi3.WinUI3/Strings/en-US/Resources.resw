@@ -685,7 +685,7 @@
     <value>Got it</value>
   </data>
   <data name="Settings_ActiveIntercept_Desc.Text" xml:space="preserve">
-    <value>Monitors context-menu entries in the background and blocks newly added third-party menu items (blocked first, reviewed later). Approve or release them in "Rogue Cleaner - Active Intercept".</value>
+    <value>Enables active interception and startup at login together; turning it off disables both. Newly added third-party context-menu entries are blocked until reviewed in Rogue Cleaner.</value>
   </data>
   <data name="Settings_ActiveIntercept_Title.Text" xml:space="preserve">
     <value>Active intercept</value>
@@ -5121,5 +5121,42 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   </data>
   <data name="AiPlayground_EpPurpose_Cpu" xml:space="preserve">
     <value>CPU (built in)</value>
+  </data>
+  <data name="HomePage_RecoverToolsButton.Content" xml:space="preserve"><value>Recover tools</value></data>
+  <data name="Recovery_Title" xml:space="preserve"><value>Recover tools</value></data>
+  <data name="Recovery_None" xml:space="preserve"><value>No unregistered tools found. Tools whose files were deleted must be imported again.</value></data>
+  <data name="Recovery_ChooseTool" xml:space="preserve"><value>Select an unregistered tool, then confirm its name and executable to add it to the catalog.</value></data>
+  <data name="Recovery_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Recovery_Name" xml:space="preserve"><value>Tool name</value></data>
+  <data name="Recovery_Executable" xml:space="preserve"><value>Executable</value></data>
+  <data name="Recovery_Register" xml:space="preserve"><value>Register tool</value></data>
+  <data name="Recovery_Done" xml:space="preserve"><value>Tool registration restored</value></data>
+  <data name="Recovery_Failed" xml:space="preserve"><value>Recovery failed</value></data>
+  <data name="Community_InvalidZip" xml:space="preserve">
+    <value>Cannot read this ZIP archive. It may be damaged, incomplete, or a different format. Download it again or create a new ZIP archive.</value>
+  </data>
+  <data name="Community_UnreadableZip" xml:space="preserve">
+    <value>Cannot read the archive. Check that it still exists and you have read permission: {0}</value>
+  </data>
+  <data name="Settings_ManageToolVisibility.Content" xml:space="preserve">
+    <value>Manage built-in tools and Start menu entries</value>
+  </data>
+  <data name="Settings_ToolVisibility_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Settings_ToolVisibility_Enabled" xml:space="preserve">
+    <value>Enable built-in tool</value>
+  </data>
+  <data name="Settings_ToolVisibility_Hint" xml:space="preserve">
+    <value>Disabling a built-in tool hides it and prevents launching it. Start menu choices apply when Windows search indexing is enabled.</value>
+  </data>
+  <data name="Settings_ToolVisibility_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Settings_ToolVisibility_Search" xml:space="preserve">
+    <value>Show in Start menu and Windows search</value>
+  </data>
+  <data name="Settings_ToolVisibility_Title" xml:space="preserve">
+    <value>Manage built-in tools and Start menu entries</value>
   </data>
 </root>

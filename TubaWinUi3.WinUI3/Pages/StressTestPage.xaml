@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.StressTestPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -14,7 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ctrl:ToolPageHeader
+        <ctrl:ToolPageHeader ToolId="stress-test"
             Grid.Row="0"
             Title="一键三烤"
             Subtitle="CPU / GPU / 网卡压力测试 — 实时监控温度、频率、功耗与网卡吞吐"

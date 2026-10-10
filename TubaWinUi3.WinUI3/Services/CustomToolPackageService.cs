@@ -25,6 +25,26 @@ public sealed record CustomToolImportResult(string ToolDirectory, string Primary
 
 public static class CustomToolPackageService
 {
+    public static bool TryGetExecutables(string packagePath, out IReadOnlyList<ImportableExecutable> executables, out string? error)
+    {
+        executables = [];
+        error = null;
+        try
+        {
+            executables = GetExecutables(packagePath);
+            return true;
+        }
+        catch (InvalidDataException)
+        {
+            error = LocalizationService.L("Community_InvalidZip", "无法读取 ZIP 压缩包：文件可能损坏、下载不完整，或并非 ZIP 格式。请重新下载或重新打包后选择。");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            error = string.Format(LocalizationService.L("Community_UnreadableZip", "无法读取压缩包，请确认文件仍存在且有读取权限：{0}"), ex.Message);
+        }
+        return false;
+    }
+
     private static readonly string[] ExecutableExtensions =
     [
         ".exe"
@@ -57,7 +77,7 @@ public static class CustomToolPackageService
         if (string.IsNullOrWhiteSpace(toolName))
             throw new InvalidOperationException("工具名称不能为空。");
 
-        var categoryRoot = Path.Combine(ToolCatalog.ToolsRoot, category);
+        var categoryRoot = Path.Combine(ToolCatalog.UserToolsRoot, "Custom", category);
         Directory.CreateDirectory(categoryRoot);
 
         var toolDirectory = GetUniqueDirectory(Path.Combine(categoryRoot, toolName));
@@ -69,7 +89,7 @@ public static class CustomToolPackageService
         if (!File.Exists(primaryPath))
             throw new FileNotFoundException("导入后没有找到所选主程序。", primaryPath);
 
-        UpsertMetadata(request, Path.GetFileName(toolDirectory));
+        UpsertMetadata(request, toolDirectory);
 
         ToolMetadataService.InvalidateCache();
         ToolCatalog.InvalidateTagsCache();
@@ -91,18 +111,33 @@ public static class CustomToolPackageService
         if (File.Exists(destinationFullPath))
             File.Delete(destinationFullPath);
 
+        _ = ToolMetadataService.GetUserTools();
         await Task.Run(() =>
         {
-            using var archive = ZipFile.Open(destinationFullPath, ZipArchiveMode.Create);
-            foreach (var file in Directory.EnumerateFiles(appDirectory, "*", SearchOption.AllDirectories))
+            var entries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            void AddDirectory(string directory, string prefix)
             {
-                var fullPath = Path.GetFullPath(file);
-                if (fullPath.Equals(destinationFullPath, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var relativePath = Path.GetRelativePath(appDirectory, fullPath);
-                archive.CreateEntryFromFile(fullPath, relativePath, CompressionLevel.Optimal);
+                if (!Directory.Exists(directory)) return;
+                foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+                {
+                    if (Path.GetFullPath(file).Equals(destinationFullPath, StringComparison.OrdinalIgnoreCase)) continue;
+                    entries[Path.Combine(prefix, Path.GetRelativePath(directory, file)).Replace('\\', '/')] = file;
+                }
             }
+            AddDirectory(appDirectory, "");
+            // 用户库可能位于 AppData/自定义目录；整合包必须带上登记与文件。
+            AddDirectory(ToolCatalog.ToolsRoot, "Tools");
+            AddDirectory(ToolCatalog.UserToolsRoot, "Data/UserTools");
+            foreach (var name in new[] { "user-tools.json", "tool-state.json" })
+            {
+                var source = Path.Combine(UserToolLibrary.DataDirectory, name);
+                if (File.Exists(source)) entries["Data/" + name] = source;
+            }
+            entries.Remove("Data/.config_location");
+            using var archive = ZipFile.Open(destinationFullPath, ZipArchiveMode.Create);
+            foreach (var (entry, source) in entries) archive.CreateEntryFromFile(source, entry, CompressionLevel.Optimal);
+            using var marker = new StreamWriter(archive.CreateEntry("Data/.config_location").Open());
+            marker.Write("AppRoot");
         });
     }
 
@@ -128,7 +163,7 @@ public static class CustomToolPackageService
         if (string.IsNullOrWhiteSpace(name))
             throw new InvalidOperationException("工具名称不能为空。");
 
-        var categoryRoot = Path.Combine(ToolCatalog.ToolsRoot, cat);
+        var categoryRoot = Path.Combine(ToolCatalog.UserToolsRoot, "Custom", cat);
         Directory.CreateDirectory(categoryRoot);
 
         var toolDirectory = GetUniqueDirectory(Path.Combine(categoryRoot, name));
@@ -149,7 +184,7 @@ public static class CustomToolPackageService
             tags,
             []);
 
-        UpsertMetadata(request, Path.GetFileName(toolDirectory));
+        UpsertMetadata(request, toolDirectory);
 
         ToolMetadataService.InvalidateCache();
         ToolCatalog.InvalidateTagsCache();
@@ -177,10 +212,13 @@ public static class CustomToolPackageService
         }
     }
 
-    private static void UpsertMetadata(CustomToolImportRequest request, string metadataMatch)
+    private static void UpsertMetadata(CustomToolImportRequest request, string toolDirectory)
     {
         ToolMetadataService.UpsertToolMetadataEntry(
-            metadataMatch,
+            Path.GetFileName(toolDirectory),
+            toolDirectory: toolDirectory,
+            category: request.Category,
+            launchTarget: NormalizeEntryPath(request.PrimaryExecutableEntry).Replace('/', '\\'),
             name: request.ToolName,
             description: request.Description,
             publisher: request.Publisher,

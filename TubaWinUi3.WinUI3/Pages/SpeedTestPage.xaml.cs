@@ -237,6 +237,17 @@ public sealed partial class SpeedTestPage : Page
         RecolorSiteRows();
     }
 
+    private void SpeedViewport_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // 根据工具实际可用宽度（包括独立窗口）排版，而非整个主窗口宽度。
+        var width = Math.Max(0, e.NewSize.Width - SpeedScroll.Padding.Left - SpeedScroll.Padding.Right);
+        SpeedBody.Width = Math.Min(1120, width);
+        var wide = width >= 780;
+        MetricsColumn.Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        Grid.SetColumn(MetricsGrid, wide ? 1 : 0);
+        Grid.SetRow(MetricsGrid, wide ? 0 : 1);
+    }
+
     private void ResetToIdle()
     {
         _phase = Phase.Idle;
@@ -851,6 +862,8 @@ public sealed partial class SpeedTestPage : Page
 
     private static Color ColorRes(string key, Color fallback)
     {
+        if (key.EndsWith("Brush", StringComparison.Ordinal))
+            return ThemeColors.ResolveBrush(key, fallback) is SolidColorBrush brush ? brush.Color : fallback;
         if (Application.Current.Resources.TryGetValue(key, out var v))
         {
             if (v is Color c) return c;
@@ -860,7 +873,7 @@ public sealed partial class SpeedTestPage : Page
     }
 
     private static Brush BrushRes(string key, Color fallback)
-        => Application.Current.Resources.TryGetValue(key, out var v) && v is Brush b ? b : new SolidColorBrush(fallback);
+        => ThemeColors.ResolveBrush(key, fallback);
 
     // ───────────────────────────── 常用网站连通性 ─────────────────────────────
 

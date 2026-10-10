@@ -156,7 +156,7 @@
             </TransitionCollection>
         </Grid.Transitions>
 
-        <Grid Padding="24,8,24,24" RowSpacing="16">
+        <Grid Padding="24,4,24,32" RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -165,7 +165,7 @@
             </Grid.RowDefinitions>
 
             <!-- 标题行：图标徽章 + 标题 + 副标题 -->
-            <controls:ToolPageHeader
+            <controls:ToolPageHeader ToolId="winget-store"
                 x:Name="PageHeader"
                 Grid.Row="0"
                 HeaderPadding="0"
@@ -201,7 +201,13 @@
                 <StackPanel
                     x:Name="CategoryBar"
                     Orientation="Horizontal"
-                    Spacing="8" />
+                    Spacing="8">
+<StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
+</StackPanel>
             </ScrollViewer>
 
             <!-- 内容区 -->

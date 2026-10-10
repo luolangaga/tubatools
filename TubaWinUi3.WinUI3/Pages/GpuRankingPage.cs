@@ -123,8 +123,8 @@ public sealed partial class GpuRankingPage : Page
     {
         var mainGrid = new Grid
         {
-            Padding = new Thickness(24, 8, 24, 24),
-            RowSpacing = 16
+            Padding = new Thickness(24, 4, 24, 32),
+            RowSpacing = 24
         };
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -154,6 +154,7 @@ public sealed partial class GpuRankingPage : Page
     {
         _toolHeader = new ToolPageHeader
         {
+            ToolId = "gpu-ranking",
             HeaderPadding = new Thickness(0, 16, 0, 0),
             Title = "GPU 天梯图",
             Subtitle = $"数据来源 TopCPU.net · 更新于 {GpuRankingService.LastUpdated ?? "内置数据"} · FP32 浮点性能排列",

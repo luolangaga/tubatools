@@ -194,8 +194,16 @@ public sealed partial class ErrorWindow : Window
 
     private void RestartButton_Click(object sender, RoutedEventArgs e)
     {
-        Process.Start(Environment.ProcessPath!);
-        Close();
+        // 新实例等待当前实例完成清理并释放互斥体，避免重启被当作重复启动转发回来。
+        if (Process.Start(new ProcessStartInfo(Environment.ProcessPath!)
+        {
+            Arguments = LaunchIntent.TakeoverArg,
+            UseShellExecute = true
+        }) is not null)
+        {
+            App.RequestExit();
+            Close();
+        }
     }
 
     private void CloseWindowButton_Click(object sender, RoutedEventArgs e)

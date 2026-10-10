@@ -17,6 +17,19 @@ namespace TubaWinUi3.Pages;
 /// </summary>
 public sealed partial class EnvironmentVariablesPage : Page, ILocalizablePage
 {
+    private void VariableWorkspace_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var wide = e.NewSize.Width >= 840;
+        VariableWorkspace.ColumnDefinitions[0].Width = wide ? new GridLength(240) : new GridLength(1, GridUnitType.Star);
+        VariableWorkspace.ColumnDefinitions[1].Width = new GridLength(wide ? 1 : 0);
+        VariableWorkspace.ColumnDefinitions[2].Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        VariableWorkspace.RowDefinitions[0].Height = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(180);
+        VariableWorkspace.RowDefinitions[1].Height = wide ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        VariableDivider.Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
+        Grid.SetColumn(EditorPanel, wide ? 2 : 0);
+        Grid.SetRow(EditorPanel, wide ? 0 : 1);
+    }
+
     private readonly List<EnvVarEntry> _original = [];
     private readonly ObservableCollection<EnvVarEntry> _working = [];
     private readonly ObservableCollection<PathEntryViewModel> _pathEntries = [];

@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="game-monitor-records"
             Grid.Row="0"
             Title="记录查看"
             Subtitle="解析游戏监控导出的 JSON / CSV，图表化回放 FPS、温度、负载等历史数据（Beta 测试中，部分数据可能有偏差）"
@@ -46,7 +46,7 @@
         </controls:ToolPageHeader>
 
         <!-- Body -->
-        <Grid Grid.Row="1" Padding="24,8,24,24" ColumnSpacing="12">
+        <Grid Grid.Row="1" Padding="24,4,24,32" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="262" />
                 <ColumnDefinition Width="*" />
@@ -84,7 +84,7 @@
             <ScrollViewer x:Name="RightScroll" Grid.Column="1"
                           VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled"
                           HorizontalScrollBarVisibility="Disabled" HorizontalScrollMode="Disabled"
-                          SizeChanged="RightScroll_SizeChanged">
+                          SizeChanged="RightScroll_SizeChanged" HorizontalContentAlignment="Stretch">
                 <Grid RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -98,12 +98,18 @@
                     <!-- Meta chips -->
                     <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                   HorizontalScrollMode="Enabled" ZoomMode="Disabled">
-                        <StackPanel x:Name="PnlMeta" Orientation="Horizontal" Spacing="8" />
+                        <StackPanel x:Name="PnlMeta" Orientation="Horizontal" Spacing="8">
+<StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
+</StackPanel>
                     </ScrollViewer>
 
                     <!-- Stat cards -->
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                  HorizontalScrollMode="Enabled" ZoomMode="Disabled">
+                                  HorizontalScrollMode="Enabled" ZoomMode="Disabled" HorizontalContentAlignment="Stretch">
                         <StackPanel x:Name="PnlCards" Orientation="Horizontal" Spacing="8" Padding="0,0,0,2" />
                     </ScrollViewer>
 
@@ -135,7 +141,7 @@
                                     <CheckBox x:Name="ChkFill" Content="面积" FontSize="12" MinWidth="0" IsChecked="True"
                                               Checked="ChartOption_Changed" Unchecked="ChartOption_Changed"
                                               ToolTipService.ToolTip="给每张图表的曲线填充面积色" />
-                                    <Button Content="重置范围" FontSize="12" Padding="8,4" Click="ResetRange_Click" />
+                                    <Button Content="重置范围" FontSize="14" Padding="8,4" Click="ResetRange_Click" />
                                 </StackPanel>
                             </Grid>
 

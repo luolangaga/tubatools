@@ -16,6 +16,7 @@ namespace TubaWinUi3.Services;
 /// </summary>
 internal static class WindowsSearchIndexService
 {
+    private static readonly object IndexGate = new();
     private static readonly string StartMenuFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         @"Microsoft\Windows\Start Menu\Programs\图吧工具箱CE");
@@ -28,9 +29,6 @@ internal static class WindowsSearchIndexService
         try
         {
             var allTools = ToolCatalog.GetAllToolsCached();
-            if (allTools.Count == 0)
-                return;
-
             await Task.Run(() => RegisterTools(allTools));
         }
         catch (Exception ex)
@@ -57,6 +55,15 @@ internal static class WindowsSearchIndexService
 
     private static void RegisterTools(IReadOnlyList<ToolItem> tools)
     {
+        lock (IndexGate)
+        {
+            if (!AppSettings.GetBool("WindowsSearchIndex", false)) return;
+            RegisterToolsCore(tools);
+        }
+    }
+
+    private static void RegisterToolsCore(IReadOnlyList<ToolItem> tools)
+    {
         // 确保目标文件夹存在
         if (!Directory.Exists(StartMenuFolder))
             Directory.CreateDirectory(StartMenuFolder);
@@ -65,7 +72,7 @@ internal static class WindowsSearchIndexService
         var expectedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // 1) 外部工具（.exe 等）
-        var toRegister = DeduplicateTools(tools);
+        var toRegister = DeduplicateTools(tools.Where(t => ToolVisibilityService.IsSearchEnabled(ToolVisibilityService.SearchKey(t))).ToList());
         foreach (var (name, tool) in toRegister)
         {
             var shortcutPath = Path.Combine(StartMenuFolder, $"{SanitizeFileName(name)}.lnk");
@@ -92,6 +99,7 @@ internal static class WindowsSearchIndexService
         {
             foreach (var builtin in BuiltinToolRegistry.Tools)
             {
+                if (!ToolVisibilityService.IsSearchEnabled("builtin:" + builtin.Id)) continue;
                 var displayName = builtin.Name;
                 if (string.IsNullOrWhiteSpace(displayName))
                     continue;
@@ -287,6 +295,11 @@ internal static class WindowsSearchIndexService
     /// 清理所有由本服务创建的快捷方式（卸载/重置时调用）。
     /// </summary>
     public static void RemoveAll()
+    {
+        lock (IndexGate) RemoveAllCore();
+    }
+
+    private static void RemoveAllCore()
     {
         try
         {

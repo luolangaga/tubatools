@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace TubaWinUi3.Compatible.Services
@@ -20,7 +21,8 @@ namespace TubaWinUi3.Compatible.Services
                 if (File.Exists(FavoritesPath))
                 {
                     var json = File.ReadAllText(FavoritesPath);
-                    _cache = JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>();
+                    _cache = (JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>())
+                        .Select(ToolMetadataService.ResolveUserDirectory).ToList();
                 }
                 else
                 {

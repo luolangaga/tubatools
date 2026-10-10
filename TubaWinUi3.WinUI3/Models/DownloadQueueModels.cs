@@ -553,7 +553,8 @@ internal static class ZipExtractHelper
         string destinationDir,
         ExtractReplaceProfile profile,
         IProgress<string>? statusProgress = null,
-        Action? onCompleted = null)
+        Action? onCompleted = null,
+        bool preserveExistingFiles = false)
     {
         Exception? lastError = null;
 
@@ -569,7 +570,7 @@ internal static class ZipExtractHelper
             try
             {
                 ExtractOnce(archivePath, destinationDir, extractDir, profile, statusProgress,
-                    allowCopyFallback: attempt == ReplaceMaxAttempts, onCompleted);
+                    allowCopyFallback: attempt == ReplaceMaxAttempts, onCompleted, preserveExistingFiles);
                 return;
             }
             catch (Exception ex)
@@ -614,7 +615,7 @@ internal static class ZipExtractHelper
 
     private static void ExtractOnce(string archivePath, string destinationDir, string extractDir,
         ExtractReplaceProfile profile, IProgress<string>? statusProgress, bool allowCopyFallback,
-        Action? onCompleted)
+        Action? onCompleted, bool preserveExistingFiles)
     {
         if (!File.Exists(archivePath))
             throw new FileNotFoundException("下载的文件不存在", archivePath);
@@ -633,6 +634,11 @@ internal static class ZipExtractHelper
             TryDeleteDirectory(extractDir);
             throw;
         }
+
+        // 内核包没有旧文件的所有权清单。新包未包含的旧文件必须保留，
+        // 不能因更新删掉手工添加的工具、工具配置或旧版用户工具。
+        if (preserveExistingFiles && Directory.Exists(destinationDir))
+            PreserveExistingFiles(destinationDir, extractDir);
 
         var backupDir = destinationDir + "_bak";
 
@@ -682,6 +688,26 @@ internal static class ZipExtractHelper
             catch (Exception fallbackEx)
             {
                 throw new IOException(string.Format(profile.CopyFailureFormat, fallbackEx.Message), fallbackEx);
+            }
+        }
+    }
+
+    private static void PreserveExistingFiles(string source, string destination)
+    {
+        foreach (var entry in Directory.EnumerateFileSystemEntries(source))
+        {
+            if ((File.GetAttributes(entry) & FileAttributes.ReparsePoint) != 0)
+                throw new IOException($"工具目录含链接，已停止整体替换以保留用户文件：{entry}");
+            var target = Path.Combine(destination, Path.GetFileName(entry));
+            if (Directory.Exists(entry))
+            {
+                Directory.CreateDirectory(target);
+                PreserveExistingFiles(entry, target);
+            }
+            else if (!File.Exists(target))
+            {
+                // 保留失败必须中断安装；不能跳过后删除旧备份。
+                File.Copy(entry, target, false);
             }
         }
     }
@@ -808,7 +834,7 @@ public sealed class ToolsBundleExtractProcessor : IDownloadPostProcessor
         await Task.Run(() =>
             ZipExtractHelper.ExtractTolerantAndReplace(
                 downloadedFilePath, destinationPath, ExtractReplaceProfile.ToolsBundle,
-                statusProgress, onCompleted: ApplyCompletedState), ct);
+                statusProgress, onCompleted: ApplyCompletedState, preserveExistingFiles: true), ct);
     }
 
     private void ApplyCompletedState()
@@ -889,7 +915,7 @@ public sealed class CommunityToolInstallProcessor : IDownloadPostProcessor
                 File.Move(downloadedFilePath, targetPath, true);
         }
 
-        // tools.json 条目：卡片名称/描述/标签/启动目标（ToolCatalog 收录的唯一依据）。
+        // 用户工具登记：卡片名称/描述/标签/启动目标。
         // 写入失败会抛 IOException → 队列项 Failed 并给出原因，不静默。
         Services.ToolMetadataService.UpsertToolMetadataEntry(
             _request.ToolId,
@@ -897,7 +923,10 @@ public sealed class CommunityToolInstallProcessor : IDownloadPostProcessor
             description: _request.Description,
             publisher: _request.Publisher,
             tags: _request.Tags,
-            launchTarget: _request.LaunchTarget);
+            launchTarget: _request.LaunchTarget,
+            toolDirectory: destinationPath,
+            category: _request.Category,
+            communityId: _request.ToolId);
         Services.ToolMetadataService.InvalidateCache();
 
         Services.CommunityToolRegistry.Upsert(new Services.CommunityInstallRecord(

@@ -791,11 +791,13 @@ public partial class App : Application
 
         // 规则：分类下没有工具就删除。启动时清理历史遗留的空白分类目录
         // （扫描放后台线程，删除与设置写入回 UI 线程）。
-        _ = Task.Run(async () =>
+        _ = DelayThenRunAsync(TimeSpan.FromSeconds(15), () => Task.Run(async () =>
         {
             List<string> emptyCategories;
             try
             {
+                // 与首页共享 single-flight 扫描，避免冷启动并发 GetTools 重复扫盘。
+                await ToolCatalog.GetAllToolsAsync();
                 emptyCategories = ToolCatalog.FindEmptyCategories();
             }
             catch
@@ -822,7 +824,7 @@ public partial class App : Application
                         mw.RefreshToolCategories();
                 }
             });
-        });
+        }));
 
         // 后端进程统一入口：按「主动拦截 + 游戏后台监控」两个功能的开关状态同步。
         // 有任一功能开启 → 拉起 NativeAOT 后端（独立常驻进程）；MSIX 沙箱下不支持。
@@ -907,6 +909,7 @@ public partial class App : Application
         try
         {
             await Task.Delay(delay);
+            if (IsExiting) return;
             await action();
         }
         catch { }

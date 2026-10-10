@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.PortViewerPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,7 +15,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="port-viewer"
             Grid.Row="0"
             Title="端口占用"
             Subtitle="通过 iphlpapi 扫描系统 TCP/UDP 连接，定位端口占用进程"
@@ -23,8 +23,13 @@
             l:Uids.Uid="PortViewer_PageHeader" />
 
         <!-- Main content -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
+        <Grid Grid.Row="1" Padding="24,4,24,24" RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" /><RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Spacing="16">
+
                 <InfoBar x:Name="ErrorBar" IsClosable="True" IsOpen="False" Severity="Error" />
 
                 <!-- Action bar -->
@@ -35,15 +40,15 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <AutoSuggestBox x:Name="SearchBox" PlaceholderText="搜索端口、进程名、PID、tcp6、地址..." l:Uids.Uid="PortViewer_SearchPlaceholder" MinWidth="240" QueryIcon="Find" TextChanged="SearchBox_TextChanged" QuerySubmitted="SearchBox_QuerySubmitted" />
-                    <ComboBox x:Name="ProtoCombo" Grid.Column="1" MinWidth="100" SelectedIndex="0" SelectionChanged="ProtoCombo_SelectionChanged">
+                    <AutoSuggestBox Header="搜索连接" x:Name="SearchBox" PlaceholderText="搜索端口、进程名、PID、tcp6、地址..." l:Uids.Uid="PortViewer_SearchPlaceholder" MinWidth="240" QueryIcon="Find" TextChanged="SearchBox_TextChanged" QuerySubmitted="SearchBox_QuerySubmitted" />
+                    <ComboBox Header="协议" x:Name="ProtoCombo" Grid.Column="1" MinWidth="100" SelectedIndex="0" SelectionChanged="ProtoCombo_SelectionChanged">
                         <ComboBoxItem Content="全部" l:Uids.Uid="PortViewer_FilterAll" Tag="全部" />
                         <ComboBoxItem Content="TCP" Tag="TCP" />
                         <ComboBoxItem Content="UDP" Tag="UDP" />
                         <ComboBoxItem Content="TCP6" Tag="TCP6" />
                         <ComboBoxItem Content="UDP6" Tag="UDP6" />
                     </ComboBox>
-                    <Button x:Name="RefreshBtn" Grid.Column="2" Click="RefreshBtn_Click">
+                    <Button x:Name="RefreshBtn" Grid.Column="2" VerticalAlignment="Bottom" Click="RefreshBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon Glyph="&#xE72C;" FontSize="12" />
                             <TextBlock Text="刷新" l:Uids.Uid="PortViewer_Refresh" />
@@ -52,8 +57,9 @@
                     <TextBlock x:Name="CountText" Grid.Column="3" FontSize="12" VerticalAlignment="Center" />
                 </Grid>
 
+            </StackPanel>
                 <!-- Column headers -->
-                <Border x:Name="HeaderBorder" Padding="12,6,12,6" CornerRadius="8,8,0,0">
+                <Border Grid.Row="1" Margin="0,0,0,-16" x:Name="HeaderBorder" Padding="12,6,12,6" CornerRadius="8,8,0,0">
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -74,18 +80,19 @@
                     </Grid>
                 </Border>
 
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled" HorizontalContentAlignment="Stretch">
                 <!-- List -->
-                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8">
+                <Border x:Name="ListBorder" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderThickness="1" CornerRadius="0,0,8,8">
                     <StackPanel x:Name="ListContainer" />
                 </Border>
 
+            </ScrollViewer>
                 <!-- Loading -->
-                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
+                <StackPanel Grid.Row="2" x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
                     <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
                     <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在扫描端口..." l:Uids.Uid="PortViewer_Scanning" />
                 </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </Grid>
     </Page>
 

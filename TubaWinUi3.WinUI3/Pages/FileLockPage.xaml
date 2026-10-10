@@ -1,155 +1,124 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Page
-    x:Class="TubaWinUi3.Pages.FileLockPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:TubaWinUi3.Controls"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:l="using:WinUI3Localizer"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
-
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:TubaWinUi3.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:l="using:WinUI3Localizer" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Class="TubaWinUi3.Pages.FileLockPage" mc:Ignorable="d">
     <Grid RowSpacing="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
-        <controls:ToolPageHeader
-            Grid.Row="0"
-            Title="文件占用查看"
-            Subtitle="列出正在占用指定文件或目录的进程，展开可看具体持有的路径"
-            Glyph="&#xE72E;"
-            l:Uids.Uid="FileLock_PageHeader" />
-
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
-                <!-- 未以管理员身份运行时的操作条：受保护进程的占用读不到；一键提权重启并续扫当前路径。 -->
+        <controls:ToolPageHeader ToolId="file-locksmith" Grid.Row="0" Title="文件占用查看" Subtitle="列出正在占用指定文件或目录的进程，展开可看具体持有的路径" Glyph="&#xE72E;" l:Uids.Uid="FileLock_PageHeader"/>
+        <Grid Grid.Row="1" Padding="24,4,24,24" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Spacing="12">
                 <InfoBar x:Name="AdminBar" IsClosable="True" IsOpen="False" Severity="Warning">
                     <InfoBar.ActionButton>
                         <Button x:Name="RestartAsAdminBtn" Click="RestartAsAdminBtn_Click" Padding="12,5">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE7EF;" />
-                                <TextBlock Text="以管理员身份重新启动" l:Uids.Uid="FileLock_AdminRestart" />
-                                <ProgressRing x:Name="RestartAsAdminRing" Width="14" Height="14" IsActive="False" Visibility="Collapsed" />
+                                <FontIcon FontSize="12" Glyph="&#xE7EF;"/>
+                                <TextBlock Text="以管理员身份重新启动" l:Uids.Uid="FileLock_AdminRestart"/>
+                                <ProgressRing x:Name="RestartAsAdminRing" Width="14" Height="14" IsActive="False" Visibility="Collapsed"/>
                             </StackPanel>
                         </Button>
                     </InfoBar.ActionButton>
                 </InfoBar>
-
-                <InfoBar x:Name="ErrorBar" IsClosable="True" IsOpen="False" Severity="Error" />
-
-                <!-- 输入行 -->
-                <Grid ColumnSpacing="8">
+                <InfoBar x:Name="ErrorBar" IsClosable="True" IsOpen="False" Severity="Error"/>
+                <Grid ColumnSpacing="8" RowSpacing="12">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <TextBox x:Name="PathBox" MinWidth="240" PlaceholderText="输入或选择要检查的文件 / 目录路径" l:Uids.Uid="FileLock_PathPlaceholder" />
-
-                    <Button x:Name="PickFileBtn" Grid.Column="1" Click="PickFileBtn_Click">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBox Grid.ColumnSpan="5" Header="文件或目录路径" x:Name="PathBox" MinWidth="240" PlaceholderText="输入或选择要检查的文件 / 目录路径" l:Uids.Uid="FileLock_PathPlaceholder"/>
+                    <Button x:Name="PickFileBtn" Grid.Row="1" Grid.Column="0" Click="PickFileBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE8E5;" FontSize="12" />
-                            <TextBlock Text="选择文件" l:Uids.Uid="FileLock_PickFile" />
+                            <FontIcon Glyph="&#xE8E5;" FontSize="12"/>
+                            <TextBlock Text="选择文件" l:Uids.Uid="FileLock_PickFile"/>
                         </StackPanel>
                     </Button>
-
-                    <Button x:Name="PickFolderBtn" Grid.Column="2" Click="PickFolderBtn_Click">
+                    <Button x:Name="PickFolderBtn" Grid.Row="1" Grid.Column="1" Click="PickFolderBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE8B7;" FontSize="12" />
-                            <TextBlock Text="选择目录" l:Uids.Uid="FileLock_PickFolder" />
+                            <FontIcon Glyph="&#xE8B7;" FontSize="12"/>
+                            <TextBlock Text="选择目录" l:Uids.Uid="FileLock_PickFolder"/>
                         </StackPanel>
                     </Button>
-
-                    <Button x:Name="ScanBtn" Grid.Column="3" Style="{StaticResource AccentButtonStyle}" Click="ScanBtn_Click">
+                    <Button x:Name="ScanBtn" Grid.Row="1" Grid.Column="2" Style="{StaticResource AccentButtonStyle}" Click="ScanBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <FontIcon Glyph="&#xE721;" FontSize="12" />
-                            <TextBlock Text="扫描" l:Uids.Uid="FileLock_Scan" />
+                            <FontIcon Glyph="&#xE721;" FontSize="12"/>
+                            <TextBlock Text="扫描" l:Uids.Uid="FileLock_Scan"/>
                         </StackPanel>
                     </Button>
-
-                    <Button x:Name="CancelBtn" Grid.Column="4" IsEnabled="False" Click="CancelBtn_Click">
-                        <TextBlock Text="取消" l:Uids.Uid="FileLock_Cancel" />
+                    <Button x:Name="CancelBtn" Grid.Row="1" Grid.Column="3" IsEnabled="False" Click="CancelBtn_Click">
+                        <TextBlock Text="取消" l:Uids.Uid="FileLock_Cancel"/>
                     </Button>
                 </Grid>
-
-                <!-- 扫描进度 -->
                 <StackPanel x:Name="ProgressPanel" Spacing="6" Visibility="Collapsed">
-                    <ProgressBar x:Name="ScanProgressBar" IsIndeterminate="True" />
-                    <TextBlock x:Name="ProgressText" FontSize="12" />
+                    <ProgressBar x:Name="ScanProgressBar" IsIndeterminate="True"/>
+                    <TextBlock x:Name="ProgressText" FontSize="12"/>
                 </StackPanel>
-
-                <TextBlock x:Name="SummaryText" FontSize="14" TextWrapping="Wrap" Visibility="Collapsed" />
-
-                <!-- 列标题。左内边距 29 = 12(自身) + 1(ExpanderHeaderBorderThickness)
-                     + 16(ExpanderHeaderPadding)：数据行在 Expander 表头里，比表头多这两段缩进。
-                     右侧留白由 code-behind 的 SyncHeaderWidth 按实测差值补齐——数据行右边还被
-                     展开箭头占掉一段，若不补，表头可用宽度更宽、星号列更宽，列名会整体右移。
-                     操作列留 Auto，由 code-behind 塞透明按钮副本占位（RefreshActionHeaderMirror）。 -->
-                <Border x:Name="HeaderBorder" Padding="29,6,12,6" CornerRadius="8,8,0,0" Visibility="Collapsed">
-                    <Grid x:Name="HeaderGrid" ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="80" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="进程" l:Uids.Uid="FileLock_ColProcess" />
-                        <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="PID" l:Uids.Uid="FileLock_ColPid" />
-                        <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="进程 exe" l:Uids.Uid="FileLock_ColPath" />
-                        <Grid x:Name="ActionHeaderCell" Grid.Column="3">
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="操作" l:Uids.Uid="FileLock_ColAction" />
-                        </Grid>
-                    </Grid>
-                </Border>
-
-                <!-- 结果列表 -->
-                <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8" Visibility="Collapsed">
-                    <StackPanel x:Name="ListContainer" />
-                </Border>
-
-                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
-                    <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True" />
-                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在扫描..." l:Uids.Uid="FileLock_Scanning" />
-                </StackPanel>
-
-                <!-- 资源管理器右键菜单集成：便携=经典菜单（显示更多选项）；MSIX+Win11=新版菜单。
-                     首次打开本页询问一次，之后在这里随时开关。 -->
-                <Expander x:Name="ShellMenuExpander" HorizontalAlignment="Stretch" IsExpanded="False">
-                    <Expander.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="14" Glyph="&#xE8B7;" />
-                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="资源管理器右键菜单" l:Uids.Uid="FileLock_MenuSectionTitle" />
-                        </StackPanel>
-                    </Expander.Header>
-                    <StackPanel Spacing="8" Padding="0,12,0,0">
-                        <TextBlock x:Name="ShellMenuDescText" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ToggleSwitch x:Name="ShellMenuToggle" MinWidth="0" Toggled="ShellMenuToggle_Toggled" VerticalAlignment="Center" />
-                            <Button x:Name="RestartExplorerBtn" Grid.Column="1" Click="RestartExplorerBtn_Click" Padding="12,5" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="12" Glyph="&#xE72C;" />
-                                    <TextBlock FontSize="12" Text="重启资源管理器" l:Uids.Uid="FileLock_MenuRestartExplorer" />
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                        <TextBlock
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="修改后如菜单未立即生效，可点右侧按钮重启资源管理器。"
-                            TextWrapping="Wrap"
-                            l:Uids.Uid="FileLock_MenuRestartHint" />
-                    </StackPanel>
-                </Expander>
+                <TextBlock x:Name="SummaryText" FontSize="14" TextWrapping="Wrap" Visibility="Collapsed"/>
             </StackPanel>
-        </ScrollViewer>
+            <Border x:Name="HeaderBorder" Padding="29,6,12,6" CornerRadius="8,8,0,0" Visibility="Collapsed" Grid.Row="1">
+                <Grid x:Name="HeaderGrid" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="12" FontWeight="SemiBold" Text="进程" l:Uids.Uid="FileLock_ColProcess"/>
+                    <TextBlock Grid.Column="1" FontSize="12" FontWeight="SemiBold" Text="PID" l:Uids.Uid="FileLock_ColPid"/>
+                    <TextBlock Grid.Column="2" FontSize="12" FontWeight="SemiBold" Text="进程 exe" l:Uids.Uid="FileLock_ColPath"/>
+                    <Grid x:Name="ActionHeaderCell" Grid.Column="3">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Text="操作" l:Uids.Uid="FileLock_ColAction"/>
+                    </Grid>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="2">
+                <ScrollViewer HorizontalContentAlignment="Stretch" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
+                    <Border x:Name="ListBorder" BorderThickness="1" CornerRadius="0,0,8,8" Visibility="Collapsed">
+                        <StackPanel x:Name="ListContainer"/>
+                    </Border>
+                </ScrollViewer>
+                <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" Spacing="8" Padding="0,40,0,40" Visibility="Collapsed">
+                    <ProgressRing x:Name="LoadingRing" Width="36" Height="36" IsActive="True"/>
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="正在扫描..." l:Uids.Uid="FileLock_Scanning"/>
+                </StackPanel>
+            </Grid>
+            <Expander x:Name="ShellMenuExpander" HorizontalAlignment="Stretch" IsExpanded="False" Grid.Row="3">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE8B7;"/>
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="资源管理器右键菜单" l:Uids.Uid="FileLock_MenuSectionTitle"/>
+                    </StackPanel>
+                </Expander.Header>
+                <StackPanel Spacing="8" Padding="0,12,0,0">
+                    <TextBlock x:Name="ShellMenuDescText" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleSwitch x:Name="ShellMenuToggle" MinWidth="0" Toggled="ShellMenuToggle_Toggled" VerticalAlignment="Center"/>
+                        <Button x:Name="RestartExplorerBtn" Grid.Column="1" Click="RestartExplorerBtn_Click" Padding="12,5" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="12" Glyph="&#xE72C;"/>
+                                <TextBlock FontSize="12" Text="重启资源管理器" l:Uids.Uid="FileLock_MenuRestartExplorer"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="修改后如菜单未立即生效，可点右侧按钮重启资源管理器。" TextWrapping="Wrap" l:Uids.Uid="FileLock_MenuRestartHint"/>
+                </StackPanel>
+            </Expander>
+        </Grid>
     </Grid>
 </Page>

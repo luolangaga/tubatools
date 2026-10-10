@@ -30,6 +30,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
     {
         base.OnNavigatedTo(e);
         CompactModeService.CompactModeChanged += OnCompactModeChanged;
+        RebuildPivot();
 
         // 离开页面期间（如设置页切换简洁模式）事件收不到，回到页面时重新同步，
         // 否则缓存页面会一直停留在构造时的旧模式，必须重启才生效

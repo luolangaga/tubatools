@@ -12,21 +12,27 @@
     Unloaded="SpeedTestPage_Unloaded">
 
     <Grid RowSpacing="0">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="speed-test"
             Grid.Row="0"
             Title="网速测试"
             Subtitle="多线程并发测速 · 浙大 / Ookla / Cloudflare 多测速节点 · 速率单位可切换"
             Glyph="&#xE86F;" />
 
         <!-- 正文 -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto" Padding="24,8,24,24">
-            <StackPanel Spacing="16">
+        <ScrollViewer x:Name="SpeedScroll" SizeChanged="SpeedViewport_SizeChanged" Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
+            <StackPanel x:Name="SpeedBody" Spacing="24" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <InfoBar x:Name="ErrorBar" Severity="Error" IsOpen="False" IsClosable="True" Title="测速失败" />
 
@@ -37,20 +43,20 @@
                     <StackPanel Spacing="8">
 
                         <!-- 测速节点 / 显示单位 -->
-                        <Grid ColumnSpacing="24" HorizontalAlignment="Center" Margin="0,2,0,4">
+                        <Grid ColumnSpacing="16" Margin="0,2,0,12">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="测速节点" VerticalAlignment="Center" />
-                                <ComboBox x:Name="NodeBox" MinWidth="200" FontSize="12"
+                            <StackPanel>
+
+                                <ComboBox Header="测速节点" HorizontalAlignment="Stretch" x:Name="NodeBox" MinWidth="200" FontSize="14"
                                           ToolTipService.ToolTip="浙江大学：境内教育网节点，低延迟稳定；苏州移动 / 上海电信 / 新加坡 Singtel：Ookla 测速点（多线路对照）；Cloudflare：境外节点，测国际出口带宽"
                                           SelectionChanged="NodeBox_SelectionChanged" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="显示单位" VerticalAlignment="Center" />
-                                <ComboBox x:Name="UnitBox" MinWidth="96" FontSize="12"
+                            <StackPanel Grid.Column="1">
+
+                                <ComboBox Header="显示单位" x:Name="UnitBox" MinWidth="96" FontSize="14"
                                           ToolTipService.ToolTip="Mbps = 兆比特/秒（运营商口径）；MB/s = 兆字节/秒（下载工具口径）。换算：1 MB/s = 8 Mbps"
                                           SelectionChanged="UnitBox_SelectionChanged" />
                             </StackPanel>
@@ -74,7 +80,7 @@
                             <Grid Grid.Column="0" Grid.Row="0" Width="44" Height="44">
                                 <Ellipse x:Name="StepPingHalo" Width="44" Height="44" Opacity="0"
                                          IsHitTestVisible="False" />
-                                <Border x:Name="ChipPing" Width="34" Height="34" CornerRadius="12"
+                                <Border x:Name="ChipPing" Width="34" Height="34" CornerRadius="8"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                     <FontIcon x:Name="ChipPingIcon" FontSize="14" Glyph="&#xE823;"
@@ -94,7 +100,7 @@
                             <Grid Grid.Column="2" Grid.Row="0" Width="44" Height="44">
                                 <Ellipse x:Name="StepDownloadHalo" Width="44" Height="44" Opacity="0"
                                          IsHitTestVisible="False" />
-                                <Border x:Name="ChipDownload" Width="34" Height="34" CornerRadius="12"
+                                <Border x:Name="ChipDownload" Width="34" Height="34" CornerRadius="8"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                     <FontIcon x:Name="ChipDownloadIcon" FontSize="14" Glyph="&#xE896;"
@@ -114,7 +120,7 @@
                             <Grid Grid.Column="4" Grid.Row="0" Width="44" Height="44">
                                 <Ellipse x:Name="StepUploadHalo" Width="44" Height="44" Opacity="0"
                                          IsHitTestVisible="False" />
-                                <Border x:Name="ChipUpload" Width="34" Height="34" CornerRadius="12"
+                                <Border x:Name="ChipUpload" Width="34" Height="34" CornerRadius="8"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                     <FontIcon x:Name="ChipUploadIcon" FontSize="14" Glyph="&#xE898;"
@@ -127,24 +133,25 @@
                         </Grid>
 
                         <!-- 中部：仪表盘(左) + 四项指标(右) -->
-                        <Grid ColumnSpacing="24" Margin="0,4,0,4" HorizontalAlignment="Center">
+                        <Grid x:Name="DialMetricsGrid" ColumnSpacing="32" RowSpacing="24" Margin="0,16,0,16">
+<Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition x:Name="MetricsColumn" Width="0" />
                             </Grid.ColumnDefinitions>
 
                             <!-- 左：仪表盘 + 读数 -->
-                            <Grid Width="330" Height="330" HorizontalAlignment="Center">
+                            <Grid x:Name="DialHost" Width="330" Height="330" HorizontalAlignment="Center">
                                 <Canvas x:Name="GaugeCanvas" Width="330" Height="330" />
                                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Spacing="-2">
-                                    <TextBlock x:Name="ValueText" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center" Text="--" />
+                                    <TextBlock x:Name="ValueText" FontSize="40" FontWeight="SemiBold" HorizontalAlignment="Center" Text="--" />
                                     <TextBlock x:Name="UnitText" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" Text="Mbps" />
                                     <TextBlock x:Name="StageText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" Text="准备就绪" Margin="0,2,0,0" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- 右：指标卡（下载速度 / 上传速度 / 延迟 Ping / 抖动 Jitter） -->
-                            <Grid Grid.Column="1" VerticalAlignment="Center" RowSpacing="8" Width="380">
+                            <Grid x:Name="MetricsGrid" Grid.Row="1" VerticalAlignment="Center" RowSpacing="8">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
@@ -161,7 +168,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border x:Name="DlIconBg" Width="28" Height="28" CornerRadius="12" VerticalAlignment="Center" />
+                                        <Border x:Name="DlIconBg" Width="28" Height="28" CornerRadius="8" VerticalAlignment="Center" />
                                         <TextBlock x:Name="DlCardLabel" Grid.Column="1" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" Text="下载速度" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                             <TextBlock x:Name="DlValue" Style="{StaticResource StatValueStyle}" Text="--" />
@@ -179,7 +186,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border x:Name="UlIconBg" Width="28" Height="28" CornerRadius="12" VerticalAlignment="Center" />
+                                        <Border x:Name="UlIconBg" Width="28" Height="28" CornerRadius="8" VerticalAlignment="Center" />
                                         <TextBlock x:Name="UlCardLabel" Grid.Column="1" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" Text="上传速度" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                             <TextBlock x:Name="UlValue" Style="{StaticResource StatValueStyle}" Text="--" />
@@ -197,7 +204,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border x:Name="PingIconBg" Width="28" Height="28" CornerRadius="12" VerticalAlignment="Center" />
+                                        <Border x:Name="PingIconBg" Width="28" Height="28" CornerRadius="8" VerticalAlignment="Center" />
                                         <TextBlock x:Name="PingCardLabel" Grid.Column="1" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" Text="延迟 Ping" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                             <TextBlock x:Name="PingValue" Style="{StaticResource StatValueStyle}" Text="--" />
@@ -215,7 +222,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border x:Name="JitIconBg" Width="28" Height="28" CornerRadius="12" VerticalAlignment="Center" />
+                                        <Border x:Name="JitIconBg" Width="28" Height="28" CornerRadius="8" VerticalAlignment="Center" />
                                         <TextBlock x:Name="JitCardLabel" Grid.Column="1" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center" Text="抖动 Jitter" />
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                             <TextBlock x:Name="JitValue" Style="{StaticResource StatValueStyle}" Text="--" />
@@ -226,7 +233,7 @@
                             </Grid>
                         </Grid>
 
-                        <TextBlock x:Name="StatusText" FontSize="12" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        <TextBlock x:Name="StatusText" FontSize="14" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                    Text="点击下方按钮开始测速，完整测试约需 20~25 秒" TextAlignment="Center" TextWrapping="Wrap" />
 
                         <!-- 进度 -->
@@ -245,7 +252,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="12" Padding="8,4"
+                            <Border HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="8" Padding="8,4"
                                     Background="{ThemeResource SubtleFillColorSecondaryBrush}">
                                 <StackPanel Orientation="Horizontal" Spacing="8" ToolTipService.ToolTip="点击复制本机公网 IP">
                                     <FontIcon x:Name="IpIcon" FontSize="12" Glyph="&#xE774;" VerticalAlignment="Center" />
@@ -315,7 +322,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Border Width="26" Height="26" CornerRadius="12" VerticalAlignment="Center"
+                            <Border Width="26" Height="26" CornerRadius="8" VerticalAlignment="Center"
                                     Background="{ThemeResource AccentFillColorDefaultBrush}">
                                 <FontIcon FontSize="14" Glyph="&#xE774;"
                                           Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />

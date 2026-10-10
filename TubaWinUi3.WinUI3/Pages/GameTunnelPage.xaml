@@ -17,7 +17,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:ToolPageHeader
+        <controls:ToolPageHeader ToolId="game-tunnel"
             Grid.Row="0"
             Title="游戏联机助手"
             Subtitle="把两台电脑接进同一个虚拟局域网 · 我的世界 / 泰拉瑞亚 / 帕鲁，不开路由器也能一起玩"
@@ -40,12 +40,17 @@
 
         <ScrollViewer
             Grid.Row="1"
-            Padding="24,8,24,24"
+            Padding="24,4,24,32"
             HorizontalScrollMode="Disabled"
             HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
+            VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
 
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" MaxWidth="1120">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
 
                 <!-- ═════════ 联机环境：我的地址 + 网里有谁 ═════════ -->
                 <Border
@@ -70,7 +75,7 @@
                             <TextBlock x:Name="StatusDetail" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                             <StackPanel x:Name="AddressRow" Orientation="Horizontal" Spacing="8" Visibility="Collapsed">
                                 <TextBlock x:Name="MyAddressText" Style="{StaticResource StatValueStyle}" FontFamily="Consolas" IsTextSelectionEnabled="True" VerticalAlignment="Center" />
-                                <Button x:Name="CopyAddressButton" Click="CopyAddress_Click" Padding="8,4" CornerRadius="8" VerticalAlignment="Center">
+                                <Button x:Name="CopyAddressButton" Click="CopyAddress_Click" Padding="8,4" CornerRadius="4" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <FontIcon FontSize="12" Glyph="&#xE8C8;" />
                                         <TextBlock FontSize="12" Text="复制" />
@@ -99,7 +104,7 @@
                             Click="Prepare_Click"
                             Style="{StaticResource AccentButtonStyle}"
                             Padding="16,8"
-                            CornerRadius="8"
+                            CornerRadius="4"
                             VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="14" Glyph="&#xE896;" />
@@ -136,13 +141,13 @@
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap"
                                 Text="选一个游戏 → 把邀请码发给朋友 → 他进的是同一个虚拟局域网，并拿到你的联机地址。端口和游戏里的操作都会自动准备好。" />
-                            <Button x:Name="StartHostButton" Click="StartHost_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="8" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                            <Button x:Name="StartHostButton" Click="StartHost_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="4" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择游戏并邀请" />
                             </Button>
                             <Button
                                 x:Name="CurrentInviteButton"
                                 Click="ShowCurrentInvite_Click"
-                                CornerRadius="8"
+                                CornerRadius="4"
                                 Padding="0,8"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
@@ -175,7 +180,7 @@
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap"
                                 Text="粘贴朋友发来的邀请码（连说明文字一起粘也行），没装 Tailscale 也会自动装好；进网络后照游戏卡上的端口，在游戏里用「通过 IP 加入」连他。" />
-                            <Button x:Name="StartJoinButton" Click="StartJoin_Click" CornerRadius="8" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                            <Button x:Name="StartJoinButton" Click="StartJoin_Click" CornerRadius="4" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="粘贴邀请码加入" />
                             </Button>
                         </StackPanel>
@@ -214,7 +219,7 @@
                                         Click="GameChip_Click"
                                         Tag="{x:Bind Self}"
                                         Padding="0"
-                                        CornerRadius="8"
+                                        CornerRadius="4"
                                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="1">
