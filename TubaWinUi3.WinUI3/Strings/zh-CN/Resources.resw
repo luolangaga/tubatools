@@ -5179,7 +5179,7 @@ else then stroke=#888888 visible=true
   <data name="Dashboard_HardwareDesc" xml:space="preserve"><value>检查你的电脑的配置</value></data>
   <data name="Dashboard_HardwareTitle" xml:space="preserve"><value>硬件信息</value></data>
   <data name="Dashboard_OpenFailed" xml:space="preserve"><value>打开失败</value></data>
-  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · 和图吧小伙伴一起交流折腾心得</value></data>
+  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · 和我们一起交流折腾心得</value></data>
   <data name="Dashboard_QqTitle" xml:space="preserve"><value>QQ 交流群</value></data>
   <data name="Dashboard_Remove" xml:space="preserve"><value>移除此卡片</value></data>
   <data name="Dashboard_Save" xml:space="preserve"><value>保存</value></data>
