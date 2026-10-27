@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- game-monitor-records 记录查看 -->
-  <path fill="none" d="M12 6.5V20.5" stroke="#C50F1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M10.9 6A1.1 1.1 0 1 1 13.1 6A1.1 1.1 0 1 1 10.9 6Z M10.9 13A1.1 1.1 0 1 1 13.1 13A1.1 1.1 0 1 1 10.9 13Z M10.9 20A1.1 1.1 0 1 1 13.1 20A1.1 1.1 0 1 1 10.9 20Z" fill="#C50F1F"/>
-  <path fill="none" d="M15.5 6H19.5M15.5 13H19.5M15.5 20H19.5M4.5 6H8.5" stroke="#E86E7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#DFCAFF"/><stop offset="0.500" stop-color="#AA8CEB"/><stop offset="1.000" stop-color="#7660CE"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="23" y="13" width="81" height="100" rx="10" fill="url(#b)"/><rect x="34" y="27" width="43" height="6" rx="3" fill="#B9CBE2"/><rect x="35" y="73" width="12" height="22" rx="3" fill="url(#a)"/><rect x="55" y="57" width="12" height="38" rx="3" fill="url(#a)"/><rect x="75" y="44" width="12" height="51" rx="3" fill="url(#a)"/><path d="m34 58 21-13 16 3 17-19" fill="none" stroke="#A68DE6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

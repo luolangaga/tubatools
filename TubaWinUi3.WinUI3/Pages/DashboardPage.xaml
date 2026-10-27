@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page x:Class="TubaWinUi3.Pages.DashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:l="using:WinUI3Localizer" xmlns:models="using:TubaWinUi3.Models" xmlns:controls="using:TubaWinUi3.Controls"
+      NavigationCacheMode="Enabled" Background="Transparent">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.png"/>
+                    <SolidColorBrush x:Key="DashboardHeroBackground" Color="#263E45"/>
+                    <Color x:Key="DashboardHeroBlendColor">#263E45</Color>
+                    <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="#F5F9FA"/>
+                    <x:Double x:Key="DashboardHeroImageOpacity">1</x:Double>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-light.png"/>
+                    <SolidColorBrush x:Key="DashboardHeroBackground" Color="#88DEE2"/>
+                    <Color x:Key="DashboardHeroBlendColor">#88DEE2</Color>
+                    <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="#133B42"/>
+                    <x:Double x:Key="DashboardHeroImageOpacity">1</x:Double>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.png"/>
+                    <SolidColorBrush x:Key="DashboardHeroBackground" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <Color x:Key="DashboardHeroBlendColor">{ThemeResource SystemColorWindowColor}</Color>
+                    <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                    <x:Double x:Key="DashboardHeroImageOpacity">0</x:Double>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="ms-appx:///Styles/DashboardGallerySelectorBar.xaml"/></ResourceDictionary.MergedDictionaries>
+            <Style x:Key="DashboardEditorMaterialStyle" TargetType="ContentDialog" BasedOn="{StaticResource DefaultContentDialogStyle}">
+                <Setter Property="Background" Value="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"/>
+            </Style>
+            <Style x:Key="DashboardToolContainerStyle" TargetType="GridViewItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                <Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,12,12"/><Setter Property="MinWidth" Value="0"/>
+            </Style>
+        </ResourceDictionary>
+    </Page.Resources>
+    <Grid>
+        <TextBlock x:Name="AccentBrushSource" Visibility="Collapsed" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+        <TextBlock x:Name="SecondaryBrushSource" Visibility="Collapsed" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        <!-- A single vertical scrolling surface keeps the full catalog virtualized. -->
+        <GridView x:Name="ToolsGrid" AutomationProperties.AutomationId="DashboardTools" SelectionMode="None" IsItemClickEnabled="True"
+                  ItemClick="ToolsGrid_ItemClick" ItemContainerStyle="{StaticResource DashboardToolContainerStyle}"
+                  SizeChanged="ToolsGrid_SizeChanged" DragItemsCompleted="ToolsGrid_DragItemsCompleted"
+                  ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal"/></ItemsPanelTemplate></GridView.ItemsPanel>
+            <GridView.Header>
+                <StackPanel x:Name="ContentStack" HorizontalAlignment="Stretch">
+                    <Grid x:Name="HeroPanel" Height="280" Background="{ThemeResource DashboardHeroBackground}">
+                        <Image x:Name="HeroArtwork" Source="{ThemeResource DashboardHeroImage}" Stretch="Uniform" HorizontalAlignment="Right"
+                               Opacity="{ThemeResource DashboardHeroImageOpacity}" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw"/>
+                        <Rectangle x:Name="HeroLeftBlend" HorizontalAlignment="Right" IsHitTestVisible="False">
+                            <Rectangle.Fill><LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                <GradientStop Color="{ThemeResource DashboardHeroBlendColor}" Offset="0"/><GradientStop Color="#00000000" Offset="0.32"/>
+                            </LinearGradientBrush></Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle x:Name="HeroRightBlend" HorizontalAlignment="Right" IsHitTestVisible="False">
+                            <Rectangle.Fill><LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                <GradientStop Color="#00000000" Offset="0"/><GradientStop Color="{ThemeResource DashboardHeroBlendColor}" Offset="1"/>
+                            </LinearGradientBrush></Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle IsHitTestVisible="False">
+                            <Rectangle.Fill><LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                <GradientStop Color="#00000000" Offset="0.35"/><GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="1"/>
+                            </LinearGradientBrush></Rectangle.Fill>
+                        </Rectangle>
+                        <Grid x:Name="HeaderPanel" Margin="36,28,36,24" ColumnSpacing="16" VerticalAlignment="Top">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="GreetingText" Style="{StaticResource BodyLargeTextBlockStyle}" Foreground="{ThemeResource DashboardHeroTextBrush}" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="TitleText" Text="图吧工具箱" l:Uids.Uid="Dashboard_GalleryTitle" Style="{StaticResource TitleLargeTextBlockStyle}" Foreground="{ThemeResource DashboardHeroTextBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Button x:Name="ManageButton" Grid.Column="1" VerticalAlignment="Top" Content="编辑大卡片" Click="ManageButton_Click" AutomationProperties.AutomationId="DashboardManageContent"/>
+                        </Grid>
+                    </Grid>
+                    <Grid x:Name="FeatureStrip" Margin="0,-112,0,0" Canvas.ZIndex="1">
+                        <ScrollViewer x:Name="FeatureScroll" AutomationProperties.AutomationId="DashboardFeatureScroll" HorizontalScrollMode="Enabled"
+                                      HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled"
+                                      ViewChanged="FeatureScroll_ViewChanged" Padding="36,0,36,12">
+                            <StackPanel x:Name="FeaturesPanel" Orientation="Horizontal" Spacing="12"/>
+                        </ScrollViewer>
+                        <Button x:Name="FeaturePrevious" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,12" Padding="8"
+                                Click="FeaturePrevious_Click" AutomationProperties.AutomationId="DashboardFeaturePrevious" AutomationProperties.Name="向左滚动大卡片" ToolTipService.ToolTip="向左滚动">
+                            <FontIcon Glyph="&#xE76B;" FontSize="12"/>
+                        </Button>
+                        <Button x:Name="FeatureNext" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="4,0,4,12" Padding="8"
+                                Click="FeatureNext_Click" AutomationProperties.AutomationId="DashboardFeatureNext" AutomationProperties.Name="向右滚动大卡片" ToolTipService.ToolTip="向右滚动">
+                            <FontIcon Glyph="&#xE76C;" FontSize="12"/>
+                        </Button>
+                    </Grid>
+                    <InfoBar x:Name="StatusBar" Margin="36,8,36,0" IsOpen="False" IsClosable="True" Visibility="Collapsed"/>
+                    <SelectorBar x:Name="FilterBar" HorizontalAlignment="Center" Margin="36,20,36,20" Style="{StaticResource TokenViewSelectorBarStyle}" SelectionChanged="FilterBar_SelectionChanged">
+                        <SelectorBarItem x:Name="AllToolsFilter" Icon="AllApps" Tag="all" Text="全部工具" Style="{StaticResource TokenViewSelectorBarItemStyle}" AutomationProperties.AutomationId="DashboardAllToolsTab"/>
+                        <SelectorBarItem x:Name="FavoritesFilter" Icon="Favorite" Tag="favorites" Text="收藏" Style="{StaticResource TokenViewSelectorBarItemStyle}" AutomationProperties.AutomationId="DashboardFavorites"/>
+                    </SelectorBar>
+                    <Grid x:Name="ToolsToolbar" Margin="36,0,36,12" ColumnSpacing="16">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock x:Name="ToolCountText" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
+                        <TextBox x:Name="ToolSearchBox" Grid.Column="1" Width="240" PlaceholderText="搜索工具" TextChanged="ToolSearchBox_TextChanged" LosingFocus="ToolSearchBox_LosingFocus"
+                                 IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" AutomationProperties.Name="搜索工具" AutomationProperties.AutomationId="DashboardToolSearch"/>
+                    </Grid>
+                </StackPanel>
+            </GridView.Header>
+            <GridView.ItemTemplate>
+                <DataTemplate x:DataType="models:ToolItem">
+                    <Border Padding="16" MinHeight="96" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" RightTapped="ToolCard_RightTapped" ToolTipService.ToolTip="{x:Bind Description}">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/></Grid.ColumnDefinitions>
+                            <controls:ToolIconPresenter Width="32" Height="32" GlyphSize="28" IconPath="{x:Bind IconPath, Mode=OneWay}" IconSource="{x:Bind IconSource, Mode=OneWay}" Glyph="{x:Bind IconGlyph, Mode=OneWay}"/>
+                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{x:Bind Description}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                            <ToggleButton Grid.Column="2" IsChecked="{x:Bind IsFavorite, Mode=OneWay}" Click="ToolFavorite_Click" VerticalAlignment="Top" Padding="4" MinWidth="24" MinHeight="24" BorderThickness="0" Background="Transparent" AutomationProperties.Name="收藏或取消收藏" ToolTipService.ToolTip="收藏或取消收藏">
+                                <FontIcon Glyph="&#xE734;" FontSize="14"/>
+                            </ToggleButton>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+            <GridView.Footer><TextBlock x:Name="EmptyText" Margin="36,8,36,28" TextWrapping="Wrap" Visibility="Collapsed" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/></GridView.Footer>
+        </GridView>
+    </Grid>
+</Page>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="body" x1="31" y1="14" x2="93" y2="107" gradientUnits="userSpaceOnUse"><stop stop-color="#455267"/><stop offset="1" stop-color="#172438"/></linearGradient><linearGradient id="belly" x1="50" y1="42" x2="84" y2="105" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#E3EAF2"/></linearGradient><linearGradient id="scarf" x1="34" y1="61" x2="94" y2="83" gradientUnits="userSpaceOnUse"><stop stop-color="#FA786E"/><stop offset="1" stop-color="#DB414C"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="39" ry="4" fill="#1C344F" opacity=".09"/>
+<ellipse cx="45" cy="109" rx="18" ry="8" fill="#F2B24D"/><ellipse cx="83" cy="109" rx="18" ry="8" fill="#F2B24D"/>
+<path d="M30 66C19 71 13 89 17 94c4 5 12-2 20-14l-7-14Zm68 0c11 5 17 23 13 28-4 5-12-2-20-14l7-14Z" fill="#28384E"/>
+<path d="M31 43c0-24 15-34 33-34s33 10 33 34l5 40c2 19-14 29-38 29S24 102 26 83l5-40Z" fill="url(#body)"/>
+<ellipse cx="64" cy="78" rx="28" ry="30" fill="url(#belly)"/>
+<ellipse cx="52" cy="39" rx="10" ry="14" fill="#fff"/><ellipse cx="76" cy="39" rx="10" ry="14" fill="#fff"/><ellipse cx="55" cy="41" rx="3" ry="5" fill="#24334A"/><ellipse cx="73" cy="41" rx="3" ry="5" fill="#24334A"/>
+<path d="M51 54c7-5 19-5 26 0-5 8-21 8-26 0Z" fill="#F2B24D"/>
+<path d="M32 61c19 9 45 9 64 0l1 13c-20 10-46 10-66 0l1-13Z" fill="url(#scarf)"/><path d="m80 75 13-3 5 18-13 4-5-19Z" fill="#E95159"/>
+</svg>

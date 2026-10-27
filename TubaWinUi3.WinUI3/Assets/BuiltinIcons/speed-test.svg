@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- speed-test 网速测试 -->
-  <path fill="none" d="M8 17.5V7.5M8 7.5L5 10.5M8 7.5L11 10.5" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M16 6.5V16.5M16 16.5L13 13.5M16 16.5L19 13.5" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M20 99C-4 51 27 15 64 15s68 36 44 84Z" fill="url(#c)"/><path d="M29 92C12 55 35 28 64 28s52 27 35 64Z" fill="url(#b)"/><path d="M34 75a31 31 0 0 1 14-23m16-5a31 31 0 0 1 27 17" fill="none" stroke="#66BFE7" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="m59 78 26-27-14 35Z" fill="url(#a)"/><circle cx="64" cy="83" r="8" fill="#52799D"/><rect x="48" y="99" width="32" height="9" rx="4" fill="#D9E9F5"/>
 </svg>

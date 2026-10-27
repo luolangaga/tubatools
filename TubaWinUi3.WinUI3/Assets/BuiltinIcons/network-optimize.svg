@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- network-optimize 网络优化 -->
-  <path fill="none" d="M6 11L12 6L18 11" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M6 18L12 13L18 18" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8DE5E0"/><stop offset="0.500" stop-color="#38C1C5"/><stop offset="1.000" stop-color="#248CBA"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<circle cx="58" cy="58" r="43" fill="url(#a)"/><path d="M16 58h84M58 15q-35 43 0 86m0-86q35 43 0 86M23 34h70M23 82h70" fill="none" stroke="#D3F4FA" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="m92 62-25 29h19l-8 26 36-37H94l-2-18Z" fill="#FFD882"/>
 </svg>

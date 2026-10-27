@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="25" y1="20" x2="103" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#98E7FF"/><stop offset=".5" stop-color="#51B9F1"/><stop offset="1" stop-color="#257CD5"/></linearGradient><linearGradient id="b" x1="30" y1="20" x2="96" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B9CA"/><stop offset="1" stop-color="#4C637B"/></linearGradient></defs>
+<ellipse cx="64" cy="119" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="24" y="13" width="80" height="100" rx="13" fill="url(#c)"/><rect x="31" y="20" width="66" height="85" rx="8" fill="url(#b)"/><circle cx="64" cy="57" r="26" fill="url(#a)"/><circle cx="64" cy="57" r="10" fill="#E0F7FF"/><path d="m64 58 24 27-9 7-22-27Z" fill="#749AB9"/><circle cx="83" cy="87" r="7" fill="#C1D7E8"/><rect x="42" y="97" width="25" height="4" rx="2" fill="#AFBFCD"/>
+</svg>

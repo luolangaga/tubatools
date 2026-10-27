@@ -43,6 +43,7 @@ public sealed partial class HardwarePage
     private void PopulateSettingsStyle(IReadOnlyList<HardwareInfoSection> sections)
     {
         ResetHardwareFocus();
+        _widthFitBudget = 8;
         _calloutRevealVersion++;
         CancelDiagramCardFlights();
         SettingsStyleDeviceName.Text = Environment.MachineName;
@@ -84,6 +85,9 @@ public sealed partial class HardwarePage
         HardwareConnectors.Opacity = 0;
         foreach (var (card, _, _, _) in _diagramCallouts)
         {
+            // Translation 只有 SetIsTranslationEnabled 之后才存在于 Visual 上：3D boot 动画没播完
+            // （卡片尚未经过 RevealDiagramCallouts）就切回经典视图时，直接 StopAnimation 会抛异常闪退。
+            ElementCompositionPreview.SetIsTranslationEnabled(card, true);
             var visual = ElementCompositionPreview.GetElementVisual(card);
             visual.StopAnimation("Opacity");
             visual.StopAnimation("Translation");
@@ -107,7 +111,8 @@ public sealed partial class HardwarePage
             var key = $"{item.Label}_{index + 1}";
             var content = new StackPanel { Spacing = 6 };
             var heading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-            heading.Children.Add(new FontIcon { Glyph = SettingsHardwareGlyph(item.Label), FontSize = 16 });
+            heading.Children.Add(new Image { Source = HardwareIconService.Get(HardwareIconService.KeyForLabel(item.Label)),
+                Width = 22, Height = 22, Stretch = Stretch.Uniform });
             heading.Children.Add(new TextBlock { Text = title, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
             content.Children.Add(heading);
             content.Children.Add(new TextBlock { Text = value, TextWrapping = TextWrapping.Wrap,
@@ -185,10 +190,6 @@ public sealed partial class HardwarePage
         }
     }
 
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SystemParametersInfoW(uint action, uint parameter, StringBuilder value, uint flags);
-
     private bool _wallpaperLoading;
     private bool _bootCompleted;
     private TaskCompletionSource<bool> _bootCompletionWaiter = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -210,19 +211,7 @@ public sealed partial class HardwarePage
         try
         {
             _diagramLaptop = await Task.Run(HardwareInfoService.IsLaptop);
-            var wallpaper = await Task.Run(() =>
-            {
-                var buffer = new StringBuilder(32768);
-                var path = SystemParametersInfoW(0x0073, (uint)buffer.Capacity, buffer, 0) ? buffer.ToString() : null;
-                if (!File.Exists(path)) path = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Microsoft", "Windows", "Themes", "TranscodedWallpaper");
-                if (!File.Exists(path)) return null;
-                using var source = System.Drawing.Image.FromFile(path);
-                using var resized = new System.Drawing.Bitmap(source, new System.Drawing.Size(960, 600));
-                using var output = new MemoryStream();
-                resized.Save(output, System.Drawing.Imaging.ImageFormat.Jpeg);
-                return "data:image/jpeg;base64," + Convert.ToBase64String(output.ToArray());
-            });
+            var wallpaper = await DesktopWallpaperService.LoadDataUriAsync();
             if (!UseSettingsStyle) return;
             _pendingScene = new { laptop = _diagramLaptop, wallpaper, embedded = true,
                 dark = ActualTheme == ElementTheme.Dark, reducedMotion = ReduceDiagramMotion,
@@ -432,17 +421,43 @@ public sealed partial class HardwarePage
 
     private void SettingsStyleScroll_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        _widthFitBudget = 8;
         ArrangeSettingsCards();
+        DispatcherQueue.TryEnqueue(FitSettingsStyleWidth);
     }
 
-    private static string SettingsHardwareGlyph(string label) => label switch
+    private void SettingsStyleRoot_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        "处理器" or "NPU" => "\uE950", "内存" => "\uE964", "显卡" => "\uE7F4",
-        "显示器" => "\uE7F8", "硬盘" => "\uEDA2", "电池" => "\uE83F",
-        "声卡" => "\uE767", "网卡" => "\uE701", "系统" => "\uE770", _ => "\uE977"
-    };
+        ArrangeSettingsCards();
+        DispatcherQueue.TryEnqueue(FitSettingsStyleWidth);
+    }
 
-    private void SettingsStyleRoot_SizeChanged(object sender, SizeChangedEventArgs e) => ArrangeSettingsCards();
+    private int _widthFitBudget;
+
+    // 3D 全景要为「一屏放下」整体等比缩放，高度先受限时缩放后的内容比可用宽度窄，
+    // 左右就露出留白。这里反推所需逻辑宽度：逻辑宽度 × 缩放比 = 可用宽度。
+    // 页面自然高度随宽度单调不增（板高有下限、换行更少），所以迭代几步必然收敛。
+    private void FitSettingsStyleWidth()
+    {
+        if (!UseSettingsStyle || _widthFitBudget <= 0) return;
+        var root = SettingsStyleRoot;
+        var hostWidth = SettingsStyleScroll.ActualWidth;
+        var hostHeight = SettingsStyleScroll.ActualHeight;
+        var contentWidth = root.ActualWidth;
+        var contentHeight = root.ActualHeight;
+        if (hostWidth < 2 || hostHeight < 2 || contentWidth < 2 || contentHeight < 2) return;
+        // 与 Viewbox（Uniform + DownOnly）一致的等比缩放比。
+        var scale = Math.Min(1, Math.Min(hostWidth / contentWidth, hostHeight / contentHeight));
+        if (scale <= 0 || double.IsNaN(scale)) return;
+        var target = Math.Clamp(Math.Round(hostWidth / scale), 960, 4096);
+        if (!double.IsNaN(root.Width) && Math.Abs(target - root.Width) < 1)
+        {
+            _widthFitBudget = 0;
+            return;
+        }
+        _widthFitBudget--;
+        root.Width = target;
+    }
 
     private bool _arrangingDiagramCards;
     private readonly int _diagramLayoutSeed = Random.Shared.Next();

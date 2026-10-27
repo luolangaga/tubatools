@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="TubaWinUi3.Pages.DriverStorePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:drivers="using:TubaWinUi3.Services.DriverStore"
+    xmlns:local="using:TubaWinUi3.Pages">
+    <Grid x:Name="PageLayout" Padding="24,4,24,24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <controls:ToolPageHeader ToolId="driver-store" Title="驱动管理" Glyph="&#xE9D5;"
+            Subtitle="查看驱动版本与设备关联，批量备份、安装和清理旧版本" HeaderPadding="0,16,0,0"/>
+        <StackPanel Grid.Row="1" Spacing="6">
+            <ProgressBar x:Name="Progress" IsIndeterminate="True" Visibility="Collapsed"/>
+            <TextBlock x:Name="Status" Visibility="Collapsed" TextWrapping="Wrap" Style="{ThemeResource CaptionTextBlockStyle}"/>
+            <InfoBar x:Name="ResultBar" IsOpen="False" IsClosable="True" Visibility="Collapsed" Closed="ResultBar_Closed"/>
+        </StackPanel>
+        <CommandBar x:Name="Commands" Grid.Row="2" HorizontalAlignment="Left" Background="Transparent" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
+            <AppBarButton Label="重新扫描" Icon="Refresh" Click="Refresh_Click" AutomationProperties.AutomationId="DriverRefresh"/>
+            <AppBarButton Label="选择旧版本" Icon="SelectAll" Click="SelectOld_Click" AutomationProperties.AutomationId="DriverSelectOld"/>
+            <AppBarButton Label="备份所选" Icon="Save" Click="BackupSelected_Click" AutomationProperties.AutomationId="DriverBackupSelected"/>
+            <AppBarButton x:Name="DeleteButton" Label="删除所选" Icon="Delete" Click="Delete_Click" IsEnabled="False" AutomationProperties.AutomationId="DriverDeleteSelected"/>
+            <CommandBar.SecondaryCommands>
+                <AppBarButton Label="备份全部驱动" Click="BackupAll_Click"/>
+                <AppBarButton Label="安装 INF 驱动" Click="Install_Click"/>
+                <AppBarButton Label="从备份目录还原" Click="Restore_Click"/>
+                <AppBarButton Label="导出当前列表 CSV" Click="Csv_Click"/>
+                <AppBarSeparator/>
+                <AppBarButton Label="打开离线 Windows 驱动库" Click="Offline_Click"/>
+                <AppBarButton Label="返回本机驱动库" Click="Online_Click"/>
+                <AppBarButton Label="取消选择" Click="ClearSelection_Click"/>
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+        <Grid x:Name="Filters" Grid.Row="3" ColumnSpacing="12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <AutoSuggestBox x:Name="Search" PlaceholderText="搜索 INF、提供商、类别或设备" TextChanged="Search_TextChanged"
+                AutomationProperties.Name="搜索驱动" AutomationProperties.AutomationId="DriverSearch"/>
+            <ComboBox x:Name="Filter" Grid.Column="1" SelectedIndex="0" SelectionChanged="Filter_Changed" AutomationProperties.Name="驱动筛选">
+                <x:String>全部驱动</x:String><x:String>仅多版本</x:String><x:String>可清理旧版本</x:String><x:String>无设备关联</x:String>
+            </ComboBox>
+            <ComboBox x:Name="Sort" Grid.Column="2" SelectedIndex="0" SelectionChanged="Filter_Changed" AutomationProperties.Name="驱动排序">
+                <x:String>按驱动名称</x:String><x:String>按占用大小</x:String><x:String>按日期</x:String><x:String>按提供商</x:String>
+            </ComboBox>
+        </Grid>
+        <TextBlock x:Name="Summary" Grid.Row="4" TextWrapping="Wrap" Style="{ThemeResource CaptionTextBlockStyle}"/>
+        <Grid Grid.Row="5">
+            <ListView x:Name="Packages" SelectionMode="None" IsItemClickEnabled="False" Background="Transparent"
+                AutomationProperties.Name="驱动包列表" AutomationProperties.AutomationId="DriverPackages">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0,0,0,10"/>
+                        <Setter Property="IsTabStop" Value="False"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:DriverGroupCard">
+                        <Border Padding="16,14" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnSpacing="12" RowSpacing="8" SizeChanged="CardHeader_SizeChanged">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <Border Width="36" Height="36" CornerRadius="8" VerticalAlignment="Top" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                                        <FontIcon Glyph="&#xE9D5;" FontSize="17" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="3">
+                                        <TextBlock Text="{x:Bind Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Title}"/>
+                                        <TextBlock Text="{x:Bind Subtitle}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Subtitle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                        <Button Content="备份" Tag="{x:Bind}" Click="BackupGroup_Click" Padding="10,4" AutomationProperties.Name="备份此驱动的全部可见版本"/>
+                                        <Button Content="{x:Bind CleanupLabel}" Tag="{x:Bind}" Click="CleanGroup_Click" IsEnabled="{x:Bind CanClean}" Padding="10,4"/>
+                                    </StackPanel>
+                                </Grid>
+                                <ItemsControl ItemsSource="{x:Bind Rows}" HorizontalContentAlignment="Stretch">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:DriverPackageRow">
+                                            <Border Margin="0,2" Padding="10,7" CornerRadius="5" Background="{ThemeResource SubtleFillColorSecondaryBrush}" ToolTipService.ToolTip="{x:Bind Details}">
+                                                <Grid ColumnSpacing="10">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="50"/>
+                                                        <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox IsChecked="{x:Bind IsSelected, Mode=TwoWay}" MinWidth="0" MinHeight="32" Padding="0" VerticalAlignment="Center" AutomationProperties.Name="{x:Bind SelectionName}"/>
+                                                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                                                        <Border Padding="7,3" CornerRadius="4" HorizontalAlignment="Left" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}" Visibility="{x:Bind LatestVisibility}">
+                                                            <TextBlock Text="最新" FontSize="11" Foreground="{ThemeResource SystemFillColorSuccessBrush}"/>
+                                                        </Border>
+                                                        <Border Padding="7,3" CornerRadius="4" HorizontalAlignment="Left" Background="{ThemeResource SystemFillColorCautionBackgroundBrush}" Visibility="{x:Bind OldVisibility}">
+                                                            <TextBlock Text="旧版本" FontSize="11" Foreground="{ThemeResource SystemFillColorCautionBrush}"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{x:Bind Version}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{x:Bind Metadata}" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="3" Text="{x:Bind Size}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                    <Button Grid.Column="4" Content="&#xE712;" FontFamily="{ThemeResource SymbolThemeFontFamily}" Padding="8,4" VerticalAlignment="Center" AutomationProperties.Name="驱动版本操作">
+                                                        <Button.Flyout>
+                                                            <MenuFlyout>
+                                                                <MenuFlyoutItem Text="备份此版本" Tag="{x:Bind}" Click="BackupRow_Click"/>
+                                                                <MenuFlyoutItem Text="查看详情" Tag="{x:Bind}" Click="DetailsRow_Click"/>
+                                                                <MenuFlyoutSeparator/>
+                                                                <MenuFlyoutItem Text="删除此旧版本" Tag="{x:Bind}" Click="DeleteRow_Click" IsEnabled="{x:Bind CanDelete}"/>
+                                                            </MenuFlyout>
+                                                        </Button.Flyout>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{x:Bind DeviceSummary}" Visibility="{x:Bind DeviceVisibility}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextTrimming="CharacterEllipsis" MaxLines="1" ToolTipService.ToolTip="{x:Bind DeviceSummary}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <TextBlock x:Name="Empty" Text="没有匹配的驱动包" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+        </Grid>
+    </Grid>
+</Page>

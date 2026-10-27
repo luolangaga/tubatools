@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- network-adapter-proxy 网络调度器 -->
-  <path fill="none" d="M4.5 9.5H16M16 9.5L13.3 6.8M16 9.5L13.3 12.2" stroke="#4F52B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M19.5 14.5H8M8 14.5L10.7 11.8M8 14.5L10.7 17.2" stroke="#8E92E0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8DE5E0"/><stop offset="0.500" stop-color="#38C1C5"/><stop offset="1.000" stop-color="#248CBA"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="14" y="20" width="86" height="69" rx="10" fill="url(#c)"/><rect x="21" y="27" width="72" height="55" rx="5" fill="url(#a)"/><rect x="30" y="38" width="53" height="30" rx="5" fill="#E6F6FC"/><path d="M40 42h33v14H63v9H50v-9H40Z" fill="#6D97AD"/><rect x="31" y="90" width="45" height="8" rx="1" fill="#DEC386"/><path d="M76 93h38m-10-10 10 10-10 10m-1 9H65m10-10-10 10 10 10" fill="none" stroke="#72D3B6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

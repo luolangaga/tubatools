@@ -17,6 +17,7 @@ namespace TubaWinUi3.Pages;
 public sealed partial class HardwarePage : Page, ILocalizablePage
 {
     private DispatcherTimer? _uptimeTimer;
+    private bool _animateUptimeClock;
     private bool _dataLoaded;
     private bool _animatingDetails;
     private bool _nicknameMode;
@@ -50,6 +51,11 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void OnSettingChanged(string key)
     {
+        if (key == "FastModeEnabled")
+        {
+            DispatcherQueue.TryEnqueue(() => { _animateUptimeClock = CanAnimateUptimeClock(); UpdateUptime(true); });
+            return;
+        }
         if (key == "HardwareDiagramStyle")
         {
             DispatcherQueue.TryEnqueue(ApplyHardwareStyle);
@@ -107,7 +113,9 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void StartUptimeTimer()
     {
-        _uptimeTimer?.Stop();
+        _animateUptimeClock = CanAnimateUptimeClock();
+        UpdateUptime(true);
+        if (_uptimeTimer is not null) return;
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _uptimeTimer.Tick += (_, _) => UpdateUptime();
         _uptimeTimer.Start();
@@ -137,11 +145,24 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         AppSettings.SettingChanged -= OnSettingChanged;
     }
 
-    private void UpdateUptime()
+    private static bool CanAnimateUptimeClock()
+    {
+        if (FastModeService.IsFastModeEnabled()) return false;
+        try { return new Windows.UI.ViewManagement.UISettings().AnimationsEnabled; }
+        catch { return false; }
+    }
+
+    private void UpdateUptime(bool forceClockUpdate = false)
     {
         var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
         UptimeText.Text = string.Format(LocalizationService.L("Hw_UptimeFormat", "{0}天{1}小时{2}分钟{3}秒"), uptime.Days, uptime.Hours, uptime.Minutes, uptime.Seconds);
         SettingsStyleUptime.Text = LocalizationService.L("Hw_UptimeCard.Text", "运行时间") + " · " + UptimeText.Text;
+        if (_animateUptimeClock || forceClockUpdate)
+        {
+            UptimeSecondHand.Angle = uptime.Seconds * 6;
+            UptimeMinuteHand.Angle = (uptime.Minutes + uptime.Seconds / 60d) * 6;
+            UptimeHourHand.Angle = ((uptime.Hours % 12) + uptime.Minutes / 60d) * 30;
+        }
     }
 
     /// <summary>语言切换后刷新卡片提示与详情列表（卡片 ToolTip 是附加属性，不能走 Uid）。</summary>
@@ -365,7 +386,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         {
             ModelText.Text = LocalizationService.L("Hw_Unknown", "未知");
             SystemText.Text = LocalizationService.L("Hw_Unknown", "未知");
-            UptimeText.Text = LocalizationService.L("Hw_Unknown", "未知");
+            UpdateUptime(true);
             DetailsRepeater.ItemsSource = Array.Empty<HardwareInfoItem>();
             ShowStatusBar(LocalizationService.L("Hw_LoadFailed", "硬件信息读取失败"), ex.Message, InfoBarSeverity.Error);
         }
@@ -507,7 +528,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         {
             var item = items[args.Index];
 
-            var logoImage = FindChild<Microsoft.UI.Xaml.Controls.Image>(el);
+            // 功能图标在标签内部；品牌标志仍只更新行末的专用 Image。
+            var logoImage = el.Children.OfType<Microsoft.UI.Xaml.Controls.Image>().FirstOrDefault(image => image.Name == "HardwareBrandLogo");
             if (logoImage is not null)
             {
                 var showLogo = AppSettings.GetBool("ShowBrandLogo", true);

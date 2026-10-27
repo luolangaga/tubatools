@@ -21,6 +21,7 @@ public sealed partial class CpuRankingPage : Page
     private double _lastScrollOffset;
     private bool _navCollapsed;
     private bool _suppressNavToggle;
+    private bool _navToggling;
     private bool _suppressFilterEvents;
     private CpuRankingEntry? _locateTarget;
     private AutoSuggestBox _searchBox = null!;
@@ -585,7 +586,7 @@ public sealed partial class CpuRankingPage : Page
 
     private void OnListScrollChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
-        if (_listScroll is null) return;
+        if (_listScroll is null || _navToggling) return;
 
         var currentOffset = _listScroll.VerticalOffset;
         var threshold = 30;
@@ -609,20 +610,39 @@ public sealed partial class CpuRankingPage : Page
         _lastScrollOffset = currentOffset;
     }
 
+    // 与 GpuRankingPage 相同：切换后必须同步重排版并重新基线化偏移量，否则视口钳制回声会让
+    // 折叠↔展开无限震荡直到 LayoutCycleException（issue #165，GPU 页同款代码）。
     private void CollapseNav()
     {
+        if (_navCollapsed) return;
         _navCollapsed = true;
-        if (_statsRow is not null) _statsRow.Visibility = Visibility.Collapsed;
-        if (_filterRow is not null) _filterRow.Visibility = Visibility.Collapsed;
-        if (_headerRow is not null) _headerRow.Visibility = Visibility.Collapsed;
+        ApplyNavVisibility();
     }
 
     private void ExpandNav()
     {
+        if (!_navCollapsed) return;
         _navCollapsed = false;
-        if (_headerRow is not null) _headerRow.Visibility = Visibility.Visible;
-        if (_filterRow is not null) _filterRow.Visibility = Visibility.Visible;
-        if (_statsRow is not null) _statsRow.Visibility = Visibility.Visible;
+        ApplyNavVisibility();
+    }
+
+    private void ApplyNavVisibility()
+    {
+        _navToggling = true;
+        try
+        {
+            var visibility = _navCollapsed ? Visibility.Collapsed : Visibility.Visible;
+            if (_statsRow is not null) _statsRow.Visibility = visibility;
+            if (_filterRow is not null) _filterRow.Visibility = visibility;
+            if (_headerRow is not null) _headerRow.Visibility = visibility;
+
+            _listScroll?.UpdateLayout();
+            _lastScrollOffset = _listScroll?.VerticalOffset ?? _lastScrollOffset;
+        }
+        finally
+        {
+            _navToggling = false;
+        }
     }
 
     private static void AddHeader(Grid grid, string text, int column)

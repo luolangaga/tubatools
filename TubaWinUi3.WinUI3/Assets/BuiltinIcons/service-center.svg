@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- service-center 服务网点查询 -->
-  <path fill="none" d="M12 3.5C15.59 3.5 18.5 6.41 18.5 10C18.5 14.6 12 20.5 12 20.5C12 20.5 5.5 14.6 5.5 10C5.5 6.41 8.41 3.5 12 3.5Z" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M9.9 10A2.1 2.1 0 1 1 14.1 10A2.1 2.1 0 1 1 9.9 10Z" fill="#A0A9B2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<circle cx="55" cy="54" r="43" fill="url(#b)"/><path d="M48 27h14l3 8 8 4 8-1 7 12-5 6v9l5 6-7 12-8-1-8 4-3 8h-14l-3-8-8-4-8 1-7-12 5-6v-9l-5-6 7-12 8 1 8-4 3-8Z" fill="url(#c)"/><circle cx="55" cy="54" r="10" fill="#E3EDF5"/><path d="M97 66c16-8 29 5 21 22l-13-9-9 9 10 12c-18 8-30-6-22-22L57 106l-12-12Z" fill="url(#a)"/>
 </svg>

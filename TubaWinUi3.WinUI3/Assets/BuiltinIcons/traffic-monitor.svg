@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- traffic-monitor 流量监控器 -->
-  <path fill="none" d="M4.5 4.5V18.5C4.5 19.6 5.4 20.5 6.5 20.5H20" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7.5 16.5L11 11.5L14 14.5L18.5 8.5" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8DE5E0"/><stop offset="0.500" stop-color="#38C1C5"/><stop offset="1.000" stop-color="#248CBA"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="13" y="19" width="102" height="77" rx="10" fill="url(#c)"/><rect x="20" y="26" width="88" height="62" rx="5" fill="url(#a)"/><path d="M26 65h17l10-22 15 35 11-19h22" fill="none" stroke="#E5FFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="55" y="97" width="18" height="10" rx="1" fill="#9CB1C5"/><rect x="39" y="107" width="50" height="6" rx="3" fill="#D5E6F3"/>
 </svg>

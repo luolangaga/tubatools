@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- startup-manager 启动项管理 -->
-  <path fill="none" d="M12 3.5C14.5 5.5 16 8.8 16 12.5V16.5H8V12.5C8 8.8 9.5 5.5 12 3.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M10.7 10.5A1.3 1.3 0 1 1 13.3 10.5A1.3 1.3 0 1 1 10.7 10.5Z" stroke="#4DBFC4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M8 13.5L5.5 16.5V17H8M16 13.5L18.5 16.5V17H16" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M10.25 19.4H13.75L12 21.4Z" fill="#4DBFC4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#DFCAFF"/><stop offset="0.500" stop-color="#AA8CEB"/><stop offset="1.000" stop-color="#7660CE"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M59 28c17-14 38-15 51-14 2 14 0 35-15 51L68 91 38 62Z" fill="url(#a)"/><path d="M38 62 21 58 10 83l30-2Z" fill="#A38DE8"/><path d="m68 91 1 27 26-13-2-18Z" fill="#7B69CC"/><circle cx="81" cy="43" r="17" fill="#E4F5FF"/><circle cx="81" cy="43" r="10" fill="#80C9E9"/><path d="m36 88 11 11c-7 15-23 20-31 20 1-9 5-25 20-31Z" fill="#FFD383"/><path d="m38 95 4 4c-5 7-11 10-15 11 1-5 4-11 11-15Z" fill="#FFF1C4"/>
 </svg>

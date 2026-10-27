@@ -1,4 +1,4 @@
-# TubaWinUi3 — Agent Notes
+﻿# TubaWinUi3 — Agent Notes
 
 ## What this is
 
@@ -146,8 +146,17 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - **转换选项 ↔ ConvertConfig 键**（已实测官网 POST 参数对照）：`updates→AddUpdates`、`cleanup→Cleanup`、`netfx→NetFx3`、`esd→wim2esd+vwim2esd`（两处同时置 1）、`SkipApps` 默认 1（更快）。**附加版本（虚拟版本）**：JSON API 不提供列表，映射写死在 `GetVirtualEditionsForBase`（Pro→Enterprise/Education/ServerRdsh/IoTEnterprise…，Core→CoreSingleLanguage，N 版同理，来自官网 Required edition 表）；仅改写 `StartVirtual=1` + `vAutoEditions`，下载文件集仍是基础版本的。
 - 包目录：`Downloads\UUPDump\<build>_<lang>_<edition>\`（`UUPs/` 子目录放文件集，ISO 与 ConvertConfig.ini 在包根），同名目录复用实现断点续传。
 
-### 垃圾清理（JunkCleanerTool）— FluentCleaner.Core 引擎架构
-- 「垃圾清理」内置工具已完全重构为 **Winapp2.ini 规则库驱动**，引擎移植自 builtbybel/FluentCleaner（MIT）的 `FluentCleaner.Core`，代码在 `Services/JunkCleaner/`，保留上游命名空间 `FluentCleaner.Models` / `FluentCleaner.Services` 以便对照上游更新。
+### 空间清理（SpaceCleanupPage）— TreeMap + 垃圾清理 + Windows 清理
+- 唯一注册入口 `space-cleanup`；旧 `junk-cleaner` 启动参数经 `BuiltinToolRegistry.GetById` 转发，tools.json 保留旧 `match: 垃圾清理` 虚拟路径以兼容收藏。旧代码构建的 `JunkCleanerTool` 页面已移除。
+- `Services/SpaceCleanup/SpaceScanService` 只读目录/文件元数据（可选 NTFS 备用流），默认使用 `SpaceDiskCache` 临时压缩缓存：文件元数据以 UTF-8/变长整数编码、256 KiB 分页 Brotli 压缩后顺序追加，目录骨架常驻内存，文件按需解码；仅保留 8 个读页与当前可见项。无数据库/WAL/逐文件落盘/强制 Flush，不保存文件内容。缓存目录从扫描结果排除，状态栏显示实际缓存大小；重扫、退出工具与进程退出时关闭 DeleteOnClose 句柄自动删除。默认无固定缓存容量、剩余空间百分比/保留量或内存压力中止阈值，优先完整扫描；显式调用者预算仅用于指定场景与测试。跳过目录重解析点，不读取文件内容，不触发云文件下载。取消/暂停逐条检查；SpaceReadOnlyDirectory 自持 CreateFile 目录句柄，以 SetFileTime 的 -1 特殊值在同一句柄上抑制访问时间更新，再用 GetFileInformationByHandleEx 批量读取 FILE_FULL_DIR_INFO。-1 不设置磁盘时间戳；禁止读取后恢复时间（会写盘）、修改全局 DisableLastAccess、或退回未抑制时间更新的枚举。备用流也用受保护句柄查询 FileStreamInfo。无法取得抑制权限的目录明确跳过；管理员既有备份/还原权限仅在工作线程的临时模拟令牌中启用，WindowsIdentity.RunImpersonated 负责恢复。默认没有固定索引大小上限，不根据可用内存自动停止；增量刷新保留原结果直到新树完成。目录监视默认关闭，重扫替换所有共享视图的旧扫描树。
+- NTFS 整盘走 `SpaceNtfsScanner` / `SpaceNtfsVolume`：明文卷经只读物理磁盘句柄按扇区对齐、无缓存批量读取 MFT；禁止经已挂载卷做 raw ReadFile（NTFS 会隐式刷回脏 MFT/日志），不锁卷、不 Flush、不创建 VSS。加密卷用既有 USN/MFT 元数据接口（不创建/调整 USN 日志），线程后台内存/IO 优先级降低缓存换页压力；后台状态必须恢复。文件/目录不逐个打开。进度分目录索引、文件大小、扩展属性，进度条与百分比显示在磁盘选择下方；文件夹扫描总量未知时显示已扫描数量与不定进度。
+- `SpaceTreemapLayout` 为纯 C# squarified TreeMap；`Controls/SpaceTreemap` 使用已有 SkiaSharp 画布渲染有界区块与动画，配原生惰性展开 TreeView（`SpaceFileRow`）供键盘/读屏访问。图与树共用 `SpaceColorPalette` 的当前目录分支配色（可切文件类型），`Assets/SpaceFileIcons` 是类型矢量图标包，树中占比为彩色进度条。动画使用 CompositionTarget.Rendering 按显示帧刷新，380 ms Fluent 缓动；导航从最后实际绘制的区块位置/颜色/透明度接续，父视图同步缩放淡出，保留内容区标题偏移，快速进入/返回可中断衔接。动画计时从首个绘制帧开始，避免文件树更新吃掉过渡；字体/画笔及标签测量复用，闲置/卸载时取消帧事件并释放绘图资源。不使用扫光/闪烁/从中心伸缩。多标签共享扫描树；筛选支持通配符、大小、日期、排除、颜色标记，CSV 为用户主动导出。
+- 删除仅经确认后调用 STA `IFileOperation`，回收站与永久删除分开；执行前拒绝扫描根、越界路径和重解析点。Windows 简易清理直接用 `IEmptyVolumeCache[2]` 先 GetSpaceUsed 后 Purge，不写 StateFlags，不启动自动清理命令。
+- 页头“全屏”按钮 / F11 进入工具全屏，隐藏主窗口标题栏与导航；Esc / 按钮退出，恢复原窗口 presenter 与布局，页面卸载自动恢复。
+- 回归：`SpaceCleanupTests` 覆盖只读扫描/计数、文件/目录/备用流访问时间不变、默认无固定上限、压缩缓存计数/精确路径/自动删除/无默认上限、按需读取、增量刷新与标签、取消、链接拒绝、删除路径边界、布局面积/无重叠、筛选。
+
+### 垃圾清理引擎 — FluentCleaner.Core（已并入空间清理）
+- 「空间清理 → 垃圾清理」为 **Winapp2.ini 规则库驱动**，引擎移植自 builtbybel/FluentCleaner（MIT）的 `FluentCleaner.Core`，代码在 `Services/JunkCleaner/`，保留上游命名空间 `FluentCleaner.Models` / `FluentCleaner.Services` 以便对照上游更新。
 - 管线：`Winapp2Parser`（FileKeyN/RegKeyN/ExcludeKeyN/Detect/DetectFile/SpecialDetect 多值键解析）→ `DetectionService`（注册表/文件/SpecialDetect 检测已安装应用，OR 逻辑）→ `CleaningService`（两阶段：Analyze 只读构建删除清单 + Clean 真删；CreateFileW 探测锁定文件、跳过 reparse point、REMOVESELF 剪除空目录、注册表排除分支保护）→ `PathExpander`（%EnvVar% 展开 + 通配符路径段递归解析）。
 - 规则库管理 `JunkCleanerDatabase`：**两个规则库随应用内置**于 `Assets/JunkCleaner/`（Winapp2.ini 清理规则 + Winappx.ini 预装应用清单，csproj `Assets\**` Content 自动打包）。数据目录 `<DataDir>/JunkCleaner/` 存在副本时优先（`GetEffectivePath(kind)`），否则回退读内置文件——离线开箱即用。「更新规则库」手动触发，从原仓库拉取（raw.githubusercontent → jsdelivr CDN → gh-proxy 三级回退），先下临时文件校验再原子替换，覆盖 Winapp2 与 Winappx 两个文件。自定义规则放 `<DataDir>/JunkCleaner/Custom/*.ini`。
 - 预装应用清理：Winappx 驱动，`AppxService`（移植上游，PowerShell `Get-AppxPackage` 检测 / `Remove-AppxPackage` 卸载）在工具页底部「预装应用清理」Expander 区，默认不勾选，卸载前确认。
@@ -163,6 +172,22 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - **读取状态一律以 /query /status 为主**：未提权时 `/query /source` 直接返回「拒绝访问 (0x80070005)」，而 /status 仍然可用且带「源:」一行（`ParseSourceFromStatus`，中英标签都认）；`/query /configuration` 同理只在需要诊断报告时读取。服务运行状态/启动类型走 WMI `Win32_Service`（值恒为英文，不受系统语言影响），失败退回注册表 `Start`/`DelayedAutostart`。
 - 注册表读写一律用 `RegistryView.Registry64` 显式打开（x86 构建下 `HKLM\SYSTEM\...` 会被重定向到 Wow6432Node，读不到真实配置）。
 - 测试：`TimeSyncTests`（预设完整性、对等列表与标志位、地址校验、注册表字符串反查、SNTP 报文与偏移数学、w32tm 中英文/真实机器输出解析、健康检查判定、设置落盘）。
+
+### 驱动管理（DriverStorePage）— pnputil + WMI + FileRepository（Issue #241）
+- 「驱动管理」内置工具（id `driver-store`，分类「系统工具」）= `Pages/DriverStorePage`（代码构建，GpuRankingPage 同模式）+ `Services/DriverStore/DriverStoreService.cs`：DriverStore 浏览、旧版本清理、导出备份 / 从备份还原（Driver Store Explorer 平替）。
+- **数据源三件套**：`pnputil /enum-drivers` 出全量包列表（**WMI `Win32_PnPSignedDriver` 只列有设备绑定的包，旧版本残留恰恰没有绑定，不能单独用**，只用它做「使用中」设备关联）；`FileRepository` 目录扫描出占用（目录名前缀 = 原始 inf 名，版本匹配靠读目录内 INF 的 `DriverVer`，UTF-16/ANSI/UTF-8 自动识别）。
+- **pnputil 输出是本地化的，解析一律按值模式**（`oem\d+\.inf`、日期+版本正则），标签文本（提供程序/签名者/类）只做中英文关键字尽力识别，缺失不影响分组排序。输出按 OEM 代码页解码（同 `W32TimeCli`）。
+- **删除安全边界（勿放宽）**：只允许删「旧版本且无设备使用」，**绝不加 `/force`**——正在使用时让系统拒绝是特性；删除前后端不带 `/uninstall` 之外的动作。`DeleteAsync` 会拒绝非 `oemNN.inf` 的输入。
+- 分组 = 原始 inf 名（缺失回退发布名）；组内按日期+版本降序，第一个标 `IsNewest`，其余为可清理旧版本。退出码 0 成功、3010 成功需重启。
+- 测试：`DriverStoreTests`（中英文/未知语言枚举解析、日期格式、INF DriverVer、分组与最新标记、大小匹配策略、结果分类、非 oem inf 拒绝）。
+
+### 排行榜页滚动折叠的布局震荡（LayoutCycleException，Issue #165）
+- `GpuRankingPage`/`CpuRankingPage` 的「滚动时折叠头部三行」有个经典死循环：折叠改变列表视口高度 → 底部附近偏移被钳制 → 再次触发 ViewChanged → 方向反转又展开 → 无限震荡直到 LayoutCycleException。**修复口径（勿回退）**：`CollapseNav`/`ExpandNav` 幂等，切换后 `ApplyNavVisibility` 里同步 `UpdateLayout()` 并把钳制后的偏移设为 `_lastScrollOffset` 新基线，`_navToggling` 期间忽略回声事件。两页是复制品，改就一起改。
+
+### 日志目录（Issue #165）与孤儿测试
+- 崩溃/启动诊断日志 = `DiagnosticLogService`（`app_crash.log` 按时间戳分隔追加、`startup_trace.log`），默认 `<DataDir>/Logs`；设置页「日志目录」卡片支持自定义（`AppSettings["LogDir"]`，目录不存在/不可写自动回退默认，切换前探测可写性）与一键打开。
+- `> 2026-10-25`：`TubaWinUi3.Tests/NativeHardwareSceneTests.cs` 引用的 `HardwareSceneModel`/`DeviceInspectionSession` 等类型只存在于 `.scene-verify/` 验证程序、从未进主项目，是 NavIconTests 同款孤儿——已在测试 csproj 用 `<Compile Remove>` 排除（文件保留在盘上）；3D 场景类型若真落地主项目，记得移除排除。
+
 
 ### AI 运行库（按需下载 + 动态加载）— 不打开 AI 工具就零加载零占用
 
@@ -233,7 +258,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - **完全铺满（唯一策略）**：页面按「视口高度 − 页头/实时区」算出 `CardBoard.FillHeight`，内容比它矮时把每列缺口平均补给该列的**单列卡片**（`DistributeFill`，跨列卡不动）并重排一次——各列底部对齐、填满窗口；内容更高时照常滚动。宽度方向由 `MaxColumns=6` + 无最大宽度限制实现「宽屏自动更多列」。
 - **不提供手动排布（重要，勿加回来）**：按产品要求删除了拖动换列/换位、边缘缩放、右键选宽度、布局持久化（`HwDetailLayout`）与「重置布局」按钮。历史教训：拖拽/缩放依赖小组件命中（无背景的 Grid、3px 圆点手柄）反复被反馈「拖不动 / 改不了大小」，手动交互的收益远低于维护成本。排布完全交给默认策略：分区定义顺序 + 默认跨度 + 贪心最短列 + 铺满对齐；要调布局就改这里的默认值，而不是加交互。
 - **采集**：`HardwareInfoService.BuildDetailData` 并行采集各分区（`Safe()` 隔离单分区失败；授权 4s / TPM 5s 限时，避免慢 WMI 提供程序拖垮首开）。新增字段/分区时：`HardwareDetailData` 加模型 → 服务加采集 → 页面的 `SectionDefinitions` 加定义（枚举成员必须都有定义，`SectionDefinitions_CoverEveryDetailPart` 拦截漏配）→ `BuildItems` 加行 → `LocalizationService.TranslateHardwareLabel` 加标签翻译（中文数据键只在显示层翻译）。
-- **分区图标**：`Assets/HwIcons/<icon>.svg`（每分区一个，Fluent 规范双色 1.5 描边，`HardwareIcons_FollowFluentSpecifications` 校验），`Services/HardwareIconService` 加载；缺失只退回纯标题，不报错。
+- **硬件图标**：`Assets/HwIcons/<icon>.svg`（与侧栏一致的 128px 彩色填充、柔和渐变风格，`HardwareIcons_FollowFluentSpecifications` 校验），`Services/HardwareIconService` 加载；`KeyForLabel` 统一映射概览明细标签，型号/系统/运行时间三个概览卡也使用此目录。明细行左侧功能图标与行末品牌 Logo 分开，品牌更新必须定位 `HardwareBrandLogo`，不能再找第一个 Image。缺失分区图标只退回纯标题，不报错。
 - 特殊数据源：磁盘分区样式走 `IOCTL_DISK_GET_DRIVE_LAYOUT_EX`（WMI 没有，需管理员）；SMART（健康/通电时间/写入量）复用 `DiskSmartReader`；DirectX = 注册表 d3d 文件版本 + 系统内部版本判定；.NET = 注册表 Release；TPM/VBS 走 DeviceGuard/TPM 命名空间。非管理员下的缺失项静默跳过（应用本身管理员启动）。
 - 回归：`HardwareDetailTests`（布局数学、Windows 系统信息映射、图标资源、本地化键覆盖）。
 
@@ -247,10 +272,10 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 ### 内置工具彩色矢量图标
 
 - 每个内置工具一个 `TubaWinUi3.WinUI3/Assets/BuiltinIcons/<tool-id>.svg`（`Assets\**` 已是 Content glob，随包分发，不需要改 csproj）。`Services/BuiltinIconService.cs` 负责加载：`Has(id)` 只探测文件（后台线程安全），`Get(id)` 返回缓存的 `SvgImageSource`（**只能在 UI 线程调用**）。没有 SVG 就返回 null，界面回退到 `IBuiltinTool.Glyph` 的字体字形，所以漏配只会退回旧样式、不会开天窗。
-- **图标按 Fluent System Icons 规范画**（对照微软官方 [fluentui-system-icons](https://github.com/microsoft/fluentui-system-icons) 的 24px Regular 图标）：`viewBox="0 0 24 24"` + 根节点 `fill="none"`；**内容收在 2..22 的 20×20 网格**里（这是 Fluent 的图标网格，四周留 2px）；**以描边为主**（`stroke-width="1.5"` + `stroke-linecap="round"` + `stroke-linejoin="round"`，圆角矩形圆角半径 2~3）；**两色**＝主色描边（Fluent 2 色板，如 `#0F6CBD` 蓝 / `#107C10` 绿 / `#C50F1F` 红 / `#CA5010` 橙 / `#5C2E91` 紫 / `#038387` 青 / `#986F0B` 金 / `#B626A9` 洋红 / `#4F52B2` 靛 / `#5C6670` 灰）＋同色系浅一档的高光（描边或实心小色块，只做点缀，不要整块填满）。**别做成实心色块拼贴**——那是 Material/iOS 的语言，不是 Fluent。
-- **SVG 写法必须落在 Direct2D SVG 支持的子集里**（[支持清单](https://learn.microsoft.com/windows/win32/direct2d/svg-support)）：`path` + `fill`/`stroke` 系（`stroke-width`/`-linecap`/`-linejoin` 都在支持列表里）；`<style>`（CSS 表）、`class=`、`currentColor`、`<text>`、`filter`、`mask` 会被**静默忽略**（不报错、只是不渲染）。`linearGradient`/`<defs>` 官方支持，但本套图标不用。上述约束由 `BuiltinIconTests` 强制（含统一 1.5 线宽、圆头圆角、≥2 色、XML 可解析、光栅化后非空白）。
+- **内置工具采用首页已确认的彩色填充、柔和渐变风格**（用户于 2026-10-27 要求统一替换原描边风格）：`viewBox="0 0 128 128"`，主体轮廓清晰、分层填充、同色系线性渐变、少量圆头细节描边。参考 `quick-device-check.svg` / `game-monitor.svg`；每个工具保留自己的功能形象，不统一套通用底板。侧栏的 `Assets/NavIcons` 与硬件分区的 `Assets/HwIcons` 已按用户要求统一采用这套填充渐变规范。
+- **SVG 写法必须落在 Direct2D SVG 支持的子集里**：使用 `path` / `rect` / `circle` / `ellipse` / `g` / `defs` / `linearGradient` / `stop`；显式颜色，渐变只引用文件内 ID。禁止 CSS、`currentColor`、文字、脚本、外部引用、`filter`、`mask`。`BuiltinIconTests` 校验 128px 填充规范、内部渐变引用、XML、非空光栅化；共享校验器仍保留 HwIcons 的严格 24px 描边检查。
 - 渲染点靠「三选一」图层：卡片模板里 `Image(IconPath)` / `Image(IconSource)` / `FontIcon(IconGlyph)` 三层并存，用 `NullToVisibilityConverter`（`Pages/FavGlyphConverter.cs`）驱动显隐；有 SVG 的内置工具在 `ToolCatalog.CreateBuiltinItemCore` 里把 `IconGlyph` 置空，字形层自然收起。`ToolItem.IconSource` / `BuiltinToolViewModel.IconSource` / `SearchResult.IconSource` 都是**惰性属性**——ToolCatalog 扫描在后台线程，而 `SvgImageSource` 是 DependencyObject，必须在 UI 线程构造。
-- 桌面快捷方式的 .ico 用同一份 SVG 离屏光栅化：`WindowsSearchIndexService.RenderBuiltinIconBitmap` 走 `Svg` 包（MIT，NuGet）的 `SvgDocument.Draw(256,256)`，失败回退 `RenderGlyphBitmap`（字形，`BuiltinShortcutIconTests` 靠反射调它，**签名不能改**）。缓存文件名带 `IconCacheVersion`（`-v2`）后缀——换图标风格时必须改它，否则老用户盘上的旧 `.ico` 永远不会重新生成。
+- 桌面快捷方式的 .ico 用同一份 SVG 离屏光栅化：`WindowsSearchIndexService.RenderBuiltinIconBitmap` 走 `Svg` 包（MIT，NuGet）的 `SvgDocument.Draw(256,256)`，失败回退 `RenderGlyphBitmap`（字形，`BuiltinShortcutIconTests` 靠反射调它，**签名不能改**）。缓存文件名带 `IconCacheVersion`（`-v3`）后缀——换图标风格时必须改它，否则老用户盘上的旧 `.ico` 永远不会重新生成。
 - 页头 `Controls/ToolPageHeader` 的图标瓦片**有意不参与**：那是 40×40 强调色/工具专属渐变底 + 白色字形的独立设计语言，彩色双色图标压在彩色底上会糊。
 
 ### 界面本地化（WinUI3Localizer）
@@ -279,6 +304,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - `ConfigManager` supports two data locations — AppData (`%LocalAppData%/TubaWinUi3/`) or AppRoot (`<appdir>/Data/`) — selected by a `.config_location` marker file.
 - `Package.appxmanifest` declares `runFullTrust` and `systemAIModels`.
 - **Bundled icon cache**: `ToolIconService` prefers `<appdir>/IconCache/` (ships inside the package, read-only) over the writable `DataDir/IconCache`; missing/stale icons are copied from the bundled cache or extracted at runtime. `build-icon-cache.ps1` generates it (same SHA256 `{ToolsRoot}\<relative>` key scheme); a `GenerateBundledIconCache` MSBuild target runs it automatically before every `dotnet publish` (skipped when `ExcludeToolsFromPublish=true`). The `IconCache/` folder is gitignored — never commit it.
+- **正在运行 Debug 版应用时构建**：exe/dll 被进程锁住，`dotnet build/test` 会挂在最后的文件拷贝（MSB3026/3027）。仓库先例是换输出路径 `-p:BaseOutputPath=bin/xxx/`；但注意 2026-10-25 实测：该路径下测试项目的 `makepri.exe` 会递归扫描 `bin\xxx\` 里的整份应用输出而**无限卡死**——构建命令要加 `-p:AppxGeneratePriEnabled=false`，或者干脆先关掉正在运行的应用再构建（最省事）。
 
 ## File-transfer subsystem (separate from the .NET app)
 

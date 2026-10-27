@@ -722,6 +722,7 @@ public static class HardwareInfoService
     internal static string FormatBatterySummary(BatteryDetail battery) =>
         $"{battery.Name ?? "电池"} · 设计容量：{battery.DesignCapacity ?? "未能读取"}" +
         $" · 满充容量：{battery.FullChargeCapacity ?? "未能读取"}" +
+        $" · 健康度：{battery.Health ?? "未能读取"}" +
         $" · 循环次数：{battery.CycleCount ?? "未能读取"}" +
         $" · 序列号：{battery.SerialNumber ?? "未能读取"}";
 

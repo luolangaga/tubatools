@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- pc-tutorial 电脑使用教程 -->
-  <path fill="none" d="M4 6C6.5 4.9 9 4.9 12 6C15 4.9 17.5 4.9 20 6V18C17.5 16.9 15 16.9 12 18C9 16.9 6.5 16.9 4 18V6Z" stroke="#986F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 6V18" stroke="#D6B44B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M64 31C47 18 26 16 9 22v78c17-5 38-1 55 12 17-13 38-17 55-12V22c-17-6-38-4-55 9Z" fill="url(#a)"/><path d="M64 31v73C47 93 32 89 17 93V29c15-3 30 0 47 10Z" fill="url(#b)"/><path d="M70 39c16-10 28-12 41-10v64c-14-2-27 2-41 11Z" fill="#D5EAF8"/><path d="M29 46q13 0 22 7m-22 8q13 0 22 7m29-15 16-5m-16 20 16-5" fill="none" stroke="#90B8D7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

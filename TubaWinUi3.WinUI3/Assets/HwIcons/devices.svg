@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- devices 其他设备 -->
-  <path fill="none" d="M4.5 7C4.5 5.9 5.4 5 6.5 5H17.5C18.6 5 19.5 5.9 19.5 7V17C19.5 18.1 18.6 19 17.5 19H6.5C5.4 19 4.5 18.1 4.5 17V7Z" stroke="#CA5010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 9V14" stroke="#CA5010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M11.2 15.9A0.8 0.8 0 1 1 12.8 15.9A0.8 0.8 0 1 1 11.2 15.9Z" fill="#F5A46B"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="25" y1="20" x2="103" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#A3E7FF"/><stop offset=".5" stop-color="#59B9EC"/><stop offset="1" stop-color="#3087D4"/></linearGradient><linearGradient id="b" x1="30" y1="20" x2="96" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B9CA"/><stop offset="1" stop-color="#4C637B"/></linearGradient></defs>
+<ellipse cx="64" cy="119" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="14" y="18" width="75" height="61" rx="9" fill="url(#c)"/><rect x="21" y="25" width="61" height="46" rx="4" fill="url(#a)"/><path d="M43 79h17v19H43Z" fill="#A5BCCD"/><rect x="29" y="96" width="45" height="7" rx="3.5" fill="#C6D7E4"/><rect x="79" y="49" width="37" height="65" rx="9" fill="url(#c)"/><rect x="84" y="55" width="27" height="47" rx="4" fill="url(#a)"/><circle cx="97.5" cy="108" r="2.5" fill="#DCF6FF"/><path d="m32 52 12-11 12 11 12-11" fill="none" stroke="#E4F9FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

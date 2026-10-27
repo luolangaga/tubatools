@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="bin" x1="31" y1="28" x2="101" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#85D7FF"/><stop offset=".54" stop-color="#38A3EF"/><stop offset="1" stop-color="#2176D5"/></linearGradient><linearGradient id="lid" x1="31" y1="19" x2="98" y2="39" gradientUnits="userSpaceOnUse"><stop stop-color="#C1ECFF"/><stop offset="1" stop-color="#67C1F7"/></linearGradient></defs>
+<ellipse cx="63" cy="116" rx="37" ry="4" fill="#225690" opacity=".09"/>
+<path d="M30 33h67l-6 70a11 11 0 0 1-11 10H47a11 11 0 0 1-11-10l-6-70Z" fill="url(#bin)"/>
+<path d="M45 31v-7a8 8 0 0 1 8-8h21a8 8 0 0 1 8 8v7" stroke="#8BD5FD" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="25" y="28" width="77" height="11" rx="5.5" fill="url(#lid)"/>
+<path d="M47 51v43M64 51v43M81 51v43" stroke="#DCF6FF" stroke-opacity=".65" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m102 47 4 11 11 4-11 4-4 11-4-11-11-4 11-4 4-11Z" fill="#7DDBCC"/><path d="m108 16 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" fill="#B5F0E4"/>
+</svg>

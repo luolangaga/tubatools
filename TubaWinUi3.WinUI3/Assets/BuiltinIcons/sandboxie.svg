@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- sandboxie 恶意软件沙盒 -->
-  <path fill="none" d="M6.5 3.5H17.5C19.16 3.5 20.5 4.84 20.5 6.5V17.5C20.5 19.16 19.16 20.5 17.5 20.5H6.5C4.84 20.5 3.5 19.16 3.5 17.5V6.5C3.5 4.84 4.84 3.5 6.5 3.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M8.6 12C8.6 10.12 10.12 8.6 12 8.6C13.88 8.6 15.4 10.12 15.4 12C15.4 13.88 13.88 15.4 12 15.4C10.12 15.4 8.6 13.88 8.6 12Z" fill="#A56FD1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFE69A"/><stop offset="0.500" stop-color="#FDC64F"/><stop offset="1.000" stop-color="#EBA439"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="m64 13 47 25v52l-47 25-47-25V38Z" fill="url(#a)"/><path d="m17 38 47 26 47-26-47-25Z" fill="#FBE59B"/><path d="M64 64v51l47-25V38Z" fill="#E8A941"/><path d="m31 54 6-8 47 26-6 9Z" fill="#FFF3CC"/><path d="m48 96-6-8 47-26 6 8Z" fill="#FFF3CC"/>
 </svg>

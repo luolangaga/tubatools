@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- benchmark-cloud 跑分排行 -->
-  <path fill="none" d="M4.5 8.5L8.5 12.5L12 6.5L15.5 12.5L19.5 8.5V17.5H4.5V8.5Z" stroke="#7719AA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M6.5 6.5A1.1 1.1 0 1 1 8.7 6.5A1.1 1.1 0 1 1 6.5 6.5Z" fill="#B47BD6"/>
-  <path d="M10.9 4.5A1.1 1.1 0 1 1 13.1 4.5A1.1 1.1 0 1 1 10.9 4.5Z" fill="#B47BD6"/>
-  <path d="M15.3 6.5A1.1 1.1 0 1 1 17.5 6.5A1.1 1.1 0 1 1 15.3 6.5Z" fill="#B47BD6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M33 94C8 94 5 59 27 52c1-37 54-46 66-11 30-3 42 45 10 53H33Z" fill="url(#a)"/><rect x="32" y="65" width="13" height="18" rx="3" fill="#D4F2FF"/><rect x="56" y="52" width="13" height="31" rx="3" fill="#E9F9FF"/><rect x="80" y="39" width="13" height="44" rx="3" fill="#FFFFFF"/><path d="m34 55 25-17 18 4 18-18" fill="none" stroke="#AEF1DB" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

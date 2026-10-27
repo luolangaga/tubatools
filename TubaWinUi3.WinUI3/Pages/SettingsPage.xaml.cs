@@ -58,16 +58,10 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private const string StorePackageName = "DA3D64F4.winui3";
     private const string StoreProductId = "9P15095X7MGB";
 
-    private FrameworkElement? _generalExpanderContent;
-    private FrameworkElement? _appearanceExpanderContent;
-    private FrameworkElement? _hardwareAiExpanderContent;
-    private FrameworkElement? _toolsCommunityExpanderContent;
-    private FrameworkElement? _creditsExpanderContent;
 
     private static readonly (string Tag, string TitleKey, string Fallback)[] DefaultPageOptions =
     [
-        ("all", "Settings_DefaultPageOptionAll", "全部工具"),
-        ("favorites", "Settings_DefaultPageOptionFavorites", "常用"),
+        ("home", "Settings_DefaultPageOptionHome", "首页"),
         ("hardware", "Settings_DefaultPageOptionHardware", "硬件信息"),
         ("builtin", "Settings_DefaultPageOptionBuiltin", "内置工具"),
     ];
@@ -116,15 +110,15 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private static readonly Dictionary<string, string> SettingKeyToExpander = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["CompactMode"] = "GeneralExpander",
-        ["NavLayoutMode"] = "GeneralExpander",
+        ["CompactMode"] = "AppearanceExpander",
+        ["NavLayoutMode"] = "AppearanceExpander",
         ["DefaultPage"] = "GeneralExpander",
         ["ShowFrequentRecommendations"] = "GeneralExpander",
         ["FastMode"] = "GeneralExpander",
         ["RememberWindow"] = "GeneralExpander",
         ["CloseToTray"] = "GeneralExpander",
-        ["Update"] = "GeneralExpander",
-        ["ToolsBundle"] = "GeneralExpander",
+        ["Update"] = "UpdatesSection",
+        ["ToolsBundle"] = "UpdatesSection",
         ["Background"] = "AppearanceExpander",
         ["Theme"] = "AppearanceExpander",
         ["Backdrop"] = "AppearanceExpander",
@@ -133,18 +127,18 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["HardwareFitScreen"] = "HardwareAiExpander",
         ["HardwareDiagramStyle"] = "HardwareAiExpander",
         ["HardwareMultiDeviceNewLine"] = "HardwareAiExpander",
-        ["ProxyEnabled"] = "GeneralExpander",
-        ["ProxyAddress"] = "GeneralExpander",
-        ["HttpDownload"] = "ToolsCommunityExpander",
-        ["HttpDownloadPath"] = "ToolsCommunityExpander",
-        ["HttpDownloadAction"] = "ToolsCommunityExpander",
+        ["ProxyEnabled"] = "NetworkSection",
+        ["ProxyAddress"] = "NetworkSection",
+        ["HttpDownload"] = "NetworkSection",
+        ["HttpDownloadPath"] = "NetworkSection",
+        ["HttpDownloadAction"] = "NetworkSection",
         ["ConfigManager"] = "ToolsCommunityExpander",
         ["StorageUsage"] = "ToolsCommunityExpander",
         ["ExportApp"] = "ToolsCommunityExpander",
-        ["CommunityTool"] = "ToolsCommunityExpander",
-        ["ActiveInterceptEnabled"] = "ToolsCommunityExpander",
-        ["ActiveInterceptNotifyMode"] = "ToolsCommunityExpander",
-        ["WindowsSearchIndex"] = "ToolsCommunityExpander",
+        ["CommunityTool"] = "CommunitySection",
+        ["ActiveInterceptEnabled"] = "IntegrationSection",
+        ["ActiveInterceptNotifyMode"] = "IntegrationSection",
+        ["WindowsSearchIndex"] = "IntegrationSection",
     };
 
     private static readonly Dictionary<string, string> SettingKeyToCardName = new(StringComparer.OrdinalIgnoreCase)
@@ -183,18 +177,15 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     public SettingsPage()
     {
         InitializeComponent();
+        InitializeSettingsLayout();
 
-        _generalExpanderContent = GeneralExpander.Content as FrameworkElement;
-        _appearanceExpanderContent = AppearanceExpander.Content as FrameworkElement;
-        _hardwareAiExpanderContent = HardwareAiExpander.Content as FrameworkElement;
-        _toolsCommunityExpanderContent = ToolsCommunityExpander.Content as FrameworkElement;
-        _creditsExpanderContent = CreditsExpander.Content as FrameworkElement;
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         VersionText.Text = string.Format(
             LocalizationService.L("Settings_VersionFormat", "版本 {0}"),
             version is not null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0");
 
+        AboutVersionText.Text = version is not null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
         _ = LoadAppIconAsync();
         InitCompactModeToggle();
         InitNavLayoutComboBox();
@@ -217,12 +208,10 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitCpuzDataSourceStatus();
         InitProxySettings();
         InitGitHubLoginStatus();
-        LoadCreditsAvatar();
         InitBuiltinToolOpenModeComboBox();
         InitHttpDownloadSettings();
         InitActiveInterceptToggle();
         InitActiveInterceptNotifyModeComboBox();
-        InitSearchIndexToggle();
         InitTelemetryToggle();
         Loaded += (_, _) => AppSettings.SettingChanged += OnInterceptSettingChanged;
         Unloaded += (_, _) => AppSettings.SettingChanged -= OnInterceptSettingChanged;
@@ -232,8 +221,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             SettingsCommunityCard.Visibility = Visibility.Collapsed;
             SettingsCommunitySubmitCard.Visibility = Visibility.Collapsed;
             SettingsStoreRatingCard.Visibility = Visibility.Visible;
-            ToolsCommunityTitleText.Text = LocalizationService.L("Settings_ToolsCommunity_TitleMsix", "工具");
-            ToolsCommunityDescText.Text = LocalizationService.L("Settings_ToolsCommunity_DescMsix", "配置管理、自定义工具、导出");
         }
 
         // 代码构建的画刷不会随主题自动刷新，切换主题后按当前设置重渲染
@@ -254,15 +241,9 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         // 页面被缓存，构造后不再重跑：开关可能被其它入口改过（如常用页的关闭按钮），进入时重新读取
         InitShowFrequentToggle();
         InitHardwareStyle();
+        RefreshLogDirCard();
 
-        RestoreExpanderContent(GeneralExpander, _generalExpanderContent);
-        RestoreExpanderContent(AppearanceExpander, _appearanceExpanderContent);
-        RestoreExpanderContent(HardwareAiExpander, _hardwareAiExpanderContent);
-        RestoreExpanderContent(ToolsCommunityExpander, _toolsCommunityExpanderContent);
-        RestoreExpanderContent(CreditsExpander, _creditsExpanderContent);
 
-        if (GeneralExpander is not null)
-            GeneralExpander.IsExpanded = true;
 
         if (e.Parameter is SearchNavigationTarget target && target.HighlightSettingKey is not null)
         {
@@ -280,23 +261,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         base.OnNavigatedFrom(e);
         DownloadQueueService.QueueChanged -= UpdateDownloadQueueStatus;
-    }
-
-    private static void RestoreExpanderContent(Expander? expander, FrameworkElement? savedContent)
-    {
-        if (expander is null || savedContent is null) return;
-        if (expander.Content is null || IsExpanderContentEmpty(expander))
-            expander.Content = savedContent;
-    }
-
-    private static bool IsExpanderContentEmpty(Expander expander)
-    {
-        if (expander.Content is not FrameworkElement content) return true;
-        if (content is ScrollViewer sv && sv.Content is StackPanel sp)
-            return sp.Children.Count == 0;
-        if (content is StackPanel sp2)
-            return sp2.Children.Count == 0;
-        return false;
     }
 
     private void StartHighlight(string settingKey)
@@ -320,9 +284,11 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
             if (ct.IsCancellationRequested) return;
 
-            if (FindName(cardName) is Border border)
+            if (FindName(cardName) is FrameworkElement card)
             {
-                border.StartBringIntoView(new BringIntoViewOptions
+                ExpandSettingsCard(card);
+                card.UpdateLayout();
+                card.StartBringIntoView(new BringIntoViewOptions
                 {
                     AnimationDesired = true,
                     VerticalAlignmentRatio = 0.5
@@ -331,7 +297,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
                 try { await Task.Delay(500, ct); } catch (OperationCanceledException) { return; }
 
                 if (ct.IsCancellationRequested) return;
-                SearchHighlightService.HighlightBorder(border);
+                if (card is Border border) SearchHighlightService.HighlightBorder(border);
             }
         }
     }
@@ -434,7 +400,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         _defaultPageInitializing = true;
         DefaultPageComboBox.Items.Clear();
-        var saved = AppSettings.Get("DefaultPage") ?? "all";
+        var saved = AppSettings.Get("DefaultPage") ?? "home";
 
         for (var i = 0; i < DefaultPageOptions.Length; i++)
         {
@@ -1266,7 +1232,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     }
 
     private bool _activeInterceptInitializing;
-    private bool _searchIndexInitializing;
     private bool _telemetryInitializing;
 
     private void InitActiveInterceptToggle()
@@ -1322,62 +1287,73 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         button.IsEnabled = false;
         try
         {
-            var tools = await ToolCatalog.GetAllToolsAsync();
-            var disabled = ToolVisibilityService.Parse(AppSettings.Get(ToolVisibilityService.DisabledBuiltinsKey));
-            var excluded = ToolVisibilityService.Parse(AppSettings.Get(ToolVisibilityService.SearchExcludedKey));
-            var rows = new ListView { SelectionMode = ListViewSelectionMode.None, MaxHeight = 480 };
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(rows, "ToolVisibilityList");
-            rows.Header = new TextBlock
+            var picker = new Controls.SearchToolPicker();
+            var enablePicker = new Controls.SearchToolPicker { IsBuiltinEnablement = true };
+            var tabs = new Grid
             {
-                Text = LocalizationService.L("Settings_ToolVisibility_Hint", "取消启用会隐藏内置工具并禁用启动入口；开始菜单选项仅在 Windows 搜索索引开启时生效。"),
-                TextWrapping = TextWrapping.Wrap
+                Width = Math.Clamp(XamlRoot.Size.Width - 80, 240, 560),
+                Height = Math.Clamp(XamlRoot.Size.Height - 240, 360, 540)
             };
-            var choices = new List<(string Key, string? Id, CheckBox? Enabled, CheckBox Search)>();
-            void AddRow(string name, string key, string? id)
+            tabs.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            tabs.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            var searchTab = new SelectorBarItem { Text = LocalizationService.L("Settings_SearchTools_Tab", "Windows 搜索"), IsSelected = true };
+            var builtinTab = new SelectorBarItem { Text = LocalizationService.L("Settings_BuiltinTools_Tab", "内置工具启用") };
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(searchTab, "SearchToolsTab");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(builtinTab, "BuiltinToolsTab");
+            var selector = new SelectorBar { Margin = new Thickness(0, 0, 0, 12) };
+            selector.Items.Add(searchTab);
+            selector.Items.Add(builtinTab);
+            enablePicker.Visibility = Visibility.Collapsed;
+            selector.SelectionChanged += (_, _) =>
             {
-                var row = new StackPanel { Spacing = 4 };
-                row.Children.Add(new TextBlock { Text = name, TextWrapping = TextWrapping.Wrap });
-                CheckBox? enabled = null;
-                if (id is not null)
-                {
-                    enabled = new CheckBox { Content = LocalizationService.L("Settings_ToolVisibility_Enabled", "启用内置工具"), IsChecked = !disabled.Contains(id) };
-                    row.Children.Add(enabled);
-                }
-                var search = new CheckBox { Content = LocalizationService.L("Settings_ToolVisibility_Search", "显示在开始菜单与 Windows 搜索"), IsChecked = !excluded.Contains(key) };
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(search, name + " " + search.Content);
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(search, "SearchVisibility_" + key);
-                if (enabled is not null)
-                {
-                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(enabled, name + " " + enabled.Content);
-                    Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(enabled, "BuiltinEnabled_" + id);
-                }
-                row.Children.Add(search);
-                rows.Items.Add(row);
-                choices.Add((key, id, enabled, search));
-            }
-            foreach (var builtin in BuiltinToolRegistry.AllTools.OrderBy(t => t.Name))
-                AddRow(builtin.Name, "builtin:" + builtin.Id, builtin.Id);
-            foreach (var tool in tools.Where(t => !t.IsBuiltinLink).DistinctBy(ToolVisibilityService.SearchKey).OrderBy(t => t.Name))
-                AddRow(tool.Name, ToolVisibilityService.SearchKey(tool), null);
+                picker.Visibility = selector.SelectedItem == searchTab ? Visibility.Visible : Visibility.Collapsed;
+                enablePicker.Visibility = selector.SelectedItem == builtinTab ? Visibility.Visible : Visibility.Collapsed;
+            };
+            Grid.SetRow(picker, 1);
+            Grid.SetRow(enablePicker, 1);
+            tabs.Children.Add(selector);
+            tabs.Children.Add(picker);
+            tabs.Children.Add(enablePicker);
             var dialog = new ContentDialog
             {
                 XamlRoot = XamlRoot, RequestedTheme = ThemeService.CurrentElementTheme,
                 Title = LocalizationService.L("Settings_ToolVisibility_Title", "管理内置工具与开始菜单展示"),
-                Content = rows,
+                Content = tabs,
                 PrimaryButtonText = LocalizationService.L("Settings_ToolVisibility_Save", "保存"),
-                CloseButtonText = LocalizationService.L("Settings_ToolVisibility_Cancel", "取消")
+                CloseButtonText = LocalizationService.L("Settings_ToolVisibility_Cancel", "取消"),
+                DefaultButton = ContentDialogButton.Primary,
+                IsPrimaryButtonEnabled = picker.CanApply
             };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-            foreach (var choice in choices)
+            dialog.Resources["ContentDialogMaxWidth"] = 680d;
+            dialog.Resources["ContentDialogMinWidth"] = 280d;
+            picker.StateChanged += (_, _) => dialog.IsPrimaryButtonEnabled = picker.CanApply;
+            void ResizePicker(XamlRoot root, XamlRootChangedEventArgs args)
             {
-                if (choice.Id is not null)
-                {
-                    if (choice.Enabled?.IsChecked == true) disabled.Remove(choice.Id); else disabled.Add(choice.Id);
-                }
-                if (choice.Search.IsChecked == true) excluded.Remove(choice.Key); else excluded.Add(choice.Key);
+                tabs.Width = Math.Clamp(root.Size.Width - 80, 240, 560);
+                tabs.Height = Math.Clamp(root.Size.Height - 240, 360, 540);
             }
-            ToolVisibilityService.Save(disabled, excluded);
-            if (AppSettings.GetBool("WindowsSearchIndex", false)) await WindowsSearchIndexService.RefreshAsync();
+            var dialogRoot = XamlRoot;
+            dialog.Opened += async (_, _) =>
+            {
+                dialogRoot.Changed += ResizePicker;
+                await Task.WhenAll(picker.InitializeAsync(), enablePicker.InitializeAsync());
+            };
+            dialog.Closed += (_, _) =>
+            {
+                dialogRoot.Changed -= ResizePicker;
+                picker.CancelPendingLoad();
+                enablePicker.CancelPendingLoad();
+            };
+            dialog.PrimaryButtonClick += (_, args) => args.Cancel = !picker.CanApply;
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+            await enablePicker.ApplySettingsAsync();
+            var result = await picker.ApplySettingsAsync();
+            SearchRegistrationResultBar.Severity = result.Errors.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success;
+            SearchRegistrationResultBar.Title = string.Format(LocalizationService.L("SearchPicker_Registered", "已注册 {0} 个工具"), result.Registered);
+            SearchRegistrationResultBar.Message = result.Errors.Count > 0 ? string.Join("\n", result.Errors)
+                : result.Unavailable > 0 ? string.Format(LocalizationService.L("SearchPicker_Unavailable", "另有 {0} 个工具尚未下载或未启用，暂未注册。"), result.Unavailable)
+                : LocalizationService.L("SearchPicker_Synchronized", "已按当前选择同步开始菜单与 Windows 搜索。一个都不选会移除全部工具注册。");
+            SearchRegistrationResultBar.IsOpen = true;
         }
         catch (Exception ex)
         {
@@ -1415,13 +1391,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         }
     }
 
-    private void InitSearchIndexToggle()
-    {
-        _searchIndexInitializing = true;
-        SearchIndexToggle.IsOn = AppSettings.GetBool("WindowsSearchIndex", false);
-        _searchIndexInitializing = false;
-    }
-
     private void InitTelemetryToggle()
     {
         _telemetryInitializing = true;
@@ -1433,22 +1402,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (_telemetryInitializing) return;
         TelemetryService.SetEnabled(TelemetryToggle.IsOn);
-    }
-
-    private void SearchIndexToggle_Toggled(object sender, RoutedEventArgs e)
-    {
-        if (_searchIndexInitializing) return;
-        var enabled = SearchIndexToggle.IsOn;
-        AppSettings.Set("WindowsSearchIndex", enabled);
-
-        if (enabled)
-        {
-            _ = WindowsSearchIndexService.RegisterAllToolsAsync();
-        }
-        else
-        {
-            WindowsSearchIndexService.RemoveAll();
-        }
     }
 
     private bool _activeInterceptNotifyModeInitializing;
@@ -1720,10 +1673,14 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private void UpdateProxyPanelVisibility(bool enabled)
     {
-        ProxyDivider.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-        ProxyAddressPanel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-        ProxyAuthPanel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-        ProxyTestPanel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+        ProxyDivider.Visibility = Visibility.Collapsed;
+        ProxyAddressPanel.Visibility = Visibility.Visible;
+        ProxyAddressTextBox.IsEnabled = enabled;
+        ProxyAuthPanel.Visibility = Visibility.Visible;
+        ProxyUsernameTextBox.IsEnabled = enabled;
+        ProxyPasswordBox.IsEnabled = enabled;
+        ProxyTestPanel.Visibility = Visibility.Visible;
+        ProxyTestButton.IsEnabled = enabled;
         
         UpdateProxyStatus();
     }
@@ -2144,15 +2101,51 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         }
     }
 
-    private void LoadCreditsAvatar()
+    // ===== 日志目录（issue #165：崩溃/启动日志可自定义位置 + 一键打开）=====
+
+    private void RefreshLogDirCard()
+    {
+        var custom = AppSettings.Get(DiagnosticLogService.LogDirSettingKey);
+        var usingCustom = !string.IsNullOrWhiteSpace(custom) && Directory.Exists(custom);
+        LogDirPathText.Text = usingCustom
+            ? custom
+            : DiagnosticLogService.DefaultDirectoryPath + LocalizationService.L("Settings_LogDir_DefaultSuffix", "（默认）");
+        ResetLogDirButton.Visibility = usingCustom ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async void ChangeLogDirButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dir = await Win32Dialogs.PickFolderAsync();
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+
+        if (!DiagnosticLogService.IsDirectoryWritable(dir))
+        {
+            await ShowMessageAsync(
+                LocalizationService.L("Settings_LogDir_UnwritableTitle", "目录不可写"),
+                LocalizationService.L("Settings_LogDir_UnwritableDesc", "请选择一个程序可以写入的目录，例如本地磁盘上的普通文件夹。"));
+            return;
+        }
+
+        AppSettings.Set(DiagnosticLogService.LogDirSettingKey, dir);
+        DiagnosticLogService.Prepare();
+        RefreshLogDirCard();
+    }
+
+    private void OpenLogDirButton_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            AuthorAvatar.ProfilePicture = new BitmapImage(new Uri("https://github.com/luolangaga.png"));
+            DiagnosticLogService.Prepare();
+            Process.Start(new ProcessStartInfo("explorer.exe", DiagnosticLogService.DirectoryPath) { UseShellExecute = true });
         }
-        catch
-        {
-        }
+        catch { }
+    }
+
+    private void ResetLogDirButton_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Remove(DiagnosticLogService.LogDirSettingKey);
+        DiagnosticLogService.Prepare();
+        RefreshLogDirCard();
     }
 
     private async void StoreRatingButton_Click(object sender, RoutedEventArgs e)
@@ -2470,55 +2463,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         Storyboard.SetTarget(animation, target);
         Storyboard.SetTargetProperty(animation, property);
         storyboard.Children.Add(animation);
-    }
-
-    private void OpenSourceButton_Click(object sender, RoutedEventArgs e)
-    {
-        DrawerOverlay.Visibility = Visibility.Visible;
-        if (FastModeService.IsFastModeEnabled())
-        {
-            // 动画 HoldEnd 的保持值优先于局部赋值，必须先停掉两个 Storyboard 再直接设值。
-            DrawerOpenStoryboard.Stop();
-            DrawerCloseStoryboard.Stop();
-            DrawerOverlayBackground.Opacity = 1;
-            DrawerPanelTransform.X = 0;
-        }
-        else
-        {
-            DrawerOpenStoryboard.Begin();
-        }
-    }
-
-    private void DrawerCloseButton_Click(object sender, RoutedEventArgs e)
-    {
-        CloseDrawer();
-    }
-
-    private void DrawerOverlayBackground_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        CloseDrawer();
-    }
-
-    private void CloseDrawer()
-    {
-        if (FastModeService.IsFastModeEnabled())
-        {
-            // 动画 HoldEnd 的保持值优先于局部赋值，必须先停掉两个 Storyboard 再直接设值。
-            DrawerOpenStoryboard.Stop();
-            DrawerCloseStoryboard.Stop();
-            DrawerOverlay.Visibility = Visibility.Collapsed;
-            DrawerOverlayBackground.Opacity = 0;
-            DrawerPanelTransform.X = 420;
-            return;
-        }
-        DrawerCloseStoryboard.Completed += OnDrawerCloseCompleted;
-        DrawerCloseStoryboard.Begin();
-    }
-
-    private void OnDrawerCloseCompleted(object? sender, object e)
-    {
-        DrawerCloseStoryboard.Completed -= OnDrawerCloseCompleted;
-        DrawerOverlay.Visibility = Visibility.Collapsed;
     }
 
     private void ThrowErrorButton_Click(object sender, RoutedEventArgs e)

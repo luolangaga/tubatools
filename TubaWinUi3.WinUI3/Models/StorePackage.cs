@@ -49,6 +49,34 @@ public sealed class StorePackage
     [JsonPropertyName("recommended")]
     public bool IsRecommended { get; init; }
 
+    [JsonPropertyName("installNotes")]
+    public string? InstallNotes { get; init; }
+
+    [JsonPropertyName("downloadUrl")]
+    public string? DownloadUrl { get; init; }
+
+    [JsonIgnore]
+    public bool IsDirectDownload => Uri.TryCreate(DownloadUrl, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps;
+
+    [JsonPropertyName("unavailableReason")]
+    public string? UnavailableReason { get; init; }
+
+    [JsonIgnore]
+    public bool CanInstall => string.IsNullOrEmpty(UnavailableReason);
+
+    [JsonIgnore]
+    public string ActionLabel => CanInstall ? "安装" : "暂未收录";
+
+    [JsonIgnore]
+    public string SourceLabel => IsDirectDownload ? "官方直链 · x64" : CanInstall ? "WinGet" : "WinGet 暂未收录";
+
+    [JsonIgnore]
+    public string Monogram => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "A";
+
+    [JsonIgnore]
+    public string AccessibleName => $"{Name}，{Description}，{SourceLabel}";
+
     // ---- 以下为运行时附加字段，不参与 JSON 反序列化 ----
 
     [JsonIgnore]
@@ -60,12 +88,20 @@ public sealed class StorePackage
     [JsonIgnore]
     public bool IsOnlineResult { get; set; }
 
-    /// <summary>安装状态：idle / resolving / queued / done / error</summary>
+    /// <summary>安装状态：idle / queued（直链下载） / installing / done / error</summary>
     [JsonIgnore]
     public string InstallState { get; set; } = "idle";
 
     [JsonIgnore]
     public string? StatusText { get; set; }
+}
+
+/// <summary>商店分组；直接作为 CollectionViewSource 的组集合。</summary>
+public sealed class StoreSection(string title, string description, IEnumerable<StorePackage> packages)
+    : List<StorePackage>(packages)
+{
+    public string Title { get; } = title;
+    public string Description { get; } = description;
 }
 
 /// <summary>

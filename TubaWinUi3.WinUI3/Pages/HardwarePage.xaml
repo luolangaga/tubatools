@@ -333,7 +333,7 @@
                                 Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="24" Glyph="&#xE772;" />
+                                <Image Width="36" Height="36" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"><Image.Source><SvgImageSource UriSource="ms-appx:///Assets/HwIcons/computer.svg"/></Image.Source></Image>
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="型号信息" l:Uids.Uid="Hw_ModelCard" />
@@ -357,7 +357,7 @@
                                 Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="24" Glyph="&#xE770;" />
+                                <Image Width="36" Height="36" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"><Image.Source><SvgImageSource UriSource="ms-appx:///Assets/HwIcons/system.svg"/></Image.Source></Image>
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="系统信息" l:Uids.Uid="Hw_SystemCard" />
@@ -381,7 +381,19 @@
                                 Height="48"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                 CornerRadius="8">
-                                <FontIcon FontSize="24" Glyph="&#xE917;" />
+                                <Grid Width="36" Height="36" AutomationProperties.AccessibilityView="Raw">
+                                    <Image Stretch="Uniform"><Image.Source><SvgImageSource UriSource="ms-appx:///Assets/HwIcons/uptime.svg"/></Image.Source></Image>
+                                    <Line X1="18" Y1="18" X2="18" Y2="12" Stroke="#478CB8" StrokeThickness="2.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                        <Line.RenderTransform><RotateTransform x:Name="UptimeHourHand" CenterX="18" CenterY="18"/></Line.RenderTransform>
+                                    </Line>
+                                    <Line X1="18" Y1="18" X2="18" Y2="9" Stroke="#478CB8" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                        <Line.RenderTransform><RotateTransform x:Name="UptimeMinuteHand" CenterX="18" CenterY="18"/></Line.RenderTransform>
+                                    </Line>
+                                    <Line X1="18" Y1="20" X2="18" Y2="7" Stroke="#E36F70" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                                        <Line.RenderTransform><RotateTransform x:Name="UptimeSecondHand" CenterX="18" CenterY="18"/></Line.RenderTransform>
+                                    </Line>
+                                    <Ellipse Width="3" Height="3" Fill="#478CB8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Grid>
                             </Border>
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="运行时间" l:Uids.Uid="Hw_UptimeCard" />
@@ -428,12 +440,11 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock
-
-                                            FontSize="14"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding DisplayLabel}"
-                                            VerticalAlignment="Center" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <Image Width="24" Height="24" Source="{Binding IconSource}" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"/>
+                                            <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       Text="{Binding DisplayLabel}" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                         <Border
                                             Grid.Column="1"
                                             Width="1"
@@ -455,6 +466,7 @@
                                             </TextBlock.RenderTransform>
                                         </TextBlock>
                                         <Image
+                                            x:Name="HardwareBrandLogo"
                                             Grid.Column="3"
                                             Width="20"
                                             Height="20"
@@ -475,7 +487,9 @@
         <Grid x:Name="SettingsStyleScroll" Visibility="Collapsed" Background="Transparent" SizeChanged="SettingsStyleScroll_SizeChanged"
               PointerPressed="HardwareFocusOutside_PointerPressed" KeyDown="HardwareFocus_KeyDown">
             <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
-            <StackPanel x:Name="SettingsStyleRoot" Width="1180" MaxWidth="1180" Padding="24,8,24,20" Spacing="12"
+            <!-- Width 由 FitSettingsStyleWidth() 按可用宽度反推：Viewbox 为「一屏放下」等比缩放，
+                 高度受限时会缩出左右白边，这里把逻辑宽度补到「缩放后刚好铺满」。 -->
+            <StackPanel x:Name="SettingsStyleRoot" Width="1180" Padding="24,8,24,20" Spacing="12"
                         HorizontalAlignment="Center" SizeChanged="SettingsStyleRoot_SizeChanged">
                 <Grid x:Name="SettingsStyleHeader" ColumnSpacing="16" RowSpacing="12">
                     <Grid.ColumnDefinitions>

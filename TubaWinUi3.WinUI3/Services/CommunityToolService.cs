@@ -919,20 +919,14 @@ public static class CommunityToolService
     {
         using var client = GitHubAuthService.CreateAuthenticatedClient();
         var base64Content = Convert.ToBase64String(Encoding.UTF8.GetBytes(content));
-        var body = JsonSerializer.Serialize(new
+        var payload = new Dictionary<string, object?>
         {
-            message = $"feat: add plugin - {path.Split('/')[^2]}",
-            content = base64Content,
-            branch
-        });
-        var httpContent = new StringContent(body, Encoding.UTF8, "application/json");
-        var resp = await client.PutAsync(
-            $"https://api.github.com/repos/{owner}/{repo}/contents/{path}", httpContent, ct);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException($"提交文件失败：{(int)resp.StatusCode}\n{err}");
-        }
+            ["message"] = $"feat: add plugin - {path.Split('/')[^2]}",
+            ["content"] = base64Content,
+            ["branch"] = branch
+        };
+        await PutContentAsync(client, owner, repo, path, branch, payload, ct,
+            err => $"提交文件失败：{err}");
     }
 
     private static async Task CreateBinaryFileAsync(string owner, string repo, string path, string branch, string localFilePath, string token, CancellationToken ct)
@@ -941,21 +935,62 @@ public static class CommunityToolService
         var bytes = await File.ReadAllBytesAsync(localFilePath, ct);
         var base64Content = Convert.ToBase64String(bytes);
         var fileName = Path.GetFileName(localFilePath);
-        var body = JsonSerializer.Serialize(new
+        var payload = new Dictionary<string, object?>
         {
-            message = $"feat: upload {fileName}",
-            content = base64Content,
-            branch
-        });
+            ["message"] = $"feat: upload {fileName}",
+            ["content"] = base64Content,
+            ["branch"] = branch
+        };
+        await PutContentAsync(client, owner, repo, path, branch, payload, ct,
+            err => $"上传 {fileName} 失败：{err}");
+    }
+
+    /// <summary>
+    /// 写入 contents。文件已存在时必须带 sha（GitHub 更新语义），
+    /// 否则返回 422 "sha wasn't supplied"。
+    /// </summary>
+    private static async Task PutContentAsync(
+        HttpClient client, string owner, string repo, string path, string branch,
+        Dictionary<string, object?> payload, CancellationToken ct, Func<string, string> formatError)
+    {
+        var sha = await GetContentShaAsync(client, owner, repo, path, branch, ct);
+        if (!string.IsNullOrWhiteSpace(sha))
+            payload["sha"] = sha;
+
+        var body = JsonSerializer.Serialize(payload);
         var httpContent = new StringContent(body, Encoding.UTF8, "application/json");
         var resp = await client.PutAsync(
-            $"https://api.github.com/repos/{owner}/{repo}/contents/{path}", httpContent, ct);
+            $"https://api.github.com/repos/{owner}/{repo}/contents/{EscapeRepoPath(path)}", httpContent, ct);
         if (!resp.IsSuccessStatusCode)
         {
             var err = await resp.Content.ReadAsStringAsync(ct);
-            throw new InvalidOperationException($"上传 {fileName} 失败：{(int)resp.StatusCode}\n{err}");
+            throw new InvalidOperationException(formatError($"{(int)resp.StatusCode}\n{err}"));
         }
     }
+
+    private static async Task<string?> GetContentShaAsync(
+        HttpClient client, string owner, string repo, string path, string branch, CancellationToken ct)
+    {
+        try
+        {
+            using var resp = await client.GetAsync(
+                $"https://api.github.com/repos/{owner}/{repo}/contents/{EscapeRepoPath(path)}?ref={Uri.EscapeDataString(branch)}", ct);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            var json = await resp.Content.ReadAsStringAsync(ct);
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
+            return doc.RootElement.TryGetProperty("sha", out var shaEl) ? shaEl.GetString() : null;
+        }
+        catch (OperationCanceledException) { throw; }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string EscapeRepoPath(string path) =>
+        string.Join("/", path.Split('/').Select(Uri.EscapeDataString));
 
     private static async Task<string> CreatePullRequestAsync(
         string branch, string forkOwner, string toolId, string toolName,

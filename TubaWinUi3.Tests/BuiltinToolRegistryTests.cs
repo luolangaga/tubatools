@@ -74,6 +74,17 @@ public class BuiltinToolRegistryTests
     }
 
     [Fact]
+    public void LegacyJunkCleanerId_ResolvesToSingleMergedTool()
+    {
+        ClearRegistry();
+        var tool = new SpaceCleanupTool(); BuiltinToolRegistry.Register(tool);
+        Assert.Same(tool, BuiltinToolRegistry.GetById("space-cleanup"));
+        Assert.Same(tool, BuiltinToolRegistry.GetById("junk-cleaner"));
+        Assert.Single(BuiltinToolRegistry.AllTools);
+        ClearRegistry();
+    }
+
+    [Fact]
     public void GetCategories_ReturnsDistinctCategories()
     {
         ClearRegistry();

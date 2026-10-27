@@ -7,7 +7,7 @@ namespace TubaWinUi3.Services;
 
 /// <summary>
 /// 硬件详情页参数卡片的彩色矢量图标（<c>Assets/HwIcons/&lt;key&gt;.svg</c>）。
-/// 与内置工具图标同一套 Fluent 规范，但放在独立目录（内置工具图标目录有「不允许孤儿文件」的回归测试）。
+/// 与侧栏、内置工具共用 128px 彩色填充渐变风格；同时用于硬件概览和详情分区。
 /// 没有对应 SVG 时返回 null，卡片头部只显示标题。
 /// </summary>
 public static class HardwareIconService
@@ -15,6 +15,24 @@ public static class HardwareIconService
     private const string UriPrefix = "ms-appx:///Assets/HwIcons/";
 
     private static readonly ConcurrentDictionary<string, ImageSource?> Cache = new(StringComparer.OrdinalIgnoreCase);
+
+    internal static string KeyForLabel(string label) => label switch
+    {
+        "型号" or "型号信息" => "computer",
+        "系统" or "系统信息" => "system",
+        "运行时间" => "uptime",
+        "主板" or "BIOS" => "motherboard",
+        "处理器" => "cpu",
+        "内存" => "memory",
+        "显卡" => "gpu",
+        "NPU" => "npu",
+        "显示器" => "display",
+        "硬盘" => "disk",
+        "电池" => "battery",
+        "声卡" => "sound",
+        "网卡" => "network",
+        _ => "devices"
+    };
 
     internal static string? ResolveSvgPath(string? key)
     {

@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- unigetui UniGetUI 包管理器 -->
-  <path fill="none" d="M3.5 7.5L12 3L20.5 7.5V16.5L12 21L3.5 16.5V7.5Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M3.5 7.5L12 12L20.5 7.5" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 12V21" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#DFCAFF"/><stop offset="0.500" stop-color="#AA8CEB"/><stop offset="1.000" stop-color="#7660CE"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="m64 13 46 24v53l-46 24-46-24V37Z" fill="url(#a)"/><path d="m18 37 46 25 46-25-46-24Z" fill="#DAE9FF"/><path d="M64 62v52l46-24V37Z" fill="#7165CA"/><path d="M43 60v24q0 19 22 19t22-19V60" fill="none" stroke="#F4F1FF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

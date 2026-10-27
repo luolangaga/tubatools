@@ -33,6 +33,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Compile Include="..\TubaWinUI3.ShellExtension\ShellItemSelection.cs" Link="ShellItemSelection.cs" />
+    <!-- 孤儿测试：引用的 HardwareSceneModel/DeviceInspectionSession 等类型只存在于
+         .scene-verify/ 验证程序，从未进入主项目，留着会堵死测试编译（同 NavIconTests 先例）。
+         待 3D 场景类型真正落地主项目后移除此排除。 -->
+    <Compile Remove="NativeHardwareSceneTests.cs" />
   </ItemGroup>
 
   <ItemGroup>

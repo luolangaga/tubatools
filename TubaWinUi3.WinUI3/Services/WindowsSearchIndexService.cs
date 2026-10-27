@@ -8,6 +8,8 @@ using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
+internal sealed record SearchRegistrationResult(int Registered, int Unavailable, IReadOnlyList<string> Errors);
+
 /// <summary>
 /// 工具快捷方式的统一写入点：注册 Windows 搜索索引（开始菜单）与「发送到桌面」。
 /// 内置工具快捷方式以 --open-builtin &lt;id&gt; 启动本程序直达工具，
@@ -17,52 +19,45 @@ namespace TubaWinUi3.Services;
 internal static class WindowsSearchIndexService
 {
     private static readonly object IndexGate = new();
-    private static readonly string StartMenuFolder = Path.Combine(
+    internal static string? StartMenuDirectoryOverride;
+    private static string StartMenuFolder => StartMenuDirectoryOverride ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         @"Microsoft\Windows\Start Menu\Programs\图吧工具箱CE");
 
     /// <summary>
     /// 将所有工具注册到 Windows 搜索索引（后台执行，不阻塞 UI）。
     /// </summary>
-    public static async Task RegisterAllToolsAsync()
+    public static async Task<SearchRegistrationResult> RegisterAllToolsAsync()
     {
         try
         {
-            var allTools = ToolCatalog.GetAllToolsCached();
-            await Task.Run(() => RegisterTools(allTools));
+            return await Task.Run(() => RegisterTools(ToolCatalog.GetAllToolsCached()));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[WindowsSearchIndex] 注册失败: {ex.Message}");
+            Debug.WriteLine($"[WindowsSearchIndex] 注册失败: {ex}");
+            return new(0, 0, [ex.Message]);
         }
     }
 
-    /// <summary>
-    /// 工具目录变化后刷新索引快捷方式。
-    /// </summary>
-    public static async Task RefreshAsync()
-    {
-        try
-        {
-            var allTools = ToolCatalog.GetAllToolsCached();
-            await Task.Run(() => RegisterTools(allTools));
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[WindowsSearchIndex] 刷新失败: {ex.Message}");
-        }
-    }
+    public static Task<SearchRegistrationResult> RefreshAsync() => RegisterAllToolsAsync();
 
-    private static void RegisterTools(IReadOnlyList<ToolItem> tools)
+    internal static SearchRegistrationResult RegisterTools(IReadOnlyList<ToolItem> tools)
     {
         lock (IndexGate)
         {
-            if (!AppSettings.GetBool("WindowsSearchIndex", false)) return;
-            RegisterToolsCore(tools);
+            if (!ToolVisibilityService.HasSearchSelection)
+            {
+                RemoveAllCore();
+                return Directory.Exists(StartMenuFolder)
+                    ? new(0, 0, ["部分工具快捷方式未能移除。"])
+                    : new(0, 0, []);
+            }
+            return RegisterToolsCore(tools);
         }
     }
 
-    private static void RegisterToolsCore(IReadOnlyList<ToolItem> tools)
+    private static SearchRegistrationResult RegisterToolsCore(IReadOnlyList<ToolItem> tools)
     {
         // 确保目标文件夹存在
         if (!Directory.Exists(StartMenuFolder))
@@ -70,9 +65,13 @@ internal static class WindowsSearchIndexService
 
         // 记录当前应该存在的快捷方式文件名，用于后续清理
         var expectedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var registered = 0;
+        var errors = new List<string>();
+        var selectedExternal = tools.Where(t => !t.IsBuiltinLink && ToolVisibilityService.IsSearchEnabled(ToolVisibilityService.SearchKey(t))).ToList();
+        var unavailable = selectedExternal.Count(t => t.NeedsDownload || string.IsNullOrWhiteSpace(t.EffectivePath) || !File.Exists(t.EffectivePath));
 
         // 1) 外部工具（.exe 等）
-        var toRegister = DeduplicateTools(tools.Where(t => ToolVisibilityService.IsSearchEnabled(ToolVisibilityService.SearchKey(t))).ToList());
+        var toRegister = DeduplicateTools(selectedExternal);
         foreach (var (name, tool) in toRegister)
         {
             var shortcutPath = Path.Combine(StartMenuFolder, $"{SanitizeFileName(name)}.lnk");
@@ -80,14 +79,14 @@ internal static class WindowsSearchIndexService
 
             try
             {
-                if (File.Exists(shortcutPath) && IsShortcutUpToDate(shortcutPath, tool.EffectivePath))
-                    continue;
-
                 CreateShortcut(shortcutPath, tool.EffectivePath, tool.EffectiveWorkingDir,
                     $"{name} - {tool.Category}");
+                VerifyShortcutTarget(shortcutPath, tool.EffectivePath);
+                registered++;
             }
             catch (Exception ex)
             {
+                errors.Add($"{name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[WindowsSearchIndex] 创建快捷方式失败 [{name}]: {ex.Message}");
             }
         }
@@ -97,9 +96,10 @@ internal static class WindowsSearchIndexService
         var appDir = AppContext.BaseDirectory;
         if (!string.IsNullOrWhiteSpace(appExe) && File.Exists(appExe))
         {
-            foreach (var builtin in BuiltinToolRegistry.Tools)
+            foreach (var builtin in BuiltinToolRegistry.AllTools)
             {
                 if (!ToolVisibilityService.IsSearchEnabled("builtin:" + builtin.Id)) continue;
+                if (!ToolVisibilityService.IsBuiltinEnabled(builtin.Id)) { unavailable++; continue; }
                 var displayName = builtin.Name;
                 if (string.IsNullOrWhiteSpace(displayName))
                     continue;
@@ -115,10 +115,13 @@ internal static class WindowsSearchIndexService
                 {
                     CreateShortcut(shortcutPath, appExe, appDir,
                         $"{displayName} - {builtin.Category}",
-                        $"--open-builtin {builtin.Id}");
+                        $"--open-builtin {builtin.Id}", EnsureBuiltinIcon(builtin));
+                    VerifyShortcutTarget(shortcutPath, appExe);
+                    registered++;
                 }
                 catch (Exception ex)
                 {
+                    errors.Add($"{displayName}: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"[WindowsSearchIndex] 创建内置工具快捷方式失败 [{displayName}]: {ex.Message}");
                 }
             }
@@ -126,6 +129,7 @@ internal static class WindowsSearchIndexService
 
         // 3) 清理过期快捷方式
         CleanupStaleShortcuts(expectedFiles);
+        return new(registered, unavailable, errors);
     }
 
     /// <summary>
@@ -169,24 +173,6 @@ internal static class WindowsSearchIndexService
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// 检查已有快捷方式是否指向正确的目标（避免重复写入）。
-    /// </summary>
-    private static bool IsShortcutUpToDate(string shortcutPath, string targetPath)
-    {
-        try
-        {
-            // 通过读取文件的最后写入时间和大小做粗略判断，
-            // 精确比对需要 COM 互操作，在批量场景下太慢
-            // 这里简单返回 false 让它每次重建，开销很小
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     /// <summary>
@@ -510,7 +496,7 @@ internal static class WindowsSearchIndexService
     }
 
     /// <summary>桌面图标缓存版本后缀；换图标风格时改这里即可让所有缓存失效。</summary>
-    private const string IconCacheVersion = "-v2";
+    private const string IconCacheVersion = "-v3";
 
     /// <summary>
     /// 优先用彩色矢量图标；没有 SVG 或光栅化失败时回退到字体字形，

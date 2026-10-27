@@ -17,36 +17,15 @@ public sealed class KeyboardTestTool : IBuiltinTool
 
     public Task ExecuteAsync(BuiltinToolContext context)
     {
-        var keyboardControl = new KeyboardTestControl();
-
-        var tipText = new TextBlock
-        {
-            Text = "点击下方键盘区域后开始按键测试，按键会高亮显示，已按过的键会留有浅色标记；大键盘含数字小键盘区，小键盘为无数字区的紧凑布局，可区分左右 Shift/Ctrl/Alt，支持 Copilot 键",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.DimText),
-            TextWrapping = TextWrapping.Wrap
-        };
-
-        var root = new StackPanel { Spacing = 14, MaxWidth = 1040 };
-        root.Children.Add(tipText);
-        root.Children.Add(keyboardControl);
-
-        var content = new ScrollViewer
-        {
-            Content = root,
-            MaxWidth = 1080,
-            Padding = new Thickness(24, 0, 24, 24),
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
+        var keyboardControl = new KeyboardTest3DControl();
 
         App.MainWindow?.NavigateToToolPage(typeof(ToolContentPage), new ToolContentPageParam
         {
             ToolId = Id,
             Title = "键盘测试",
-            Description = "依次按下键盘上的按键，检测每个键位是否正常工作",
+            Description = "3D 键盘测试 · 按键聚焦，停留 1 秒自动回到全景",
             Glyph = Glyph,
-            Content = content,
+            Content = keyboardControl,
             OnClose = keyboardControl.Cleanup
         });
 

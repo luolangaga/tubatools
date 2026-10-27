@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- performance-benchmark 性能测试 -->
-  <path fill="none" d="M8.5 4.5H15.5V10.5C15.5 12.43 13.93 14 12 14C10.07 14 8.5 12.43 8.5 10.5V4.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M8.5 6H6.5C6.5 8.2 7.3 9.7 8.5 10.1M15.5 6H17.5C17.5 8.2 16.7 9.7 15.5 10.1" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 14V16.5M8 16.5H16V19C16 19.83 15.33 20.5 14.5 20.5H9.5C8.67 20.5 8 19.83 8 19V16.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M12 5.9L12.75 7.95L14.8 8.2L13.25 9.6L13.7 11.6L12 10.55L10.3 11.6L10.75 9.6L9.2 8.2L11.25 7.95Z" fill="#A56FD1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M16 101C-11 45 30 5 66 13c39-2 72 40 45 88Z" fill="url(#c)"/><path d="M25 93C4 48 36 23 64 23s61 27 39 70Z" fill="url(#b)"/><path d="M27 77a39 39 0 0 1 46-42l-5 11a28 28 0 0 0-30 31Z" fill="#75DCC5"/><path d="M78 37a39 39 0 0 1 24 33l-12 2a28 28 0 0 0-18-24Z" fill="#F9BF73"/><path d="m59 69 28-24-15 35Z" fill="#F47D8A"/><circle cx="64" cy="78" r="9" fill="#567695"/><rect x="43" y="97" width="42" height="11" rx="4" fill="#DAE9F3"/>
 </svg>

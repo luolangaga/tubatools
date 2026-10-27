@@ -212,6 +212,9 @@
     <PackageReference Include="WinUI3Localizer" Version="2.3.0" />
 
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Controls\NativeHardwareScene.cs" />
+  </ItemGroup>
 
   <!-- Publish Properties -->
   <PropertyGroup>

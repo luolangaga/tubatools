@@ -1,8 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- environment-variables 环境变量：变量列表面板 -->
-  <path fill="none" d="M5.5 4H18.5C19.6 4 20.5 4.9 20.5 6V18C20.5 19.1 19.6 20 18.5 20H5.5C4.4 20 3.5 19.1 3.5 18V6C3.5 4.9 4.4 4 5.5 4Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7 9H12" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7 12H17" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7 15H10" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="#2B88D8" d="M14.5 8H16.5C16.78 8 17 8.22 17 8.5V9.5C17 9.78 16.78 10 16.5 10H14.5C14.22 10 14 9.78 14 9.5V8.5C14 8.22 14.22 8 14.5 8Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8DE5E0"/><stop offset="0.500" stop-color="#38C1C5"/><stop offset="1.000" stop-color="#248CBA"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="12" y="19" width="104" height="90" rx="11" fill="url(#c)"/><rect x="18" y="26" width="92" height="76" rx="6" fill="#EAF4FC"/><circle cx="27" cy="34" r="3" fill="#F4A48C"/><circle cx="38" cy="34" r="3" fill="#EBC969"/><circle cx="49" cy="34" r="3" fill="#6DCAB0"/><path d="m45 51-15 15 15 15m38-30 15 15-15 15m-14-35-11 40" fill="none" stroke="#43A3B1" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

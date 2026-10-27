@@ -7,6 +7,11 @@
       "categories": ["系统工具"]
     },
     {
+      "match": "驱动管理",
+      "builtin": "driver-store",
+      "categories": ["系统工具"]
+    },
+    {
       "match": "CPU-Z",
       "order": 1,
       "description": "处理器、主板、内存和显卡基础信息查看工具。",
@@ -1438,8 +1443,9 @@
     },
     {
       "match": "垃圾清理",
-      "builtin": "junk-cleaner",
+      "builtin": "space-cleanup",
       "categories": [
+        "系统工具",
         "其他工具"
       ]
     },

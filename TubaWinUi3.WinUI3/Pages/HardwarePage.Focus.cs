@@ -143,7 +143,8 @@ public sealed partial class HardwarePage
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var heading = new StackPanel { Spacing = 8 };
         var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        titleRow.Children.Add(new FontIcon { Glyph = SettingsHardwareGlyph(state.Label), FontSize = 20 });
+        titleRow.Children.Add(new Image { Source = HardwareIconService.Get(HardwareIconService.KeyForLabel(state.Label)),
+            Width = 28, Height = 28, Stretch = Stretch.Uniform, VerticalAlignment = VerticalAlignment.Center });
         titleRow.Children.Add(new TextBlock { Text = state.Title, Style = (Style)Application.Current.Resources["SubtitleTextBlockStyle"] });
         heading.Children.Add(titleRow);
         heading.Children.Add(new TextBlock { Text = state.Summary, TextWrapping = TextWrapping.Wrap,

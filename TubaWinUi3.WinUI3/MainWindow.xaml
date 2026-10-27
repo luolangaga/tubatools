@@ -280,17 +280,10 @@
                     <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
                 </NavigationView.Resources>
                 <NavigationView.MenuItems>
-                    <NavigationViewItem
-                        Content="全部"
-                        Tag="all"
-                        l:Uids.Uid="MainWindow_NavAll">
+                    <NavigationViewItem Content="首页" Tag="home" l:Uids.Uid="MainWindow_NavHome"
+                                        AutomationProperties.AutomationId="NavHome">
                         <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE80F;" FontWeight="Bold" />
-                        </NavigationViewItem.Icon>
-                    </NavigationViewItem>
-                    <NavigationViewItem Content="常用" Tag="favorites" l:Uids.Uid="MainWindow_NavFavorites">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE735;" FontWeight="Bold" />
+                            <FontIcon Glyph="&#xE80F;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
                     <NavigationViewItem Content="硬件信息" Tag="hardware" l:Uids.Uid="MainWindow_NavHardware">

@@ -1,386 +1,255 @@
 {
   "categories": [
     {
-      "name": "浏览器",
-      "glyph": "\uE774",
+      "name": "AI Agent",
+      "glyph": "",
       "packages": [
-        { "id": "Google.Chrome", "name": "Google Chrome", "desc": "谷歌浏览器", "recommended": true },
-        { "id": "Mozilla.Firefox", "name": "Firefox", "desc": "火狐浏览器", "recommended": true },
-        { "id": "Brave.Brave", "name": "Brave", "desc": "隐私优先浏览器" },
-        { "id": "Microsoft.Edge", "name": "Microsoft Edge", "desc": "微软浏览器" },
-        { "id": "Vivaldi.Vivaldi", "name": "Vivaldi", "desc": "高度可定制浏览器" },
-        { "id": "Opera.Opera", "name": "Opera", "desc": "内置VPN浏览器" },
-        { "id": "TheBrowserCompany.Arc", "name": "Arc", "desc": "新一代浏览器" },
-        { "id": "TorProject.TorBrowser", "name": "Tor Browser", "desc": "匿名安全浏览器" }
-      ]
-    },
-    {
-      "name": "压缩工具",
-      "glyph": "\uE8D7",
-      "packages": [
-        { "id": "7zip.7zip", "name": "7-Zip", "desc": "开源文件压缩工具", "recommended": true },
-        { "id": "M2Team.NanaZip", "name": "NanaZip", "desc": "现代化的7-Zip" },
-        { "id": "RARLab.WinRAR", "name": "WinRAR", "desc": "经典压缩解压软件" },
-        { "id": "Bandisoft.Bandizip", "name": "Bandizip", "desc": "轻量压缩工具" },
-        { "id": "Giorgiotani.Peazip", "name": "PeaZip", "desc": "开源跨平台压缩工具" }
-      ]
-    },
-    {
-      "name": "办公工具",
-      "glyph": "\uE8BD",
-      "packages": [
-        { "id": "Yerong.OfficeToolPlus", "name": "Office Tool Plus", "desc": "Office部署与管理工具", "recommended": true },
-        { "id": "Microsoft.Office", "name": "Microsoft 365", "desc": "微软官方Office套件" },
-        { "id": "TheDocumentFoundation.LibreOffice", "name": "LibreOffice", "desc": "开源办公套件" },
-        { "id": "ONLYOFFICE.DesktopEditors", "name": "ONLYOFFICE", "desc": "兼容Office的开源套件" },
-        { "id": "Kingsoft.WPSOffice.CN", "name": "WPS Office", "desc": "金山办公套件" },
-        { "id": "appmakes.Typora", "name": "Typora", "desc": "Markdown编辑器" },
-        { "id": "Obsidian.Obsidian", "name": "Obsidian", "desc": "知识管理与笔记", "recommended": true },
-        { "id": "Joplin.Joplin", "name": "Joplin", "desc": "开源笔记工具" }
-      ]
-    },
-    {
-      "name": "PDF工具",
-      "glyph": "\uE8A5",
-      "packages": [
-        { "id": "SumatraPDF.SumatraPDF", "name": "SumatraPDF", "desc": "轻量PDF阅读器", "recommended": true },
-        { "id": "Adobe.Acrobat.Reader.64-bit", "name": "Adobe Acrobat Reader", "desc": "官方PDF阅读器" },
-        { "id": "Foxit.FoxitReader", "name": "Foxit Reader", "desc": "福昕PDF阅读器" }
-      ]
-    },
-    {
-      "name": "邮件通讯",
-      "glyph": "\uE715",
-      "packages": [
-        { "id": "Mozilla.Thunderbird", "name": "Thunderbird", "desc": "开源邮件客户端" },
-        { "id": "Tencent.QQ", "name": "QQ", "desc": "腾讯即时通讯", "recommended": true },
-        { "id": "Tencent.WeChat", "name": "微信", "desc": "微信桌面版", "recommended": true },
-        { "id": "Telegram.TelegramDesktop", "name": "Telegram", "desc": "加密通讯客户端" },
-        { "id": "Discord.Discord", "name": "Discord", "desc": "游戏语音与社区" },
-        { "id": "SlackTechnologies.Slack", "name": "Slack", "desc": "团队协作通讯" },
-        { "id": "Zoom.Zoom", "name": "Zoom", "desc": "视频会议软件" },
-        { "id": "Alibaba.DingTalk.Mainland", "name": "钉钉", "desc": "阿里办公协作平台" },
-        { "id": "Tencent.WeCom", "name": "企业微信", "desc": "企业办公通讯" },
-        { "id": "ByteDance.Feishu", "name": "飞书", "desc": "字节跳动办公套件" }
-      ]
-    },
-    {
-      "name": "媒体播放",
-      "glyph": "\uE8B2",
-      "packages": [
-        { "id": "VideoLAN.VLC", "name": "VLC Media Player", "desc": "开源多媒体播放器" },
-        { "id": "Daum.PotPlayer", "name": "PotPlayer", "desc": "高性能多媒体播放器", "recommended": true },
-        { "id": "XBMCFoundation.Kodi", "name": "Kodi", "desc": "家庭影院播放中心" },
-        { "id": "Spotify.Spotify", "name": "Spotify", "desc": "音乐流媒体" },
-        { "id": "PeterPawlowski.foobar2000", "name": "foobar2000", "desc": "专业音频播放器" },
-        { "id": "Netease.CloudMusic", "name": "网易云音乐", "desc": "网易音乐客户端", "recommended": true },
-        { "id": "Tencent.QQMusic", "name": "QQ音乐", "desc": "QQ音乐客户端" }
-      ]
-    },
-    {
-      "name": "录屏直播",
-      "glyph": "\uE960",
-      "packages": [
-        { "id": "OBSProject.OBSStudio", "name": "OBS Studio", "desc": "开源录屏与直播软件", "recommended": true },
-        { "id": "ShareX.ShareX", "name": "ShareX", "desc": "截图录屏工具" }
-      ]
-    },
-    {
-      "name": "截图工具",
-      "glyph": "\uE722",
-      "packages": [
-        { "id": "liule.Snipaste", "name": "Snipaste", "desc": "截图贴图工具", "recommended": true },
-        { "id": "Flameshot.Flameshot", "name": "Flameshot", "desc": "开源截图标注工具" },
-        { "id": "Greenshot.Greenshot", "name": "Greenshot", "desc": "轻量截图工具" }
-      ]
-    },
-    {
-      "name": "下载工具",
-      "glyph": "\uE896",
-      "packages": [
-        { "id": "qBittorrent.qBittorrent", "name": "qBittorrent", "desc": "开源BitTorrent客户端", "recommended": true },
-        { "id": "agalwood.Motrix", "name": "Motrix", "desc": "全能下载工具" },
-        { "id": "SoftDeluxe.FreeDownloadManager", "name": "Free Download Manager", "desc": "多协议下载管理器" },
-        { "id": "aria2.aria2", "name": "aria2", "desc": "命令行下载工具" },
-        { "id": "Tonec.InternetDownloadManager", "name": "Internet Download Manager", "desc": "多线程下载加速" }
-      ]
-    },
-    {
-      "name": "网盘同步",
-      "glyph": "\uE753",
-      "packages": [
-        { "id": "Baidu.BaiduNetdisk", "name": "百度网盘", "desc": "百度云存储客户端", "recommended": true },
-        { "id": "Alibaba.aDrive", "name": "阿里云盘", "desc": "阿里云存储客户端" },
-        { "id": "Nextcloud.NextcloudDesktop", "name": "Nextcloud", "desc": "开源私有云同步" },
-        { "id": "Rclone.Rclone", "name": "Rclone", "desc": "云存储同步工具" },
-        { "id": "Dropbox.Dropbox", "name": "Dropbox", "desc": "跨国云存储同步" }
-      ]
-    },
-    {
-      "name": "图像编辑",
-      "glyph": "\uEB9F",
-      "packages": [
-        { "id": "GIMP.GIMP", "name": "GIMP", "desc": "开源图像编辑器" },
-        { "id": "dotPDN.PaintDotNet", "name": "Paint.NET", "desc": "轻量图像编辑器", "recommended": true },
-        { "id": "DuongDieuPhap.ImageGlass", "name": "ImageGlass", "desc": "轻量图片查看器" },
-        { "id": "IrfanSkiljan.IrfanView", "name": "IrfanView", "desc": "快速图片查看器" },
-        { "id": "XnSoft.XnViewMP", "name": "XnView MP", "desc": "多功能图片浏览器" },
-        { "id": "KDE.Krita", "name": "Krita", "desc": "数字绘画工具" }
-      ]
-    },
-    {
-      "name": "视频编辑",
-      "glyph": "\uE960",
-      "packages": [
-        { "id": "KDE.Kdenlive", "name": "Kdenlive", "desc": "开源视频编辑器" },
-        { "id": "Meltytech.Shotcut", "name": "Shotcut", "desc": "开源视频编辑器" },
-        { "id": "OBSProject.OBSStudio", "name": "OBS Studio", "desc": "录屏与直播" },
-        { "id": "HandBrake.HandBrake", "name": "HandBrake", "desc": "视频转码工具" },
-        { "id": "OpenShot.OpenShot", "name": "OpenShot", "desc": "易用开源视频编辑器" },
-        { "id": "Gyan.FFmpeg", "name": "FFmpeg", "desc": "命令行视频处理" }
-      ]
-    },
-    {
-      "name": "音频编辑",
-      "glyph": "\uEB9F",
-      "packages": [
-        { "id": "Audacity.Audacity", "name": "Audacity", "desc": "开源音频编辑器" },
-        { "id": "LAME.LAME", "name": "LAME", "desc": "MP3编码器" }
-      ]
-    },
-    {
-      "name": "设计工具",
-      "glyph": "\uEB9F",
-      "packages": [
-        { "id": "BlenderFoundation.Blender", "name": "Blender", "desc": "3D建模与渲染" },
-        { "id": "FreeCAD.FreeCAD", "name": "FreeCAD", "desc": "开源CAD工具" },
-        { "id": "Inkscape.Inkscape", "name": "Inkscape", "desc": "矢量图形编辑器" },
-        { "id": "Scribus.Scribus", "name": "Scribus", "desc": "开源排版工具" },
-        { "id": "Figma.Figma", "name": "Figma", "desc": "在线UI设计工具" }
-      ]
-    },
-    {
-      "name": "文本编辑",
-      "glyph": "\uE8AC",
-      "packages": [
-        { "id": "Notepad++.Notepad++", "name": "Notepad++", "desc": "免费源代码编辑器" },
-        { "id": "SublimeHQ.SublimeText.4", "name": "Sublime Text 4", "desc": "高性能文本编辑器" },
-        { "id": "vim.vim", "name": "Vim", "desc": "终端文本编辑器" },
-        { "id": "Helix.Helix", "name": "Helix", "desc": "现代终端编辑器" }
-      ]
-    },
-    {
-      "name": "IDE/编辑器",
-      "glyph": "\uE943",
-      "packages": [
-        { "id": "Microsoft.VisualStudioCode", "name": "VS Code", "desc": "轻量代码编辑器", "recommended": true },
-        { "id": "VSCodium.VSCodium", "name": "VSCodium", "desc": "开源VS Code" },
-        { "id": "JetBrains.IntelliJIDEA.Community", "name": "IntelliJ IDEA Community", "desc": "Java IDE" },
-        { "id": "JetBrains.PyCharm.Community", "name": "PyCharm Community", "desc": "Python IDE" },
-        { "id": "GitHub.cli", "name": "GitHub CLI", "desc": "GitHub命令行工具" },
-        { "id": "Postman.Postman", "name": "Postman", "desc": "API调试工具" },
-        { "id": "ApacheFriends.Xampp.8.2", "name": "XAMPP", "desc": "PHP集成开发环境" }
-      ]
-    },
-    {
-      "name": "系统工具",
-      "glyph": "\uE90F",
-      "packages": [
-        { "id": "Microsoft.PowerToys", "name": "PowerToys", "desc": "微软官方系统增强工具集", "recommended": true },
-        { "id": "voidtools.Everything", "name": "Everything", "desc": "极速文件搜索工具", "recommended": true },
-        { "id": "AutoHotkey.AutoHotkey", "name": "AutoHotkey", "desc": "自动化脚本工具" },
-        { "id": "HiBitSoftware.HiBitUninstaller", "name": "HiBit Uninstaller", "desc": "强大的卸载工具" },
-        { "id": "AntibodySoftware.WizTree", "name": "WizTree", "desc": "磁盘空间分析工具" },
-        { "id": "Microsoft.Sysinternals.ProcessExplorer", "name": "Process Explorer", "desc": "进程管理工具" },
-        { "id": "Microsoft.Sysinternals.ProcessMonitor", "name": "Process Monitor", "desc": "进程监控工具" },
-        { "id": "Microsoft.Sysinternals.Autoruns", "name": "Autoruns", "desc": "启动项管理工具" },
-        { "id": "Microsoft.PowerShell", "name": "PowerShell 7", "desc": "现代命令行Shell" },
-        { "id": "CPUID.CPU-Z", "name": "CPU-Z", "desc": "CPU信息检测工具" },
-        { "id": "TechPowerUp.GPU-Z", "name": "GPU-Z", "desc": "GPU信息检测工具" },
-        { "id": "CrystalDewWorld.CrystalDiskInfo", "name": "CrystalDiskInfo", "desc": "硬盘健康检测" },
-        { "id": "CrystalDewWorld.CrystalDiskMark", "name": "CrystalDiskMark", "desc": "硬盘性能测试" },
-        { "id": "SoftPerfect.RAMDisk", "name": "RAMDisk", "desc": "内存盘工具" },
-        { "id": "Rufus.Rufus", "name": "Rufus", "desc": "启动盘制作工具" },
-        { "id": "Ventoy.Ventoy", "name": "Ventoy", "desc": "多系统启动盘工具" },
-        { "id": "BleachBit.BleachBit", "name": "BleachBit", "desc": "开源系统清理工具" }
-      ]
-    },
-    {
-      "name": "桌面美化",
-      "glyph": "\uE771",
-      "packages": [
-        { "id": "Rainmeter.Rainmeter", "name": "Rainmeter", "desc": "桌面美化组件" },
-        { "id": "rocksdanister.LivelyWallpaper", "name": "Lively Wallpaper", "desc": "动态壁纸引擎" },
-        { "id": "CharlesMilette.TranslucentTB", "name": "TranslucentTB", "desc": "任务栏透明工具" },
-        { "id": "Flow-Launcher.Flow-Launcher", "name": "Flow Launcher", "desc": "快捷启动器" }
-      ]
-    },
-    {
-      "name": "安全工具",
-      "glyph": "\uEA18",
-      "packages": [
-        { "id": "Malwarebytes.Malwarebytes", "name": "Malwarebytes", "desc": "反恶意软件" },
-        { "id": "VirusTotal.VirusTotalUploader", "name": "VirusTotal Uploader", "desc": "在线病毒扫描上传" },
-        { "id": "WiresharkFoundation.Wireshark", "name": "Wireshark", "desc": "网络抓包分析" },
-        { "id": "Insecure.Nmap", "name": "Nmap", "desc": "网络扫描工具" }
-      ]
-    },
-    {
-      "name": "终端/SSH",
-      "glyph": "\uE756",
-      "packages": [
-        { "id": "Microsoft.WindowsTerminal", "name": "Windows Terminal", "desc": "现代终端", "recommended": true },
-        { "id": "Mobatek.MobaXterm", "name": "MobaXterm", "desc": "全能远程终端" },
-        { "id": "PuTTY.PuTTY", "name": "PuTTY", "desc": "经典SSH客户端" },
-        { "id": "Git.Git", "name": "Git for Windows", "desc": "版本控制 + Git Bash", "recommended": true }
-      ]
-    },
-    {
-      "name": "远程控制",
-      "glyph": "\uE968",
-      "packages": [
-        { "id": "TeamViewer.TeamViewer", "name": "TeamViewer", "desc": "远程桌面控制" },
-        { "id": "AnyDesk.AnyDesk", "name": "AnyDesk", "desc": "轻量远程桌面" },
-        { "id": "Youqu.ToDesk", "name": "ToDesk", "desc": "国产远程控制" },
-        { "id": "Parsec.Parsec", "name": "Parsec", "desc": "低延迟游戏串流" }
-      ]
-    },
-    {
-      "name": "虚拟化",
-      "glyph": "\uE977",
-      "packages": [
-        { "id": "Oracle.VirtualBox", "name": "VirtualBox", "desc": "开源虚拟机" },
-        { "id": "Microsoft.WSL", "name": "WSL2", "desc": "Windows Linux子系统" }
-      ]
-    },
-    {
-      "name": "数据库",
-      "glyph": "\uE943",
-      "packages": [
-        { "id": "DBeaver.DBeaver.Community", "name": "DBeaver", "desc": "通用数据库管理工具" },
-        { "id": "DBBrowserForSQLite.DBBrowserForSQLite", "name": "DB Browser for SQLite", "desc": "SQLite可视化管理" },
-        { "id": "RedisInsight.RedisInsight", "name": "RedisInsight", "desc": "Redis可视化管理" },
-        { "id": "MongoDB.Compass.Community", "name": "MongoDB Compass", "desc": "MongoDB可视化管理" },
-        { "id": "HeidiSQL.HeidiSQL", "name": "HeidiSQL", "desc": "MySQL/MariaDB管理工具" }
-      ]
-    },
-    {
-      "name": "游戏平台",
-      "glyph": "\uE7FC",
-      "packages": [
-        { "id": "Valve.Steam", "name": "Steam", "desc": "游戏平台" },
-        { "id": "EpicGames.EpicGamesLauncher", "name": "Epic Games", "desc": "Epic游戏平台" }
-      ]
-    },
-    {
-      "name": "硬件监控",
-      "glyph": "\uE946",
-      "packages": [
-        { "id": "LibreHardwareMonitor.LibreHardwareMonitor", "name": "Libre Hardware Monitor", "desc": "开源硬件监控" },
-        { "id": "REALiX.HWiNFO", "name": "HWiNFO", "desc": "硬件信息检测" },
-        { "id": "Guru3D.Afterburner", "name": "MSI Afterburner", "desc": "显卡超频监控" },
-        { "id": "FinalWire.AIDA64.Extreme", "name": "AIDA64", "desc": "系统信息与诊断" }
-      ]
-    },
-    {
-      "name": "输入法",
-      "glyph": "\uE7BF",
-      "packages": [
-        { "id": "Rime.Weasel", "name": "小狼毫 (Rime)", "desc": "开源输入法框架" }
-      ]
-    },
-    {
-      "name": "驱动管理",
-      "glyph": "\uEC43",
-      "packages": [
-        { "id": "Easeware.DriverEasy", "name": "Driver Easy", "desc": "驱动更新工具" },
-        { "id": "GlennDelahoy.SnappyDriverInstallerOrigin", "name": "Snappy Driver Installer", "desc": "离线驱动安装" }
-      ]
-    },
-    {
-      "name": "开发环境",
-      "glyph": "\uE943",
-      "subCategories": [
         {
-          "name": "Python",
-          "packages": [
-            { "id": "Python.Python.3.12", "name": "Python 3.12", "desc": "Python 运行时" },
-            { "id": "Python.Python.3.11", "name": "Python 3.11", "desc": "Python 运行时 (旧版)" },
-            { "id": "Anaconda.Anaconda3", "name": "Anaconda", "desc": "Python数据科学发行版" },
-            { "id": "Anaconda.Miniconda3", "name": "Miniconda", "desc": "轻量Conda发行版" }
-          ]
+          "id": "Anthropic.ClaudeCode",
+          "name": "Claude Code",
+          "desc": "Anthropic 的编程助手，在终端中理解项目、修改代码和运行验证。",
+          "installNotes": "通过 WinGet 安装终端版；安装完成后新开终端并运行 claude。"
         },
         {
-          "name": "Node.js",
-          "packages": [
-            { "id": "OpenJS.NodeJS.LTS", "name": "Node.js LTS", "desc": "JavaScript 运行时" },
-            { "id": "OpenJS.NodeJS", "name": "Node.js Current", "desc": "JavaScript 运行时(最新版)" }
-          ]
+          "id": "OpenAI.Codex",
+          "name": "Codex",
+          "desc": "OpenAI 的终端编程助手，理解项目、编写代码并运行验证（CLI 版）。",
+          "installNotes": "通过 WinGet 安装 Codex CLI；安装完成后新开终端并运行 codex。"
         },
         {
-          "name": "Java",
-          "packages": [
-            { "id": "Oracle.JDK.21", "name": "JDK 21", "desc": "Java 开发工具包" },
-            { "id": "EclipseAdoptium.Temurin.21.JDK", "name": "Temurin JDK 21", "desc": "Eclipse Adoptium JDK 21" },
-            { "id": "EclipseAdoptium.Temurin.17.JDK", "name": "Temurin JDK 17", "desc": "Eclipse Adoptium JDK 17" },
-            { "id": "EclipseAdoptium.Temurin.8.JDK", "name": "Temurin JDK 8", "desc": "Eclipse Adoptium JDK 8" }
-          ]
+          "id": "SST.OpenCodeDesktop",
+          "name": "OpenCode",
+          "desc": "开源 AI 编程助手，可在桌面、终端和编辑器中连接多种模型。",
+          "installNotes": "通过 WinGet 安装 OpenCode 桌面版。"
         },
         {
-          "name": "Go",
-          "packages": [
-            { "id": "GoLang.Go", "name": "Go", "desc": "Go 编程语言" }
-          ]
+          "id": "ZhipuAI.ZCode",
+          "name": "ZCode",
+          "desc": "智谱的 AI 编程工具，通过智能体协作处理开发任务。",
+          "installNotes": "通过 WinGet 安装 ZCode 桌面版。"
         },
         {
-          "name": "Rust",
-          "packages": [
-            { "id": "Rustlang.Rustup", "name": "Rustup", "desc": "Rust 工具链安装器" }
-          ]
+          "id": "deepseek-harness",
+          "name": "DeepSeek Harness",
+          "desc": "DeepSeek 的智能体工具，通过插件扩展编程与任务执行能力。",
+          "installNotes": "下载 DeepSeek 官方 Windows x64 安装包；完成后自动启动安装程序。可在下载中心查看进度。",
+          "downloadUrl": "https://download.deepseek.com/desktop/dsh-latest-windows-x64.exe"
         },
         {
-          "name": ".NET",
-          "packages": [
-            { "id": "Microsoft.DotNet.SDK.8", "name": ".NET 8 SDK", "desc": ".NET 开发工具包" },
-            { "id": "Microsoft.DotNet.SDK.9", "name": ".NET 9 SDK", "desc": ".NET 9 开发工具包" }
-          ]
+          "id": "Tencent.WorkBuddy",
+          "name": "WorkBuddy",
+          "desc": "腾讯的 AI 办公工作台，协助处理文档、资料研究和多步骤任务。",
+          "installNotes": "通过 WinGet 安装 WorkBuddy 桌面版。"
+        }
+      ]
+    },
+    {
+      "name": "日常必备",
+      "glyph": "",
+      "packages": [
+        {
+          "id": "Google.Chrome",
+          "name": "Google Chrome",
+          "desc": "谷歌浏览器",
+          "recommended": true
         },
         {
-          "name": "C/C++",
-          "packages": [
-            { "id": "MSYS2.MSYS2", "name": "MSYS2/MinGW-w64", "desc": "C/C++ 编译工具链" },
-            { "id": "LLVM.LLVM", "name": "LLVM/Clang", "desc": "C/C++ 编译器" },
-            { "id": "Microsoft.VisualStudio.2022.BuildTools", "name": "MSVC Build Tools", "desc": "微软C++编译工具" }
-          ]
+          "id": "Mozilla.Firefox",
+          "name": "Firefox",
+          "desc": "火狐浏览器",
+          "recommended": false
         },
         {
-          "name": "PHP",
-          "packages": [
-            { "id": "PHP.PHP.8.3", "name": "PHP 8.3", "desc": "PHP 运行时" }
-          ]
+          "id": "7zip.7zip",
+          "name": "7-Zip",
+          "desc": "开源文件压缩工具",
+          "recommended": true
         },
         {
-          "name": "Ruby",
-          "packages": [
-            { "id": "RubyInstallerTeam.Ruby.3.2", "name": "Ruby 3.2", "desc": "Ruby 运行时" }
-          ]
+          "id": "M2Team.NanaZip",
+          "name": "NanaZip",
+          "desc": "现代化的7-Zip",
+          "recommended": false
         },
         {
-          "name": "Docker/容器",
-          "packages": [
-            { "id": "Docker.DockerDesktop", "name": "Docker Desktop", "desc": "容器化平台" },
-            { "id": "Kubernetes.kubectl", "name": "kubectl", "desc": "K8s命令行工具" },
-            { "id": "Helm.Helm", "name": "Helm", "desc": "K8s包管理器" }
-          ]
+          "id": "SumatraPDF.SumatraPDF",
+          "name": "SumatraPDF",
+          "desc": "轻量PDF阅读器",
+          "recommended": true
         },
         {
-          "name": "数据库服务",
-          "packages": [
-            { "id": "PostgreSQL.PostgreSQL.17", "name": "PostgreSQL", "desc": "开源关系数据库" },
-            { "id": "Oracle.MySQL", "name": "MySQL", "desc": "开源关系数据库" },
-            { "id": "Redis.Redis", "name": "Redis", "desc": "内存键值数据库" },
-            { "id": "MongoDB.Server", "name": "MongoDB", "desc": "文档数据库" }
-          ]
+          "id": "qBittorrent.qBittorrent",
+          "name": "qBittorrent",
+          "desc": "开源BitTorrent客户端",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "name": "办公通讯",
+      "glyph": "",
+      "packages": [
+        {
+          "id": "TheDocumentFoundation.LibreOffice",
+          "name": "LibreOffice",
+          "desc": "开源办公套件",
+          "recommended": false
+        },
+        {
+          "id": "Kingsoft.WPSOffice.CN",
+          "name": "WPS Office",
+          "desc": "金山办公套件",
+          "recommended": false
+        },
+        {
+          "id": "Obsidian.Obsidian",
+          "name": "Obsidian",
+          "desc": "知识管理与笔记",
+          "recommended": false
+        },
+        {
+          "id": "Tencent.WeChat",
+          "name": "微信",
+          "desc": "微信桌面版",
+          "recommended": true
+        },
+        {
+          "id": "Tencent.QQ",
+          "name": "QQ",
+          "desc": "腾讯即时通讯",
+          "recommended": false
+        },
+        {
+          "id": "ByteDance.Feishu",
+          "name": "飞书",
+          "desc": "字节跳动办公套件",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "name": "影音创作",
+      "glyph": "",
+      "packages": [
+        {
+          "id": "VideoLAN.VLC",
+          "name": "VLC Media Player",
+          "desc": "开源多媒体播放器",
+          "recommended": false
+        },
+        {
+          "id": "Daum.PotPlayer",
+          "name": "PotPlayer",
+          "desc": "高性能多媒体播放器",
+          "recommended": false
+        },
+        {
+          "id": "OBSProject.OBSStudio",
+          "name": "OBS Studio",
+          "desc": "录屏与直播",
+          "recommended": false
+        },
+        {
+          "id": "liule.Snipaste",
+          "name": "Snipaste",
+          "desc": "截图贴图工具",
+          "recommended": false
+        },
+        {
+          "id": "BlenderFoundation.Blender",
+          "name": "Blender",
+          "desc": "3D建模与渲染",
+          "recommended": false
+        },
+        {
+          "id": "Audacity.Audacity",
+          "name": "Audacity",
+          "desc": "开源音频编辑器",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "name": "系统效率",
+      "glyph": "",
+      "packages": [
+        {
+          "id": "Microsoft.PowerToys",
+          "name": "PowerToys",
+          "desc": "微软官方系统增强工具集",
+          "recommended": true
+        },
+        {
+          "id": "voidtools.Everything",
+          "name": "Everything",
+          "desc": "极速文件搜索工具",
+          "recommended": true
+        },
+        {
+          "id": "Microsoft.WindowsTerminal",
+          "name": "Windows Terminal",
+          "desc": "现代终端",
+          "recommended": false
+        },
+        {
+          "id": "Rufus.Rufus",
+          "name": "Rufus",
+          "desc": "启动盘制作工具",
+          "recommended": false
+        },
+        {
+          "id": "Flow-Launcher.Flow-Launcher",
+          "name": "Flow Launcher",
+          "desc": "快捷启动器",
+          "recommended": false
+        },
+        {
+          "id": "Youqu.ToDesk",
+          "name": "ToDesk",
+          "desc": "国产远程控制",
+          "recommended": false
+        }
+      ]
+    },
+    {
+      "name": "开发工具",
+      "glyph": "",
+      "packages": [
+        {
+          "id": "Microsoft.VisualStudioCode",
+          "name": "VS Code",
+          "desc": "轻量代码编辑器",
+          "recommended": false
+        },
+        {
+          "id": "Git.Git",
+          "name": "Git for Windows",
+          "desc": "版本控制 + Git Bash",
+          "recommended": false
+        },
+        {
+          "id": "OpenJS.NodeJS.LTS",
+          "name": "Node.js LTS",
+          "desc": "JavaScript 运行时",
+          "recommended": false
+        },
+        {
+          "id": "Python.Python.3.12",
+          "name": "Python 3.12",
+          "desc": "Python 运行时",
+          "recommended": false
+        },
+        {
+          "id": "Docker.DockerDesktop",
+          "name": "Docker Desktop",
+          "desc": "容器化平台",
+          "recommended": false
+        },
+        {
+          "id": "DBeaver.DBeaver.Community",
+          "name": "DBeaver",
+          "desc": "通用数据库管理工具",
+          "recommended": false
         }
       ]
     }

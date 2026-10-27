@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- context-menu-mgr 右键菜单管理 -->
-  <path fill="none" d="M5.5 4.5H18.5C19.6 4.5 20.5 5.4 20.5 6.5V17.5C20.5 18.6 19.6 19.5 18.5 19.5H5.5C4.4 19.5 3.5 18.6 3.5 17.5V6.5C3.5 5.4 4.4 4.5 5.5 4.5Z" stroke="#CA5010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M6.8 8.5H13.2M6.8 12H13.2M6.8 15.5H10.4" stroke="#E8935A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M15.4 7.7H17.2V9.3H15.4ZM15.4 11.2H17.2V12.8H15.4ZM15.4 14.7H17.2V16.3H15.4Z" fill="#E8935A"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="19" y="16" width="88" height="94" rx="10" fill="url(#b)"/><rect x="19" y="16" width="88" height="22" rx="10" fill="url(#a)"/><rect x="19" y="28" width="88" height="10" rx="0" fill="url(#a)"/><rect x="29" y="49" width="68" height="17" rx="4" fill="#D3E8FF"/><circle cx="37" cy="57" r="3" fill="#4A9DE0"/><rect x="48" y="54" width="39" height="5" rx="2" fill="#6990B5"/><rect x="30" y="77" width="54" height="5" rx="2" fill="#ACBED0"/><rect x="30" y="91" width="39" height="5" rx="2" fill="#ACBED0"/><path d="m86 68 29 28-17 2-8 14-4-44Z" fill="url(#c)"/>
 </svg>

@@ -44,6 +44,8 @@ internal static class HardwareSceneRuntime
             core.Settings.AreDevToolsEnabled = false;
             core.Settings.AreDefaultContextMenusEnabled = false;
             core.WebMessageReceived += OnMessage;
+            core.NavigationCompleted += OnNavigationCompleted;
+            core.ProcessFailed += OnProcessFailed;
             _view.Source = new Uri("https://hardware-scene.local/index.html");
         }
 
@@ -51,6 +53,15 @@ internal static class HardwareSceneRuntime
         {
             if (!_disposed && args.Source.StartsWith("https://hardware-scene.local/", StringComparison.OrdinalIgnoreCase))
                 MessageReceived?.Invoke(args.WebMessageAsJson);
+        }
+
+        private void OnNavigationCompleted(CoreWebView2 sender, CoreWebView2NavigationCompletedEventArgs args)
+        {
+            if (!_disposed && !args.IsSuccess) MessageReceived?.Invoke("{\"type\":\"error\",\"message\":\"3D 页面加载失败\"}");
+        }
+        private void OnProcessFailed(CoreWebView2 sender, CoreWebView2ProcessFailedEventArgs args)
+        {
+            if (!_disposed) MessageReceived?.Invoke("{\"type\":\"error\",\"message\":\"3D 渲染进程已停止\"}");
         }
 
         public void Post(string json)
@@ -71,7 +82,12 @@ internal static class HardwareSceneRuntime
             _disposed = true;
             try
             {
-                if (_view.CoreWebView2 is { } core) core.WebMessageReceived -= OnMessage;
+                if (_view.CoreWebView2 is { } core)
+                {
+                    core.WebMessageReceived -= OnMessage;
+                    core.NavigationCompleted -= OnNavigationCompleted;
+                    core.ProcessFailed -= OnProcessFailed;
+                }
                 _view.Close();
             }
             catch (COMException ex) when (ex.HResult == unchecked((int)0x8007139F)) { }

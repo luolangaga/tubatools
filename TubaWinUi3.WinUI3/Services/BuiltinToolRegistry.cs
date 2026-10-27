@@ -24,7 +24,7 @@ public static class BuiltinToolRegistry
         Register(new PortViewerTool());
         Register(new HostsEditorTool());
         Register(new KeyboardTestTool());
-        Register(new JunkCleanerTool());
+        Register(new SpaceCleanupTool());
         Register(new BatteryAnalyzerTool());
         Register(new SpeedTestTool());
         Register(new WifiPasswordTool());
@@ -74,6 +74,7 @@ public static class BuiltinToolRegistry
         Register(new EnvironmentVariablesTool());
         Register(new AiPlaygroundTool());
         Register(new MemoryManagerTool());
+        Register(new DriverStoreTool());
     }
 
     public static IReadOnlyList<string> GetCategories()
@@ -95,6 +96,8 @@ public static class BuiltinToolRegistry
 
     public static IBuiltinTool? GetById(string id)
     {
+        // Existing desktop shortcuts / history continue to open the merged tool.
+        if (id == "junk-cleaner") id = "space-cleanup";
         return Tools.FirstOrDefault(t => t.Id == id);
     }
 }

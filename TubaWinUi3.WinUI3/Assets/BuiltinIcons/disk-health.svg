@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- disk-health 磁盘健康 -->
-  <path fill="none" d="M4 7.5C4 6.12 5.12 5 6.5 5H17.5C18.88 5 20 6.12 20 7.5V16.5C20 17.88 18.88 19 17.5 19H6.5C5.12 19 4 17.88 4 16.5V7.5Z" stroke="#026467" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M6.5 8.8A1.1 1.1 0 1 1 8.7 8.8A1.1 1.1 0 1 1 6.5 8.8Z" fill="#4DBFC4"/>
-  <path fill="none" d="M6.75 15H9.25L10.75 12L12.75 16.5L14.25 14.75H17.25" stroke="#026467" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8AE6B8"/><stop offset="0.500" stop-color="#39BE91"/><stop offset="1.000" stop-color="#15906E"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="21" y="12" width="86" height="101" rx="12" fill="url(#c)"/><rect x="28" y="20" width="72" height="86" rx="7" fill="url(#b)"/><circle cx="64" cy="55" r="26" fill="#BDD6E9"/><circle cx="64" cy="55" r="10" fill="#739DBF"/><path d="M64 55 89 83l-8 6-20-26Z" fill="#fff"/><circle cx="89" cy="91" r="22" fill="url(#accent)"/><path d="m79 91 7 7 13-15" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

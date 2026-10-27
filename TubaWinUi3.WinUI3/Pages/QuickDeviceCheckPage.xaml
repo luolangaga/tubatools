@@ -1,77 +1,68 @@
-<Page
-    x:Class="TubaWinUi3.Pages.QuickDeviceCheckPage"
+<Page x:Class="TubaWinUi3.Pages.QuickDeviceCheckPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="Transparent">
-
-    <Grid Padding="24,8,24,24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <!-- 页面返回按钮（左上角）：独立窗口模式下由代码隐藏 -->
-        <Button
-            x:Name="ToolBackButton"
-            Grid.Row="0"
-            Grid.RowSpan="2"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Style="{StaticResource ToolPageBackButtonStyle}"
-            Click="ToolBackButton_Click"
-            AutomationProperties.Name="返回"
-            ToolTipService.ToolTip="返回" />
-
-        <StackPanel Grid.Row="0" Spacing="8" HorizontalAlignment="Center">
-            <StackPanel x:Name="StepProgressPanel" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                <Border Width="12" Height="12" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                <Border Width="8" Height="8" CornerRadius="4" Background="{ThemeResource SubtleFillColorSecondaryBrush}" />
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="Transparent">
+    <Grid x:Name="LayoutRoot" Padding="24,8,24,16" RowSpacing="16" SizeChanged="LayoutRoot_SizeChanged">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Button x:Name="ToolBackButton" Style="{StaticResource ToolPageBackButtonStyle}" Click="ToolBackButton_Click" VerticalAlignment="Center" AutomationProperties.Name="返回"/>
+            <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock x:Name="PageTitle" Text="快速验机" Style="{StaticResource TitleTextBlockStyle}"/>
+                    <TextBlock x:Name="PageSubtitle" Text="从外观到稳定性，逐项认识你的新电脑" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>
-            <TextBlock x:Name="StepIndicatorText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
-        </StackPanel>
-
-        <StackPanel Grid.Row="1" Spacing="8" HorizontalAlignment="Center" Margin="0,16,0,16">
-            <FontIcon x:Name="StepGlyphIcon" Glyph="&#xE734;" FontSize="28" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" HorizontalAlignment="Center" />
-            <TextBlock x:Name="StepTitleText" Style="{StaticResource PageTitleStyle}" HorizontalAlignment="Center" />
-            <TextBlock x:Name="StepDescText" Style="{StaticResource PageSubtitleStyle}" HorizontalAlignment="Center" />
-        </StackPanel>
-
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
-            <StackPanel x:Name="StepContentPanel" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel.RenderTransform>
-                    <TranslateTransform x:Name="StepContentPanelTransform" Y="0" />
-                </StackPanel.RenderTransform>
-            </StackPanel>
-        </ScrollViewer>
-
-        <Grid Grid.Row="3" Margin="0,16,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <Button x:Name="BackButton"
-                    Content="上一步"
-                    Padding="24,8,24,8"
-                    Visibility="Collapsed"
-                    Click="BackButton_Click"
-                    HorizontalAlignment="Left" />
-
-            <Button x:Name="NextButton"
-                    Content="下一步"
-                    Style="{ThemeResource AccentButtonStyle}"
-                    Padding="32,8,32,8"
-                    Grid.Column="1"
-                    Click="NextButton_Click" />
+            <TextBlock x:Name="StepIndicatorText" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" AutomationProperties.LiveSetting="Polite"/>
         </Grid>
+        <Grid x:Name="Workspace" Grid.Row="1" ColumnSpacing="20">
+            <Grid.RowDefinitions><RowDefinition x:Name="MainWorkspaceRow" Height="*"/><RowDefinition x:Name="CompletionSceneRow" Height="0"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition x:Name="SceneColumn" Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="480"/></Grid.ColumnDefinitions>
+            <Border x:Name="SceneSurface" CornerRadius="12" Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <Grid RowSpacing="8" Padding="12">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock x:Name="SceneTitle" Text="整机全景" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="DeviceText" Text="正在读取设备信息…" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="回到全景" Click="Overview_Click" AutomationProperties.AutomationId="InspectionOverview" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid x:Name="KeyboardToolbar" Grid.Row="1" ColumnSpacing="12" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <ComboBox x:Name="KeyboardLayout" SelectedIndex="0" Width="156" SelectionChanged="KeyboardLayout_SelectionChanged" IsTabStop="False" AutomationProperties.Name="键盘布局" AutomationProperties.AutomationId="InspectionKeyboardLayout">
+                            <ComboBoxItem Content="全尺寸键盘"/><ComboBoxItem Content="紧凑键盘 · TKL"/>
+                        </ComboBox>
+                        <Button Grid.Column="1" Content="重新检测" Click="KeyboardReset_Click" IsTabStop="False" AutomationProperties.AutomationId="InspectionKeyboardReset"/>
+                        <TextBlock x:Name="KeyboardStatistics" Grid.Column="2" Text="已检测 0 / 105 键" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.AutomationId="InspectionKeyboardStatistics" AutomationProperties.LiveSetting="Polite"/>
+                    </Grid>
+                    <ContentControl x:Name="SceneHost" Grid.Row="2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" AutomationProperties.Name="验机 3D 电脑场景"/>
+                    <ContentControl x:Name="KeyboardFallbackHost" Grid.Row="2" Visibility="Collapsed" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                    <StackPanel x:Name="SceneStatus" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                        <ProgressRing x:Name="SceneLoading" Width="28" Height="28" IsActive="True"/>
+                        <TextBlock x:Name="SceneStatusText" Text="正在准备 3D 全景…" TextWrapping="Wrap" MaxWidth="260"/>
+                    </StackPanel>
+                    <TextBlock x:Name="SceneHint" Grid.Row="3" Text="拖动旋转 · 镜头随检测步骤切换 · 模型为硬件示意" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                </Grid>
+            </Border>
+            <Grid x:Name="DetailsPanel" Grid.Column="1" RowSpacing="12">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="StepTitleText" FontSize="24" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="StepDescText" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+                <Grid x:Name="StepContentPanel" Grid.Row="1" VerticalAlignment="Stretch"/>
+                <StackPanel x:Name="CompletionSummary" Grid.Row="1" Visibility="Collapsed" Spacing="8" AutomationProperties.AutomationId="InspectionCompletion">
+                    <StackPanel.Transitions><TransitionCollection><EntranceThemeTransition FromVerticalOffset="16"/></TransitionCollection></StackPanel.Transitions>
+                    <TextBlock x:Name="CompletionSummaryText" TextWrapping="Wrap" FontSize="14"/>
+                    <TextBlock Text="流程结束不代表所有硬件均通过检测，请结合你的观察和烤机报告复核。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Grid>
+                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnSpacing="8" Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Button x:Name="BackButton" Content="上一步" Click="BackButton_Click" AutomationProperties.AutomationId="InspectionBack"/>
+                    <TextBlock x:Name="ActivityText" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="确认后继续" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Button x:Name="NextButton" Grid.Column="2" Content="开始验机" Style="{StaticResource AccentButtonStyle}" Click="NextButton_Click" AutomationProperties.AutomationId="InspectionNext"/>
+                </Grid>
+        </Grid>
+        <Grid x:Name="StepProgressPanel" Grid.Row="2" ColumnSpacing="4"/>
     </Grid>
 </Page>

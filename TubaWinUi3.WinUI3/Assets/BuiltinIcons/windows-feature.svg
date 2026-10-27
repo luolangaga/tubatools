@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- windows-feature Windows 隐藏功能 -->
-  <path fill="none" d="M7.5 6.5H16.5C17.88 6.5 19 7.62 19 9C19 10.38 17.88 11.5 16.5 11.5H7.5C6.12 11.5 5 10.38 5 9C5 7.62 6.12 6.5 7.5 6.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7.5 12.5H16.5C17.88 12.5 19 13.62 19 15C19 16.38 17.88 17.5 16.5 17.5H7.5C6.12 17.5 5 16.38 5 15C5 13.62 6.12 12.5 7.5 12.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M14.9 9A1.6 1.6 0 1 1 18.1 9A1.6 1.6 0 1 1 14.9 9Z" fill="#A56FD1"/>
-  <path d="M5.9 15A1.6 1.6 0 1 1 9.1 15A1.6 1.6 0 1 1 5.9 15Z" fill="#A56FD1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#73DCFF"/><stop offset="0.500" stop-color="#399CEB"/><stop offset="1.000" stop-color="#3A63D8"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="14" y="17" width="100" height="92" rx="10" fill="url(#b)"/><rect x="14" y="17" width="100" height="21" rx="10" fill="url(#a)"/><rect x="14" y="29" width="100" height="10" rx="0" fill="url(#a)"/><rect x="30" y="49" width="19" height="19" rx="3" fill="url(#a)"/><rect x="30" y="74" width="19" height="19" rx="3" fill="url(#a)"/><rect x="55" y="49" width="19" height="19" rx="3" fill="url(#a)"/><rect x="55" y="74" width="19" height="19" rx="3" fill="url(#a)"/><path d="M88 58h9v10h10v9H97v10h-9V77H78v-9h10Z" fill="#63CAA6"/>
 </svg>

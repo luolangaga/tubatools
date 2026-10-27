@@ -931,13 +931,13 @@ public partial class App : Application
         }
 
         // 若用户已启用 Windows 搜索索引注册，启动时刷新快捷方式
-        if (AppSettings.GetBool("WindowsSearchIndex", false))
+        if (ToolVisibilityService.HasSearchSelection)
         {
             _ = DelayThenRunAsync(TimeSpan.FromSeconds(15), () => WindowsSearchIndexService.RegisterAllToolsAsync());
         }
         ToolCatalog.ToolsChanged += () =>
         {
-            if (AppSettings.GetBool("WindowsSearchIndex", false))
+            if (ToolVisibilityService.HasSearchSelection)
                 _ = WindowsSearchIndexService.RefreshAsync();
         };
     }

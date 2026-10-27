@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- npu AI 加速器 -->
-  <path fill="none" d="M7 8.5C7 7.67 7.67 7 8.5 7H14.5C15.33 7 16 7.67 16 8.5V14.5C16 15.33 15.33 16 14.5 16H8.5C7.67 16 7 15.33 7 14.5V8.5Z" stroke="#986F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M9 5V7M12.5 5V7M9 16V18M12.5 16V18M5 9.5H7M5 13H7M16 9.5H18M16 13H18" stroke="#986F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M18.5 6L19.2 7.8L21 8.5L19.2 9.2L18.5 11L17.8 9.2L16 8.5L17.8 7.8L18.5 6Z" fill="#E3B737"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="25" y1="20" x2="103" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#D9C9FF"/><stop offset=".5" stop-color="#AA94ED"/><stop offset="1" stop-color="#7D68CB"/></linearGradient><linearGradient id="b" x1="30" y1="20" x2="96" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B9CA"/><stop offset="1" stop-color="#4C637B"/></linearGradient></defs>
+<ellipse cx="64" cy="119" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M34 13v16m20-16v16m20-16v16m20-16v16M34 99v16m20-16v16m20-16v16m20-16v16M13 34h16m-16 20h16m-16 20h16m-16 20h16m70-60h16m-16 20h16m-16 20h16m-16 20h16" fill="none" stroke="#B1A9CD" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><rect x="24" y="24" width="80" height="80" rx="12" fill="url(#c)"/><rect x="33" y="33" width="62" height="62" rx="9" fill="url(#a)"/><path d="m47 49 17 15 17-15M47 79l17-15 17 15" fill="none" stroke="#F2EDFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="47" cy="49" r="7" fill="#EEE7FF"/><circle cx="81" cy="49" r="7" fill="#EEE7FF"/><circle cx="47" cy="79" r="7" fill="#EEE7FF"/><circle cx="81" cy="79" r="7" fill="#EEE7FF"/><circle cx="64" cy="64" r="9" fill="#C6F1F6"/>
 </svg>

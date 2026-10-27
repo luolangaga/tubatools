@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- security 安全 -->
-  <path fill="none" d="M12 3.5C12 3.5 15.9 5 19 5.4V11.4C19 15.6 16.6 18.9 12 20.5C7.4 18.9 5 15.6 5 11.4V5.4C8.1 5 12 3.5 12 3.5Z" stroke="#4F52B2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M9.2 12L11.3 14.1L15.1 9.9" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="25" y1="20" x2="103" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#AAEED4"/><stop offset=".5" stop-color="#58C5A4"/><stop offset="1" stop-color="#29977F"/></linearGradient><linearGradient id="b" x1="30" y1="20" x2="96" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B9CA"/><stop offset="1" stop-color="#4C637B"/></linearGradient></defs>
+<ellipse cx="64" cy="119" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M64 10c17 9 32 13 45 15v34c0 30-18 47-45 59C37 106 19 89 19 59V25c13-2 28-6 45-15Z" fill="url(#c)"/><path d="M64 20c13 7 25 10 35 12v27c0 24-14 39-35 49C43 98 29 83 29 59V32c10-2 22-5 35-12Z" fill="url(#a)"/><path d="m46 63 13 13 25-28" fill="none" stroke="#F1FFF8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

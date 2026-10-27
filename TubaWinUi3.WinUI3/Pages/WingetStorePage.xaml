@@ -1,271 +1,143 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
+    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
     x:Class="TubaWinUi3.Pages.WingetStorePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
-    NavigationCacheMode="Enabled"
-    mc:Ignorable="d">
-
+    xmlns:models="using:TubaWinUi3.Models"
+    NavigationCacheMode="Enabled">
     <Page.Resources>
-        <!-- 分类胶囊：选中强调色实底，未选中透明描边 -->
-        <Style x:Key="StoreCategoryChipStyle" TargetType="RadioButton">
-            <Setter Property="MinHeight" Value="32" />
-            <Setter Property="Padding" Value="12,4" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border
-                            x:Name="RootBorder"
-                            Padding="{TemplateBinding Padding}"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.15">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Checked" GeneratedDuration="0:0:0.15">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Normal" GeneratedDuration="0:0:0.2">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource SubtleFillColorTertiaryBrush}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Checked">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorDefaultBrush}" />
-                                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="CheckedPointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
-                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
-                                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="CheckedPressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
-                                            <Setter Target="RootBorder.BorderBrush" Value="{ThemeResource AccentFillColorSecondaryBrush}" />
-                                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter
-                                x:Name="ContentPresenter"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Content="{TemplateBinding Content}"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- 商店卡片 GridViewItem 样式：悬浮缩放 + 涟漪 -->
+        <CollectionViewSource x:Name="StoreGroups" IsSourceGrouped="True" />
+        <!-- Keep the platform item presenter: keyboard focus, pointer and contrast states. -->
         <Style x:Key="StoreCardItemStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="0,0,12,12" />
+            <Setter Property="Padding" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewItem">
-                        <Grid x:Name="RootGrid" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <ScaleTransform x:Name="ItemScale" ScaleX="1" ScaleY="1" />
-                            </Grid.RenderTransform>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualStateGroup.Transitions>
-                                        <VisualTransition To="PointerOver" GeneratedDuration="0:0:0.18">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Pressed" GeneratedDuration="0:0:0.08">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                        <VisualTransition To="Normal" GeneratedDuration="0:0:0.25">
-                                            <VisualTransition.GeneratedEasingFunction>
-                                                <CubicEase EasingMode="EaseOut" />
-                                            </VisualTransition.GeneratedEasingFunction>
-                                        </VisualTransition>
-                                    </VisualStateGroup.Transitions>
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="1.02" />
-                                            <Setter Target="ItemScale.ScaleY" Value="1.02" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="ItemScale.ScaleX" Value="0.97" />
-                                            <Setter Target="ItemScale.ScaleY" Value="0.97" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter
-                                x:Name="ContentPresenter"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
-    </Page.Resources>
-
-    <Grid>
-        <Grid.Transitions>
-            <TransitionCollection>
-                <EntranceThemeTransition FromVerticalOffset="16" FromHorizontalOffset="0" IsStaggeringEnabled="False" />
-            </TransitionCollection>
-        </Grid.Transitions>
-
-        <Grid Padding="24,4,24,32" RowSpacing="16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!-- 标题行：图标徽章 + 标题 + 副标题 -->
-            <controls:ToolPageHeader ToolId="winget-store"
-                x:Name="PageHeader"
-                Grid.Row="0"
-                HeaderPadding="0"
-                Title="正版软件商店"
-                Subtitle="浏览并安装正版软件，基于 WinGet 软件源"
-                Glyph="&#xE719;" />
-
-            <!-- 搜索框（圆角卡片容器） -->
-            <Border
-                Grid.Row="1"
-                Padding="16,12"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                HorizontalAlignment="Stretch">
-                <AutoSuggestBox
-                    x:Name="SearchBox"
-                    PlaceholderText="搜索正版软件（支持中文，回车搜索）..."
-                    QueryIcon="Find"
-                    TextChanged="SearchBox_TextChanged"
-                    QuerySubmitted="SearchBox_QuerySubmitted"
-                    KeyDown="SearchBox_KeyDown" />
-            </Border>
-
-            <!-- 分类胶囊栏 -->
-            <ScrollViewer
-                Grid.Row="2"
-                HorizontalScrollBarVisibility="Auto"
-                HorizontalScrollMode="Auto"
-                VerticalScrollBarVisibility="Disabled"
-                VerticalScrollMode="Disabled">
-                <StackPanel
-                    x:Name="CategoryBar"
-                    Orientation="Horizontal"
-                    Spacing="8">
-<StackPanel.ChildrenTransitions>
-                    <TransitionCollection>
-                        <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True" />
-                    </TransitionCollection>
-                </StackPanel.ChildrenTransitions>
-</StackPanel>
-            </ScrollViewer>
-
-            <!-- 内容区 -->
-            <Grid Grid.Row="3">
-                <!-- 加载中 -->
-                <StackPanel
-                    x:Name="LoadingPanel"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="12"
-                    Visibility="Collapsed">
-                    <ProgressRing
-                        Width="36"
-                        Height="36"
-                        IsActive="True" />
-                    <TextBlock
-                        x:Name="LoadingText"
-                        HorizontalAlignment="Center"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="正在加载..." />
-                </StackPanel>
-
-                <!-- 空状态 -->
-                <StackPanel
-                    x:Name="EmptyPanel"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="8"
-                    Visibility="Collapsed">
-                    <FontIcon
-                        FontSize="28"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Glyph="&#xE721;"
-                        HorizontalAlignment="Center" />
-                    <TextBlock
-                        x:Name="EmptyText"
-                        HorizontalAlignment="Center"
-                        FontSize="14"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="未找到相关软件" />
-                </StackPanel>
-
-                <!-- 软件列表 -->
-                <ScrollViewer x:Name="ContentScroller">
-                    <StackPanel Spacing="12">
-                        <InfoBar
-                            x:Name="SearchErrorBar"
-                            IsClosable="True"
-                            IsOpen="False"
-                            Severity="Warning"
-                            Title="在线搜索不可用" />
-                        <StackPanel
-                            x:Name="GroupsPanel"
-                            Spacing="16" />
+        <DataTemplate x:Key="PackageTemplate" x:DataType="models:StorePackage">
+            <Grid Padding="16" RowSpacing="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8"
+                  AutomationProperties.Name="{x:Bind AccessibleName}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="40" Height="40" CornerRadius="8" Background="{ThemeResource AccentFillColorDefaultBrush}">
+                        <TextBlock Text="{x:Bind Monogram}" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="{x:Bind Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{x:Bind Category}" Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
-                </ScrollViewer>
+                </Grid>
+                <TextBlock Grid.Row="1" Text="{x:Bind Description}" TextWrapping="Wrap" MaxLines="2"
+                           TextTrimming="CharacterEllipsis" LineHeight="20"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Grid Grid.Row="2" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{x:Bind SourceLabel}" Style="{StaticResource CaptionTextBlockStyle}"
+                               VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <Button Grid.Column="1" Content="{x:Bind ActionLabel}" IsEnabled="{x:Bind CanInstall}" Tag="{x:Bind}" Click="InstallButton_Click"
+                            Loaded="InstallButton_Loaded" MinWidth="80" AutomationProperties.Name="{x:Bind Name}" />
+                </Grid>
             </Grid>
-        </Grid>
+        </DataTemplate>
+    </Page.Resources>
+    <Grid x:Name="LayoutRoot" Padding="24,4,24,24" RowSpacing="16">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="Compact">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0" /></VisualState.StateTriggers>
+                    <VisualState.Setters><Setter Target="LayoutRoot.Padding" Value="12,4,12,16" /></VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="800" /></VisualState.StateTriggers>
+                    <VisualState.Setters><Setter Target="LayoutRoot.Padding" Value="24,4,24,24" /></VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <controls:ToolPageHeader x:Name="PageHeader" ToolId="winget-store" HeaderPadding="0"
+            Title="正版应用商店" Subtitle="精选日常应用与 AI Agent，从官方渠道开始。" Glyph="&#xE719;" />
+        <AutoSuggestBox x:Name="SearchBox" Grid.Row="1" Header="搜索应用" PlaceholderText="搜索名称、用途或 WinGet 包 ID"
+            QueryIcon="Find" TextChanged="SearchBox_TextChanged" QuerySubmitted="SearchBox_QuerySubmitted"
+            KeyDown="SearchBox_KeyDown" AutomationProperties.AutomationId="StoreSearch" />
+        <NavigationView x:Name="CategoryNavigation" Grid.Row="2" PaneDisplayMode="Top" IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False" IsPaneToggleButtonVisible="False" IsTitleBarAutoPaddingEnabled="False"
+            SelectionChanged="CategoryNavigation_SelectionChanged" AutomationProperties.AutomationId="StoreCategories">
+            <Grid Margin="0,12,0,0" RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <InfoBar x:Name="SearchErrorBar" IsClosable="True" IsOpen="False" Severity="Warning" Title="在线搜索不可用" />
+                <Grid Grid.Row="1">
+                    <!-- One scrolling, virtualized collection for the whole storefront. -->
+                    <GridView x:Name="PackageGrid" ItemsSource="{Binding Source={StaticResource StoreGroups}}"
+                        ItemTemplate="{StaticResource PackageTemplate}" ItemContainerStyle="{StaticResource StoreCardItemStyle}"
+                        SelectionMode="None" IsItemClickEnabled="True" ItemClick="PackageGrid_ItemClick"
+                        SizeChanged="PackageGrid_SizeChanged" Padding="0,0,0,12"
+                        ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        AutomationProperties.AutomationId="StorePackages">
+                        <GridView.Header>
+                            <Border x:Name="HomeIntro" Padding="20" Margin="0,0,12,20" CornerRadius="8"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="为下一件事，找到趁手的应用。" Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                                    <TextBlock x:Name="CatalogSummary" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <TextBlock Text="点击“安装”直接安装应用；DeepSeek Harness 使用官方安装包，可在下载中心查看进度。"
+                                        TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </GridView.Header>
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" ItemWidth="280" ItemHeight="204" /></ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+                        <GridView.GroupStyle>
+                            <GroupStyle HidesIfEmpty="True">
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate x:DataType="models:StoreSection">
+                                        <StackPanel Spacing="4" Margin="0,0,12,12">
+                                            <TextBlock Text="{x:Bind Title}" Style="{StaticResource SubtitleTextBlockStyle}" AutomationProperties.HeadingLevel="Level2" />
+                                            <TextBlock Text="{x:Bind Description}" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </GridView.GroupStyle>
+                    </GridView>
+                    <StackPanel x:Name="LoadingPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" Visibility="Collapsed">
+                        <ProgressRing Width="32" Height="32" IsActive="True" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="LoadingText" Text="正在加载软件目录…" />
+                    </StackPanel>
+                    <StackPanel x:Name="EmptyPanel" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="420" Visibility="Collapsed">
+                        <FontIcon Glyph="&#xE721;" FontSize="32" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="EmptyText" TextWrapping="Wrap" TextAlignment="Center" />
+                        <Button Content="返回精选" Click="ResetButton_Click" HorizontalAlignment="Center" />
+                        <Button Content="重新加载目录" Click="ReloadButton_Click" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </NavigationView>
     </Grid>
 </Page>

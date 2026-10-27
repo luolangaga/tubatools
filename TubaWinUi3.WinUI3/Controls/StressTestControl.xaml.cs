@@ -71,6 +71,8 @@ public sealed partial class StressTestControl : UserControl
 
     private bool _isRunning;
     private bool _settingsReady;
+    private readonly bool _inspectionMode;
+    private ComboBox? _inspectionDuration;
 
     private double _cpuTempPeak, _cpuUsagePeak, _cpuClockPeak, _cpuPowerPeak;
     private double _gpuTempPeak, _gpuClockPeak, _gpuPowerPeak;
@@ -100,13 +102,17 @@ public sealed partial class StressTestControl : UserControl
 
     public event EventHandler? StressStarted;
     public event EventHandler? StressStopped;
+    internal event Action<MonitorSample>? InspectionSampled;
 
     public Window? OwnerWindow { get; set; }
 
     public bool IsRunning => _isRunning;
 
-    public StressTestControl()
+    public StressTestControl() : this(false) { }
+
+    public StressTestControl(bool inspectionMode)
     {
+        _inspectionMode = inspectionMode;
         InitializeComponent();
         InitCharts();
         // 曲线画刷在代码里构造，切换主题后按现有数据集合重建系列
@@ -116,6 +122,7 @@ public sealed partial class StressTestControl : UserControl
         UpdateDxt5Availability();
         LoadNetSettings();
         UpdateNetReference();
+        if (inspectionMode) BuildInspectionLayout();
     }
 
     public void Cleanup() => StopStress();
@@ -149,6 +156,7 @@ public sealed partial class StressTestControl : UserControl
 
     private void SaveNetSettings()
     {
+        if (_inspectionMode) return;
         try
         {
             var s = new NetSettings
@@ -215,6 +223,7 @@ public sealed partial class StressTestControl : UserControl
 
     private void SaveFurMarkSettings()
     {
+        if (_inspectionMode) return;
         try
         {
             var s = new FurMarkSettings
@@ -648,6 +657,8 @@ public sealed partial class StressTestControl : UserControl
     {
         // 与「游戏监控」共用同一硬件监控引擎（LibreHardwareMonitor）
         var sample = await Task.Run(() => LiteMonitorService.Instance.Read());
+        if (!_isRunning) return;
+        if (_inspectionMode) InspectionSampled?.Invoke(sample);
 
         if (!HasMonitorData(sample))
         {
@@ -1294,6 +1305,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
 
     private void SetButtonsEnabled(bool enabled)
     {
+        if (_inspectionDuration is not null) _inspectionDuration.IsEnabled = enabled;
         TripleStressBtn.IsEnabled = enabled;
         CpuSelBox.IsEnabled = enabled;
         GpuSelBox.IsEnabled = enabled;

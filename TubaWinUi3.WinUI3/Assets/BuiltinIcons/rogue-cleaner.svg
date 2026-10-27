@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- rogue-cleaner 流氓软件的克星 -->
-  <path fill="none" d="M12 3.5V10.5" stroke="#C50F1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7 10.5H17L15.6 19.2C15.5 19.9 14.9 20.4 14.2 20.4H9.8C9.1 20.4 8.5 19.9 8.4 19.2L7 10.5Z" stroke="#C50F1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M10.2 13.6V17.4M13.8 13.6V17.4" stroke="#E86E7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8AE6B8"/><stop offset="0.500" stop-color="#39BE91"/><stop offset="1.000" stop-color="#15906E"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M64 13 105 29v31c0 25-17 42-41 54-24-12-41-29-41-54V29l41-16Z" fill="url(#a)"/><path d="M64 22 96 35v25c0 20-13 34-32 45V22Z" fill="#fff" opacity=".13"/><path d="M64 44c-21 0-27 20-19 35l-6 10h50l-6-10c8-15 2-35-19-35Z" fill="#F1FAFF"/><rect x="51" y="60" width="8" height="12" rx="4" fill="#A0B0C1"/><rect x="70" y="60" width="8" height="12" rx="4" fill="#A0B0C1"/><path d="M45 92 88 49" fill="none" stroke="#F57F8E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

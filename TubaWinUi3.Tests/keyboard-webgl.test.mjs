@@ -1,0 +1,60 @@
+// npm install --prefix <tooling-dir> playwright@1.56.1
+// node TubaWinUi3.Tests/keyboard-webgl.test.mjs <tooling-dir> <chromium-exe> [screenshots-dir]
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const prefix=path.resolve(process.argv[2]);
+const {chromium}=createRequire(path.join(prefix,'package.json'))('playwright');
+const browser=await chromium.launch({headless:true,executablePath:process.argv[3]});
+try {
+  const page=await browser.newPage({viewport:{width:1200,height:650},deviceScaleFactor:1});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const source=fileURLToPath(new URL('../TubaWinUi3.WinUI3/Assets/KeyboardTest/index.html',import.meta.url));
+  await page.goto(pathToFileURL(source).href);
+  await page.waitForFunction(()=>window.keyboardTest?.getState().drawCalls>0);
+  assert.equal((await page.locator('body').innerText()).trim(),'','embedded scene must leave all interface text to native WinUI');
+  const send=m=>page.evaluate(message=>window.keyboardTest.receive(message),m);
+  const state=()=>page.evaluate(()=>window.keyboardTest.getState());
+  const screenshot=async name=>{
+    if(!process.argv[4])return;
+    await fs.mkdir(process.argv[4],{recursive:true});
+    await page.screenshot({path:path.join(process.argv[4],name+'.png')});
+  };
+  await page.waitForTimeout(1800);
+  assert.deepEqual(errors,[]);
+  assert.equal((await state()).keyCount,105);
+  assert.ok((await state()).drawCalls<40,'caps and legends must stay batched');
+  assert.equal((await state()).frame,0,'settled scene should stop requesting frames');
+  await screenshot('panorama');
+  await send({type:'key',key:65,down:true});
+  await page.waitForTimeout(1250);
+  assert.equal((await state()).focused,65,'holding a key must retain focus');
+  await screenshot('focus');
+  await send({type:'key',key:65,down:true,repeat:true});
+  assert.equal((await state()).visited.length,1,'repeat cannot inflate coverage');
+  await send({type:'key',key:65,down:false});
+  await page.waitForTimeout(820);assert.equal((await state()).focused,65);
+  await page.waitForTimeout(230);assert.equal((await state()).focused,null,'idle returns at one second');
+  await send({type:'key',key:162,down:true});await send({type:'key',key:163,down:true});
+  assert.equal((await state()).held.length,2);
+  await send({type:'key',key:162,down:false});await page.waitForTimeout(1100);
+  assert.equal((await state()).focused,163,'a second held key prevents idle return');
+  await send({type:'key',key:163,down:false});
+  await send({type:'layout',compact:true});assert.equal((await state()).keyCount,88);
+  await send({type:'layout',compact:false});
+  await send({type:'theme',dark:true,accent:'#54b3d5'});
+  await send({type:'panorama'});await page.waitForTimeout(1800);await screenshot('dark');
+  await page.setViewportSize({width:720,height:440});await page.waitForTimeout(1600);await screenshot('narrow');
+  await send({type:'reset'});assert.equal((await state()).visited.length,0);
+  await page.setViewportSize({width:1200,height:650});await page.waitForTimeout(1800);
+  await page.mouse.click(500,330);
+  assert.notEqual((await state()).focused,null,'clicking a cap previews its camera');
+  assert.equal((await state()).visited.length,0,'pointer preview must not pass a physical key test');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await send({type:'key',key:0xE01C,down:true});await page.waitForTimeout(100);
+  const final=await state();assert.equal(final.focused,0xE01C);assert.deepEqual(final.pose,final.target);
+  assert.deepEqual(errors,[]);
+  console.log('PASS: WebGL rendering, static-frame sleep, held/repeat input, 1s idle, rollover, TKL, themes, resize, reset, pointer preview, reduced motion.');
+} finally { await browser.close(); }

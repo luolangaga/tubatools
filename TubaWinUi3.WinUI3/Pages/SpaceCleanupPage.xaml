@@ -1,0 +1,212 @@
+<Page
+    x:Class="TubaWinUi3.Pages.SpaceCleanupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:models="using:TubaWinUi3.Services.SpaceCleanup"
+    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+    <Page.Resources>
+        <DataTemplate x:Key="SpaceFileRowTemplate" x:DataType="models:SpaceFileRow">
+            <TreeViewItem ItemsSource="{x:Bind ChildItems}" IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
+                GlyphOpacity="{x:Bind ChevronOpacity, Mode=OneWay}"
+                HasUnrealizedChildren="{x:Bind HasUnrealizedChildren, Mode=OneWay}" HorizontalContentAlignment="Stretch"
+                AutomationProperties.Name="{x:Bind AccessibilityName, Mode=OneWay}">
+                <Grid Padding="0,6,4,6" ColumnSpacing="10" MinHeight="56" ToolTipService.ToolTip="{x:Bind Path}">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Image Width="26" Height="26" Source="{x:Bind IconSource}" VerticalAlignment="Top" Margin="0,2,0,0" AutomationProperties.AccessibilityView="Raw"/>
+                    <StackPanel Grid.Column="1" Spacing="5">
+                        <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis"/>
+                        <Grid ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{x:Bind Size, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"/>
+                            <TextBlock Grid.Column="1" Text="{x:Bind Percent, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"/>
+                        </Grid>
+                        <ProgressBar Minimum="0" Maximum="100" Value="{x:Bind Usage, Mode=OneWay}" IsIndeterminate="False" Height="4" MinHeight="4"
+                            Foreground="{x:Bind Accent, Mode=OneWay}" AutomationProperties.Name="占当前目录的空间比例"/>
+                    </StackPanel>
+                </Grid>
+            </TreeViewItem>
+        </DataTemplate>
+    </Page.Resources>
+    <Grid Padding="24,4,24,16" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <controls:ToolPageHeader ToolId="space-cleanup" Title="空间清理" Glyph="&#xEDA8;"
+            Subtitle="看清空间去向，再决定清理什么" HeaderPadding="0,0,0,0">
+            <controls:ToolPageHeader.Actions>
+                <Button x:Name="FullscreenButton" Click="ToggleFullscreen" ToolTipService.ToolTip="全屏工具视图（F11）；Esc 退出"
+                    AutomationProperties.Name="全屏工具视图" AutomationProperties.AutomationId="SpaceFullscreen">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon x:Name="FullscreenIcon" Glyph="&#xE740;" FontSize="16"/>
+                        <TextBlock x:Name="FullscreenText" Text="全屏"/>
+                    </StackPanel>
+                </Button>
+            </controls:ToolPageHeader.Actions>
+        </controls:ToolPageHeader>
+        <SelectorBar x:Name="Modes" Grid.Row="1" SelectionChanged="ModeChanged" AutomationProperties.AutomationId="SpaceCleanupModes">
+            <SelectorBarItem x:Name="AnalysisMode" Text="空间分析" IsSelected="True"/>
+            <SelectorBarItem x:Name="JunkMode" Text="垃圾清理"/>
+            <SelectorBarItem x:Name="WindowsMode" Text="Windows 清理"/>
+        </SelectorBar>
+        <InfoBar x:Name="Notice" Grid.Row="2" IsOpen="False" IsClosable="True"/>
+        <Grid x:Name="AnalysisPane" Grid.Row="3" RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Spacing="8">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="位置" VerticalAlignment="Center"/>
+                <ComboBox x:Name="DrivePicker" Grid.Column="1" MinWidth="0" HorizontalAlignment="Stretch" AutomationProperties.Name="扫描位置"
+                    AutomationProperties.AutomationId="SpaceDrivePicker">
+                    <ComboBox.ItemTemplate><DataTemplate x:DataType="models:SpaceDriveChoice">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Image Width="24" Height="24"><Image.Source><SvgImageSource UriSource="ms-appx:///Assets/SpaceFileIcons/drive.svg"/></Image.Source></Image>
+                            <TextBlock Text="{x:Bind Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </DataTemplate></ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button x:Name="FolderButton" Grid.Column="2" Content="文件夹" VerticalAlignment="Bottom" Click="ChooseFolder"
+                    AutomationProperties.AutomationId="SpaceChooseFolder"/>
+                <Button x:Name="ScanButton" Grid.Column="3" Content="开始扫描" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Click="StartScan"
+                    AutomationProperties.AutomationId="SpaceStartScan"/>
+                <Button x:Name="PauseButton" Grid.Column="4" Content="暂停" Visibility="Collapsed" VerticalAlignment="Bottom" Click="PauseScan"
+                    AutomationProperties.AutomationId="SpacePauseScan"/>
+                <Button x:Name="StopButton" Grid.Column="5" Content="停止" Visibility="Collapsed" VerticalAlignment="Bottom" Click="StopScan"
+                    AutomationProperties.AutomationId="SpaceStopScan"/>
+            </Grid>
+            <Grid x:Name="ScanProgressPane" Visibility="Collapsed" ColumnSpacing="12">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <ProgressBar x:Name="ScanProgressBar" Minimum="0" Maximum="100" IsIndeterminate="True" VerticalAlignment="Center"
+                    AutomationProperties.Name="磁盘扫描进度" AutomationProperties.AutomationId="SpaceScanProgress"/>
+                <TextBlock x:Name="ScanProgressText" Grid.Column="1" Text="准备扫描…" Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" AutomationProperties.AutomationId="SpaceScanProgressText"/>
+            </Grid>
+            </StackPanel>
+            <Grid Grid.Row="1" RowSpacing="8">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <TabView x:Name="ViewTabs" TabWidthMode="SizeToContent" IsAddTabButtonVisible="True" AddTabButtonClick="AddView"
+                    SelectionChanged="ViewChanged" TabCloseRequested="CloseView" Visibility="Collapsed" AutomationProperties.AutomationId="SpaceViews"/>
+                <Grid Grid.Row="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <Button x:Name="UpButton" Click="GoUp" IsEnabled="False" ToolTipService.ToolTip="上一级（Backspace）" AutomationProperties.Name="上一级" AutomationProperties.AutomationId="SpaceUp"><FontIcon Glyph="&#xE74A;"/></Button>
+                    <Button x:Name="RootButton" Grid.Column="1" Click="GoHome" ToolTipService.ToolTip="返回扫描根目录" AutomationProperties.Name="扫描根目录" AutomationProperties.AutomationId="SpaceRoot"><FontIcon Glyph="&#xE80F;"/></Button>
+                    <BreadcrumbBar x:Name="Breadcrumb" Grid.Column="2" ItemClicked="BreadcrumbClicked" VerticalAlignment="Center" AutomationProperties.AutomationId="SpaceBreadcrumb"/>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
+                        <TextBlock x:Name="FilterLabel" Text="筛选" VerticalAlignment="Center"/>
+                        <AutoSuggestBox x:Name="FilterBox" Width="180" PlaceholderText="*.zip 或 &gt;500mb" AutomationProperties.Name="筛选文件"
+                            ToolTipService.ToolTip="分号表示或，空格表示且；支持 !*.dll、date&gt;2026-01-01、tag:red"
+                            TextChanged="FilterChanged" QueryIcon="Find" AutomationProperties.AutomationId="SpaceFilter"/>
+                    </StackPanel>
+                    <DropDownButton Grid.Column="4" Content="视图" AutomationProperties.AutomationId="SpaceViewOptions">
+                        <DropDownButton.Flyout><MenuFlyout>
+                            <MenuFlyoutItem Text="新建共享视图" Click="NewView"/>
+                            <MenuFlyoutItem Text="返回扫描根目录" Click="GoHome"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="按目录分支配色" Click="ColorByBranch"/>
+                            <MenuFlyoutItem Text="按文件类型配色" Click="ColorByType"/>
+                            <MenuFlyoutItem Text="减少层级" Click="LessDetail"/>
+                            <MenuFlyoutItem Text="增加层级" Click="MoreDetail"/>
+                            <ToggleMenuFlyoutItem x:Name="ListToggle" Text="显示文件列表" IsChecked="True" Click="ToggleList"/>
+                            <ToggleMenuFlyoutItem x:Name="AnimationToggle" Text="动画与扫描高亮" IsChecked="True" Click="ToggleAnimations"/>
+                            <ToggleMenuFlyoutItem x:Name="WatchToggle" Text="监视文件变化（增加扫描开销）" IsChecked="False" Click="ToggleWatching"/>
+                            <ToggleMenuFlyoutItem x:Name="StreamsToggle" Text="扫描 NTFS 备用数据流（下次扫描）"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="刷新当前目录" Click="RescanFolder"/>
+                            <MenuFlyoutItem Text="导出 CSV 报告" Click="ExportReport"/>
+                            <MenuFlyoutItem Text="查看扫描日志" Click="ShowScanLog"/>
+                        </MenuFlyout></DropDownButton.Flyout>
+                    </DropDownButton>
+                </Grid>
+            </Grid>
+            <Grid x:Name="MapAndList" Grid.Row="2" ColumnSpacing="12" SizeChanged="AnalysisSizeChanged">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="ListColumn" Width="320"/></Grid.ColumnDefinitions>
+                <Border Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                    <Grid>
+                        <controls:SpaceTreemap x:Name="Treemap" Margin="4" SizeChanged="MapSizeChanged"
+                            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <StackPanel x:Name="EmptyMap" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="360" Margin="24" IsHitTestVisible="False">
+                            <FontIcon Glyph="&#xEDA8;" FontSize="40" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="EmptyTitle" Text="空间都去哪儿了？" Style="{StaticResource SubtitleTextBlockStyle}" TextAlignment="Center"/>
+                            <TextBlock x:Name="EmptyDescription" Text="选择磁盘或文件夹开始扫描。矩形越大，占用越多；双击文件夹逐层探索。" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Grid x:Name="FileListPane" Grid.Column="1" RowSpacing="8">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock x:Name="ListHeading" Text="文件树 · 占当前目录" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                    <ContentControl x:Name="FileListHost" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                </Grid>
+            </Grid>
+            <StackPanel Grid.Row="3" Spacing="4">
+                <TextBlock x:Name="SelectionText" Text="双击缩放 · 右键操作 · 方向键选择 · Enter 进入目录" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="DiskSummary" Text="面积按文件大小计算；硬链接可能重复计数，未读取的目录和文件系统保留空间不计入。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="CleanupPane" Grid.Row="3" Visibility="Collapsed" RowSpacing="12">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <StackPanel Spacing="8">
+                <TextBlock x:Name="CleanupTitle" Text="应用缓存与临时文件" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <TextBlock x:Name="CleanupDescription" Text="使用内置 Winapp2 规则库。先扫描，预览文件，再清理选中的项目。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+            <Grid Grid.Row="1" ColumnSpacing="8" RowSpacing="8">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <ComboBox x:Name="CleanupCategory" MinWidth="0" HorizontalAlignment="Stretch" SelectionChanged="CleanupCategoryChanged" Header="清理范围" AutomationProperties.AutomationId="SpaceCleanupCategory"/>
+                <Button x:Name="CleanupScanButton" Grid.Column="1" Content="扫描垃圾" Click="ScanCleanup" VerticalAlignment="Bottom" AutomationProperties.AutomationId="SpaceCleanupScan"/>
+                <DropDownButton x:Name="CleanupMore" Grid.Column="2" Content="更多" VerticalAlignment="Bottom" AutomationProperties.AutomationId="SpaceCleanupMore">
+                    <DropDownButton.Flyout><MenuFlyout>
+                        <MenuFlyoutItem Text="全选当前列表" Click="SelectAllCleanup"/>
+                        <MenuFlyoutItem Text="取消全选" Click="ClearCleanupSelection"/>
+                        <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem x:Name="UpdateRulesItem" Text="更新规则库" Click="UpdateRules"/>
+                        <MenuFlyoutItem x:Name="AppxItem" Text="管理预装应用" Click="ManageAppx"/>
+                    </MenuFlyout></DropDownButton.Flyout>
+                </DropDownButton>
+            </Grid>
+            <Grid Grid.Row="2">
+                <ListView x:Name="CleanupList" SelectionMode="Multiple" IsMultiSelectCheckBoxEnabled="True" SelectionChanged="CleanupSelectionChanged"
+                    DoubleTapped="PreviewCleanup" AutomationProperties.AutomationId="SpaceCleanupResults" AutomationProperties.Name="可清理项目，双击预览明细">
+                    <ListView.ItemTemplate><DataTemplate x:DataType="models:CleanupRow">
+                        <Grid Padding="4,10" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{x:Bind Detail}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{x:Bind Warning}" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{x:Bind SizeText}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </DataTemplate></ListView.ItemTemplate>
+                </ListView>
+                <TextBlock x:Name="CleanupEmpty" Text="扫描后，可清理的项目会显示在这里。" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+            </Grid>
+            <Grid Grid.Row="3" ColumnSpacing="12">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="CleanupSelectionText" Text="尚未选择项目" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                <Button Grid.Column="1" Content="预览明细" Click="PreviewCleanupClick" AutomationProperties.AutomationId="SpacePreviewCleanup"/>
+                <Button x:Name="CleanButton" Grid.Column="2" Content="清理选中项" IsEnabled="False" Click="CleanSelected" Style="{StaticResource AccentButtonStyle}" AutomationProperties.AutomationId="SpaceCleanSelected"/>
+            </Grid>
+        </Grid>
+        <StackPanel Grid.Row="4" Spacing="6">
+            <ProgressBar x:Name="BusyProgress" IsIndeterminate="True" Visibility="Collapsed"/>
+            <Grid ColumnSpacing="12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="StatusText" Text="准备就绪" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}"/>
+                <Button x:Name="CancelCleanupButton" Grid.Column="1" Content="取消操作" Visibility="Collapsed" Click="CancelCleanup" AutomationProperties.AutomationId="SpaceCancelCleanup"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Page>

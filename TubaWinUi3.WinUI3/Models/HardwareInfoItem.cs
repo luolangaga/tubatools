@@ -21,6 +21,9 @@ public sealed class HardwareInfoItem
     /// <summary>显示用标签：按当前界面语言翻译（Label 本身是数据键，服务内部比较仍用中文）。</summary>
     public string DisplayLabel => Services.LocalizationService.TranslateHardwareLabel(Label);
 
+    /// <summary>模板在 UI 线程按需取图，不在后台硬件采集时创建 SvgImageSource。</summary>
+    public Microsoft.UI.Xaml.Media.ImageSource? IconSource => Services.HardwareIconService.Get(Services.HardwareIconService.KeyForLabel(Label));
+
     /// <summary>详情行提示（模板内 ToolTip 走绑定——附加属性不能用 Uid）。</summary>
     public string CopyHint => Services.LocalizationService.L("Hw_CopyHint", "点击复制");
 }

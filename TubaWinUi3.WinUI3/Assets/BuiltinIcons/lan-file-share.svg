@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- lan-file-share 局域网文件分享 -->
-  <path fill="none" d="M3.5 7.5C3.5 6.4 4.4 5.5 5.5 5.5H7.5C8.6 5.5 9.5 6.4 9.5 7.5V16.5C9.5 17.6 8.6 18.5 7.5 18.5H5.5C4.4 18.5 3.5 17.6 3.5 16.5V7.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M14.5 7.5C14.5 6.4 15.4 5.5 16.5 5.5H18.5C19.6 5.5 20.5 6.4 20.5 7.5V16.5C20.5 17.6 19.6 18.5 18.5 18.5H16.5C15.4 18.5 14.5 17.6 14.5 16.5V7.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M10 12H14M14 12L12.4 10.4M14 12L12.4 13.6" stroke="#4DBFC4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#8DE5E0"/><stop offset="0.500" stop-color="#38C1C5"/><stop offset="1.000" stop-color="#248CBA"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M12 34q0-8 9-8h27l12 12h45q10 0 10 10v56H12Z" fill="url(#a)"/><rect x="15" y="45" width="97" height="61" rx="7" fill="#96D9ED"/><path d="M42 67h45m-10-9 10 9-10 9M84 88H39m10-9-10 9 10 9" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

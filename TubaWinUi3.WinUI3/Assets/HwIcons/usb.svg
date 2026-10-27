@@ -1,9 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- usb 接口 -->
-  <path fill="none" d="M12 4.5V18" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 12.5L9 10V8.5" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M12 9L15 7V5.5" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M7.5 8.5A1.5 1.5 0 1 1 10.5 8.5A1.5 1.5 0 1 1 7.5 8.5Z" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M13.5 4H16.5V7H13.5V4Z" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M10.5 18H13.5V20.5H10.5V18Z" fill="#9AA4AE"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="25" y1="20" x2="103" y2="109" gradientUnits="userSpaceOnUse"><stop stop-color="#A3E7FF"/><stop offset=".5" stop-color="#59B9EC"/><stop offset="1" stop-color="#3087D4"/></linearGradient><linearGradient id="b" x1="30" y1="20" x2="96" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#A5B9CA"/><stop offset="1" stop-color="#4C637B"/></linearGradient></defs>
+<ellipse cx="64" cy="119" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<rect x="39" y="12" width="50" height="32" rx="5" fill="url(#c)"/><rect x="48" y="20" width="11" height="14" rx="2" fill="#E6F5FC"/><rect x="69" y="20" width="11" height="14" rx="2" fill="#E6F5FC"/><rect x="29" y="39" width="70" height="75" rx="15" fill="url(#a)"/><path d="M64 56v37m0-27-13 10v8m13-7 13-11" fill="none" stroke="#F0FBFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="m64 51-8 10h16Z" fill="#F0FBFF"/><circle cx="51" cy="86" r="5" fill="#F0FBFF"/><rect x="73" y="60" width="9" height="9" rx="2" fill="#F0FBFF"/><circle cx="64" cy="96" r="5" fill="#F0FBFF"/>
 </svg>

@@ -1335,7 +1335,7 @@
     <value>记住窗口位置和大小</value>
   </data>
   <data name="Settings_SearchIndex_Desc.Text" xml:space="preserve">
-    <value>在开始菜单搜索工具名（如 CPU-Z）直接启动，无需打开工具箱；多版本自动去重，关闭时自动清理快捷方式</value>
+    <value>选择要添加到开始菜单与 Windows 搜索的工具；一个都不选即不注册。</value>
   </data>
   <data name="Settings_Telemetry_Title.Text" xml:space="preserve">
     <value>发送匿名使用数据</value>
@@ -5148,4 +5148,147 @@ else then stroke=#888888 visible=true
   <data name="Hw_FocusNoDetails" xml:space="preserve"><value>系统未提供更多参数</value></data>
   <data name="Hw_FocusDetailFailed" xml:space="preserve"><value>详细参数读取失败，可重试</value></data>
   <data name="Hw_ModelCredit" xml:space="preserve"><value>示意模型：</value></data>
+  <data name="Settings_LogDir_Title.Text" xml:space="preserve"><value>日志目录</value></data>
+  <data name="Settings_LogDir_Desc.Text" xml:space="preserve"><value>崩溃与启动诊断日志的保存位置；目录不存在或不可写时自动回退默认位置</value></data>
+  <data name="Settings_LogDir_Change.Text" xml:space="preserve"><value>更改目录</value></data>
+  <data name="Settings_LogDir_Open.Text" xml:space="preserve"><value>打开目录</value></data>
+  <data name="Settings_LogDir_Reset.Content" xml:space="preserve"><value>恢复默认</value></data>
+  <data name="Settings_LogDir_DefaultSuffix" xml:space="preserve"><value>（默认）</value></data>
+  <data name="Settings_LogDir_UnwritableTitle" xml:space="preserve"><value>目录不可写</value></data>
+  <data name="Settings_LogDir_UnwritableDesc" xml:space="preserve"><value>请选择一个程序可以写入的目录，例如本地磁盘上的普通文件夹。</value></data>
+  <data name="Builtin_driver-store_Name" xml:space="preserve"><value>驱动管理</value></data>
+  <data name="Builtin_driver-store_Desc" xml:space="preserve"><value>查看驱动库中每个驱动的全部版本与磁盘占用，安全清理没有设备在用的旧版本残留，支持导出驱动备份与从备份还原</value></data>
+  <data name="Builtin_space-cleanup_Name" xml:space="preserve"><value>空间清理</value></data>
+  <data name="Builtin_space-cleanup_Desc" xml:space="preserve"><value>TreeMap 可视化磁盘占用、应用垃圾清理与 Windows 磁盘清理。</value></data>
+  <data name="Dashboard_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Dashboard_CatalogTool" xml:space="preserve"><value>打开工具目录中的常用工具</value></data>
+  <data name="Dashboard_CheckDesc" xml:space="preserve"><value>新电脑到手，快速排查问题</value></data>
+  <data name="Dashboard_CheckTitle" xml:space="preserve"><value>快速验机</value></data>
+  <data name="Dashboard_CleanupDesc" xml:space="preserve"><value>通过多种方式，快速清理电脑空间</value></data>
+  <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>垃圾清理</value></data>
+  <data name="Dashboard_Copied" xml:space="preserve"><value>群号已复制</value></data>
+  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>在 QQ 中搜索群号 485079194，即可申请加入。</value></data>
+  <data name="Dashboard_Description" xml:space="preserve"><value>自定义介绍（留空使用默认）</value></data>
+  <data name="Dashboard_EditFailed" xml:space="preserve"><value>无法编辑首页</value></data>
+  <data name="Dashboard_GameDesc" xml:space="preserve"><value>检测游戏帧率等数据，随时掌握游戏表现</value></data>
+  <data name="Dashboard_GameTitle" xml:space="preserve"><value>游戏监控</value></data>
+  <data name="Dashboard_GreetingAfternoon" xml:space="preserve"><value>下午好，欢迎回来</value></data>
+  <data name="Dashboard_GreetingEvening" xml:space="preserve"><value>晚上好，欢迎回来</value></data>
+  <data name="Dashboard_GreetingMorning" xml:space="preserve"><value>上午好，欢迎回来</value></data>
+  <data name="Dashboard_GreetingNight" xml:space="preserve"><value>夜深了，欢迎回来</value></data>
+  <data name="Dashboard_HardwareDesc" xml:space="preserve"><value>检查你的电脑的配置</value></data>
+  <data name="Dashboard_HardwareTitle" xml:space="preserve"><value>硬件信息</value></data>
+  <data name="Dashboard_OpenFailed" xml:space="preserve"><value>打开失败</value></data>
+  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · 和图吧小伙伴一起交流折腾心得</value></data>
+  <data name="Dashboard_QqTitle" xml:space="preserve"><value>QQ 交流群</value></data>
+  <data name="Dashboard_Remove" xml:space="preserve"><value>移除此卡片</value></data>
+  <data name="Dashboard_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="Dashboard_StoreDesc" xml:space="preserve"><value>怕下到盗版应用？这里能下到你能想到的任何软件</value></data>
+  <data name="Dashboard_StoreTitle" xml:space="preserve"><value>正版应用商店</value></data>
+  <data name="Dashboard_Title" xml:space="preserve"><value>自定义标题（留空使用默认）</value></data>
+  <data name="Dashboard_Tool" xml:space="preserve"><value>卡片工具</value></data>
+  <data name="Dashboard_Unavailable" xml:space="preserve"><value>此工具暂不可用，请在编辑首页中更换卡片工具。</value></data>
+  <data name="MainWindow_NavHome.Content" xml:space="preserve"><value>首页</value></data>
+  <data name="Settings_DefaultPageOptionHome" xml:space="preserve"><value>首页</value></data>
+  <data name="Dashboard_GalleryTitle.Text" xml:space="preserve"><value>图吧工具箱</value></data>
+  <data name="Dashboard_Recent" xml:space="preserve"><value>最近使用</value></data>
+  <data name="Dashboard_Section" xml:space="preserve"><value>常用工具</value></data>
+  <data name="Dashboard_Favorites" xml:space="preserve"><value>收藏</value></data>
+  <data name="Dashboard_FavoritesEmpty" xml:space="preserve"><value>还没有收藏的工具。在工具卡片上点击星标即可收藏。</value></data>
+  <data name="Dashboard_Loading" xml:space="preserve"><value>正在加载…</value></data>
+  <data name="Dashboard_ManageContent" xml:space="preserve"><value>编辑首页内容</value></data>
+  <data name="Dashboard_Add" xml:space="preserve"><value>添加工具</value></data>
+  <data name="Dashboard_ContentEmpty" xml:space="preserve"><value>点击「编辑内容」添加你需要的工具。</value></data>
+  <data name="Dashboard_Card" xml:space="preserve"><value>选择卡片</value></data>
+  <data name="Dashboard_ManageContent.Content" xml:space="preserve"><value>编辑内容</value></data>
+  <data name="Dashboard_RestoreContent" xml:space="preserve"><value>恢复默认内容</value></data>
+  <data name="Dashboard_SearchTools" xml:space="preserve"><value>搜索名称、介绍或分类</value></data>
+  <data name="Dashboard_HomeContent" xml:space="preserve"><value>首页内容</value></data>
+  <data name="Dashboard_ContentOrderHint" xml:space="preserve"><value>勾选添加工具，拖动卡片排序；选中后可设置展示样式。</value></data>
+  <data name="Dashboard_EditSelectedCard" xml:space="preserve"><value>编辑选中的卡片</value></data>
+  <data name="Dashboard_NoSelectedTools" xml:space="preserve"><value>尚未添加工具</value></data>
+  <data name="Dashboard_NoMatchingTools" xml:space="preserve"><value>没有找到匹配的工具</value></data>
+  <data name="Dashboard_MoveUp" xml:space="preserve"><value>上移</value></data>
+  <data name="Dashboard_MoveDown" xml:space="preserve"><value>下移</value></data>
+  <data name="Dashboard_AllTools" xml:space="preserve"><value>全部工具</value></data>
+  <data name="Dashboard_BuiltinTools" xml:space="preserve"><value>内置工具</value></data>
+  <data name="Dashboard_ExternalTools" xml:space="preserve"><value>外部工具</value></data>
+  <data name="Dashboard_ToolCount" xml:space="preserve"><value>{0} 项</value></data>
+  <data name="Dashboard_HiddenInSettings" xml:space="preserve"><value>已在设置隐藏</value></data>
+  <data name="Dashboard_System" xml:space="preserve"><value>系统</value></data>
+  <data name="Dashboard_Community" xml:space="preserve"><value>社区</value></data>
+  <data name="Dashboard_Configured" xml:space="preserve"><value>已配置</value></data>
+  <data name="Dashboard_CardTitleLabel" xml:space="preserve"><value>名称</value></data>
+  <data name="Dashboard_CardDescriptionLabel" xml:space="preserve"><value>介绍</value></data>
+  <data name="Dashboard_CardLayout" xml:space="preserve"><value>展示样式</value></data>
+  <data name="Dashboard_FeatureCard" xml:space="preserve"><value>大卡片（顶部）</value></data>
+  <data name="Dashboard_CompactCard" xml:space="preserve"><value>小卡片（常用工具）</value></data>
+  <data name="Dashboard_EditFeatured" xml:space="preserve"><value>编辑大卡片</value></data>
+  <data name="Dashboard_SearchCatalog" xml:space="preserve"><value>搜索工具</value></data>
+  <data name="Dashboard_CatalogCount" xml:space="preserve"><value>{0} · {1} 个工具</value></data>
+  <data name="Dashboard_CatalogEmpty" xml:space="preserve"><value>工具目录中暂无工具。</value></data>
+  <data name="Dashboard_LoadFailed" xml:space="preserve"><value>工具加载失败</value></data>
+  <data name="Dashboard_AddFavorite" xml:space="preserve"><value>收藏</value></data>
+  <data name="Dashboard_RemoveFavorite" xml:space="preserve"><value>取消收藏</value></data>
+  <data name="Dashboard_FeaturedOrderHint" xml:space="preserve"><value>勾选添加大卡片，拖动调整顺序；选中后可修改名称和介绍。</value></data>
+  <data name="Dashboard_ContextMenuTitle" xml:space="preserve"><value>右键菜单管理</value></data>
+  <data name="Dashboard_ContextMenuDesc" xml:space="preserve"><value>整理右键菜单，管理常用菜单项</value></data>
+  <data name="Dashboard_StartupTitle" xml:space="preserve"><value>开机自启动管理</value></data>
+  <data name="Dashboard_StartupDesc" xml:space="preserve"><value>管理开机启动项目，让电脑启动更清爽</value></data>
+  <data name="Dashboard_BatteryTitle" xml:space="preserve"><value>电池消耗分析</value></data>
+  <data name="Dashboard_BatteryDesc" xml:space="preserve"><value>分析电池消耗趋势，查看应用耗电排行</value></data>
+  <data name="Dashboard_StressTitle" xml:space="preserve"><value>一键三烤</value></data>
+  <data name="Dashboard_StressDesc" xml:space="preserve"><value>同时测试 CPU、GPU 和网卡，监控温度与功耗</value></data>
+  <data name="Settings_GroupUpdates.Text" xml:space="preserve"><value>版本和更新</value></data>
+  <data name="Settings_GroupOptionUpdates.Content" xml:space="preserve"><value>版本和更新</value></data>
+  <data name="Settings_GroupBehavior.Text" xml:space="preserve"><value>启动和行为</value></data>
+  <data name="Settings_GroupOptionBehavior.Content" xml:space="preserve"><value>启动和行为</value></data>
+  <data name="Settings_GroupAppearance.Text" xml:space="preserve"><value>外观和布局</value></data>
+  <data name="Settings_GroupOptionAppearance.Content" xml:space="preserve"><value>外观和布局</value></data>
+  <data name="Settings_GroupHardware.Text" xml:space="preserve"><value>硬件信息</value></data>
+  <data name="Settings_GroupOptionHardware.Content" xml:space="preserve"><value>硬件信息</value></data>
+  <data name="Settings_GroupIntegration.Text" xml:space="preserve"><value>工具和系统集成</value></data>
+  <data name="Settings_GroupOptionIntegration.Content" xml:space="preserve"><value>工具和系统集成</value></data>
+  <data name="Settings_GroupNetwork.Text" xml:space="preserve"><value>网络和下载</value></data>
+  <data name="Settings_GroupOptionNetwork.Content" xml:space="preserve"><value>网络和下载</value></data>
+  <data name="Settings_GroupStorage.Text" xml:space="preserve"><value>数据和存储</value></data>
+  <data name="Settings_GroupOptionStorage.Content" xml:space="preserve"><value>数据和存储</value></data>
+  <data name="Settings_GroupPrivacy.Text" xml:space="preserve"><value>隐私和诊断</value></data>
+  <data name="Settings_GroupOptionPrivacy.Content" xml:space="preserve"><value>隐私和诊断</value></data>
+  <data name="Settings_GroupCommunity.Text" xml:space="preserve"><value>社区和反馈</value></data>
+  <data name="Settings_GroupOptionCommunity.Content" xml:space="preserve"><value>社区和反馈</value></data>
+  <data name="Settings_GroupAbout.Text" xml:space="preserve"><value>关于与鸣谢</value></data>
+  <data name="Settings_GroupOptionAbout.Content" xml:space="preserve"><value>关于与鸣谢</value></data>
+  <data name="Settings_SectionPicker.PlaceholderText" xml:space="preserve"><value>跳转到分类</value></data>
+  <data name="Settings_WebsiteLink.Content" xml:space="preserve"><value>官方网站</value></data>
+  <data name="Settings_RepositoryLink.Content" xml:space="preserve"><value>GitHub</value></data>
+  <data name="Settings_FeedbackLink.Content" xml:space="preserve"><value>反馈与建议</value></data>
+  <data name="Settings_AboutSummary.Text" xml:space="preserve"><value>开源的 PC 硬件与实用工具集合</value></data>
+  <data name="Settings_AboutRepository.Header" xml:space="preserve"><value>项目仓库</value></data>
+  <data name="Settings_AboutFeedback.Header" xml:space="preserve"><value>报告问题或提出建议</value></data>
+  <data name="Settings_AboutAuthor.Header" xml:space="preserve"><value>开发者</value></data>
+  <data name="Settings_AboutSource.Header" xml:space="preserve"><value>工具来源</value></data>
+  <data name="Settings_AboutSource.Description" xml:space="preserve"><value>硬件检测与测试工具来源于图吧工具箱项目。</value></data>
+  <data name="Settings_AboutThanks.Header" xml:space="preserve"><value>特别鸣谢</value></data>
+  <data name="SearchPicker_Query.Header" xml:space="preserve"><value>选择要添加的工具</value></data>
+  <data name="SearchPicker_Query.PlaceholderText" xml:space="preserve"><value>搜索工具名称或分类</value></data>
+  <data name="SearchPicker_All.Content" xml:space="preserve"><value>全选</value></data>
+  <data name="SearchPicker_None.Content" xml:space="preserve"><value>全不选</value></data>
+  <data name="SearchPicker_Empty.Text" xml:space="preserve"><value>没有匹配的工具，请换个名称试试。</value></data>
+  <data name="SearchPicker_Loading.Text" xml:space="preserve"><value>正在读取可添加的工具…</value></data>
+  <data name="SearchPicker_LoadingSummary" xml:space="preserve"><value>正在读取工具…</value></data>
+  <data name="SearchPicker_Summary" xml:space="preserve"><value>已选择 {0} / {1} 个工具</value></data>
+  <data name="SearchPicker_LocalError" xml:space="preserve"><value>本地工具读取失败，当前仅列出内置工具。稍后可在设置中调整。</value></data>
+  <data name="SearchPicker_BuiltinCategory" xml:space="preserve"><value>内置工具 · {0}</value></data>
+  <data name="SearchPicker_LocalCategory" xml:space="preserve"><value>本地工具 · {0}</value></data>
+  <data name="Settings_BuiltinVisibility_Hint" xml:space="preserve"><value>取消启用会隐藏内置工具并禁用启动入口。</value></data>
+  <data name="Settings_SearchTools_Tab" xml:space="preserve"><value>Windows 搜索</value></data>
+  <data name="Settings_BuiltinTools_Tab" xml:space="preserve"><value>内置工具启用</value></data>
+  <data name="SearchPicker_EnableHeader" xml:space="preserve"><value>选择要启用的内置工具</value></data>
+  <data name="SearchPicker_PendingDownload" xml:space="preserve"><value> · 下载后自动注册</value></data>
+  <data name="SearchPicker_Hint.Text" xml:space="preserve"><value>勾选的工具会添加到开始菜单与 Windows 搜索；一个都不选就不注册。</value></data>
+  <data name="Settings_SearchIndex_Select.Content" xml:space="preserve"><value>选择工具</value></data>
+  <data name="SearchPicker_Registered" xml:space="preserve"><value>已注册 {0} 个工具</value></data>
+  <data name="SearchPicker_Unavailable" xml:space="preserve"><value>另有 {0} 个工具尚未下载或未启用，暂未注册。</value></data>
+  <data name="SearchPicker_Synchronized" xml:space="preserve"><value>已按当前选择同步开始菜单与 Windows 搜索。一个都不选会移除全部工具注册。</value></data>
 </root>

@@ -32,6 +32,9 @@ public sealed class DiskCardVm
     public required string PowerOnCountText { get; init; }
     public required string DataReadText { get; init; }
     public required string DataWrittenText { get; init; }
+    public string InspectionHealthText { get; init; } = "--";
+    public string InspectionReadText { get; init; } = "--";
+    public string InspectionWriteText { get; init; } = "--";
     public required double DataReadGb { get; init; }
     public required double DataWriteGb { get; init; }
     public required double ReadWriteMax { get; init; }
@@ -102,17 +105,30 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
     private CancellationTokenSource? _cts;
     private DiskHealthResponse? _lastResponse;
     private bool _loading;
+    private readonly bool _embedded;
+    private uint? _selectedDiskIndex;
     private readonly HashSet<string> _optimizingDriveLetters = new();
 
     public IReadOnlyList<DiskCardVm> DiskCards { get; private set; } = [];
 
-    public DiskHealthPage()
+    public DiskHealthPage() : this(embedded: false) { }
+
+    public DiskHealthPage(bool embedded)
     {
+        _embedded = embedded;
         InitializeComponent();
+        if (embedded)
+        {
+            PageHeader.Visibility = Visibility.Collapsed;
+            InspectionToolbar.Visibility = Visibility.Visible;
+            BodyScroll.Padding = new Thickness(0, 0, 4, 12);
+            BodyStack.Spacing = 8;
+            ErrorBar.Visibility = SuccessBar.Visibility = Visibility.Collapsed;
+        }
         // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
         ActualThemeChanged += (_, _) =>
         {
-            if (_lastResponse is not null)
+            if (!_loading && _lastResponse is not null)
                 Render(_lastResponse);
         };
     }
@@ -122,7 +138,9 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
     private void DiskHealthPage_Loaded(object sender, RoutedEventArgs e)
     {
         _cts = new CancellationTokenSource();
-        _ = ReloadAsync();
+        if (_loading) SetLoadingUi(true);
+        else if (_embedded && _lastResponse is not null) Render(_lastResponse);
+        else _ = ReloadAsync();
     }
 
     private void DiskHealthPage_Unloaded(object sender, RoutedEventArgs e)
@@ -135,7 +153,7 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
     /// <summary>语言切换后按当前语言重渲染（卡片文本由代码生成；表头等 Uid 控件自动更新）。</summary>
     public void ApplyLocalization()
     {
-        if (_lastResponse is not null)
+        if (!_loading && _lastResponse is not null)
             Render(_lastResponse);
     }
     private static SolidColorBrush Brush(Color color) => new(color);
@@ -147,20 +165,24 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         if (_loading)
             return;
         _loading = true;
+        var request = _cts;
         SetLoadingUi(true);
         ErrorBar.IsOpen = false;
         SuccessBar.IsOpen = false;
         RefreshButton.IsEnabled = false;
+        InspectionRefreshButton.IsEnabled = false;
+        InspectionDiskSelector.IsEnabled = false;
         try
         {
             var response = await DiskHealthService.GetHealthAsync();
-            if (_cts is null || _cts.IsCancellationRequested)
+            if (request is null || request.IsCancellationRequested || request != _cts)
                 return;
             _lastResponse = response;
             Render(response);
         }
         catch (Exception ex)
         {
+            if (request is null || request.IsCancellationRequested || request != _cts) return;
             ErrorText.Text = ex.Message;
             LoadingPanel.Visibility = Visibility.Collapsed;
             ErrorPanel.Visibility = Visibility.Visible;
@@ -170,6 +192,10 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         {
             _loading = false;
             RefreshButton.IsEnabled = true;
+            InspectionRefreshButton.IsEnabled = true;
+            InspectionDiskSelector.IsEnabled = true;
+            // A reattached page may have been waiting for an older scan to finish.
+            if (_cts is not null && request != _cts) _ = ReloadAsync();
         }
     }
 
@@ -178,6 +204,13 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         LoadingPanel.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
         ErrorPanel.Visibility = Visibility.Collapsed;
         ContentPanel.Visibility = loading ? Visibility.Collapsed : Visibility.Visible;
+        InspectionContent.Visibility = Visibility.Collapsed;
+        if (loading)
+        {
+            // Do not expose a previous scan's unavailable/unsupported status while reading.
+            InspectionStatus.IsOpen = false;
+            InspectionStatus.Title = InspectionStatus.Message = string.Empty;
+        }
     }
 
     private void Render(DiskHealthResponse response)
@@ -189,6 +222,10 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
 
         if (response.Disks.Count == 0)
         {
+            DiskCards = [];
+            InspectionDiskSelector.ItemsSource = null;
+            InspectionDiskList.ItemsSource = null;
+            InspectionContent.Visibility = Visibility.Collapsed;
             ErrorText.Text = LocalizationService.L("DiskHealth_NoDisk", "未检测到可用的物理硬盘");
             LoadingPanel.Visibility = Visibility.Collapsed;
             ErrorPanel.Visibility = Visibility.Visible;
@@ -204,12 +241,48 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
             cards.Add(BuildDiskCard(disk, ref paletteCursor));
         }
         DiskCards = cards;
+        if (_embedded)
+        {
+            var selected = response.Disks.ToList().FindIndex(d => d.Index == _selectedDiskIndex);
+            InspectionDiskSelector.ItemsSource = response.Disks.Select(d => $"磁盘 {d.Index} · {d.Model}").ToList();
+            InspectionDiskSelector.SelectedIndex = Math.Max(0, selected);
+            RenderInspectionDisk();
+            LoadingPanel.Visibility = Visibility.Collapsed;
+            ErrorPanel.Visibility = ContentPanel.Visibility = Visibility.Collapsed;
+            InspectionContent.Visibility = Visibility.Visible;
+            return;
+        }
         BuildOverview(response);
 
         Bindings.Update();
         LoadingPanel.Visibility = Visibility.Collapsed;
         ErrorPanel.Visibility = Visibility.Collapsed;
         ContentPanel.Visibility = Visibility.Visible;
+    }
+
+    private void InspectionDiskSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) => RenderInspectionDisk();
+
+    private void RenderInspectionDisk()
+    {
+        var index = InspectionDiskSelector.SelectedIndex;
+        if (_lastResponse is not { } response || index < 0 || index >= response.Disks.Count || index >= DiskCards.Count) return;
+        var disk = response.Disks[index];
+        _selectedDiskIndex = disk.Index;
+        InspectionDiskList.ItemsSource = new[] { DiskCards[index] };
+        var (severity, title, message) = disk switch
+        {
+            { HasError: true } => (InfoBarSeverity.Error, "此磁盘读取失败", disk.Error ?? "请重新检测。"),
+            { HealthStatus: "unhealthy" } => (InfoBarSeverity.Error, "磁盘健康异常", "请检查硬盘状况，并向商家核实；重要数据建议及时备份。"),
+            { HealthStatus: "warning" } => (InfoBarSeverity.Warning, "磁盘健康警告", "SMART 检测发现风险，请结合通电记录与保修信息核实。"),
+            { HasSmart: false } => (InfoBarSeverity.Informational, "暂未读到 SMART 信息", "本次检测未获得 SMART 数据，可能与接口、驱动或访问权限有关，可重新检测。"),
+            { HealthStatus: "healthy" } => (InfoBarSeverity.Success, "磁盘健康正常", "SMART 未报告健康告警，请继续核对通电记录与累计写入量。"),
+            _ => (InfoBarSeverity.Informational, "健康状态未知", "已读取磁盘信息，但暂时无法判定健康状态。"),
+        };
+        InspectionStatus.Severity = severity;
+        InspectionStatus.Title = title;
+        InspectionStatus.Message = message;
+        InspectionStatus.IsOpen = true;
+        BodyScroll.ChangeView(null, 0, null, true);
     }
 
     private DiskCardVm BuildDiskCard(DiskHealthInfo disk, ref int paletteCursor)
@@ -241,6 +314,7 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
         var temp = disk.TemperatureC;
         var tempBrush = temp switch
         {
+            null => NeutralGray,
             > 55 => CriticalRed,
             > 45 => CautionAmber,
             _ => SuccessGreen,
@@ -266,6 +340,9 @@ public sealed partial class DiskHealthPage : Page, ILocalizablePage
             HealthRingBrush = Brush(healthColor),
             HealthText = disk.HealthPercent is { } hp ? hp.ToString() : "--",
             HealthTextBrush = Brush(healthColor),
+            InspectionHealthText = !hasError && disk.HasSmart && disk.HealthPercent is { } percentage ? $"{percentage}%" : "--",
+            InspectionReadText = !hasError && disk.DataReadBytes is { } read ? FormatBytes(read) : "--",
+            InspectionWriteText = !hasError && disk.DataWrittenBytes is { } written ? FormatBytes(written) : "--",
             Tags = tags,
             TempRingValue = temp is { } t ? Math.Clamp(t, 0, 100) : 0,
             TempText = temp is { } t2 ? $"{t2}°C" : "--",

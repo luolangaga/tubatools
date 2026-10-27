@@ -5,7 +5,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <controls:ToolPageHeader ToolId="disk-health" Grid.Row="0" Title="磁盘健康" Subtitle="SMART 健康度检测 · CrystalDiskInfo 判定方案 · 环形图仪表盘" Glyph="&#xEDA8;" l:Uids.Uid="DiskHealth_PageHeader">
+        <controls:ToolPageHeader x:Name="PageHeader" ToolId="disk-health" Grid.Row="0" Title="磁盘健康" Subtitle="查看健康状态、通电记录与磁盘容量" Glyph="&#xEDA8;" l:Uids.Uid="DiskHealth_PageHeader">
             <controls:ToolPageHeader.Actions>
                 <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
@@ -15,9 +15,14 @@
                 </Button>
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
+        <Grid x:Name="InspectionToolbar" Visibility="Collapsed" ColumnSpacing="8" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <ComboBox x:Name="InspectionDiskSelector" PlaceholderText="选择物理磁盘" HorizontalAlignment="Stretch" SelectionChanged="InspectionDiskSelector_SelectionChanged" AutomationProperties.AutomationId="InspectionDiskSelector" AutomationProperties.Name="选择检测磁盘"/>
+            <Button x:Name="InspectionRefreshButton" Grid.Column="1" Click="RefreshButton_Click" Content="重新检测" AutomationProperties.AutomationId="InspectionDiskRefresh"/>
+        </Grid>
         <!-- 正文 -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
-            <StackPanel Spacing="24" MaxWidth="1120">
+        <ScrollViewer x:Name="BodyScroll" Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Padding="24,4,24,32" HorizontalContentAlignment="Stretch" controls:ToolViewport.ConstrainContent="True">
+            <StackPanel x:Name="BodyStack" Spacing="24" MaxWidth="1120">
                 <StackPanel.ChildrenTransitions>
                     <TransitionCollection>
                         <EntranceThemeTransition FromHorizontalOffset="0" FromVerticalOffset="24" IsStaggeringEnabled="True"/>
@@ -39,6 +44,54 @@
                         <Button x:Name="RetryButton" Click="RetryButton_Click" Margin="0,8,0,0" HorizontalAlignment="Center" Content="重试" l:Uids.Uid="DiskHealth_Retry"/>
                     </StackPanel>
                 </Border>
+                <StackPanel x:Name="InspectionContent" Visibility="Collapsed" Spacing="12">
+                    <InfoBar x:Name="InspectionStatus" IsOpen="True" IsClosable="False"/>
+                    <ItemsControl x:Name="InspectionDiskList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:DiskCardVm">
+                                <Border Padding="12" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel Spacing="12">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{x:Bind Model}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" IsTextSelectionEnabled="True"/>
+                                            <TextBlock Text="{x:Bind SizeText}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Grid ColumnSpacing="20">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Text="健康度" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="{x:Bind InspectionHealthText}" FontSize="24" FontWeight="SemiBold" Foreground="{x:Bind HealthTextBrush}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="4">
+                                                <TextBlock Text="当前温度" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock Text="{x:Bind TempText}" FontSize="24" FontWeight="SemiBold" Foreground="{x:Bind TempRingBrush}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                                        <Grid ColumnSpacing="12" RowSpacing="12">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                            <StackPanel Spacing="4"><TextBlock Text="通电时间" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/><TextBlock Text="{x:Bind PowerOnHoursText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/></StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="通电次数" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/><TextBlock Text="{x:Bind PowerOnCountText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/></StackPanel>
+                                            <StackPanel Grid.Row="1" Spacing="4"><TextBlock Text="累计读取" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/><TextBlock Text="{x:Bind InspectionReadText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/></StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4"><TextBlock Text="累计写入" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/><TextBlock Text="{x:Bind InspectionWriteText}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/></StackPanel>
+                                        </Grid>
+                                        <ItemsControl ItemsSource="{x:Bind Partitions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="local:PartitionVm">
+                                                    <StackPanel Spacing="5" Margin="0,0,0,12">
+                                                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="{x:Bind DriveLetter}" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="{x:Bind UsageText}" HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/></Grid>
+                                                        <ProgressBar Value="{x:Bind UsagePercent}" Maximum="100" Foreground="{x:Bind UsageRingBrush}" AutomationProperties.Name="分区已用容量百分比"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="未提供的指标显示为 --。通电记录可能来自出厂测试和系统预装，不能单独判断新旧；请结合购买渠道、外观和保修核实。" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
                 <!-- 检测结果 -->
                 <StackPanel x:Name="ContentPanel" Visibility="Collapsed" Spacing="16">
                     <!-- ═════════ 概览统计（4 枚小圆角芯片） ═════════ -->

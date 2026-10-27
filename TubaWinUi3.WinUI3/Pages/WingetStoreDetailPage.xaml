@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
+    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
     x:Class="TubaWinUi3.Pages.WingetStoreDetailPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -135,6 +136,7 @@
                                     Text="来源" />
                                 <TextBlock
                                     x:Name="SourceText"
+                                    TextWrapping="Wrap"
                                     Grid.Column="1"
                                     FontSize="14"
                                     Text="WinGet 官方源 · 正版直链下载" />

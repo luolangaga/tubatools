@@ -15,11 +15,10 @@ internal static class IconAssetValidation
     internal const double FluentStrokeWidth = 1.5;
 
     /// <summary>
-    /// Direct2D 不支持的写法（会静默不渲染）。<c>&lt;defs&gt;</c>/<c>linearGradient</c> 是支持的，
-    /// 但本套图标只用纯色描边与实心块面，保持最小依赖面。
+    /// 禁止 Direct2D 不支持的写法及可执行、外部内容；允许文件内部的线性渐变。
     /// </summary>
     private static readonly string[] UnsupportedMarkers =
-        ["<style", "class=", "currentColor", "<text", "<filter", "<mask", "<use", "url(#"];
+        ["<style", "class=", "currentColor", "<text", "<filter", "<mask", "<use", "<script", "<image", "<foreignObject", "href="];
 
     internal static IReadOnlyList<string> SvgFiles(string folder)
         => Directory.GetFiles(folder, "*.svg").OrderBy(f => Path.GetFileName(f), StringComparer.Ordinal).ToList();
@@ -28,10 +27,11 @@ internal static class IconAssetValidation
         => SvgFiles(folder).Select(f => Path.GetFileNameWithoutExtension(f)!).ToList();
 
     /// <summary>
-    /// 逐个校验：Fluent 写法（20×20 网格、1.5 描边、圆头圆角、≥2 色）与 Direct2D 兼容子集。
+    /// 默认校验硬件分区的 24px 描边规范；filled 模式校验内置工具的 128px 填充渐变规范。
+    /// 两种风格都遵守 Direct2D 兼容子集。
     /// 返回问题列表，空表示全部通过。
     /// </summary>
-    internal static List<string> ValidateAll(string folder)
+    internal static List<string> ValidateAll(string folder, bool filled = false)
     {
         var problems = new List<string>();
 
@@ -61,6 +61,12 @@ internal static class IconAssetValidation
             if (root is null || root.Name.LocalName != "svg")
             {
                 problems.Add($"{name}：根节点不是 <svg>");
+                continue;
+            }
+
+            if (filled)
+            {
+                ValidateFilledIcon(name, root, problems);
                 continue;
             }
 
@@ -123,6 +129,47 @@ internal static class IconAssetValidation
         }
 
         return problems;
+    }
+
+    private static void ValidateFilledIcon(string name, XElement root, List<string> problems)
+    {
+        if ((string?)root.Attribute("viewBox") != "0 0 128 128")
+            problems.Add($"{name}：填充图标必须使用统一的 128×128 网格");
+        var allowed = new HashSet<string> { "svg", "defs", "linearGradient", "stop", "path", "rect", "circle", "ellipse", "g" };
+        var colors = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var gradients = root.Descendants().Where(e => e.Name.LocalName == "linearGradient")
+            .Select(e => (string?)e.Attribute("id")).Where(id => id is not null).ToHashSet();
+        int shapes = 0, filledShapes = 0;
+        foreach (var element in root.Descendants())
+        {
+            if (!allowed.Contains(element.Name.LocalName)) problems.Add($"{name}：不支持的 SVG 元素 {element.Name.LocalName}");
+            bool shape = element.Name.LocalName is "path" or "rect" or "circle" or "ellipse";
+            if (shape)
+            {
+                shapes++;
+                if (element.Name.LocalName == "path" && string.IsNullOrWhiteSpace((string?)element.Attribute("d")))
+                    problems.Add($"{name}：存在空 path");
+                if (element.Attribute("fill") is { Value: not "none" }) filledShapes++;
+                if (element.Attribute("stroke") is not null &&
+                    ((string?)element.Attribute("stroke-linecap") != "round" || (string?)element.Attribute("stroke-linejoin") != "round"))
+                    problems.Add($"{name}：细节描边必须使用圆头、圆角");
+            }
+            foreach (var attribute in element.Attributes())
+            {
+                if (attribute.Name.LocalName.StartsWith("on", StringComparison.OrdinalIgnoreCase))
+                    problems.Add($"{name}：不允许 SVG 事件属性");
+                if (attribute.Name.LocalName is not ("fill" or "stroke" or "stop-color")) continue;
+                var value = attribute.Value;
+                if (value.StartsWith("url(", StringComparison.Ordinal))
+                {
+                    if (!value.StartsWith("url(#", StringComparison.Ordinal) || !value.EndsWith(')') || !gradients.Contains(value[5..^1]))
+                        problems.Add($"{name}：渐变引用缺失或不是文件内部引用 {value}");
+                }
+                else AddColor(name, value, colors, problems);
+            }
+        }
+        if (shapes < 3 || filledShapes < 3) problems.Add($"{name}：填充图标需要可辨识的主体与细节");
+        if (gradients.Count == 0 || colors.Count < 3) problems.Add($"{name}：缺少柔和渐变或分层配色");
     }
 
     /// <summary>

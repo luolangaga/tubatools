@@ -1275,7 +1275,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         ToolDetailTip.IsOpen = true;
     }
 
-    private void LaunchTool(ToolItem tool, bool runAsAdmin)
+    internal void LaunchTool(ToolItem tool, bool runAsAdmin)
     {
         if (tool.IsBuiltinLink)
         {

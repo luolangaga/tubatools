@@ -45,32 +45,42 @@ public class BuiltinShortcutIconTests
         var dir = Path.Combine(Path.GetTempPath(), "tubawinui3-lnk-test-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var lnk = Path.Combine(dir, "屏幕坏点检测.lnk");
+        var previousDataDir = ConfigManager.DataDirectoryOverride;
+        ConfigManager.DataDirectoryOverride = dir;
         try
         {
+            var iconPath = WindowsSearchIndexService.EnsureBuiltinIcon(new ScreenTestTool());
+            Assert.NotNull(iconPath);
+            Assert.EndsWith(".ico", iconPath);
+            using var coloredIcon = new Icon(iconPath);
+            Assert.NotEqual(IntPtr.Zero, coloredIcon.Handle);
             create.Invoke(null, new object?[]
             {
                 lnk, @"C:\Windows\System32\notepad.exe", @"C:\Windows",
-                "屏幕坏点检测 - 硬件工具", "--open-builtin screen-test", null
+                "屏幕坏点检测 - 硬件工具", "--open-builtin screen-test", iconPath
             });
             Assert.True(File.Exists(lnk));
 
             // 读回验证（WScript.Shell 需 STA）
-            string? target = null, args = null;
+            string? target = null, args = null, iconLocation = null;
             RunSta(() =>
             {
                 dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
                 dynamic sc = shell.CreateShortcut(lnk);
                 target = (string)sc.TargetPath;
                 args = (string)sc.Arguments;
+                iconLocation = (string)sc.IconLocation;
                 Marshal.FinalReleaseComObject(sc);
                 Marshal.FinalReleaseComObject(shell);
             });
 
             Assert.Equal(@"C:\Windows\System32\notepad.exe", target);
             Assert.Equal("--open-builtin screen-test", args);
+            Assert.Equal(iconPath + ",0", iconLocation);
         }
         finally
         {
+            ConfigManager.DataDirectoryOverride = previousDataDir;
             Directory.Delete(dir, recursive: true);
         }
     }

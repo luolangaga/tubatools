@@ -408,7 +408,7 @@ public class HardwareDetailTests
     public void HardwareIcons_FollowFluentSpecifications()
     {
         Assert.True(Directory.Exists(HwIconDir), $"缺少图标目录: {HwIconDir}");
-        Assert.Empty(IconAssetValidation.ValidateAll(HwIconDir));
+        Assert.Empty(IconAssetValidation.ValidateAll(HwIconDir, filled: true));
         Assert.Empty(IconAssetValidation.ValidateRasterizes(HwIconDir));
     }
 
@@ -426,6 +426,29 @@ public class HardwareDetailTests
 
         var missing = icons.Where(icon => !File.Exists(Path.Combine(HwIconDir, icon + ".svg"))).ToList();
         Assert.Empty(missing);
+    }
+
+    [Theory]
+    [InlineData("型号信息", "computer")]
+    [InlineData("系统信息", "system")]
+    [InlineData("运行时间", "uptime")]
+    [InlineData("系统", "system")]
+    [InlineData("BIOS", "motherboard")]
+    [InlineData("主板", "motherboard")]
+    [InlineData("处理器", "cpu")]
+    [InlineData("内存", "memory")]
+    [InlineData("显卡", "gpu")]
+    [InlineData("NPU", "npu")]
+    [InlineData("显示器", "display")]
+    [InlineData("硬盘", "disk")]
+    [InlineData("电池", "battery")]
+    [InlineData("声卡", "sound")]
+    [InlineData("网卡", "network")]
+    public void HardwareIcons_CoverSummaryCardsAndRows(string label, string expected)
+    {
+        var key = HardwareIconService.KeyForLabel(label);
+        Assert.Equal(expected, key);
+        Assert.True(File.Exists(Path.Combine(HwIconDir, key + ".svg")));
     }
 
     [Fact]

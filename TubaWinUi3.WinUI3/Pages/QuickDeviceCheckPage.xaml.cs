@@ -1,19 +1,14 @@
-using Microsoft.UI.Xaml.Controls.Primitives;
 using System.Speech.Synthesis;
+using System.Text.Json;
 using Microsoft.Toolkit.Uwp.Notifications;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
+using TubaWinUi3.Models;
 using TubaWinUi3.Services;
-using Windows.Graphics;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
 using Windows.Media.Core;
-using Windows.UI;
-using DiagnosticsProcess = System.Diagnostics.Process;
 
 namespace TubaWinUi3.Pages;
 
@@ -21,119 +16,258 @@ public sealed partial class QuickDeviceCheckPage : Page
 {
     private int _currentStep;
     private const int TotalSteps = 8;
-
     private Controls.StressTestControl? _stressControl;
+    private DiskHealthPage? _diskHealthPage;
     private Controls.KeyboardTestControl? _keyboardTestControl;
+    private KeyboardTestInput? _keyboardInput;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _keyboardLoadTimeout;
+    private bool _keyboardPrepared, _keyboardStarting;
+    private bool _isCompleted, _stressWasRun;
+    private readonly HashSet<int> _visitedSteps = [];
+    private bool _sceneFailed, _keyboardFailed, _keyboardReady, _layoutAnimating;
+    private double _keyboardExpansion, _layoutFrom, _layoutTo, _detailsWidth = 480;
+    private long _layoutStarted;
     private SpeechSynthesizer? _speechSynth;
-    private bool _cameraLaunched;
+    private bool _cameraLaunched, _closed, _sceneReady, _sceneBooted, _laptop;
+    private int _contentVersion;
     private MediaCapture? _mediaCapture;
     private MediaPlayerElement? _cameraPlayer;
-    private MediaFrameSourceGroup? _mediaFrameSourceGroup;
-
-    private static readonly string[] StepTitles =
-    [
-        "恭喜收获新电脑！",
-        "硬件信息确认",
-        "硬盘通电检查",
-        "屏幕坏点检测",
-        "外设检查",
-        "摄像头检测",
-        "音频测试",
-        "三烤压力测试"
-    ];
-
-    private static readonly string[] StepGlyphs =
-    [
-        "\uE734", "\uE964", "\uEDA7", "\uE7F4", "\uE92E", "\uE960", "\uEA60", "\uE9D9"
-    ];
-
-    private static readonly string[] StepDescriptions =
-    [
-        "请仔细检查外观，确保没有使用痕迹",
-        "核对硬件配置是否与购买一致",
-        "检查硬盘通电时间和通电次数",
-        "检测屏幕是否有坏点与漏光",
-        "测试键盘和硬盘是否正常",
-        "确认摄像头能否正常工作",
-        "确认扬声器能否正常播放",
-        "CPU+GPU+网卡 三烤，验证系统稳定性"
-    ];
+    private IHardwareScene? _scene;
+    private List<HardwareInfoSection>? _hardware;
+    private string? _hardwareError;
+    private string? _focusLabel;
+    private string? _wallpaper;
+    private readonly Dictionary<int, bool> _exteriorChecks = [];
+    private static readonly string[] StepTitles = ["欢迎收到新电脑", "核对硬件配置", "检查硬盘状态", "检查屏幕", "检查键盘", "检查摄像头", "检查扬声器", "散热与稳定性"];
+    private static readonly string[] StepLabels = ["外观", "配置", "硬盘", "屏幕", "键盘", "摄像头", "音频", "烤机"];
+    private static readonly string[] StepDescriptions = ["先看整机全景，再检查机身外观。", "点击硬件条目定位整机上的对应区域，并核对订单配置。", "查看 SMART 信息，结合购买渠道与商家说明判断。", "在全屏纯色画面中检查坏点、色斑和漏光。", "逐个按下按键，已测试的键位会留下标记。", "开启预览，检查画面、对焦和颜色是否正常。", "播放测试语音，留意无声、杂音或破音。", "验机特别版：统一时长，实时观察温度与负载。"];
 
     public QuickDeviceCheckPage()
     {
         InitializeComponent();
-        _currentStep = 0;
-        UpdateStepUI();
         Loaded += OnLoaded;
-
-        // 代码构建的画刷不会随主题自动刷新，切换主题后重建当前步骤界面
-        // （压力测试 / 摄像头预览进行中不重建，避免打断正在运行的检测）
+        Unloaded += (_, _) => Cleanup();
         ActualThemeChanged += (_, _) =>
         {
-            if (_stressControl?.IsRunning != true && !_cameraLaunched)
-                UpdateStepContent();
+            DispatcherQueue.TryEnqueue(() => _scene?.SetBackground(SceneBackground));
+            PostScene(new { type = "theme", dark = ActualTheme == ElementTheme.Dark });
         };
+        UpdateStepUI();
     }
 
-    public void Cleanup()
+    private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _stressControl?.Cleanup();
-        _keyboardTestControl?.Cleanup();
-        StopCamera();
-        _speechSynth?.Dispose();
-    }
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        // 独立工具窗口中隐藏页面返回按钮：关闭窗口即可退出，避免与标题栏重复
-        ToolBackButton.Visibility = BuiltinToolWindow.IsInToolWindow(this)
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-
-        PlayStepTransition();
-    }
-
-    private void ToolBackButton_Click(object sender, RoutedEventArgs e) => App.MainWindow?.NavigateBack();
-
-    private void UpdateStepUI()
-    {
-        StepIndicatorText.Text = $"第 {_currentStep + 1} 步 / 共 {TotalSteps} 步";
-        StepTitleText.Text = StepTitles[_currentStep];
-        StepGlyphIcon.Glyph = StepGlyphs[_currentStep];
-        StepDescText.Text = StepDescriptions[_currentStep];
-
-        BackButton.Visibility = _currentStep > 0 ? Visibility.Visible : Visibility.Collapsed;
-        NextButton.Content = _currentStep == TotalSteps - 1 ? "完成验机" : "下一步";
-
-        for (int i = 0; i < TotalSteps; i++)
+        var wasClosed = _closed;
+        _closed = false;
+        if (wasClosed) { _sceneFailed = _keyboardFailed = false; UpdateStepUI(); }
+        ToolBackButton.Visibility = BuiltinToolWindow.IsInToolWindow(this) ? Visibility.Collapsed : Visibility.Visible;
+        if (_scene is not null) return;
+        var scene = HardwareSceneRuntime.Create();
+        _scene = scene;
+        SceneHost.Content = scene.View;
+        scene.MessageReceived += SceneMessageReceived;
+        try
         {
-            if (StepProgressPanel.Children[i] is Border dot)
+            // Reuse the hardware page cache and the same laptop/desktop detection.
+            _ = LoadHardwareAsync(scene);
+            var laptopTask = Task.Run(HardwareInfoService.IsLaptop);
+            var wallpaperTask = DesktopWallpaperService.LoadDataUriAsync();
+            await Task.WhenAll(laptopTask, wallpaperTask);
+            _laptop = laptopTask.Result;
+            _wallpaper = wallpaperTask.Result;
+            if (_closed || _scene != scene) return;
+            await scene.InitializeAsync(SceneBackground);
+            await Task.Delay(12000);
+            if (!_closed && _scene == scene && !_sceneBooted) ShowSceneError("3D 场景加载超时，可继续完成右侧检测。");
+        }
+        catch (Exception ex) { if (!_closed) ShowSceneError($"3D 预览暂不可用：{ex.Message}"); }
+    }
+
+    private async Task LoadHardwareAsync(IHardwareScene scene)
+    {
+        try
+        {
+            var hardware = await HardwareInfoService.LoadAsync(false);
+            if (_closed || _scene != scene) return;
+            _hardware = hardware.ToList();
+            _hardwareError = null;
+            DeviceText.Text = _hardware.SelectMany(s => s.Items).FirstOrDefault(i => i.Label == "设备型号")?.Value ?? "本机硬件";
+        }
+        catch (Exception ex)
+        {
+            if (_closed || _scene != scene) return;
+            _hardwareError = $"硬件配置读取失败：{ex.Message}。其他检测可继续。";
+            DeviceText.Text = "配置暂未能读取";
+        }
+        if (_currentStep == 1) BuildHardwareInfoStep();
+    }
+
+    private void SceneMessageReceived(string message)
+    {
+        if (_closed) return;
+        try
+        {
+            using var document = JsonDocument.Parse(message);
+            var root = document.RootElement;
+            switch (root.GetProperty("type").GetString())
             {
-                if (i < _currentStep)
-                {
-                    dot.Background = new SolidColorBrush(ThemeColors.AccentGreen);
-                    dot.Width = 8; dot.Height = 8;
-                }
-                else if (i == _currentStep)
-                {
-                    dot.Background = new SolidColorBrush(ThemeColors.AccentBlue);
-                    dot.Width = 12; dot.Height = 12;
-                }
-                else
-                {
-                    dot.Background = new SolidColorBrush(ThemeColors.DimText);
-                    dot.Width = 8; dot.Height = 8;
-                }
+                case "ready":
+                    _sceneReady = true;
+                    PostScene(new { laptop = _laptop, wallpaper = _wallpaper, embedded = true, inspection = true, dark = ActualTheme == ElementTheme.Dark, connectors = false });
+                    break;
+                case "booted":
+                    _sceneBooted = true;
+                    SceneStatus.Visibility = Visibility.Collapsed;
+                    SceneLoading.IsActive = false;
+                    FocusScene(_focusLabel);
+                    if (_currentStep == 4) StartKeyboardScene();
+                    else if (_currentStep == 3) PostScene(new { type = "prepareKeyboard" });
+                    PostScene(new { type = "stress", active = _stressControl?.IsRunning == true });
+                    if (_isCompleted) PostScene(new { type = "inspectionComplete", active = true });
+                    break;
+                case "keyboardPrepared":
+                    if (_currentStep != 4 || _keyboardFailed || _sceneFailed || _keyboardPrepared) break;
+                    _keyboardPrepared = true;
+                    AnimateWorkspace(true);
+                    StartKeyboardTransition();
+                    break;
+                case "keyboardReady":
+                    if (_currentStep != 4 || _keyboardFailed || _sceneFailed || _keyboardReady) break;
+                    try
+                    {
+                        _keyboardInput = new KeyboardTestInput(DispatcherQueue);
+                        _keyboardInput.KeyChanged += KeyboardKeyChanged;
+                        _keyboardReady = true;
+                        _keyboardLoadTimeout?.Stop();
+                        KeyboardToolbar.Visibility = Visibility.Visible;
+                        SceneStatus.Visibility = Visibility.Collapsed;
+                        SceneLoading.IsActive = false;
+                        SendKeyboard(new { type = "layout", compact = KeyboardLayout.SelectedIndex == 1 });
+                        SceneHint.Text = "按实体键盘检测 · 松开后 1 秒回到全景 · 点击键帽可预览 · 功能键可能需要配合 Fn";
+                    }
+                    catch (Exception ex) { ShowKeyboardFallback(ex.Message); }
+                    break;
+                case "stats":
+                    if (_currentStep == 4)
+                    {
+                        KeyboardStatistics.Text = $"已检测 {root.GetProperty("count").GetInt32()} / {root.GetProperty("total").GetInt32()} 键 · 最近按键：{root.GetProperty("last").GetString()}";
+                        int held = root.GetProperty("held").GetInt32();
+                        ActivityText.Text = held > 0 ? $"同时按住 {held} 键" : "逐个按下按键，确认后继续";
+                    }
+                    break;
+                case "keyboardError":
+                    _keyboardFailed = true;
+                    ShowKeyboardFallback("3D 键盘初始化失败");
+                    break;
+                case "dismissFocus": FocusScene(null); break;
+                case "error": ShowSceneError("3D 预览暂不可用，可继续完成右侧检测。"); break;
+                case "focusFailed": ShowSceneError("部件特写未能加载，可点“回到全景”继续。"); break;
             }
         }
-
-        UpdateStepContent();
+        catch (JsonException) { }
     }
 
-    private void UpdateStepContent()
+    private void ShowSceneError(string message)
     {
+        _sceneFailed = true;
+        SceneLoading.IsActive = false;
+        SceneStatusText.Text = message;
+        SceneStatus.Visibility = Visibility.Visible;
+        if (_currentStep == 4) ShowKeyboardFallback(message);
+    }
+    private void PostScene(object message) { if (_sceneReady) _scene?.Post(JsonSerializer.Serialize(message)); }
+    private Windows.UI.Color SceneBackground => SceneSurface.Background is SolidColorBrush brush ? brush.Color : ThemeColors.CardBg;
+    private void FocusScene(string? label)
+    {
+        _focusLabel = label;
+        SceneTitle.Text = _currentStep == 4 ? (_keyboardFailed || _sceneFailed ? "检查键盘 · 2D 备用版" : "检查键盘 · 3D") : label is null ? "整机全景" : $"{label} · 检查位置";
+        if (!_sceneBooted) return;
+        SceneStatus.Visibility = Visibility.Collapsed;
+        PostScene(new { type = "inspectionFocus", label });
+    }
+    private void Overview_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentStep == 4) SendKeyboard(new { type = "panorama" });
+        else FocusScene(null);
+    }
+    private void LayoutRoot_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Keep the controls readable at laptop widths; give remaining width to the scene.
+        _detailsWidth = Math.Clamp(e.NewSize.Width * .46, 360, 520);
+        ApplyWorkspaceLayout();
+        LayoutRoot.Padding = e.NewSize.Width < 1000 ? new Thickness(16, 8, 16, 12) : new Thickness(24, 8, 24, 16);
+        UpdateCompactChrome();
+    }
+    public void Cleanup()
+    {
+        if (_closed) return;
+        _closed = true;
+        StopWorkspaceAnimation();
+        _contentVersion++;
+        ReleaseStep();
+        _sceneReady = _sceneBooted = false;
+        if (_scene is { } scene)
+        {
+            scene.MessageReceived -= SceneMessageReceived;
+            _scene = null;
+            SceneHost.Content = null;
+            scene.Dispose();
+        }
+        _speechSynth?.Dispose();
+        _speechSynth = null;
+        _wallpaper = null;
+    }
+    private void ReleaseStep()
+    {
+        StopKeyboardInput();
+        PostScene(new { type = "keyboardMode", active = false });
+        KeyboardToolbar.Visibility = Visibility.Collapsed;
+        KeyboardFallbackHost.Content = null;
+        KeyboardFallbackHost.Visibility = Visibility.Collapsed;
+        SceneHost.Visibility = Visibility.Visible;
+        if (_stressControl is { } stress)
+        {
+            stress.StressStarted -= OnStressStarted;
+            stress.StressStopped -= OnStressStopped;
+            stress.InspectionSampled -= OnInspectionSampled;
+            stress.Cleanup();
+            _stressControl = null;
+        }
         _keyboardTestControl?.Cleanup();
         _keyboardTestControl = null;
+        StopCamera();
+        _cameraPlayer = null;
+        _speechSynth?.SpeakAsyncCancelAll();
+    }
+    private void ToolBackButton_Click(object sender, RoutedEventArgs e) { Cleanup(); App.MainWindow?.NavigateBack(); }
+    private void UpdateStepUI()
+    {
+        if (_isCompleted) LeaveCompletion();
+        _visitedSteps.Add(_currentStep);
+        ReleaseStep();
+        _contentVersion++;
+        StepIndicatorText.Text = $"{_currentStep + 1:00} / {TotalSteps:00}";
+        StepTitleText.Text = StepTitles[_currentStep];
+        StepDescText.Text = StepDescriptions[_currentStep];
+        BackButton.IsEnabled = _currentStep > 0;
+        NextButton.Content = _currentStep == 0 ? "开始验机" : _currentStep == TotalSteps - 1 ? "完成验机" : "下一步";
+        ActivityText.Text = "确认后继续";
+        SceneHint.Text = "拖动旋转 · 镜头随检测步骤切换 · 模型为硬件示意";
+        if (_currentStep != 4) AnimateWorkspace(false);
+        UpdateCompactChrome();
+        StepProgressPanel.Children.Clear();
+        StepProgressPanel.ColumnDefinitions.Clear();
+        for (int i = 0; i < TotalSteps; i++)
+        {
+            StepProgressPanel.ColumnDefinitions.Add(new ColumnDefinition());
+            var step = i;
+            var button = new Button { Content = $"{i + 1:00}  {StepLabels[i]}", HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(4, 8, 4, 8) };
+            if (i == _currentStep) button.Style = Application.Current.Resources["AccentButtonStyle"] as Style;
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(button, $"InspectionStep{i}");
+            button.Click += (_, _) => GoToStep(step);
+            Grid.SetColumn(button, i);
+            StepProgressPanel.Children.Add(button);
+        }
         StepContentPanel.Children.Clear();
         switch (_currentStep)
         {
@@ -146,439 +280,401 @@ public sealed partial class QuickDeviceCheckPage : Page
             case 6: BuildAudioStep(); break;
             case 7: BuildStressTestStep(); break;
         }
+        FocusScene(_currentStep switch { 1 => "处理器", 2 => "硬盘", 3 => "显示器", 4 => "键盘", 5 => "摄像头", 6 => "声卡", 7 => "散热", _ => null });
+    }
+    private void GoToStep(int step)
+    {
+        if (_stressControl?.IsRunning == true || step == _currentStep) return;
+        _currentStep = step;
+        UpdateStepUI();
+    }
+    private void NextButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_stressControl?.IsRunning == true) return;
+        if (_isCompleted)
+        {
+            LeaveCompletion();
+            _visitedSteps.Clear(); _exteriorChecks.Clear(); _stressWasRun = false;
+            _diskHealthPage = null;
+            _currentStep = 0; UpdateStepUI(); return;
+        }
+        if (_currentStep < TotalSteps - 1) GoToStep(_currentStep + 1);
+        else CompleteInspection();
+    }
+    private void BackButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isCompleted) { LeaveCompletion(); return; }
+        if (_currentStep > 0) GoToStep(_currentStep - 1);
     }
 
-    #region Step 1: Welcome
+    private void CompleteInspection()
+    {
+        if (_closed || _isCompleted || _stressControl?.IsRunning == true) return;
+        _isCompleted = true;
+        StopWorkspaceAnimation(); StopKeyboardInput();
+        _keyboardExpansion = 0;
+        PageTitle.Text = "验机完成";
+        PageSubtitle.Text = "保留本次检查记录，给新电脑一个从容的开始";
+        StepIndicatorText.Text = "流程已结束";
+        StepTitleText.Text = "本次检查记录";
+        StepDescText.Text = _stressWasRun ? "烤机记录已保留，可返回查看和导出。" : "按需返回检查，或开始新一轮验机。";
+        CompletionSummaryText.Text = $"已查看 {_visitedSteps.Count} / {TotalSteps} 项 · 外观已确认 {_exteriorChecks.Count(item => item.Value)} / 5 项";
+        BackButton.Content = "返回检查";
+        NextButton.Content = "重新验机";
+        ActivityText.Text = "本次记录保留在当前页面";
+        SceneTitle.Text = "你的电脑 · 整机全景";
+        SceneHint.Text = "拖动旋转 · 当前桌面壁纸 · 模型为硬件示意";
+        ApplyCompletionLayout(true);
+        // Retain the same WebView and the same stress control/report; no Cleanup here.
+        PostScene(new { type = "inspectionComplete", active = true });
+    }
+    private void LeaveCompletion()
+    {
+        if (!_isCompleted) return;
+        _isCompleted = false;
+        PageTitle.Text = "快速验机";
+        PageSubtitle.Text = "从外观到稳定性，逐项认识你的新电脑";
+        StepIndicatorText.Text = $"{_currentStep + 1:00} / {TotalSteps:00}";
+        StepTitleText.Text = StepTitles[_currentStep];
+        StepDescText.Text = StepDescriptions[_currentStep];
+        BackButton.Content = "上一步";
+        NextButton.Content = "完成验机";
+        ActivityText.Text = _stressWasRun ? "已停止，可导出报告" : "确认后继续";
+        ApplyCompletionLayout(false);
+        PostScene(new { type = "inspectionComplete", active = false });
+        FocusScene("散热");
+    }
+    private void ApplyCompletionLayout(bool completed)
+    {
+        MainWorkspaceRow.Height = completed ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
+        CompletionSceneRow.Height = completed ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        Grid.SetRow(SceneSurface, completed ? 1 : 0);
+        Grid.SetColumnSpan(SceneSurface, completed ? 2 : 1);
+        Grid.SetColumn(DetailsPanel, completed ? 0 : 1);
+        Grid.SetColumnSpan(DetailsPanel, completed ? 2 : 1);
+        DetailsPanel.Margin = completed ? new Thickness(0, 0, 0, 12) : new Thickness(0);
+        StepContentPanel.Visibility = completed ? Visibility.Collapsed : Visibility.Visible;
+        CompletionSummary.Visibility = completed ? Visibility.Visible : Visibility.Collapsed;
+        StepProgressPanel.Visibility = completed ? Visibility.Collapsed : Visibility.Visible;
+        ApplyWorkspaceLayout(); UpdateCompactChrome();
+    }
 
+    private static TextBlock Copy(string text, bool secondary = false)
+    {
+        var block = (TextBlock)Microsoft.UI.Xaml.Markup.XamlReader.Load(
+            "<TextBlock xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Foreground='{ThemeResource " +
+            (secondary ? "TextFillColorSecondaryBrush" : "TextFillColorPrimaryBrush") + "}' />");
+        block.Text = text; block.FontSize = 13; block.TextWrapping = TextWrapping.Wrap;
+        return block;
+    }
+    private StackPanel ContentStack() { var panel = new StackPanel { Spacing = 12 }; StepContentPanel.Children.Add(panel); return panel; }
     private void BuildWelcomeStep()
     {
-        var stack = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
-
-        var emojiBlock = new TextBlock
+        var panel = ContentStack();
+        panel.Children.Add(Copy("花几分钟完成 8 项检查。自动读取的配置与手动检测相结合，先从外观开始。", true));
+        string[] checks = ["机身：没有划痕、磕碰与使用痕迹", "转轴 / 面板：无松动、异响或变形", "接口：无氧化、明显插拔痕迹", "屏幕表面：无划痕、压痕", "散热口：没有明显积灰或堵塞"];
+        for (int i = 0; i < checks.Length; i++)
         {
-            Text = "💻",
-            FontSize = 28,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var emojiBorder = new Border
-        {
-            Width = 160,
-            Height = 160,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            CornerRadius = new CornerRadius(12),
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            Child = emojiBlock
-        };
-        stack.Children.Add(emojiBorder);
-
-        stack.Children.Add(new TextBlock
-        {
-            Text = "🎉 恭喜你收获了一台新电脑！",
-            FontSize = 28,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-
-        var checkCard = new Border
-        {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            MaxWidth = 500,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var checkStack = new StackPanel { Spacing = 12 };
-        checkStack.Children.Add(new TextBlock
-        {
-            Text = "📋 外观检查清单",
-            FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
-        });
-
-        var checks = new (string Title, string Desc)[]
-        {
-            ("转轴", "开合屏幕，检查转轴是否有松动或异响"),
-            ("外观痕迹", "仔细检查机身是否有划痕、磕碰或使用痕迹"),
-            ("接口", "检查各接口是否有插拔痕迹或氧化"),
-            ("屏幕表面", "检查屏幕是否有划痕或压痕"),
-            ("散热口", "检查散热口是否有灰尘堆积")
-        };
-
-        foreach (var (title, desc) in checks)
-        {
-            var row = new StackPanel { Spacing = 4 };
-            row.Children.Add(new TextBlock
-            {
-                Text = $"✓ {title}",
-                FontSize = 14,
-                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                Foreground = new SolidColorBrush(ThemeColors.AccentBlue)
-            });
-            row.Children.Add(new TextBlock
-            {
-                Text = desc,
-                FontSize = 12,
-                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                TextWrapping = TextWrapping.Wrap
-            });
-            checkStack.Children.Add(row);
+            var index = i;
+            var check = new CheckBox { Content = Copy(checks[i]), IsChecked = _exteriorChecks.GetValueOrDefault(i), HorizontalAlignment = HorizontalAlignment.Stretch };
+            check.Checked += (_, _) => _exteriorChecks[index] = true;
+            check.Unchecked += (_, _) => _exteriorChecks[index] = false;
+            panel.Children.Add(check);
         }
-
-        checkCard.Child = checkStack;
-        stack.Children.Add(checkCard);
-
-        stack.Children.Add(new TextBlock
-        {
-            Text = "💡 请在继续之前仔细完成以上检查，如有问题请及时联系商家",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.AccentOrange),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 500
-        });
-
-        StepContentPanel.Children.Add(stack);
+        panel.Children.Add(Copy("发现异常时，先拍照留证，再联系商家。", true));
     }
-
-    #endregion
-
-    #region Step 2: Hardware Info
-
     private void BuildHardwareInfoStep()
     {
-        var stack = new StackPanel { Spacing = 16 };
-
-        var tipCard = BuildTipCard("请核对以下硬件信息是否与购买配置一致，重点关注 CPU、GPU、内存和硬盘型号。");
-        stack.Children.Add(tipCard);
-
-        var hwBorder = new Border
+        StepContentPanel.Children.Clear();
+        if (_hardware is null)
         {
-            CornerRadius = new CornerRadius(8),
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(16),
-            MaxWidth = 700,
-            HorizontalAlignment = HorizontalAlignment.Center
+            ContentStack().Children.Add(Copy(_hardwareError ?? "正在读取硬件配置，请稍候…"));
+            return;
+        }
+        var layout = new Grid { RowSpacing = 8 };
+        layout.RowDefinitions.Add(new RowDefinition());
+        layout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var rows = new Grid { RowSpacing = 4 };
+        var values = new List<TextBlock>();
+        var items = _hardware.SelectMany(s => s.Items).GroupBy(i => i.Label).ToDictionary(g => g.Key, g => g.Last().Value);
+        string[] labels = ["处理器", "显卡", "内存", "硬盘", "主板", "显示器", "网卡", "电池", "系统"];
+        foreach (var label in labels)
+        {
+            if (!items.TryGetValue(label, out var value)) continue;
+            var row = new Grid { ColumnSpacing = 8 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(54) });
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            row.Children.Add(Copy(label, true));
+            var text = Copy(value.Replace("\r", " ").Replace("\n", " "));
+            text.MaxLines = 1;
+            text.TextTrimming = TextTrimming.CharacterEllipsis;
+            values.Add(text);
+            Grid.SetColumn(text, 1); row.Children.Add(text);
+            var button = new Button { Content = row, MinHeight = 0, VerticalAlignment = VerticalAlignment.Stretch,
+                HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Padding = new Thickness(8, 4, 8, 4) };
+            ToolTipService.SetToolTip(button, value);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(button, $"InspectionHardware_{label}");
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, $"{label}：{value}");
+            button.Click += (_, _) => FocusScene(label);
+            Grid.SetRow(button, rows.RowDefinitions.Count);
+            rows.RowDefinitions.Add(new RowDefinition());
+            rows.Children.Add(button);
+        }
+        rows.SizeChanged += (_, args) =>
+        {
+            var maxLines = args.NewSize.Height / Math.Max(1, values.Count) >= 48 ? 2 : 1;
+            foreach (var text in values) text.MaxLines = maxLines;
         };
-        var hwStack = new StackPanel { Spacing = 12 };
-
-        var loadingRing = new ProgressRing
-        {
-            Width = 32,
-            Height = 32,
-            IsActive = true,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        hwStack.Children.Add(loadingRing);
-        hwBorder.Child = hwStack;
-        stack.Children.Add(hwBorder);
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                var sections = await HardwareInfoService.LoadAsync(false);
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    hwStack.Children.Clear();
-
-                    for (int s = 0; s < sections.Count; s++)
-                    {
-                        var section = sections[s];
-
-                        if (s > 0)
-                        {
-                            hwStack.Children.Add(new Border
-                            {
-                                Height = 1,
-                                Background = new SolidColorBrush(ThemeColors.Separator),
-                                Margin = new Thickness(0, 4, 0, 4)
-                            });
-                        }
-
-                        hwStack.Children.Add(new TextBlock
-                        {
-                            Text = section.Title,
-                            FontSize = 18,
-                            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
-                        });
-
-                        foreach (var item in section.Items)
-                        {
-                            var row = new Grid
-                            {
-                                ColumnSpacing = 12,
-                                Padding = new Thickness(0, 4, 0, 4)
-                            };
-                            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-                            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-                            row.Children.Add(new TextBlock
-                            {
-                                Text = item.Label,
-                                FontSize = 14,
-                                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                                VerticalAlignment = VerticalAlignment.Center
-                            });
-
-                            var valueStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-                            Grid.SetColumn(valueStack, 1);
-
-                            valueStack.Children.Add(new TextBlock
-                            {
-                                Text = item.Value,
-                                FontSize = 14,
-                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                                TextWrapping = TextWrapping.Wrap,
-                                VerticalAlignment = VerticalAlignment.Center
-                            });
-
-                            row.Children.Add(valueStack);
-                            hwStack.Children.Add(row);
-                        }
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    hwStack.Children.Clear();
-                    hwStack.Children.Add(new TextBlock
-                    {
-                        Text = $"加载硬件信息失败: {ex.Message}",
-                        FontSize = 14,
-                        Foreground = new SolidColorBrush(ThemeColors.AccentRed)
-                    });
-                });
-            }
-        });
-
-        StepContentPanel.Children.Add(stack);
+        layout.Children.Add(rows);
+        var caption = Copy("悬停查看完整型号；完整参数可在“硬件信息”查看。", true);
+        Grid.SetRow(caption, 1); layout.Children.Add(caption);
+        StepContentPanel.Children.Add(layout);
     }
-
-    #endregion
-
-    #region Step 3: Disk Info
-
     private void BuildDiskInfoStep()
     {
-        var stack = new StackPanel { Spacing = 16 };
-
-        var tipCard = BuildTipCard(
-            "新机硬盘通电时间一般应小于 100 小时，通电次数一般应小于 50 次。\n" +
-            "如果通电时间过长，可能是翻新机或展示机。");
-        stack.Children.Add(tipCard);
-
-        var launchCard = new Border
-        {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var launchStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
-
-        launchStack.Children.Add(new TextBlock
-        {
-            Text = "将打开 DiskInfo 查看硬盘通电信息",
-            FontSize = 14,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-
-        var launchBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uEDA7", FontSize = 16 },
-                    new TextBlock { Text = "打开 DiskInfo", FontSize = 14 }
-                }
-            },
-            Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 8, 24, 8)
-        };
-        launchBtn.Click += async (_, _) =>
-        {
-            launchBtn.IsEnabled = false;
-            launchBtn.Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new ProgressRing { Width = 16, Height = 16, IsActive = true },
-                    new TextBlock { Text = "正在启动 DiskInfo...", FontSize = 14 }
-                }
-            };
-
-            await Task.Delay(TimeSpan.FromSeconds(2));
-
-            LaunchDiskInfo();
-
-            launchBtn.IsEnabled = true;
-            launchBtn.Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uEDA7", FontSize = 16 },
-                    new TextBlock { Text = "打开 DiskInfo", FontSize = 14 }
-                }
-            };
-        };
-        launchStack.Children.Add(launchBtn);
-
-        launchCard.Child = launchStack;
-        stack.Children.Add(launchCard);
-
-        var judgeCard = new Border
-        {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            MaxWidth = 500,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var judgeStack = new StackPanel { Spacing = 8 };
-        judgeStack.Children.Add(new TextBlock
-        {
-            Text = "📊 判断标准",
-            FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
-        });
-        judgeStack.Children.Add(new TextBlock
-        {
-            Text = "✅ 通电时间 < 100 小时 → 正常（新机）",
-            FontSize = 14,
-            Foreground = new SolidColorBrush(ThemeColors.AccentGreen)
-        });
-        judgeStack.Children.Add(new TextBlock
-        {
-            Text = "⚠️ 通电时间 100~300 小时 → 可能展示机",
-            FontSize = 14,
-            Foreground = new SolidColorBrush(ThemeColors.AccentOrange)
-        });
-        judgeStack.Children.Add(new TextBlock
-        {
-            Text = "❌ 通电时间 > 300 小时 → 疑似翻新机",
-            FontSize = 14,
-            Foreground = new SolidColorBrush(ThemeColors.AccentRed)
-        });
-        judgeCard.Child = judgeStack;
-        stack.Children.Add(judgeCard);
-
-        StepContentPanel.Children.Add(stack);
+        StepContentPanel.Children.Add(_diskHealthPage ??= new DiskHealthPage(embedded: true));
     }
-
-    private void LaunchDiskInfo()
-    {
-        try
-        {
-            var toolsRoot = ToolCatalog.ToolsRoot;
-            if (string.IsNullOrEmpty(toolsRoot)) return;
-
-            var diskInfoPaths = new[]
-            {
-                Path.Combine(toolsRoot, "硬盘工具", "DiskInfo", "DiskInfo64.exe"),
-                Path.Combine(toolsRoot, "硬盘工具", "DiskInfo", "DiskInfo.exe"),
-                Path.Combine(toolsRoot, "硬盘工具", "CrystalDiskInfo", "DiskInfo64.exe"),
-                Path.Combine(toolsRoot, "硬盘工具", "CrystalDiskInfo", "DiskInfo.exe"),
-            };
-
-            foreach (var path in diskInfoPaths)
-            {
-                if (File.Exists(path))
-                {
-                    ToolProcessLauncher.Launch(path, Path.GetDirectoryName(path));
-                    SendToast("已打开 DiskInfo", "请查看硬盘通电时间和通电次数");
-                    return;
-                }
-            }
-
-            var allExes = Directory.GetFiles(toolsRoot, "DiskInfo*.exe", SearchOption.AllDirectories);
-            if (allExes.Length > 0)
-            {
-                ToolProcessLauncher.Launch(allExes[0], Path.GetDirectoryName(allExes[0]));
-                SendToast("已打开 DiskInfo", "请查看硬盘通电时间和通电次数");
-            }
-            else
-            {
-                SendToast("未找到 DiskInfo", "请确保工具箱中已安装 DiskInfo");
-            }
-        }
-        catch (Exception ex)
-        {
-            SendToast("启动失败", ex.Message);
-        }
-    }
-
-    #endregion
-
-    #region Step 4: Screen Test
-
     private void BuildScreenTestStep()
     {
-        var stack = new StackPanel { Spacing = 16 };
+        if (_sceneBooted && !_keyboardFailed) PostScene(new { type = "prepareKeyboard" });
+        var panel = ContentStack();
+        panel.Children.Add(Copy("白色 / 黑色：检查亮点、暗点与漏光\n红色 / 绿色 / 蓝色：检查坏点与色斑"));
+        var button = new Button { Content = "开始全屏检测", Style = Application.Current.Resources["AccentButtonStyle"] as Style };
+        button.Click += (_, _) => LaunchScreenTest(); panel.Children.Add(button);
+        panel.Children.Add(Copy("← → 切换颜色 · Esc 返回验机", true));
+    }
+    private void BuildPeripheralStep()
+    {
+        ActivityText.Text = "逐个按下按键，确认后继续";
+        SceneHint.Text = "正在准备 3D 键盘…";
+        if (_sceneFailed || _keyboardFailed) ShowKeyboardFallback("3D 场景暂不可用");
+        else StartKeyboardScene();
+    }
 
-        var tipCard = BuildTipCard(
-            "将进入全屏模式检测屏幕坏点与漏光。\n" +
-            "使用 ← → 方向键切换颜色，ESC 退出全屏检测。");
-        stack.Children.Add(tipCard);
+    private void StartKeyboardScene()
+    {
+        if (!_sceneBooted || _currentStep != 4 || _sceneFailed || _keyboardFailed) return;
+        SceneStatusText.Text = "正在准备 3D 键盘…";
+        SceneStatus.Visibility = Visibility.Visible;
+        SceneLoading.IsActive = true;
+        _keyboardLoadTimeout?.Stop();
+        _keyboardLoadTimeout = DispatcherQueue.CreateTimer();
+        _keyboardLoadTimeout.Interval = TimeSpan.FromSeconds(15);
+        _keyboardLoadTimeout.IsRepeating = false;
+        _keyboardLoadTimeout.Tick += (_, _) => { if (!_keyboardReady) ShowKeyboardFallback("3D 键盘加载超时"); };
+        _keyboardLoadTimeout.Start();
+        PostScene(new { type = "prepareKeyboard", notify = true, width = Math.Max(1, Workspace.ActualWidth - 26) });
+    }
+    private void SendKeyboard(object message)
+    {
+        if (_keyboardReady && _currentStep == 4) PostScene(new { type = "keyboard", message });
+    }
+    private void KeyboardKeyChanged(int key, bool down, bool repeat) => SendKeyboard(new { type = "key", key, down, repeat });
+    private void KeyboardLayout_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_keyboardReady) SendKeyboard(new { type = "layout", compact = ((ComboBox)sender).SelectedIndex == 1 });
+    }
+    private void KeyboardReset_Click(object sender, RoutedEventArgs e) => SendKeyboard(new { type = "reset" });
+    private void StopKeyboardInput()
+    {
+        _keyboardReady = false;
+        _keyboardPrepared = _keyboardStarting = false;
+        _keyboardLoadTimeout?.Stop();
+        _keyboardLoadTimeout = null;
+        if (_keyboardInput is not { } input) return;
+        input.KeyChanged -= KeyboardKeyChanged;
+        input.Dispose();
+        _keyboardInput = null;
+    }
+    private void ShowKeyboardFallback(string reason)
+    {
+        if (_closed || _currentStep != 4 || _keyboardTestControl is not null) return;
+        System.Diagnostics.Debug.WriteLine($"[InspectionKeyboard] {reason}");
+        _keyboardFailed = true;
+        AnimateWorkspace(true);
+        StopKeyboardInput();
+        PostScene(new { type = "keyboardMode", active = false });
+        KeyboardToolbar.Visibility = SceneStatus.Visibility = SceneHost.Visibility = Visibility.Collapsed;
+        SceneLoading.IsActive = false;
+        _keyboardTestControl = new Controls.KeyboardTestControl { Width = 940 };
+        KeyboardFallbackHost.Content = new Viewbox { Child = _keyboardTestControl, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly };
+        KeyboardFallbackHost.Visibility = Visibility.Visible;
+        SceneTitle.Text = "检查键盘 · 2D 备用版";
+        SceneHint.Text = "3D 暂不可用，已自动切换到 2D 键盘检测。功能键可能需要配合 Fn。";
+    }
 
-        var launchCard = new Border
+    // Animate the real viewport width: the WebView and its camera stay alive throughout.
+    private void AnimateWorkspace(bool expanded)
+    {
+        StopWorkspaceAnimation();
+        _layoutFrom = _keyboardExpansion;
+        _layoutTo = expanded ? 1 : 0;
+        DetailsPanel.Visibility = Visibility.Visible;
+        if (!IsLoaded || !new Windows.UI.ViewManagement.UISettings().AnimationsEnabled || _layoutFrom == _layoutTo)
         {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var launchStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Center };
-
-        launchStack.Children.Add(new TextBlock
+            _keyboardExpansion = _layoutTo;
+            ApplyWorkspaceLayout();
+            StartKeyboardTransition();
+            return;
+        }
+        _layoutStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+        _layoutAnimating = true;
+        CompositionTarget.Rendering += WorkspaceRendering;
+    }
+    private void WorkspaceRendering(object? sender, object e)
+    {
+        double t = Math.Clamp(System.Diagnostics.Stopwatch.GetElapsedTime(_layoutStarted).TotalMilliseconds / 450, 0, 1);
+        double ease = t * t * t * (10 + t * (-15 + 6 * t));
+        _keyboardExpansion = _layoutFrom + (_layoutTo - _layoutFrom) * ease;
+        ApplyWorkspaceLayout();
+        if (t >= 1) { StopWorkspaceAnimation(); StartKeyboardTransition(); }
+    }
+    private void ApplyWorkspaceLayout()
+    {
+        if (DetailsColumn is null) return;
+        if (_isCompleted)
         {
-            Text = "全屏检测坏点、漏光、色斑和漏光情况",
-            FontSize = 14,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-
-        var launchBtn = new Button
+            DetailsColumn.Width = new GridLength(0); Workspace.ColumnSpacing = 0;
+            DetailsPanel.Opacity = 1; DetailsPanel.IsHitTestVisible = true;
+            DetailsPanel.Clip = null; DetailsPanel.Visibility = Visibility.Visible;
+            return;
+        }
+        double remaining = 1 - _keyboardExpansion;
+        DetailsColumn.Width = new GridLength(_detailsWidth * remaining);
+        Workspace.ColumnSpacing = 20 * remaining;
+        DetailsPanel.Opacity = remaining;
+        DetailsPanel.IsHitTestVisible = _currentStep != 4;
+        DetailsPanel.Clip = new RectangleGeometry { Rect = new Windows.Foundation.Rect(0, 0, _detailsWidth * remaining, Math.Max(0, Workspace.ActualHeight)) };
+        DetailsPanel.Visibility = remaining < .001 ? Visibility.Collapsed : Visibility.Visible;
+    }
+    private void StopWorkspaceAnimation()
+    {
+        if (!_layoutAnimating) return;
+        CompositionTarget.Rendering -= WorkspaceRendering;
+        _layoutAnimating = false;
+    }
+    private void StartKeyboardTransition()
+    {
+        if (_closed || _currentStep != 4 || !_keyboardPrepared || _keyboardStarting || _keyboardFailed || _sceneFailed) return;
+        _keyboardStarting = true;
+        PostScene(new { type = "keyboardMode", active = true, width = Math.Max(1, Workspace.ActualWidth - 26) });
+    }
+    private void UpdateCompactChrome()
+    {
+        bool compact = LayoutRoot.ActualHeight > 0 && LayoutRoot.ActualHeight < 560;
+        LayoutRoot.RowSpacing = compact ? 8 : 16;
+        PageTitle.FontSize = compact ? 24 : 32;
+        PageSubtitle.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+        DeviceText.Visibility = _currentStep == 4 && compact ? Visibility.Collapsed : Visibility.Visible;
+        SceneHint.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+    }
+    private void BuildAudioStep()
+    {
+        var panel = ContentStack();
+        panel.Children.Add(Copy("先将音量调到适中，确认当前输出设备是要测试的扬声器。", true));
+        var button = new Button { Content = "播放测试语音", Style = Application.Current.Resources["AccentButtonStyle"] as Style };
+        button.Click += (_, _) => PlayTestAudio(); panel.Children.Add(button);
+        panel.Children.Add(Copy("听不到声音时，请检查系统音量、静音状态与音频输出设备。", true));
+    }
+    private void BuildStressTestStep()
+    {
+        _stressControl = new Controls.StressTestControl(inspectionMode: true);
+        _stressControl.StressStarted += OnStressStarted;
+        _stressControl.StressStopped += OnStressStopped;
+        _stressControl.InspectionSampled += OnInspectionSampled;
+        StepContentPanel.Children.Add(_stressControl);
+    }
+    private void OnStressStarted(object? sender, EventArgs e)
+    {
+        if (_closed || _isCompleted) return;
+        _stressWasRun = true;
+        BackButton.IsEnabled = NextButton.IsEnabled = ToolBackButton.IsEnabled = false;
+        foreach (var button in StepProgressPanel.Children.OfType<Button>()) button.IsEnabled = false;
+        ActivityText.Text = "运行中 · 先停止再继续";
+        FocusScene("烤机");
+        SceneTitle.Text = "烤机中 · 夏日热浪";
+        PostScene(new { type = "stress", active = true });
+    }
+    private void OnStressStopped(object? sender, EventArgs e)
+    {
+        if (_closed) return;
+        if (_isCompleted) { PostScene(new { type = "stress", active = false }); return; }
+        BackButton.IsEnabled = NextButton.IsEnabled = ToolBackButton.IsEnabled = true;
+        foreach (var button in StepProgressPanel.Children.OfType<Button>()) button.IsEnabled = true;
+        ActivityText.Text = "已停止，可导出报告";
+        PostScene(new { type = "stress", active = false });
+        FocusScene("散热");
+    }
+    private void OnInspectionSampled(MonitorSample sample) => PostScene(new
+    {
+        type = "stressSample", cpuTemp = SceneReading(sample.CpuTemp), gpuTemp = SceneReading(sample.GpuTemp),
+        cpuLoad = SceneReading(sample.CpuLoad), gpuLoad = SceneReading(sample.GpuLoad)
+    });
+    private static float SceneReading(float value) => float.IsFinite(value) ? value : -1;
+    private void BuildCameraStep()
+    {
+        var version = _contentVersion;
+        var panel = ContentStack();
+        var placeholder = Copy("摄像头未开启", true);
+        placeholder.HorizontalAlignment = HorizontalAlignment.Center;
+        placeholder.VerticalAlignment = VerticalAlignment.Center;
+        var player = new MediaPlayerElement { AutoPlay = true, Stretch = Stretch.Uniform, Visibility = Visibility.Collapsed };
+        _cameraPlayer = player;
+        var preview = new Grid { Height = 180 };
+        preview.Children.Add(placeholder); preview.Children.Add(player);
+        panel.Children.Add(preview);
+        var button = new Button { Content = "开启摄像头", Style = Application.Current.Resources["AccentButtonStyle"] as Style };
+        panel.Children.Add(button);
+        panel.Children.Add(Copy("没有摄像头的台式机可直接跳过此项。", true));
+        button.Click += async (_, _) =>
         {
-            Content = new StackPanel
+            if (_cameraLaunched)
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
+                StopCamera(); player.Visibility = Visibility.Collapsed;
+                placeholder.Visibility = Visibility.Visible;
+                button.Content = "开启摄像头"; return;
+            }
+            button.IsEnabled = false;
+            MediaCapture? capture = null;
+            try
+            {
+                var groups = await MediaFrameSourceGroup.FindAllAsync();
+                if (_closed || version != _contentVersion) return;
+                var group = groups.FirstOrDefault(g => g.SourceInfos.Any(i => i.SourceKind == MediaFrameSourceKind.Color));
+                if (group is null) { placeholder.Text = "未找到摄像头设备，可跳过此项"; return; }
+                capture = new MediaCapture();
+                await capture.InitializeAsync(new MediaCaptureInitializationSettings
                 {
-                    new FontIcon { Glyph = "\uE7F4", FontSize = 16 },
-                    new TextBlock { Text = "开始屏幕检测", FontSize = 14 }
-                }
-            },
-            Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 8, 24, 8)
+                    SourceGroup = group, SharingMode = MediaCaptureSharingMode.SharedReadOnly,
+                    StreamingCaptureMode = StreamingCaptureMode.Video, MemoryPreference = MediaCaptureMemoryPreference.Cpu
+                });
+                if (_closed || version != _contentVersion) return;
+                var source = capture.FrameSources.Values.FirstOrDefault(f => f.Info.SourceKind == MediaFrameSourceKind.Color);
+                if (source is null) { placeholder.Text = "摄像头未提供彩色视频源"; return; }
+                player.Source = MediaSource.CreateFromMediaFrameSource(source);
+                _mediaCapture = capture; capture = null;
+                player.Visibility = Visibility.Visible; placeholder.Visibility = Visibility.Collapsed;
+                _cameraLaunched = true; button.Content = "关闭摄像头";
+            }
+            catch (UnauthorizedAccessException) { placeholder.Text = "访问被拒绝，请在 Windows 隐私设置中允许摄像头访问"; }
+            catch (Exception ex) { if (!_closed && version == _contentVersion) placeholder.Text = $"摄像头启动失败：{ex.Message}"; }
+            finally { capture?.Dispose(); button.IsEnabled = true; }
         };
-        launchBtn.Click += (_, _) => LaunchScreenTest();
-        launchStack.Children.Add(launchBtn);
-
-        launchCard.Child = launchStack;
-        stack.Children.Add(launchCard);
-
-        StepContentPanel.Children.Add(stack);
+    }
+    private void StopCamera()
+    {
+        if (_cameraPlayer is { } player)
+        {
+            var source = player.Source;
+            player.Source = null;
+            var mediaPlayer = player.MediaPlayer;
+            player.SetMediaPlayer(null);
+            mediaPlayer?.Dispose();
+            (source as IDisposable)?.Dispose();
+        }
+        _mediaCapture?.Dispose(); _mediaCapture = null;
+        _cameraLaunched = false;
     }
 
     private void LaunchScreenTest()
@@ -600,252 +696,6 @@ public sealed partial class QuickDeviceCheckPage : Page
         }
     }
 
-    #endregion
-
-    #region Step 5: Peripheral Check
-
-    private void BuildPeripheralStep()
-    {
-        var stack = new StackPanel { Spacing = 16 };
-
-        var tipCard = BuildTipCard(
-            "请测试键盘每个按键是否正常响应，同时检查硬盘读写是否正常。\n" +
-            "按下按键后对应键位会高亮显示。");
-        stack.Children.Add(tipCard);
-
-        _keyboardTestControl = new Controls.KeyboardTestControl
-        {
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        stack.Children.Add(_keyboardTestControl);
-
-        StepContentPanel.Children.Add(stack);
-    }
-
-    #endregion
-
-    #region Step 6: Camera
-
-    private void BuildCameraStep()
-    {
-        var stack = new StackPanel { Spacing = 16 };
-
-        var tipCard = BuildTipCard("点击下方按钮开启摄像头，确认画面是否正常显示。");
-        stack.Children.Add(tipCard);
-
-        var cameraCard = new Border
-        {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Width = 480,
-            Height = 320,
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-
-        var cameraGrid = new Grid();
-        var placeholder = new StackPanel
-        {
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        placeholder.Children.Add(new FontIcon
-        {
-            Glyph = "\uE960",
-            FontSize = 28,
-            Foreground = new SolidColorBrush(ThemeColors.DimText)
-        });
-        var placeholderText = new TextBlock
-        {
-            Text = "摄像头预览",
-            FontSize = 14,
-            Foreground = new SolidColorBrush(ThemeColors.DimText)
-        };
-        placeholder.Children.Add(placeholderText);
-
-        _cameraPlayer = new MediaPlayerElement
-        {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-            Stretch = Stretch.UniformToFill,
-            AutoPlay = true,
-            Visibility = Visibility.Collapsed
-        };
-
-        cameraGrid.Children.Add(placeholder);
-        cameraGrid.Children.Add(_cameraPlayer);
-
-        cameraCard.Child = cameraGrid;
-        stack.Children.Add(cameraCard);
-
-        var cameraBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uE960", FontSize = 16 },
-                    new TextBlock { Text = "开启摄像头", FontSize = 14 }
-                }
-            },
-            Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 8, 24, 8),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        cameraBtn.Click += async (_, _) =>
-        {
-            if (!_cameraLaunched)
-            {
-                try
-                {
-                    var groups = await MediaFrameSourceGroup.FindAllAsync();
-                    if (groups.Count == 0)
-                    {
-                        placeholderText.Text = "未找到摄像头设备";
-                        SendToast("未找到摄像头", "未检测到摄像头设备");
-                        return;
-                    }
-
-                    _mediaFrameSourceGroup = groups[0];
-                    _mediaCapture = new MediaCapture();
-                    var settings = new MediaCaptureInitializationSettings
-                    {
-                        SourceGroup = _mediaFrameSourceGroup,
-                        SharingMode = MediaCaptureSharingMode.SharedReadOnly,
-                        StreamingCaptureMode = StreamingCaptureMode.Video,
-                        MemoryPreference = MediaCaptureMemoryPreference.Cpu
-                    };
-                    await _mediaCapture.InitializeAsync(settings);
-
-                    var frameSource = _mediaCapture.FrameSources[_mediaFrameSourceGroup.SourceInfos[0].Id];
-                    _cameraPlayer!.Source = MediaSource.CreateFromMediaFrameSource(frameSource);
-
-                    _cameraPlayer.Visibility = Visibility.Visible;
-                    placeholder.Visibility = Visibility.Collapsed;
-                    _cameraLaunched = true;
-                    (cameraBtn.Content as StackPanel)!.Children.OfType<TextBlock>().First().Text = "关闭摄像头";
-                    SendToast("摄像头已开启", "请确认画面是否正常");
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    SendToast("摄像头访问被拒绝", "请在隐私设置中允许访问摄像头");
-                }
-                catch (Exception ex)
-                {
-                    SendToast("摄像头启动失败", ex.Message);
-                }
-            }
-            else
-            {
-                StopCamera();
-                _cameraPlayer!.Source = null;
-                _cameraPlayer.Visibility = Visibility.Collapsed;
-                placeholder.Visibility = Visibility.Visible;
-                _cameraLaunched = false;
-                (cameraBtn.Content as StackPanel)!.Children.OfType<TextBlock>().First().Text = "开启摄像头";
-            }
-        };
-        stack.Children.Add(cameraBtn);
-
-        stack.Children.Add(new TextBlock
-        {
-            Text = "💡 如果摄像头无法打开，请检查隐私设置中是否允许访问摄像头",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.DimText),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 400
-        });
-
-        StepContentPanel.Children.Add(stack);
-    }
-
-    private void StopCamera()
-    {
-        try
-        {
-            if (_mediaCapture != null)
-            {
-                Task.Run(() => _mediaCapture.Dispose()).Wait(TimeSpan.FromSeconds(3));
-                _mediaCapture = null;
-            }
-        }
-        catch { }
-        _cameraLaunched = false;
-    }
-
-    #endregion
-
-    #region Step 7: Audio Test
-
-    private void BuildAudioStep()
-    {
-        var stack = new StackPanel { Spacing = 16 };
-
-        var tipCard = BuildTipCard("点击下方按钮播放测试语音，确认扬声器是否能正常发声。");
-        stack.Children.Add(tipCard);
-
-        var audioCard = new Border
-        {
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        var audioStack = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Center };
-
-        audioStack.Children.Add(new FontIcon
-        {
-            Glyph = "\uEA60",
-            FontSize = 28,
-            Foreground = new SolidColorBrush(ThemeColors.AccentBlue)
-        });
-
-        audioStack.Children.Add(new TextBlock
-        {
-            Text = "将使用 Windows 语音合成朗读测试语句",
-            FontSize = 14,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-
-        var playBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uE102", FontSize = 16 },
-                    new TextBlock { Text = "播放测试语音", FontSize = 14 }
-                }
-            },
-            Style = Application.Current.Resources["AccentButtonStyle"] as Style,
-            Padding = new Thickness(24, 8, 24, 8),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        playBtn.Click += (_, _) => PlayTestAudio();
-        audioStack.Children.Add(playBtn);
-
-        audioStack.Children.Add(new TextBlock
-        {
-            Text = "💡 如果听不到语音，请检查音量设置和扬声器连接",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.DimText),
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-
-        audioCard.Child = audioStack;
-        stack.Children.Add(audioCard);
-        StepContentPanel.Children.Add(stack);
-    }
-
     private void PlayTestAudio()
     {
         try
@@ -860,187 +710,6 @@ public sealed partial class QuickDeviceCheckPage : Page
         }
     }
 
-    #endregion
-
-    #region Step 8: Stress Test
-
-    private void BuildStressTestStep()
-    {
-        _stressControl = new Controls.StressTestControl
-        {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-        _stressControl.StressStarted += OnStressStarted;
-        _stressControl.StressStopped += OnStressStopped;
-        StepContentPanel.Children.Add(_stressControl);
-    }
-
-    private DispatcherTimer? _reclaimTimer;
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool BringWindowToTop(IntPtr hWnd);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    private const int SW_SHOW = 5;
-
-    private void OnStressStarted(object? sender, EventArgs e)
-    {
-        StepProgressPanel.Visibility = Visibility.Collapsed;
-        StepIndicatorText.Visibility = Visibility.Collapsed;
-        StepGlyphIcon.Visibility = Visibility.Collapsed;
-        StepTitleText.Visibility = Visibility.Collapsed;
-        StepDescText.Visibility = Visibility.Collapsed;
-        BackButton.Visibility = Visibility.Collapsed;
-        NextButton.Visibility = Visibility.Collapsed;
-        ForceToForeground();
-        _reclaimTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        _reclaimTimer.Tick += (_, _) =>
-        {
-            _reclaimTimer.Stop();
-            _reclaimTimer = null;
-            if (_stressControl?.IsRunning == true)
-            {
-                ForceToForeground();
-                var t2 = new DispatcherTimer { Interval = TimeSpan.FromSeconds(7) };
-                t2.Tick += (_, _) =>
-                {
-                    t2.Stop();
-                    if (_stressControl?.IsRunning == true) ForceToForeground();
-                };
-                t2.Start();
-            }
-        };
-        _reclaimTimer.Start();
-    }
-
-    private void ForceToForeground()
-    {
-        try
-        {
-            var mainWindow = App.MainWindow;
-            if (mainWindow is null) return;
-            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(mainWindow);
-            mainWindow.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
-            ShowWindow(hwnd, SW_SHOW);
-            BringWindowToTop(hwnd);
-            SetForegroundWindow(hwnd);
-        }
-        catch { }
-    }
-
-    private void OnStressStopped(object? sender, EventArgs e)
-    {
-        StepProgressPanel.Visibility = Visibility.Visible;
-        StepIndicatorText.Visibility = Visibility.Visible;
-        StepGlyphIcon.Visibility = Visibility.Visible;
-        StepTitleText.Visibility = Visibility.Visible;
-        StepDescText.Visibility = Visibility.Visible;
-        NextButton.Visibility = Visibility.Visible;
-        BackButton.Visibility = _currentStep > 0 ? Visibility.Visible : Visibility.Collapsed;
-        try { App.MainWindow?.AppWindow.SetPresenter(AppWindowPresenterKind.Default); } catch { }
-    }
-
-    #endregion
-
-    #region Navigation
-
-    private void NextButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentStep >= TotalSteps - 1)
-        {
-            Cleanup();
-            try { App.MainWindow?.AppWindow.SetPresenter(AppWindowPresenterKind.Default); } catch { }
-            App.MainWindow?.NavigateBack();
-            return;
-        }
-
-        _currentStep++;
-        UpdateStepUI();
-        PlayStepTransition();
-    }
-
-    private void BackButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentStep <= 0) return;
-        _currentStep--;
-        UpdateStepUI();
-        PlayStepTransition();
-    }
-
-    private void PlayStepTransition()
-    {
-        var fadeIn = new DoubleAnimation
-        {
-            From = 0,
-            To = 1,
-            Duration = TimeSpan.FromMilliseconds(350),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(fadeIn, StepContentPanel);
-        Storyboard.SetTargetProperty(fadeIn, "Opacity");
-
-        var slideUp = new DoubleAnimation
-        {
-            From = 30,
-            To = 0,
-            Duration = TimeSpan.FromMilliseconds(400),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(slideUp, StepContentPanelTransform);
-        Storyboard.SetTargetProperty(slideUp, "Y");
-
-        var sb = new Storyboard();
-        sb.Children.Add(fadeIn);
-        sb.Children.Add(slideUp);
-        StepContentPanel.Opacity = 0;
-        sb.Begin();
-    }
-
-    #endregion
-
-    #region Helpers
-
-    private Border BuildTipCard(string text)
-    {
-        var card = new Border
-        {
-            Background = new SolidColorBrush(Color.FromArgb(30, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(80, ThemeColors.AccentBlue.R, ThemeColors.AccentBlue.G, ThemeColors.AccentBlue.B)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16, 12, 16, 12),
-            HorizontalAlignment = HorizontalAlignment.Center,
-            MaxWidth = 600
-        };
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8
-        };
-        row.Children.Add(new FontIcon
-        {
-            Glyph = "\uE946",
-            FontSize = 18,
-            Foreground = new SolidColorBrush(ThemeColors.AccentBlue),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        row.Children.Add(new TextBlock
-        {
-            Text = text,
-            FontSize = 14,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        card.Child = row;
-        return card;
-    }
-
     private static void SendToast(string title, string message)
     {
         try
@@ -1051,5 +720,5 @@ public sealed partial class QuickDeviceCheckPage : Page
         catch { }
     }
 
-    #endregion
+
 }

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <!-- cert-block 恶意软件拦截器 -->
-  <path fill="none" d="M5 5.6L12 3.2L19 5.6V11.4C19 16 15.9 19.6 12 21C8.1 19.6 5 16 5 11.4V5.6Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path fill="none" d="M8.75 12.1L11 14.35L15.35 10" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="a" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFB2B6"/><stop offset="0.500" stop-color="#F47F92"/><stop offset="1.000" stop-color="#D65373"/></linearGradient><linearGradient id="b" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#FFFFFF"/><stop offset="1.000" stop-color="#E5F1FB"/></linearGradient><linearGradient id="c" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#A5B9CA"/><stop offset="1.000" stop-color="#4C637B"/></linearGradient><linearGradient id="accent" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse"><stop offset="0.000" stop-color="#9EE8C7"/><stop offset="1.000" stop-color="#27AD83"/></linearGradient></defs>
+<ellipse cx="64" cy="117" rx="43" ry="4" fill="#233B58" opacity=".09"/>
+<path d="M32 12h42l25 25v65a10 10 0 0 1-10 10H32a10 10 0 0 1-10-10V22a10 10 0 0 1 10-10Z" fill="url(#b)"/><path d="M74 12v18a7 7 0 0 0 7 7h18Z" fill="#BAD4E9"/><rect x="34" y="45" width="42" height="5" rx="2" fill="#ABC8DE"/><rect x="34" y="57" width="31" height="5" rx="2" fill="#C2D7E8"/><circle cx="86" cy="87" r="27" fill="url(#a)"/><path d="m72 73 28 28" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

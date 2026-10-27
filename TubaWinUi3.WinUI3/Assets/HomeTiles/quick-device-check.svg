@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs><linearGradient id="board" x1="24" y1="15" x2="109" y2="117" gradientUnits="userSpaceOnUse"><stop stop-color="#72DDA4"/><stop offset="1" stop-color="#15936A"/></linearGradient><linearGradient id="paper" x1="39" y1="30" x2="95" y2="96" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#DFF5EC"/></linearGradient><linearGradient id="badge" x1="75" y1="71" x2="113" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#39CB8C"/><stop offset="1" stop-color="#0C956C"/></linearGradient></defs>
+<ellipse cx="66" cy="116" rx="39" ry="4" fill="#1D7457" opacity=".09"/>
+<rect x="25" y="15" width="76" height="99" rx="12" fill="url(#board)"/><rect x="33" y="25" width="60" height="80" rx="7" fill="url(#paper)"/>
+<rect x="46" y="10" width="34" height="21" rx="7" fill="#A8EBC7"/><rect x="55" y="15" width="16" height="5" rx="2.5" fill="#45B789"/>
+<rect x="43" y="43" width="39" height="5" rx="2.5" fill="#9BCBB6"/><rect x="43" y="57" width="30" height="5" rx="2.5" fill="#B9DDCC"/><rect x="43" y="71" width="21" height="5" rx="2.5" fill="#B9DDCC"/>
+<circle cx="94" cy="92" r="25" fill="url(#badge)"/><path d="m82 92 8 8 16-18" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

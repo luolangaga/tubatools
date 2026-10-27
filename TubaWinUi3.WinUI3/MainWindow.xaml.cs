@@ -133,6 +133,10 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
 
+        ApplyNavigationIcons();
+        NavView.ActualThemeChanged += NavigationThemeChanged;
+        Activated += NavigationWindowActivated;
+
         SearchListView.ItemsSource = _searchResults;
 
         // AutoSuggestBox 会先于实例处理 Escape（置 Handled），键盘导航必须用 handledEventsToo 注册
@@ -193,6 +197,7 @@ public sealed partial class MainWindow : Window
     private void NavView_Loaded(object sender, RoutedEventArgs e)
     {
         NavView.Loaded -= NavView_Loaded;
+        ApplyNavigationIcons();
         ApplyLocalizedShellText();
         _ = InitializeAfterSplashAsync();
     }
@@ -349,8 +354,9 @@ public sealed partial class MainWindow : Window
 
     private static string? ResolvePageTag(Type pageType, object? parameter)
     {
+        if (pageType == typeof(DashboardPage)) return "home";
         if (pageType == typeof(SettingsPage)) return "settings";
-        if (pageType == typeof(FavoritesPage)) return "favorites";
+        if (pageType == typeof(FavoritesPage)) return "home";
         if (pageType == typeof(HardwarePage)) return "hardware";
         if (pageType == typeof(BuiltinToolsPage)) return "builtin";
         if (pageType == typeof(CommunityToolsPage)) return "community";
@@ -358,7 +364,7 @@ public sealed partial class MainWindow : Window
         if (pageType == typeof(HomePage))
         {
             if (parameter is string category) return category;
-            return "all";
+            return "home";
         }
         return null;
     }
@@ -510,6 +516,8 @@ public sealed partial class MainWindow : Window
         try { EnergyStarService.Shutdown(); } catch { }
 
         BackdropService.BackdropChanged -= OnBackdropChanged;
+        NavView.ActualThemeChanged -= NavigationThemeChanged;
+        Activated -= NavigationWindowActivated;
         AppWindow.Changed -= AppWindow_Changed;
         AppWindow.Closing -= MainWindow_Closing;
         try { WindowSizeService.SaveWindowSize(this); } catch { }
@@ -686,11 +694,14 @@ public sealed partial class MainWindow : Window
         {
             switch (item.Tag)
             {
+                case "home":
+                    NavFrame.Navigate(typeof(DashboardPage));
+                    break;
                 case "all":
-                    NavFrame.Navigate(typeof(HomePage), null);
+                    NavFrame.Navigate(typeof(DashboardPage));
                     break;
                 case "favorites":
-                    NavFrame.Navigate(typeof(FavoritesPage));
+                    NavFrame.Navigate(typeof(DashboardPage), "favorites");
                     break;
                 case "hardware":
                     NavFrame.Navigate(typeof(HardwarePage));
@@ -724,7 +735,7 @@ public sealed partial class MainWindow : Window
 
     private void NavigateToDefaultPage()
     {
-        var defaultPage = AppSettings.Get("DefaultPage") ?? "all";
+        var defaultPage = AppSettings.Get("DefaultPage") ?? "home";
 
         NavigationViewItem? targetItem = null;
 
@@ -743,7 +754,7 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            NavFrame.Navigate(typeof(HomePage), null);
+            NavFrame.Navigate(typeof(DashboardPage));
         }
     }
 
@@ -766,7 +777,7 @@ public sealed partial class MainWindow : Window
             {
                 Content = LocalizationService.GetCategoryDisplayName(category),
                 Tag = category,
-                Icon = new FontIcon { Glyph = GetCategoryGlyphStatic(category) }
+                Icon = NavigationIconService.Create(category, GetCategoryGlyphStatic(category), _navigationHighContrast)
             });
             _dynamicMenuItemCount++;
         }
@@ -777,7 +788,7 @@ public sealed partial class MainWindow : Window
             {
                 Content = LocalizationService.GetCategoryDisplayName(otherCategory),
                 Tag = otherCategory,
-                Icon = new FontIcon { Glyph = GetCategoryGlyphStatic(otherCategory) }
+                Icon = NavigationIconService.Create(otherCategory, GetCategoryGlyphStatic(otherCategory), _navigationHighContrast)
             });
             _dynamicMenuItemCount++;
         }
@@ -895,6 +906,13 @@ public sealed partial class MainWindow : Window
     public void NavigateToBenchmark()
     {
         NavFrame.Navigate(typeof(PerformanceBenchmarkPage));
+    }
+
+    public void LaunchCatalogTool(ToolItem tool)
+    {
+        // Reuse the catalog's download, script, architecture and launch handling.
+        NavFrame.Navigate(typeof(HomePage), new SearchNavigationTarget { HighlightToolPath = tool.Path });
+        if (NavFrame.Content is HomePage page) page.LaunchTool(tool, false);
     }
 
     public void NavigateToToolPage(Type pageType, object? parameter = null)
@@ -1172,8 +1190,8 @@ public sealed partial class MainWindow : Window
                 SyncNavSelection("hardware");
                 break;
             case "favorites":
-                frame.Navigate(typeof(FavoritesPage));
-                SyncNavSelection("favorites");
+                frame.Navigate(typeof(DashboardPage), "favorites");
+                SyncNavSelection("home");
                 break;
             case "builtin":
                 frame.Navigate(typeof(BuiltinToolsPage));

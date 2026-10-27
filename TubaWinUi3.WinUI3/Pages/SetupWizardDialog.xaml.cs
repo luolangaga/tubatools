@@ -1,158 +1,136 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using TubaWinUi3.Services;
-using Windows.UI;
 
 namespace TubaWinUi3.Pages;
 
 public sealed partial class SetupWizardDialog : ContentDialog
 {
     private int _currentStep;
-    private bool _compactMode;
-    private BackdropType _backdropType = BackdropType.Mica;
-
-    private readonly Border[] _layoutOptions = [];
-    private readonly Border[] _backdropOptions = [];
+    private Storyboard? _transition;
 
     public SetupWizardDialog()
     {
         InitializeComponent();
-
-        _layoutOptions = [CardModeOption, CompactModeOption];
-        _backdropOptions = [BackdropMicaOption, BackdropMicaAltOption, BackdropAcrylicOption];
-
+        LayoutChoices.SelectedIndex = CompactModeService.IsCompactModeEnabled() ? 1 : 0;
+        var backdrop = BackdropService.GetBackdropType().ToString();
+        BackdropChoices.SelectedItem = BackdropChoices.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == backdrop)
+            ?? BackdropChoices.Items[0];
+        WizardCloseToTrayToggle.IsOn = CloseToTrayService.IsEnabled;
         UpdateStepUI();
     }
 
-    private void UpdateStepUI()
+    private void OnOpened(ContentDialog sender, ContentDialogOpenedEventArgs args)
     {
-        Step0Content.Visibility = _currentStep == 0 ? Visibility.Visible : Visibility.Collapsed;
-        Step1Content.Visibility = _currentStep == 1 ? Visibility.Visible : Visibility.Collapsed;
-        Step2Content.Visibility = _currentStep == 2 ? Visibility.Visible : Visibility.Collapsed;
-        Step3Content.Visibility = _currentStep == 3 ? Visibility.Visible : Visibility.Collapsed;
-
-        StepPager.SelectedPageIndex = _currentStep;
-
-        switch (_currentStep)
-        {
-            case 0:
-                StepTitleText.Text = "欢迎使用图吧工具箱CE";
-                StepSubtitleText.Text = "请仔细阅读以下重要信息。";
-                PrimaryButtonText = "下一步";
-                SecondaryButtonText = "上一步";
-                IsSecondaryButtonEnabled = false;
-                CloseButtonText = "跳过";
-                break;
-            case 1:
-                StepTitleText.Text = "选择显示方式";
-                StepSubtitleText.Text = "您可以随时在设置中更改此选项。";
-                PrimaryButtonText = "下一步";
-                SecondaryButtonText = "上一步";
-                IsSecondaryButtonEnabled = true;
-                CloseButtonText = "跳过";
-                break;
-            case 2:
-                StepTitleText.Text = "选择背景材质";
-                StepSubtitleText.Text = "不同的材质会为窗口带来不同的视觉效果。";
-                PrimaryButtonText = "下一步";
-                SecondaryButtonText = "上一步";
-                IsSecondaryButtonEnabled = true;
-                CloseButtonText = "跳过";
-                break;
-            case 3:
-                StepTitleText.Text = "搜索集成";
-                StepSubtitleText.Text = "让工具出现在 Windows 搜索中，方便快速启动。";
-                PrimaryButtonText = "完成";
-                SecondaryButtonText = "上一步";
-                IsSecondaryButtonEnabled = true;
-                CloseButtonText = "跳过";
-                break;
-        }
+        ResizeContent();
+        XamlRoot.Changed += OnXamlRootChanged;
+        _ = SearchPicker.InitializeAsync();
     }
 
-    private void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private void OnClosed(ContentDialog sender, ContentDialogClosedEventArgs args)
     {
-        if (_currentStep < 3)
+        SearchPicker.CancelPendingLoad();
+        _transition?.Stop();
+        if (XamlRoot is not null) XamlRoot.Changed -= OnXamlRootChanged;
+    }
+
+    private void OnXamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => ResizeContent();
+
+    private void ResizeContent()
+    {
+        if (XamlRoot is null) return;
+        WizardRoot.Width = Math.Clamp(XamlRoot.Size.Width - 80, 240, 560);
+        WizardRoot.Height = Math.Clamp(XamlRoot.Size.Height - 180, 420, 540);
+    }
+
+    private void UpdateStepUI(bool animate = false, bool forward = true)
+    {
+        PreferencesPanel.Visibility = _currentStep == 0 ? Visibility.Visible : Visibility.Collapsed;
+        SearchPicker.Visibility = _currentStep == 1 ? Visibility.Visible : Visibility.Collapsed;
+        StepTitleText.Text = _currentStep == 0 ? "欢迎使用图吧工具箱" : "把常用工具，放进 Windows 搜索";
+        StepSubtitleText.Text = _currentStep == 0 ? "先选好外观与使用习惯，马上开始。" : "按 Win 键搜索名称，直接打开你勾选的工具。";
+        StepCountText.Text = $"{_currentStep + 1} / 2";
+        StepProgress.Value = _currentStep + 1;
+        PrimaryButtonText = _currentStep == 0 ? "下一步" : "完成设置";
+        SecondaryButtonText = _currentStep == 0 ? "" : "上一步";
+        CloseButtonText = "跳过设置";
+        UpdateSearchState();
+        if (animate) AnimateStep(forward);
+    }
+
+    private void AnimateStep(bool forward)
+    {
+        _transition?.Stop();
+        StepSlide.X = 0;
+        StepHost.Opacity = 1;
+        if (!new Windows.UI.ViewManagement.UISettings().AnimationsEnabled) return;
+        var slide = new DoubleAnimation
+        {
+            From = forward ? -36 : 36, To = 0, Duration = TimeSpan.FromMilliseconds(240),
+            EnableDependentAnimation = true, EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(slide, StepSlide);
+        Storyboard.SetTargetProperty(slide, "X");
+        var fade = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(180) };
+        Storyboard.SetTarget(fade, StepHost);
+        Storyboard.SetTargetProperty(fade, "Opacity");
+        _transition = new Storyboard();
+        _transition.Children.Add(slide);
+        _transition.Children.Add(fade);
+        _transition.Begin();
+    }
+
+    private async void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        if (_currentStep == 0)
         {
             args.Cancel = true;
-            _currentStep++;
-            UpdateStepUI();
+            _currentStep = 1;
+            UpdateStepUI(animate: true);
+            return;
         }
-        else
+        if (!SearchPicker.CanApply)
         {
-            ApplySettings();
+            args.Cancel = true;
+            UpdateSearchState();
+            return;
         }
+        var deferral = args.GetDeferral();
+        try
+        {
+            IsPrimaryButtonEnabled = false;
+            ApplyPreferences();
+            var result = await SearchPicker.ApplySettingsAsync();
+            if (result.Errors.Count > 0)
+            {
+                args.Cancel = true;
+                SearchPicker.ShowRegistrationErrors(result.Errors);
+            }
+            else AppSettings.Set("SetupCompleted", true);
+        }
+        finally { UpdateSearchState(); deferral.Complete(); }
     }
 
     private void OnSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         args.Cancel = true;
-        if (_currentStep > 0)
-        {
-            _currentStep--;
-            UpdateStepUI();
-        }
+        _currentStep = 0;
+        UpdateStepUI(animate: true, forward: false);
     }
 
-    private void OnCloseButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-    {
+    private void OnCloseButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args) =>
         AppSettings.Set("SetupCompleted", true);
-    }
 
-    private void LayoutOption_Tapped(object sender, TappedRoutedEventArgs e)
+    private void SearchPicker_StateChanged(object? sender, EventArgs e) => UpdateSearchState();
+
+    private void UpdateSearchState() => IsPrimaryButtonEnabled = _currentStep == 0 || SearchPicker.CanApply;
+
+    private void ApplyPreferences()
     {
-        if (sender is not Border border) return;
-        var tag = border.Tag?.ToString();
-        _compactMode = tag == "Compact";
-        UpdateLayoutOptionSelection(border);
-    }
-
-    private void UpdateLayoutOptionSelection(Border selected)
-    {
-        foreach (var border in _layoutOptions)
-        {
-            if (border is null) continue;
-            var isSelected = border == selected;
-            border.BorderBrush = isSelected
-                ? (Brush)App.Current.Resources["AccentFillColorDefaultBrush"]
-                : (Brush)App.Current.Resources["SubtleFillColorSecondaryBrush"];
-        }
-    }
-
-    private void BackdropOption_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (sender is not Border border) return;
-        if (!Enum.TryParse<BackdropType>(border.Tag?.ToString(), out var type)) return;
-        _backdropType = type;
-        UpdateBackdropOptionSelection(border);
-    }
-
-    private void UpdateBackdropOptionSelection(Border selected)
-    {
-        foreach (var border in _backdropOptions)
-        {
-            if (border is null) continue;
-            var isSelected = border == selected;
-            border.BorderBrush = isSelected
-                ? (Brush)App.Current.Resources["AccentFillColorDefaultBrush"]
-                : (Brush)App.Current.Resources["SubtleFillColorSecondaryBrush"];
-        }
-    }
-
-    private void ApplySettings()
-    {
-        CompactModeService.SetCompactModeEnabled(_compactMode);
-        BackdropService.SetBackdropType(_backdropType);
-
-        var enableSearchIndex = WizardSearchIndexToggle.IsOn;
-        AppSettings.Set("WindowsSearchIndex", enableSearchIndex);
-        if (enableSearchIndex)
-            _ = WindowsSearchIndexService.RegisterAllToolsAsync();
-
+        CompactModeService.SetCompactModeEnabled(LayoutChoices.SelectedIndex == 1);
+        if (BackdropChoices.SelectedItem is ComboBoxItem { Tag: string value } && Enum.TryParse<BackdropType>(value, out var backdrop))
+            BackdropService.SetBackdropType(backdrop);
         CloseToTrayService.SetEnabled(WizardCloseToTrayToggle.IsOn);
-
-        AppSettings.Set("SetupCompleted", true);
     }
 }

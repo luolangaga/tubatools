@@ -117,7 +117,18 @@ public class HardwareSummaryTests
         Assert.Contains("设计容量：70.0 Wh", text);
         Assert.Contains("循环次数：0 次", text);
         Assert.Contains("满充容量：未能读取", text);
+        Assert.Contains("健康度：未能读取", text);
         Assert.Contains("序列号：未能读取", text);
+    }
+
+    [Fact]
+    public void BatterySummary_ShowsHealthWhenCapacitiesAvailable()
+    {
+        var battery = new BatteryDetail { Name = "Battery", DesignCapacity = "70.0 Wh",
+            FullChargeCapacity = "63.0 Wh", Health = "90%" };
+        var text = HardwareInfoService.FormatBatterySummary(battery);
+        Assert.Contains("满充容量：63.0 Wh", text);
+        Assert.Contains("健康度：90%", text);
     }
 
     [Fact]

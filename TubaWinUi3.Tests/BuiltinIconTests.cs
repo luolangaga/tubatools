@@ -58,9 +58,9 @@ public class BuiltinIconTests
     }
 
     [Fact]
-    public void EveryIcon_FollowsFluentConventions()
+    public void EveryIcon_FollowsFilledGradientConventions()
     {
-        var problems = IconAssetValidation.ValidateAll(IconDir);
+        var problems = IconAssetValidation.ValidateAll(IconDir, filled: true);
         Assert.True(problems.Count == 0, string.Join("\n", problems));
     }
 

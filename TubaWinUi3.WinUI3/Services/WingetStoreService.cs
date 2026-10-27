@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -328,35 +328,62 @@ public static class WingetStoreService
         }
     }
 
-    /// <summary>
-    /// 一键安装：获取直链 → 加入下载队列 → 下载完自动启动安装程序
-    /// </summary>
-    public static async Task<DownloadItem?> InstallPackageAsync(
-        string packageId, string displayName, string? glyph,
-        IProgress<string>? statusProgress, CancellationToken ct = default)
+    private static readonly SemaphoreSlim InstallGate = new(1, 1);
+
+    public static DownloadItem EnqueueDirectInstaller(StorePackage package)
     {
-        statusProgress?.Report("正在获取下载链接...");
+        if (!package.CanInstall || !package.IsDirectDownload)
+            throw new ArgumentException("未配置有效的 HTTPS 安装包地址。", nameof(package));
+        var destination = Path.Combine(Path.GetTempPath(), "TubaWinUi3_Store");
+        Directory.CreateDirectory(destination);
+        return DownloadQueueService.Enqueue(package.Name, package.DownloadUrl!, destination,
+            new InstallerLaunchProcessor(), "官方安装包 · 下载完成后启动安装", package.Glyph);
+    }
 
-        var (url, fileName, error) = await GetInstallerUrlAsync(packageId, ct);
-        if (url is null)
+    /// <summary>以精确包 ID 交给 WinGet 安装，保留依赖、校验和及 portable 包处理。</summary>
+    internal static ProcessStartInfo BuildInstallStartInfo(string packageId)
+    {
+        if (string.IsNullOrWhiteSpace(packageId)
+            || !Regex.IsMatch(packageId, @"^[A-Za-z0-9][A-Za-z0-9._+\-]*$"))
+            throw new ArgumentException("无效的 WinGet 包 ID。", nameof(packageId));
+        var startInfo = new ProcessStartInfo
         {
-            statusProgress?.Report(error ?? "获取下载链接失败");
-            return null;
+            FileName = "winget", UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+        };
+        foreach (var argument in new[] { "install", "--id", packageId, "--exact", "--source", "winget",
+                     "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity", "--silent" })
+            startInfo.ArgumentList.Add(argument);
+        return startInfo;
+    }
+
+    public static async Task InstallPackageAsync(string packageId, IProgress<string>? statusProgress,
+        CancellationToken ct = default)
+    {
+        var startInfo = BuildInstallStartInfo(packageId);
+        statusProgress?.Report("等待 WinGet 安装…");
+        await InstallGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            statusProgress?.Report("WinGet 正在下载并安装…");
+            using var process = Process.Start(startInfo)
+                ?? throw new InvalidOperationException("无法启动 WinGet，请安装或更新 Windows 应用安装程序。");
+            // 启动后让 WinGet 完成；导航离开不应终止正在运行的安装程序。
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync().ConfigureAwait(false);
+            var output = await outputTask.ConfigureAwait(false);
+            var error = await errorTask.ConfigureAwait(false);
+            if (process.ExitCode != 0)
+            {
+                var detail = (output + "\n" + error).Trim();
+                if (detail.Length > 3000) detail = detail[^3000..];
+                throw new InvalidOperationException($"WinGet 安装失败（0x{unchecked((uint)process.ExitCode):X8}）。\n{detail}");
+            }
+            statusProgress?.Report("安装完成");
         }
-
-        var destDir = Path.Combine(Path.GetTempPath(), "TubaWinUi3_Winget");
-        Directory.CreateDirectory(destDir);
-
-        var item = DownloadQueueService.Enqueue(
-            displayName: displayName,
-            downloadUrl: url,
-            destinationPath: destDir,
-            postProcessor: new InstallerLaunchProcessor(),
-            description: $"WinGet: {packageId}",
-            glyph: glyph);
-
-        statusProgress?.Report("已加入下载队列");
-        return item;
+        finally { InstallGate.Release(); }
     }
 
     /// <summary>

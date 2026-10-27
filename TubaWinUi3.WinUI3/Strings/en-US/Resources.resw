@@ -1321,7 +1321,7 @@
     <value>Remember window position and size</value>
   </data>
   <data name="Settings_SearchIndex_Desc.Text" xml:space="preserve">
-    <value>Search a tool name (e.g. CPU-Z) in the Start menu to launch it directly without opening the toolbox; duplicate versions are deduplicated, and shortcuts are cleaned up when disabled</value>
+    <value>Choose tools to add to Start and Windows Search. Select none to remove all tool registrations.</value>
   </data>
   <data name="Settings_Telemetry_Title.Text" xml:space="preserve">
     <value>Send anonymous usage data</value>
@@ -5132,4 +5132,147 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="Hw_FocusNoDetails" xml:space="preserve"><value>No additional specifications reported</value></data>
   <data name="Hw_FocusDetailFailed" xml:space="preserve"><value>Could not read detailed specifications. Try again</value></data>
   <data name="Hw_ModelCredit" xml:space="preserve"><value>Illustrative model: </value></data>
+  <data name="Settings_LogDir_Title.Text" xml:space="preserve"><value>Log folder</value></data>
+  <data name="Settings_LogDir_Desc.Text" xml:space="preserve"><value>Where crash and startup diagnostics logs are saved. Falls back to the default location if the folder is missing or not writable</value></data>
+  <data name="Settings_LogDir_Change.Text" xml:space="preserve"><value>Change folder</value></data>
+  <data name="Settings_LogDir_Open.Text" xml:space="preserve"><value>Open folder</value></data>
+  <data name="Settings_LogDir_Reset.Content" xml:space="preserve"><value>Reset to default</value></data>
+  <data name="Settings_LogDir_DefaultSuffix" xml:space="preserve"><value> (default)</value></data>
+  <data name="Settings_LogDir_UnwritableTitle" xml:space="preserve"><value>Folder not writable</value></data>
+  <data name="Settings_LogDir_UnwritableDesc" xml:space="preserve"><value>Pick a folder the app can write to, such as a normal folder on a local disk.</value></data>
+  <data name="Builtin_driver-store_Name" xml:space="preserve"><value>Driver manager</value></data>
+  <data name="Builtin_driver-store_Desc" xml:space="preserve"><value>Browse every driver package and version in the driver store with disk usage, safely clean up old versions not used by any device, and back up or restore drivers</value></data>
+  <data name="Builtin_space-cleanup_Name" xml:space="preserve"><value>Space Cleanup</value></data>
+  <data name="Builtin_space-cleanup_Desc" xml:space="preserve"><value>Visualize disk usage with a treemap, clean application junk, and use Windows Disk Cleanup.</value></data>
+  <data name="Dashboard_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Dashboard_CatalogTool" xml:space="preserve"><value>Open a favorite tool from your tool catalog</value></data>
+  <data name="Dashboard_CheckDesc" xml:space="preserve"><value>New computer? Quickly check for common problems</value></data>
+  <data name="Dashboard_CheckTitle" xml:space="preserve"><value>Quick PC check</value></data>
+  <data name="Dashboard_CleanupDesc" xml:space="preserve"><value>Free up disk space with a range of cleanup tools</value></data>
+  <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>Junk cleanup</value></data>
+  <data name="Dashboard_Copied" xml:space="preserve"><value>Group number copied</value></data>
+  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>Search for group 485079194 in QQ to request to join.</value></data>
+  <data name="Dashboard_Description" xml:space="preserve"><value>Custom description (leave blank for default)</value></data>
+  <data name="Dashboard_EditFailed" xml:space="preserve"><value>Unable to edit home</value></data>
+  <data name="Dashboard_GameDesc" xml:space="preserve"><value>Track frame rates and other gaming performance data</value></data>
+  <data name="Dashboard_GameTitle" xml:space="preserve"><value>Game monitoring</value></data>
+  <data name="Dashboard_GreetingAfternoon" xml:space="preserve"><value>Good afternoon. Welcome back</value></data>
+  <data name="Dashboard_GreetingEvening" xml:space="preserve"><value>Good evening. Welcome back</value></data>
+  <data name="Dashboard_GreetingMorning" xml:space="preserve"><value>Good morning. Welcome back</value></data>
+  <data name="Dashboard_GreetingNight" xml:space="preserve"><value>Working late? Welcome back</value></data>
+  <data name="Dashboard_HardwareDesc" xml:space="preserve"><value>Check your computer&apos;s configuration</value></data>
+  <data name="Dashboard_HardwareTitle" xml:space="preserve"><value>Hardware information</value></data>
+  <data name="Dashboard_OpenFailed" xml:space="preserve"><value>Unable to open tool</value></data>
+  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · Share tips and ideas with the Tuba community</value></data>
+  <data name="Dashboard_QqTitle" xml:space="preserve"><value>QQ community</value></data>
+  <data name="Dashboard_Remove" xml:space="preserve"><value>Remove card</value></data>
+  <data name="Dashboard_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Dashboard_StoreDesc" xml:space="preserve"><value>Find the apps you need from trusted software sources.</value></data>
+  <data name="Dashboard_StoreTitle" xml:space="preserve"><value>Official app store</value></data>
+  <data name="Dashboard_Title" xml:space="preserve"><value>Custom title (leave blank for default)</value></data>
+  <data name="Dashboard_Tool" xml:space="preserve"><value>Card tool</value></data>
+  <data name="Dashboard_Unavailable" xml:space="preserve"><value>This tool is unavailable. Change the card&apos;s tool in Edit home.</value></data>
+  <data name="MainWindow_NavHome.Content" xml:space="preserve"><value>Home</value></data>
+  <data name="Settings_DefaultPageOptionHome" xml:space="preserve"><value>Home</value></data>
+  <data name="Dashboard_GalleryTitle.Text" xml:space="preserve"><value>Tuba Toolbox</value></data>
+  <data name="Dashboard_Recent" xml:space="preserve"><value>Recent</value></data>
+  <data name="Dashboard_Section" xml:space="preserve"><value>Everyday tools</value></data>
+  <data name="Dashboard_Favorites" xml:space="preserve"><value>Favorites</value></data>
+  <data name="Dashboard_FavoritesEmpty" xml:space="preserve"><value>No favorites yet. Select the star on a tool card to add it here.</value></data>
+  <data name="Dashboard_Loading" xml:space="preserve"><value>Loading…</value></data>
+  <data name="Dashboard_ManageContent" xml:space="preserve"><value>Edit home content</value></data>
+  <data name="Dashboard_Add" xml:space="preserve"><value>Add tool</value></data>
+  <data name="Dashboard_ContentEmpty" xml:space="preserve"><value>Select Edit content to add the tools you need.</value></data>
+  <data name="Dashboard_Card" xml:space="preserve"><value>Choose card</value></data>
+  <data name="Dashboard_ManageContent.Content" xml:space="preserve"><value>Edit content</value></data>
+  <data name="Dashboard_RestoreContent" xml:space="preserve"><value>Restore default content</value></data>
+  <data name="Dashboard_SearchTools" xml:space="preserve"><value>Search names, descriptions or categories</value></data>
+  <data name="Dashboard_HomeContent" xml:space="preserve"><value>Home content</value></data>
+  <data name="Dashboard_ContentOrderHint" xml:space="preserve"><value>Select tools to add them. Drag cards to reorder, then choose each card’s display style.</value></data>
+  <data name="Dashboard_EditSelectedCard" xml:space="preserve"><value>Edit selected card</value></data>
+  <data name="Dashboard_NoSelectedTools" xml:space="preserve"><value>No tools added yet</value></data>
+  <data name="Dashboard_NoMatchingTools" xml:space="preserve"><value>No matching tools</value></data>
+  <data name="Dashboard_MoveUp" xml:space="preserve"><value>Move up</value></data>
+  <data name="Dashboard_MoveDown" xml:space="preserve"><value>Move down</value></data>
+  <data name="Dashboard_AllTools" xml:space="preserve"><value>All tools</value></data>
+  <data name="Dashboard_BuiltinTools" xml:space="preserve"><value>Built-in tools</value></data>
+  <data name="Dashboard_ExternalTools" xml:space="preserve"><value>External tools</value></data>
+  <data name="Dashboard_ToolCount" xml:space="preserve"><value>{0} tools</value></data>
+  <data name="Dashboard_HiddenInSettings" xml:space="preserve"><value>Hidden in settings</value></data>
+  <data name="Dashboard_System" xml:space="preserve"><value>System</value></data>
+  <data name="Dashboard_Community" xml:space="preserve"><value>Community</value></data>
+  <data name="Dashboard_Configured" xml:space="preserve"><value>Configured</value></data>
+  <data name="Dashboard_CardTitleLabel" xml:space="preserve"><value>Name</value></data>
+  <data name="Dashboard_CardDescriptionLabel" xml:space="preserve"><value>Description</value></data>
+  <data name="Dashboard_CardLayout" xml:space="preserve"><value>Display style</value></data>
+  <data name="Dashboard_FeatureCard" xml:space="preserve"><value>Large card (top)</value></data>
+  <data name="Dashboard_CompactCard" xml:space="preserve"><value>Small card (common tools)</value></data>
+  <data name="Dashboard_EditFeatured" xml:space="preserve"><value>Edit featured cards</value></data>
+  <data name="Dashboard_SearchCatalog" xml:space="preserve"><value>Search tools</value></data>
+  <data name="Dashboard_CatalogCount" xml:space="preserve"><value>{0} · {1} tools</value></data>
+  <data name="Dashboard_CatalogEmpty" xml:space="preserve"><value>No tools in the catalog.</value></data>
+  <data name="Dashboard_LoadFailed" xml:space="preserve"><value>Unable to load tools</value></data>
+  <data name="Dashboard_AddFavorite" xml:space="preserve"><value>Add to favorites</value></data>
+  <data name="Dashboard_RemoveFavorite" xml:space="preserve"><value>Remove from favorites</value></data>
+  <data name="Dashboard_FeaturedOrderHint" xml:space="preserve"><value>Select tools to add featured cards. Drag to reorder; select a card to edit its name and description.</value></data>
+  <data name="Dashboard_ContextMenuTitle" xml:space="preserve"><value>Context menu manager</value></data>
+  <data name="Dashboard_ContextMenuDesc" xml:space="preserve"><value>Organize your right-click menu and common commands</value></data>
+  <data name="Dashboard_StartupTitle" xml:space="preserve"><value>Startup manager</value></data>
+  <data name="Dashboard_StartupDesc" xml:space="preserve"><value>Manage startup programs for a smoother start</value></data>
+  <data name="Dashboard_BatteryTitle" xml:space="preserve"><value>Battery usage analysis</value></data>
+  <data name="Dashboard_BatteryDesc" xml:space="preserve"><value>Review battery usage trends and power-hungry apps</value></data>
+  <data name="Dashboard_StressTitle" xml:space="preserve"><value>Combined stress test</value></data>
+  <data name="Dashboard_StressDesc" xml:space="preserve"><value>Stress-test CPU, GPU and network while monitoring temperature and power</value></data>
+  <data name="Settings_GroupUpdates.Text" xml:space="preserve"><value>Version and updates</value></data>
+  <data name="Settings_GroupOptionUpdates.Content" xml:space="preserve"><value>Version and updates</value></data>
+  <data name="Settings_GroupBehavior.Text" xml:space="preserve"><value>Startup and behavior</value></data>
+  <data name="Settings_GroupOptionBehavior.Content" xml:space="preserve"><value>Startup and behavior</value></data>
+  <data name="Settings_GroupAppearance.Text" xml:space="preserve"><value>Appearance and layout</value></data>
+  <data name="Settings_GroupOptionAppearance.Content" xml:space="preserve"><value>Appearance and layout</value></data>
+  <data name="Settings_GroupHardware.Text" xml:space="preserve"><value>Hardware information</value></data>
+  <data name="Settings_GroupOptionHardware.Content" xml:space="preserve"><value>Hardware information</value></data>
+  <data name="Settings_GroupIntegration.Text" xml:space="preserve"><value>Tools and system integration</value></data>
+  <data name="Settings_GroupOptionIntegration.Content" xml:space="preserve"><value>Tools and system integration</value></data>
+  <data name="Settings_GroupNetwork.Text" xml:space="preserve"><value>Network and downloads</value></data>
+  <data name="Settings_GroupOptionNetwork.Content" xml:space="preserve"><value>Network and downloads</value></data>
+  <data name="Settings_GroupStorage.Text" xml:space="preserve"><value>Data and storage</value></data>
+  <data name="Settings_GroupOptionStorage.Content" xml:space="preserve"><value>Data and storage</value></data>
+  <data name="Settings_GroupPrivacy.Text" xml:space="preserve"><value>Privacy and diagnostics</value></data>
+  <data name="Settings_GroupOptionPrivacy.Content" xml:space="preserve"><value>Privacy and diagnostics</value></data>
+  <data name="Settings_GroupCommunity.Text" xml:space="preserve"><value>Community and feedback</value></data>
+  <data name="Settings_GroupOptionCommunity.Content" xml:space="preserve"><value>Community and feedback</value></data>
+  <data name="Settings_GroupAbout.Text" xml:space="preserve"><value>About and acknowledgments</value></data>
+  <data name="Settings_GroupOptionAbout.Content" xml:space="preserve"><value>About and acknowledgments</value></data>
+  <data name="Settings_SectionPicker.PlaceholderText" xml:space="preserve"><value>Jump to section</value></data>
+  <data name="Settings_WebsiteLink.Content" xml:space="preserve"><value>Website</value></data>
+  <data name="Settings_RepositoryLink.Content" xml:space="preserve"><value>GitHub</value></data>
+  <data name="Settings_FeedbackLink.Content" xml:space="preserve"><value>Send feedback</value></data>
+  <data name="Settings_AboutSummary.Text" xml:space="preserve"><value>An open-source collection of PC hardware and utility tools</value></data>
+  <data name="Settings_AboutRepository.Header" xml:space="preserve"><value>Project repository</value></data>
+  <data name="Settings_AboutFeedback.Header" xml:space="preserve"><value>Report a problem or suggest a feature</value></data>
+  <data name="Settings_AboutAuthor.Header" xml:space="preserve"><value>Developer</value></data>
+  <data name="Settings_AboutSource.Header" xml:space="preserve"><value>Tool source</value></data>
+  <data name="Settings_AboutSource.Description" xml:space="preserve"><value>Hardware diagnostics and testing tools are sourced from the Tuba Toolbox project.</value></data>
+  <data name="Settings_AboutThanks.Header" xml:space="preserve"><value>Special thanks</value></data>
+  <data name="SearchPicker_Query.Header" xml:space="preserve"><value>Choose tools to add</value></data>
+  <data name="SearchPicker_Query.PlaceholderText" xml:space="preserve"><value>Search tool names or categories</value></data>
+  <data name="SearchPicker_All.Content" xml:space="preserve"><value>Select all</value></data>
+  <data name="SearchPicker_None.Content" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="SearchPicker_Empty.Text" xml:space="preserve"><value>No matching tools. Try a different name.</value></data>
+  <data name="SearchPicker_Loading.Text" xml:space="preserve"><value>Loading available tools…</value></data>
+  <data name="SearchPicker_LoadingSummary" xml:space="preserve"><value>Loading tools…</value></data>
+  <data name="SearchPicker_Summary" xml:space="preserve"><value>Selected {0} of {1} tools</value></data>
+  <data name="SearchPicker_LocalError" xml:space="preserve"><value>Local tools could not be loaded. Only built-in tools are listed. You can adjust this later in Settings.</value></data>
+  <data name="SearchPicker_BuiltinCategory" xml:space="preserve"><value>Built-in tool · {0}</value></data>
+  <data name="SearchPicker_LocalCategory" xml:space="preserve"><value>Local tool · {0}</value></data>
+  <data name="Settings_BuiltinVisibility_Hint" xml:space="preserve"><value>Disabling a built-in tool hides it and prevents it from being launched.</value></data>
+  <data name="Settings_SearchTools_Tab" xml:space="preserve"><value>Windows Search</value></data>
+  <data name="Settings_BuiltinTools_Tab" xml:space="preserve"><value>Enable built-in tools</value></data>
+  <data name="SearchPicker_EnableHeader" xml:space="preserve"><value>Choose built-in tools to enable</value></data>
+  <data name="SearchPicker_PendingDownload" xml:space="preserve"><value> · Registers after download</value></data>
+  <data name="SearchPicker_Hint.Text" xml:space="preserve"><value>Selected tools appear in Start and Windows Search. Select none to remove all tool registrations.</value></data>
+  <data name="Settings_SearchIndex_Select.Content" xml:space="preserve"><value>Choose tools</value></data>
+  <data name="SearchPicker_Registered" xml:space="preserve"><value>Registered {0} tools</value></data>
+  <data name="SearchPicker_Unavailable" xml:space="preserve"><value>Another {0} tools are not downloaded or enabled and have not been registered.</value></data>
+  <data name="SearchPicker_Synchronized" xml:space="preserve"><value>Start and Windows Search now match your selection. Selecting none removes all tool registrations.</value></data>
 </root>

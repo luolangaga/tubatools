@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
@@ -33,11 +33,18 @@ public sealed partial class WingetStoreDetailPage : Page
 
         NameText.Text = pkg.Name;
         MetaText.Text = string.IsNullOrEmpty(pkg.Category) ? pkg.Id : $"{pkg.Category} · {pkg.Id}";
-        DescText.Text = pkg.Description ?? "（暂无简介）";
-        IdText.Text = pkg.Id;
+        DescText.Text = (pkg.Description ?? "（暂无简介）")
+            + (string.IsNullOrWhiteSpace(pkg.InstallNotes) ? "" : $"\n\n安装方式\n{pkg.InstallNotes}");
+        IdText.Text = pkg.IsDirectDownload ? "官方安装包（Windows x64）" : pkg.CanInstall ? pkg.Id : "WinGet 暂未收录";
         CategoryText.Text = string.IsNullOrEmpty(pkg.Category) ? "在线搜索" : pkg.Category;
 
-        InstallButton.Content = StoreVisuals.BuildInstallContent("获取", "\uE896", null);
+        SourceText.Text = pkg.IsDirectDownload ? pkg.DownloadUrl : pkg.CanInstall ? "WinGet 软件源 · 由 WinGet 下载、校验并安装" : pkg.UnavailableReason;
+        InstallButton.IsEnabled = pkg.CanInstall && pkg.InstallState is not ("installing" or "queued" or "done");
+        InstallButton.Content = pkg.InstallState switch
+        {
+            "installing" => "正在安装…", "queued" => "已加入队列", "done" => "已安装", "error" => "重试", _ => pkg.ActionLabel
+        };
+
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -49,62 +56,49 @@ public sealed partial class WingetStoreDetailPage : Page
     private async void InstallButton_Click(object sender, RoutedEventArgs e)
     {
         if (_pkg is not StorePackage pkg) return;
-        if (pkg.InstallState is "resolving" or "queued") return;
-
+        if (!pkg.CanInstall || pkg.InstallState is "installing" or "queued" or "done") return;
         InstallButton.IsEnabled = false;
-        InstallButton.Content = StoreVisuals.BuildResolvingContent("获取链接...");
-        pkg.InstallState = "resolving";
-
+        InstallButton.Content = StoreVisuals.BuildResolvingContent("正在安装…");
+        pkg.InstallState = "installing";
         try
         {
-            var progress = new Progress<string>(status => DispatcherQueue.TryEnqueue(() =>
+            if (pkg.IsDirectDownload)
             {
-                if (status == "已加入下载队列")
-                {
-                    InstallButton.IsEnabled = false;
-                    InstallButton.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                        new SolidColorBrush(ThemeColors.AccentGreen));
-                    pkg.InstallState = "queued";
-                }
-                else
-                {
-                    InstallButton.Content = StoreVisuals.BuildResolvingContent(status);
-                }
-            }));
-
-            var item = await WingetStoreService.InstallPackageAsync(
-                pkg.Id, pkg.Name, pkg.Glyph,
-                progress,
-                CancellationToken.None);
-
-            if (item is not null)
-            {
+                WingetStoreService.EnqueueDirectInstaller(pkg);
                 pkg.InstallState = "queued";
-                InstallButton.IsEnabled = false;
-                InstallButton.Content = StoreVisuals.BuildInstallContent("已加入队列", "\uE73E",
-                    new SolidColorBrush(ThemeColors.AccentGreen));
+                pkg.StatusText = "已加入下载中心，下载完成后启动安装程序。";
+                InstallButton.Content = "已加入队列";
+                ToolTipService.SetToolTip(InstallButton, pkg.StatusText);
+                return;
             }
-            else
+            var progress = new Progress<string>(status =>
             {
-                pkg.InstallState = "error";
-                InstallButton.IsEnabled = true;
-                InstallButton.Content = StoreVisuals.BuildInstallContent("重试", "\uE72C", null);
-            }
+                pkg.StatusText = status;
+                ToolTipService.SetToolTip(InstallButton, status);
+                if (pkg.InstallState == "installing")
+                    InstallButton.Content = StoreVisuals.BuildResolvingContent(status.StartsWith("等待") ? "等待安装…" : "正在安装…");
+            });
+            await WingetStoreService.InstallPackageAsync(pkg.Id, progress);
+            pkg.InstallState = "done";
+            InstallButton.Content = "已安装";
         }
         catch (Exception ex)
         {
             pkg.InstallState = "error";
+            pkg.StatusText = ex.Message;
             InstallButton.IsEnabled = true;
-            InstallButton.Content = StoreVisuals.BuildInstallContent("重试", "\uE72C", null);
-
-            var dialog = new ContentDialog
+            InstallButton.Content = "重试";
+            if (XamlRoot is null) return;
+            await new ContentDialog
             {
-                Title = "安装失败",
-                Content = $"无法安装 {pkg.Name}：\n{ex.Message}",
-                CloseButtonText = "确定",
-                XamlRoot = XamlRoot
-            };
-            _ = dialog.ShowAsync();
+                Title = $"无法安装 {pkg.Name}", Content = new TextBlock
+                {
+                    Text = ex.Message, TextWrapping = TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true, MaxHeight = 400
+                },
+                CloseButtonText = "确定", XamlRoot = XamlRoot
+            }.ShowAsync();
         }
     }
+
 }
