@@ -171,7 +171,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>All GPUs</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>All GPUs</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Select device---</Options1>
@@ -247,6 +248,27 @@
 		<lblINTELspecific>
 			<Text>Intel® Specific Options</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm Specific Options</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>General</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Advanced</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Advanced Options (Change at your own risks)</Text>
 		</lblAdvancedO>
@@ -325,6 +347,30 @@
 		<lblRemIntelNpu>
 			<Text>Remove Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Remove the PC maker's driver extensions installed on the GPU (more thorough cleanup) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Riskier on laptops. Without them, features can be missing or the GPU may not start (Code 31). To put them back: reinstall your PC maker's driver package, or run pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Expert options</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Remove the Snapdragon Control Panel</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Remove the OEM driver extensions installed on the GPU (more thorough cleanup) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Without them, features can be missing or the GPU may not start (Code 31). To put them back: reinstall the Qualcomm or PC maker's driver package, or run pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Expert options</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Remove the Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH driver) Remove the AMD Control Panel installed from the Microsoft Store</Text>
 		</lblRemAMDCP>

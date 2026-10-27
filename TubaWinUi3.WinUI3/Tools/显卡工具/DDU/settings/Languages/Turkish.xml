@@ -180,7 +180,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Tüm GPU'lar</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Tüm GPU'lar</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Aygıtı seçin---</Options1>
@@ -256,6 +257,27 @@
 		<lblINTELspecific>
 			<Text>Intel®'e Özel Seçenekler</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm'a Özel Seçenekler</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Genel</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Gelişmiş</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Gelişmiş Seçenekler (Kendi sorumluluğunuzda değiştirin)</Text>
 		</lblAdvancedO>
@@ -334,6 +356,30 @@
 		<lblRemIntelNpu>
 			<Text>Intel® NPU'yu kaldır</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>GPU'ya yüklü bilgisayar üreticisinin sürücü uzantılarını kaldır (daha kapsamlı temizlik) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Dizüstü bilgisayarlarda daha riskli. Bunlar olmadan özellikler eksik kalabilir veya GPU başlamayabilir (Kod 31). Geri yüklemek için: bilgisayar üreticisinin sürücü paketini yeniden kurun veya pnputil /add-driver &lt;uzantı .inf&gt; /install çalıştırın</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Uzman seçenekleri</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Snapdragon Denetim Masası'nı kaldır</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>GPU'ya yüklü OEM sürücü uzantılarını kaldır (daha kapsamlı temizlik) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Bunlar olmadan özellikler eksik kalabilir veya GPU başlamayabilir (Kod 31). Geri yüklemek için: Qualcomm'un veya bilgisayar üreticisinin sürücü paketini yeniden kurun veya pnputil /add-driver &lt;uzantı .inf&gt; /install çalıştırın</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Uzman seçenekleri</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Qualcomm Hexagon NPU'yu kaldır</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH sürücü) Microsoft Mağazası'ndan yüklenen AMD Denetim Masası'nı kaldır</Text>
 		</lblRemAMDCP>

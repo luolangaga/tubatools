@@ -106,8 +106,13 @@ namespace TubaWinUi3.Compatible.Models
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(DownloadUrl)) return "下载";
-                return "打开";
+                // 本地已有启动文件时一律显示「打开」——tools.json 里的 downloadUrl 只用于
+                // 完整版下载，不代表这台机器上缺文件（否则装好的工具会显示成「下载」）。
+                var path = EffectivePath;
+                if (!string.IsNullOrWhiteSpace(path) && System.IO.File.Exists(path))
+                    return "打开";
+
+                return !string.IsNullOrWhiteSpace(DownloadUrl) ? "下载" : "打开";
             }
         }
 

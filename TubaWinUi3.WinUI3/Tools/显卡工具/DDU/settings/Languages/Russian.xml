@@ -8,7 +8,7 @@
 	<frmMain Text="Display Driver Uninstaller (DDU)">
 		<btnCleanRestart>
 			<Text>
-				УДАЛИТЬ И ПЕРЕЗАГРУЗИТЬ
+				Удалить и перезагрузить
 				(настоятельно рекомендуется)
 			</Text>
 			<Tooltip>
@@ -18,7 +18,7 @@
 		</btnCleanRestart>
 		<btnClean>
 			<Text>
-				УДАЛИТЬ БЕЗ ПЕРЕЗАГРУЗКИ
+				Удалить без перезагрузки
 				(возможны проблемы, например чёрный экран)
 			</Text>
 			<Tooltip>
@@ -28,7 +28,7 @@
 		</btnClean>
 		<btnCleanShutdown>
 			<Text>
-				УДАЛИТЬ И ВЫКЛЮЧИТЬ
+				Удалить и выключить
 				(для установки новой видеокарты)
 			</Text>
 			<Tooltip>
@@ -39,16 +39,16 @@
 		<btnCleanGfeDownloads>
 			<Text>
 				Удалить кэш/файлы установленного драйвера GeForce Experience (GFE).
-                                (ВНИМАНИЕ: Драйверы не будут удалены)
+				(ВНИМАНИЕ: Драйверы не будут удалены)
 			</Text>
 			<Tooltip>
-				В основном используется для высвобождения места на диске, которое не очищается установщиком GFE(Устаревшие версии GFE).
+				В основном используется для высвобождения места на диске, которое не очищается установщиком GFE (устаревшие версии GFE).
 			</Tooltip>
 		</btnCleanGfeDownloads>
 		<btnWuRestore>
 			<Text>
-			        Включить установку драйверов через Windows Update по умолчанию
-			        (автоустановка драйверов)
+				Установить параметры установки устройств Windows по умолчанию
+				(автоустановка драйверов)
 			</Text>
 		</btnWuRestore>
 		<btnCleanCaches>
@@ -60,7 +60,7 @@
 			</Tooltip>
 		</btnCleanCaches>
 		<lblWinVersion>
-			<Text>Версия операционной системы:</Text>
+			<Text>Обнаруженная операционная система:</Text>
 		</lblWinVersion>
 		<lblDonate>
 			<Text>*** Вам нравится DDU? Помогите авторам материально, это поможет дальнейшей разработке! ***</Text>
@@ -69,21 +69,20 @@
 			<Text>Журнал:</Text>
 		</lblLog>
 		<lblSelectedGPU>
-			<Text>Выбор видеодрайвера:</Text>
+			<Text>Выбранный видеодрайвер</Text>
 		</lblSelectedGPU>
 		<lblLanguage>
-			<Text>Язык:</Text>
+			<Text>Выбранный язык</Text>
 		</lblLanguage>
-
-                <lblUpdate>
+		<lblUpdate>
 			<Text>Проверка обновлений...</Text>
 			<Text2>У вас новейшая версия программы. Обновление не требуется.</Text2>
-			<Text3>Найдена новая версия! Рекомендуется её установить.</Text3>
+			<Text3>Найдены обновления! Для старых версий поддержка ограничена.</Text3>
 			<Text4>Не удалось проверить наличие обновлений!</Text4>
 		</lblUpdate>
 
 		<lblOffer>
-			<Text>Предложения от наших партнёров</Text>
+			<Text>Предложения от наших партнёров (рекомендуется)</Text>
 			<Tooltip>Вы можете отключить эту функцию в меню параметров.</Tooltip>
 		</lblOffer>
 
@@ -112,33 +111,24 @@
 			<Text>Меценаты</Text>
 		</PatronMenuItem>
 		<VisitDDUHomeMenuItem>
-			<Text>Посетить официальный сайт DDU</Text>
+			<Text>Сайт DDU</Text>
 		</VisitDDUHomeMenuItem>
 		<VisitDDUShopMenuItem>
-      <Text>Посетите официальный магазин мерча DDU</Text>
-    </VisitDDUShopMenuItem>
+			<Text>Магазин мерча DDU</Text>
+		</VisitDDUShopMenuItem>
 		<VisitDiscord>
-			<Text>Присоединяйтесь к нашему Discord</Text>
+			<Text>Discord-сервер</Text>
 		</VisitDiscord>
 		<VisitSVNMenuItem>
-		<Text>Посетить тему на GitHub</Text>
+			<Text>Репозиторий GitHub</Text>
 		</VisitSVNMenuItem>
-		<VisitGuru3DNvidiaMenuItem>
-			<Text>Посетить тему NVIDIA на Guru3d</Text>
-		</VisitGuru3DNvidiaMenuItem>
-		<VisitGuru3DAMDMenuItem>
-			<Text>Посетить тему AMD на Guru3d</Text>
-		</VisitGuru3DAMDMenuItem>
-		<VisitGeforceMenuItem>
-			<Text>Посетить тему DDU на GeForce</Text>
-		</VisitGeforceMenuItem>
-        <DownloadNvidiaMenuItem>
+		<DownloadNvidiaMenuItem>
 			<Text>Загрузки драйверов NVIDIA</Text>
 		</DownloadNvidiaMenuItem>
-        <DownloadAmdMenuItem>
+		<DownloadAmdMenuItem>
 			<Text>Загрузки драйверов AMD</Text>
 		</DownloadAmdMenuItem>
-        <DownloadIntelMenuItem>
+		<DownloadIntelMenuItem>
 			<Text>Загрузки драйверов Intel</Text>
 		</DownloadIntelMenuItem>
 		<Messages>
@@ -149,7 +139,20 @@
 			<Text5>DDU вносит много изменений в реестр. При запуске в обычном режиме DDU попытается автоматически создать точку восстановления системы.</Text5>
 			<Text6>В одном из модулей возникла проблема, отправьте содержимое журнала разработчику DDU.</Text6>
 			<Text7>DDU определил, что у вас ПК с технологией AMD Enduro. DDU пока не полностью поддерживает устройства с этой технологией, используйте на свой риск.</Text7>
-			<Text8>DDU определил, что вы не в безопасном режиме. Для лучшей беспроблемной очистки рекомендуется перезагрузить компьютер в безопасный режим.</Text8>
+			<Text8>DDU определил, что вы не в безопасном режиме. Для лучшей беспроблемной очистки рекомендуется перезагрузить компьютер в безопасный режим.
+
+Известные проблемы:
+
+- (НЕ ПРОБЛЕМА DDU) В Windows 11 24H2 и выше PIN-код может не работать в безопасном режиме.
+Убедитесь, что вы знаете пароль от учётной записи, а также проверьте следующую настройку:
+
+Параметры → Учётные записи → Параметры входа
+В разделе «Дополнительные параметры» отключите пункт
+«Для повышения безопасности разрешать вход только с помощью Windows Hello для учётных записей Microsoft на этом устройстве»
+
+Важно: Перед тем как пароль заработает в безопасном режиме, его нужно хотя бы один раз использовать в обычном режиме.
+
+Важно (BitLocker): Если у вас включено шифрование BitLocker, перед перезагрузкой в безопасный режим обязательно подготовьте ключ восстановления. В некоторых случаях Windows может его запросить.</Text8>
 			<Text9>Автоматическая загрузка драйверов через Windows Update отключена. После установки нового драйвера можно вернуться к исходным настройкам.</Text9>
 			<Text10>Очистка и удаление выполнены! Выйти?</Text10>
 			<Text11>Автоматическая загрузка драйверов через Windows Update включена.</Text11>
@@ -159,14 +162,13 @@
 			<Text15>Не было внесено никаких изменений. Параметры установки устройств Windows установлены в стандартные значения.</Text15>
 			<Text16>Произошла критическая ошибка Windows, мешающая правильному удалению драйверов. Ради безопасности DDU не будет продолжать удаление файлов и записей в реестре. Перед использованием DDU необходимо устранить системные проблемы.</Text16>
 			<Text17>Кажется, это первый раз, когда вы запустили DDU.
-		
-         Перед использованием, пожалуйста, знайте следующее:
-         1: В зависимости от ваших проблем и конфигурации это может помочь или ухудшить ситуацию.
-         2: У вас должна быть резервная копия.
-         3: Вы должны прочитать лицензию, Readme и Условия предоставления услуг.
-         4: Мы не несем ответственности за любой ущерб или потерю данных.
-         5: Мы всегда готовы помочь, если есть проблема.
-			</Text17>
+
+Перед использованием, пожалуйста, знайте следующее:
+1: В зависимости от ваших проблем и конфигурации это может помочь или ухудшить ситуацию.
+2: У вас должна быть резервная копия.
+3: Вы должны прочитать лицензию, Readme и Условия предоставления услуг.
+4: Мы не несём ответственности за любой ущерб или потерю данных.
+5: Мы всегда готовы помочь, если есть проблема.</Text17>
 		</Messages>
 		<Options_Type>
 			<Options1>---Выберите тип устройства---</Options1>
@@ -174,12 +176,13 @@
 			<Options3>Видеокарта</Options3>
 		</Options_Type>
 		<Options_GPU>
-			<Options1>---Выберите производителя---</Options1>
+			<Options1>---Выберите устройство---</Options1>
 			<Options2>NVIDIA</Options2>
 			<Options3>AMD</Options3>
-			<Options4>Intel</Options4>
+			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Все графические процессоры</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Все графические процессоры</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Выберите устройство---</Options1>
@@ -244,7 +247,7 @@
 			<Text>Закрыть</Text>
 		</btnClose>
 		<lblOffer>
-			<Text>Показывать предложения от наших партнёров (реклама)</Text>
+			<Text>Показывать предложения от наших партнёров (рекомендуется)</Text>
 		</lblOffer>
 		<lblNvidiaspecific>
 			<Text>Параметры драйверов NVIDIA</Text>
@@ -255,8 +258,29 @@
 		<lblINTELspecific>
 			<Text>Параметры драйверов Intel®</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Параметры драйверов Qualcomm</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Общие</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Дополнительно</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
-			<Text>Дополнительные параметры (изменение - на ваш страх и риск)</Text>
+			<Text>Дополнительные параметры (изменение — на ваш страх и риск)</Text>
 		</lblAdvancedO>
 		<lblGeneral>
 			<Text>Общие параметры</Text>
@@ -301,16 +325,15 @@
 		<lblRemGFE>
 			<Text>Удалить GeForce Experience (GFE) / NVIDIA App</Text>
 		</lblRemGFE>
-				<lblRemNVBROADCAST>
+		<lblRemNVBROADCAST>
 			<Text>Удалить NVIDIA Broadcast</Text>
 		</lblRemNVBROADCAST>
 		<lblRemNVCP>
 			<Text>(DCH-драйвер) Удалить Панель управления NVIDIA, установленную из Microsoft Store</Text>
 		</lblRemNVCP>
-        <lblRemoveNvidiaCache>
-            <Text>Удалить кэш шейдеров NVIDIA (Снимите флажок при использовании ASC / автокомпиляции шейдеров NVIDIA App)
-            </Text>
-        </lblRemoveNvidiaCache>
+		<lblRemoveNvidiaCache>
+			<Text>Удалить кэш шейдеров NVIDIA (Снимите флажок при использовании ASC / автокомпиляции шейдеров NVIDIA App)</Text>
+		</lblRemoveNvidiaCache>
 		<lblKeepNVCPopt>
 			<Text>Сохранить глобальную Панель управления NVIDIA / Настройки программы.</Text>
 			<Tooltip>
@@ -322,7 +345,7 @@
 		    <Text>(DCH-драйвер) Удалить Панель управления Intel®, установленную из Microsoft Store</Text>
 		</lblRemINTELCP>
 		<lblRemINTELIGS>
-			<Text>Удалить программное обеспечение Intel® Arc Control / Intel® Graphics</Text>
+			<Text>Удалить Intel® Arc Control / Intel® Graphics Software</Text>
 		</lblRemINTELIGS>
 		<lblRemOneAPI>
 			<Text>Удалить Intel® oneAPI Level Zero SDK</Text>
@@ -333,6 +356,30 @@
 		<lblRemIntelNpu>
 			<Text>Удалить Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Удалить расширения драйвера от производителя ПК, установленные на ГП (более полная очистка) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Рискованнее на ноутбуках. Без них могут отсутствовать функции или ГП не запустится (код 31). Чтобы вернуть: переустановите пакет драйверов производителя ПК или выполните pnputil /add-driver &lt;расширение .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Параметры для экспертов</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Удалить Панель управления Snapdragon</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Удалить OEM-расширения драйвера, установленные на ГП (более полная очистка) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Без них могут отсутствовать функции или ГП не запустится (код 31). Чтобы вернуть: переустановите пакет драйверов Qualcomm или производителя ПК, либо выполните pnputil /add-driver &lt;расширение .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Параметры для экспертов</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Удалить Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH-драйвер) Удалить Панель управления AMD, установленную из Microsoft Store</Text>
 		</lblRemAMDCP>
@@ -347,17 +394,17 @@
 			<Text>Удалить runtime-библиотеки Vulkan</Text>
 			<Tooltip>Не рекомендуется, если установлены две разные видеокарты с поддержкой Vulkan API.</Tooltip>
 		</lblVulkan>
-    <lblPreventWinUpdate>
-      <Text>Не загружать драйверы из Центра обновления Windows, когда Windows ищет драйвер для устройства</Text>
-      <Tooltip>Эта настройка запрещает Windows/Диспетчеру устройств проверять наличие обновления драйверов в Windows Update.
+		<lblPreventWinUpdate>
+			<Text>Не загружать драйверы из Центра обновления Windows, когда Windows ищет драйвер для устройства</Text>
+			<Tooltip>Эта настройка запрещает Windows/Диспетчеру устройств проверять наличие обновления драйверов в Windows Update.
                Примечание 1: Это не мешает Центру обновления Windows загружать/устанавливать новые драйверы.
                Примечание 2: *Настоятельно* рекомендуется вернуть прежнее состояние этой настройки после завершения использования DDU и переустановки драйвера видеокарты, иначе возможны проблемы с установкой других устройств.</Tooltip>
-     </lblPreventWinUpdate>
-     <lblRememberLastChoice>
-         <Text>Запомнить последний выбранный графический процессор</Text>
-     </lblRememberLastChoice>
-	 		<lblUseDarkTheme>
-			<Text>Использовать темную тему</Text>
+		</lblPreventWinUpdate>
+		<lblRememberLastChoice>
+			<Text>Запомнить последний выбранный графический процессор</Text>
+		</lblRememberLastChoice>
+		<lblUseDarkTheme>
+			<Text>Использовать тёмную тему</Text>
 		</lblUseDarkTheme>
   </frmOptions>
 
@@ -371,7 +418,7 @@
 		</btnAccept>
 		<btnWuRestore>
 			<Text>
-				Устан.устр.Windows «По умолчанию» и выйти
+				Параметры установки устройств Windows «По умолчанию» и выйти
 			</Text>
 		</btnWuRestore>
 		<btnClose>
@@ -389,9 +436,23 @@
 		<lblWinPasswordWarn>
 			<Text>
 				Важное замечание для пользователей Windows 8/8.1/10/11:
+
 				После перезагрузки в безопасный режим для входа в Windows требуется
 				пароль к учётной записи! В этом режиме доступ по PIN-коду не работает!
 				Немедленно закройте программу, если вы не знаете или забыли пароль!
+
+				Известные проблемы:
+
+				- (НЕ ПРОБЛЕМА DDU) В Windows 11 24H2 и выше PIN-код может не работать в безопасном режиме.
+				Убедитесь, что вы знаете пароль от учётной записи, а также проверьте следующую настройку:
+
+				Параметры → Учётные записи → Параметры входа
+				В разделе «Дополнительные параметры» отключите пункт
+				«Для повышения безопасности разрешать вход только с помощью Windows Hello для учётных записей Microsoft на этом устройстве»
+
+				Важно: Перед тем как пароль заработает в безопасном режиме, его нужно хотя бы один раз использовать в обычном режиме.
+
+				Важно (BitLocker): Если у вас включено шифрование BitLocker, перед перезагрузкой в безопасный режим обязательно подготовьте ключ восстановления. В некоторых случаях Windows может его запросить.
 			</Text>
 		</lblWinPasswordWarn>
 		<cbBootOption>
@@ -477,12 +538,14 @@
 				-Matti Metsikko
 				-mikalonia - mika
 				-ChaosDMNS
-                -Eduardo Macias
-                -Peter Le
-                -Kater Willschie
-                -Duke Hanson
-		        -Sam Gooding
-            
+				-Eduardo Macias
+				-Peter Le
+				-Kater Willschie
+				-Duke Hanson
+				-Sam Gooding
+				-Zero Chung
+				-Remy Starshade
+				-Lion-man
 			</Text>
 		</lblPatron>
 	</frmAbout>
@@ -490,9 +553,9 @@
 	<Misc>
 		<About>
 			<Text>
-				Display Driver Uninstaller (DDU) - утилита для удаления видеодрайверов NVIDIA, AMD, Intel®.
+				Display Driver Uninstaller (DDU) - утилита для удаления видеодрайверов NVIDIA, AMD, Intel®, LISUAN, Qualcomm.
 
-				Удаляет текущие и предыдущие видеодрайверы из диспетчера устройств и хранилища драйверов Windows. Также удаляются службы NVIDIA и AMD.
+				Удаляет текущие и предыдущие видеодрайверы из диспетчера устройств и хранилища драйверов Windows. Также удаляются службы NVIDIA, AMD и других поддерживаемых производителей.
 
 				С помощью DDU вы можете решить проблемы с установкой более старой или более новой версии драйвера. Установка драйверов после использования DDU подобна "чистой" установке.
 
@@ -539,8 +602,8 @@
 
 				Используя программу DDU, вы отказываетесь от претензий к её создателям в случае возникновения неполадок или ошибок в системе.
 
-				Используя DDU, вы признаёте, что компании NVIDIA ("NVIDIA, GeForce"), Advanced Micro Devices ("AMD, Radeon")
-				и Intel® не имеют ничего общего с этой программой и не являются партнёрами DDU или её создателей.
+				Используя DDU, вы признаёте, что компании NVIDIA ("NVIDIA, GeForce"), Advanced Micro Devices ("AMD, Radeon"),
+				Intel®, LISUAN и Qualcomm не имеют ничего общего с этой программой и не являются партнёрами DDU или её создателей.
 			</Text>
 		</Tos>
 	</Misc>
@@ -553,7 +616,7 @@
 
 		<Translator2>
 			<User>Danis Miryasov (miryasov.danis@yandex.ru)</User>
-			<LastUpdate>26.12.2025</LastUpdate>
+			<LastUpdate>17.09.2026</LastUpdate>
 		</Translator2>
 		<Translator3>
 			<User>Dmitry Yerokhin (erodim@mail.ru)</User>

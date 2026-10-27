@@ -8,7 +8,7 @@ sc delete inpoutx64
 
 @echo.
 @echo 3. Removing registry key
-regedit.exe /s remove_inpoux64.reg
+reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Services\inpoutx64" /f
 
 @echo.
 @echo 4. Deleting driver

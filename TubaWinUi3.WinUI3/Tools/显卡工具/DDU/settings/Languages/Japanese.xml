@@ -180,7 +180,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>すべての GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>すべての GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---デバイスを選択---</Options1>
@@ -256,6 +257,27 @@
 		<lblINTELspecific>
 			<Text>Intel® 固有のオプション</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm 固有のオプション</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>全般</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>詳細</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>高度なオプション (変更は自己責任です)</Text>
 		</lblAdvancedO>
@@ -334,6 +356,30 @@
 		<lblRemIntelNpu>
 			<Text>Intel® NPU を削除する</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>GPU にインストールされた PC メーカーのドライバー拡張機能を削除する (より徹底したクリーンアップ) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* ノート PC ではリスクが高くなります。拡張機能がないと機能が欠けたり GPU が起動しない (コード 31) ことがあります。元に戻すには: PC メーカーのドライバー パッケージを再インストールするか、pnputil /add-driver &lt;拡張機能の .inf&gt; /install を実行します</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>エキスパート オプション</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Snapdragon コントロールパネルを削除する</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>GPU にインストールされた OEM ドライバー拡張機能を削除する (より徹底したクリーンアップ) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* 拡張機能がないと機能が欠けたり GPU が起動しない (コード 31) ことがあります。元に戻すには: Qualcomm または PC メーカーのドライバー パッケージを再インストールするか、pnputil /add-driver &lt;拡張機能の .inf&gt; /install を実行します</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>エキスパート オプション</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Qualcomm Hexagon NPU を削除する</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH ドライバー) Microsoft Store からインストールされた AMD コントロールパネルを削除する</Text>
 		</lblRemAMDCP>

@@ -179,7 +179,8 @@
 			<Options3>AMD</Options3>
 			<Options4>INTEL</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Wszystkie GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Wszystkie GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Wybierz urządzenie---</Options1>

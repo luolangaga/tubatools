@@ -1,0 +1,186 @@
+All references to WizTree in this document also apply
+to WizTreeMac (as WizTree is known on macOS).
+
+WizTree is free for PERSONAL USE ONLY.
+
+If you wish to use WizTree commercially, please purchase
+an appropriate supporter code for each business site from:
+https://diskanalyzer.com/donate
+
+If you have a very large organization, please purchase an
+Enterprise License for unlimited use of WizTree on all of
+your organization's PCs/Macs at a single location:
+https://diskanalyzer.com/donate#enterprise
+
+For very large organizations with multiple locations, 
+please purchase an Enterprise Multi Site License for 
+unlimited use of WizTree at any number of locations:
+https://diskanalyzer.com/donate#enterprisemulti
+
+If you're unsure which license type to purchase please 
+contact us and we'll help you pick the right option, or 
+prepare a quote for you. Discounts are available to non 
+profit organisations.
+
+If you're a software developer wanting to package WizTree 
+with your application, please purchase a 
+"WizTree Distribution License subscription" from:
+https://diskanalyzer.com/distribution-license
+
+This EULA is available online here:
+https://diskanalyzer.com/eula
+
+-------------------------------------------------------------
+
+END-USER LICENSE AGREEMENT (EULA) OF WIZTREE
+
+This End-User License Agreement ("EULA") is a legal
+agreement between you and Antibody Software Limited.
+
+This EULA agreement governs your acquisition and use of our
+WizTree software ("Software") directly from Antibody
+Software Limited or indirectly through a Antibody Software
+Limited authorized reseller or distributor (a "Reseller").
+
+Please read this EULA agreement carefully before completing
+the installation process and using the WizTree software. It
+provides a license to use the WizTree software and contains
+warranty information and liability disclaimers.
+
+By clicking "accept" or installing and/or using the WizTree
+software, you are confirming your acceptance of the Software
+and agreeing to become bound by the terms of this EULA
+agreement. If you are entering into this EULA agreement on
+behalf of a company or other legal entity, you represent
+that you have the authority to bind such entity and its
+affiliates to these terms and conditions. If you do not have
+such authority or if you do not agree with the terms and
+conditions of this EULA agreement, do not install or use the
+Software, and you must not accept this EULA agreement.
+
+This EULA agreement shall apply only to the Software
+supplied by Antibody Software Limited herewith regardless of
+whether other software is referred to or described herein.
+The terms also apply to any Antibody Software Limited
+updates, supplements, Internet-based services, and support
+services for the Software, unless other terms accompany
+those items on delivery. If so, those terms apply.
+
+LICENSE GRANT
+
+License Grant
+WizTree is free for PERSONAL USE ONLY. Users using WizTree
+for personal use are encouraged to purchase a "supporter
+code" to help support further development of the software.
+
+Use of WizTree in a commercial environment requires the
+puchase of a "supporter code" for each business site
+(physical location). The license type required per site is
+based on the number of staff members at the site.
+
+An "Enterprise License" is required for each business site
+with more than 100 staff members.
+
+For software developers wanting to package WizTree with
+their application, a "WizTree Distribution License
+subscription" is required.
+
+Antibody Software Limited hereby grants you a personal,
+non-transferable, non-exclusive licence to use the WizTree
+software on your devices in accordance with the terms of
+this EULA agreement. You are permitted to load the WizTree
+software on a device under your control (for example a PC,
+Mac, laptop, or tablet). You are responsible for ensuring
+your device meets the minimum requirements of the WizTree
+software.
+
+If you have staff that provide technical support to clients 
+outside of your business, and you have purchased a suitable 
+supporter code license for the site that these staff work 
+from, then they may install WizTree on the client devices 
+if required, but only for your organization's use. If your 
+clients wish to use WizTree for their own staff, they will 
+require a suitable license. For technical staff with 
+physical access to client devices, we recommend that they 
+use a registered "portable" version of WizTree on a 
+portable storage device (such as a USB flash drive) to 
+avoid having to install WizTree on each client device.
+
+You are not permitted to:
+* Edit, alter, modify, adapt, translate or otherwise change
+  the whole or any part of the Software nor permit the whole
+  or any part of the Software to be combined with or become
+  incorporated in any other software, nor decompile,
+  disassemble or reverse engineer the Software or attempt to
+  do any such things
+
+* Reproduce, copy, distribute, resell or otherwise use the
+  Software for any commercial purpose
+  
+* Allow any third party to use the Software on behalf of or
+  for the benefit of any third party
+  
+* Use the Software in any way which breaches any applicable
+  local, national or international law
+  
+* Use the Software for any purpose that Antibody Software
+  Limited considers is a breach of this EULA agreement
+  
+INTELLECTUAL PROPERTY AND OWNERSHIP
+  
+Antibody Software Limited shall at all times retain
+ownership of the Software as originally downloaded by you
+and all subsequent downloads of the Software by you. The
+Software (and the copyright, and other intellectual property
+rights of whatever nature in the Software, including any
+modifications made thereto) are and shall remain the
+property of Antibody Software Limited. Antibody Software
+Limited reserves the right to grant licences to use the
+Software to third parties.
+
+TERMINATION
+
+This EULA agreement is effective from the date you first use
+the Software and shall continue until terminated. You may
+terminate it at any time upon written notice to Antibody
+Software Limited. It will also terminate immediately if you
+fail to comply with any term of this EULA agreement. Upon
+such termination, the licenses granted by this EULA
+agreement will immediately terminate and you agree to stop
+all access and use of the Software. The provisions that by
+their nature continue and survive will survive any
+termination of this EULA agreement.
+
+GOVERNING LAW
+
+This EULA agreement, and any dispute arising out of or in
+connection with this EULA agreement, shall be governed by
+and construed in accordance with the laws of New Zealand.
+
+LIMITATION OF LIABILITY
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE
+QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH THE
+LICENSEE. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+IF ANY ALGORITHM IS PATENTED IN YOUR COUNTRY, YOU SHOULD
+ACQUIRE A LICENSE BEFORE USING THIS SOFTWARE.
+
+IN NO EVENT WILL THE AUTHOR OR ANY OTHER PARTY WHO MAY HAVE
+DISTRIBUTED THE SOFTWARE AS PERMITTED ABOVE, BE LIABLE TO
+YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY
+TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED
+BY YOU OR THIRD PARTIES OR A FAILURE OF THE SOFTWARE TO
+OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR
+OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+WizTree
+Copyright 2012-2026 Antibody Software Limited
+www.diskanalyzer.com
+www.antibody-software.com

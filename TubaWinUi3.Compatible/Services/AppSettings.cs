@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TubaWinUi3.Compatible.Services
 {
@@ -22,7 +23,7 @@ namespace TubaWinUi3.Compatible.Services
                 if (File.Exists(SettingsPath))
                 {
                     var json = File.ReadAllText(SettingsPath);
-                    _cache = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+                    _cache = ParseSettings(json);
                 }
                 else
                 {
@@ -43,8 +44,10 @@ namespace TubaWinUi3.Compatible.Services
             {
                 var dir = Path.GetDirectoryName(SettingsPath);
                 if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                var json = JsonConvert.SerializeObject(_cache);
-                File.WriteAllText(SettingsPath, json);
+                var root = new JObject();
+                foreach (var pair in _cache)
+                    root[pair.Key] = pair.Value;
+                File.WriteAllText(SettingsPath, root.ToString(Formatting.Indented));
                 _dirty = false;
             }
             catch { }
@@ -96,6 +99,29 @@ namespace TubaWinUi3.Compatible.Services
         {
             _cache = null;
             _dirty = false;
+        }
+
+        /// <summary>
+        /// 只用 Newtonsoft 的 DOM（JObject）读取，避免 JsonConvert.DeserializeObject&lt;T&gt;
+        /// 的反射反序列化——后者在 NativeAOT 下不可用（PE 兼容版直接 AOT 发布）。
+        /// </summary>
+        private static Dictionary<string, string> ParseSettings(string json)
+        {
+            var result = new Dictionary<string, string>();
+            if (string.IsNullOrWhiteSpace(json))
+                return result;
+
+            var root = JObject.Parse(json);
+            foreach (var pair in root)
+            {
+                var token = pair.Value;
+                if (token == null || token.Type == JTokenType.Null)
+                    continue;
+
+                result[pair.Key] = token.Type == JTokenType.String ? (string)token : token.ToString();
+            }
+
+            return result;
         }
     }
 }

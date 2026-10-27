@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using TubaWinUi3.Compatible.Models;
 
 namespace TubaWinUi3.Compatible.Services
@@ -55,6 +56,35 @@ namespace TubaWinUi3.Compatible.Services
 
         public static string ToolsRoot { get { return FindToolsRoot(); } }
 
+        /// <summary>
+        /// 只用 Newtonsoft 的 DOM（JArray）解析字符串数组，避免
+        /// JsonConvert.DeserializeObject&lt;List&lt;string&gt;&gt; 的反射反序列化
+        /// ——后者在 NativeAOT 下不可用（PE 兼容版直接 AOT 发布）。
+        /// </summary>
+        private static List<string> ParseStringList(string json)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(json))
+                return result;
+
+            try
+            {
+                var array = JArray.Parse(json);
+                foreach (var token in array)
+                {
+                    if (token == null || token.Type == JTokenType.Null)
+                        continue;
+
+                    var value = token.ToString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                        result.Add(value);
+                }
+            }
+            catch { }
+
+            return result;
+        }
+
         public static IReadOnlyList<string> GetCategories()
         {
             var dirs = (Directory.Exists(ToolsRoot) ? Directory.GetDirectories(ToolsRoot).Select(Path.GetFileName) : Enumerable.Empty<string>())
@@ -65,11 +95,7 @@ namespace TubaWinUi3.Compatible.Services
             List<string> ordered = null;
             if (!string.IsNullOrWhiteSpace(orderJson))
             {
-                try
-                {
-                    ordered = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(orderJson);
-                }
-                catch { }
+                ordered = ParseStringList(orderJson);
             }
 
             if (ordered != null && ordered.Count > 0)
@@ -160,11 +186,7 @@ namespace TubaWinUi3.Compatible.Services
             List<string> toolOrder = null;
             if (!string.IsNullOrWhiteSpace(toolOrderJson))
             {
-                try
-                {
-                    toolOrder = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(toolOrderJson);
-                }
-                catch { }
+                toolOrder = ParseStringList(toolOrderJson);
             }
 
             if (toolOrder != null && toolOrder.Count > 0)

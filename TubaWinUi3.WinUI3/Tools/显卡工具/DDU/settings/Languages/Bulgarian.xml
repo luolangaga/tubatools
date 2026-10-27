@@ -180,7 +180,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Всички</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Всички</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>--- Изберете устройството ---</Options1>
@@ -249,6 +250,27 @@
 		<lblINTELspecific>
 			<Text>Специфични опции за Intel®</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Специфични опции за Qualcomm</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Общи</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Разширени</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Опции за напреднали потребители (променяте ги на свой риск)</Text>
 		</lblAdvancedO>
@@ -327,6 +349,30 @@
 		<lblRemIntelNpu>
 			<Text>Премахни Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Премахни разширенията на драйвера от производителя на компютъра, инсталирани на GPU (по-пълно почистване) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* По-рисковано при лаптопи. Без тях може да липсват функции или GPU да не стартира (код 31). За да ги върнете: преинсталирайте пакета с драйвери на производителя на компютъра или изпълнете pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Експертни опции</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Премахни контролния панел Snapdragon</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Премахни OEM разширенията на драйвера, инсталирани на GPU (по-пълно почистване) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Без тях може да липсват функции или GPU да не стартира (код 31). За да ги върнете: преинсталирайте пакета с драйвери на Qualcomm или на производителя на компютъра, или изпълнете pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Експертни опции</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Премахни Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH драйвър) Премахни контролния панел на AMD, който се инсталира от Microsoft Store</Text>
 		</lblRemAMDCP>

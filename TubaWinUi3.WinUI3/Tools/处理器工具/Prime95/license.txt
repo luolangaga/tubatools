@@ -1,0 +1,49 @@
+Great Internet Mersenne Prime Search
+Research Computing Software v31.7
+
+END USER LICENSE AGREEMENT
+
+The full legal rules are at http://mersenne.org/legal/
+
+It is up to you to get your employer's permission before installing this software
+on any office machines.  Many companies have a strict policy against running any
+non-business software, however hundreds of companies and other large organizations
+are participating successfully in the GIMPS research project.  Your network
+administrator, MIS or IT manager is welcome to contact us about this software at
+primenet@mersenne.org.
+
+Every effort has been made to ensure that you will be assigned an exponent that no
+one else has tested or is testing.  We are not responsible for lost prize money,
+fame, credit, etc. should someone accidentally or maliciously test the number you
+are working on and find it to be prime.  We are not responsible should the program
+determine a number composite even though it is prime - the program's heavy use of
+memory and FPU could trigger an error that goes undetected. 
+
+Finally, as with all freeware, the program is provided "as is".  However, please do
+send bug reports and suggestions for improvements to woltman@alum.mit.edu. See
+http://mersenne.org/freesoft/ for free updates.
+
+
+Cash Awards for New Mersenne Primes
+-----------------------------------
+
+At the time of this software release, the Electronic Frontier Foundation is offering
+a $150,000 award to the first person or group to discover a hundred million digit
+prime number.  If you find such a prime with the software provided, GIMPS will claim
+the award and distribute the award according to the rules published at
+http://mersenne.org/legal/#awards
+
+
+Third Party Software Redistribution License
+-------------------------------------------
+
+Contains distributed computing software licensed from Entropia.com, Inc.
+
+
+Disclaimer
+----------
+ 
+THIS PROGRAM AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+

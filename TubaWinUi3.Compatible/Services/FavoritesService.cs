@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TubaWinUi3.Compatible.Services
 {
@@ -21,8 +22,7 @@ namespace TubaWinUi3.Compatible.Services
                 if (File.Exists(FavoritesPath))
                 {
                     var json = File.ReadAllText(FavoritesPath);
-                    _cache = (JsonConvert.DeserializeObject<List<string>>(json) ?? new List<string>())
-                        .Select(ToolMetadataService.ResolveUserDirectory).ToList();
+                    _cache = ParseFavorites(json);
                 }
                 else
                 {
@@ -100,10 +100,38 @@ namespace TubaWinUi3.Compatible.Services
             {
                 var dir = Path.GetDirectoryName(FavoritesPath);
                 if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                var json = JsonConvert.SerializeObject(favorites);
-                File.WriteAllText(FavoritesPath, json);
+                var array = new JArray();
+                foreach (var favorite in favorites)
+                    array.Add(favorite);
+                File.WriteAllText(FavoritesPath, array.ToString(Formatting.None));
             }
             catch { }
+        }
+
+        /// <summary>
+        /// 只用 Newtonsoft 的 DOM（JArray）读取，避免 JsonConvert.DeserializeObject&lt;List&lt;string&gt;&gt;
+        /// 的反射反序列化——后者在 NativeAOT 下不可用（PE 兼容版直接 AOT 发布）。
+        /// </summary>
+        private static List<string> ParseFavorites(string json)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(json))
+                return result;
+
+            var array = JArray.Parse(json);
+            foreach (var token in array)
+            {
+                if (token == null || token.Type == JTokenType.Null)
+                    continue;
+
+                var value = token.ToString();
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                result.Add(ToolMetadataService.ResolveUserDirectory(value));
+            }
+
+            return result;
         }
     }
 }

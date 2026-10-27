@@ -1,0 +1,1472 @@
+New features in Version 31.1 of prime95.exe
+-------------------------------------------
+
+1) AVX-512 FFTs smaller than 32K are faster.  There are now more small AVX-512 FFTs
+   starting at length 128.  This is mainly useful for ECM on small Mersenne numbers.
+
+New features in Version 30.19 of prime95.exe
+--------------------------------------------
+
+1) Edwards ECM curves.  Given a reasonable amount of memory, Edwards ECM curves are roughly
+   10% faster than Montgomery ECM curves used in all earlier prime95 versions.
+2) Added support for running ECM stage 2 given a resume file from GMP-ECM.  Especially useful
+   when GMP-ECM uses a GPU to run ECM stage 1.  Syntax for worktodo entries are:
+	ECMSTAGE2=k,b,n,c,filename[,B2-or-zero][,skip_curves][,num_curves][,"known-factors"]
+	ECMSTAGE2N=filename[,B2-or-zero][,skip_curves][,num_curves][,"known-factors"]
+3) New timestamp options in undoc.txt.
+4) Manual communication menu choice will also start proof uploads.
+5) From the Test/Primenet... dialog box, turning on Use Primenet will bring up the Test/Worker
+   Windows... dialog box to allow changing work preferences prior to contacting the PrimeNet server.
+6) The P-1 and ECM stage 2 vs. stage 1 runtime estimate used for optimal B2 calculations is now
+   compared to the actual so that future estimates will hopefully more accurate.
+7) Advanced/Test now creates a PRP worktodo.txt entry for large exponents.
+
+New features in Version 30.18 of prime95.exe
+--------------------------------------------
+
+1) Faster generic mod.  This is more useful for programs like PFGW than prime95.
+
+New features in Version 30.16 - 30.17 of prime95.exe
+----------------------------------------------------
+
+1) Smaller executable.  Many SSE2 FFTs optimized for CPUs made before 2010 were removed.
+   These CPUs will still be able to run all FFT sizes, but 30.15 might have a more efficient
+   implementation available.
+
+New features in Version 30.11 - 30.15 of prime95.exe
+----------------------------------------------------
+
+1) Settings are no longer stored in local.txt.  Settings are automatically moved to prime.txt.
+   In addition, settings within prime.txt are now organized into several sections for
+   enhanced readability.
+
+New features in Version 30.9 - 30.10 of prime95.exe
+---------------------------------------------------
+
+1) ECM stage 2 using fast polynomial multiplication similar to the GMP-ECM program.  If lots
+   of memory is available for stage 2 this implementation will be substantially faster.
+2) Proof files start uploading within a minute of sending a PRP result to the server.
+   Previously it could take up to an hour for proof uploading to begin.
+3) Worktodo.add files are now processed without stopping all workers.
+4) Settings from local.txt have been moved to prime.txt.  Settings in prime.txt grouped for clarity.
+
+New features in Version 30.8 of prime95.exe
+-------------------------------------------
+
+1) P-1 stage 2 using fast polynomial multiplication similar to the GMP-ECM program.  If lots
+   of memory is available for stage 2 this implementation will be substantially faster.
+
+New features in Version 30.7 of prime95.exe
+-------------------------------------------
+
+1) Better prime pairing in stage 2 of ECM/P-1/P+1.  This usually results in slightly better
+   stage 2 timings or less memory used.  Save file formats changed - upgrading to 30.7 while
+   ECM/P-1/P+1 work is in stage 2 will result in stage 2 being restarted from scratch.
+2) P-1 converted to use P+1 style stage 2.  From the users perspective there is no difference.
+   Internally a modular inverse is required at stage 2 init, but there is one multiplication
+   saved for every D-block processed.  For all common P-1 cases, this is a little faster.
+3) ECM/P-1/P+1 no longer use a bit map for prime pairs.  Instead a compressed pairing map is
+   created to save memory.  For large B2 values this also results in fewer calls to generate
+   pairing maps.  It also makes stage 2 save files smaller.
+4) Some minor changes in AVX-512 FFT crossovers.  ECM/P-1/P+1 all changed to rollback to the
+   last save file and switch to a larger FFT size should an excessive roundoff error be
+   encountered.
+5) Support for asymmetric processor architectures such as Intel's Alder Lake.
+6) Torture test dialog now asks for number of cores to test along with a "Use hyperthreading"
+   checkbox.  Previously, the dialog box asked for total number of torture threads to execute.
+7) Versions 30.4/30.5/30.6 were underestimating the cost of P-1 stage 2 relative to P-1 stage 1.
+   Expect this version to use lower stage 2 bounds in P-1.
+
+New features in Version 30.6 of prime95.exe
+-------------------------------------------
+
+1) P+1 factoring.  A worktodo.txt entry looks like this:
+	Pplus1=k,b,n,c,B1,B2,nth_run[,how_far_factored][,"known_factors"]
+   Unlike P-1, the fact that factors of Mersenne numbers is 1 mod 2p is of no value.
+   Thus, P-1 is vastly more effective at finding factors.  A P+1 run is about as
+   valuable as running one ECM curve.  P+1 stage 1 is 50% slower than P-1 stage 1
+   but several times faster than ECM stage 1.  P+1 stage 2 is a little faster than
+   P-1 stage 2 which in turn is a little faster than ECM stage 2.
+   Unlike P-1, P+1 has only a 50% chance of finding a factor if factor+1 is B1/B2 smooth.
+   Thus, it makes sense to do 1 or 2 (maybe 3) runs.  That is what the nth_run argument is for.
+   There are two special starting values for P+1 that have a slightly higher chance of
+   finding a factor.  These special starting values correspond to nth_run=1 and nth_run=2.
+   Like P-1, if how_far_factored is specified, prime95 will ignore B2 and calculate the
+   best B2 value for the given B1.
+2) Faster ECM stage 1 when factoring exponents near the limit of an FFT size.
+3) Gwnum library new functions give a programmer more tools to reduce normalized adds.
+   A tutorial.txt file (download the prime95 sources) is now available to help a programmer
+   use the gwnum library.
+
+New features in Version 30.4/30.5 of prime95.exe
+------------------------------------------------
+
+1) Faster P-1 stage 2.
+2) Faster ECM stage 1 and stage 2.
+3) Gwnum library overhauled.  Many functions deprecated.  Replaced by more powerful gwmul3.  New functions
+   that compute (a+b)*c and (a-b)*c with less memory accesses.  Faster conversion to and from binary.
+4) ECM and P-1 can find the best B2 value for the amount of memory prime95 is allowed to use.  For ECM,
+   this happens when the worktodo.txt line sets B2=100*B1 which is the default assignment from the PrimeNet
+   server.  For P-1, the best B2 is chosen when the worktodo.txt line specifies the trial factoring depth.
+   For example, "Pminus1=1,2,20000003,-1,500000,0,70" chooses the best B2 bound for B1=500000 given that
+   M20000003 has been trial factored to 2^70.
+
+New features in Version 30.1/30.2/30.3 of prime95.exe
+-----------------------------------------------------
+
+1) PRP proofs.  This allows GIMPS to double-check a PRP test at less than 1% of the cost of a full PRP test!
+   PRP proofs require lots of temporary disk space.  See readme.txt for details.
+   PRP proofs require uploading a large proof file.  See readme.txt for details.
+   PRP proof verifications require downloading a modest verification file.  See readme.txt for details.
+2) Proofs automatically uploaded to server in 30.2.
+3) First time LL, World-record LL, 100M-digit LL work preference is deprecated.
+4) New resource limits menu choice and dialog box.  Consult readme.txt before making changes to these settings.
+   Some options previously in Test/Worker Windows and Options/CPU are moved to the resources dialog box.
+5) LL-DC and PRP-DC combined into a single work preference.
+6) Warning raised if temporary disk space is less than 1.5GB -- you may not get first time prime tests.
+7) Thanks to Mihai Preda, the P-1 probability calculator has been improved.  This change results in a
+   lower optimal B1 value and higher optimal B2 value.
+
+New features in Version 29.8 of prime95.exe
+-------------------------------------------
+
+1)  Support added for AVX-512 FFTs.
+2)  FMA3 FFTs now have slightly higher FFT crossover points.  Soft crossovers are
+    no longer used by default.  See undoc.txt.
+3)  Torture test dialog box options now based on cache sizes.  Options for performing
+    a weaker torture test are available.  Torture tests that use all RAM are now more
+    stressful.  In-place vs. not in-place memory accesses now displayed on screen.
+    On machines with more than 5GB of memory, blend defaults to all but 3GB of RAM.
+4)  Add & subtract operations for AVX-512 FFTs are now multithreaded.  This should
+    improve performance for P-1 and ECM when using multiple threads.
+5)  Benchmark results are now written to results.bench.txt.
+6)  JSON results are now available for all work performed.  JSON results are
+    written to results.json.txt.
+7)  PRP tests with Gerbicz error checking are more immune to hardware errors.
+
+New features in Version 29.4 of prime95.exe
+-------------------------------------------
+
+1)  GIMPS has a new sub-project -- finding (probable) prime Mersenne cofactors.
+    This sub-project has two parts:  1) Running PRP tests, and 2) Finding
+    additional factors.  To support this new sub-project there are three
+    new work preferences:  PRP on Mersenne cofactors, PRP double-checking on
+    Mersenne cofactors, ECM on Mersenne cofactors.
+2)  Like LL tests, PRP tests now support shift counts to aid in running double-checks.
+    Shift counts are only supported for Mersenne numbers and Mersenne cofactors.
+3)  PRP tests now support a type of low overhead error checking that almost guarantees
+    correct results even on flaky hardware.  We call this Gerbicz error-checking after
+    it was proposed by Robert Gerbicz at mersenneforum.org.  This error-check only
+    works for base-2 numbers.
+4)  Because PRP tests are highly reliable, we now offer the option to do PRP tests
+    instead of Lucas-Lehmer primality tests.  There are 4 new work preferences
+    similar to LL work preferences:  first-time PRP tests, world record PRP tests,
+    PRP tests on 100 million digit numbers, and PRP double-checking.
+    If you are looking for a 100 million digit prime, PRP testing is recommended
+    rather than LL testing.
+5)  For non-base-2 PRP tests, there is a new option to run each iteration twice and
+    rollback if a mismatch occurs.  Useful only on flaky hardware due to the obvious
+    high overhead.
+6)  Minor performance tweaks were made to stage 1 of P-1.  Save files are incompatible
+    in stage 1.  Wait for your P-1 test to reach stage 2 before upgrading.
+
+New features in Version 29.3 of prime95.exe
+-------------------------------------------
+
+1)  A new error check for LL testing has been implemented.  This error check,
+    called a Jacobi error check, has a 50% chance of detecting hardware error(s)
+    since the last time a Jacobi error check was performed.  This error check
+    takes roughly 30 seconds and is scheduled to run twice a day.  The program
+    now saves two additional intermediate files that have passed the Jacobi
+    error check.  This test requires use of the GMP (GNU multi-precision) library.
+2)  The GCD step in P-1 and ECM factoring is faster.
+
+New features in Version 29.2 of prime95.exe
+-------------------------------------------
+
+1)  Throughput benchmarks of all FFT implementations are written to gwnum.txt. 
+    These benchmarks will then be used to pick the best FFT implementation to use.
+    This can lead to minor performance improvements.
+2)  Benchmarks are run at 5AM (and every 21 hours after that) for any FFT sizes that
+    will be needed within the next 7 days.  Once enough benchmark data is accumulated,
+    these automatic benchmarks no longer take place.
+3)  Default FFT implementations for Ryzen added.
+4)  A few new FFT sizes (up to 50M) are enabled for FMA3-capable CPUs.
+5)  ECM and P-1 on Fermat numbers will automatically add known Fermat factors to
+    the worktodo.txt entries.
+
+New features in Version 29.1 of prime95.exe
+-------------------------------------------
+
+1)  Faster trial factoring for machines that support FMA (Haswell and later).  
+    Multi-threaded trial factoring now supports more than one thread sieving for
+    small primes.  Several tuning parameters added - see undoc.txt.
+2)  The portable library, hwloc, for analyzing a machine's topology is now used.
+    This replaces the buggy code prime95 used to detect hyperthreading.  It also
+    eliminates the need for AffinityScramble2.  Running a benchmark will output
+    this topology information to results.txt.
+3)  AVX-512 trial factoring support added.
+4)  Dialog box for benchmarking added.
+5)  In the Test/Worker Windows dialog box you no longer choose how many threads
+    each worker uses.  Instead, you choose how many CPU cores each worker uses.
+    There affinity options have been removed.  There are two new options that
+    will decide if each worker also uses hyperthreading.
+
+New features in Version 28.9 of prime95.exe
+-------------------------------------------
+
+1)  Since GPUs are so much better at trial factoring than CPUs, benchmarking no longer times
+    prime95's trial factoring by default.  Two new benchmarking options are available:
+    OnlyBenchThroughput and OnlyBenchMaxCPUs.  See undoc.txt for details.
+2)  Slightly reduced the memory bandwidth requirements for several large FFTs.  May lead to
+    a very small speed increase for users testing 100 million digit numbers.
+3)  If running more than one worker, prime95 looks for any sin/cos data that it can share among
+    the workers.  Depending on the FFT sizes you are running, this could lead to a very slight
+    reduction in needed memory bandwidth.
+4)  Method for choosing the best FFT implementation changed.  In previous versions, the FFT
+    implementation that resulted in the fastest single worker timing was used.  In this version
+    the FFT implementation that had the best throughput was selected.  For FMA3 FFTs I used a
+    4-core Skylake to measure best throughput.  For AVX FFTs I used a 4-core Sandy Bridge
+    to measure best throughput.  Not many FFTs were affected, but you may see a few percent
+    variation in throughput with this version.
+5)  Improved AVX2 trial factoring in 64-bit executable.  Trial factoring should still be done
+    on a GPU.  A GPU is over 10 times more efficient at trial factoring than a CPU!!!
+6)  Trial factoring now defines one "iteration" as processing 128KB of sieve, or 1M possible
+    factors.  In previous versions an iteration was defined as 16KB of sieve in 32-bit executables
+    and 48KB in 64-bit executables.  The trial factoring benchmark still times processing 16KB of sieve.
+7)  Trial factoring in 64-bit executables is now multi-threaded.
+8)  On initial install, the default settings for number of worker windows will be set to
+    the number of cores / 4 with multithreading turned on.
+9)  The worker windows dialog box now enforces a minimum number of multi-threaded cores for some
+    work types to ensure timely completion of assignments.  Also, the worker windows menu choice
+    no longer allows assigning work to hyperthreads (they are rarely beneficial in prime95).
+    This behavior can be overridden with the ConfigureHyperthreads undoc.txt feature.
+
+New features in Version 28.6 of prime95.exe
+-------------------------------------------
+
+1)  The "days between sending new end dates" preference now accepts values between 0.125 and
+    7.0 (was between 1 and 7).  This lets you contact the server as frequently as every three
+    hours.  This can be useful in conjunction with the server feature that sends an email to
+    you if the computer is more than one hour late contacting the server.  To turn on that
+    server feature, go to the CPUs web page, and click on the CPU, there you can turn on a
+    couple of email features.
+2)  AVX2 support for trial factoring.  About a 50% speedup over the previous version.  However,
+    all trial factoring should still be done on a GPU.  A GPU is over 10 times more
+    efficient at trial factoring than a CPU!!!
+
+New features in Version 28.5 of prime95.exe
+-------------------------------------------
+
+1)  Changed the output to the worker windows during LL and PRP tests.  The new output includes
+    the estimated time to complete the test.  There are two new options described in undoc.txt:
+    ClassicOutput and OutputRoundoff.
+
+2)  Added some new options described in undoc.txt: ScaleOutputFrequency, TitleOutputFrequency,
+    and SilentVictoryPRP.
+
+3)  Benchmarking on hyperthreaded machines now times only the most common cases.  Specifically,
+    hyperthreading is used only in the one cpu and all cpu cases.
+
+4)  Benchmarking trial factoring is now off by default.  Prime95 should not be used for trial
+    factoring.  GPUs are over 10 times more efficient at that task.
+
+5)  On multi-core machines, benchmarks are now run on multiple workers.  This measures the effect
+    of memory bandwidth during testing and helps you select the setup that gives you the most throughput.
+
+6)  There are many new options described in undoc.txt to customize the benchmarking process.
+
+7)  In build 2, added a preference to bypass some of Mac OS X Mavericks' power saving features.
+ 
+
+New features in Version 28.4 of prime95.exe
+-------------------------------------------
+
+1)  Reduced memory usage.  This may make some single-thread benchmarks slower, but when
+    running several workers on machines where memory is a bottleneck there should be a
+    small performance increase.
+
+
+New features in Version 28.3 of prime95.exe
+-------------------------------------------
+
+1)  Supports Intel's new for fused multiply add instruction introduced with the Haswell CPU.
+    This results in faster FFTs.  Note that performance on many Haswell systems is memory-bandwidth
+    limited.  This means that when running workers on all cores performance gains will be small.
+2)  Some minor optimizations may give a very small performance boost for AVX CPUs.
+3)  All new test torture test data for AVX CPUs.  The new data runs more iterations, thus more time
+    is spent torturing the CPU rather than initializing the FFT routines.
+4)  Information added to result lines containing "has a factor".  This information may be used
+    by the server's manual web page to give proper TF / P-1 / ECM cpu credit at a future date.
+
+New features in Version 27.9 of prime95.exe
+-------------------------------------------
+
+1)  None, only minor bug fixes.
+
+New features in Version 27.7 of prime95.exe
+-------------------------------------------
+
+1)  When an error occurs reading a save file it is renamed with a .bad extension.
+    On rare occasions the file can be read successfully at a later time.
+
+New features in Version 27.6 of prime95.exe
+-------------------------------------------
+
+1)  Multi-threaded tests might be a little bit faster especially when using a lot of threads.
+    Of course, single-threaded usage still gives the best throughput.
+2)  FFT crossover points were adjusted.  Many higher, a few lower.
+
+New features in Version 27.3 of prime95.exe
+-------------------------------------------
+
+1)  64-bit optimizations for AVX-capable computers.  Single core benchmarks on Intel Sandy
+    Bridge computers should see a decent speed increase.  However, running on 4 cores
+    runs into main memory bandwidth bottleneck.  Sandy Bridge-E CPUs with 4 memory channels
+    should avoid this problem.
+
+New features in Version 27.1 of prime95.exe
+-------------------------------------------
+
+1)  32-bit FFTs optimized for AVX-capable computers.  Intel Sandy Bridge computers should
+    see a 25% speed increase.
+
+New features in Version 26.6 of prime95.exe
+-------------------------------------------
+
+1)  For rare cases where the program cannot figure out the number of cores and hyperthreading,
+    the NumPhysicalCores option may help.  See undoc.txt.
+2)  Faster FFT implementations are now selected for Core 2 CPUs with 1MB L2 cache or less
+    (marketed under the Celeron and Pentium label).
+3)  New, slightly higher, trial factoring breakeven points.
+
+New features in Version 26.5 of prime95.exe
+-------------------------------------------
+
+1)  Minor bug fixes.
+2)  Starting in build 2, P-1 work will display the chance of finding a factor.
+    The worktodo.txt line must include how_far_factored using the new syntax:
+	Pminus1=k,b,n,c,B1,B2[,how_far_factored][,B2_start][,"factors"]
+3)  Starting with build 3, at startup the program tries to determine which
+    hyperthreaded logical CPUs comprise one physical CPU.  If this isn't working
+    properly, see the AffinityScramble2 setting in undoc.txt.  The previous
+    version's AffinityScramble setting is no longer supported!
+
+New features in Version 26.4 of prime95.exe
+-------------------------------------------
+
+1)  The 64-bit version supports 64 threads (up from 32).
+2)  Each on-screen window can now scroll back 1000 lines of output.
+3)  ECM time estimates improved.  ECM may be a smidge faster.
+
+New features in Version 26.3 of prime95.exe
+-------------------------------------------
+
+1)  A few crash bugs were fixed that affected only some CPU architectures and some
+    FFT lengths.  Other minor bugs were fixed.
+
+New features in Version 26.2 of prime95.exe
+-------------------------------------------
+
+1)  Faster FFTs for most SSE2-capable CPU architectures.
+2)  More FFT lengths supported.
+3)  Some of the new, faster FFTs don't let us do as much error checking on each iteration.
+    If you don't want to lose this error checking, choose "SUM(INPUTS) error checking" from
+    the Options menu.  This will slow down your tests by about 2-5%.
+4)  When a possible hardware error occurs during a test, the error message would
+    likely scroll off the screen unnoticed.  Now, all future progress updates to
+    the screen will be followed by a message containing a count of the errors that
+    have occurred during the test.
+5)  Worker Windows now stagger their starts.  This improves timings for some
+    CPUs and operating systems.  See undoc.txt to control this feature.
+
+New features in Version 25.11 of prime95.exe
+--------------------------------------------
+
+1)  PRP of k*b^n+c where b > 2 will be faster in many cases.
+2)  Zero-padded FFTs are about 3-4% faster.  These FFTs are used in projects
+    like SeventeenOrBust.
+
+New features in Version 25.10 of prime95.exe
+--------------------------------------------
+
+1)  A bug that caused pfactor save file names to begin with the letter p
+    was fixed.  It now uses m like all other P-1 efforts.  Old save file
+    names are automatically upgraded.
+2)  Prime95 now recovers gracefully from more out-of-memory conditions
+    when doing ECM or P-1.
+3)  We now do P-1 factoring one bit level before the trial factoring limit.
+    The previous version started P-1 two bit levels before the trial
+    factoring limit.
+
+New features in Version 25.9 of prime95.exe
+-------------------------------------------
+
+1)  Performance increases for the 64-bit version by taking advantage of the
+    eight extra SSE2 registers.  The 32-bit version may also be a bit faster
+    by taking advantage of the Core 2 architecture.  The FFT code was 
+    originally optimized for the Pentium 4 where instructions like
+    "movapd reg,reg" take 6 clocks and should be avoided, whereas on Core 2
+    the same instruction uses just 1 clock cycle and improves scheduling.
+    The 32-bit version may be slightly faster or slower on the Pentium 4, but
+    not enough to worry about.  Preliminary benchmarks indicate:
+	32-bit Pentium 4:	between 2% slower and 1% faster
+	32-bit Core 2:		between 2% and 6% faster
+	64-bit Pentium 4:	between 2% and 4% faster
+	64-bit Core 2:		between 10% and 13% faster
+	64-bit Core i7:		between 7% and 12% faster
+	64-bit Phenom:		between 10% and 13% faster
+	AMD64:			between 1% slower and 1% faster
+2)  Intermediate save files were overhauled.  Trial factoring, P-1, and
+    ECM now support multiple save files.  The backup save file uses a .bu
+    extension.  While a new save file is being written a .write extension
+    is used and renamed when successfully written (thus, briefly there are
+    3 save files). NOTE #1: LL save files no longer use an initial letter
+    of q and r.  The program will automatically use these obsolete files if
+    necessary and delete them when no longer needed.  NOTE #2: ECM and P-1
+    save files on k*2^n+1 no longer use file names beginning with d and l.
+    The -An command line argument no longer appends an extension to save
+    file names.  NOTE #3: The client now supports keeping three save files.
+3)  Miscellaneous minor bug fixes.
+
+New features in Version 25.8 of prime95.exe
+-------------------------------------------
+
+1)  Bug fixed in smart affinity on hyperthreaded CPUs.
+2)  Bug fixed in setting a thread priority other than 1.
+3)  Off-by-one-bit bug fixed in the benchmarking of trial factoring.
+4)  In rare case an infinite loop could occur when the computer ID
+    in the spool file did not match the current computer ID.
+5)  The "days between checkin" value now has a range of 1 to 7 days.
+    In version 24, the range was 1 to 60 days with a default of 28 days.
+6)  Fixed bug where switching users on a Windows machine caused computer
+    GUIDs to be erroneously regenerated.  You may need to suffer through
+    one more regenerated GUID before the fix takes effect. 
+7)  A bug where some low memory situations on a multi-core machine resulted
+    in one or more workers sat idle has been fixed.
+8)  A crash bug doing 61 and 62 bit trial factoring on Pentium CPUs that
+    do not support the CMOV instruction was fixed.  On these same CPUs
+    a bug was fixed when factors smaller than 2^60 was found.
+
+New features in Version 25.7 of prime95.exe
+-------------------------------------------
+
+1)  Time= in ini files no longer supported.  A during/else syntax can be
+    used instead for some ini file options.
+2)  PauseWhileRunning enhanced to pause any number of workers.
+3)  LowMemWhileRunning added.
+4)  Ability to stop and start individual workers added.
+5)  DayMemory and NightMemory in local.txt replaced with a single Memory
+    setting.
+6)  Memory can be set for each worker.
+7)  Scheme to distribute available memory among workers needing a lot of
+    memory has been completely revamped.
+8)  MaxHighMemWorkers replaces delayStage2Workers option.
+9)  The executable now defaults to talking to the PrimeNet v5 server.  To
+    use the executable with the old v4 server, add "UseV4=1" to the top
+    of prime.txt.
+
+New features in Version 25.5 of prime95.exe
+-------------------------------------------
+
+1)  Multiple LL tests can be run within a single prime95 instance.  There is
+    no longer a need to run multiple instances of prime95 on multi-cpu
+    machines.
+2)  Uses a new version of the Primenet server.  Features include user IDs that
+    are different than team IDs.  New work types.  Ability to set some client
+    options using web-based forms.
+3)  Communication with the server runs in a separate thread.
+4)  The CURL library is used for communication with the server.  Hopefully
+    this will support a wider variety of client networking configurations.
+5)  Supports using multiple logical or physical CPUs on a single LL test.
+    Except for some hyperthreaded CPUs and only on some FFT sizes, this is
+    not recommended as you will get more throughput by giving each CPU
+    its own number to test.
+6)  ECM and P-1 now support B1 and B2 values above 4.29 billion.  ECM now
+    pays attention to the memory settings in the Options/CPU dialog box.
+7)  Several files have been renamed so that they are not changed by Windows
+    save/restore.  Prime.ini is now prime.txt.  Local.ini is now local.txt.
+    Worktodo.ini is now worktodo.txt.  The primenet.ini file has been
+    deleted - it is now a section within the prime.txt file.
+8)  It is now legal to put comment lines in the prime.txt, local.txt, and
+    worktodo.txt files.
+9)  In older versions, editing the worktodo.ini file while prime95 was running
+    sometimes had the desired effect.  That is no longer the case.  You can
+    create a worktodo.add file to add work to a running prime95.
+10) WARNINGS:  Previous versions of prime95 will not be able to read save files
+    generated by this version.  This version will not be able to continue from
+    P-1 save files generated by the previous version in the middle of stage 2.
+    This version cannot read a prime.spl file generated by a previous version.
+11) Program can now do PRP tests of (k*b^n+c)/f.  Add a line worktodo.txt that
+    looks like this:
+	    PRP=k,b,n,c[,how_far_factored,tests_saved][,known_factors]
+    The optional how_far_factored (in bits) and tests_saved values are used
+    to determine if P-1 factoring prior to the PRP test would be beneficial.
+    The optional known_factors list is a quoted comma separated list of
+    known factors of k*b^n+c. 
+12) The program no longer does a one-hour self-test before testing an exponent
+    with a new FFT length.
+13) You can now copy the contents of a window to the clipboard.
+14) New icon colors.  Green means "go".  Red means "stopped".
+15) The torture test dialog box lets you choose how many CPUs or cores you
+    want to torture test.
+16) The benchmark times both single-threaded and multi-threaded FFTs.
+17) The Advanced menu no longer needs a password.
+
+
+New features in Version 24.15 of prime95.exe
+--------------------------------------------
+
+1)  To limit prime95's impact on computer responsiveness on a hyperthreaded
+    machine the program now pauses for 30 seconds if two successive iterations 
+    take 40% longer than a typical iteration.  You can adjust this feature
+    using the HyperthreadingBackoff setting described in undoc.txt.
+
+New features in Version 24.14 of prime95.exe
+--------------------------------------------
+
+1)  A bug that caused the torture test to hang on 256K FFTs on SSE2 machines
+    with 128K of L2 cache was fixed.
+
+New features in Version 24.13 of prime95.exe
+--------------------------------------------
+
+1)  Celeron D (256K L2 cache) and Willamette (also 256K L2 cache) now have
+    different implementations for several FFT sizes.  This results in an
+    improvement of several percent for the Celeron D.
+2)  A bug that caused some machines to generate "Error 2252" when communicating
+    with the server was fixed.
+3)  SSE2 trial factoring code had a bug when factoring very large exponents.
+
+New features in Version 24.12 of prime95.exe
+--------------------------------------------
+
+1)  For SSE2 machines the larger FFTs have been changed to more effectively
+    use a wide variety of L2 cache sizes.  The previous version was optimized
+    for a 256KB L2 cache only.  Depending on your CPU and FFT size, you could
+    see an improvement of several percent.
+2)  As a side "benefit" even larger FFT sizes are now supported.  This allows
+    testing of exponents up to 596 million.  Not recommended.
+3)  The factoring breakeven points have been recalculated using my 2 GHz P4.
+    This version of prime95 will do less trial factoring.
+4)  Since server database crashes cause spurious error 3 messages, prime95
+    will now ignore error 3 messages from the server for 72 hours.  This should
+    workaround the problem whereby a result is reported but no CPU credit is
+    given and the reservation is not cleared.
+5)  Fixed crash bug trial factoring exponents above 286 million.
+
+New features in Version 24.11 of prime95.exe
+--------------------------------------------
+
+1)  Faster FFTs for AMD64 using prefetchw in both 32-bit and 64-bit mode.
+    You can expect about a 15% speed improvement.
+2)  Prime95 now detects support for 3DNow! instructions.  See undoc.txt
+    for overriding this detection with CpuSupports3DNow=n in local.ini.
+3)  Factoring entries in worktodo.ini now accept exponents up to 2 billion.
+4)  Improved checking for memory allocation errors during a torture test.
+    Better guessing of amount of memory to use in a blend test.
+5)  Added timeouts to PrimeNet communications in hopes of avoiding rare hangs
+    when contacting the PrimeNet server.
+6)  Fixed rare bug where P-1's GCD could miss a factor.
+7)  Added trial factoring to the benchmark.
+8)  Fixed bug in ECM when using zero-padded FFTs.
+9)  SSE2 macros optimized for an additional 1-3% improvement on P4 and AMD64
+    CPUs.
+
+New features in Version 24.10 of prime95.exe
+--------------------------------------------
+
+1)  64-bit version of prime95 available for 64-bit Windows.
+
+New features in Version 24.9 of prime95.exe
+-------------------------------------------
+
+1)  Fixed crash when running on machines with "no-execute" protection.
+2)  Fixed mis-detection of some P3 and Celeron CPUs.
+
+New features in Version 24.6 of prime95.exe
+-------------------------------------------
+
+1)  Athlon users should see a 20% to 30% speed increase.
+2)  Pentium, Pentium II, Pentium III users should see dramatically WORSE
+    performance.  Run version 23 instead.
+3)  P-1 and ECM now support numbers of the form k*b^n+c.  This cannot be done
+    from the menus.  Add these entries to worktodo.ini:
+	Pminus1=k,b,n,c,B1,B2
+	ECM2=k,b,n,c,B1,B2,curves_to_do[,specific_sigma]
+
+New features in Version 23.9 of prime95.exe
+-------------------------------------------
+
+1)  The blend torture test now uses less memory by default to prevent
+    thrashing.  The in-place torture test is now the default more cases
+    to reduce complaints dealing with memory allocation issues (no pagefile,
+    thrashing, etc.)
+2)  A bug in continuing after finding a factor when using AdvancedFactor was
+    fixed.
+
+New features in Version 23.8 of prime95.exe
+-------------------------------------------
+
+1)  A communication bug, Primenet Error 1, was fixed in the case where
+    proxy software inserted the text "NetAnts: MaxConnection=1" in the HTML
+    response from the Primenet server.
+2)  Fixed memory allocation bug in torture test when using 926MB of memory
+    on the 20K FFT size.
+3)  The program will now try both full and a relative URL in trying to
+    contact the PrimeNet server.  Some rare setups only work with full URLs
+    and some only work with relative URLs.  The small downside is there might
+    be an increase in network traffic when the server is down.  If this is
+    a concern you can use the UseFullURL option described in undoc.txt.    
+
+New features in Version 23.7 of prime95.exe
+-------------------------------------------
+
+1)  A bug was fixed where the torture test used more virtual memory than
+    necessary, sometimes resulting in an "Out of memory" error.
+
+New features in Version 23.6 of prime95.exe
+-------------------------------------------
+
+1)  Several changes have been made to the torture test.
+    a) Machines faster than 1 GHz will use new test data that runs a lot more
+       iterations.  This will reduce time spent in initialization code,
+       hopefully increasing stress on the CPU.
+    b) The torture test stops after 100 ILLEGAL SUMOUT errors.
+    c) There are now 3 flavors of torture testing.  One that operates on small
+       FFTs only, theoretically maximizing FPU stress.  One that operates 
+       in place on large FFTs only, maximizing heat and power drain.  One that
+       runs a blend of tests using lots of memory, possibly catching errors
+       that might only occur at a specific memory address.
+
+New features in Version 23.5 of prime95.exe
+-------------------------------------------
+
+1)  Four changes have been made after GIMPS' first false positive report
+    in 7 1/2 years of operation.
+    a) The program now returns the number of errors that occurred when the
+       result is prime.  A non-zero value will make us more suspect of the
+       reported prime.
+    b) The save files will not be deleted.  The user can then email these to
+       me and we can rerun the last 30 minutes of the LL test.  It is hard
+       to imagine a second false positive report in this mini LL run.
+    c) The shift counter is now checked every iteration.  If this variable
+       AND the FFT data was corrupted, then and endless loop of LL iterations
+       generating zero is possible - resulting in a false prime report.
+    d) Every iteration the FFT data is checked to see if the data has been
+       zeroed.
+    e) The is-this-a-prime check now makes sure the FFT data is not NaN.
+       NaN stands for not a number and means the data is corrupt.  The
+       previous version checked for zero and my C compiler returns TRUE for
+       the test NaN == 0.0!
+2)  I restored the old behavior sending relative URLs.  Some users had trouble
+    with this feature introduced in 23.4.  So, UseFullURL=0 is now the default.
+3)  Some prefetching improvements were made for the Athlon, Pentium 3, and 
+    Celeron 2 processors.  You can expect speed improvements between 3%
+    and 10% for most FFT sizes.  Warning: the new code is slower for Durons
+    and Celeron's with small L2 caches for FFT sizes 1024K and above.
+
+New features in Version 23.4 of prime95.exe
+-------------------------------------------
+
+1)  Further performance improvements in the SSE2 FFT code.  I've tried to
+    do more work while data is in the L1 data cache.
+2)  The program should now work with a "redirected proxy server".  This was
+    done by sending full URLs in Primenet requests.  While I don't anticipate
+    any problems, the old relative URL functionality can be had by setting
+    UseFullURL=0 in primenet.ini.
+3)  A bug in the assembly language add and subtract routines was fixed.  The
+    bug could affect ECM on exponents just below
+    MAXIMUM_EXPONENT_FOR_FFTLEN - FFTLEN/2.
+
+New features in Version 23.3 of prime95.exe
+-------------------------------------------
+
+1)  Further performance improvements in the SSE2 code for FFTs larger than
+    640K.  You should see about a 4% improvement in LL tests on a P4.  However,
+    FFTs between 40K and 512K might be a tiny bit slower.
+2)  Stage 2 of P-1 factoring has been recoded for more speed.  WARNING: when
+    continuing from a save file created in stage 2 by a previous prime95
+    version, this version will restart stage 2 from the beginning.  ALSO:
+    the stage 2 P-1 save file format has changed - in dual boot scenarios
+    you must upgrade mprime and prime95 at the same time.
+
+New features in Version 23.2 of prime95.exe
+-------------------------------------------
+
+1)  Further performance improvements in the SSE2 code.  You can expect about
+    a 5% improvement in LL tests on a P4.
+
+New features in Version 23.1 of prime95.exe
+-------------------------------------------
+
+1)  Big SSE2 FFTs now take the L2 cache size into account.  P4 Celeron (128KB
+    L2 cache) is faster for FFTs between 512K and 2M.  P4 Northwood (512KB
+    L2 cache) is faster for FFTs larger than 1M.
+2)  Benchmark no longer times 256K and 320K FFTs, but does time 2048K FFT.
+3)  Support for torture testing FFT sizes from 1280K to 4096K added.
+4)  A 900 MHz P-III is now required to get first time LL tests by default.
+5)  Slightly faster SSE2 FFTs for lengths of 5*2^N and 7*2^N (e.g. 640K, 896K).
+
+New features in Version 22.13 of prime95.exe
+--------------------------------------------
+
+1)  A P-1 and ECM QA suite was implemented.  A bug in ECM for exponents
+    below 172,700 and near the limit of an FFT size and using SSE2 code
+    was fixed.
+
+New features in Version 22.12 of prime95.exe
+--------------------------------------------
+
+1)  A bug was fixed that caused some factors to be missed in stage 2 of P-1
+    when the available memory did not let the program allocate 12 temporary
+    variables.  If testing a number in the 16 millions using an FFT size of
+    768K, then each temporary takes 768K * 8 bytes or 6MB.  If your memory
+    setting was less than 72MB (6MB * 12 temporaries) then you were affected
+    by the bug.  Actual the program allocates some fixed tables so anything
+    less than about 75MB triggered the bug.
+
+New features in Version 22.11 of prime95.exe
+--------------------------------------------
+
+1)  A bug that caused factors to be missed in the last stage of P-1 and ECM
+    factoring was fixed.  The bug was introduced in executables built after
+    Sept. 28, 2002.
+
+New features in Version 22.10 of prime95.exe
+--------------------------------------------
+
+1)  When running a double-check assignment the preferred trial factoring
+    depth is reduced one bit.  This is done because finding a factor will
+    save one LL test instead of the usual two LL tests.
+2)  On a Windows NT/2000/XP system, if prime95 is run by a user without
+    administrator privileges then prime95 cannot install itself as a service.
+    Thus, the Start at Bootup option will set prime95 to run at login time
+    rather than bootup time.
+3)  A crash bug when selecting "Start at Bootup" on Windows NT3 and Windows NT4
+    systems was fixed.
+4)  Bug in starting more than one prime95 as NT services on multi-processor
+    machines was fixed.
+
+New features in Version 22.9 of prime95.exe
+-------------------------------------------
+
+1)  Error rate for a clean run is now estimated at 1.8% raising your chances
+    of finding a Mersenne prime while double-checking.
+2)  You can now stop and continue testing from the system tray menu.
+3)  You can now pause prime95 when another program starts running.  See the
+    PauseWhileRunning option in undoc.txt.
+4)  Fixed bug introduced in 22.8 where No Icon did not work if Start at Bootup
+    was also specified in Windows 98.
+5)  A bug in unscrambling the proxy server password in primenet.ini was fixed.
+
+New features in Version 22.8 of prime95.exe
+-------------------------------------------
+
+1)  Soft FFT crossovers have been implemented.  If you test an exponent that
+    is within 0.2% of the old hard FFT crossover point, then 1000 test
+    iterations are run to determine if the smaller or larger FFT is
+    appropriate for the exponent.  Although not recommended, you can adjust
+    prime95's behavior to be more aggressive using the SoftCrossover and
+    SoftCrossoverAdjust features discussed in undoc.txt.
+2)  To better stress main memory, the torture test will now use up to the
+    amount of memory specified in the Options/CPU dialog box.
+3)  Iterations with roundoff checking are a little faster for non-SSE2 CPUs.
+
+New features in Version 22.7 of prime95.exe
+-------------------------------------------
+
+1)  Trial factoring above 2^64 on a P4 now uses the SSE2 instructions.
+    This is more than four times as fast as the previous version.
+2)  Old Advanced/Factoring save files are not compatible with this version.
+    They are named p0000000 and should be deleted.  This should not be a
+    problem as no one should be using this obsolete and unsupported feature.
+3)  Four more x87 FFT crossover changes as suggested by Brian Beesley's
+    research.
+4)  You can now change the NT/2000/XP service name and service display name.
+    See undoc.txt for details.
+5)  Bug where found factors were silently truncated to 200 digits was fixed.
+
+New features in Version 22.6 of prime95.exe
+-------------------------------------------
+
+1)  The Start At Bootup option now runs prime95 as a Windows NT/2000/XP
+    service!!  Normally Windows NT/2000/XP will not run GUI programs as
+    services, but several tricks have allowed us to get this working
+    almost flawlessly.
+2)  To reduce spurious error reports on x86 LL tests near the crossover
+    points, the program now allows roundoff errors less than 0.40625
+    rather than less than 0.4.
+
+New features in Version 22.5 of prime95.exe
+-------------------------------------------
+
+1)  A bug in P4 roundoff error recovery was fixed.  Bug was present in
+    version 22 executables dated between May 22 and June 18.
+2)  Prime95 now properly detects if the program is running by another
+    logged in Windows XP user.
+3)  When Tray Icon or Hide Icon is set, the "X" in the upper right corner
+    no longer closes prime95 rather it minimizes it.  Also right clicking
+    the tray icon now brings up a popup menu.
+4)  Changed the way prime95 shuts down.  Logoff in WinXP used to hang.
+
+New features in Version 22.4 of prime95.exe
+-------------------------------------------
+
+1)  A little more tweaking of the FFT crossovers.
+2)  A GCD hang bug was fixed in case where there were a large number of
+    entries in the lowm.txt file.  Another GCD bug affecting ECM on F18
+    was fixed.
+
+New features in Version 22.3 of prime95.exe
+-------------------------------------------
+
+1)  Given more data, the roundoff error checking is now done on every
+    iteration for exponents within 0.5% of the maximum that can be tested
+    by the current FFT length.  If a roundoff error above 0.4 occurs,
+    then the iteration is now repeated without any change to the shift count.
+    It now takes a roundoff error greater than 0.6 to corrupt the results.
+2)  Many of the FFT ranges have changed.  Version 21 was too aggressive
+    in choosing FFT sizes for the P4.  The new handling of roundoff
+    errors above 0.4 lets us be more aggressive with the non-P4 code.
+3)  Result lines are now WYn rather than WXn.
+4)  A crash bug affecting P-1 and ECM using the 2^N+1 option for large N was
+    fixed.
+5)  A rare memory corruption and possible crash bug in the GCD code was
+    fixed.
+6)  The -t command line argument will run the torture test.
+7)  To reduce wild fluctuations in the RollingAverage, it will be updated
+    roughly twice per day.
+
+New features in Version 22.2 of prime95.exe
+-------------------------------------------
+
+1)  Factoring assignments go to machines slower than a 233 MHz Pentium.
+    Double-checks are assigned machines slower than a 500 MHz P-III.
+2)  The speed of the GCD has been improved.
+3)  Some of the P4 FFT ranges have changed.  Version 21 was too aggressive
+    in choosing FFT sizes for the P4.
+4)  Roundoff error checking is now done on every iteration for exponents
+    within 2% of the maximum that can be tested by the current FFT length.
+    See undoc.txt for ways to disable this new feature.
+5)  The previous version would get into an infinite loop if a repeatable
+    roundoff error larger than 0.48 was discovered.  Now if a repeatable
+    roundoff error greater than 0.45 is found, then the iteration is
+    repeated after shifting the FFT data.
+
+New features in Version 22.1 of prime95.exe
+-------------------------------------------
+
+1)  Some bugs in error handling when communicating with the server have
+    been fixed.
+2)  Communicating with the server by RPC is no longer supported.  The
+    HTTPNET.DLL and RPCNET.DLL have been deleted.  Only "Basic" Proxy server
+    authentication is supported.  Version 21 may have supported MS Proxy
+    Server 2.0's NTLM (NT Lan Manager) challenge/response authentication.
+3)  The program now uses a high resolution timer rather than the RDTSC
+    instruction to time events.  This should help the program display accurate
+    timings on laptops with SpeedStep or desktops that can hibernate.  You can
+    force the program to use the old RDTSC timing method with the RdtscTiming
+    option described in undoc.txt.
+4)  The program uses a updated algorithm to automatically detect CPU type and
+    speed.  The Options/CPU dialog box no longer let's you set this
+    information.  Instead, the Options/CPU dialog displays the detected
+    CPU type and speed.  This new feature helps prevent incorrect settings
+    when users upgrade or try several overclocking speeds.  If the new
+    algorithm fails, you can override the settings as described in undoc.txt.
+5)  Benchmark now writes the program version, timing methodology, cpu type
+    and speed, L1 and L2 cache information to results.txt.  It will refuse to
+    benchmark if rdtsctiming is 10.
+
+New features in Version 21.4 of prime95.exe
+-------------------------------------------
+
+1)  Exiting the Torture Test now prints out how long it ran.
+2)  P4 error checking was relaxed slightly to reduce false alarms.
+
+New features in Version 21.3 of prime95.exe
+-------------------------------------------
+
+1)  The program will now skip the P-1 factoring stage if another user has
+    already performed this step.
+2)  The Advanced/Quit GIMPS menu choice now lets you quit after current
+    work completes or quit immediately.
+3)  A bug was fixed in the error recovery code.  After getting a "Disregard
+    last error" message, the user was treated to a new error on every
+    iteration.  The end result was incorrect.  The bug only affected the
+    error recovery of the new P4 FFT introduced in the beta version 21.2.
+
+New features in Version 21.2 of prime95.exe
+-------------------------------------------
+
+1)  The program now uses the SSE2 instructions introduced on the Pentium 4 CPU.
+    This version is about 3 times faster than the previous version on a P4.
+2)  The program now uses the prefetch instructions on the Celeron 2, Pentium 3,
+    and all Athlon CPUs.  This results in about a 20% performance boost on
+    these machines.
+3)  Process priority is now set to idle.  Microsoft documentation says that
+    an idle thread priority overrides process priority.  The program's
+    priority scheme has always worked well.  However, several Win2K users
+    have reported that the program works better if the process priority is
+    also set to idle.
+4)  The program now delays calculations until 90 seconds after bootup.  This
+    lets your machine boot up as fast as possible.  This can be changed, see
+    undoc.txt.
+5)  The default crossover between double-check assignments and first-time
+    tests has been increased to a 400 MHz PII.
+6)  After 5 1/2 years, a help file now exists!  It is HTML Help which may
+    have problems on older Windows machines.  If so, try downloading
+    hhupd.exe from Microsoft's web site.
+7)  The program used to do factoring and P-1 testing on new exponents before
+    completing LL tests on older exponents.  This was confusing to many.
+    The program now processes the worktodo.ini file in sequential order.
+    See undoc.txt on how to restore the old behavior.
+8)  Error messages such as ILLEGAL SUMOUT, SUMINP != SUMOUT, etc. are no
+    longer sent to the server since the final result contains a count of how
+    many errors occurred during the LL test.
+9)  Some of the FFT crossover points have changed slightly.
+10) Test/Status now outputs the day of the week each work item will complete.
+11) Interim output lines have changed - hopefully, so they are more useful
+    especially to newbies.  By default, output lines no longer contain the
+    clocks count.  Lines now contain a timestamp.  Benchmark timings are now
+    output in milliseconds.  These defaults can be changed using options
+    in undoc.txt.
+12) A new welcome screen for new users will encourage stress testers
+    to use the program without reserving exponents.
+13) There is now a menu choice that lets you unreserve a specific exponent.
+    This is for knowledgable users only.  You might do this if the server
+    assigned a small exponent and you'd rather be testing larger ones.  Or
+    the prime95 you set up on another machine had a hard drive failure.
+14) The Windows 9x Service menu choice has been replaced by the more general
+    Start at Bootup menu choice.  This choice now sets registry entries to
+    autostart prime95 on any Windows machine.  WARNING:  Using this option
+    will delete any StartUp menu shortcuts so the registry entry and startup
+    menu do not both try to start prime95.
+15) Prime95 will now ask for confirmation if you enter a CPU speed that
+    differs from the computed CPU speed by more than 4%.
+16) The self-test menu choice was deleted - use the torture test instead.
+17) A benchmark menu choice has been added.
+18) The torture test code now includes more FFT lengths including smaller
+    ones that run completely in the L2 cache which may increase CPU
+    temperatures.  Each FFT size is tested for 15 minutes by default.
+    There are now several options in the undoc.txt for fine tuning the
+    torture test's behavior.
+
+New features in Version 20.6 of prime95.exe
+-------------------------------------------
+
+1)  A crash bug was fixed.  If you did P-1 factoring followed by trial
+    factoring, then if you found a factor unallocated memory was accessed
+    usually resulting in a crash.
+
+New features in Version 20.5 of prime95.exe
+-------------------------------------------
+
+1)  A rare error was fixed.  When the memory settings changed during the
+    GCD step in P-1 or ECM factoring, then a spurious "ERROR: Factor
+    does not divide N!" error was raised.
+
+New features in Version 20.4 of prime95.exe
+-------------------------------------------
+
+1)  If stage 2 of P-1 was postponed because of insufficient memory, the
+    program did not restart stage 2 when nighttime started.  This bug was
+    fixed.
+2)  By default, PII-300's and faster get first-time LL tests, P-90 and faster
+    get double-checking work, and all slower machines get factoring work.
+3)  An ECM bug during stage 2 init on huge exponents caused false ILLEGAL
+    SUMOUT errors.  This bug was fixed.
+
+New features in Version 20.3 of prime95.exe
+-------------------------------------------
+
+1)  Another fairly uncommon ECM bug was fixed.  The bug caused "Factor does
+    not divide N!" errors.
+2)  A couple of minor bugs in computing the optimal P-1 bounds to use prior
+    to a Lucas-Lehmer test were fixed.  The program now does a better job at
+    estimating the memory required in P-1 stage 2.  Finally, although P-1
+    stage 2 working set size is unchanged, the program allocates less memory
+    in stage 2.
+3)  Prime95 no longer searches for a smaller factor when trial factoring
+    discovers a factor.  The reasons are two-fold.  1)  Version 19 had a
+    bug where stopping and restarting the program bypassed the search for
+    smaller factors.  Thus, my database may already be missing smaller
+    factors.  2) As we factor larger exponents to a deeper depth it may
+    no longer be a quick job to determine if there are smaller factors.
+    Note, that version 20 will still look for smaller factors if you are
+    looking for factors below 2^60 with the FactorOverride option in undoc.txt.
+4)  The undocumented AMPM feature controls how times are formatted in the
+    Options/CPU dialog box.
+
+New features in Version 20.2 of prime95.exe
+-------------------------------------------
+
+1)  If P-1 stage 1 completed and there was not enough memory to start
+    stage 2 immediately, then an incorrect save file was generated.  This
+    bug was introduced in version 20.1.  Upon restart of the P-1 factoring
+    job a crash or other unpredictable behavior was possible.  This bug was
+    fixed and this version has special code to properly read these
+    incorrect save files.
+2)  P-1 will restart any time the memory settings change.  This is done
+    so that the optimal P-1 bounds can be computed with the new memory
+    settings.
+3)  A bug in ECM testing was fixed.
+
+New features in Version 20.1 of prime95.exe
+-------------------------------------------
+
+1)  A bug in the new GCD code was fixed.
+2)  Timings in the P-1 stage are no longer cumulative.  There is a new
+    feature in undoc.txt for those that prefer cumulative timings.
+3)  Messages are now output prior to beginning the lengthy GCD.
+4)  The FactorOverride undocumented feature (not for use with PrimeNet) now
+    supports factoring to a deeper level than prime95 would ordinarily factor.
+5)  A bug where the worktodo.ini entry was not removed if P-1 found a factor
+    was fixed.
+6)  If P-1 finds a factor it now deletes any Lucas-Lehmer intermediate files.
+7)  A crash bug when continuing from a P-1 stage 2 save files with
+    different available memory parameters was fixed.
+8)  Resuming an LL test now outputs a line to the screen,
+9)  The Test/Status display now correctly calculates the estimated completion
+    time for an LL test when P-1 factoring is in progress.
+10) Advanced/Factor menu choice was deleted.
+11) A bug in computing P-1 stage 2 percentage complete was fixed.
+
+New features in Version 20.0 of prime95.exe
+-------------------------------------------
+
+1)  The program now does some P-1 factoring prior to running first time
+    and double-checking Lucas-Lehmer tests.  This will increase overall
+    GIMPS throughput.  If you install version 20 in the middle of an LL test
+    the program will run the P-1 step if the LL test is less than 50%
+    complete.
+2)  The Options/CPU dialog box now asks how much memory the program can
+    use during the P-1 factoring.  See the "Setting Available Memory"
+    section in the readme.txt file.
+3)  Stage 1 of P-1 factoring is now faster.
+4)  The GCD used in P-1 and ECM factoring is now faster.
+5)  The Test/Manual Operation menu choice has been deleted.
+6)  The memory options in P-1 and ECM dialog boxes have been deleted.
+7)  The "send new completion dates" checkbox was moved from the Test/Primenet
+    dialog box to the Advanced/Manual Communication dialog box.
+8)  A bug in estimating time remaining for a factoring job was fixed.
+9)  AdvancedFactor now writes a line to the worktodo.ini - just like all
+    the other work types.
+10) ECM and P-1 are now consistent with Lucas-Lehmer testing in the use
+    of the "Iterations between screen outputs" setting.  An iteration is
+    defined as the time it takes to do a squaring.  If you are doing ECM
+    on small exponents you will probably want to increase this setting.
+
+New features in Version 19.2 of prime95.exe
+-------------------------------------------
+
+1)  A bug in factoring exponents above 35.79 million was fixed.
+
+New features in Version 19.1 of prime95.exe
+-------------------------------------------
+
+1)  A new undocumented feature, Stage1GCD, lets you speed up P-1 tests
+    on large exponents - see undoc.txt for details.
+2)  K6 CPUs now default to the Pentium code path instead of the Pentium
+    Pro code path.  This is faster on the K6.
+3)  The rolling average formula was adjusted to work better on machines
+    that are not on 24 hours a day.
+
+New features in Version 19.0 of prime95.exe
+-------------------------------------------
+
+1)  Faster - in some cases as much as 10% faster!.  The FFTs were recoded
+    for improved memory and TLB efficiency.  Furthermore, optimizations
+    specific to the Pentium Pro and later processors were added.
+2)  New FFT lengths.  The program can now test exponents as large as
+    79.3 million.  Also, smaller FFT lengths are supported for use in
+    ECM and P-1 factoring.
+3)  More conservative FFT breakpoints.  This could actually result in
+    some exponents being slower to test in this version.  However, the
+    chance of a fatal rounding error has been reduced.
+4)  P-1 factoring has been added.  Although it is not very practical for
+    large exponents because of a slow GCD routine, it can be used to
+    find new factors of exponents below a few million or so.
+5)  ECM can now run on large exponents.  Once again, the slow GCD routine
+    and high memory requirements might make this impractical for large
+    exponents.
+6)  ECM and P-1 factoring now support save files.  Very handy on lengthy runs.
+    The count of completed ECM curves is maintained in the save file instead
+    of the worktodo.ini file.
+7)  ECM and P-1 factoring lets you specify the amount of memory to use.
+    In some cases, more memory can improve execution speed slightly.
+8)  A bug in guessing the CPU speed on initial install has been fixed.
+9)  The preferences dialog now has an option to pause prime95 when a laptop
+    is running on its battery.
+10) Error checking has been improved slightly.
+11) Factoring is now "layered".  That is, prime95 now factors to 2^50, then
+    2^51, 2^52, and so forth up to the appropriate limit.  The factoring
+    output lines have been changed to show percent complete in the current
+    "layer".
+12) A bug in running two or more self or torture tests in the same directory
+    has been fixed.
+13) Trial factoring above 2^64 is now supported.
+14) More trial factoring is now done to take into account the cost of
+    double-checking.
+15) Title now contains percent complete when LL testing.  By default, the
+    percent complete value is now displayed to 2 decimal places.  You can
+    change this by setting PercentPrecision in prime.ini to a value
+    between 0 and 6.
+16) Affinity and service name settings moved from prime.ini to local.ini file.
+    Prime95 will automatically move these settings for you.
+17) An option to get only 10,000,000 digit numbers to run primality tests
+    on has been added to the Test/Primenet dialog box.  See
+    http://www.mersenne.org/prize.htm for rules on claiming the EFF award
+    for finding a 10,000,000 digit prime.
+18) The Advanced/Clear primes menu choice has been deleted.
+19) The prime95 icon turns yellow when the program is idle.  After an
+    error such as ILLEGAL SUMOUT, the icon will blink for 10 seconds.
+20) The User Information dialog box allows you to request newsletters and
+    form a team user ID where the team members cannot alter the team name.
+21) A bug in the reporting of error counts in the results.txt file has
+    been fixed.
+22) The server can now broadcast important messages to the prime95 client.
+    Prime95 will blink the icon until prime95 is activated and then it will
+    display the message.
+23) A computer ID will be generated for computers that do not have one.  If
+    you want to assign your own computer ID, please try to make each
+    computer ID using the same user ID unique.
+
+New features in Version 18.1 of prime95.exe
+-------------------------------------------
+
+1)  Added code so that server can distinguish between a v17 and v18 client.
+2)  Only v17 save files above 4194304 are deleted.
+
+New features in Version 18.0 of prime95.exe
+-------------------------------------------
+
+1)  Bug fixed in Lucas-Lehmer testing of exponents above 4194304.
+
+New features in Version 17.2 of prime95.exe
+-------------------------------------------
+
+1)  Faster 2^N+1 ECM factoring.
+
+New features in Version 17.1 of prime95.exe
+-------------------------------------------
+
+1)  The -T command line switch has been deleted.
+2)  You can now fine tune your control of the program by adding Time=
+    lines to your prime.ini file - see the readme.txt file.
+3)  ECM factoring for 2^N+1 is now available.
+4)  By default, ECM factoring stops if a factor is found for exponents
+    above 5825 and continues (if the cofactor is composite) for exponents
+    below 5825.  You can override this behavior by setting ContinueECM=0
+    or 1 in prime.ini.
+
+New features in Version 17.0 of prime95.exe
+-------------------------------------------
+
+1)  Prime95 can now be used to double-check its own results.
+2)  Machines less powerful than a P133 will default to double-checking
+    assignments.
+3)  The total number of errors that occur during the Lucas-Lehmer test
+    are now output in results.txt.
+
+New features in Version 16.5 of prime95.exe
+-------------------------------------------
+
+1)  A new httpnet.dll can provide Scott Kurowski with debugging information.
+    Simply create a primenet.ini file with these lines:
+	[Debug]
+	PacketLog=1
+    Output file is pnHttp.txt.
+2)  The old network retry time has been replaced by two settings.
+    The modem retry time (default 2 minutes) controls how often prime95
+    polls your modem to see if you are connected to the Internet.
+    The network retry time (default 60 minutes) controls how long prime95
+    waits after a failed attempt to contact the server.
+3)  A timestamp and program version number is written to the prime.log file.
+4)  You can now switch between HTTP-based and RPC-based PrimeNet protocols
+    from the Test/Primenet dialog box.
+
+New features in Version 16.4 of prime95.exe
+-------------------------------------------
+
+1)  Lucas-Lehmer testing output now shows percent complete.
+2)  Windows NT users can now set processor affinity on multi-CPU systems.
+3)  ECM factoring is available for small exponents.  See
+    http://www.mersenne.org/ecm.htm for a list of exponents that
+    need factoring.
+4)  A bug that prevented 486 & Cyrix machines from factoring above 2^62
+    has been fixed.
+5)  The LockUserInfo feature no longer sends user info every time prime95
+    starts up.
+6)  A bug in setting minimized or maximized window in a shortcut to prime95
+    is fixed.
+7)  Test/Status now shows expected completion dates.
+
+
+New features in Version 16.3 of prime95.exe
+-------------------------------------------
+
+1)  The LockUserInfo=1 setting is now sent to the server so that no
+    member of a team can accidentally transfer the credit for work
+    previously performed by the team.
+
+New features in Version 16.2 of prime95.exe
+-------------------------------------------
+
+1)  Bug in calculating estimated time to factor a number has been fixed.
+
+New features in Version 16.1 of prime95.exe
+-------------------------------------------
+
+1)  Prime95 can now test exponents up to 20.5 million.
+2)  Prime95 can now find factors up to 2^64.
+3)  The program now reports to the PrimeNet server new completion dates
+    every 28 days (actually user adjustable from 1 to 60 days).  This will
+    improve the reclaiming of exponents that are not being actively tested.
+4)  The program now reports the current iteration number to the server
+    for more informative status reports.
+5)  Intermediate files are now less likely to fail.  If an error occurs
+    during the writing of an intermediate file, the program continues on
+    trying to write the intermediate file every 10 minutes.
+6)  A bug in the rolling average code has been fixed.  Prime95 now modifies
+    the rolling average when factoring too.
+7)  The prime.log file is now limited in size to 256K bytes.
+8)  The user information dialog box now has a checkbox to tell the server
+    not to send email.
+9)  Setting LockUserInfo=1 in prime.ini will make the user information
+    dialog box inaccessible.
+10) Trying to run a second copy of prime95 will now start the already
+    running copy of prime95.  This makes the Hide Icon feature a bit more
+    useful.
+
+New features in Version 15.4 of prime95.exe
+-------------------------------------------
+
+1) Quit GIMPS choice moved to the Advanced Menu (so novice users do
+   not confuse it with exit).
+2) A bug in httpnet.dll was fixed.  It now works for even more
+   proxy servers and firewalls.
+
+New features in Version 15.3 of prime95.exe
+-------------------------------------------
+
+1) More errors in detecting whether you are connected to the Internet have
+   been fixed.
+2) Minor bugs fixed.
+
+New features in Version 15.2 of prime95.exe
+-------------------------------------------
+
+1) A new primenet.dll that uses HTTP to communicate with the server is
+   available.  This should allow prime95 to work in environments that
+   have firewalls installed.
+2) An option that allows you to write a progress line to the results file
+   every N iterations is available.
+3) A dialog box lets you tell prime95 when you go on vacation.  This
+   will prevent the server from reassigning your exponents when you're
+   on an extended vacation.
+4) Some errors in detecting whether you are connected to the Internet have
+   been fixed.
+5) An option for you to initiate all contact with the Primenet server
+   is now available (in case I didn't find all the problems mentioned
+   in number 4 above!)
+6) Support for Windows 95 services has been added.
+7) To get Windows 95 service support to work, prime95 now changes its
+   working directory to the same directory that prime95.exe is located.
+   If you must run prime95 from a different directory than the rest of the
+   files, then use new -W switch.
+
+New features in Version 15.1 of prime95.exe
+-------------------------------------------
+
+1) Better support for dial-up users to the Internet.
+2) Prime95 no longer contacts the PrimeNet server at startup.
+3) Prime95 will no longer let you select Pentium Pro or Pentium CPU type
+   unless your CPU supports the process-specific instructions.
+4) Bug where AMD-K6s were using the Pentium Pro factoring code (and
+   crashing because of it) is fixed.
+
+New features in Version 15.0 of prime95.exe
+-------------------------------------------
+
+1)  Prime95 can now contact a central server to get exponents to test,
+    report results, and change your email address.  No database is required!
+    The old manual reservation system is still supported.
+    This has led to a major reworking of the user interface.
+    See the readme file for more details.
+2)  The Pentium factoring code (up to 60 bit factors) is about 4.5% faster.
+3)  You can now change how often prime95 saves intermediate files to disk.
+4)  You can now select one save file or two.
+5)  The auto-continue option is gone.  The program now does an auto-continue
+    by default.
+6)  -Q switch removed.  The preferences dialog box lets you select whether
+    the program should be quiet if a new Mersenne prime is found.
+7)  -H switch removed.  Use the Hide Icon menu choice instead.
+8)  -P switch removed.  The advanced menu now has a dialog box
+    that lets you change the priority.
+9)  -A switch added.  This allows you to run multiple copies of prime95
+    from the same directory.  This is useful on multi-processor machines.
+10) Prime95 no longer uses a prime95.ini file in the Windows directory.
+    All information is kept in 3 local ini files:  prime.ini, local.ini,
+    and worktodo.ini.  Eventually, all ports to other operating systems
+    will use these same ini files.
+11) The CPU dialog box now has an entry for the AMD K6 and an entry
+    for how many hours per day you expect to be running the program.
+12) The time estimate in the Status dialog box now takes into account
+    the time you've invested in the current Lucas-Lehmer test.  It also
+    takes into account how many hours per day you are running the program.
+    It also adjusts its time estimate if your computer seems to be running
+    faster or slower than expected.
+13) Timestamps in the results.txt file.  
+14) The results file is now named results.txt, not results.  
+
+New features in Version 14.3 of prime95.exe
+-------------------------------------------
+
+1)  The Pentium Pro factoring code is nearly twice as fast compared
+    to version 14.2.
+
+New features in Version 14.2 of prime95.exe
+-------------------------------------------
+
+1)  Corrected floating point round-off bugs in the factoring code that
+    affected testing factors larger than 2^59.
+2)  The Pentium factoring code is 5-10% faster.
+3)  When an error is detected the program now waits 5 minutes before
+    restarting from the last save file.
+4)  The detection of corrupt save files has improved.
+5)  The Advanced/Time feature now displays the estimated time to test
+    an exponent.
+
+New features in Version 14.1 of prime95.exe
+-------------------------------------------
+
+1)  The Pentium factoring code is 5% faster.
+
+New features in Version 14.0 of prime95.exe
+-------------------------------------------
+
+1)  The program can now check exponents up to 5.26 million!  To test
+    these big exponents, you will need a new database and great patience.
+2)  The per-iteration error checking code has been improved.  It will
+    detect more errors and automatically restart from the previous save
+    file.
+3)  Options/Tray Icon can be used to have prime95 occupy just a small
+    part of the taskbar.
+4)  Options/No Icon can be used to have prime95 removed from the taskbar.
+    Read the warnings in the readme file before using this feature.
+5)  Options/Preferences now has a checkbox to let you send results to
+    a file called "results.txt" rather than "results".
+6)  Options/CPU now has a Cyrix checkbox.  There is no Cyrix-specific
+    code.  This change provides better estimates in Range/Status.
+7)  Options/Torture Test runs a continuous Self Test.  This is great
+    for "burning in" a new machine.
+8)  The Round-off checking menu choice (which should be turned off)
+    was moved to the Advanced menu.
+9)  The estimates in Range/Status have been changed slightly.  Hopefully,
+    these new estimate are a little more accurate.
+10) The Options/Self Test option now takes nine hours.
+
+New features in Version 13.2 of prime95.exe
+-------------------------------------------
+
+1)  Minor adjustments made to the per-iteration error checking code.
+    It was occasionally raising a FATAL ERROR when it should not have been.
+
+New features in Version 13.1 of prime95.exe
+-------------------------------------------
+
+1)  Faster!  Prime now supports a wider variety of FFT run lengths.
+    This means Lucas-Lehmer tests on exponents between 1.33M and 2.33M
+    will be 13 to 40% faster.
+
+New features in Version 12.4 of prime95.exe
+-------------------------------------------
+
+1)  A minor bug in the Pentium factoring code has been fixed.
+2)  When creating an intermediate file, instead of deleting the previous
+    intermediate file it is renamed just in case there is a machine crash
+    before the new intermediate file is written to disk.
+3)  Factoring is now 6% faster.
+4)  The program is now "network-enabled".  See network.txt for more details.
+
+New features in Version 12.3 of prime95.exe
+-------------------------------------------
+
+1)  The -h command line argument is now available.
+
+2)  Save files are generated every half-hour when factoring.
+
+New features in Version 12.2 of prime95.exe
+-------------------------------------------
+
+1)  A minor bug in the factoring code has been fixed.
+
+New features in Version 12.1 of prime95.exe
+-------------------------------------------
+
+1)  Command line arguments are now available to help you run the program
+    on your co-worker's machines!
+
+
+New features in Version 12 of prime95.exe
+-----------------------------------------
+
+1)  The program is faster!  Expect to see improvements of 8 to 15%.
+    The faster your CPU, the more improvement you should notice.
+    The program also uses less memory.
+2)  There are now 5 separate hour-long self tests - one for each
+    possible FFT length.  You will run one of the new one-hour
+    self tests even if you passed the self test in the previous version.
+3)  The program can now test exponents as high as 2,630,000!
+4)  The user interface has changed.
+	a) You no longer enter a 3 or 4 digit range.  Rather you enter
+	   an explicit starting and stopping point.  For example, in
+	   the previous version you would enter 1234 for the range.
+	   In this version you enter a starting point of 1234000 and
+	   an ending point of 1234999.
+	   This makes it much easier to "check out" just part of a range.
+	   It also makes it easier to split a range among two or more
+	   machines.
+	b) The "Only Find Factors" checkbox has been replaced.  Use
+	   the Range / Factor menu choice instead.
+	c) The Range / Double Check menu choice has been added for those
+	   of you who are double checking previously checked exponents.
+	d) The Advanced / Password menu choice is now used to activate
+	   the rest of the Advanced menu.
+5)  The program now performs two new error checks every iteration!  These
+    will help guard against memory errors or "cosmic ray" errors.
+    These new checks will not catch all such problems but should catch the
+    vast majority.
+
+
+New features in Version 10 of prime95.exe
+-----------------------------------------
+
+1)  The program will now undergo an hour long self-test before
+    running any Lucas-Lehmer tests in your selected range.
+    This self-test is also available from the menus.  You might
+    want to run this when you install new hardware or device
+    drivers.
+2)  You can now get a status report on your range.  Choose Range
+    Status from the menus to get a report on the number of Mersenne
+    numbers left to test, expected time to completion, etc.  This
+    information is also displayed whenever you choose a new range
+    with Range Start or Range Next.
+3)  The File menu has been renamed Range - it seems clearer to beginners.
+4)  The Advanced menu has been disabled.  You must read the readme.txt
+    file to learn how to activate it.  This is designed to keep novice
+    users out of trouble.  There is no reason, other than curiosity, for
+    you to use any of the Advanced menu choices.
+5)  A bug in stopping and continuing when factoring in Version 8 has
+    been fixed.
+
+
+New features in Version 8 of prime95.exe
+----------------------------------------
+
+1)  Factoring speed has been doubled for Pentiums.  486 machines will
+    notice a 15% improvement when factoring.
+2)  The program will now automatically determine your CPU type and speed.
+    This information is used in choosing the optimal factoring algorithm.
+

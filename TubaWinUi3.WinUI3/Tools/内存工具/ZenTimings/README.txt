@@ -13,7 +13,8 @@ Extract the downloaded archive anywhere on the disk.
 InpOut64 driver gets automatically installed on first launch.
 Location of the installed driver is /System32/drivers/inpout64.sys.
 
-To uninstall the driver you may use a manual method or a utility such as Autoruns for Windows.
+To uninstall the driver you may use the bundled UninstallDriver.exe, a manual method or utility such as Autoruns for Windows.
+Additionally, the app enables automatic uninstall on each close. You can disable the feature from Options dialog.
 
 # Functions
 Common Timings

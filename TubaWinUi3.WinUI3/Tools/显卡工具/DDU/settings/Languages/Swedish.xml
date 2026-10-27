@@ -179,7 +179,8 @@
 			<Options3>AMD</Options3>
 			<Options4>INTEL</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Alla GPU:er</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Alla GPU:er</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Välj enhet---</Options1>
@@ -255,6 +256,27 @@
 		<lblINTELspecific>
 			<Text>INTEL Specifika alternativ</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm Specifika alternativ</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Allmänt</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Avancerat</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Avancerade alternativ (Ändra på egen risk)</Text>
 		</lblAdvancedO>
@@ -333,6 +355,30 @@
 		<lblRemIntelNpu>
 			<Text>Ta bort Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Ta bort datortillverkarens drivrutinstillägg som är installerade på GPU:n (grundligare rensning) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Mer riskabelt på bärbara datorer. Utan dem kan funktioner saknas eller GPU:n inte starta (kod 31). Återställ: installera om datortillverkarens drivrutinspaket, eller kör pnputil /add-driver &lt;tilläggets .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Expertalternativ</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Ta bort Snapdragon Kontrollpanel</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Ta bort OEM-drivrutinstilläggen som är installerade på GPU:n (grundligare rensning) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Utan dem kan funktioner saknas eller GPU:n inte starta (kod 31). Återställ: installera om Qualcomms eller datortillverkarens drivrutinspaket, eller kör pnputil /add-driver &lt;tilläggets .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Expertalternativ</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Ta bort Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH-drivrutin) Ta bort AMD Kontrollpanel installerad från Microsoft Store</Text>
 		</lblRemAMDCP>

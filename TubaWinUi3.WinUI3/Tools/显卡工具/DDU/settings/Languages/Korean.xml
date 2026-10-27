@@ -171,7 +171,8 @@
 			<Options3>AMD</Options3>
 			<Options4>INTEL</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>모든 GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>모든 GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---장치 선택---</Options1>
@@ -247,6 +248,27 @@
 		<lblINTELspecific>
 			<Text>INTEL 관련 옵션</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm 관련 옵션</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>일반</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>고급</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>고급 옵션 (사용자 부담으로 변경)</Text>
 		</lblAdvancedO>
@@ -325,6 +347,30 @@
 		<lblRemIntelNpu>
 			<Text>Intel® NPU 제거</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>GPU에 설치된 PC 제조사의 드라이버 확장 제거 (더 철저한 정리) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* 노트북에서는 더 위험합니다. 확장이 없으면 기능이 빠지거나 GPU가 시작되지 않을 수 있습니다 (코드 31). 복원 방법: PC 제조사의 드라이버 패키지를 다시 설치하거나 pnputil /add-driver &lt;확장 .inf&gt; /install 을 실행하세요</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>전문가 옵션</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Snapdragon 제어판 제거</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>GPU에 설치된 OEM 드라이버 확장 제거 (더 철저한 정리) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* 확장이 없으면 기능이 빠지거나 GPU가 시작되지 않을 수 있습니다 (코드 31). 복원 방법: Qualcomm 또는 PC 제조사의 드라이버 패키지를 다시 설치하거나 pnputil /add-driver &lt;확장 .inf&gt; /install 을 실행하세요</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>전문가 옵션</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Qualcomm Hexagon NPU 제거</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH 드라이버) Microsoft Store에서 설치된 AMD 제어판 제거</Text>
 		</lblRemAMDCP>

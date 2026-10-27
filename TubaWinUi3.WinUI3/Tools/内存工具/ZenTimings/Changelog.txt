@@ -1,3 +1,127 @@
+# v142.713 Oct 6, 2026
+ - Removed unused code to (hopefully) fix latest AV definitions flagging the release
+ - Add MAG B650 TOMAHAWK WIFI (MS-7D75) to the supported SuperIO list
+ - Replace beta update option checkbox to a dropdown
+
+# v141.706 Oct 3, 2026
+ - Fixed issue with reading SPD5118 hub (IDT/Renesas)
+ - Removed the AdonisUI dependency while keeping the existing themes, with refreshed theme colors and more consistent styles across windows
+ - The splash screen now shows core initialization progress
+ - Added DDR4 SPD and DIMM thermal sensor support
+ - Improved DDR5 SPD reading and redesigned the SPD and PMIC window, including EXPO extended timings
+ - Extended APOB tables (now with DDR4 support) and added a new APOB window under Advanced Info
+ - Added experimental reading of Vref values - available in Debug log and APOB and System windows (Tools -> Advanced Info)
+ - Replaced BGS Alt with PowerDown; tCCDL is now shown as part of a combined value
+ - Optional UCLK to MCLK ratio shown next to UCLK, toggled from the Tools menu (idea by @deadfellow34, PR#109 by @b1zya)
+ - BurstLength and BurstCtrl are now decoded as readable text in the Advanced Timings window and debug report
+ - VDDIO read from SuperIO is checked for a valid range, with a fallback to AOD if not. It can still be wrong on unsupported motherboards
+ - Mismatched timings between channels are highlighted with neutral accent colors
+ - DIMM info blocks can now be hidden in the Sensors window, plus several other QoL improvements
+ - Fixed the Advanced Timings window not remembering its size and position
+ - Improved the driver cleanup notification and fixed it blocking a new instance of the app from starting
+ - SPD dumps now use a more descriptive filename
+ - Fixed ASUS WMI resources not being released
+ - Rendering and performance improvements
+
+# v141.704 beta Oct 2, 2026
+ - Fixed issue with reading SPD5118 hub (IDT/Renesas)
+
+# v141.703 beta Oct 2, 2026
+ - Fixed older beta builds being unable to update from the Release channel
+ - Removed the AdonisUI dependency while keeping the existing themes, with refreshed theme colors and more consistent styles across windows
+ - The splash screen now shows core initialization progress
+ - Added DDR4 SPD and DIMM thermal sensor support
+ - Improved DDR5 SPD reading and redesigned the SPD and PMIC window, including EXPO extended timings
+ - Extended APOB tables (now with DDR4 support) and added a new APOB window under Advanced Info
+ - Added experimental reading of Vref values - available in Debug log and APOB and System windows (Tools -> Advanced Info)
+ - Replaced BGS Alt with PowerDown; tCCDL is now shown as part of a combined value
+ - Optional UCLK to MCLK ratio shown next to UCLK, toggled from the Tools menu (idea by @deadfellow34, PR#109 by @b1zya)
+ - BurstLength and BurstCtrl are now decoded as readable text in the Advanced Timings window and debug report
+ - VDDIO read from SuperIO is checked for a valid range, with a fallback to AOD if not. It can still be wrong on unsupported motherboards
+ - Mismatched timings between channels are highlighted with neutral accent colors
+ - DIMM info blocks can now be hidden in the Sensors window, plus several other QoL improvements
+ - Fixed the Advanced Timings window not remembering its size and position
+ - Improved the driver cleanup notification and fixed it blocking a new instance of the app from starting
+ - SPD dumps now use a more descriptive filename
+ - Fixed ASUS WMI resources not being released
+ - Rendering and performance improvements
+
+# v140.665 Sep 25, 2026
+ - Added All DIMMs view (feature by @deadfellow34)
+ - Added Export dialog with additional options (feature by @b1zya)
+ - Added copy to clipboard buttons to grids and windows (feature by @b1zya)
+ - Added CCD_L timings for DDR5 in Advanced mode, based on @deadfellow34's findings
+ - Added Super I/O hardware support, ported from @LibreHardwareMonitor
+ - Added voltage source selection options in Options
+ - Added SMU/SVI3 telemetry to the Sensors window
+ - Added additional DDR5 UMC timings
+ - Added autostart option
+ - Added automatic inpoutx64 driver cleanup on application exit, configurable from Options
+ - Added sensor settings dialog to show/hide individual sensors
+ - Added window snapping option
+ - Added icons to sections in the Options dialog
+ - Added icons to sensors
+ - Added ASRock B650M-HDV/M.2 to supported motherboards (thanks Melan@ocn for testing)
+ - Added support for reading and displaying more values from saved Debug reports (beta)
+ - Added resizable columns for Sensors windw (double click to auto-fit, drag for manual resizing)
+ - Added beta update channel (off by default, toggle from Options)
+ - Updated HTML export and moved it to the Export dialog
+ - Renamed Telemetry window to Sensors and enabled it on all systems
+ - Renamed SMU sensors to SVI3 and updated offsets
+ - Improved KrackanPoint support
+ - Extended Debug report data and parsing
+ - Sensors window now continues updating while the main window is minimized
+ - Fixed XMP parsing in Tools -> Advanced Info -> SPD
+ - Fixed incorrect read function for SVI2 planes on Zen3 and earlier
+ - Fixed sensor alarm colors not recording maximum values correctly
+ - Fixed incorrect corner radius handling on Windows 11
+ - Fixed memory leak in Debug window
+ - Unmatched Hynix dies are now displayed as 'Unknown' instead of an incorrect value
+ - Removed the maximize button when maximizing is not applicable
+ - Various other bug fixes and performance improvements
+
+# v140.644 beta, Sep 22 2026
+ - Add updated All DIMMs view (feature by @deadfellow34)
+ - Add Export dialog with more options (feature by @b1zya)
+ - Add copy to clipboard buttons to grids and windows (feature by @b1zya)
+ - Add voltage sources options in Options window
+ - Add SMU/SVI3 telemetry to Sensors window
+ - Add button in Options to reset settings to their defaults
+ - Extend debug dialog parsing (thanks @deadfellow34 for the help)
+ - Update HTML export and move as an option in Export dialog
+ - Rename 'SMU' sensors to 'SVI3' and update offsets
+ - Various bugfixes and performance improvements
+
+# v140.584 beta, Sep 16 2026
+ - Switch to total power mode reporting on PMIC init
+ - Read and display more values from saved debug reports (still WIP)
+ - Fixed CCD_L group reading on Zen4 APU (Phoenix)
+ - Fixed empty numeric input handling in Options windows
+
+# v140.576 beta, Sep 12 2026
+ - Fixed issue with NCT6687DR detection on MSI motherboards
+ - Fixed display of impedances from extended table
+
+# v140.571 beta, Sep 10 2026
+ - dded CCD_L timings for DDR5 in advanced mode, based on @deadfellow34's findings
+ - Renamed Telemetry window to Sensors and enabled it for all systems
+ - Added a sensor settings dialog to show/hide individual sensors
+ - Added icons for sensors
+ - Sensors window now keeps updating while the main window is minimized
+ - Bind VSOC and VDDIO to SuperIO when available, falling back to PMT
+ - Added autostart option
+ - Added automatic inpoutx64 driver cleanup on app close (toggle from Options)
+ - Added icons to sections in the options dialog
+ - Fixed sensors window alarm colors not recording max values
+ - Fixed incorrect read function used for SVI2 planes (Zen3 and earlier)
+ - Fixed incorrect handling of corner radius (W11)
+ - Fixed memory leak in Debug window
+ - Unmatched Hynix dies are now displayed as 'Unknown' instead of an incorrect value
+ - Removed the maximize button when maximizing is not applicable
+ - Added SuperIO hardware support, ported from @LibreHardwareMonitor
+ - Updated DDR5 UMC timings with additional entries
+ - Extended data in Debug report
+
 # v1.39 May 28 2026
  - Fixed Proc DQ Drive Stength sometimes showing as N/A on auto
  - Fixed crash on DragonRange family
@@ -93,7 +217,7 @@
 # v1.32 Aug 7 2024
  - Add support for Granite Ridge (Ryzen 9000 series)
  - Extend Phoenix support (Ryzen 8000 series)
- - Add experimental Nitro settings reading in System Info dialog
+ - Add experimental Nitro settings reading in System Info dialog (thanks @Kagashini)
  - Add setting to control screenshot mode (window or desktop)
  - Update themes
  - Update site url

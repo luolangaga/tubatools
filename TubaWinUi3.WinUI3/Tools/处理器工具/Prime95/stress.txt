@@ -1,0 +1,193 @@
+
+			STRESS TESTING YOUR COMPUTER
+
+BACKGROUND
+----------
+
+Today's computers are not perfect.  Even brand new systems from major
+manufacturers can have hidden flaws.  If any of several key components such
+as CPU, memory, cooling, etc. are not up to spec, it can lead to incorrect
+calculations and/or unexplained system crashes.
+
+Overclocking is the practice of increasing the speed of the CPU and/or
+memory to make a machine faster at little cost.  Typically, overclocking
+involves pushing a machine past its limits and then backing off just a
+little bit.
+
+For these reasons, both non-overclockers and overclockers need programs
+that test the stability of their computers.  This is done by running
+programs that put a heavy load on the computer.  Though not originally
+designed for this purpose, Prime95 is an excellent way of placing a heavy 
+load on a computer system and includes a "torture test" to allow users to do
+so without interfering in the prime search.
+
+
+RESOURCES
+---------
+
+This program is a good stress test primarily for CPUs and RAM, as well as
+cooling systems and power supplies.  The torture tests run continuously, checking
+the calculations are within certain parameters while they are in progress and
+comparing your computer's final results to results that are known to be correct.
+Any mismatch and you've got a problem!
+
+You'll need other programs to stress test other system components, monitor
+the state of the system while testing and help identify the source of any faults
+that arise.
+
+Other stress tests for CPUs, memory, graphics cards etc:
+	OCCT - http://www.ocbase.com
+	Linpack - http://www.techpowerup.com/download/linpack-xtreme/
+	Realbench - http://rog.asus.com/tag/realbench/
+	MemTest64 - http://www.techpowerup.com/memtest64/
+	FurMark - http://geeks3d.com/furmark/
+	GpuTest - https://www.geeks3d.com/gputest/
+	PassMark BurnInTest - https://www.passmark.com/products/bit.htm
+	Aida64 - https://www.aida64.com/
+
+Utilities and monitoring software:
+	Intel XTU - https://downloadcenter.intel.com/download/24075
+	Ryzen Master - https://www.amd.com/en/technologies/ryzen-master
+	Afterburner - https://www.msi.com/page/afterburner
+	HWiNFO - https://www.hwinfo.com/
+	CPU-Z - https://www.cpuid.com/softwares/cpu-z.html
+	GPU-Z - https://www.techpowerup.com/gpuz/
+
+Useful websites and forums with pertinent information:
+	http://www.overclockers.com
+	http://www.overclock.net
+	http://www.anandtech.com
+	http://www.tomshardware.com
+	http://www.hardocp.com
+	http://linustechtips.com/main/
+	http://ark.intel.com
+	http://www.amd.com/en/products/specifications/processors
+
+A number of subreddits exist where assistance may be found - please make sure
+you understand the scope of each and read their rules before posting:
+	http://www.reddit.com/r/pchelp
+	http://www.reddit.com/r/buildapchelp
+	http://www.reddit.com/r/techsupport
+	http://www.reddit.com/r/overclocking
+	http://www.reddit.com/r/Intel
+	http://www.reddit.com/r/AMD
+
+
+WHAT TO DO IF A PROBLEM IS FOUND?
+---------------------------------
+
+The exact cause of a hardware problem can be very hard to find.
+
+If you are not overclocking, the most likely cause is memory.  It is not uncommon
+for memory to not run correctly at its rated speed (incorrectly "binned").  This is
+most easily tested by swapping it with memory from another compatible computer and
+retesting.  If that is not possible you can try underclocking memory or increasing
+memory voltage a tiny bit.  Overheating is another possible source of problems.
+You can check the temperatures using monitoring software like HWiNFO to make sure
+the CPU is below it's rated temperature limit.  If not, the cooler may be incorrectly
+mounted or disconnected from the system while in transit, or the thermal paste
+between the CPU and the cooler may not have been applied properly - YouTube is an
+excellent place to find videos demonstrating correct cooler/paste application methods.
+Occasionally, the power supply is incapable of supplying sufficient power to the
+system under heavy load, you can often diagnose this by monitoring the 12v, 5v and
+3.3v voltages - you will typically observe a substantial drop in these voltages when
+putting the system under load and generally means the PSU itself needs to be replaced
+with a more capable unit.
+
+If you are overclocking, the most likely problems are either the CPU core
+voltage being set too low or drooping too far under heavy low.  You should
+either increase the voltage or adjust the load line calibration to deal
+with these issues.  Another frequently seen issue is the motherboard failing
+to set a suitable voltage for the memory controller when an XMP profile is
+enabled.
+
+The above causes are far from a comprehensive list of possible causes.  Diagnosing
+the exact cause can be a very difficult process.
+
+***NB:*** You should always thoroughly research the voltage tolerances of any
+specific component before you start changing it.  Memory controllers integrated
+into modern CPUs in particular are very sensitive to increased running voltages
+and can functionally degrade very quickly if set too high.  Also make sure you
+have accurate temperature monitoring in place while stress testing with increased
+voltages and clock speeds as heat outputs increase exponentially - 1st generation
+Ryzen CPUs specifically develop heat-related stability problems when running at
+temperatures above 70degC.
+
+
+CAN I IGNORE THE PROBLEM?
+-------------------------
+
+Ignoring the problem is a matter of personal preference.  There are
+two schools of thought on this subject.
+
+Most programs you run will not stress your computer enough to cause a
+wrong result or system crash.  If you ignore the problem, then certain
+workloads may stress your machine resulting in a system crash.  Also,
+stay away from distributed computing projects where an incorrect calculation
+might cause you to return wrong results.  Bad data will not help these
+projects! In conclusion, if you are comfortable with a small risk of an
+occasional system crash then feel free to live a little dangerously!  Keep in
+mind that the faster prime95 finds a hardware error the more likely it is that
+other programs will experience problems.
+
+The second school of thought is, "Why run a stress test if you are going
+to ignore the results?"  These people want a guaranteed 100% rock solid
+machine.  Passing these stability tests gives them the ability to run
+CPU intensive programs with confidence.
+
+
+FREQUENTLY ASKED QUESTIONS
+--------------------------
+
+Q)  My machine is not overclocked.  If I'm getting an error, then there must
+be a bug in the program, right?
+
+	A)  The torture test is comparing your machines	results against
+	KNOWN CORRECT RESULTS.  If your machine cannot generate correct
+	results, you have a hardware problem.  HOWEVER, if you are failing
+	the torture test in the SAME SPOT with the SAME ERROR MESSAGE
+	every time, then ask for help at http://mersenneforum.org - it is
+	possible that a recent change to the torture test code may have
+	introduced a software bug.
+
+Q)  How long should I run the torture test?
+
+	A)  I recommend running it for somewhere between 6 and 24 hours.
+	The program has been known to fail only after several hours and in
+	some cases several weeks of operation.  In most cases though, it will
+	fail within a few minutes on a flaky machine. When overclocking it is
+	entirely feasible to run short 10-15min tests at each increase in
+	clock speed to quickly assess the feasibility of running at those
+	speeds, then run longer tests later.
+
+Q)  Prime95 reports errors during the torture test, but other stability
+tests don't.  Do I have a problem?
+
+	A)  Stability tests are not equal in their ability to detect problems.
+	Some don't apply a heavy enough load for their results to be reliable,
+	while others apply loads so heavy that only extremely edge-case
+	real-world workloads would compare.  There also may be significant
+	differences between stress tests regarding the CPU features they make
+	use of, so specific tests that don't make use of them may not be valid
+	for specific use cases where those features are required (e.g. AVX
+	instructions, virtualization technologies).
+
+Q)  A forum member said "Don't bother with prime95, it always pukes on me,
+and my system is stable!.  What do you make of that?"
+
+	or
+
+"We had a server at work that ran for 2 MONTHS straight, without a reboot
+I installed Prime95 on it and ran it - a couple minutes later I get an error.
+You are going to tell me that the server wasn't stable?"
+
+	A)  If a system can be easily crashed or made to generate incorrect
+	results to mathematical functions simply by running a program on it,
+	it is impossible to argue that it is reliable.  The consequences of 
+	that unreliability are up to the user to be aware of, but many faults
+	go unnoticed for a long time.  Glitches in games may be assumed to be
+	bugs in the programming.  Vital data in long term storage may already
+	have been corrupted without anyone knowing about it.  The question to
+	ask yourself is whether or not the responsibilities of that system are
+	unimportant enough to make continuing without remedial action worth
+	the risk.

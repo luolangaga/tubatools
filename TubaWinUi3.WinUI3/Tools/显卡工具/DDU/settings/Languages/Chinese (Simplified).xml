@@ -171,7 +171,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>所有 GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>所有 GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>--- 设备供应商 ---</Options1>
@@ -247,6 +248,27 @@
 		<lblINTELspecific>
 			<Text>Intel 特定设置</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm 特定设置</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>常规</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>高级</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>高级设置 (更改后果自负)</Text>
 		</lblAdvancedO>
@@ -315,6 +337,30 @@
 		<lblRemIntelNpu>
 			<Text>移除 Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>移除安装在 GPU 上的电脑制造商驱动程序扩展 (更彻底的清理) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* 笔记本电脑上风险更高。缺少扩展可能导致功能缺失或 GPU 无法启动 (代码 31)。恢复方法: 重新安装电脑制造商的驱动程序包, 或运行 pnputil /add-driver &lt;扩展 .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>专家选项</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>移除 Snapdragon 控制面板</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>移除安装在 GPU 上的 OEM 驱动程序扩展 (更彻底的清理) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* 缺少扩展可能导致功能缺失或 GPU 无法启动 (代码 31)。恢复方法: 重新安装 Qualcomm 或电脑制造商的驱动程序包, 或运行 pnputil /add-driver &lt;扩展 .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>专家选项</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>移除 Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(仅适用于 DCH 驱动程序) 卸载从 Microsoft Store 安装的 AMD Radeon Settings</Text>
 		</lblRemAMDCP>

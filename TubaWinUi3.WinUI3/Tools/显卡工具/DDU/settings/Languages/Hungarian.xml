@@ -38,7 +38,7 @@
 		</btnCleanShutdown>
 		<btnCleanGfeDownloads>
 			<Text>
-				"GeForce Experience" eltávolítása a cache és az illesztőprogram fájlok közül.
+				"GeForce Experience" eltávolítása a cache- és az illesztőprogram-fájlok közül.
 				(Megjegyzés: a meghajtó programokat nem érinti ez a változás)
 			</Text>
 			<Tooltip>
@@ -123,15 +123,6 @@
 		<VisitSVNMenuItem>
 			<Text>A Github oldal meglátogatása</Text>
 		</VisitSVNMenuItem>
-		<VisitGuru3DNvidiaMenuItem>
-			<Text>A Guru3d NVIDIA fórumok meglátogatása</Text>
-		</VisitGuru3DNvidiaMenuItem>
-		<VisitGuru3DAMDMenuItem>
-			<Text>A Guru3d AMD fórumok meglátogatása</Text>
-		</VisitGuru3DAMDMenuItem>
-		<VisitGeforceMenuItem>
-			<Text>A GeForce fórumok meglátogatása</Text>
-		</VisitGeforceMenuItem>
         <DownloadNvidiaMenuItem>
 			<Text>NVIDIA illesztőprogram letöltések</Text>
 		</DownloadNvidiaMenuItem>
@@ -141,6 +132,7 @@
         <DownloadIntelMenuItem>
 			<Text>Intel illesztőprogram letöltések</Text>
 		</DownloadIntelMenuItem>
+
 		<Messages>
 			<Text1>Új frissítés érhető el! Meglátogatod most a DDU honlapját?</Text1>
 			<Text2>A program régebbi verzióin korlátozott támogatásra számíthatsz. Kérlek először próbáld ki az újabb verziókat, mielőtt hibát jelentenél!</Text2>
@@ -179,7 +171,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Összes GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Összes GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Válaszd ki az eszközt---</Options1>
@@ -233,6 +226,9 @@
 	</frmMain>
 
 	<frmOptions Text="Beállítások">
+		<btnClose>
+			<Text>Bezár</Text>
+		</btnClose>
 		<btnResetDefaults>
 			<Text>Visszaállítás ajánlott értékekre</Text>
 			<Tooltip>Minden beállítás visszaállítása az ajánlott (alapértelmezett) értékekre.</Tooltip>
@@ -240,9 +236,6 @@
 		<Messages>
 			<Text1>Visszaállítod az összes beállítást az ajánlott (alapértelmezett) értékekre?</Text1>
 		</Messages>
-		<btnClose>
-			<Text>Bezár</Text>
-		</btnClose>
 		<lblOffer>
 			<Text>Ajánlatok mutatása a partnerektől</Text>
 		</lblOffer>
@@ -255,6 +248,27 @@
 		<lblINTELspecific>
 			<Text>Intel® specifikus beállítások</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm specifikus beállítások</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Általános</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Haladó</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>További beállítások (csak saját felelősségre változtasd meg)</Text>
 		</lblAdvancedO>
@@ -333,22 +347,46 @@
 		<lblRemIntelNpu>
 			<Text>Intel® NPU eltávolítása</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>A számítógép gyártója által, a GPU-hoz fejlesztett és telepített illesztőprogram-csomagok eltávolítása (még alaposabb tisztítás) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Laptopok esetében kockázatos lehet az eltávolítás. Funkciók hiányozhatnak vagy a GPU nem indul el (31-es kód). Helyreállítás: Telepítsd újra a gyártó által fejlesztett illesztőprogram-csomagot, vagy futtasd le: pnputil /add-driver &lt;kiterjesztés .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Szakértői beállítások</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>A Snapdragon vezérlőpult eltávolítása</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>A GPU-hoz tartozó és telepített OEM illesztőprogram-csomagok eltávolítása (még alaposabb tisztítás) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Funkciók hiányozhatnak vagy a GPU nem indul el (31-es kód). Helyreállítás: Telepítsd újra a Qualcomm vagy a gép gyártója által fejlesztett illesztőprogram-csomagot, vagy futtasd le: pnputil /add-driver &lt;kiterjesztés .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Szakértői beállítások</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Qualcomm Hexagon NPU eltávolítása</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
-			<Text>(DCH illesztőprogram) A Microsoft Store-ból telepített AMD Vezérlőpult eltávolítása</Text>
+			<Text>(DCH illesztőprogram) A Microsoft Store-ból telepített AMD vezérlőpult eltávolítása</Text>
 		</lblRemAMDCP>
 		<lblRemCrimsonCache>
-			<Text>AMD Crimson Shader Cache könyvtár eltávolítása</Text>
+			<Text>AMD Crimson Shader Cache-könyvtár eltávolítása</Text>
 			<Tooltip>
-				Akkor ajánlott, grafikus anomáliákat tapasztalsz (sebesség vagy képalkotásbeli hibákat) a sérült shader cache adatok miatt.
-				Ajánlott, gyártóváltás esetén is, például NVIDIA márkára váltasz.
+				Akkor ajánlott, ha megjelenítési anomáliákat tapasztalsz (sebesség vagy képalkotásbeli hibákat) a sérült shader cache adatok miatt.
+				Ajánlott gyártóváltás esetén is, például ha NVIDIA márkára váltasz.
 			</Tooltip>
 		</lblRemCrimsonCache>
 		<lblVulkan>
-			<Text>Vulkan-meghajtók eltávolítása</Text>
+			<Text>Vulkan-meghajtóprogramok eltávolítása</Text>
 			<Tooltip>Abban az esetben nem ajánlott, ha kettő darab GPU-val rendelkezel, melyek Vulkan API képesek.</Tooltip>
 		</lblVulkan>
 	<lblPreventWinUpdate>
-		<Text>Az illesztőprogramok letöltésének megakadályozása a "Windows Update"-ből, amikor a "Windows" egy eszközhöz illesztőprogramot keres.</Text>
+		<Text>Az illesztőprogramok letöltésének megakadályozása a "Windows Update"-ből, ha a "Windows" egy eszközhöz illesztőprogramot keres.</Text>
 		<Tooltip>Egyszerűbben fogalmazva: ezzel az opcióval megadhatod, hogy a "Windows/Gépkezelő" NE ELLENŐRIZZE az illesztőprogram frissítését a "Windows Update"-en.
 				Megjegyzés: Ez nem akadályozza meg, hogy a "Windows Update" letöltse/telepítse az új illesztőprogramokat.
 				Megjegyzés2: Szintén *ERŐSEN* ajánlott visszaállítani ezt a beállítás, miután végeztél a DDU használatával és újratelepítetted a GPU-illesztőprogramot, különben probléma adódhat más eszközök telepítése során</Tooltip>
@@ -403,7 +441,7 @@
 		</Messages>
 	</frmLaunch>
 
-	<frmLog Text="Bővített napló">
+	<frmLog Text="Bővített naplózás">
 		<btnClose>
 			<Text>Bezár</Text>
 		</btnClose>
@@ -559,7 +597,7 @@
 		<Translator>
 			<User>istvanszabo890629</User>
 			<Details>istvanszabo890629@gmail.com</Details>
-			<LastUpdate>27/01/2026</LastUpdate>
+			<LastUpdate>04/10/2026</LastUpdate>
 		</Translator>
 
 		<Translator2>

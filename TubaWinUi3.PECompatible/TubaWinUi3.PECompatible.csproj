@@ -10,11 +10,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
+    <!-- WmiProvider 用 unmanaged 函数指针直接调用 WMI 的 COM vtable（System.Management 在 AOT 下不可用）。 -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PublishSingleFile>true</PublishSingleFile>
     <!-- 兼容未完整支持 CET 的旧版 Windows / PE，构建与单文件发布均禁用 CET。 -->
     <CetCompat>false</CetCompat>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <PublishTrimmed>false</PublishTrimmed>
+    <PublishAot>true</PublishAot>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <SelfContained Condition="'$(RuntimeIdentifier)' != ''">true</SelfContained>
     <MewUIWin32TextEngine>Gdi</MewUIWin32TextEngine>
   </PropertyGroup>
@@ -25,7 +28,6 @@
     <PackageReference Include="Aprillz.MewUI.Backend.Gdi" Version="0.22.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
-    <PackageReference Include="System.Management" Version="10.0.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +42,7 @@
     <Compile Include="..\TubaWinUi3.Compatible\Services\ToolCatalog.cs" Link="CompatibilityCore\Services\ToolCatalog.cs" />
     <Compile Include="..\TubaWinUi3.Compatible\Services\ToolIconService.cs" Link="CompatibilityCore\Services\ToolIconService.cs" />
     <Compile Include="..\TubaWinUi3.Compatible\Services\ToolMetadataService.cs" Link="CompatibilityCore\Services\ToolMetadataService.cs" />
+    <Compile Include="..\TubaWinUi3.Compatible\Services\WmiRow.cs" Link="CompatibilityCore\Services\WmiRow.cs" />
   </ItemGroup>
 
   <!--

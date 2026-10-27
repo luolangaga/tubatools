@@ -180,7 +180,8 @@
 			<Options3>AMD</Options3>
 			<Options4>INTEL</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>所有 GPU</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>所有 GPU</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---選擇裝置---</Options1>
@@ -257,6 +258,27 @@
 		<lblINTELspecific>
 			<Text>INTEL 專用選項</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm 專用選項</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>一般</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>進階</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>進階選項（請自行承擔修改所帶來的後果）</Text>
 		</lblAdvancedO>
@@ -338,6 +360,30 @@
 		<lblRemIntelNpu>
 			<Text>移除 Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>移除安裝在 GPU 上的電腦製造商驅動程式延伸模組 (更徹底的清理) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* 筆記型電腦上風險較高。缺少延伸模組可能導致功能缺失或 GPU 無法啟動 (代碼 31)。還原方法: 重新安裝電腦製造商的驅動程式套件, 或執行 pnputil /add-driver &lt;延伸模組 .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>專家選項</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>移除 Snapdragon 控制台</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>移除安裝在 GPU 上的 OEM 驅動程式延伸模組 (更徹底的清理) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* 缺少延伸模組可能導致功能缺失或 GPU 無法啟動 (代碼 31)。還原方法: 重新安裝 Qualcomm 或電腦製造商的驅動程式套件, 或執行 pnputil /add-driver &lt;延伸模組 .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>專家選項</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>移除 Qualcomm Hexagon NPU</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH 驅動程式) 移除從 Microsoft Store 安裝的 AMD 控制台</Text>
 		</lblRemAMDCP>

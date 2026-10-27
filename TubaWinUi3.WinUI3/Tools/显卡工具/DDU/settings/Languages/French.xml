@@ -179,7 +179,8 @@
 			<Options3>AMD</Options3>
 			<Options4>INTEL</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Tout les GPUs</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Tout les GPUs</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Choisir le matériel---</Options1>
@@ -255,6 +256,27 @@
 		<lblINTELspecific>
 			<Text>Options spécifiques à Intel®</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Options spécifiques à Qualcomm</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Général</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Avancé</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Options avancées (changez à vos propres risques)</Text>
 		</lblAdvancedO>
@@ -333,6 +355,30 @@
 				<lblRemIntelNpu>
 			<Text>Supprimer Intel® NPU</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Supprimer les extensions du pilote du fabricant du PC installées sur le GPU (nettoyage plus complet) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Plus risqué sur un portable. Sans elles, des fonctions peuvent manquer ou le GPU ne pas démarrer (Code 31). Pour les remettre : réinstallez le pilote du fabricant du PC, ou lancez pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Options expert</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Supprimer le Snapdragon Control Panel</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Supprimer les extensions OEM du pilote installées sur le GPU (nettoyage plus complet) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Sans elles, des fonctions peuvent manquer ou le GPU ne pas démarrer (Code 31). Pour les remettre : réinstallez le pilote Qualcomm ou celui du fabricant du PC, ou lancez pnputil /add-driver &lt;extension .inf&gt; /install</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Options expert</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Supprimer le NPU Qualcomm Hexagon</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>Supprimer AMD (Pilote DCH) du Panneau de Configuration du Microsoft Store</Text>
 		</lblRemAMDCP>

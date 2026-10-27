@@ -171,7 +171,8 @@
 			<Options3>AMD</Options3>
 			<Options4>Intel®</Options4>
 			<Options5>LISUAN</Options5>
-			<Options6>Alle GPUs</Options6>
+			<Options6>QUALCOMM</Options6>
+			<Options7>Alle GPUs</Options7>
 		</Options_GPU>
 		<Options_AUDIO>
 			<Options1>---Gerät auswählen---</Options1>
@@ -247,6 +248,27 @@
 		<lblINTELspecific>
 			<Text>Intel®-spezifische Optionen</Text>
 		</lblINTELspecific>
+		<lblQualcommspecific>
+			<Text>Qualcomm-spezifische Optionen</Text>
+		</lblQualcommspecific>
+		<tabGeneral>
+			<Text>Allgemein</Text>
+		</tabGeneral>
+		<tabNvidia>
+			<Text>NVIDIA</Text>
+		</tabNvidia>
+		<tabAmd>
+			<Text>AMD</Text>
+		</tabAmd>
+		<tabIntel>
+			<Text>Intel®</Text>
+		</tabIntel>
+		<tabQualcomm>
+			<Text>Qualcomm</Text>
+		</tabQualcomm>
+		<tabAdvanced>
+			<Text>Erweitert</Text>
+		</tabAdvanced>
 		<lblAdvancedO>
 			<Text>Erweiterte Optionen (Änderung auf eigene Gefahr)</Text>
 		</lblAdvancedO>
@@ -325,6 +347,30 @@
 		<lblRemIntelNpu>
 			<Text>Intel® NPU entfernen</Text>
 		</lblRemIntelNpu>
+		<lblRemIntelExt>
+			<Text>Die Treibererweiterungen des PC-Herstellers auf der GPU entfernen (gründlichere Bereinigung) *</Text>
+		</lblRemIntelExt>
+		<lblRemIntelExtNote>
+			<Text>* Bei Laptops riskanter. Ohne sie können Funktionen fehlen oder die GPU startet nicht (Code 31). Wiederherstellen: das Treiberpaket des PC-Herstellers erneut installieren oder pnputil /add-driver &lt;Erweiterungs-.inf&gt; /install ausführen</Text>
+		</lblRemIntelExtNote>
+		<lblIntelExpert>
+			<Text>Expertenoptionen</Text>
+		</lblIntelExpert>
+		<lblRemQualcommCP>
+			<Text>Snapdragon Control Panel entfernen</Text>
+		</lblRemQualcommCP>
+		<lblRemQualcommExt>
+			<Text>Die OEM-Treibererweiterungen auf der GPU entfernen (gründlichere Bereinigung) *</Text>
+		</lblRemQualcommExt>
+		<lblRemQualcommExtNote>
+			<Text>* Ohne sie können Funktionen fehlen oder die GPU startet nicht (Code 31). Wiederherstellen: das Treiberpaket von Qualcomm oder des PC-Herstellers erneut installieren oder pnputil /add-driver &lt;Erweiterungs-.inf&gt; /install ausführen</Text>
+		</lblRemQualcommExtNote>
+		<lblQualcommExpert>
+			<Text>Expertenoptionen</Text>
+		</lblQualcommExpert>
+		<lblRemQualcommNpu>
+			<Text>Qualcomm Hexagon NPU entfernen</Text>
+		</lblRemQualcommNpu>
 		<lblRemAMDCP>
 			<Text>(DCH Driver) Entfernen des aus dem Microsoft Store installierten AMD Control Panel</Text>
 		</lblRemAMDCP>

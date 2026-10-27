@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Management;
 using System.Runtime.InteropServices;
 using TubaWinUi3.Compatible.Models;
 
@@ -294,7 +293,7 @@ namespace TubaWinUi3.Compatible.Services
             }
         }
 
-        private static int GetMemoryConfiguredClockSpeed(ManagementBaseObject item)
+        private static int GetMemoryConfiguredClockSpeed(WmiRow item)
         {
             return ToInt(Get(item, "ConfiguredClockSpeed"));
         }
@@ -555,7 +554,7 @@ namespace TubaWinUi3.Compatible.Services
         private static DISPLAY_DEVICE NewDisplayDevice()
         {
             var dd = new DISPLAY_DEVICE();
-            dd.Size = Marshal.SizeOf(typeof(DISPLAY_DEVICE));
+            dd.Size = Marshal.SizeOf<DISPLAY_DEVICE>();
             return dd;
         }
 
@@ -577,7 +576,7 @@ namespace TubaWinUi3.Compatible.Services
         private static string GetCurrentResolution(string displayDeviceName)
         {
             var mode = new DEVMODE();
-            mode.dmSize = (ushort)Marshal.SizeOf(typeof(DEVMODE));
+            mode.dmSize = (ushort)Marshal.SizeOf<DEVMODE>();
             if (!EnumDisplaySettings(displayDeviceName, ENUM_CURRENT_SETTINGS, ref mode) ||
                 mode.dmPelsWidth == 0 || mode.dmPelsHeight == 0)
                 return null;
@@ -616,23 +615,20 @@ namespace TubaWinUi3.Compatible.Services
             var labels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             try
             {
-                using (var searcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorID"))
+                foreach (var item in WmiProvider.Query("root\\WMI", "SELECT * FROM WmiMonitorID"))
                 {
-                    foreach (ManagementBaseObject item in searcher.Get())
-                    {
-                        var pnpCode = ExtractMonitorPnpCode(Get(item, "InstanceName"));
-                        if (string.IsNullOrWhiteSpace(pnpCode) || labels.ContainsKey(pnpCode)) continue;
-                        var label = BuildWmiMonitorLabel(item);
-                        if (!string.IsNullOrWhiteSpace(label))
-                            labels[pnpCode] = label;
-                    }
+                    var pnpCode = ExtractMonitorPnpCode(Get(item, "InstanceName"));
+                    if (string.IsNullOrWhiteSpace(pnpCode) || labels.ContainsKey(pnpCode)) continue;
+                    var label = BuildWmiMonitorLabel(item);
+                    if (!string.IsNullOrWhiteSpace(label))
+                        labels[pnpCode] = label;
                 }
             }
             catch { }
             return labels;
         }
 
-        private static string BuildWmiMonitorLabel(ManagementBaseObject item)
+        private static string BuildWmiMonitorLabel(WmiRow item)
         {
             var mfr = DecodeWmiArray(item, "ManufacturerName");
             var product = DecodeWmiArray(item, "ProductName");
@@ -670,7 +666,7 @@ namespace TubaWinUi3.Compatible.Services
             return "";
         }
 
-        private static string DecodeWmiArray(ManagementBaseObject item, string propName)
+        private static string DecodeWmiArray(WmiRow item, string propName)
         {
             try
             {
@@ -856,7 +852,7 @@ namespace TubaWinUi3.Compatible.Services
             }
         }
 
-        private static string JoinNames(string className, Func<ManagementBaseObject, bool> filter = null)
+        private static string JoinNames(string className, Func<WmiRow, bool> filter = null)
         {
             var names = Query(className)
                 .Where(item => filter == null || filter(item))
@@ -867,27 +863,20 @@ namespace TubaWinUi3.Compatible.Services
             return string.Join(GetSeparator(), names);
         }
 
-        private static ManagementBaseObject First(string className)
+        private static WmiRow First(string className)
         {
             return Query(className).FirstOrDefault();
         }
 
-        private static IEnumerable<ManagementBaseObject> Query(string className)
+        private static IEnumerable<WmiRow> Query(string className)
         {
-            var result = new List<ManagementBaseObject>();
-            try
-            {
-                using (var searcher = new ManagementObjectSearcher("SELECT * FROM " + className))
-                {
-                    foreach (ManagementBaseObject item in searcher.Get())
-                        result.Add(item);
-                }
-            }
-            catch { }
-            return result;
+            if (string.IsNullOrWhiteSpace(className))
+                return new List<WmiRow>();
+
+            return WmiProvider.Query("SELECT * FROM " + className);
         }
 
-        private static string Get(ManagementBaseObject item, string propertyName)
+        private static string Get(WmiRow item, string propertyName)
         {
             try
             {
@@ -898,7 +887,7 @@ namespace TubaWinUi3.Compatible.Services
             catch { return null; }
         }
 
-        private static bool IsTrue(ManagementBaseObject item, string propertyName)
+        private static bool IsTrue(WmiRow item, string propertyName)
         {
             bool value;
             return bool.TryParse(Get(item, propertyName), out value) && value;

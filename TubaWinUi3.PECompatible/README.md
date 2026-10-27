@@ -11,7 +11,12 @@ dotnet build TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj
 dotnet publish TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj -c Release -r win-x64
 ```
 
-其他架构可将 RID 替换为 `win-x86` 或 `win-arm64`。该项目不启用裁剪或 NativeAOT，以保留现有 WMI 查询行为。
+其他架构可将 RID 替换为 `win-x86` 或 `win-arm64`。项目启用 NativeAOT，发布为自包含单文件（x64 约 16 MB）。
+
+注意 WMI：`System.Management` 依赖托管 COM interop，full AOT 下 ILC 会直接判定为不可用（IL3052，运行时必抛异常），
+因此硬件信息改由 `Services/WmiProvider.cs` 直接调用 WMI 的 COM vtable 实现（`IWbemLocator` → `IWbemServices` →
+`IEnumWbemClassObject` → `IWbemClassObject`，unmanaged 函数指针 + `CoSetProxyBlanket`）。
+`TubaWinUi3.Compatible` 里的同名类是 `System.Management` 实现，两者对 `HardwareInfoService` 暴露相同的 `WmiRow` 契约。
 
 Debug 构建完成后会自动把产物复制到主程序 Debug 输出目录下的 `图吧工具箱PE兼容版/` 子目录（如 `TubaWinUi3.WinUI3/bin/Debug/net10.0-windows10.0.26100.0/win-x64/图吧工具箱PE兼容版/`），便于直接以完整 `Tools/`、`Metadata/` 运行调试；主程序尚未构建出 Debug 产物时跳过复制。
 

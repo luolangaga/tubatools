@@ -1,98 +1,128 @@
-# DDU – Common Issues & Solutions
+===============================================================================
+ Display Driver Uninstaller - Issues and solutions
+===============================================================================
 
-A clear and user‑friendly troubleshooting guide for Display Driver Uninstaller.
 
----
+-------------------------------------------------------------------------------
+ 1. Stuck in Safe Mode / boot loop (or cannot sign in)
+-------------------------------------------------------------------------------
 
-## **1. Stuck in Safe Mode / Boot Loop (or Lost Password)**
+If Windows stays in Safe Mode after DDU:
 
-If Windows remains stuck in Safe Mode after using DDU, try the following:
+ Method 1 (recommended)
+  1. Boot into the Windows Recovery Environment:
+     - boot from a Windows installation USB/DVD, or
+     - restart the PC and hold SHIFT until the Advanced Options menu appears.
+  2. Open Command Prompt.
+  3. Run:
 
-### **Method 1 (Recommended)**
+       bcdedit /deletevalue {default} safeboot
 
-1. Boot into the **Windows Recovery Environment**:
+     If Windows is not the {default} entry, run "bcdedit" alone to find the
+     right identifier (dual-boot systems).
 
-   * Boot from a Windows installation USB/DVD, **OR**
-   * Restart the computer and **hold SHIFT** until the **Advanced Options** menu appears.
-2. Open **Command Prompt**.
-3. Run the following command:
+ Method 2 (last resort, only if Method 1 fails)
 
-```
-bcdedit /deletevalue {default} safeboot
-```
+       bootrec /rebuildbcd
 
-> Replace `{default}` with the correct OS identifier if required (shown by running `bcdedit`).
+     This rebuilds the boot store; on a dual-boot PC, other entries may need
+     to be added back.
 
-### **Method 2 (If Method 1 fails)**
+ Notes
+  - Some UXTheme patchers are known to cause Safe Mode issues.
+  - Safe Mode may fail on some systems when CSM is disabled in the BIOS.
 
-```
-bootrec /rebuildbcd
-```
 
-### **Notes**
+-------------------------------------------------------------------------------
+ 2. DDU does not start
+-------------------------------------------------------------------------------
 
-* Dual‑boot systems may require selecting the correct OS entry.
-* Some **UXTheme patchers** have been known to cause Safe Mode issues.
-* Safe Mode may fail on some systems when **CSM is disabled** in BIOS (known Microsoft issue).
+  - Do not run DDU from a network drive.
+  - Check that the DDU folder has standard Windows permissions (Full Control)
+    for SYSTEM, Administrators and your user account.
+  - Try extracting and running DDU from the Desktop.
+  - If it still fails, include the log files from the "DDU Logs" folder
+    (inside the DDU folder) when asking for support.
 
----
 
-## **2. DDU Does Not Start**
+-------------------------------------------------------------------------------
+ 3. An old driver installs itself instead of the new one
+-------------------------------------------------------------------------------
 
-If DDU fails to launch:
+Windows Update installs an older driver before you can install yours:
 
-* Do **not** run DDU from a **network drive**.
-* Verify the DDU folder has standard Windows permissions (**Full Control**) for:
+  - Disconnect from the internet before running DDU.
+  - Stay offline until your new driver is installed.
 
-  * `SYSTEM`
-  * `Administrators`
-  * Your user account
-* Try extracting and running DDU from the **Desktop**.
-* If the problem persists, include the log files found in:
 
-```
-DDU folder → DDU Logs
-```
+-------------------------------------------------------------------------------
+ 4. Windows still behaves as if it were in Safe Mode
+-------------------------------------------------------------------------------
 
-when asking for support.
+Symptoms: no internet, reduced performance, missing features.
 
----
+  1. Check that Safe boot is not ticked in msconfig (Boot tab), and that
+     "bcdedit" shows no "safeboot" line.
+  2. If both are clear, open Registry Editor and go to:
 
-## **3. Old Driver Installs Automatically Instead of the New One**
+       HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot
 
-If Windows installs an older driver via Windows Update before you can install your new driver:
+  3. If a subkey named "Options" is there, delete it.
+  4. Restart the PC.
 
-* **Disconnect from the internet** before running DDU.
-* Stay offline **until after** you manually install your new driver.
 
----
+-------------------------------------------------------------------------------
+ 5. Laptop: camera missing, features gone, or GPU "Code 31" after reinstall
+-------------------------------------------------------------------------------
 
-## **4. Windows Still Behaves as if It's in Safe Mode**
+On laptops, the PC maker ships part of the graphics driver as separate
+"extension" packages: panel and power settings on Intel, files the GPU needs
+to start on Qualcomm (Snapdragon), colour profiles for the screen (e.g. MyASUS
+Splendid). The generic driver from Intel or Qualcomm does not include them.
 
-Symptoms: no internet, reduced performance, limited features.
+DDU keeps these extensions by default. If you ticked the "Expert options"
+extension removal, or removed the driver another way, you may see:
 
-1. Open **Registry Editor**.
-2. Navigate to:
+  - Qualcomm: the GPU shows Code 31 in Device Manager, or the Snapdragon
+    Control Panel cannot install the NPU driver.
+  - Intel: power or panel settings from the PC maker are gone.
+  - The screen shows as "Generic PnP Monitor" and the maker's display modes
+    lost their profiles.
 
-```
-HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SafeBoot
-```
+To put them back, pick one:
 
-3. Check for a subkey named **Options**.
+  1. Reinstall the complete driver package from the PC maker's support page
+     (not the generic one).
+  2. Let Windows Update bring them back (driver updates must be enabled; they
+     may show under Optional updates).
+  3. From the folder of the extracted package, install the extension .inf
+     files: right-click > Install, or run:
 
-4. If:
+       pnputil /add-driver *.inf /subdirs /install
 
-   * Safe Boot is not selected in **msconfig**, and
-   * `bcdedit` shows no `safeboot` entry,
+Do not use Device Manager's "Update driver" for extensions: it applies them
+to one device only.
 
-   …you may safely **delete the `Options` subkey**.
+To see what is installed:
 
-5. Restart the computer.
+       pnputil /enum-drivers | findstr /i /c:"Original Name"
 
-Windows should now return to normal mode.
 
----
+-------------------------------------------------------------------------------
+ 6. Snapdragon Control Panel: a driver download stalls
+-------------------------------------------------------------------------------
 
-## **Need Additional Help?**
+The Snapdragon Control Panel downloads the drivers from Qualcomm's servers.
+After several installs in a row, the servers may slow down or stop answering
+for a while, and the download stalls or the panel stops responding. This is
+not caused by DDU: close the panel, wait a while, and try again.
 
-If issues continue, feel free to provide DDU logs or system details so the problem can be diagnosed more accurately.
+
+-------------------------------------------------------------------------------
+ Need more help?
+-------------------------------------------------------------------------------
+
+Send the DDU logs and a description of the problem; the log usually shows what
+happened.
+
+===============================================================================
