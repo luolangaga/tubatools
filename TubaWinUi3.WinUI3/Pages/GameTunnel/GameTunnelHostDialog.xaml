@@ -280,7 +280,7 @@
                     BorderThickness="1"
                     CornerRadius="8">
                     <StackPanel Spacing="8">
-                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="你的联机地址（朋友在游戏里要填的地址）" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="你的房间码（发给朋友，粘贴后直接加入）" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock
                                 x:Name="RoomAddressText"
@@ -296,6 +296,7 @@
                                 </StackPanel>
                             </Button>
                         </StackPanel>
+                        <TextBlock x:Name="GameAddressText" FontSize="12" FontFamily="Consolas" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                         <TextBlock x:Name="RoomStatusText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
@@ -349,7 +350,7 @@
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap"
-                            Text="4. 还是不行就让朋友先停掉安全软件的网络防护试一次，个别安全软件会拦截 Tailscale。" />
+                            Text="4. 还是不行就让朋友先停掉安全软件的网络防护试一次，个别安全软件会拦截 EasyTier 的 P2P 连接。" />
                     </StackPanel>
                 </Expander>
 

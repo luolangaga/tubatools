@@ -20,9 +20,15 @@
         <controls:ToolPageHeader ToolId="game-tunnel"
             Grid.Row="0"
             Title="游戏联机助手"
-            Subtitle="把两台电脑接进同一个虚拟局域网 · 我的世界 / 泰拉瑞亚 / 帕鲁，不开路由器也能一起玩"
+            Subtitle="把两台电脑接进同一个虚拟网络 · 我的世界 / 泰拉瑞亚 / 帕鲁，不用公网 IP 也能一起玩"
             Glyph="&#xE774;">
             <controls:ToolPageHeader.Actions>
+                <Button x:Name="SettingsButton" Click="Settings_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE713;" />
+                        <TextBlock Text="联机设置" />
+                    </StackPanel>
+                </Button>
                 <Button x:Name="DiagnosticsButton" Click="Diagnostics_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="12" Glyph="&#xE9D9;" />
@@ -52,7 +58,7 @@
                     </TransitionCollection>
                 </StackPanel.ChildrenTransitions>
 
-                <!-- ═════════ 联机环境：我的地址 + 网里有谁 ═════════ -->
+                <!-- ═════════ 联机环境 / 当前房间 ═════════ -->
                 <Border
                     Padding="16"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -84,7 +90,7 @@
                                 <Border x:Name="LiveBadge" Style="{StaticResource StatusPillStyle}" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}" VerticalAlignment="Center" Visibility="Collapsed">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <Ellipse Width="6" Height="6" Fill="{ThemeResource SystemFillColorSuccessBrush}" VerticalAlignment="Center" />
-                                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="游戏正在监听端口" />
+                                        <TextBlock FontSize="12" FontWeight="SemiBold" Text="房间已开启" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
@@ -95,22 +101,33 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap"
                                 Visibility="Collapsed"
-                                Text="想关掉联机时：右键系统托盘（任务栏右下角）的 Tailscale 图标选 Disconnect；要从后台彻底退出就选 Exit。" />
+                                Text="房间在后台运行：离开这个页面不会断开，点「停止联机」才会关闭。" />
                         </StackPanel>
 
-                        <Button
-                            x:Name="PrepareButton"
-                            Grid.Column="2"
-                            Click="Prepare_Click"
-                            Style="{StaticResource AccentButtonStyle}"
-                            Padding="16,8"
-                            CornerRadius="4"
-                            VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="14" Glyph="&#xE896;" />
-                                <TextBlock x:Name="PrepareButtonText" FontSize="14" FontWeight="SemiBold" Text="准备联机环境" />
-                            </StackPanel>
-                        </Button>
+                        <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Center">
+                            <Button
+                                x:Name="PrepareButton"
+                                Click="Prepare_Click"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Padding="16,8"
+                                CornerRadius="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE896;" />
+                                    <TextBlock x:Name="PrepareButtonText" FontSize="14" FontWeight="SemiBold" Text="准备联机组件" />
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                x:Name="StopButton"
+                                Click="Stop_Click"
+                                Padding="16,6"
+                                CornerRadius="4"
+                                Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="12" Glyph="&#xE71A;" />
+                                    <TextBlock FontSize="12" Text="停止联机" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -133,16 +150,16 @@
                                 </Border>
                                 <StackPanel VerticalAlignment="Center" Spacing="4">
                                     <TextBlock Style="{StaticResource CardTitleStyle}" Text="我当主机，邀请朋友" />
-                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="游戏跑在我这台，朋友一键进来" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="游戏跑在我这台，朋友一条邀请码进来" />
                                 </StackPanel>
                             </StackPanel>
                             <TextBlock
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap"
-                                Text="选一个游戏 → 把邀请码发给朋友 → 他进的是同一个虚拟局域网，并拿到你的联机地址。端口和游戏里的操作都会自动准备好。" />
+                                Text="选一个游戏 → 拿到房间码 → 发给朋友。房间码里带着这个房间的网络密钥，朋友粘贴后直接进同一个虚拟网络，不需要账号，也不需要我点同意。" />
                             <Button x:Name="StartHostButton" Click="StartHost_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="4" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择游戏并邀请" />
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Text="选择游戏并创建房间" />
                             </Button>
                             <Button
                                 x:Name="CurrentInviteButton"
@@ -155,7 +172,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon x:Name="CurrentInviteIcon" FontSize="12" Glyph="&#xE8F1;" />
                                     <ProgressRing x:Name="CurrentInviteRing" Width="12" Height="12" IsActive="False" Visibility="Collapsed" />
-                                    <TextBlock x:Name="CurrentInviteText" FontSize="12" Text="查看当前邀请信息" />
+                                    <TextBlock x:Name="CurrentInviteText" FontSize="12" Text="查看当前房间与邀请" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -172,14 +189,14 @@
                                 </Border>
                                 <StackPanel VerticalAlignment="Center" Spacing="4">
                                     <TextBlock Style="{StaticResource CardTitleStyle}" Text="我加入朋友" />
-                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="朋友当主机，我进他的虚拟网络" />
+                                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="朋友当主机，我连他的游戏" />
                                 </StackPanel>
                             </StackPanel>
                             <TextBlock
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap"
-                                Text="粘贴朋友发来的邀请码（连说明文字一起粘也行），没装 Tailscale 也会自动装好；进网络后照游戏卡上的端口，在游戏里用「通过 IP 加入」连他。" />
+                                Text="粘贴朋友发来的邀请码（连说明文字一起粘也行），没装联机组件会自动下载。加入后本机会开一个本地端口指向他的游戏——我的世界会直接出现在「扫描局域网世界」里。" />
                             <Button x:Name="StartJoinButton" Click="StartJoin_Click" CornerRadius="4" Padding="0,8" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Text="粘贴邀请码加入" />
                             </Button>
@@ -199,7 +216,7 @@
                             VerticalAlignment="Center"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="点一下 = 选好端口并进入邀请流程" />
+                            Text="点一下 = 选好端口并创建房间" />
                     </Grid>
 
                     <ScrollViewer
@@ -266,13 +283,13 @@
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap">
-                            <Run Text="· Tailscale 把两台电脑接进同一个虚拟局域网：每台有一个 100 开头的固定地址，TCP / UDP 游戏都能跑，不用公网 IP、不用改路由器。" />
+                            <Run Text="· 每次建房都会生成一张独立的加密虚拟网络：房间码的前半段是网络名、后半段是密钥，所以光有房间码就能入网，不需要账号，也没有第三方能看你的游戏数据。" />
                             <LineBreak />
-                            <Run Text="· 这个虚拟网络是「三层」的：局域网组播和子网广播跨不过去，所以能不能自动刷出对方的房间取决于游戏怎么找主机——刷不出来时，在游戏里选「直接连接 / 通过 IP 加入」填地址和端口，这一步任何游戏都有效。" />
+                            <Run Text="· 联机组件 EasyTier 以「无网卡」模式工作：它不安装驱动、不创建虚拟网卡，只把游戏端口在虚拟网络里转发。房主只开放自己游戏用的那个端口，加入者不开放任何端口。" />
                             <LineBreak />
-                            <Run Text="· 打洞成功时是点对点直连（延迟接近直连），打洞失败会自动走加密中继，能玩但延迟略高——想看自己属于哪种，点右上角「网络检测」。" />
+                            <Run Text="· 优先打洞直连（延迟接近局域网）；打不通时经发现节点中转，仍能玩但延迟略高。想保证别人看不到你的真实 IP，可以在设置里打开「隐藏我的 IP 地址」。" />
                             <LineBreak />
-                            <Run Text="· 少数游戏的联机走平台自己的通道（例如 Steam 好友邀请），不受上面这条限制。" />
+                            <Run Text="· 我的世界 Java 版额外支持局域网发现：加入后房间会直接出现在「扫描局域网世界」列表里，离线账号也能进。" />
                         </TextBlock>
                     </StackPanel>
                 </Border>

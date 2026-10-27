@@ -33,16 +33,16 @@
 
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock x:Name="StepText" FontSize="12" FontWeight="SemiBold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Text="第 1 步 / 共 2 步" />
-                <TextBlock x:Name="StepNameText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="· 粘贴邀请" />
+                <TextBlock x:Name="StepNameText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="· 粘贴房间码" />
             </StackPanel>
 
-            <!-- ══════════ 第 1 步：邀请码 / 地址 ══════════ -->
+            <!-- ══════════ 第 1 步：邀请码 / 房间码 ══════════ -->
             <StackPanel x:Name="Step1Panel" Spacing="8">
                 <TextBlock
                     FontSize="12"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap"
-                    Text="把对方发来的邀请码整段粘进来就行（连说明文字一起粘也可以）。如果对方只给了地址，直接填 100.x.x.x:端口。" />
+                    Text="把对方发来的邀请码整段粘进来就行（连说明文字一起粘也可以）；只有房间码 U/XXXX-… 也能加入。" />
 
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -51,7 +51,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBox
                         x:Name="InviteBox"
-                        PlaceholderText="TBG1:… 或 100.101.102.103:25565"
+                        PlaceholderText="TBG2:… 或 U/XXXX-XXXX-XXXX-XXXX"
                         TextChanged="InviteBox_TextChanged"
                         FontFamily="Consolas"
                         FontSize="12" />
@@ -98,7 +98,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon x:Name="AddressIcon" FontSize="14" Glyph="&#xE9F5;" VerticalAlignment="Center" />
-                            <TextBlock x:Name="AddressText" Grid.Column="1" FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Text="本机联机地址" />
+                            <TextBlock x:Name="AddressText" Grid.Column="1" FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Text="加入虚拟网络" />
                         </Grid>
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -106,30 +106,8 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon x:Name="PingIcon" FontSize="14" Glyph="&#xE9F5;" VerticalAlignment="Center" />
-                            <TextBlock x:Name="PingText" Grid.Column="1" FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Text="与对方的连接" />
+                            <TextBlock x:Name="PingText" Grid.Column="1" FontSize="14" VerticalAlignment="Center" TextWrapping="Wrap" Text="找到房主并建立端口转发" />
                         </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- 需要切换网络时的确认（ContentDialog 不能再嵌套，所以就地确认） -->
-                <Border
-                    x:Name="SwitchWarningCard"
-                    Padding="16,12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Visibility="Collapsed">
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="14" Glyph="&#xE7BA;" Foreground="{ThemeResource SystemFillColorCautionBrush}" />
-                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="这一步会切换你的 Tailscale 网络" />
-                        </StackPanel>
-                        <TextBlock x:Name="SwitchWarningText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button x:Name="ConfirmSwitchButton" Click="ConfirmSwitch_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="8" Padding="12,8" Content="确认切换并继续" FontSize="14" />
-                            <Button x:Name="SkipSwitchButton" Click="SkipSwitch_Click" CornerRadius="8" Padding="12,8" Content="先跳过" FontSize="14" />
-                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -150,7 +128,7 @@
                             <FontIcon FontSize="16" Glyph="&#xE73E;" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="连上了，现在打开游戏" />
                         </StackPanel>
-                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="在游戏里连接这个地址：" />
+                        <TextBlock x:Name="FinalHintText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="在游戏里连接这个地址：" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock
                                 x:Name="FinalAddressText"
@@ -170,7 +148,7 @@
                     </StackPanel>
                 </Border>
 
-                <Expander Header="在游戏里怎么填？" HorizontalAlignment="Stretch" IsExpanded="True">
+                <Expander Header="在游戏里怎么进？" HorizontalAlignment="Stretch" IsExpanded="True">
                     <ItemsControl x:Name="GuestStepsList" Padding="0,8">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -203,12 +181,12 @@
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap"
-                            Text="· 一直连不上：回到工具箱主页点「网络检测」，看和对方是直连还是中继、有没有告警。" />
+                            Text="· 一直连不上：回主页点「网络检测」，看和房主是直连还是中转、有没有告警。" />
                         <TextBlock
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap"
-                            Text="· 玩完想恢复正常网络：右键任务栏的 Tailscale 图标选择 Disconnect，或者用托盘菜单切回你自己的账号。" />
+                            Text="· 玩完想断开：回主页点「停止联机」；本机不会留下虚拟网卡或后台服务。" />
                     </StackPanel>
                 </Expander>
             </StackPanel>

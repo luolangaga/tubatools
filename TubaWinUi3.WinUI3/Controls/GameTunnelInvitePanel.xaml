@@ -9,122 +9,8 @@
 
     <StackPanel MinWidth="470" Spacing="12">
 
-        <!-- 生成中 -->
-        <StackPanel x:Name="BusyPanel" Orientation="Horizontal" Spacing="10" Padding="4,18" Visibility="Collapsed">
-            <ProgressRing Width="20" Height="20" IsActive="True" />
-            <TextBlock x:Name="BusyText" VerticalAlignment="Center" FontSize="13" Text="正在生成邀请码…" />
-        </StackPanel>
-
-        <!-- 还缺邀请密钥：内联引导（不用再开对话框） -->
-        <StackPanel x:Name="KeyPromptPanel" Spacing="10" Visibility="Collapsed">
-            <Border
-                Padding="14,12"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="10">
-                <StackPanel Spacing="8">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE72E;" Foreground="{ThemeResource SystemFillColorCautionBrush}" />
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="还差一步：需要一个邀请密钥" />
-                    </StackPanel>
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="朋友要「一键加入」你的网络，需要一把短期有效的密钥。配置一次 API 密钥后，本工具以后会自动生成；也可以每次手动创建。" />
-
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="UseApiKeyButton" Click="UseApiKey_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon FontSize="12" Glyph="&#xE9D9;" />
-                                <TextBlock FontSize="13" Text="配置 API 密钥（一次即可）" />
-                            </StackPanel>
-                        </Button>
-                        <Button x:Name="ManualKeyButton" Click="ManualKey_Click" CornerRadius="7" Padding="14,7">
-                            <TextBlock FontSize="13" Text="手动创建密钥" />
-                        </Button>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- API 密钥内联表单 -->
-            <Border
-                x:Name="ApiKeyForm"
-                Padding="14,12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Visibility="Collapsed">
-                <StackPanel Spacing="8">
-                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="粘贴 Tailscale API 访问令牌" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="在控制台 Keys 页面生成，以 tskey-api- 开头。令牌只保存在本机数据目录，用于自动创建邀请密钥。" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="不用手动粘贴：在控制台点「复制」后回到本窗口，这里会自动填入并验证。" />
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="ApiKeyBox" Grid.Column="0" PlaceholderText="tskey-api-…" FontFamily="Consolas" />
-                        <Button x:Name="ApiKeyPasteButton" Grid.Column="1" Click="PasteApiKey_Click" CornerRadius="7" Padding="12,6" Content="粘贴" FontSize="13" VerticalAlignment="Stretch" />
-                    </Grid>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="ApiKeySaveButton" Click="ApiKeySave_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7" Content="验证并保存" FontSize="13" />
-                        <Button x:Name="ApiKeyHelpButton" Click="OpenKeysPage_Click" CornerRadius="7" Padding="14,7" Content="打开 Keys 页面" FontSize="13" />
-                    </StackPanel>
-                    <TextBlock x:Name="ApiKeyError" FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
-                </StackPanel>
-            </Border>
-
-            <!-- 手动密钥内联表单 -->
-            <Border
-                x:Name="ManualKeyForm"
-                Padding="14,12"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Visibility="Collapsed">
-                <StackPanel Spacing="8">
-                    <TextBlock FontSize="13" FontWeight="SemiBold" Text="在控制台手动创建一个授权密钥" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="Keys 页面 →「Generate auth key」→ 勾选 Reusable 与 Pre-approved → Generate key。" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="同样不用手动粘贴：生成后点「复制」，回到本窗口会自动填入。" />
-                    <Grid ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="ManualKeyBox" Grid.Column="0" PlaceholderText="tskey-auth-…" FontFamily="Consolas" />
-                        <Button x:Name="ManualKeyPasteButton" Grid.Column="1" Click="PasteAuthKey_Click" CornerRadius="7" Padding="12,6" Content="粘贴" FontSize="13" VerticalAlignment="Stretch" />
-                    </Grid>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="ManualKeyApplyButton" Click="ManualKeyApply_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7" Content="使用这个密钥" FontSize="13" />
-                        <Button x:Name="ManualKeyHelpButton" Click="OpenKeysPage_Click" CornerRadius="7" Padding="14,7" Content="打开 Keys 页面" FontSize="13" />
-                    </StackPanel>
-                    <TextBlock x:Name="ManualKeyError" FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-
-        <!-- 就绪：三种给朋友的方式 -->
-        <StackPanel x:Name="ReadyPanel" Spacing="12" Visibility="Collapsed">
+        <!-- 三种给朋友的方式 -->
+        <StackPanel x:Name="ReadyPanel" Spacing="12">
 
             <!-- 邀请码 -->
             <Border
@@ -169,11 +55,7 @@
                                 <TextBlock FontSize="13" Text="复制完整说明" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="RevokeButton" Click="Revoke_Click" CornerRadius="7" Padding="12,7" Background="Transparent" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Visibility="Collapsed">
-                            <TextBlock FontSize="13" Text="撤销邀请码" />
-                        </Button>
                     </StackPanel>
-                    <TextBlock x:Name="ExpiryText" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
@@ -193,7 +75,7 @@
                         FontSize="12"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap"
-                        Text="生成一个 .cmd 文件发给朋友，双击后它会自动装好 Tailscale 并连上你，全程无需配置。" />
+                        Text="生成一个 .cmd 文件发给朋友，双击后它会自动下载联机组件、加入房间并建立端口转发。" />
                     <TextBlock
                         x:Name="ScriptDirectNote"
                         FontSize="11"
@@ -217,7 +99,7 @@
                 </StackPanel>
             </Border>
 
-            <!-- 直接给地址 -->
+            <!-- 游戏地址 -->
             <Border
                 Padding="14,12"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -226,19 +108,14 @@
                 CornerRadius="10">
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE774;" Foreground="{ThemeResource SystemFillColorCautionBrush}" />
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="只发地址（需要对方已经在你的网络里）" />
+                        <FontIcon FontSize="14" Glyph="&#xE774;" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="游戏里填的地址" />
                     </StackPanel>
                     <TextBlock
                         x:Name="AddressOnlyPreconditionText"
                         FontSize="12"
-                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         TextWrapping="Wrap" />
-                    <TextBlock
-                        FontSize="11"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="不想解释这些？用上面的邀请码或一键加入脚本——那条路会把他直接加进你的网络，不需要任何人同意。" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border
                             Padding="12,7"
@@ -251,12 +128,6 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
-
-            <TextBlock
-                FontSize="11"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                TextWrapping="Wrap"
-                Text="提示：朋友加入后，会在你的 Tailscale 控制台里多出一台设备；邀请密钥到期后这些设备不会被自动删除，需要时可在控制台 Machines 页面移除。" />
         </StackPanel>
 
         <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True" Severity="Success" />

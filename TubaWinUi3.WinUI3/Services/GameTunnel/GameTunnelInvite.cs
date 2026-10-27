@@ -1,56 +1,44 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
 /// <summary>
-/// 邀请码与朋友端「一键加入」脚本的生成。
-/// 邀请码是一段能直接粘进 QQ / 微信的紧凑字符串（TBG1: + Base64Url），
-/// 内含对方地址、端口、游戏名，以及可选的短期授权密钥。
+/// 邀请码与朋友端「一键加入」脚本。
+/// 邀请码是一段能直接粘进 QQ / 微信的紧凑字符串（TBG2: + Base64Url），
+/// 内含房间码（网络名 + 密钥）、游戏端口与游戏名——不依赖任何账号或服务器。
 /// </summary>
 public static partial class GameTunnelInvite
 {
-    public const string CodePrefix = "TBG1:";
-
-    /// <summary>脚本里的 Tailscale 安装包地址（latest 由官方 302 到当前版本）。</summary>
-    public const string InstallerUrlTemplate = "https://pkgs.tailscale.com/stable/tailscale-setup-latest-{0}.msi";
-
-    static GameTunnelInvite()
-    {
-        try { Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); } catch { }
-    }
+    public const string CodePrefix = "TBG2:";
 
     // ══════════════════════ 邀请码 ══════════════════════
 
     private sealed class InvitePayload
     {
-        public string h { get; set; } = "";
+        public string c { get; set; } = "";
         public int p { get; set; }
         public string? g { get; set; }
-        public string? k { get; set; }
-        public string? n { get; set; }
-        public long e { get; set; }
         public string? r { get; set; }
+        public bool l { get; set; }
     }
 
     public static string Encode(InviteInfo info)
     {
         var payload = new InvitePayload
         {
-            h = info.Host,
+            c = info.RoomCode,
             p = info.Port,
-            g = info.Game,
-            k = string.IsNullOrWhiteSpace(info.AuthKey) ? null : info.AuthKey.Trim(),
-            n = string.IsNullOrWhiteSpace(info.HostName) ? null : info.HostName.Trim(),
-            e = info.ExpiresAt,
+            g = string.IsNullOrWhiteSpace(info.Game) ? null : info.Game.Trim(),
             r = info.Protocol switch
             {
                 GameTunnelProtocol.Udp => "udp",
                 GameTunnelProtocol.TcpAndUdp => "both",
                 _ => "tcp"
-            }
+            },
+            l = info.UsesLanDiscovery
         };
 
         var json = JsonSerializer.Serialize(payload, PayloadOptions);
@@ -58,8 +46,8 @@ public static partial class GameTunnelInvite
     }
 
     /// <summary>
-    /// 解析邀请码。同时兼容三种粘贴内容：
-    /// 纯邀请码、带说明文字的整条邀请消息、以及手写的「IP:端口」。
+    /// 解析邀请码。兼容三种粘贴内容：纯邀请码、带说明文字的整段邀请消息，
+    /// 以及只有房间码（<c>U/XXXX-XXXX-XXXX-XXXX</c>，端口由房主主机名在运行时给出）。
     /// </summary>
     public static InviteInfo? Decode(string? text)
     {
@@ -71,10 +59,23 @@ public static partial class GameTunnelInvite
         {
             var rest = value[(index + CodePrefix.Length)..];
             var token = new string(rest.TakeWhile(c => char.IsLetterOrDigit(c) || c is '-' or '_' or '=').ToArray());
-            return DecodeToken(token);
+            var decoded = DecodeToken(token);
+            if (decoded is not null) return decoded;
         }
 
-        return TryParsePlainAddress(value);
+        // 只有房间码：仍然可以加入，端口在找到房主时从主机名解析。
+        // 协议未知时按 TCP+UDP 处理（多建一条 UDP 转发是安全的，少建则 UDP 游戏会连不上）。
+        var room = TunnelRoomCode.Find(value);
+        return room is null
+            ? null
+            : new InviteInfo
+            {
+                RoomCode = room.Code,
+                NetworkName = room.NetworkName,
+                NetworkSecret = room.NetworkSecret,
+                Port = 0,
+                Protocol = GameTunnelProtocol.TcpAndUdp
+            };
     }
 
     private static InviteInfo? DecodeToken(string token)
@@ -85,59 +86,31 @@ public static partial class GameTunnelInvite
             var json = Encoding.UTF8.GetString(FromBase64Url(token));
             var payload = JsonSerializer.Deserialize<InvitePayload>(json, PayloadOptions);
             if (payload is null) return null;
-            if (!IsValidAddress(payload.h) || !GameTunnelCatalog.IsValidPort(payload.p)) return null;
+
+            var room = TunnelRoomCode.Find(payload.c) ?? TunnelRoomCode.TryParse(payload.c);
+            if (room is null) return null;
+            if (payload.p is < 0 or > 65535) return null;
 
             return new InviteInfo
             {
-                Host = payload.h.Trim(),
+                RoomCode = room.Code,
+                NetworkName = room.NetworkName,
+                NetworkSecret = room.NetworkSecret,
                 Port = payload.p,
                 Game = payload.g ?? "",
-                AuthKey = payload.k,
-                HostName = payload.n,
-                ExpiresAt = payload.e,
                 Protocol = payload.r switch
                 {
                     "udp" => GameTunnelProtocol.Udp,
                     "both" => GameTunnelProtocol.TcpAndUdp,
                     _ => GameTunnelProtocol.Tcp
-                }
+                },
+                UsesLanDiscovery = payload.l
             };
         }
-        catch
+        catch (Exception ex) when (ex is FormatException or JsonException)
         {
             return null;
         }
-    }
-
-    /// <summary>「100.1.2.3:25565」这种手输地址也直接支持。</summary>
-    private static InviteInfo? TryParsePlainAddress(string value)
-    {
-        var match = AddressRegex().Match(value);
-        if (!match.Success) return null;
-
-        var host = match.Groups[1].Value.Trim();
-        if (!IsValidAddress(host)) return null;
-        if (!int.TryParse(match.Groups[2].Value, out var port) || !GameTunnelCatalog.IsValidPort(port)) return null;
-
-        return new InviteInfo { Host = host, Port = port, Game = "" };
-    }
-
-    [GeneratedRegex(@"^\s*([0-9A-Za-z\.\-]{7,64})\s*[:\uff1a]\s*(\d{2,5})\s*$")]
-    private static partial Regex AddressRegex();
-
-    public static bool IsValidAddress(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        var host = value.Trim();
-
-        if (TailscaleService.IsTailnetAddress(host)) return true;
-
-        // 也允许普通 IP / 主机名（比如自定义网络里的地址）
-        if (System.Net.IPAddress.TryParse(host, out _)) return true;
-
-        return host.Length is >= 2 and <= 253
-               && host.All(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_')
-               && host.Contains('.');
     }
 
     private static string ToBase64Url(byte[] bytes)
@@ -157,7 +130,7 @@ public static partial class GameTunnelInvite
 
     private static readonly JsonSerializerOptions PayloadOptions = new()
     {
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
@@ -169,43 +142,40 @@ public static partial class GameTunnelInvite
         var builder = new StringBuilder();
         builder.AppendLine("【图吧工具箱 · 联机邀请】");
         if (!string.IsNullOrWhiteSpace(info.Game)) builder.AppendLine($"游戏：{info.Game}");
-        builder.AppendLine($"联机地址：{info.Address}");
+        builder.AppendLine($"房间码：{info.RoomCode}");
+        if (info.Port > 0) builder.AppendLine($"游戏里填：{info.Address}");
         builder.AppendLine();
-
-        if (info.ExpiresAtLocal is { } expires)
-        {
-            builder.AppendLine($"（邀请码有效期到 {expires:HH:mm}，过期后让我重新生成）");
-            builder.AppendLine();
-        }
 
         var step = 1;
 
-        if (info.HasAuthKey && inviteCode is { Length: > 0 })
+        if (inviteCode is { Length: > 0 })
         {
-            builder.AppendLine($"{step}) 装了图吧工具箱：打开「游戏联机助手」→ 我要加入 → 粘贴下面这行邀请码");
+            builder.AppendLine($"{step}) 装了图吧工具箱：打开「游戏联机助手」→「我要加入」→ 粘贴下面这行");
             builder.AppendLine(inviteCode);
-            builder.AppendLine("   （不用你登录 Tailscale，也不用等我批准——粘贴后直接加入我的网络）");
+            builder.AppendLine("   （邀请码里带着网络密钥，直接加入——不需要我批准，也不用你注册任何账号）");
             builder.AppendLine();
             step++;
         }
 
-        if (info.HasAuthKey && hasScript)
+        if (hasScript)
         {
-            builder.AppendLine($"{step}) 没装工具箱：双击我发你的「一键加入联机.cmd」，它会自动装好并连上我");
-            builder.AppendLine("   （和邀请码一样是直接加入，不需要任何人同意）");
+            builder.AppendLine($"{step}) 没装工具箱：双击我发你的「一键加入联机.cmd」，它会自动装好联机组件并连上我");
             builder.AppendLine();
             step++;
         }
 
-        if (!info.HasAuthKey)
+        if (info.UsesLanDiscovery)
         {
-            builder.AppendLine($"{step}) 你已经和我处在同一个 Tailscale 网络里：直接打开游戏就行");
-            builder.AppendLine("   （如果我们不在同一个网络，光有地址是连不上的——跟我说一声，我改成发邀请码给你）");
-            builder.AppendLine();
-            step++;
+            builder.AppendLine($"{step}) 进游戏：多人游戏 → 稍等两秒，我的房间会直接出现在「扫描局域网世界」里");
+            builder.AppendLine("   （没出现时点「直接连接」，填上面的地址）");
+        }
+        else if (info.Port > 0)
+        {
+            builder.AppendLine($"{step}) 进游戏：在联机界面里填 {info.Address}");
+            builder.AppendLine("   （首次连接可能需要多试一次——双方还在打洞直连）");
         }
 
-        builder.AppendLine($"连接后在游戏里填：{info.Address}");
+        builder.AppendLine("   （玩完想断：在「游戏联机助手」里点「停止联机」即可）");
         return builder.ToString().TrimEnd() + Environment.NewLine;
     }
 
@@ -230,16 +200,37 @@ public static partial class GameTunnelInvite
     }
 
     /// <summary>
-    /// 生成朋友端 .cmd 脚本内容（GBK 落盘，中文 Windows 的 cmd 才不会乱码）。
-    /// 流程：自动提权 → 没有 Tailscale 就下载并静默安装 → 用授权密钥加入对方的网络 → 等待分配地址 → 打印游戏内要填的地址。
+    /// 生成朋友端 .cmd 脚本。
+    /// 落盘编码是 <b>UTF-8 无 BOM</b>，正文以 <c>chcp 65001</c> 开头：
+    /// ACP=65001（UTF-8 beta）的机器用 GBK 会直接变成乱码，而 GBK 机器在切到 65001 后也能正确读取 UTF-8。
     /// </summary>
-    public static string BuildScript(InviteInfo info)
+    /// <param name="nodes">房主使用的发现节点；为空时用内置公共节点。</param>
+    public static string BuildScript(InviteInfo info, IReadOnlyList<string>? nodes = null)
     {
-        var authKey = TailscaleService.NormalizeAuthKey(info.AuthKey) ?? "";
         var gameName = string.IsNullOrWhiteSpace(info.Game) ? "游戏联机" : info.Game!;
+        var port = info.Port > 0 ? info.Port : 25565;
+        var protocol = info.Protocol;
+
+        var nodeEcho = new StringBuilder();
+        foreach (var node in nodes ?? GameTunnelCatalog.DefaultNodes)
+        {
+            nodeEcho.AppendLine(">>\"%CFG%\" echo [peer]");
+            nodeEcho.AppendLine($">>\"%CFG%\" echo uri = \"{node}\"");
+            nodeEcho.AppendLine(">>\"%CFG%\" echo.");
+        }
+
+        var tcpForward = $"""
+"%ETCLI%" -p 127.0.0.1:%RPC% port-forward add tcp 127.0.0.1:{port} {InviteInfo.HostAddress}:{port}
+""";
+        var udpForward = protocol.UsesUdp()
+            ? $"""
+"%ETCLI%" -p 127.0.0.1:%RPC% port-forward add udp 127.0.0.1:{port} {InviteInfo.HostAddress}:{port}
+"""
+            : "";
 
         return $$"""
 @echo off
+chcp 65001 >nul
 setlocal EnableExtensions
 title 图吧工具箱 · 一键加入联机
 cd /d "%~dp0"
@@ -252,43 +243,48 @@ if errorlevel 1 (
 )
 
 set "GAME={{gameName}}"
-set "HOSTADDR={{info.Host}}"
-set "PORT={{info.Port}}"
-set "AUTHKEY={{authKey}}"
-set "TSEXE=%ProgramFiles%\Tailscale\tailscale.exe"
-set "TSIPN=%ProgramFiles%\Tailscale\tailscale-ipn.exe"
+set "PORT={{port}}"
+set "HOSTIP={{InviteInfo.HostAddress}}"
+set "NETNAME={{info.NetworkName}}"
+set "NETSEC={{info.NetworkSecret}}"
+set "WORKDIR=%TEMP%\tuba-easytier"
+set "ETCORE=%WORKDIR%\easytier-core.exe"
+set "ETCLI=%WORKDIR%\easytier-cli.exe"
+set "CFG=%WORKDIR%\guest.toml"
+set "RPC=15888"
 
 cls
 echo ============================================================
 echo   图吧工具箱 · 一键加入联机
 echo ------------------------------------------------------------
 echo   游戏：%GAME%
-echo   主机：%HOSTADDR%:%PORT%
+echo   房间：{{info.RoomCode}}
 echo ============================================================
 echo.
 
-if exist "%TSEXE%" goto :has_tailscale
+if exist "%ETCORE%" if exist "%ETCLI%" goto :has_component
 
-echo [1/3] 下载 Tailscale 安装包（约 38MB，视网速可能需要一两分钟）
-set "MSIDIR=%TEMP%\tuba-tailscale"
-set "MSI=%MSIDIR%\tailscale-setup.msi"
-mkdir "%MSIDIR%" 2>nul
-if exist "%MSI%" del /f /q "%MSI%" >nul 2>&1
+echo [1/3] 下载联机组件（约 30MB）
+set "ZIP=%WORKDIR%\easytier.zip"
+mkdir "%WORKDIR%" 2>nul
+if exist "%ZIP%" del /f /q "%ZIP%" >nul 2>&1
 
-set "ARCH=amd64"
+set "ARCH=x86_64"
 if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "ARCH=arm64"
-set "URL=https://pkgs.tailscale.com/stable/tailscale-setup-latest-%ARCH%.msi"
-
+if /i "%PROCESSOR_ARCHITECTURE%"=="x86" set "ARCH=i686"
+set "ASSET=easytier-windows-%ARCH%-v{{EasyTierPackage.Version}}.zip"
+set "GH=https://github.com/EasyTier/EasyTier/releases/download/v{{EasyTierPackage.Version}}/%ASSET%"
 set "TRIES=0"
+
 :download
 set /a TRIES+=1
 echo     第 %TRIES% 次尝试...
-if exist "%SystemRoot%\System32\curl.exe" (
-    "%SystemRoot%\System32\curl.exe" -L --fail --silent --show-error --connect-timeout 20 -o "%MSI%" "%URL%"
-) else (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '%URL%' -OutFile '%MSI%' -UseBasicParsing } catch { exit 1 }"
-)
-for %%F in ("%MSI%") do if %%~zF GTR 5000000 goto :downloaded
+call :fetch "%GH%"
+if exist "%ZIP%" for %%F in ("%ZIP%") do if %%~zF GTR 5000000 goto :extract
+call :fetch "https://ghfast.top/%GH%"
+if exist "%ZIP%" for %%F in ("%ZIP%") do if %%~zF GTR 5000000 goto :extract
+call :fetch "https://gh-proxy.com/%GH%"
+if exist "%ZIP%" for %%F in ("%ZIP%") do if %%~zF GTR 5000000 goto :extract
 if %TRIES% GEQ 3 goto :download_failed
 echo     下载没有完成，5 秒后重试...
 timeout /t 5 /nobreak >nul
@@ -296,156 +292,101 @@ goto :download
 
 :download_failed
 echo.
-echo   [失败] 没能自动下载 Tailscale。
-echo   请手动打开 https://tailscale.com/download/windows 下载安装，
-echo   装好后再双击运行本脚本即可（本脚本会自动跳过下载）。
+echo   [失败] 没能自动下载联机组件。
+echo   请手动从 https://github.com/EasyTier/EasyTier/releases 下载
+echo   %ASSET% ，把 easytier-core.exe / easytier-cli.exe / Packet.dll
+echo   放进 %WORKDIR% 后重新运行本脚本。
 echo.
 pause
 exit /b 1
 
-:downloaded
-echo     下载完成。
-
-echo [2/3] 正在静默安装 Tailscale...
-start /wait "" msiexec /i "%MSI%" /qn /norestart
-set "WAIT=0"
-:wait_cli
-if exist "%TSEXE%" goto :has_tailscale
-set /a WAIT+=1
-if %WAIT% GEQ 40 goto :install_failed
-timeout /t 1 /nobreak >nul
-goto :wait_cli
-
-:install_failed
-echo.
-echo   [失败] 安装似乎没有完成。
-echo   请手动安装后再运行本脚本：https://tailscale.com/download/windows
-echo.
-pause
-exit /b 1
-
-:has_tailscale
-rem 托盘客户端必须常驻。没有它，tailscaled 只在命令行进程活着的那几十毫秒里连接，
-rem 命令一退出立刻断开——登录/入网都会「看起来成功然后又弹回未连接」。
-tasklist /FI "IMAGENAME eq tailscale-ipn.exe" 2>nul | find /i "tailscale-ipn.exe" >nul
-if not errorlevel 1 goto :tray_ready
-if not exist "%TSIPN%" goto :tray_ready
-echo     正在启动 Tailscale 客户端（托盘常驻，之后不要退出它）...
-explorer.exe "%TSIPN%"
-timeout /t 4 /nobreak >nul
-:tray_ready
-if "%AUTHKEY%"=="" goto :manual_login
-
-echo [3/3] 加入对方的联机网络（不会修改本机 DNS 设置）
-echo     如果你本来登录了别的 Tailscale 网络，这次会切换过去，
-echo     之后可以用托盘图标里的账号菜单随时切回来。
-set "TRIES=0"
-:join
-set /a TRIES+=1
-"%TSEXE%" up --auth-key=%AUTHKEY% --accept-dns=false --unattended
-if not errorlevel 1 goto :wait_ip
-if %TRIES% GEQ 3 goto :join_failed
-echo     加入失败，5 秒后重试...
-timeout /t 5 /nobreak >nul
-goto :join
-
-:join_failed
-echo.
-echo   [失败] 没能加入联机网络。常见原因：
-echo     - 邀请码已经过期或被对方撤销（让对方重新生成一个）
-echo     - 本机时间不准（同步一下系统时间再试）
-echo     - 网络受限（安全软件 / 代理拦截了 Tailscale）
-echo.
-pause
-exit /b 1
-
-:manual_login
-echo [3/3] 这个邀请没有附带自动登录密钥，请手动登录：
-echo     1. 在任务栏右下角找到 Tailscale 图标，右键 -^> Log in
-echo     2. 按提示完成登录（浏览器会自动打开）
-echo     3. 登录完成后回到本窗口，按任意键继续
-pause >nul
-
-:wait_ip
-echo     正在等待分配联机地址...
-set "WAIT=0"
-:ip_loop
-set "MYIP="
-for /f "usebackq delims=" %%i in (`"%TSEXE%" ip -4 2^>nul`) do set "MYIP=%%i"
-if defined MYIP goto :ready
-set /a WAIT+=1
-if %WAIT% GEQ 40 goto :ip_timeout
-timeout /t 1 /nobreak >nul
-goto :ip_loop
-
-:ip_timeout
-echo.
-echo   [失败] 没有拿到联机地址，请确认 Tailscale 已登录并处于 Connected 状态。
-echo.
-pause
-exit /b 1
-
-:ready
-echo     本机联机地址：%MYIP%
-echo     正在测试与对方的连接...
-"%TSEXE%" ping --c 2 --timeout 5s %HOSTADDR% > "%TEMP%\tuba-ping.txt" 2>&1
-findstr /i "pong" "%TEMP%\tuba-ping.txt" >nul
-if errorlevel 1 (
-    echo     暂时没通——对方可能还没进入游戏，先打开游戏试试
-) else (
-    echo     连接测试成功
+:extract
+echo [2/3] 正在解包联机组件...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%ZIP%' -DestinationPath '%WORKDIR%' -Force"
+del /f /q "%ZIP%" >nul 2>&1
+rem 官方 zip 内的文件在 easytier-windows-<架构>\ 子目录里，统一提回根目录
+for /d %%D in ("%WORKDIR%\easytier-windows-*") do (
+    if exist "%%D\easytier-core.exe" copy /y "%%D\easytier-core.exe" "%WORKDIR%\" >nul
+    if exist "%%D\easytier-cli.exe" copy /y "%%D\easytier-cli.exe" "%WORKDIR%\" >nul
+    if exist "%%D\Packet.dll" copy /y "%%D\Packet.dll" "%WORKDIR%\" >nul
 )
-del "%TEMP%\tuba-ping.txt" >nul 2>&1
+if not exist "%ETCORE%" goto :download_failed
+
+:has_component
+echo [3/3] 正在加入房间并建立端口转发...
+> "%CFG%" echo hostname = "tuba-guest-%RANDOM%%RANDOM%"
+>>"%CFG%" echo dhcp = true
+>>"%CFG%" echo listeners = ["tcp://0.0.0.0:0", "udp://0.0.0.0:0"]
+>>"%CFG%" echo tcp_whitelist = ["0"]
+>>"%CFG%" echo udp_whitelist = ["0"]
+>>"%CFG%" echo.
+>>"%CFG%" echo [network_identity]
+>>"%CFG%" echo network_name = "%NETNAME%"
+>>"%CFG%" echo network_secret = "%NETSEC%"
+>>"%CFG%" echo.
+{{nodeEcho.ToString().TrimEnd()}}
+>>"%CFG%" echo [flags]
+>>"%CFG%" echo no_tun = true
+>>"%CFG%" echo latency_first = true
+>>"%CFG%" echo enable_kcp_proxy = true
+>>"%CFG%" echo enable_quic_proxy = true
+>>"%CFG%" echo data_compress_algo = 2
+>>"%CFG%" echo private_mode = true
+
+taskkill /IM easytier-core.exe /F >nul 2>&1
+start "" /b "%ETCORE%" -c "%CFG%" -r 127.0.0.1:%RPC% --multi-thread
+timeout /t 4 /nobreak >nul
+
+{{tcpForward.TrimEnd()}}
+{{udpForward.TrimEnd()}}
 
 cls
 echo ============================================================
 echo   全部就绪！
 echo ============================================================
 echo.
-echo   现在打开游戏，在这里填地址：
-echo        %HOSTADDR%:%PORT%
+echo   现在打开游戏：
+{{(info.UsesLanDiscovery ? "echo     多人游戏 → 稍等两秒，房间会出现在「扫描局域网世界」里" : "echo     在联机界面里填：" + InviteInfo.HostAddress + ":" + port)}}
 echo.
-echo   这个窗口关掉也不影响联机（Tailscale 会一直在后台运行）。
-echo   想退出联机时，右键任务栏的 Tailscale 图标选择 Disconnect 即可。
+echo   联机组件已经在后台运行，这个窗口可以关闭。
+echo   想断开联机：任务管理器里结束 easytier-core.exe 即可。
 echo.
 echo ============================================================
 echo.
 pause
 exit /b 0
+
+:fetch
+if exist "%ZIP%" del /f /q "%ZIP%" >nul 2>&1
+if exist "%SystemRoot%\System32\curl.exe" (
+    "%SystemRoot%\System32\curl.exe" -L --fail --silent --show-error --connect-timeout 20 -o "%ZIP%" "%~1"
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -Uri '%~1' -OutFile '%ZIP%' -UseBasicParsing } catch { exit 1 }"
+)
+exit /b 0
 """;
     }
 
-    /// <summary>把脚本写到指定路径：GBK 且不带 BOM，换行统一成 CRLF。</summary>
+    /// <summary>把脚本写到指定路径：UTF-8 无 BOM，换行统一成 CRLF。</summary>
     public static string WriteScript(string content, string targetPath)
     {
         var dir = Path.GetDirectoryName(targetPath);
         if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
 
-        var encoding = GetGbkEncoding();
-        File.WriteAllBytes(targetPath, encoding.GetBytes(ToCrlf(content)));
+        File.WriteAllBytes(targetPath, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(ToCrlf(content)));
         return targetPath;
     }
 
     /// <summary>
     /// 批处理必须是 CRLF：cmd.exe 遇到裸 LF 会把命令行拆碎成「'o' 不是内部或外部命令」这种碎片。
-    /// 脚本正文来自源码里的多行字符串，源码存成 LF 时正文也就是 LF，所以落盘前统一一次。
     /// </summary>
     internal static string ToCrlf(string text) =>
         text.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\n", "\r\n");
 
     /// <summary>写到本工具自己的脚本目录，返回路径。</summary>
-    public static string WriteScriptToDataDir(InviteInfo info)
+    public static string WriteScriptToDataDir(InviteInfo info, IReadOnlyList<string>? nodes = null)
     {
         var path = Path.Combine(GameTunnelCatalog.GetScriptsDir(), ScriptFileName(info.Game));
-        return WriteScript(BuildScript(info), path);
+        return WriteScript(BuildScript(info, nodes), path);
     }
-
-    private static Encoding GetGbkEncoding()
-    {
-        try { return Encoding.GetEncoding(936); }
-        catch { return new UTF8Encoding(encoderShouldEmitUTF8Identifier: false); }
-    }
-
-    /// <summary>给界面用的脚本体积估算文案。</summary>
-    public static string DescribeScriptStaleness() => "脚本里带的是本次邀请的密钥，过期后需要重新生成。";
 }

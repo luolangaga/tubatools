@@ -539,6 +539,8 @@ public sealed partial class MainWindow : Window
         // 模型正在加载时绝不阻塞后面的托盘/单实例清理（超时则放弃，进程退出由内核回收）
         try { Services.Ai.Onnx.LocalModelRuntime.TryUnload(TimeSpan.FromSeconds(3)); } catch { }
         try { Services.DisplayTools.DisplayColorAdjustment.RestoreAll(); } catch { }
+        // 游戏联机：停掉 EasyTier 子进程并释放配置（作业对象之外的第二道保险）
+        try { Services.TunnelSession.Instance.Shutdown(); } catch { }
         // 托盘图标必须显式移除：进程退出后残留的图标要等鼠标划过去才消失
         try { TrayIconService.Dispose(); } catch { }
 

@@ -61,6 +61,7 @@ public static class GameTunnelCatalog
             Glyph = "\uE7FC",
             DefaultPort = 25565,
             Protocol = GameTunnelProtocol.Tcp,
+            UsesLanDiscovery = true,
             Tagline = "单人世界对局域网开放，或启动服务端",
             HostAction = "进入世界后按 Esc →「对局域网开放」；专用服务器默认 25565",
             HostSteps =
@@ -71,11 +72,11 @@ public static class GameTunnelCatalog
             ],
             GuestSteps =
             [
-                "打开游戏 →「多人游戏」→「直接连接」",
-                "地址填 {host}:{port}",
-                "提示「未知主机」时多试一次，或等 10 秒再连（首次打洞需要一点时间）",
+                "打开游戏 →「多人游戏」，稍等两秒，房间会直接出现在底部的「扫描局域网世界」里",
+                "没出现时再点一次「扫描」；仍然没有就点「直接连接」填 {host}:{port}",
+                "提示「无效会话」时，请从局域网列表进入（房主用正版账号开放时，离线账号只能走这条路）",
             ],
-            GuestEntryPoint = "多人游戏 → 直接连接",
+            GuestEntryPoint = "多人游戏 → 局域网世界（自动出现）",
             Note = "Java 版要求朋友和你的游戏版本一致；装了 Mod 的话两边 Mod 也要一致。",
         },
         new()
@@ -307,6 +308,57 @@ public static class GameTunnelCatalog
     public static GamePreset? FindPreset(string? id)
         => id is null ? null : _presets.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase));
 
+    // ══════════════════════ 联机节点 ══════════════════════
+
+    /// <summary>
+    /// 帮同一房间的玩家互相发现的公共节点。玩家只有在共用至少一个节点时才能找到对方，
+    /// 所以这个列表应当只增不改。
+    /// </summary>
+    public static readonly string[] DefaultNodes =
+    [
+        "tcp://public.easytier.top:11010",
+        "tcp://public2.easytier.cn:54321",
+        "https://etnode.zkitefly.eu.org/node1",
+        "https://etnode.zkitefly.eu.org/node2",
+    ];
+
+    /// <summary>自定义节点在前，再补内置节点，去重。</summary>
+    public static IReadOnlyList<string> GetNodes(GameTunnelSettings settings)
+    {
+        var nodes = ParseNodes(settings.CustomNodes, out _);
+        return (settings.UsePublicNodes ? nodes.Concat(DefaultNodes) : nodes)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>
+    /// 把用户输入拆成节点地址：空格/逗号/分号/换行分隔，裸 host:port 按 TCP 处理。
+    /// 非法项通过 <paramref name="invalid"/> 返回。
+    /// </summary>
+    public static IReadOnlyList<string> ParseNodes(string? text, out IReadOnlyList<string> invalid)
+    {
+        var nodes = new List<string>();
+        var rejected = new List<string>();
+        invalid = rejected;
+        if (string.IsNullOrWhiteSpace(text)) return nodes;
+
+        var separators = new[] { ' ', '\t', '\r', '\n', ',', ';', '，', '；', '、' };
+        foreach (var part in text.Split(separators, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var node = part.Contains("://") ? part : "tcp://" + part;
+            if (Uri.TryCreate(node, UriKind.Absolute, out var uri) && !string.IsNullOrEmpty(uri.Host)
+                && uri.Scheme is "tcp" or "udp" or "ws" or "wss" or "quic" or "http" or "https")
+            {
+                nodes.Add(node);
+            }
+            else
+            {
+                rejected.Add(part);
+            }
+        }
+        return nodes;
+    }
+
     // ══════════════════════ 自定义游戏 ══════════════════════
 
     public static List<CustomGame> LoadCustomGames()
@@ -391,16 +443,31 @@ public static class GameTunnelCatalog
 /// <summary>本工具自己的持久化设置（与全局 AppSettings 分开，避免污染）。</summary>
 public sealed class GameTunnelSettings
 {
-    /// <summary>Tailscale API 访问令牌（tskey-api-…），用于自动生成邀请码。</summary>
-    public string? ApiToken { get; set; }
-
     public string? LastPresetId { get; set; }
 
     public int LastPort { get; set; }
 
-    /// <summary>当主机时自动为端口放行防火墙（仅限 Tailscale 网络）。</summary>
-    public bool AutoFirewall { get; set; } = true;
+    /// <summary>直连打不通时允许经中转节点传输。</summary>
+    public bool AllowRelay { get; set; } = true;
 
-    /// <summary>联机时自动把设备名改成易识别的名字（仅首次）。</summary>
-    public bool RenameDevice { get; set; } = true;
+    /// <summary>不直连任何成员，全部流量经中转，其他玩家无从得知本机 IP。</summary>
+    public bool HideAddress { get; set; }
+
+    /// <summary>使用内置公共发现节点。</summary>
+    public bool UsePublicNodes { get; set; } = true;
+
+    /// <summary>额外节点，空格/逗号/换行分隔；裸 host:port 按 TCP 处理。</summary>
+    public string? CustomNodes { get; set; }
+
+    /// <summary>把房间也分享给本机所在局域网的其他设备（默认只在真正需要时打开）。</summary>
+    public bool ShareWithLan { get; set; }
+
+    /// <summary>加入时使用的本地端口，0 = 自动。</summary>
+    public int LocalPort { get; set; }
+
+    /// <summary>找房主的超时时间（秒）。</summary>
+    public int SearchTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>首次联机时自动为联机组件添加防火墙入站规则。</summary>
+    public bool AutoFirewall { get; set; } = true;
 }

@@ -45,20 +45,19 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
         InvitePanel.InviteStateChanged += (_, ready) => UpdateInviteStatus(ready);
     }
 
-    private void UpdateInviteStatus(bool inviteReady)
+    private void UpdateInviteStatus(bool roomReady)
     {
-        RoomStatusText.Text = inviteReady
-            ? "邀请码已生成 ✓ 把下面任意一种方式发给朋友，他加入后在游戏里填上面的地址即可。你保持游戏开着就行。"
-            : "网络已就绪，但还差一把邀请密钥——朋友现在连不进来。用下面任意一种方式生成邀请码即可（配一次 API 密钥以后就自动了）。";
+        RoomStatusText.Text = roomReady
+            ? "房间已开启 ✓ 把房间码或邀请文案发给朋友，他加入后在游戏里填上面的地址即可。你保持游戏开着就行。"
+            : "房间还在准备中——等网络就绪后这里会变成可用的邀请。";
     }
 
     public async Task<bool> RunAsync()
     {
         LoadGames();
 
-        // 「查看当前邀请」：先用现成的信息把第 3 步画出来（弹窗立刻可见），
-        // 读状态、放行防火墙、生成密钥这些慢动作放到后面异步补，不让用户干等。
-        if (_resumeInvite && GameTunnelCatalog.CurrentInvite is { } invite)
+        // 「查看当前房间」：房间已经在运行，直接用现成的信息画第 3 步。
+        if (_resumeInvite && TunnelSession.Instance is { IsActive: true, Invite: { } invite })
         {
             PortBox.Value = invite.Port;
             PrefillStep3(invite);
@@ -69,25 +68,38 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
         return _inviteReady;
     }
 
-    /// <summary>恢复时后台补齐防火墙与邀请密钥；失败就地提示，不打断已经显示出来的页面。</summary>
+    /// <summary>恢复时后台补齐防火墙与邀请面板；失败就地提示，不打断已经显示出来的页面。</summary>
     private async Task ResumeInviteAsync()
     {
         try
         {
-            await StartInviteAsync();
+            if (!TunnelSession.Instance.IsActive)
+            {
+                await StartRoomAsync();
+                return;
+            }
+
+            _invite = TunnelSession.Instance.Invite;
+            if (_invite is null) return;
+
+            FirewallText.Text = TunnelSession.Instance.FirewallMessage ?? "";
+            UpdateInviteStatus(true);
+            await InvitePanel.InitializeAsync(_invite);
+            _inviteReady = true;
         }
         catch (Exception ex)
         {
-            StatusText($"准备邀请信息失败：{ex.Message}");
+            StatusText($"准备房间信息失败：{ex.Message}");
         }
     }
 
     /// <summary>用已有的联机信息直接画出第 3 步，不用再等一次状态查询。</summary>
     private void PrefillStep3(InviteInfo invite)
     {
-        RoomAddressText.Text = invite.Address;
-        UpdateInviteStatus(invite.HasAuthKey);
-        UpdateGuestSteps(invite.Host);
+        RoomAddressText.Text = invite.RoomCode;
+        GameAddressText.Text = invite.Port > 0 ? $"游戏里填：{invite.Address}" : "";
+        UpdateInviteStatus(true);
+        UpdateGuestSteps();
         _step = 3;
         Step1Panel.Visibility = Visibility.Collapsed;
         Step2Panel.Visibility = Visibility.Collapsed;
@@ -316,7 +328,7 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
         UpdateGuestSteps();
     }
 
-    private void UpdateGuestSteps(string host = "对方地址")
+    private void UpdateGuestSteps()
     {
         var port = _selected?.Port ?? 0;
         if (PortBox.Value is double value && !double.IsNaN(value)) port = (int)value;
@@ -326,19 +338,20 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
         {
             GuestStepsList.ItemsSource = new List<string>
             {
-                "运行一键加入脚本，或者在工具箱里粘贴邀请码（直接加入，双方都不需要点同意）",
-                $"打开游戏，在联机界面里填 {host}:{port}",
-                "只发地址的话，对方必须已经在你这个 Tailscale 网络里，否则填了也连不上",
-                "首次连接可能需要多试一次（网络还在打洞）"
+                "运行一键加入脚本，或者在工具箱里粘贴房间码（直接加入，双方都不需要点同意）",
+                $"打开游戏，在联机界面里填 {InviteInfo.HostAddress}:{port}",
+                "首次连接可能需要多试一次（网络还在打洞直连）"
             };
             return;
         }
 
-        // 预设步骤是「游戏里怎么操作」，最后补一句加入方式的前提，避免朋友拿着地址干等
+        // 预设步骤是「游戏里怎么操作」，最后补一句加入方式的说明
         var steps = preset.GuestSteps
-            .Select(step => step.Replace("{host}", host).Replace("{port}", port.ToString()))
+            .Select(step => step.Replace("{host}", InviteInfo.HostAddress).Replace("{port}", port.ToString()))
             .ToList();
-        steps.Add("邀请码 / 一键加入脚本会把他直接加进你的网络；只发地址的前提是他已经在这个网络里");
+        steps.Add(preset.UsesLanDiscovery
+            ? "房间码 / 一键加入脚本会把他直接加进这个房间；我的世界会直接出现在局域网列表里"
+            : "房间码 / 一键加入脚本会把他直接加进这个房间，不需要任何人批准");
         GuestStepsList.ItemsSource = steps;
     }
 
@@ -362,7 +375,7 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
 
     // ══════════════════ 第 3 步：邀请朋友 ══════════════════
 
-    private async Task StartInviteAsync()
+    private async Task StartRoomAsync()
     {
         if (_selected is null) return;
 
@@ -373,56 +386,31 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
             return;
         }
 
-        SetBusy(true, "正在准备邀请…");
+        SetBusy(true, "正在创建房间…");
         try
         {
-            var status = await TailscaleService.GetStatusAsync();
-            if (status?.IsReady != true)
+            if (!EasyTierPackage.IsReady)
             {
-                ShowStatus(InfoBarSeverity.Error, "联机环境还没准备好，请先点主页的「准备联机环境」完成安装与登录");
-                return;
-            }
-
-            var ip = status.Ipv4;
-            if (string.IsNullOrWhiteSpace(ip))
-            {
-                ShowStatus(InfoBarSeverity.Error, "没有拿到联机地址，请到主页的「网络检测」看看是什么问题");
+                ShowStatus(InfoBarSeverity.Error, "联机组件还没准备好，请先回主页点「准备联机组件」");
                 return;
             }
 
             var protocol = _selected.Protocol;
-            var game = _selected.Name;
+            StatusText("正在启动虚拟网络…");
+            await TunnelSession.Instance.StartHostAsync(_selected.Name, port, protocol, _selected.Preset?.UsesLanDiscovery == true);
 
-            _invite = new InviteInfo
+            _invite = TunnelSession.Instance.Invite;
+            if (_invite is null)
             {
-                Host = ip!,
-                Port = port,
-                Game = game,
-                Protocol = protocol,
-                HostName = status.HostName
-            };
-
-            // 主页「查看当前邀请信息」靠它回到这一步（本次运行内有效）
-            GameTunnelCatalog.CurrentInvite = _invite;
-
-            // 防火墙只放行 Tailscale 网卡，不影响局域网与公网暴露面
-            var settings = GameTunnelCatalog.LoadSettings();
-            if (settings.AutoFirewall)
-            {
-                StatusText("正在放行防火墙（仅 Tailscale 网络）…");
-                var firewall = await TailscaleService.EnsureFirewallAsync(port, protocol);
-                FirewallText.Text = firewall.Ok
-                    ? $"防火墙：{firewall.Message}"
-                    : $"防火墙：{firewall.Message}（如果朋友连不上，可手动在 Windows 防火墙里放行 {port}）";
-            }
-            else
-            {
-                FirewallText.Text = "防火墙：已跳过（可在设置里打开自动放行）";
+                ShowStatus(InfoBarSeverity.Error, "房间没有成功建立，请重试");
+                return;
             }
 
-            RoomAddressText.Text = $"{ip}:{port}";
-            UpdateInviteStatus(_invite.AuthKey is { Length: > 0 });
-            UpdateGuestSteps(ip!);
+            FirewallText.Text = TunnelSession.Instance.FirewallMessage ?? "";
+            RoomAddressText.Text = _invite.RoomCode;
+            GameAddressText.Text = $"游戏里填：{_invite.Address}（本机游戏端口 {port}）";
+            UpdateInviteStatus(true);
+            UpdateGuestSteps();
 
             _step = 3;
             Step1Panel.Visibility = Visibility.Collapsed;
@@ -432,11 +420,16 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
 
             await InvitePanel.InitializeAsync(_invite);
 
+            var settings = GameTunnelCatalog.LoadSettings();
             settings.LastPresetId = _selected.Id;
             settings.LastPort = port;
             GameTunnelCatalog.SaveSettings(settings);
 
             _inviteReady = true;
+        }
+        catch (Exception ex)
+        {
+            ShowStatus(InfoBarSeverity.Error, $"创建房间失败：{ex.Message}");
         }
         finally
         {
@@ -448,8 +441,8 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
     {
         if (_invite is null) return;
         // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
-        if (ClipboardService.TrySetText(_invite.Address).Success)
-            ShowStatus(InfoBarSeverity.Success, "地址已复制");
+        if (ClipboardService.TrySetText(_invite.RoomCode).Success)
+            ShowStatus(InfoBarSeverity.Success, "房间码已复制");
         else
             ShowStatus(InfoBarSeverity.Error, "复制失败，请手动选中文本复制");
     }
@@ -527,7 +520,7 @@ public sealed partial class GameTunnelHostDialog : ContentDialog
 
                 case 2:
                     args.Cancel = true;
-                    await StartInviteAsync();
+                    await StartRoomAsync();
                     break;
 
                 default:

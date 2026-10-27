@@ -6,11 +6,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="准备联机环境"
-    PrimaryButtonText="下一步"
-    CloseButtonText="稍后再说"
+    Title="联机组件"
+    PrimaryButtonText="下载联机组件"
+    CloseButtonText="关闭"
     DefaultButton="Primary"
-    PrimaryButtonClick="OnPrimaryButtonClick">
+    PrimaryButtonClick="OnPrimaryButtonClick"
+    SecondaryButtonClick="OnSecondaryButtonClick">
 
     <ContentDialog.Resources>
         <ResourceDictionary>
@@ -28,16 +29,15 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <TextBlock
             FontSize="12"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap"
-            Text="联机靠 Tailscale 把两台电脑接进同一个虚拟局域网，延迟低、不用改路由器。整个过程只做两件事：装客户端、登录一次。" />
+            Text="联机靠 EasyTier 把两台电脑接进同一个加密虚拟网络：不装驱动、不建虚拟网卡、不需要账号。第一次联机需要下载一次组件（约 30MB），之后直接可用。" />
 
-        <!-- 步骤 1：客户端 -->
+        <!-- 步骤 1：组件 -->
         <Border
             Grid.Row="1"
             Style="{StaticResource FluentCardStyle}">
@@ -52,15 +52,15 @@
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="安装 Tailscale 客户端" />
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="下载联机组件" />
                     <TextBlock x:Name="Step1Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="检测中…" />
                     <ProgressBar x:Name="Step1Progress" Visibility="Collapsed" Margin="0,4,0,0" />
-                    <TextBlock x:Name="Step1ProgressText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" />
+                    <TextBlock x:Name="Step1ProgressText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 步骤 2：登录 -->
+        <!-- 步骤 2：就绪 -->
         <Border
             Grid.Row="2"
             Style="{StaticResource FluentCardStyle}">
@@ -71,71 +71,25 @@
                 </Grid.ColumnDefinitions>
 
                 <Border x:Name="Step2Badge" Width="28" Height="28" CornerRadius="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
-                    <FontIcon x:Name="Step2Icon" FontSize="12" Glyph="&#xE77B;" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <FontIcon x:Name="Step2Icon" FontSize="12" Glyph="&#xE774;" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
 
                 <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="登录 Tailscale" />
-                    <TextBlock x:Name="Step2Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="等待客户端就绪…" />
-
-                    <StackPanel x:Name="AuthUrlPanel" Visibility="Collapsed" Spacing="8" Margin="0,4,0,0">
-                        <TextBlock
-                            FontSize="12"
-                            TextWrapping="Wrap"
-                            Text="浏览器没有自动打开的话，复制下面这个地址，在浏览器里完成登录：" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBox x:Name="AuthUrlBox" IsReadOnly="True" FontSize="12" FontFamily="Consolas" MinWidth="300" />
-                            <Button x:Name="CopyAuthUrlButton" Click="CopyAuthUrl_Click" CornerRadius="8" Padding="8,8" Content="复制" FontSize="14" />
-                            <Button x:Name="OpenAuthUrlButton" Click="OpenAuthUrl_Click" CornerRadius="8" Padding="8,8" Content="打开浏览器" FontSize="14" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- 后端还在启动 / 卡在启动：这里给出实时进度与自救入口 -->
-                    <StackPanel x:Name="WaitingPanel" Visibility="Collapsed" Spacing="8" Margin="0,4,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <ProgressRing x:Name="WaitingRing" Width="16" Height="16" IsActive="True" VerticalAlignment="Center" />
-                            <TextBlock x:Name="WaitingText" VerticalAlignment="Center" FontSize="12" Text="正在等待 Tailscale 就绪…" />
-                        </StackPanel>
-                        <TextBlock
-                            x:Name="StuckHintText"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            TextWrapping="Wrap"
-                            Visibility="Collapsed" />
-                    </StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="可以开始联机" />
+                    <TextBlock x:Name="Step2Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="组件下载完成后即可建房或加入" />
+                    <TextBlock x:Name="ComponentVersionText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="Collapsed" />
+                    <TextBlock x:Name="ComponentPathText" FontSize="12" FontFamily="Consolas" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Visibility="Collapsed" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 步骤 3：就绪 -->
-        <Border
-            Grid.Row="3"
-            Style="{StaticResource FluentCardStyle}">
-            <Grid ColumnSpacing="12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border x:Name="Step3Badge" Width="28" Height="28" CornerRadius="12" Background="{ThemeResource SubtleFillColorSecondaryBrush}" VerticalAlignment="Top">
-                    <FontIcon x:Name="Step3Icon" FontSize="12" Glyph="&#xE774;" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
-
-                <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="拿到联机地址" />
-                    <TextBlock x:Name="Step3Status" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="登录后自动获取" />
-                    <TextBlock x:Name="IpText" Style="{StaticResource StatValueStyle}" FontFamily="Consolas" Visibility="Collapsed" IsTextSelectionEnabled="True" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <InfoBar x:Name="StatusBar" Grid.Row="4" IsOpen="False" IsClosable="True" Severity="Informational" />
+        <InfoBar x:Name="StatusBar" Grid.Row="3" IsOpen="False" IsClosable="True" Severity="Informational" />
 
         <TextBlock
-            Grid.Row="5"
+            Grid.Row="4"
             FontSize="12"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
             TextWrapping="Wrap"
-            Text="Tailscale 是免费的个人组网工具，登录用 Google / Microsoft / GitHub 账号都可以。它不会改变你的上网方式，也不会把游戏端口暴露到公网。" />
+            Text="联机组件为开源项目 EasyTier（LGPL-3.0），每个文件都会与本程序内置的 SHA-256 比对，来源不可信的文件会被丢弃。它只在本机转发游戏端口，不会把你的电脑暴露到公网。" />
     </Grid>
 </ContentDialog>

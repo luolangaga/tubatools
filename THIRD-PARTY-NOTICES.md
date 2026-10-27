@@ -56,6 +56,19 @@
   文档：https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/integrate-packaged-app-with-file-explorer
   参照项目：https://github.com/M2Team/NanaZip
 
+## 7. 运行时下载的第三方组件
+
+以下组件**不随本仓库/安装包分发**，由用户在首次使用时按需下载，属于独立程序，按其自身许可证授权：
+
+- **EasyTier**（游戏联机助手使用的 P2P 虚拟网络组件，`TubaWinUi3.WinUI3/Services/GameTunnel/EasyTier/`）
+  LGPL-3.0。项目地址：https://github.com/EasyTier/EasyTier
+  本程序只调用其官方发布的未修改版本，并在下载后逐个文件校验 SHA-256。
+  需要替换/重新链接该组件的用户可从上述地址获取对应版本的完整源码，
+  或直接删除 `<数据目录>/GameTunnel/EasyTier/` 后用自行编译的 `easytier-core.exe` / `easytier-cli.exe` 替换
+  （文件名与所在目录保持不变即可被本程序使用）。
+  联机机制（邀请码=网络名+密钥、端口转发、Minecraft 局域网广播）参照 **Campfire**（https://github.com/Xocio/Campfire）
+  的公开实现重新编写，未复制其源代码；Campfire 采用何种许可请以其仓库声明为准。
+
 ---
 
 # Third-Party Notice (English)
@@ -117,3 +130,19 @@ The following features are managed-code **re-implementations** modelled on upstr
   Copyright (c) Mouri Naruto); no source files were copied from it.
   Docs: https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/integrate-packaged-app-with-file-explorer
   Reference project: https://github.com/M2Team/NanaZip
+
+## 7. Components Downloaded at Runtime
+
+The following components are **not distributed** with this repository or installer. They are downloaded on first use
+and are independent programs governed by their own licenses:
+
+- **EasyTier** (P2P virtual-network component used by the Game Tunnel tool,
+  `TubaWinUi3.WinUI3/Services/GameTunnel/EasyTier/`) — LGPL-3.0.
+  Upstream: https://github.com/EasyTier/EasyTier
+  This program calls the official, unmodified release and verifies each file against a pinned SHA-256 hash.
+  Users who wish to replace or relink the component may obtain the complete corresponding source from the upstream
+  project, or delete `<DataDir>/GameTunnel/EasyTier/` and drop in their own build of `easytier-core.exe` /
+  `easytier-cli.exe` (same file names and directory layout are enough for this program to use it).
+  The room-code / port-forwarding / Minecraft LAN-discovery design is modelled on the public implementation of
+  **Campfire** (https://github.com/Xocio/Campfire); no source code was copied. Campfire's own license terms are
+  those stated in its repository.

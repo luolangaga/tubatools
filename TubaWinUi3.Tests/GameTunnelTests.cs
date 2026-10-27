@@ -6,8 +6,8 @@ using TubaWinUi3.Services;
 namespace TubaWinUi3.Tests;
 
 /// <summary>
-/// 游戏联机助手的纯逻辑回归：解析、邀请码、脚本生成、游戏档案。
-/// 不依赖本机是否装了 Tailscale，也不会真的发起登录或联机。
+/// 游戏联机助手的纯逻辑回归：房间码、EasyTier 配置、设备解析、邀请码、脚本生成、游戏档案。
+/// 不依赖本机是否装了联机组件，也不会真的发起联机。
 /// </summary>
 public class GameTunnelTests : IDisposable
 {
@@ -27,768 +27,327 @@ public class GameTunnelTests : IDisposable
         try { Directory.Delete(_tempDir, true); } catch { }
     }
 
-    // ══════════════════ 后端卡在启动（真实故障现场） ══════════════════
+    // ══════════════════ 房间码 ══════════════════
 
-    /// <summary>
-    /// 开发机真实现场：浏览器里授权成功了，但本机连不上控制服务器（被代理/加速器拦截），
-    /// 状态一直停在 NoState。界面绝不能把它显示成「未登录」，否则用户会反复点登录。
-    /// </summary>
     [Fact]
-    public void ParseStatusJson_NoStateIsStartingNotLoggedOut()
+    public void RoomCode_CreateProducesUsableCode()
+    {
+        var code = TunnelRoomCode.Create();
+
+        Assert.StartsWith("U/", code.Code);
+        Assert.Equal(21, code.Code.Length);
+        Assert.Equal(18, code.Code.Count(c => c != '-'));
+
+        // 房间码同时就是网络名与密钥：前半段进网络名，后半段进密钥。
+        Assert.StartsWith("tuba-", code.NetworkName);
+        Assert.Equal(14, code.NetworkName.Length);
+        Assert.Equal(9, code.NetworkSecret.Length);
+        Assert.Contains('-', code.NetworkSecret);
+
+        Assert.Equal(code.Code, TunnelRoomCode.Find(code.Code)?.Code);
+        Assert.Equal(code.Code, TunnelRoomCode.TryParse(code.Code)?.Code);
+    }
+
+    [Theory]
+    [InlineData("U/0000-0000-0000-0001")] // 不是 7 的倍数
+    [InlineData("U/0000-0000-0000-0002")]
+    [InlineData("U/0000-0000-0000-0003")]
+    public void RoomCode_RejectsBadChecksum(string text)
+        => Assert.Null(TunnelRoomCode.TryParse(text));
+
+    [Fact]
+    public void RoomCode_ToleratesLookAlikeLetters()
+    {
+        // 全 0 是 7 的倍数；I/O 必须按 1/0 读
+        var code = TunnelRoomCode.Find("U/OOOO-OOOO-OOOO-OOOO");
+
+        Assert.NotNull(code);
+        Assert.Equal("U/0000-0000-0000-0000", code!.Code);
+        Assert.Equal("U/0000-0000-0000-0000", TunnelRoomCode.Find("我的房间 U/0000-0000-0000-0000 快来")?.Code);
+    }
+
+    [Fact]
+    public void RoomCode_FindRejectsGarbage()
+    {
+        Assert.Null(TunnelRoomCode.Find(""));
+        Assert.Null(TunnelRoomCode.Find("没有房间码"));
+        Assert.Null(TunnelRoomCode.Find("U/0000-0000-0000-0002"));
+    }
+
+    // ══════════════════ EasyTier 配置 ══════════════════
+
+    private static EasyTierConfig HostConfig(int port = 25565) => new()
+    {
+        NetworkName = "tuba-ABCD-EFGH",
+        NetworkSecret = "IJKL-MNOP",
+        Hostname = TunnelSession.HostNamePrefix + port,
+        IPv4 = InviteInfo.HostAddress,
+        TcpWhitelist = { port.ToString() },
+        UdpWhitelist = { port.ToString() },
+        Peers = { "tcp://public.easytier.top:11010" }
+    };
+
+    [Fact]
+    public void EasyTierConfig_HostHasFixedAddressAndOpenPorts()
+    {
+        var toml = HostConfig().ToToml();
+
+        Assert.Contains("hostname = \"tuba-host-25565\"", toml);
+        Assert.Contains("ipv4 = \"10.144.144.1\"", toml);
+        Assert.Contains("tcp_whitelist = [\"25565\"]", toml);
+        Assert.Contains("udp_whitelist = [\"25565\"]", toml);
+        Assert.Contains("network_name = \"tuba-ABCD-EFGH\"", toml);
+        Assert.Contains("network_secret = \"IJKL-MNOP\"", toml);
+        Assert.Contains("uri = \"tcp://public.easytier.top:11010\"", toml);
+    }
+
+    [Fact]
+    public void EasyTierConfig_UsesNoTunAndPrivateMode()
+    {
+        var toml = HostConfig().ToToml();
+
+        Assert.Contains("no_tun = true", toml);
+        Assert.Contains("private_mode = true", toml);
+        Assert.Contains("latency_first = true", toml);
+        Assert.Contains("enable_kcp_proxy = true", toml);
+        Assert.Contains("enable_quic_proxy = true", toml);
+        Assert.Contains("data_compress_algo = 2", toml);
+        Assert.Contains("listeners = [\"tcp://0.0.0.0:0\", \"udp://0.0.0.0:0\"]", toml);
+        Assert.Contains("p2p_only = false", toml);
+    }
+
+    [Fact]
+    public void EasyTierConfig_GuestBlocksEveryInboundPort()
+    {
+        var config = new EasyTierConfig
+        {
+            NetworkName = "tuba-ABCD-EFGH",
+            NetworkSecret = "IJKL-MNOP",
+            Hostname = "tuba-guest-1a2b",
+            TcpWhitelist = { "0" },
+            UdpWhitelist = { "0" }
+        };
+
+        var toml = config.ToToml();
+
+        Assert.Contains("dhcp = true", toml);
+        Assert.DoesNotContain("ipv4 =", toml);
+        Assert.Contains("tcp_whitelist = [\"0\"]", toml);
+        Assert.Contains("udp_whitelist = [\"0\"]", toml);
+    }
+
+    [Fact]
+    public void EasyTierConfig_DirectOnlySetsP2pOnly()
+    {
+        var config = HostConfig();
+        config.DirectOnly = true;
+
+        Assert.Contains("p2p_only = true", config.ToToml());
+    }
+
+    [Fact]
+    public void EasyTierConfig_HideAddressDisablesEveryDirectPath()
+    {
+        var config = HostConfig();
+        config.HideAddress = true;
+        // 隐藏地址时即使勾了「仅直连」也不能真的只直连（根本没有直连）
+        config.DirectOnly = true;
+
+        var toml = config.ToToml();
+        Assert.Contains("listeners = []", toml);
+        Assert.Contains("disable_p2p = true", toml);
+        Assert.Contains("disable_udp_hole_punching = true", toml);
+        Assert.Contains("disable_tcp_hole_punching = true", toml);
+        Assert.Contains("disable_sym_hole_punching = true", toml);
+        Assert.Contains("disable_upnp = true", toml);
+        Assert.Contains("p2p_only = false", toml);
+    }
+
+    [Fact]
+    public void EasyTierConfig_QuotesAreEscaped()
+    {
+        var config = HostConfig();
+        config.Hostname = "tuba-\"x\"\\y";
+
+        var toml = config.ToToml();
+        Assert.Contains("hostname = \"tuba-\\\"x\\\"\\\\y\"", toml);
+    }
+
+    // ══════════════════ EasyTier 设备解析 ══════════════════
+
+    [Fact]
+    public void EasyTierPeer_ParsesRealPeerJson()
     {
         const string json = """
-        {
-          "BackendState": "NoState",
-          "HaveNodeKey": true,
-          "AuthURL": "",
-          "Self": { "HostName": "LAPTOP-CE9T4R0L", "TailscaleIPs": null },
-          "Health": [
-            "Tailscale is starting. Please wait.",
-            "You are logged out. The last login error was: fetch control key: Get \"https://controlplane.tailscale.com/key?v=142\": context canceled"
-          ]
-        }
-        """;
-
-        var status = TailscaleService.ParseStatusJson(json);
-
-        Assert.NotNull(status);
-        Assert.True(status!.IsStarting);
-        Assert.False(status.IsLoggedIn);
-        Assert.False(status.NeedsLogin);
-        Assert.False(status.IsReady);
-        Assert.True(status.HaveNodeKey);
-        Assert.Equal("正在启动", status.DescribeState());
-    }
-
-    [Fact]
-    public void ParseStatusJson_NeedsLoginIsTheOnlyLoggedOutState()
-    {
-        var needsLogin = TailscaleService.ParseStatusJson("""{"BackendState":"NeedsLogin"}""");
-        Assert.NotNull(needsLogin);
-        Assert.True(needsLogin!.NeedsLogin);
-        Assert.False(needsLogin.IsStarting);
-
-        var starting = TailscaleService.ParseStatusJson("""{"BackendState":"Starting","HaveNodeKey":true}""");
-        Assert.NotNull(starting);
-        Assert.True(starting!.IsStarting);
-        Assert.False(starting.NeedsLogin);
-    }
-
-    /// <summary>
-    /// warming-up 会抑制其它提醒，但解释故障的告警必须留下——否则用户只看到「正在启动」，
-    /// 永远不知道是代理拦住了控制服务器。
-    /// </summary>
-    [Fact]
-    public void DescribeHealthLines_KeepsExplanationWhileWarmingUp()
-    {
-        var notes = TailscaleService.DescribeHealthLines(
         [
-            "Tailscale is starting. Please wait.",
-            "You are logged out. The last login error was: fetch control key: Get \"https://controlplane.tailscale.com/key?v=142\": context canceled"
-        ]);
-
-        var only = Assert.Single(notes);
-        Assert.Equal("fetch-control-key", only.Code);
-        Assert.True(only.ImpactsConnectivity);
-        Assert.Contains("代理", only.Advice);
-    }
-
-    [Fact]
-    public void DescribeHealth_RegisterFailurePointsAtProxy()
-    {
-        var note = TailscaleService.DescribeHealth(
-            "You are logged out. The last login error was: register request: Post \"https://controlplane.tailscale.com/machine/register\": context canceled");
-
-        Assert.Equal("register-node", note.Code);
-        Assert.True(note.ImpactsConnectivity);
-        Assert.Contains("controlplane.tailscale.com", note.Advice);
-    }
-
-    [Fact]
-    public void DescribeStartupHint_NamesProxyWhenPresent()
-    {
-        var withProxy = TailscaleService.DescribeStartupHint("127.0.0.1:58088");
-        Assert.Contains("127.0.0.1:58088", withProxy);
-        Assert.Contains("重启 Tailscale 服务", withProxy);
-
-        var withoutProxy = TailscaleService.DescribeStartupHint(null, "proxy.local:8080");
-        Assert.Contains("proxy.local:8080", withoutProxy);
-
-        var generic = TailscaleService.DescribeStartupHint(null);
-        Assert.Contains("controlplane.tailscale.com", generic);
-    }
-
-    // ══════════════════ 真实数据：status --json ══════════════════
-
-    /// <summary>开发机真实输出（未登录状态，Health 里带两条告警）。</summary>
-    private const string RealNeedsLoginJson = """
-    {
-      "Version": "1.102.4-t3caf7d9e7-g084ee3b64",
-      "TUN": true,
-      "BackendState": "NeedsLogin",
-      "AuthURL": "https://login.tailscale.com/a/1cbef3bf01be15",
-      "TailscaleIPs": null,
-      "Self": {
-        "ID": "",
-        "HostName": "LAPTOP-CE9T4R0L",
-        "DNSName": "",
-        "OS": "windows",
-        "UserID": 0,
-        "TailscaleIPs": null,
-        "Online": false
-      },
-      "Health": [
-        "Unable to connect to the Tailscale coordination server to synchronize the state of your tailnet. Peer reachability might degrade over time.",
-        "You are logged out. The last login error was: register request: Post \"https://controlplane.tailscale.com/machine/register\": context canceled"
-      ],
-      "MagicDNSSuffix": "",
-      "CurrentTailnet": null,
-      "Peer": null,
-      "User": null
-    }
-    """;
-
-    [Fact]
-    public void ParseStatusJson_ReadsRealNeedsLoginOutput()
-    {
-        var status = TailscaleService.ParseStatusJson(RealNeedsLoginJson);
-
-        Assert.NotNull(status);
-        Assert.Equal("NeedsLogin", status!.BackendState);
-        Assert.True(status.NeedsLogin);
-        Assert.False(status.IsLoggedIn);
-        Assert.False(status.IsReady);
-        Assert.Equal("未登录", status.DescribeState());
-        Assert.Equal("LAPTOP-CE9T4R0L", status.HostName);
-        Assert.Equal("https://login.tailscale.com/a/1cbef3bf01be15", status.AuthUrl);
-        Assert.Null(status.Ipv4);
-        Assert.Equal(2, status.Health.Count);
-    }
-
-    [Fact]
-    public void ParseStatusJson_ReadsRunningWithIpsAndUser()
-    {
-        const string json = """
-        {
-          "Version": "1.102.4",
-          "BackendState": "Running",
-          "Self": {
-            "HostName": "desktop-abc",
-            "DNSName": "desktop-abc.my-tailnet.ts.net.",
-            "UserID": 3124156728162092,
-            "TailscaleIPs": ["100.101.102.103", "fd7a:115c:a1e0::1"]
+          {
+            "hostname": "tuba-host-25565",
+            "ipv4": "10.144.144.1",
+            "cost": "p2p",
+            "lat_ms": 12.5,
+            "tunnel_proto": "udp",
+            "nat_type": "FullCone"
           },
-          "User": {
-            "3124156728162092": { "ID": 3124156728162092, "LoginName": "alice@example.com", "DisplayName": "Alice" }
+          {
+            "hostname": "tuba-guest-1a2b",
+            "ipv4": "10.144.144.214",
+            "cost": "relay",
+            "lat_ms": 88.0,
+            "tunnel_proto": "tcp",
+            "nat_type": "Symmetric"
           },
-          "MagicDNSSuffix": "my-tailnet.ts.net",
-          "CurrentTailnet": { "Name": "example.com", "MagicDNSSuffix": "my-tailnet.ts.net" },
-          "Health": null,
-          "Peer": {}
-        }
-        """;
-
-        var status = TailscaleService.ParseStatusJson(json);
-
-        Assert.NotNull(status);
-        Assert.True(status!.IsReady);
-        Assert.Equal("已就绪", status.DescribeState());
-        Assert.Equal("100.101.102.103", status.Ipv4);
-        Assert.Equal("fd7a:115c:a1e0::1", status.Ipv6);
-        Assert.Equal("desktop-abc.my-tailnet.ts.net", status.DnsName);
-        Assert.Equal("alice@example.com", status.LoginName);
-        Assert.Equal("example.com", status.TailnetName);
-        Assert.Empty(status.Health);
-    }
-
-    [Fact]
-    public void ParseStatusJson_StoppedIsLoggedInButNotReady()
-    {
-        var status = TailscaleService.ParseStatusJson("""{"BackendState":"Stopped","Self":{"TailscaleIPs":["100.64.0.9"]}}""");
-
-        Assert.NotNull(status);
-        Assert.True(status!.IsLoggedIn);
-        Assert.False(status.IsReady);
-        Assert.Equal("已登录 · 未连接", status.DescribeState());
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("not json")]
-    [InlineData("[1,2,3]")]
-    [InlineData("""{"Version":"1.2.3"}""")]
-    public void ParseStatusJson_RejectsGarbage(string? json)
-        => Assert.Null(TailscaleService.ParseStatusJson(json));
-
-    [Fact]
-    public void ParseStatusJson_ToleratesMissingUserMap()
-    {
-        var status = TailscaleService.ParseStatusJson("""{"BackendState":"Running","Self":{"TailscaleIPs":["100.64.0.1"]}}""");
-        Assert.NotNull(status);
-        Assert.Null(status!.LoginName);
-        Assert.Equal("100.64.0.1", status.Ipv4);
-    }
-
-    // ══════════════════ Health 告警分级 ══════════════════
-
-    [Fact]
-    public void DescribeHealth_NotInMapPollIsReminderNotFailure()
-    {
-        var note = TailscaleService.DescribeHealth(
-            "Unable to connect to the Tailscale coordination server to synchronize the state of your tailnet. Peer reachability might degrade over time.");
-
-        Assert.Equal("not-in-map-poll", note.Code);
-        Assert.False(note.ImpactsConnectivity);
-        Assert.Contains("协调服务器", note.Text);
-        // 界面不能出现英文原文
-        Assert.DoesNotContain("Unable to connect", note.Describe());
-    }
-
-    [Fact]
-    public void DescribeHealth_WarmingUpIsTransient()
-    {
-        var note = TailscaleService.DescribeHealth("Tailscale is starting. Please wait.");
-        Assert.Equal("warming-up", note.Code);
-        Assert.True(note.Transient);
-        Assert.False(note.ImpactsConnectivity);
-    }
-
-    [Theory]
-    [InlineData("Tailscale could not connect to any relay server. Check your Internet connection.", "no-derp-home")]
-    [InlineData("Tailscale cannot connect because the network is down. Check your Internet connection.", "network-status")]
-    [InlineData("Tailscale couldn't listen for incoming UDP connections.", "no-udp4-bind")]
-    [InlineData("Tailscale could not establish an encrypted connection with 'controlplane.tailscale.com': tls: bad certificate", "tls-connection-failed")]
-    [InlineData("Tailscale could not connect to the 'tok' relay server. Your Internet connection might be down.", "no-derp-connection")]
-    public void DescribeHealth_FlagsConnectivityImpacting(string raw, string expectedCode)
-    {
-        var note = TailscaleService.DescribeHealth(raw);
-        Assert.Equal(expectedCode, note.Code);
-        Assert.True(note.ImpactsConnectivity);
-        Assert.False(note.Transient);
-    }
-
-    [Theory]
-    [InlineData("Tailscale hasn't received a network map from the coordination server in 5m0s.", "map-response-timeout")]
-    [InlineData("The coordination server is reporting a health issue: NODE_KEY_EXPIRED", "control-health")]
-    [InlineData("Tailscale hasn't heard from the 'tok' relay server in 10s.", "derp-timed-out")]
-    [InlineData("You are logged out. The last login error was: x", "login-state")]
-    [InlineData("this device needs machine authorization", "machine-auth")]
-    [InlineData("Tailscale is stopped.", "want-running-false")]
-    [InlineData("A security update from version 1.0 to 1.1 is available.", "security-update-available")]
-    public void DescribeHealth_CoversCommonWarnings(string raw, string expectedCode)
-        => Assert.Equal(expectedCode, TailscaleService.DescribeHealth(raw).Code);
-
-    [Fact]
-    public void DescribeHealth_UnknownTextPassesThrough()
-    {
-        var note = TailscaleService.DescribeHealth("something nobody has seen before");
-        Assert.Equal("unknown", note.Code);
-        Assert.Contains("something nobody has seen before", note.Describe());
-        Assert.False(note.ImpactsConnectivity);
-    }
-
-    [Fact]
-    public void DescribeHealthLines_WarmingUpSuppressesOthers()
-    {
-        var notes = TailscaleService.DescribeHealthLines(
-        [
-            "Unable to connect to the Tailscale coordination server to synchronize the state of your tailnet.",
-            "Tailscale is starting. Please wait."
-        ]);
-
-        var only = Assert.Single(notes);
-        Assert.Equal("warming-up", only.Code);
-        Assert.True(only.Transient);
-    }
-
-    [Fact]
-    public void DescribeHealthLines_KeepsEveryNoteOtherwise()
-    {
-        var notes = TailscaleService.DescribeHealthLines(["Tailscale is stopped.", "Tailscale couldn't listen for incoming UDP connections."]);
-        Assert.Equal(2, notes.Count);
-        Assert.True(TailscaleService.HasBlockingHealth(notes));
-    }
-
-    [Fact]
-    public void DescribeHealthLines_EmptyInputYieldsNothing()
-    {
-        Assert.Empty(TailscaleService.DescribeHealthLines(null));
-        Assert.Empty(TailscaleService.DescribeHealthLines([]));
-        Assert.Empty(TailscaleService.DescribeHealthLines(["  "]));
-        Assert.False(TailscaleService.HasBlockingHealth(null));
-    }
-
-    // ══════════════════ netcheck（开发机真实输出） ══════════════════
-
-    private const string RealNetCheck = """
-        2026/09/14 22:37:47 No DERP map from tailscaled; using default.
-        2026/09/14 22:37:47 attempting to fetch a DERPMap from https://controlplane.tailscale.com
-        2026/09/14 22:37:48 portmap: monitor: gateway and self IP changed: gw=172.27.0.1 self=172.27.110.235
-
-        Report:
-                * Time: 2026-09-14 22:37:53.3621299+08:00
-                * UDP: true
-                * IPv4: yes, 183.221.22.239:38290
-                * IPv6: yes, [2409:8762:318:90:9385::1b]:56924
-                * MappingVariesByDestIP: true
-                * PortMapping: 
-                * CaptivePortal: false
-                * Nearest DERP: Hong Kong
-                * DERP latency:
-                        - hkg: 67.6ms  (Hong Kong)
-                        - sin: 102.7ms (Singapore)
-                        - tok: 105.2ms (Tokyo)
-                        - lax: 229ms   (Los Angeles)
-        """;
-
-    [Fact]
-    public void ParseNetCheck_ReadsRealOutput()
-    {
-        var report = TailscaleService.ParseNetCheck(RealNetCheck);
-
-        Assert.NotNull(report);
-        Assert.True(report!.Udp);
-        Assert.True(report.HasIpv4);
-        Assert.True(report.HasIpv6);
-        Assert.True(report.MappingVariesByDestIp);
-        Assert.False(report.HasPortMapping);
-        Assert.Equal("Hong Kong", report.NearestDerp);
-        Assert.Equal(67.6, report.NearestDerpMs!.Value, 1);
-        Assert.Equal(4, report.DerpLatency.Count);
-        // 无小数点的 "229ms" 也要解析出来
-        Assert.Equal(229, report.DerpLatency.Single(d => d.Code == "lax").Ms, 1);
-        Assert.False(report.LikelyDirect);
-        Assert.Contains("难穿透 NAT", report.Verdict);
-        Assert.Contains("UDP 可用", report.Detail());
-    }
-
-    [Fact]
-    public void ParseNetCheck_GoodNetworkPredictsDirect()
-    {
-        const string good = """
-            Report:
-            	* UDP: true
-            	* IPv4: yes, 1.2.3.4:5
-            	* IPv6: no, but OS has support
-            	* MappingVariesByDestIP: false
-            	* PortMapping: UPnP, NAT-PMP, PCP
-            	* Nearest DERP: Hong Kong
-            	* DERP latency:
-            		- hkg: 12.5ms  (Hong Kong)
-            """;
-
-        var report = TailscaleService.ParseNetCheck(good);
-
-        Assert.NotNull(report);
-        Assert.True(report!.HasPortMapping);
-        Assert.True(report.LikelyDirect);
-        Assert.Contains("直连", report.Verdict);
-    }
-
-    [Fact]
-    public void ParseNetCheck_NoUdpMeansRelayOnly()
-    {
-        var report = TailscaleService.ParseNetCheck("Report:\n\t* UDP: false\n\t* IPv4: yes, 1.2.3.4:5\n\t* MappingVariesByDestIP: false\n");
-
-        Assert.NotNull(report);
-        Assert.False(report!.LikelyDirect);
-        Assert.Contains("UDP", report.Verdict);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("no report here at all")]
-    [InlineData("Report:\n\t* CaptivePortal: false\n")]
-    public void ParseNetCheck_RejectsGarbage(string? output)
-        => Assert.Null(TailscaleService.ParseNetCheck(output));
-
-    // ══════════════════ ping ══════════════════
-
-    [Fact]
-    public void ParsePing_DetectsDirectPath()
-    {
-        var result = TailscaleService.ParsePing("pong from desktop-friend (100.101.102.103) via 203.0.113.7:41641 in 12.4ms");
-
-        Assert.True(result.Ok);
-        Assert.True(result.Direct);
-        Assert.Equal("100.101.102.103", result.PeerIp);
-        Assert.Contains("直连", result.Summary);
-    }
-
-    [Fact]
-    public void ParsePing_DetectsRelayPath()
-    {
-        var result = TailscaleService.ParsePing("pong from desktop-friend (100.101.102.103) via DERP(tok) in 92ms");
-
-        Assert.True(result.Ok);
-        Assert.False(result.Direct);
-        Assert.Contains("中继", result.Summary);
-        Assert.Contains("tok", result.Summary);
-    }
-
-    /// <summary>开发机真实输出：未登录时 ping 会把登录地址打出来，不能当成「连不上」以外的结论。</summary>
-    [Fact]
-    public void ParsePing_ExplainsLoggedOut()
-    {
-        var result = TailscaleService.ParsePing("\nLogged out.\nLog in at: https://login.tailscale.com/a/1cbef3bf01be15\n");
-
-        Assert.False(result.Ok);
-        Assert.Contains("未登录", result.Summary);
-    }
-
-    [Theory]
-    [InlineData("no matching peer", "不在你的网络里")]
-    [InlineData("ping timed out waiting for pong", "没有响应")]
-    public void ParsePing_ExplainsFailures(string output, string fragment)
-    {
-        var result = TailscaleService.ParsePing(output);
-        Assert.False(result.Ok);
-        Assert.Contains(fragment, result.Summary);
-    }
-
-    /// <summary>
-    /// 「no matching peer」是纯地址路径的判据：这个地址根本不在本机 tailnet 里。
-    /// 必须能和「在同一网络但对方没响应」区分开，否则界面没法给出正确的补救建议。
-    /// </summary>
-    [Fact]
-    public void ParsePing_MarksPeerNotInTailnet()
-    {
-        var notInTailnet = TailscaleService.ParsePing("no matching peer");
-        Assert.True(notInTailnet.PeerNotInTailnet);
-        Assert.False(notInTailnet.Ok);
-
-        var offline = TailscaleService.ParsePing("ping timed out waiting for pong");
-        Assert.False(offline.PeerNotInTailnet);
-
-        var direct = TailscaleService.ParsePing("pong from laptop (100.80.223.82) in 12ms");
-        Assert.True(direct.Ok);
-        Assert.False(direct.PeerNotInTailnet);
-    }
-
-    [Fact]
-    public void ParsePing_IgnoresLogNoise()
-    {
-        var noisy = TailscaleService.ParsePing("2026/09/14 22:12:12 tshttpproxy: using proxy \"http://127.0.0.1:1/\"\nping never got a reply");
-        Assert.False(noisy.Ok);
-        Assert.DoesNotContain("tshttpproxy", noisy.Summary);
-    }
-
-    // ══════════════════ 登录地址 / 版本 / 密钥 ══════════════════
-
-    [Fact]
-    public void ExtractAuthUrl_ReadsRealLoginOutput()
-    {
-        const string output = "To authenticate, visit:\n\n\thttps://login.tailscale.com/a/2f1c9d8e7a6b\n";
-        Assert.Equal("https://login.tailscale.com/a/2f1c9d8e7a6b", TailscaleService.ExtractAuthUrl(output));
-        Assert.Equal("https://login.tailscale.com/a/1cbef3bf01be15", TailscaleService.ExtractAuthUrl("Log in at: https://login.tailscale.com/a/1cbef3bf01be15"));
-        Assert.Null(TailscaleService.ExtractAuthUrl("see https://tailscale.com/download"));
-        Assert.Null(TailscaleService.ExtractAuthUrl(""));
-    }
-
-    [Fact]
-    public void ParseVersionText_TakesVersionFromRealOutput()
-    {
-        const string real = """
-            1.102.4
-              tailscale commit: 3caf7d9e7dcaba589cfc58beda596929733e4fea
-              long version: 1.102.4-t3caf7d9e7-g084ee3b64
-              go version: go1.26.6 (tailscale/go 7275f792d4)
-            """;
-        Assert.Equal("1.102.4", TailscaleService.ParseVersionText(real));
-        Assert.Equal("1.102.4", TailscaleService.ParseVersionText("\n\n1.102.4\n"));
-        Assert.Null(TailscaleService.ParseVersionText("   "));
-    }
-
-    [Fact]
-    public void ParsePackagesVersion_PrefersVersionField()
-    {
-        const string real = """
-        {"Version":"1.102.4","Tarballs":{"amd64":"tailscale_1.102.4_amd64.tgz"},
-         "MSIs":{"amd64":"tailscale-setup-1.102.4-amd64.msi","arm64":"tailscale-setup-1.102.4-arm64.msi","x86":"tailscale-setup-1.102.4-x86.msi"},
-         "MSIsVersion":"1.102.4"}
-        """;
-        Assert.Equal("1.102.4", TailscaleService.ParsePackagesVersion(real));
-        Assert.Equal("1.102.4", TailscaleService.ParsePackagesVersion("""{"MSIsVersion":"1.102.4"}"""));
-        Assert.Null(TailscaleService.ParsePackagesVersion("{}"));
-        Assert.Null(TailscaleService.ParsePackagesVersion(null));
-    }
-
-    [Fact]
-    public void InstallerUrl_UsesArchSuffix()
-    {
-        Assert.Equal(
-            "https://pkgs.tailscale.com/stable/tailscale-setup-1.102.4-amd64.msi",
-            TailscaleService.InstallerUrl("1.102.4", "amd64"));
-        Assert.EndsWith($"tailscale-setup-1.102.4-{TailscaleService.ArchSuffix}.msi",
-            TailscaleService.InstallerUrl("1.102.4", TailscaleService.ArchSuffix));
-    }
-
-    [Theory]
-    [InlineData("tskey-auth-k1234567890CNTRL", "tskey-auth-k1234567890CNTRL")]
-    [InlineData("  tskey-auth-abcdefghijklmnop  ", "tskey-auth-abcdefghijklmnop")]
-    [InlineData("tskey-api-abcdefghijklmnop", null)]
-    [InlineData("random-string", null)]
-    [InlineData(null, null)]
-    public void NormalizeAuthKey_Validates(string? input, string? expected)
-        => Assert.Equal(expected, TailscaleService.NormalizeAuthKey(input));
-
-    [Theory]
-    [InlineData("tskey-api-kAbc123456789012345", "tskey-api-kAbc123456789012345")]
-    [InlineData(" tskey-api-abcdefghijklmnop ", "tskey-api-abcdefghijklmnop")]
-    [InlineData("tskey-auth-abcdefghijklmnop", null)]
-    [InlineData(null, null)]
-    public void NormalizeApiKey_Validates(string? input, string? expected)
-        => Assert.Equal(expected, TailscaleApiService.NormalizeApiKey(input));
-
-    [Fact]
-    public void DescribeKeyKindMismatch_DetectsAuthKeyInApiField()
-    {
-        Assert.NotNull(TailscaleApiService.DescribeKeyKindMismatch("tskey-auth-abcdefghijklmnop"));
-        Assert.Null(TailscaleApiService.DescribeKeyKindMismatch("tskey-api-abcdefghijklmnop"));
-        Assert.Null(TailscaleApiService.DescribeKeyKindMismatch(""));
-    }
-
-    [Fact]
-    public void IsUsableInstaller_ChecksMagicAndSize()
-    {
-        var small = Path.Combine(_tempDir, "small.msi");
-        File.WriteAllBytes(small, [0xD0, 0xCF, 0x11, 0xE0]);
-        Assert.False(TailscaleService.IsUsableInstaller(small));
-
-        var garbage = Path.Combine(_tempDir, "garbage.msi");
-        using (var fs = File.Create(garbage))
-        {
-            fs.Write("PK"u8);
-            fs.SetLength(6L * 1024 * 1024);
-        }
-        Assert.False(TailscaleService.IsUsableInstaller(garbage));
-
-        var compound = Path.Combine(_tempDir, "real.msi");
-        using (var fs = File.Create(compound))
-        {
-            fs.Write([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]);
-            fs.SetLength(6L * 1024 * 1024);
-        }
-        Assert.True(TailscaleService.IsUsableInstaller(compound));
-
-        Assert.False(TailscaleService.IsUsableInstaller(Path.Combine(_tempDir, "missing.msi")));
-    }
-
-    [Fact]
-    public void FirewallRuleName_IsStablePerPortAndProtocol()
-    {
-        var name = TailscaleService.FirewallRuleName(25565, GameTunnelProtocol.Tcp);
-        Assert.Contains("TCP", name);
-        Assert.Contains("25565", name);
-        Assert.NotEqual(name, TailscaleService.FirewallRuleName(25566, GameTunnelProtocol.Tcp));
-        Assert.NotEqual(name, TailscaleService.FirewallRuleName(25565, GameTunnelProtocol.Udp));
-    }
-
-    [Fact]
-    public void IsTailnetAddress_OnlyAcceptsCgnatRange()
-    {
-        Assert.True(TailscaleService.IsTailnetAddress("100.101.102.103"));
-        Assert.False(TailscaleService.IsTailnetAddress("192.168.1.10"));
-        Assert.False(TailscaleService.IsTailnetAddress(""));
-    }
-
-    // ══════════════════ API ══════════════════
-
-    [Fact]
-    public void BuildCreateKeyBody_HasExpectedCapabilities()
-    {
-        var body = TailscaleApiService.BuildCreateKeyBody(true, true, true, 3600, "Tuba Tunnel - Java 25565");
-
-        using var doc = System.Text.Json.JsonDocument.Parse(body);
-        var create = doc.RootElement.GetProperty("capabilities").GetProperty("devices").GetProperty("create");
-
-        Assert.True(create.GetProperty("reusable").GetBoolean());
-        Assert.True(create.GetProperty("ephemeral").GetBoolean());
-        Assert.True(create.GetProperty("preauthorized").GetBoolean());
-        // 未指定标签时不下发 tags（ACL 未定义标签会 400）
-        Assert.False(create.TryGetProperty("tags", out _));
-        Assert.Equal(3600, doc.RootElement.GetProperty("expirySeconds").GetInt32());
-        Assert.Equal("Tuba Tunnel - Java 25565", doc.RootElement.GetProperty("description").GetString());
-    }
-
-    /// <summary>
-    /// 真实故障：描述里带中文/中文标点时服务端返回 400
-    /// 「keys: description had invalid characters」，邀请码永远生成不出来。
-    /// </summary>
-    [Fact]
-    public void BuildCreateKeyBody_StripsCharactersTailscaleRejects()
-    {
-        var body = TailscaleApiService.BuildCreateKeyBody(true, false, true, 7200, "图吧工具箱 · 我的世界（Java 版）");
-
-        using var doc = System.Text.Json.JsonDocument.Parse(body);
-        var description = doc.RootElement.GetProperty("description").GetString()!;
-
-        Assert.Equal("Java", description);
-        Assert.Matches("^[A-Za-z0-9 _-]*$", description);
-    }
-
-    [Theory]
-    [InlineData("图吧工具箱 · 我的世界（Java 版）", "Java")]
-    [InlineData("泰拉瑞亚", "")]
-    [InlineData("Tuba Tunnel - Java 25565", "Tuba Tunnel - Java 25565")]
-    [InlineData("a.b:c/d!e", "a b c d e")]
-    [InlineData("  前后留空  ", "")]
-    [InlineData("深岩银河  Dedicated  Server", "Dedicated Server")]
-    public void SanitizeKeyDescription_KeepsOnlyAllowedCharacters(string raw, string expected)
-    {
-        var result = TailscaleApiService.SanitizeKeyDescription(raw);
-        Assert.Equal(expected, result);
-        Assert.Matches("^[A-Za-z0-9 _-]*$", result);
-        Assert.DoesNotContain("  ", result);
-    }
-
-    [Fact]
-    public void SanitizeKeyDescription_EmptyStaysEmptyAndIsOmitted()
-    {
-        Assert.Equal("", TailscaleApiService.SanitizeKeyDescription("泰拉瑞亚"));
-        Assert.Equal("", TailscaleApiService.SanitizeKeyDescription("   "));
-        Assert.Equal("", TailscaleApiService.SanitizeKeyDescription(null));
-
-        // 全中文游戏名清洗后为空 → 请求体里干脆不带 description（而不是留个空串）
-        var body = TailscaleApiService.BuildCreateKeyBody(true, false, true, 7200, "泰拉瑞亚");
-        using var doc = System.Text.Json.JsonDocument.Parse(body);
-        Assert.False(doc.RootElement.TryGetProperty("description", out _));
-    }
-
-    [Fact]
-    public void SanitizeKeyDescription_IsLengthCapped()
-    {
-        var result = TailscaleApiService.SanitizeKeyDescription(new string('x', 200));
-        Assert.True(result.Length <= 60);
-    }
-
-    [Fact]
-    public void BuildCreateKeyBody_IncludesTagsWhenGiven()
-    {
-        var body = TailscaleApiService.BuildCreateKeyBody(true, false, false, 600, null, ["tag:game"]);
-        using var doc = System.Text.Json.JsonDocument.Parse(body);
-        var tags = doc.RootElement.GetProperty("capabilities").GetProperty("devices").GetProperty("create").GetProperty("tags");
-        Assert.Equal("tag:game", tags[0].GetString());
-        Assert.False(doc.RootElement.TryGetProperty("description", out _));
-    }
-
-    [Fact]
-    public void ParseAuthKeyResponse_ReadsKeyAndExpiry()
-    {
-        const string json = """
-        {"id":"k123","key":"tskey-auth-kAbc1234567890xyz","created":"2026-09-14T00:00:00Z","expires":"2026-09-14T01:00:00Z"}
-        """;
-        var result = TailscaleApiService.ParseAuthKeyResponse(json);
-
-        Assert.True(result.Ok);
-        Assert.Equal("tskey-auth-kAbc1234567890xyz", result.Key);
-        Assert.Equal("k123", result.KeyId);
-        Assert.Equal(2026, result.Expires!.Value.Year);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("not json")]
-    [InlineData("""{"id":"k1"}""")]
-    [InlineData("""{"key":"tskey-api-notanauthkey12345"}""")]
-    public void ParseAuthKeyResponse_RejectsBadPayloads(string json)
-    {
-        var result = TailscaleApiService.ParseAuthKeyResponse(json);
-        Assert.False(result.Ok);
-        Assert.NotNull(result.Error);
-    }
-
-    [Fact]
-    public void DescribeApiError_ExplainsCommonCodes()
-    {
-        Assert.Contains("令牌", TailscaleApiService.DescribeApiError(401, ""));
-        Assert.Contains("权限", TailscaleApiService.DescribeApiError(403, ""));
-        Assert.Contains("频繁", TailscaleApiService.DescribeApiError(429, ""));
-        Assert.Contains("500", TailscaleApiService.DescribeApiError(500, ""));
-    }
-
-    [Fact]
-    public void ParseDeviceList_ReadsDevices()
-    {
-        const string json = """
-        {"devices":[
-          {"id":"n1","name":"host.my-tailnet.ts.net","hostname":"host","os":"windows","addresses":["100.101.102.103","fd7a::1"],"online":true},
-          {"id":"n2","name":"phone.my-tailnet.ts.net","hostname":"phone","os":"android","addresses":[],"lastSeen":"2026-09-13T10:00:00Z"}
-        ]}
-        """;
-        var rows = TailscaleApiService.ParseDeviceList(json);
-
-        Assert.Equal(2, rows.Count);
-        Assert.Equal("host", rows[0].HostName);
-        Assert.Equal("100.101.102.103", rows[0].Ipv4);
-        Assert.True(rows[0].Online);
-        Assert.Null(rows[1].Ipv4);
-        Assert.False(rows[1].Online);
-        Assert.NotNull(rows[1].LastSeen);
-    }
-
-    [Fact]
-    public void ParseDeviceList_TolerantOfBadPayload()
-    {
-        Assert.Empty(TailscaleApiService.ParseDeviceList(null));
-        Assert.Empty(TailscaleApiService.ParseDeviceList("{}"));
-        Assert.Empty(TailscaleApiService.ParseDeviceList("nope"));
-    }
-
-    // ══════════════════ Peer 解析 ══════════════════
-
-    [Fact]
-    public void ParsePeers_ReadsPeersWithOwnerAndConnectionKind()
-    {
-        const string json = """
-        {
-          "BackendState": "Running",
-          "User": { "3124156728162092": { "ID": 3124156728162092, "LoginName": "luolan233@outlook.com" } },
-          "Peer": {
-            "nodekey:aaa": {
-              "HostName": "DESKTOP-FRIEND",
-              "DNSName": "desktop-friend.tailnet.ts.net.",
-              "TailscaleIPs": ["100.101.102.103", "fd7a:115c:a1e0::1"],
-              "OS": "windows", "UserID": 3124156728162092, "Online": true,
-              "CurAddr": "203.0.113.7:41641", "Relay": "tok"
-            },
-            "nodekey:bbb": {
-              "HostName": "phone",
-              "DNSName": "phone.tailnet.ts.net.",
-              "TailscaleIPs": ["100.101.102.104"],
-              "OS": "android", "Online": true, "Relay": "hkg"
-            }
+          {
+            "hostname": "my-pc",
+            "ipv4": "10.144.144.99",
+            "cost": "Local",
+            "lat_ms": 0.0,
+            "tunnel_proto": ""
+          },
+          {
+            "hostname": "public.easytier.top",
+            "ipv4": "",
+            "cost": "relay"
           }
-        }
+        ]
         """;
 
-        var rows = TailscaleService.ParsePeers(json);
+        var peers = EasyTierPeer.ParseList(json);
 
-        Assert.Equal(2, rows.Count);
-        var first = rows[0];
-        Assert.Equal("DESKTOP-FRIEND", first.HostName);
-        Assert.Equal("100.101.102.103", first.Ipv4);
-        Assert.True(first.Online);
-        Assert.True(first.IsDirect);
-        Assert.Equal("luolan233@outlook.com", first.OwnerLogin);
-        Assert.Contains("直连", first.Describe());
+        Assert.Equal(4, peers.Count);
+        Assert.True(peers[0].IsDirect);
+        Assert.Equal(12.5, peers[0].LatencyMs);
+        Assert.Equal(NatKind.FullCone, peers[0].Nat);
+        Assert.True(peers[0].IsMember);
 
-        // 没有 CurAddr 的在线设备走中继
-        Assert.False(rows[1].IsDirect);
-        Assert.Equal("relay", rows[1].ConnectionKindForTest());
-        Assert.Contains("中继", rows[1].Describe());
+        Assert.False(peers[1].IsDirect);
+        Assert.Equal(NatKind.Symmetric, peers[1].Nat);
+
+        Assert.True(peers[2].IsLocal);
+        Assert.Equal("本机", peers[2].Describe());
+
+        // 公共节点没有虚拟地址，不算网络成员
+        Assert.False(peers[3].IsMember);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not json")]
+    [InlineData("{}")]
+    [InlineData("null")]
+    public void EasyTierPeer_RejectsGarbage(string json)
+        => Assert.Empty(EasyTierPeer.ParseList(json));
+
+    [Fact]
+    public void EasyTierPeer_DescribesConnectionKind()
+    {
+        var direct = EasyTierPeer.ParseList("""[{"ipv4":"10.0.0.2","cost":"p2p","lat_ms":9}]""")[0];
+        Assert.Contains("直连", direct.Describe());
+
+        var relay = EasyTierPeer.ParseList("""[{"ipv4":"10.0.0.2","cost":"relay","lat_ms":120}]""")[0];
+        Assert.Contains("中转", relay.Describe());
     }
 
     [Fact]
-    public void ParsePeers_TolerantOfMissingBackend()
+    public void HostPort_IsEncodedInHostname()
     {
-        Assert.Empty(TailscaleService.ParsePeers(null));
-        Assert.Empty(TailscaleService.ParsePeers("not json"));
-        Assert.Empty(TailscaleService.ParsePeers("""{"BackendState":"NoState"}"""));
-        Assert.Empty(TailscaleService.ParsePeers("""{"Peer":{"a":{}}}"""));
+        Assert.Equal(25565, TunnelSession.PortOfHost(new EasyTierPeer { Hostname = "tuba-host-25565", IPv4 = "10.144.144.1" }));
+        Assert.Equal(7777, TunnelSession.PortOfHost(new EasyTierPeer { Hostname = "tuba-host-7777", IPv4 = "10.144.144.1" }));
+        Assert.Equal(0, TunnelSession.PortOfHost(new EasyTierPeer { Hostname = "tuba-guest-1a2b" }));
+        Assert.Equal(0, TunnelSession.PortOfHost(new EasyTierPeer { Hostname = "tuba-host-nope" }));
+    }
+
+    [Fact]
+    public void NatKinds_AreTranslated()
+    {
+        Assert.Equal(NatKind.Open, EasyTierPeer.ParseNat("OpenInternet"));
+        Assert.Equal(NatKind.Symmetric, EasyTierPeer.ParseNat("SymmetricEasyInc"));
+        Assert.Equal(NatKind.Unknown, EasyTierPeer.ParseNat("???"));
+        Assert.Contains("对称", NatKind.Symmetric.Describe());
+    }
+
+    // ══════════════════ 联机组件包 ══════════════════
+
+    [Theory]
+    [InlineData("x86_64")]
+    [InlineData("arm64")]
+    [InlineData("i686")]
+    public void PackageAssetName_FollowsOfficialRelease(string architecture)
+    {
+        Assert.Equal($"easytier-windows-{architecture}-v{EasyTierPackage.Version}.zip",
+            EasyTierPackage.AssetName(architecture));
+    }
+
+    [Fact]
+    public void PackageShipsExactlyThreeVerifiedFiles()
+    {
+        Assert.Equal(["easytier-core.exe", "easytier-cli.exe", "Packet.dll"], EasyTierPackage.FileNames);
+
+        foreach (var architecture in new[] { "x86_64", "arm64", "i686" })
+        {
+            foreach (var file in EasyTierPackage.FileNames)
+            {
+                var hash = EasyTierPackage.ExpectedHash(architecture, file);
+                Assert.Equal(64, hash.Length);
+                Assert.True(hash.All(Uri.IsHexDigit), $"{architecture}/{file} 的哈希不是 16 进制");
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("easytier-core.exe", "easytier-core.exe", true)]
+    [InlineData("folder/easytier-core.exe", "easytier-core.exe", true)]
+    [InlineData("folder\\easytier-core.exe", "easytier-core.exe", true)]
+    [InlineData("folder/easytier-cli.exe", "easytier-core.exe", false)]
+    public void PackageEntryMatcher_AcceptsNestedPaths(string entry, string file, bool expected)
+        => Assert.Equal(expected, EasyTierPackage.MatchesEntry(entry, file));
+
+    [Fact]
+    public void PackageSourceUrls_PreferMirrors()
+    {
+        var urls = EasyTierPackage.SourceUrls("x86_64").ToList();
+
+        Assert.Contains(urls, url => url.Contains("gitee.com/easytier/EasyTier", StringComparison.Ordinal));
+        Assert.Contains(urls, url => url.Contains("github.com/EasyTier/EasyTier", StringComparison.Ordinal));
+        Assert.Contains(urls, url => url.Contains("ghfast.top", StringComparison.Ordinal));
+        Assert.Contains(urls, url => url.Contains("gh-proxy.com", StringComparison.Ordinal));
+        Assert.All(urls, url => Assert.Contains($"easytier-windows-x86_64-v{EasyTierPackage.Version}.zip", url));
+    }
+
+    // ══════════════════ 联机节点 ══════════════════
+
+    [Fact]
+    public void Nodes_DefaultListIsReachableAndComplete()
+    {
+        var settings = new GameTunnelSettings();
+        var nodes = GameTunnelCatalog.GetNodes(settings);
+
+        Assert.Equal(4, nodes.Count);
+        Assert.Contains("tcp://public.easytier.top:11010", nodes);
+    }
+
+    [Fact]
+    public void Nodes_CustomEntriesComeFirstAndBareHostBecomesTcp()
+    {
+        var settings = new GameTunnelSettings { CustomNodes = "1.2.3.4:11010, quic://node.example:11011" };
+        var nodes = GameTunnelCatalog.GetNodes(settings);
+
+        Assert.Equal("tcp://1.2.3.4:11010", nodes[0]);
+        Assert.Contains("quic://node.example:11011", nodes);
+        Assert.Contains("tcp://public.easytier.top:11010", nodes);
+    }
+
+    [Fact]
+    public void Nodes_PublicNodesCanBeDisabled()
+    {
+        var settings = new GameTunnelSettings { UsePublicNodes = false, CustomNodes = "tcp://mine:11010" };
+        Assert.Equal(["tcp://mine:11010"], GameTunnelCatalog.GetNodes(settings));
+    }
+
+    [Fact]
+    public void Nodes_ParseReportsInvalidEntries()
+    {
+        GameTunnelCatalog.ParseNodes("bad!!, tcp://ok:1", out var invalid);
+        Assert.Single(invalid);
     }
 
     // ══════════════════ 内置游戏档案 ══════════════════
@@ -820,6 +379,13 @@ public class GameTunnelTests : IDisposable
         Assert.Equal(7777, GameTunnelCatalog.FindPreset("terraria")!.DefaultPort);
         Assert.Equal(GameTunnelProtocol.Udp, GameTunnelCatalog.FindPreset("minecraft-bedrock")!.Protocol);
         Assert.Null(GameTunnelCatalog.FindPreset("nope"));
+    }
+
+    [Fact]
+    public void MinecraftJavaUsesLanDiscovery()
+    {
+        Assert.True(GameTunnelCatalog.FindPreset("minecraft-java")!.UsesLanDiscovery);
+        Assert.False(GameTunnelCatalog.FindPreset("terraria")!.UsesLanDiscovery);
     }
 
     [Theory]
@@ -879,207 +445,178 @@ public class GameTunnelTests : IDisposable
     public void Settings_RoundTrip()
     {
         var settings = GameTunnelCatalog.LoadSettings();
-        Assert.Null(settings.ApiToken);
+        Assert.True(settings.AllowRelay);
+        Assert.True(settings.UsePublicNodes);
         Assert.True(settings.AutoFirewall);
+        Assert.False(settings.HideAddress);
+        Assert.False(settings.ShareWithLan);
+        Assert.Equal(60, settings.SearchTimeoutSeconds);
 
-        settings.ApiToken = "tskey-api-abcdefghijklmnop";
+        settings.AllowRelay = false;
+        settings.HideAddress = true;
+        settings.CustomNodes = "tcp://mine:11010";
+        settings.ShareWithLan = true;
+        settings.LocalPort = 25570;
+        settings.SearchTimeoutSeconds = 30;
         settings.LastPresetId = "terraria";
         settings.LastPort = 7777;
         GameTunnelCatalog.SaveSettings(settings);
 
         var reloaded = GameTunnelCatalog.LoadSettings();
-        Assert.Equal("tskey-api-abcdefghijklmnop", reloaded.ApiToken);
+        Assert.False(reloaded.AllowRelay);
+        Assert.True(reloaded.HideAddress);
+        Assert.Equal("tcp://mine:11010", reloaded.CustomNodes);
+        Assert.True(reloaded.ShareWithLan);
+        Assert.Equal(25570, reloaded.LocalPort);
+        Assert.Equal(30, reloaded.SearchTimeoutSeconds);
         Assert.Equal("terraria", reloaded.LastPresetId);
         Assert.Equal(7777, reloaded.LastPort);
     }
 
     // ══════════════════ 邀请码 ══════════════════
 
+    private static InviteInfo MakeInvite()
+    {
+        var room = TunnelRoomCode.Create();
+        return new InviteInfo
+        {
+            RoomCode = room.Code,
+            NetworkName = room.NetworkName,
+            NetworkSecret = room.NetworkSecret,
+            Port = 25565,
+            Game = "我的世界（Java 版）",
+            Protocol = GameTunnelProtocol.Udp,
+            UsesLanDiscovery = true
+        };
+    }
+
     [Fact]
     public void InviteCode_RoundTrips()
     {
-        var info = new InviteInfo
-        {
-            Host = "100.101.102.103",
-            Port = 25565,
-            Game = "我的世界（Java 版）",
-            AuthKey = "tskey-auth-kAbc1234567890xyz",
-            HostName = "房主的电脑",
-            Protocol = GameTunnelProtocol.Udp,
-            ExpiresAt = 1_800_000_000
-        };
-
+        var info = MakeInvite();
         var code = GameTunnelInvite.Encode(info);
+
         Assert.StartsWith(GameTunnelInvite.CodePrefix, code);
 
         var decoded = GameTunnelInvite.Decode(code);
-
         Assert.NotNull(decoded);
-        Assert.Equal(info.Host, decoded!.Host);
+        Assert.Equal(info.RoomCode, decoded!.RoomCode);
+        Assert.Equal(info.NetworkName, decoded.NetworkName);
+        Assert.Equal(info.NetworkSecret, decoded.NetworkSecret);
         Assert.Equal(info.Port, decoded.Port);
         Assert.Equal(info.Game, decoded.Game);
-        Assert.Equal(info.AuthKey, decoded.AuthKey);
-        Assert.Equal(info.HostName, decoded.HostName);
         Assert.Equal(GameTunnelProtocol.Udp, decoded.Protocol);
-        Assert.Equal(info.ExpiresAt, decoded.ExpiresAt);
-        Assert.Equal("100.101.102.103:25565", decoded.Address);
+        Assert.True(decoded.UsesLanDiscovery);
+        Assert.Equal($"{InviteInfo.HostAddress}:25565", decoded.Address);
     }
 
     [Fact]
     public void InviteCode_DecodesFromFullInviteMessage()
     {
-        var info = new InviteInfo { Host = "100.1.2.3", Port = 7777, Game = "泰拉瑞亚", AuthKey = "tskey-auth-abcdefghijklmnop" };
+        var info = MakeInvite();
         var text = GameTunnelInvite.BuildInviteText(info, GameTunnelInvite.Encode(info), hasScript: true);
 
         var decoded = GameTunnelInvite.Decode(text);
-
         Assert.NotNull(decoded);
-        Assert.Equal("100.1.2.3", decoded!.Host);
-        Assert.Equal(7777, decoded.Port);
+        Assert.Equal(info.RoomCode, decoded!.RoomCode);
+        Assert.Equal(25565, decoded.Port);
     }
 
-    [Theory]
-    [InlineData("100.101.102.103:25565")]
-    [InlineData("  100.101.102.103:25565  ")]
-    [InlineData("100.101.102.103：25565")]
-    public void InviteCode_AcceptsPlainAddress(string text)
+    [Fact]
+    public void InviteCode_AcceptsBareRoomCode()
     {
-        var decoded = GameTunnelInvite.Decode(text);
+        var room = TunnelRoomCode.Create();
+        var decoded = GameTunnelInvite.Decode("房间码 " + room.Code + " 快来");
+
         Assert.NotNull(decoded);
-        Assert.Equal("100.101.102.103", decoded!.Host);
-        Assert.Equal(25565, decoded.Port);
-        Assert.False(decoded.HasAuthKey);
+        Assert.Equal(room.Code, decoded!.RoomCode);
+        Assert.Equal(room.NetworkName, decoded.NetworkName);
+        Assert.Equal(0, decoded.Port); // 端口由房主主机名在运行时给出
+        Assert.Equal(GameTunnelProtocol.TcpAndUdp, decoded.Protocol); // 协议未知时两条转发都建
     }
 
     [Theory]
     [InlineData("")]
     [InlineData("随便一段话")]
-    [InlineData("TBG1:not-base64!!!")]
-    [InlineData("100.101.102.103:99999")]
-    public void InviteCode_RejectsGarbage(string text)
+    [InlineData("TBG2:not-base64!!!")]
+    [InlineData("TBG1:eyJoIjoiMTAwLjEifQ")]
+    [InlineData("100.101.102.103:25565")] // EasyTier 下纯地址没有意义
+    public void InviteCode_RejectsGarbageAndPlainAddress(string text)
         => Assert.Null(GameTunnelInvite.Decode(text));
 
     [Fact]
-    public void InviteCode_WithoutAuthKeyStillEncodes()
+    public void BuildInviteText_MentionsRoomCodeAndNoAccount()
     {
-        var code = GameTunnelInvite.Encode(new InviteInfo { Host = "100.1.2.3", Port = 25565 });
-        var decoded = GameTunnelInvite.Decode(code);
-        Assert.NotNull(decoded);
-        Assert.False(decoded!.HasAuthKey);
-        // 不含密钥时载荷里不应出现任何 tskey 字样
-        Assert.DoesNotContain("tskey", Encoding.UTF8.GetString(Convert.FromBase64String(PadBase64(code[5..]))), StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string PadBase64(string value)
-    {
-        var normalized = value.Replace('-', '+').Replace('_', '/');
-        return (normalized.Length % 4) switch
-        {
-            2 => normalized + "==",
-            3 => normalized + "=",
-            _ => normalized
-        };
-    }
-
-    [Fact]
-    public void BuildInviteText_MentionsAddressAndCode()
-    {
-        var info = new InviteInfo
-        {
-            Host = "100.1.2.3",
-            Port = 25565,
-            Game = "我的世界",
-            AuthKey = "tskey-auth-kAbc1234567890xyz"
-        };
+        var info = MakeInvite();
         var code = GameTunnelInvite.Encode(info);
 
         var text = GameTunnelInvite.BuildInviteText(info, code, hasScript: true);
 
-        Assert.Contains("100.1.2.3:25565", text);
+        Assert.Contains(info.RoomCode, text);
+        Assert.Contains(InviteInfo.HostAddress + ":25565", text);
         Assert.Contains(code, text);
         Assert.Contains("一键加入联机.cmd", text);
         Assert.Contains("我的世界", text);
+        Assert.Contains("不需要我批准", text);
+        Assert.DoesNotContain("Tailscale", text);
+        Assert.DoesNotContain("tskey", text);
     }
 
     [Fact]
-    public void BuildInviteText_WithoutAuthKeyTellsFriendTheyAreAlreadyIn()
+    public void BuildInviteText_UsesLanDiscoveryHintForMinecraft()
     {
-        var info = new InviteInfo { Host = "100.1.2.3", Port = 25565 };
+        var info = MakeInvite();
         var text = GameTunnelInvite.BuildInviteText(info, null, hasScript: false);
-
-        Assert.Contains("直接打开游戏", text);
-        Assert.DoesNotContain("tskey", text);
+        Assert.Contains("扫描局域网世界", text);
     }
 
     // ══════════════════ 一键加入脚本 ══════════════════
 
     [Fact]
-    public void BuildScript_ContainsInstallAndJoinFlow()
+    public void BuildScript_DownloadsComponentAndForwardsPort()
     {
-        var script = GameTunnelInvite.BuildScript(new InviteInfo
-        {
-            Host = "100.101.102.103",
-            Port = 25565,
-            Game = "我的世界（Java 版）",
-            AuthKey = "tskey-auth-kAbc1234567890xyz"
-        });
+        var info = MakeInvite();
+        var script = GameTunnelInvite.BuildScript(info);
 
-        Assert.Contains("set \"HOSTADDR=100.101.102.103\"", script);
+        Assert.Contains($"set \"NETNAME={info.NetworkName}\"", script);
+        Assert.Contains($"set \"NETSEC={info.NetworkSecret}\"", script);
         Assert.Contains("set \"PORT=25565\"", script);
-        Assert.Contains("set \"AUTHKEY=tskey-auth-kAbc1234567890xyz\"", script);
-        Assert.Contains("set \"GAME=我的世界（Java 版）\"", script);
+        Assert.Contains("set \"HOSTIP=10.144.144.1\"", script);
+        Assert.Contains($"easytier-windows-%ARCH%-v{EasyTierPackage.Version}.zip", script);
+        Assert.Contains("Expand-Archive", script);
+        // 官方 zip 解包后在 easytier-windows-<架构>\ 子目录里，脚本必须把它提回根目录
+        Assert.Contains("for /d %%D in (\"%WORKDIR%\\easytier-windows-*\")", script);
+        Assert.Contains("easytier-core.exe", script);
+        Assert.Contains("easytier-cli.exe", script);
+        Assert.Contains("port-forward add tcp 127.0.0.1:25565 10.144.144.1:25565", script);
+        Assert.Contains("port-forward add udp 127.0.0.1:25565 10.144.144.1:25565", script);
 
-        // 自提权
+        // 自提权 + UTF-8 脚本必须显式切到 65001（ACP=65001 的机器用 GBK 会乱码）
         Assert.Contains("net session >nul 2>&1", script);
         Assert.Contains("Start-Process -FilePath '%~f0' -Verb RunAs", script);
-
-        // 按对方架构选安装包
-        Assert.Contains("set \"ARCH=amd64\"", script);
-        Assert.Contains("if /i \"%PROCESSOR_ARCHITECTURE%\"==\"ARM64\" set \"ARCH=arm64\"", script);
-        Assert.Contains("tailscale-setup-latest-%ARCH%.msi", script);
-
-        // 静默安装 + 加入网络
-        Assert.Contains("msiexec /i \"%MSI%\" /qn /norestart", script);
-        Assert.Contains("up --auth-key=%AUTHKEY% --accept-dns=false --unattended", script);
-
-        // 托盘客户端必须常驻：没有它，tailscale up 一退出守护进程就会断开，
-        // 表现为「入网看起来成功、状态又弹回未连接」
-        Assert.DoesNotContain("TS_NOLAUNCH", script);
-        Assert.Contains("tasklist /FI \"IMAGENAME eq tailscale-ipn.exe\"", script);
-        Assert.Contains("explorer.exe \"%TSIPN%\"", script);
-
-        // 连接测试与最终提示
-        Assert.Contains("ping --c 2 --timeout 5s %HOSTADDR%", script);
-        Assert.Contains("%HOSTADDR%:%PORT%", script);
-
-        // GBK 脚本不能用 chcp 切码页
-        Assert.DoesNotContain("chcp", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("chcp 65001 >nul", script);
+        Assert.DoesNotContain("tskey", script);
     }
 
     [Fact]
-    public void BuildScript_WithoutAuthKeyFallsBackToManualLogin()
+    public void BuildScript_EmbedsHostNodes()
     {
-        var script = GameTunnelInvite.BuildScript(new InviteInfo { Host = "100.64.0.5", Port = 7777, Game = "泰拉瑞亚" });
+        var script = GameTunnelInvite.BuildScript(MakeInvite(), ["tcp://my.node:11010"]);
 
-        Assert.Contains("set \"AUTHKEY=\"", script);
-        Assert.Contains("goto :manual_login", script);
-        Assert.Contains("Log in", script);
-        // 无密钥时脚本里不该残留任何密钥
-        Assert.DoesNotContain("tskey-", script);
+        Assert.Contains(">>\"%CFG%\" echo [peer]", script);
+        Assert.Contains(">>\"%CFG%\" echo uri = \"tcp://my.node:11010\"", script);
+        Assert.DoesNotContain("public.easytier.top", script);
     }
 
     [Fact]
-    public void BuildScript_RejectsMalformedAuthKey()
+    public void BuildScript_TcpOnlyGameHasNoUdpForward()
     {
-        var script = GameTunnelInvite.BuildScript(new InviteInfo
-        {
-            Host = "100.64.0.5",
-            Port = 25565,
-            AuthKey = "tskey-api-wrongkindabcdefgh"
-        });
+        var info = MakeInvite();
+        info.Protocol = GameTunnelProtocol.Tcp;
+        var script = GameTunnelInvite.BuildScript(info);
 
-        Assert.Contains("set \"AUTHKEY=\"", script);
-        Assert.DoesNotContain("wrongkind", script);
+        Assert.Contains("port-forward add tcp", script);
+        Assert.DoesNotContain("port-forward add udp", script);
     }
 
     [Theory]
@@ -1090,19 +627,21 @@ public class GameTunnelTests : IDisposable
         => Assert.Equal(expected, GameTunnelInvite.ScriptFileName(input));
 
     [Fact]
-    public void WriteScript_UsesGbkWithoutBom()
+    public void WriteScript_UsesUtf8WithoutBom()
     {
-        var info = new InviteInfo { Host = "100.101.102.103", Port = 25565, Game = "我的世界" };
+        var info = MakeInvite();
         var path = GameTunnelInvite.WriteScriptToDataDir(info);
 
         Assert.True(File.Exists(path));
-        Assert.Contains("100.101.102.103", File.ReadAllText(path));
+        Assert.Contains(info.NetworkName, File.ReadAllText(path));
 
         var bytes = File.ReadAllBytes(path);
         Assert.False(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF);
 
-        var gbkMarker = Encoding.GetEncoding(936).GetBytes("一键加入联机");
-        Assert.True(ContainsSequence(bytes, gbkMarker));
+        // 中文必须按 UTF-8 落盘：ACP=65001（UTF-8 beta）的机器用 GBK 会全部变成替换字符。
+        var utf8Marker = new UTF8Encoding(false).GetBytes("一键加入联机");
+        Assert.True(ContainsSequence(bytes, utf8Marker));
+        Assert.False(ContainsSequence(bytes, Encoding.GetEncoding(936).GetBytes("一键加入联机")));
     }
 
     /// <summary>
@@ -1112,8 +651,7 @@ public class GameTunnelTests : IDisposable
     [Fact]
     public void WriteScript_UsesCrlfLineEndings()
     {
-        var info = new InviteInfo { Host = "100.101.102.103", Port = 25565, Game = "我的世界" };
-        var path = GameTunnelInvite.WriteScriptToDataDir(info);
+        var path = GameTunnelInvite.WriteScriptToDataDir(MakeInvite());
 
         var bytes = File.ReadAllBytes(path);
         Assert.Contains((byte)13, bytes);
@@ -1132,6 +670,23 @@ public class GameTunnelTests : IDisposable
         Assert.Equal("a\r\nb", GameTunnelInvite.ToCrlf("a\rb"));
     }
 
+    // ══════════════════ LAN 广播 ══════════════════
+
+    [Fact]
+    public void LanAnnouncement_MatchesMinecraftFormat()
+    {
+        Assert.Equal("[MOTD]图吧工具箱 · 我的世界[/MOTD][AD]25565[/AD]",
+            LanWorldAnnouncer.Format("图吧工具箱 · 我的世界", 25565));
+    }
+
+    [Fact]
+    public void LanSenders_EnumerateLocalAddresses()
+    {
+        var addresses = LanWorldAnnouncer.GetIPv4Addresses();
+        Assert.NotEmpty(addresses);
+        Assert.Contains(System.Net.IPAddress.Loopback, addresses);
+    }
+
     private static bool ContainsSequence(byte[] haystack, byte[] needle)
     {
         for (var i = 0; i + needle.Length <= haystack.Length; i++)
@@ -1144,133 +699,6 @@ public class GameTunnelTests : IDisposable
             if (match) return true;
         }
         return false;
-    }
-}
-
-/// <summary>API 凭据输入与错误提示（用户实测踩过的坑：粘贴不进去、400 只显示状态码）。</summary>
-public class TailscaleApiCredentialTests
-{
-    [Theory]
-    [InlineData("tskey-api-kAbc1234567890abcdefghij", "tskey-api-kAbc1234567890abcdefghij")]
-    [InlineData("   tskey-api-kAbc1234567890abcdefghij  ", "tskey-api-kAbc1234567890abcdefghij")]
-    [InlineData("Tailscale API key: tskey-api-kAbc1234567890abcdefghij\n", "tskey-api-kAbc1234567890abcdefghij")]
-    [InlineData("tskey-api-kAbc1234567890abcdefghij，这是我的令牌", "tskey-api-kAbc1234567890abcdefghij")]
-    public void ExtractKey_PullsTokenOutOfNoisyClipboardText(string clipboard, string expected)
-    {
-        Assert.Equal(expected, TailscaleApiService.ExtractKey(clipboard, "tskey-api-"));
-    }
-
-    [Fact]
-    public void ExtractKey_RejectsWrongKindAndPartialText()
-    {
-        // 授权密钥里不能抠出 API 令牌
-        Assert.Null(TailscaleApiService.ExtractKey("tskey-auth-kAbc1234567890abcdefghij", "tskey-api-"));
-        // 控制台页面上被截断显示的令牌（带省略号）不能当完整令牌用
-        Assert.Null(TailscaleApiService.ExtractKey("tskey-api-kAbc1234…", "tskey-api-"));
-        Assert.Null(TailscaleApiService.ExtractKey(null, "tskey-api-"));
-        Assert.Null(TailscaleApiService.ExtractKey("这里没有密钥", "tskey-api-"));
-    }
-
-    [Fact]
-    public void ExtractKey_FindsAuthKeyInsideInviteText()
-    {
-        const string clipboard = "欢迎联机！授权密钥 tskey-auth-kZzzz9876543210abcdefghij 有效期 2 小时";
-        Assert.Equal("tskey-auth-kZzzz9876543210abcdefghij", TailscaleApiService.ExtractKey(clipboard, "tskey-auth-"));
-    }
-
-    [Fact]
-    public void DescribeApiError_AlwaysCarriesServerMessage()
-    {
-        // 400 曾经只显示「请求失败（HTTP 400）」，用户完全不知道为什么被拒
-        var message = TailscaleApiService.DescribeApiError(400, """{"message":"requested tags [tag:foo] are invalid or not permitted"}""");
-        Assert.Contains("tag:foo", message);
-        Assert.Contains("标签", message);
-
-        var unauthorized = TailscaleApiService.DescribeApiError(401, """{"message":"API token invalid"}""");
-        Assert.Contains("API token invalid", unauthorized);
-        Assert.Contains("重新生成", unauthorized);
-
-        var forbidden = TailscaleApiService.DescribeApiError(403, """{"message":"insufficient permissions"}""");
-        Assert.Contains("insufficient permissions", forbidden);
-        Assert.Contains("Owner", forbidden);
-    }
-
-    [Fact]
-    public void ExtractServerMessage_HandlesNonJsonAndHtml()
-    {
-        Assert.Equal("plain failure", TailscaleApiService.ExtractServerMessage("plain failure"));
-        Assert.Null(TailscaleApiService.ExtractServerMessage("<html><body>502 Bad Gateway</body></html>"));
-        Assert.Null(TailscaleApiService.ExtractServerMessage(null));
-
-        var message = TailscaleApiService.DescribeApiError(500, "<html>oops</html>");
-        Assert.Contains("Tailscale 服务端出错", message);
-        Assert.DoesNotContain("<html>", message);
-    }
-
-    [Fact]
-    public void DescribeApiError_400WithoutServerMessageStillGivesCauses()
-    {
-        var message = TailscaleApiService.DescribeApiError(400, "");
-        Assert.Contains("标签", message);
-        Assert.Contains("90 天", message);
-    }
-}
-
-/// <summary>
-/// 两种邀请方式的口径：邀请码/脚本 = 直接加入（预授权，无需任何人同意）；
-/// 纯地址 = 前提是双方已在同一个 Tailscale 网络。
-/// 这套说法在房主侧、朋友侧、教程、邀请文案里必须一致。
-/// </summary>
-public class GameTunnelInviteCopyTests
-{
-    [Fact]
-    public void DirectPathsSayNoApprovalNeeded()
-    {
-        Assert.Contains("不需要你点批准", GameTunnelInviteCopy.InviteCodeDirect);
-        Assert.Contains("不需要任何人同意", GameTunnelInviteCopy.ScriptDirect);
-    }
-
-    [Fact]
-    public void AddressOnlyPreconditionStatesTheNetworkRequirement()
-    {
-        Assert.Contains("同一个 Tailscale 网络", GameTunnelInviteCopy.AddressOnlyPrecondition);
-        // 不能把它写得像邀请码一样即点即用
-        Assert.DoesNotContain("直接加入你的网络", GameTunnelInviteCopy.AddressOnlyPrecondition);
-        // 必须给替代方案
-        Assert.Contains("邀请码", GameTunnelInviteCopy.AddressOnlyPrecondition);
-    }
-
-    [Fact]
-    public void AddressOnlyRemedyPointsBackToInviteCode()
-    {
-        Assert.Contains("不在同一个 Tailscale 网络", GameTunnelInviteCopy.AddressOnlyRemedy);
-        Assert.Contains("邀请码", GameTunnelInviteCopy.AddressOnlyRemedy);
-    }
-
-    [Fact]
-    public void InviteText_WithKeySaysNoApprovalNeeded()
-    {
-        var text = GameTunnelInvite.BuildInviteText(
-            new InviteInfo { Host = "100.80.223.82", Port = 25565, Game = "我的世界", AuthKey = "tskey-auth-kAbc1234567890xyz" },
-            inviteCode: "TBG1:abc",
-            hasScript: true);
-
-        Assert.Contains("不用等我批准", text);
-        Assert.Contains("不需要任何人同意", text);
-        Assert.DoesNotContain("已经和我处在同一个 Tailscale 网络里", text);
-    }
-
-    [Fact]
-    public void InviteText_AddressOnlyWarnsAboutThePrecondition()
-    {
-        var text = GameTunnelInvite.BuildInviteText(
-            new InviteInfo { Host = "100.80.223.82", Port = 7777, Game = "泰拉瑞亚" },
-            inviteCode: null,
-            hasScript: false);
-
-        Assert.Contains("同一个 Tailscale 网络", text);
-        Assert.Contains("光有地址是连不上的", text);
-        Assert.DoesNotContain("直接加入", text);
     }
 }
 
@@ -1363,74 +791,4 @@ public class GameLogoServiceTests
         Assert.Null(card.Logo);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, card.GlyphVisibility);
     }
-}
-
-/// <summary>status --json 顺带解析出设备列表（主页「同一虚拟网络」那行用它，不额外起进程）。</summary>
-public class TailscaleStatusPeersTests
-{
-    [Fact]
-    public void ParseStatusJson_CarriesPeersFromTheSamePayload()
-    {
-        const string json = """
-        {
-          "BackendState": "Running",
-          "Self": { "HostName": "my-laptop", "TailscaleIPs": ["100.64.0.1"], "UserID": 1 },
-          "User": { "1": { "LoginName": "me@example.com" } },
-          "Peer": {
-            "nodekey:aaa": {
-              "HostName": "DESKTOP-A",
-              "DNSName": "desktop-a.tailnet.ts.net.",
-              "TailscaleIPs": ["100.64.0.2"],
-              "Online": true,
-              "CurAddr": "203.0.113.5:41641",
-              "OS": "windows",
-              "UserID": 1
-            },
-            "nodekey:bbb": {
-              "HostName": "iphone",
-              "DNSName": "iphone.tailnet.ts.net.",
-              "TailscaleIPs": ["100.64.0.3"],
-              "Online": false,
-              "Relay": "hkg",
-              "UserID": 1
-            }
-          }
-        }
-        """;
-
-        var status = TailscaleService.ParseStatusJson(json);
-
-        Assert.NotNull(status);
-        Assert.True(status!.IsReady);
-        Assert.Equal(2, status.Peers.Count);
-
-        // 在线的排在前面
-        var desktop = status.Peers[0];
-        Assert.Equal("DESKTOP-A", desktop.HostName);
-        Assert.Equal("100.64.0.2", desktop.Ipv4);
-        Assert.True(desktop.Online);
-        Assert.True(desktop.IsDirect);
-
-        var phone = status.Peers[1];
-        Assert.Equal("iphone", phone.HostName);
-        Assert.False(phone.Online);
-        Assert.False(phone.IsDirect);
-        Assert.Equal("离线", phone.Describe());
-    }
-
-    [Fact]
-    public void ParseStatusJson_WithoutPeersIsEmptyNotFailing()
-    {
-        var status = TailscaleService.ParseStatusJson("""{"BackendState":"Stopped"}""");
-
-        Assert.NotNull(status);
-        Assert.Empty(status!.Peers);
-    }
-}
-
-internal static class PeerTestExtensions
-{
-    /// <summary>测试辅助：把连接方式归一化成 relay / direct / offline。</summary>
-    public static string ConnectionKindForTest(this TailscalePeer peer)
-        => !peer.Online ? "offline" : peer.IsDirect ? "direct" : "relay";
 }

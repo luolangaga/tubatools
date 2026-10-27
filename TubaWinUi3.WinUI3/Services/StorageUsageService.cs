@@ -126,6 +126,8 @@ public static class StorageUsageService
             "图片格式转换引擎，再次转换时重新下载。", Path.Combine(dataDir, "imagemagick")));
         items.Add(FileItem(StorageGroupKind.Component, "officecli", "OfficeCLI",
             "文档（Word/Excel/PPT）高保真转换引擎，约 33 MB，再次转换时重新下载。", Path.Combine(dataDir, "officecli")));
+        items.Add(FileItem(StorageGroupKind.Component, "easytier", "EasyTier 联机组件",
+            "游戏联机助手使用的虚拟网络组件，约 60 MB，再次联机时重新下载。", Path.Combine(dataDir, "GameTunnel", "EasyTier")));
         items.Add(FileItem(StorageGroupKind.Component, "sysinternals", "Sysinternals 工具",
             "启动项管理器使用的微软官方工具集，再次打开时重新下载。", Path.Combine(dataDir, "Sysinternals")));
         items.Add(FileItem(StorageGroupKind.Component, "dotnet-downloads", ".NET 运行时包",
@@ -175,7 +177,7 @@ public static class StorageUsageService
         items.Add(FileItem(StorageGroupKind.UserData, "active-intercept", "主动拦截记录",
             "拦截事件、信任策略与已忽略项。", Path.Combine(dataDir, "active_intercept")));
         items.Add(FileItem(StorageGroupKind.UserData, "game-tunnel", "联机助手数据",
-            "自定义游戏档案、Tailscale API 令牌与生成的加入脚本。", Path.Combine(dataDir, "GameTunnel")));
+            "自定义游戏档案、联机设置与生成的加入脚本。", Path.Combine(dataDir, "GameTunnel")));
         items.Add(FileItem(StorageGroupKind.UserData, "junk-rules", "垃圾清理规则库",
             "从网络更新的 Winapp2 规则库副本与自定义规则，删除后回退到内置规则。", Path.Combine(dataDir, "JunkCleaner")));
         items.Add(FileItem(StorageGroupKind.UserData, "time-sync", "时间同步设置记录",

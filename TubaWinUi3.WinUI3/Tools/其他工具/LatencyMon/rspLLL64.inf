@@ -1,40 +1,48 @@
 ;;; rspLLL
 ;;;
-;;; Copyright (c) 2005-2015, Resplendence Software Projects Sp
+;;; Copyright (c) 2005-2026, Resplendence Software Projects Sp
 ;;;
 
 [Version]
 Signature   = "$Windows NT$"
 Class       = "ActivityMonitor"                         ;This is determined by the work this filter driver does
-Provider    = Resplendence Software Projects
-DriverVer   = 07/13/2015,1.0.0.0
+ClassGuid   = {b86dff51-a31e-4bac-b3cf-e8cfe75c9fc2}    ;Class GUID for file system Activity Monitor filters
+Provider    = "Resplendence Software Projects"
+DriverVer   = 10/08/2026,7.50.0.0
+CatalogFile = rspLLL64.cat
+PnpLockdown = 1
 
 [DestinationDirs]
 DefaultDestDir         = 12
 rspLLL.DriverFiles     = 12                            ;%windir%\system32\drivers
 rspLLL.UserFiles       = 10,FltMgr                     ;%windir%\FltMgr
 
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+rspLLL64.sys = 1
+
 ;;
 ;; Default install sections
 ;;
 
-[DefaultInstall]
+[DefaultInstall.NTamd64]
 OptionDesc          = %rspLLLServiceDesc%
 CopyFiles           = rspLLL.DriverFiles, rspLLL.UserFiles
 
-[DefaultInstall.Services]
+[DefaultInstall.NTamd64.Services]
 AddService          = %rspLLLServiceName%,,rspLLL.Service
 
 ;;
 ;; Default uninstall sections
 ;;
 
-[DefaultUninstall]
+[DefaultUninstall.NTamd64]
+LegacyUninstall = 1
 DelFiles   = rspLLL.DriverFiles, rspLLL.UserFiles
 
-
-
-[DefaultUninstall.Services]
+[DefaultUninstall.NTamd64.Services]
 DelService = rspLLL,0x200      ;Ensure service is stopped before deleting
 
 ;
@@ -80,7 +88,8 @@ rspLLL64.sys
 ;;
 
 [Strings]
-rspLLLServiceDesc           = "rspLLL filter"
+DiskName                    = "rspLLL Installation Media"
+rspLLLServiceDesc           = "rspLLL LatMon Driver"
 rspLLLServiceName           = "rspLLL"
 RegInstancesSubkeyName      = "Instances"
 RegDefaultInstanceValueName = "DefaultInstance"
@@ -101,4 +110,3 @@ Instance2.Flags      = 0x1          ; Suppress automatic attachments
 Instance3.Name       = "rspLLL - Top Instance"
 Instance3.Altitude   = "366199"
 Instance3.Flags      = 0x1          ; Suppress automatic attachments
-

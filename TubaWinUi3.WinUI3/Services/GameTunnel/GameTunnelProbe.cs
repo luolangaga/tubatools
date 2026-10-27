@@ -8,6 +8,24 @@ public static class GameTunnelProbe
 {
     public sealed record PortStatus(bool Listening, string Message);
 
+    /// <summary>本机 TCP 端口能否建立连接（用于确认端口转发链路真的通了）。</summary>
+    public static async Task<bool> CanConnectAsync(int port, TimeSpan timeout, CancellationToken cancellation = default)
+    {
+        if (!GameTunnelCatalog.IsValidPort(port)) return false;
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient(System.Net.Sockets.AddressFamily.InterNetwork);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+            timeoutCts.CancelAfter(timeout);
+            await client.ConnectAsync(System.Net.IPAddress.Loopback, port, timeoutCts.Token).ConfigureAwait(false);
+            return client.Connected;
+        }
+        catch (Exception ex) when (ex is System.Net.Sockets.SocketException or OperationCanceledException or ObjectDisposedException)
+        {
+            return false;
+        }
+    }
+
     public static PortStatus Check(int port, GameTunnelProtocol protocol)
     {
         if (!GameTunnelCatalog.IsValidPort(port))

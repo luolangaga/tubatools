@@ -120,21 +120,31 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - 图片→MP4/WebM 借用 FFmpeg（`BuildImageVideoArgs`：静态图 -loop 1 + 时长，GIF 直接转码）；OCR/ZIP/合并/拆分等非普通目标是 `ConvertSpecial`，由页面专门调度。
 - Win32 拖放复用 `Win32DropHelper`（管理员 UIPI 绕过）；文件多选用 `Win32Dialogs.PickOpenMultiple`。
 
-### 游戏联机助手（GameTunnelPage）— Tailscale 内网穿透联机
+### 游戏联机助手（GameTunnelPage）— EasyTier 免登录虚拟网络联机
 
-- 「游戏联机助手」内置工具（id `game-tunnel`）= `Pages/GameTunnel/GameTunnelPage.xaml`：一个主页 + 全套弹窗（环境准备向导 / 主机向导 / 加入向导 / 邀请面板 / 教程 / 网络检测）。主页只回答「现在能不能玩、点哪里」，细节全部收进弹窗与分步向导里。
-- **主页口径 = 虚拟网络 + 地址（不是"房间"）**：Tailscale 是三层覆盖网，**不转发局域网广播/组播**（tailscale#11134），所以游戏**不会**自动扫描出对方大厅，必须在游戏里用「直接连接 / 通过 IP 加入」填 `100.x.x.x:端口`。主页因此分五段：①联机环境卡（状态 + 我的地址 + 同一虚拟网络里的设备 `_status.Peers`）②健康告警 ③和朋友连起来（我当主机 / 我加入朋友）④我要玩的游戏（游戏卡点一下直接进主机向导并预选）⑤原理说明。**没有「最近联机」记录**（`records.json` 与相关 UI 已删除，别再往回加）。「邀请/邀请码」是必需的（解决朋友入网授权），但 UI 一律不用「开房/房间」这套词（游戏内的房间/世界概念除外）。
-- **设备列表零成本**：`TailscaleStatus.Peers` 由 `ParseStatusJson` 顺带解析（`ParsePeerMap` 与 `ParsePeers` 共用），主页 5 秒刷新不额外起 `tailscale status` 进程。
-- **通道选择**：用 Tailscale 而不是 HTTP 隧道——它是 L3 虚拟局域网，**TCP/UDP 游戏都支持**，不需要公网 IP、不用改路由器、也不用域名。代价是朋友的机器也要装一次客户端（脚本会自动装）。
-- 关键文件（均在 `TubaWinUi3.WinUI3/`）：`Services/GameTunnel/TailscaleService.cs`（安装/登录/状态/**Health 中文释义**/netcheck/ping/防火墙）、`TailscaleCli.cs`（进程调用，「无输出/超时/取消」都归一成 `CliResult`）、`TailscaleApiService.cs`（API 令牌 → 自动生成邀请密钥、设备列表）、`GameTunnelInvite.cs`（邀请码 + 朋友端 .cmd）、`GameTunnelCatalog.cs`（档案 + JSON 存储）、`GameTunnelProbe.cs`（端口占用探测）、`Controls/GameTunnelInvitePanel.xaml`（邀请面板，主机向导最后一步共用）。
-- **游戏 Logo**：`GamePreset.LogoUrls` 存候选地址（Steam 用官方 `logo.png` 透明字标 + 两个 CDN 互为备份；我的世界用官网 svg），`Services/GameTunnel/GameLogoService.cs` 首次下载后缓存到 `<DataDir>/GameLogos/<id>.<ext>`（png → `BitmapImage`、svg → `SvgImageSource`），拿不到就退回 `GamePreset.Glyph` 图标字形——卡片图标是 64×40 的宽条，`TunnelGameCard` 因此实现了 `INotifyPropertyChanged` 以便图片到位后就地替换。素材不随仓库分发，界面注明版权归各自所有者。
-- **邀请模型**：邀请码 `TBG1:{Base64Url(JSON)}`（房主地址+端口+游戏名+短期 auth key），同时兼容「整段邀请文字」和手输 `100.x.x.x:端口`；朋友端脚本自动提权 → 下载 MSI（`tailscale-setup-latest-<arch>.msi`，官方 302 到当前版本）→ `msiexec /qn TS_NOLAUNCH=1` → `tailscale up --auth-key=… --accept-dns=false --unattended` → 轮询 `ip -4` → `ping` 测连通。脚本落盘用 **GBK 无 BOM 且不能 chcp**（中文 cmd 的批处理读取编码）。
-- **邀请密钥**：优先用 API 令牌自动生成（`POST /api/v2/tailnet/-/keys`，2 小时有效、reusable+preauthorized），没配令牌则就地引导手动创建；同一房间 10 分钟内复用同一把密钥，避免反复生成把朋友手里的邀请码作废。
-- **加入侧不要求先登录自己的账号**：邀请带密钥时由加入向导直接装客户端 + 用密钥入网（一次授权搞定）；若对方已能 `tailscale ping` 通房主则完全不碰登录状态；需要切换账号时先在弹窗内就地确认（ContentDialog 不能再嵌套 ContentDialog）。
-- **防火墙**：`New-NetFirewallRule … -InterfaceAlias 'Tailscale'`，只在 Tailscale 虚拟网卡上放行，规则名统一 `图吧工具箱·游戏联机 <协议> <端口>`，可在网络检测里一键清理。应用自身已提权，所以这一步不需要再弹 UAC。
-- 端口校验用 `IPGlobalProperties.GetActiveTcpListeners/GetActiveUdpListeners` 判断游戏是否真的开好了（无副作用），配合「游戏正在监听端口」徽标提示房主。
-- 数据落盘 `DataDir/GameTunnel/`：`custom_games.json`、`records.json`（最近联机）、`settings.json`（API 令牌）、`Scripts/`（生成的加入脚本）。无常驻子进程，应用退出**不需要**清理。
-- 测试：`TubaWinUi3.Tests/GameTunnelTests.cs`（103 项，覆盖真实 `status --json` / `netcheck` 输出解析、Health 分级、邀请码往返、脚本内容与 GBK 编码、档案与存储）。
+- 「游戏联机助手」内置工具（id `game-tunnel`）= `Pages/GameTunnel/GameTunnelPage.xaml`：一个主页 + 全套弹窗（组件准备 / 主机向导 / 加入向导 / 邀请面板 / 教程 / 网络检测）。主页只回答「现在能不能玩、点哪里」，细节全部收进弹窗与分步向导里。
+- **传输层 = EasyTier（无网卡模式）**：`no_tun = true`，不装驱动、不创建虚拟网卡、不接管 DNS/路由。房主固定虚拟地址 `10.144.144.1`、hostname `tuba-host-<游戏端口>`；加入者 `dhcp = true`、hostname `tuba-guest-<4hex>`。加入者靠 hostname 前缀找到房主（端口也编码在里面）。**完全不需要账号、登录或第三方服务器**——这也是当初从 Tailscale 换过来的原因。
+- **房间码 = 网络名 + 密钥**：`Services/GameTunnel/TunnelRoomCode.cs` 生成 `U/XXXX-XXXX-XXXX-XXXX`（16 位 base-34，I/O 按 1/0 读，整体为 7 的倍数做校验）。前 8 位 → `network_name = tuba-XXXX-XXXX`，后 8 位 → `network_secret`，所以光凭房间码就能入网。
+- 关键文件（均在 `TubaWinUi3.WinUI3/Services/GameTunnel/`）：
+  - `EasyTier/EasyTierPackage.cs`（按需下载 + SHA-256 校验 + 解包）
+  - `EasyTier/EasyTierConfig.cs`（TOML：网络名/密钥、白名单、直连/中转、隐藏 IP）
+  - `EasyTier/EasyTierInstance.cs`（起 `easytier-core`，用 `easytier-cli` 查 peer/connector、动态加端口转发）
+  - `EasyTier/EasyTierPeer.cs`（`peer -o json` 解析：cost=p2p/relay、lat_ms、nat_type）
+  - `EasyTier/ChildProcessJob.cs`（作业对象：主程序退出/崩溃，组件进程一起结束）
+  - `TunnelSession.cs`（进程内单例，Host/Guest 状态机与 2 秒刷新）
+  - `LanWorldAnnouncer.cs`（Minecraft 局域网广播）、`GameTunnelFirewall.cs`（程序级入站放行）、`TunnelLog.cs`（`<DataDir>/GameTunnel/tunnel.log`）
+  - `GameTunnelInvite.cs`（TBG2 邀请码 + 朋友端 .cmd）、`GameTunnelCatalog.cs`（游戏档案/设置/节点）、`GameTunnelProbe.cs`（端口监听与 TCP 连通性）
+- **组件分发（不随安装包）**：首次联机时经下载队列入队 `easytier-windows-<x86_64|arm64|i686>-v<版本>.zip`（Gitee → GitHub → ghfast → gh-proxy），只解出 `easytier-core.exe` / `easytier-cli.exe` / `Packet.dll`，逐个与写死的 SHA-256 比对后原子落盘，落点 `<DataDir>/GameTunnel/EasyTier/<版本>-<架构>/`。**升级版本只改 `EasyTierPackage.Version` 与哈希表一处**。
+- **配置口径**：房主 `tcp_whitelist/udp_whitelist` 只放行自己的游戏端口；加入者白名单是 `["0"]`（拒绝一切入站）。`private_mode = true`（不替陌生网络中转）；「仅直连」→ `p2p_only = true`；「隐藏 IP」→ `listeners = []` + `disable_p2p` + 关三种打洞 + 关 UPnP（此时强制走中转，`p2p_only` 必须为 false）。
+- **加入流程**：启动组件 → 轮询 `peer` 找 `tuba-host-*` 成员 → 优先等直连（8 秒宽限）→ 加 TCP（协议含 UDP 时再加 UDP）转发 `127.0.0.1:<本地端口> → 房主虚拟IP:<游戏端口>`（本地端口优先沿用房主端口号，被占用再随机；用 `IPGlobalProperties` 查监听表，不 bind 试探）→ TCP 探测本机端口确认链路通。
+- **Minecraft 局域网发现**：仅 `GamePreset.UsesLanDiscovery`（我的世界 Java 版）启用。`LanWorldAnnouncer` 每 1.5 秒发原生格式 `[MOTD]图吧工具箱 · 游戏[/MOTD][AD]本地端口[/AD]` 到 `224.0.2.60:4445`；默认只发 `127.0.0.1:4445`（设置 `ShareWithLan` 才向每块网卡组播）。从局域网列表进入也是离线账号绕过正版会话校验的唯一路径。
+- **邀请模型**：邀请码 `TBG2:{Base64Url(JSON)}`（`c` 房间码、`p` 端口、`g` 游戏名、`r` 协议、`l` 是否 MC 局域网），也接受裸房间码（端口由房主 hostname 运行时给出，协议按 TCP+UDP 处理）；**不再支持纯 IP 地址**（EasyTier 下房主虚拟 IP 恒为 10.144.144.1，没有网络密钥的地址没有意义）。朋友端脚本自动提权 → 下载官方 zip → `Expand-Archive`（官方包内文件在 `easytier-windows-<架构>\` 子目录，脚本要先提回根目录）→ 写 guest TOML（含房主同一套发现节点）→ 后台启动 `easytier-core` → `port-forward add` → 打印 `127.0.0.1:<端口>`。脚本落盘用 **UTF-8 无 BOM + 第二行 `chcp 65001`**：ACP=65001（UTF-8 beta）的机器用 GBK 会整段变成替换字符 `�`，而 GBK 机器切到 65001 后能正常读取 UTF-8；**不要改回 GBK**。
+- **防火墙**：程序级规则 `New-NetFirewallRule -Program <easytier-core.exe>`（规则名 `图吧工具箱·游戏联机组件`），不对游戏端口或网卡单独放行；首次建房/加入时自动创建，网络检测里可一键清理，并会顺手删掉 Tailscale 时期按端口留下的 `图吧工具箱·游戏联机 *` 规则。
+- **退出清理**：组件进程同时挂在 Job Object 上（句柄关闭即杀），`MainWindow_Closed` 还会显式调 `TunnelSession.Instance.Shutdown()`；下次启动 `EasyTierInstance.StopLeftovers()` 清掉父进程已死的残留与遗留 TOML（里面有网络密钥）。
+- 数据落盘 `DataDir/GameTunnel/`：`custom_games.json`、`settings.json`（中继/隐藏 IP/节点/本地端口）、`Scripts/`（生成的加入脚本）、`tunnel.log`、`EasyTier/`（组件与运行时配置）。存储清理页把 `EasyTier/` 单列为组件项。
+- 端口校验用 `IPGlobalProperties.GetActiveTcpListeners/GetActiveUdpListeners` 判断游戏是否真的开好了（无副作用）；正确性由 `GameTunnelProbe.CanConnectAsync` 的 TCP 探测兜底。
+- 测试：`TubaWinUi3.Tests/GameTunnelTests.cs`（房间码、TOML、peer JSON、组件资产/哈希、邀请码、脚本内容与 UTF-8/CRLF、LAN 广播格式、档案与设置）。
+- **不能本机自测**：应用是单实例，同一台机器无法同时当房主和加入者；端到端联机必须两台机器 / 虚拟机。
 
 ### Windows 镜像下载（WindowsImagePage）— UUP Dump JSON API 管线
 - 「UUP Dump」标签页是**三步向导**（选版本 → 选语言/版本 → 下载转 ISO），数据全部来自官方 JSON API（`https://api.uupdump.net`，仓库 uup-dump/json-api）。`UupDumpService` 内的解析方法（`ParseBuildsJson` 等）为 internal，单测在 `UupDumpApiTests`。

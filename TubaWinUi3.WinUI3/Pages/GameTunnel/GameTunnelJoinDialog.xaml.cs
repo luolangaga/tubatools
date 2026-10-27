@@ -7,18 +7,18 @@ using Windows.ApplicationModel.DataTransfer;
 namespace TubaWinUi3.Pages;
 
 /// <summary>
-/// 加入向导：粘贴邀请码 → 必要时装客户端并以密钥入网 → 给出游戏内要填的地址。
-/// 朋友端刻意不要求先登录自己的 Tailscale：邀请里带了密钥就一步到位。
+/// 加入向导：粘贴房间码 → （首次）下载组件 → 加入虚拟网络 → 找到房主并转发端口 → 给出本机地址。
+/// 房间码里带着网络密钥，所以不需要账号、登录或对方批准。
 /// </summary>
 public sealed partial class GameTunnelJoinDialog : ContentDialog
 {
     private InviteInfo? _invite;
     private bool _busy;
     private bool _connected;
-    private bool _awaitingSwitchConfirm;
-    private string? _myIp;
+    private bool _startedJoin;
+    private int _localPort;
 
-    /// <summary>关闭时是否已经连上对方的网络。</summary>
+    /// <summary>关闭时是否已经连上房间。</summary>
     public bool Connected => _connected;
 
     public GameTunnelJoinDialog(XamlRoot xamlRoot)
@@ -26,6 +26,11 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         InitializeComponent();
         XamlRoot = xamlRoot;
         RequestedTheme = ThemeService.CurrentElementTheme;
+        Closed += (_, _) =>
+        {
+            // 只收回自己发起的加入；用户开着房间时打开本弹窗又关掉，不能把已有房间停掉。
+            if (_startedJoin && !_connected) TunnelSession.Instance.Stop();
+        };
     }
 
     public async Task<bool> RunAsync()
@@ -83,34 +88,17 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         }
 
         PreviewCard.Visibility = Visibility.Visible;
-        PreviewTitle.Text = string.IsNullOrWhiteSpace(_invite.Game) ? "识别到联机地址" : $"识别到：{_invite.Game}";
-        PreviewAddress.Text = _invite.Address;
+        PreviewTitle.Text = string.IsNullOrWhiteSpace(_invite.Game) ? "识别到房间码" : $"识别到：{_invite.Game}";
+        PreviewAddress.Text = _invite.RoomCode;
 
-        var notes = new List<string>();
-        if (_invite.HasAuthKey)
+        var notes = new List<string>
         {
-            // 邀请码路径：密钥自带预授权，直接加入
-            notes.Add("带了短期密钥：粘贴后直接加入对方的网络，不用对方批准，也不用你登录 Tailscale");
-        }
-        else
-        {
-            // 纯地址路径：前提必须说在前面，不能让人以为填个地址就能连
-            notes.Add("这是纯地址、没有密钥：只有你已经和对方在同一个 Tailscale 网络里才有效");
-        }
-
+            "房间码里带着这个房间的网络密钥：粘贴后直接加入，不需要对方批准，也不用注册任何账号"
+        };
+        if (_invite.Port > 0) notes.Add($"房主游戏端口 {_invite.Port}");
         if (_invite.Protocol.UsesUdp()) notes.Add($"游戏使用 {_invite.Protocol.Describe()}，本工具同样支持");
-        if (_invite.ExpiresAtLocal is { } expires) notes.Add($"密钥 {expires:HH:mm} 过期");
+        if (_invite.UsesLanDiscovery) notes.Add("加入后可直接从「扫描局域网世界」进入");
         PreviewNote.Text = string.Join(" · ", notes);
-
-        if (!_invite.HasAuthKey)
-        {
-            ShowStatus(InfoBarSeverity.Warning, GameTunnelInviteCopy.AddressOnlyGuestNote);
-        }
-
-        if (!GameTunnelInvite.IsValidAddress(_invite.Host))
-        {
-            ShowStatus(InfoBarSeverity.Error, "地址看起来不对，请让对方重新发一次邀请");
-        }
 
         UpdateChrome();
     }
@@ -121,7 +109,7 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
     {
         if (_invite is null)
         {
-            ShowStatus(InfoBarSeverity.Warning, "先粘贴邀请码或联机地址");
+            ShowStatus(InfoBarSeverity.Warning, "先粘贴邀请码或房间码");
             return;
         }
 
@@ -129,138 +117,54 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         ResetProgress();
         try
         {
-            // 1) 客户端
-            TailscaleCli.Invalidate();
-            if (!TailscaleService.IsInstalled)
+            var session = TunnelSession.Instance;
+
+            // 1) 组件
+            MarkRow(JoinIcon, RowState.Running, "1/3 正在准备联机组件…");
+            JoinProgress.Visibility = Visibility.Visible;
+            JoinProgress.IsIndeterminate = true;
+
+            var progress = new Progress<(int Percent, string Message)>(report =>
             {
-                if (!_invite.HasAuthKey)
-                {
-                    // 纯地址路径下，装好并登录自己的 Tailscale 是不够的——那是另一个网络，
-                    // 对方的 100.x 地址在本机根本不存在。必须说清楚，别让用户白折腾。
-                    MarkRow(JoinIcon, RowState.Failed, "1/3 这个邀请只有地址、没有密钥");
-                    ShowStatus(InfoBarSeverity.Error, GameTunnelInviteCopy.AddressOnlyRemedy);
-                    return;
-                }
+                JoinProgress.IsIndeterminate = report.Percent < 0;
+                if (report.Percent >= 0) JoinProgress.Value = report.Percent;
+                JoinText.Text = $"1/3 {report.Message}";
+            });
 
-                MarkRow(JoinIcon, RowState.Running, "1/3 正在安装 Tailscale 客户端…");
-                JoinProgress.Visibility = Visibility.Visible;
-                JoinProgress.IsIndeterminate = true;
-
-                var version = await TailscaleService.GetLatestVersionAsync() ?? "latest";
-                var progress = new Progress<InstallerProgress>(report =>
-                {
-                    JoinProgress.IsIndeterminate = report.Percent <= 0;
-                    if (report.Percent > 0) JoinProgress.Value = report.Percent;
-                    if (report.Percent is > 0 and < 100) JoinText.Text = $"1/3 正在下载 Tailscale · {report.Percent:F0}%";
-                });
-
-                var msi = await TailscaleService.DownloadInstallerAsync(version, progress);
-                JoinText.Text = "1/3 正在静默安装…";
-                var install = await TailscaleService.InstallAsync(msi);
-                if (!install.Ok)
-                {
-                    MarkRow(JoinIcon, RowState.Failed, $"1/3 安装失败：{install.Message}");
-                    return;
-                }
-
-                if (!await TailscaleService.WaitForCliAsync(TimeSpan.FromSeconds(40)))
-                {
-                    MarkRow(JoinIcon, RowState.Failed, "1/3 安装完成但找不到 tailscale.exe，请重启后再试");
-                    return;
-                }
+            if (!EasyTierPackage.IsReady)
+            {
+                await EasyTierPackage.EnsureInstalledAsync(progress);
             }
 
-            MarkRow(JoinIcon, RowState.Done, "1/3 客户端就绪");
+            MarkRow(JoinIcon, RowState.Done, "1/3 联机组件就绪");
             JoinProgress.Visibility = Visibility.Collapsed;
 
-            // 2) 网络：能直连就不动用户的登录状态
-            var status = await TailscaleService.GetStatusAsync();
-            var alreadyReachable = false;
-            TailscalePingResult? probe = null;
-
-            if (status?.IsReady == true)
+            // 2) 入网 + 找房主 + 端口转发（会话内部按步骤推进，这里实时回显）
+            MarkRow(AddressIcon, RowState.Running, "2/3 正在加入虚拟网络…");
+            _startedJoin = true;
+            var join = session.StartJoinAsync(_invite);
+            while (!join.IsCompleted)
             {
-                AddressText.Text = "2/3 正在测试能不能直接连到对方…";
-                probe = TailscaleService.ParsePing(await TailscaleService.PingAsync(_invite.Host));
-                alreadyReachable = probe.Ok;
+                RenderSessionSteps(session);
+                await Task.WhenAny(join, Task.Delay(400));
             }
+            await join;
 
-            if (!alreadyReachable && _invite.HasAuthKey)
-            {
-                var needSwitch = status?.IsLoggedIn == true;
-                if (needSwitch && !_awaitingSwitchConfirm)
-                {
-                    ShowSwitchWarning(status);
-                    SetBusy(false, null);
-                    return;
-                }
+            _localPort = session.LocalPort;
+            MarkRow(AddressIcon, RowState.Done, $"2/3 已加入房间（本地端口 {_localPort}）");
+            MarkRow(PingIcon, RowState.Done,
+                session.HostPeer is { } host
+                    ? $"3/3 房主 {host.Hostname} · {host.Describe()}"
+                    : "3/3 端口转发已建立");
 
-                _awaitingSwitchConfirm = false;
-                SwitchWarningCard.Visibility = Visibility.Collapsed;
-                AddressText.Text = "2/3 正在加入对方的网络…";
-
-                var join = await TailscaleService.JoinTailnetAsync(_invite.AuthKey!);
-                if (!join.Ok)
-                {
-                    MarkRow(AddressIcon, RowState.Failed, $"2/3 加入失败：{join.Message}");
-                    ShowStatus(InfoBarSeverity.Error, join.Message);
-                    return;
-                }
-            }
-            else if (!alreadyReachable && !_invite.HasAuthKey)
-            {
-                if (status?.IsReady != true)
-                {
-                    MarkRow(AddressIcon, RowState.Failed, "2/3 本机的 Tailscale 还没就绪");
-                    ShowStatus(InfoBarSeverity.Error, "请先点主页的「准备联机环境」完成安装与登录，或者让对方用「邀请码 / 一键加入脚本」的方式邀请你。");
-                    return;
-                }
-
-                if (probe?.PeerNotInTailnet == true)
-                {
-                    // 铁证：这个地址不在本机 tailnet 里 —— 光有地址永远连不上，停下来说清楚
-                    MarkRow(AddressIcon, RowState.Failed, "2/3 这个地址不在你的 Tailscale 网络里");
-                    ShowStatus(InfoBarSeverity.Error, GameTunnelInviteCopy.AddressOnlyRemedy);
-                    return;
-                }
-
-                // 在同一网络里但对方没响应：可能只是对方没开机，允许继续（后面还会再测一次）
-                MarkRow(AddressIcon, RowState.Warning, "2/3 你和对方在同一个网络，但他暂时没有响应");
-            }
-
-            // 3) 等地址
-            var ready = await TailscaleService.WaitForReadyAsync(TimeSpan.FromSeconds(40));
-            _myIp = ready?.Ipv4;
-            if (string.IsNullOrWhiteSpace(_myIp))
-            {
-                MarkRow(AddressIcon, RowState.Failed, "2/3 没有拿到联机地址");
-                ShowStatus(InfoBarSeverity.Error, "没能拿到本机联机地址，请到主页的「网络检测」看看原因");
-                return;
-            }
-            MarkRow(AddressIcon, RowState.Done, $"2/3 本机联机地址 {_myIp}");
-
-            // 4) 连通性
-            var ping = TailscaleService.ParsePing(await TailscaleService.PingAsync(_invite.Host));
-            if (ping.Ok)
-            {
-                MarkRow(PingIcon, RowState.Done, $"3/3 与对方连通 · {ping.Summary}");
-            }
-            else
-            {
-                MarkRow(PingIcon, RowState.Warning, $"3/3 暂时没连上对方：{ping.Summary}");
-            }
-
-            EnterStep3(ping);
-
+            EnterStep3(session);
             _connected = true;
-        }
-        catch (OperationCanceledException)
-        {
-            ShowStatus(InfoBarSeverity.Error, "操作已取消");
         }
         catch (Exception ex)
         {
-            ShowStatus(InfoBarSeverity.Error, $"连接失败：{ex.Message}");
+            _startedJoin = false;
+            MarkRow(AddressIcon, RowState.Failed, "2/3 加入失败");
+            ShowStatus(InfoBarSeverity.Error, ex.Message);
         }
         finally
         {
@@ -268,56 +172,61 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         }
     }
 
-    private void ShowSwitchWarning(TailscaleStatus status)
+    private void RenderSessionSteps(TunnelSession session)
     {
-        _awaitingSwitchConfirm = true;
-        SwitchWarningCard.Visibility = Visibility.Visible;
-        SwitchWarningText.Text = status.LoginName is { Length: > 0 } login
-            ? $"这台电脑当前登录的是 {login}。继续会把 Tailscale 切换成对方的网络，切换后你自己的设备会暂时离线；玩完可以用托盘图标的账号菜单切回来。"
-            : "继续会把 Tailscale 切换成对方的网络，玩完可以随时切回来。";
-        ShowStatus(InfoBarSeverity.Informational, "需要你确认一下，再点一次下面的按钮即可继续");
+        // 入网 → 找房主 → 端口转发，按会话当前步骤推进文案。
+        if (session.GetStepState(TunnelStep.Network) == TunnelStepState.Active)
+        {
+            MarkRow(AddressIcon, RowState.Running, "2/3 正在加入虚拟网络…");
+            return;
+        }
+
+        if (session.GetStepState(TunnelStep.FindHost) == TunnelStepState.Active)
+        {
+            MarkRow(AddressIcon, RowState.Done, "2/3 已加入虚拟网络");
+            MarkRow(PingIcon, RowState.Running,
+                session.ConnectedNodes >= 0
+                    ? $"3/3 正在寻找房主…（已连上 {session.ConnectedNodes} 个节点）"
+                    : "3/3 正在寻找房主…");
+            return;
+        }
+
+        if (session.GetStepState(TunnelStep.Enter) == TunnelStepState.Active)
+        {
+            MarkRow(AddressIcon, RowState.Done, "2/3 已加入虚拟网络");
+            MarkRow(PingIcon, RowState.Running, "3/3 正在建立端口转发…");
+        }
     }
 
-    private async void ConfirmSwitch_Click(object sender, RoutedEventArgs e) => await ConnectAsync();
-
-    private void SkipSwitch_Click(object sender, RoutedEventArgs e)
-    {
-        SwitchWarningCard.Visibility = Visibility.Collapsed;
-        _awaitingSwitchConfirm = false;
-        ShowStatus(InfoBarSeverity.Warning, "已跳过切换。你可以在网络检测里确认自己是不是已经在对方的网络里。");
-    }
-
-    private void EnterStep3(TailscalePingResult ping)
+    private void EnterStep3(TunnelSession session)
     {
         Step1Panel.Visibility = Visibility.Collapsed;
         Step2Panel.Visibility = Visibility.Collapsed;
         Step3Panel.Visibility = Visibility.Visible;
 
-        FinalAddressText.Text = _invite!.Address;
-        if (ping.Ok)
+        var hostAddress = $"{_invite!.Host}:{session.GamePort}";
+        FinalAddressText.Text = _localPort > 0 ? $"127.0.0.1:{_localPort}" : hostAddress;
+
+        if (_invite.UsesLanDiscovery)
         {
-            FinalNoteText.Text = _invite.HasAuthKey
-                ? "你已经加入对方的网络，连接正常。剩下的就是在游戏里填上面的地址。"
-                : "你和对方本来就在同一个网络里，连接正常。剩下的就是在游戏里填上面的地址。";
-        }
-        else if (ping.PeerNotInTailnet && !_invite.HasAuthKey)
-        {
-            FinalNoteText.Text = GameTunnelInviteCopy.AddressOnlyRemedy;
+            FinalHintText.Text = "不用手填地址：打开游戏「多人游戏」，房间会出现在「扫描局域网世界」里";
+            FinalNoteText.Text = "没出现时再点一次「扫描」，或点「直接连接」填上面的地址（就是本机端口）。";
         }
         else
         {
-            FinalNoteText.Text = "与对方的连接还没建立（可能是对方刚进游戏）。先在游戏里试一次，不行再回主页做网络检测。";
+            FinalHintText.Text = "在游戏里连接这个地址：";
+            FinalNoteText.Text = $"本机端口已转发到房主 {hostAddress}。首次连接可能需要多试一次（双方还在打洞直连）。";
         }
 
         var preset = GameTunnelCatalog.Presets.FirstOrDefault(p => p.Name == _invite.Game);
         GuestStepsList.ItemsSource = preset?.GuestSteps
-            .Select(step => step.Replace("{host}", _invite.Host).Replace("{port}", _invite.Port.ToString()))
+            .Select(step => step.Replace("{host}", "127.0.0.1").Replace("{port}", _localPort.ToString()))
             .ToList()
             ?? new List<string>
             {
-                $"打开游戏，在联机 / 多人游戏界面里填 {_invite.Address}",
-                "首次连接可能需要多试一次（网络还在打洞）",
-                "玩完想恢复正常网络：右键任务栏 Tailscale 图标选择 Disconnect"
+                $"打开游戏，在联机界面里填 127.0.0.1:{_localPort}",
+                "首次连接可能需要多试一次（网络还在打洞直连）",
+                "玩完想断开：回主页点「停止联机」"
             };
 
         StepNameText.Text = "· 连上了";
@@ -326,9 +235,11 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
 
     private void CopyFinalAddress_Click(object sender, RoutedEventArgs e)
     {
-        if (_invite is null) return;
+        var text = _localPort > 0 ? $"127.0.0.1:{_localPort}" : _invite?.Address;
+        if (string.IsNullOrWhiteSpace(text)) return;
+
         // 失败重试与诊断由 ClipboardService 统一负责（剪贴板被占用时不得崩溃）
-        if (ClipboardService.TrySetText(_invite.Address).Success)
+        if (ClipboardService.TrySetText(text).Success)
             ShowStatus(InfoBarSeverity.Success, "地址已复制");
         else
             ShowStatus(InfoBarSeverity.Error, "复制失败，请手动选中复制");
@@ -356,37 +267,23 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         };
         icon.Foreground = state switch
         {
-            RowState.Done => ThemeBrush("SystemFillColorSuccessBrush"),
-            RowState.Warning => ThemeBrush("SystemFillColorCautionBrush"),
-            RowState.Failed => ThemeBrush("SystemFillColorCriticalBrush"),
-            _ => ThemeBrush("TextFillColorSecondaryBrush")
+            RowState.Done => GameTunnelUi.ThemeBrush("SystemFillColorSuccessBrush"),
+            RowState.Warning => GameTunnelUi.ThemeBrush("SystemFillColorCautionBrush"),
+            RowState.Failed => GameTunnelUi.ThemeBrush("SystemFillColorCriticalBrush"),
+            _ => GameTunnelUi.ThemeBrush("TextFillColorSecondaryBrush")
         };
 
         var target = icon == JoinIcon ? JoinText : icon == AddressIcon ? AddressText : PingText;
         target.Text = text;
     }
 
-    private static Microsoft.UI.Xaml.Media.Brush ThemeBrush(string key)
-    {
-        try
-        {
-            if (Application.Current.Resources.TryGetValue(key, out var value) && value is Microsoft.UI.Xaml.Media.Brush brush)
-                return brush;
-        }
-        catch
-        {
-        }
-        return new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-    }
-
     private void ResetProgress()
     {
         JoinProgress.Value = 0;
         JoinProgress.Visibility = Visibility.Collapsed;
-        SwitchWarningCard.Visibility = Visibility.Collapsed;
         MarkRow(JoinIcon, RowState.Idle, "等待开始");
-        MarkRow(AddressIcon, RowState.Idle, "本机联机地址");
-        MarkRow(PingIcon, RowState.Idle, "与对方的连接");
+        MarkRow(AddressIcon, RowState.Idle, "加入虚拟网络");
+        MarkRow(PingIcon, RowState.Idle, "找到房主并建立端口转发");
     }
 
     // ══════════════════ 外壳 ══════════════════
@@ -399,7 +296,7 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         if (!inStep3)
         {
             StepText.Text = inStep2 ? "第 2 步 / 共 2 步" : "第 1 步 / 共 2 步";
-            StepNameText.Text = inStep2 ? "· 连接" : "· 粘贴邀请";
+            StepNameText.Text = inStep2 ? "· 连接" : "· 粘贴房间码";
         }
 
         SecondaryButtonText = inStep2 ? "上一步" : null;
@@ -448,7 +345,7 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
         if (_invite is null)
         {
             args.Cancel = true;
-            ShowStatus(InfoBarSeverity.Warning, "先粘贴对方发来的邀请码，或者直接填地址");
+            ShowStatus(InfoBarSeverity.Warning, "先粘贴对方发来的邀请码，或者直接填房间码");
             return;
         }
 
@@ -461,10 +358,7 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
 
     private void OnSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        if (Step2Panel.Visibility != Visibility.Visible)
-        {
-            return;
-        }
+        if (Step2Panel.Visibility != Visibility.Visible) return;
 
         args.Cancel = true;
         Step2Panel.Visibility = Visibility.Collapsed;
