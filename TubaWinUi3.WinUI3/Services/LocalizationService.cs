@@ -203,6 +203,8 @@ public static class LocalizationService
         "BIOS 序列号" => L("Hw_Field_BiosSerial", "BIOS 序列号"),
         "SMBIOS 版本" => L("Hw_Field_Smbios", "SMBIOS 版本"),
         "最大容量" => L("Hw_Field_MaxCapacity", "最大容量"),
+        "理论带宽" => L("Hw_Field_MemoryBandwidth", "理论带宽"),
+        "位宽" => L("Hw_Field_MemoryBusWidth", "位宽"),
         // 显卡 / 硬盘 / 显示器 / 网卡补全字段
         "厂商" => L("Hw_Field_Vendor", "厂商"),
         "设备 ID" => L("Hw_Field_DeviceId", "设备 ID"),

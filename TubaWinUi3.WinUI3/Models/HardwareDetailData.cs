@@ -126,6 +126,10 @@ public sealed class MemoryDetail
 {
     public string? TotalCapacity { get; set; }
     public string? MemoryType { get; set; }
+    /// <summary>总位宽（"128-bit"）。</summary>
+    public string? BusWidth { get; set; }
+    /// <summary>理论带宽（"153.6 GB/s"）。</summary>
+    public string? Bandwidth { get; set; }
     public string? ChannelMode { get; set; }
     public bool ChannelModeInferred { get; set; }
     /// <summary>主板支持的最大内存容量。</summary>

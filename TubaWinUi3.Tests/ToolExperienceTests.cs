@@ -11,6 +11,14 @@ public class ToolExperienceTests
         Assert.Contains("共享上限 16 GB", text); Assert.Contains("预留 128 MB", text);
         Assert.DoesNotContain("0.1 GB", text);
     }
+    [Theory]
+    [InlineData(9600, 128, 153.6)]   // LPDDR5X-9600，8×16-bit
+    [InlineData(5600, 128, 89.6)]    // DDR5-5600，双通道
+    [InlineData(3200, 64, 25.6)]     // DDR4-3200，单通道
+    [InlineData(0, 128, 0)]
+    [InlineData(9600, 0, 0)]
+    public void TheoreticalBandwidthFollowsTransferRateAndBusWidth(int transferRateMt, int busBits, double expected)
+        => Assert.Equal(expected, HardwareDisplayPolicy.ComputeMemoryBandwidthGbs(transferRateMt, busBits), 3);
     [Fact]
     public void DiscreteGpuShowsDedicatedCapacity()
         => Assert.Equal("专用 8 GB", HardwareDisplayPolicy.FormatGpuMemory(8UL * 1024 * 1024 * 1024, 16UL * 1024 * 1024 * 1024));

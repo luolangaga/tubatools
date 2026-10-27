@@ -3286,6 +3286,12 @@ Permissions
   <data name="Hw_Field_VramBus" xml:space="preserve">
     <value>VRAM bus</value>
   </data>
+  <data name="Hw_Field_MemoryBandwidth" xml:space="preserve">
+    <value>Theoretical bandwidth</value>
+  </data>
+  <data name="Hw_Field_MemoryBusWidth" xml:space="preserve">
+    <value>Bus width</value>
+  </data>
   <data name="Hw_Field_DriverVersion" xml:space="preserve">
     <value>Driver version</value>
   </data>

@@ -3302,6 +3302,12 @@
   <data name="Hw_Field_VramBus" xml:space="preserve">
     <value>显存位宽</value>
   </data>
+  <data name="Hw_Field_MemoryBandwidth" xml:space="preserve">
+    <value>理论带宽</value>
+  </data>
+  <data name="Hw_Field_MemoryBusWidth" xml:space="preserve">
+    <value>位宽</value>
+  </data>
   <data name="Hw_Field_DriverVersion" xml:space="preserve">
     <value>驱动版本</value>
   </data>

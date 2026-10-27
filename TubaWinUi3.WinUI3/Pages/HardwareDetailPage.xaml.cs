@@ -706,6 +706,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         if (mem == null) return items;
         AddIf(items, "总容量", mem.TotalCapacity);
         AddIf(items, "类型", mem.MemoryType);
+        AddIf(items, "位宽", mem.BusWidth);
+        AddIf(items, "理论带宽", mem.Bandwidth);
         AddIf(items, "最大容量", mem.MaxCapacity);
         items.Add(Item("插槽", string.Format(LocalizationService.L("HwDetail_SlotsUsed", "{0}/{1} 已使用"), mem.UsedSlots, mem.TotalSlots)));
         foreach (var mod in mem.Modules)

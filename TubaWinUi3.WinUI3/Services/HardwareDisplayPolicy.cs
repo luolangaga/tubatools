@@ -16,6 +16,12 @@ internal static class HardwareDisplayPolicy
         return "显存未能读取";
     }
 
+    public static string FormatMemoryBandwidth(double gigabytesPerSecond) => $"{gigabytesPerSecond:0.#} GB/s";
+
+    /// <summary>理论带宽 = 传输速率（MT/s）× 总位宽（bit）÷ 8，换算为 GB/s。</summary>
+    public static double ComputeMemoryBandwidthGbs(int transferRateMt, int busBits)
+        => transferRateMt > 0 && busBits > 0 ? transferRateMt * (busBits / 8d) / 1000d : 0;
+
     public static string FormatMemoryDevices(int count, int reportedMaximum, int memoryType)
     {
         // SMBIOS reports logical devices for soldered LPDDR; it cannot prove replaceable sockets.

@@ -884,6 +884,10 @@ public static class HardwareInfoService
         if (!string.IsNullOrWhiteSpace(manufacturer)) parts.Add(manufacturer);
         parts.Add($"{totalBytes / 1024d / 1024d / 1024d:0.#}GB");
         if (speedLabel.Length > 0) parts.Add(speedLabel);
+        var (bandwidthRate, busBits) = ReadMemoryBusInfo(modules);
+        if (busBits > 0) parts.Add($"{busBits}-bit");
+        var memoryBandwidth = HardwareDisplayPolicy.ComputeMemoryBandwidthGbs(bandwidthRate, busBits);
+        if (memoryBandwidth > 0) parts.Add($"理论带宽 {HardwareDisplayPolicy.FormatMemoryBandwidth(memoryBandwidth)}");
         parts.Add(HardwareDisplayPolicy.FormatMemoryDevices(modules.Count, totalSlots, memType));
 
         var result = Item("内存", string.Join(" ", parts));
@@ -922,6 +926,28 @@ public static class HardwareInfoService
     private static int GetMemoryConfiguredClockSpeed(ManagementBaseObject item)
     {
         return ToInt(Get(item, "ConfiguredClockSpeed"));
+    }
+
+    /// <summary>总位宽 = 各已插内存 DataWidth 之和（DDR5 单条 64 bit，LPDDR 常见 16 bit×多颗）。</summary>
+    private static (int TransferRateMt, int BusBits) ReadMemoryBusInfo(IEnumerable<ManagementBaseObject> modules)
+    {
+        int transferRate = 0, busBits = 0;
+        foreach (var module in modules)
+        {
+            if (ToLong(Get(module, "Capacity")) <= 0) continue;
+
+            var width = ToInt(Get(module, "DataWidth"));
+            if (width <= 0) width = ToInt(Get(module, "TotalWidth"));
+            if (width <= 0) continue;
+            busBits += width;
+
+            var rate = GetMemoryConfiguredClockSpeed(module);
+            if (rate <= 0) rate = ToInt(Get(module, "Speed"));
+            // ConfiguredClockSpeed / Speed 是传输速率（MT/s），不是时钟频率。
+            transferRate = Math.Max(transferRate, rate);
+        }
+
+        return (transferRate, busBits);
     }
 
     internal static string? CleanMemManufacturer(string? raw)
@@ -2097,10 +2123,15 @@ public static class HardwareInfoService
         var memType = ToInt(modules.Select(item => Get(item, "SMBIOSMemoryType")).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)));
         var typeLabel = GetMemoryTypeLabel(memType);
 
+        var (bandwidthRate, busBits) = ReadMemoryBusInfo(modules);
+        var memoryBandwidth = HardwareDisplayPolicy.ComputeMemoryBandwidthGbs(bandwidthRate, busBits);
+
         var detail = new MemoryDetail
         {
             TotalCapacity = totalBytes > 0 ? $"{totalBytes / 1024d / 1024d / 1024d:0.#} GB" : null,
             MemoryType = typeLabel,
+            BusWidth = busBits > 0 ? $"{busBits}-bit" : null,
+            Bandwidth = memoryBandwidth > 0 ? HardwareDisplayPolicy.FormatMemoryBandwidth(memoryBandwidth) : null,
             ChannelMode = InferMemoryChannel(modules.Select(mod => Get(mod, "DeviceLocator"))),
             ChannelModeInferred = true,
             MaxCapacity = ReadMaxMemoryCapacity(),
