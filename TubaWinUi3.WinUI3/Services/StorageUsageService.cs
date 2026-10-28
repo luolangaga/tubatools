@@ -118,6 +118,9 @@ public static class StorageUsageService
         items.Add(FileItem(StorageGroupKind.Cache, "webview2", "网页渲染缓存",
             "内置浏览器（AI 助手、格式转换等）的 WebView2 数据目录。正在使用中的文件会被跳过，关闭软件后再清理可全部释放。",
             webView2Dir));
+        items.Add(FileItem(StorageGroupKind.Cache, "winget-index", "WinGet 软件源索引",
+            "「正版软件商店」使用的官方源索引（约 4 MB），删除后下次搜索时重新下载。",
+            Path.Combine(dataDir, "Store")));
 
         // ── 内置工具按需下载的组件 ───────────────────────────
         items.Add(FileItem(StorageGroupKind.Component, "ffmpeg", "FFmpeg",

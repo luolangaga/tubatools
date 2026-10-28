@@ -23,6 +23,12 @@ public static class PerformanceBenchmarkService
 {
 	private static CancellationTokenSource? _cts;
 	private static volatile bool _running;
+	private static readonly object SessionLock = new();
+	internal static bool TryBeginSession()
+	{
+		lock (SessionLock) { if (_running) return false; _running = true; return true; }
+	}
+	internal static void EndSession() { lock (SessionLock) _running = false; }
 	private const double CpuSingleBaseline = 728.0;
 	private const double CpuMultiBaseline = 8351.0;
 
@@ -41,11 +47,10 @@ public static class PerformanceBenchmarkService
 
 	public static async Task<PerformanceBenchmarkResult> RunAllAsync(IProgress<BenchmarkProgress>? progress, CancellationToken ct)
 	{
-		if (_running)
+		if (!TryBeginSession())
 		{
 			throw new InvalidOperationException("测试已在运行中");
 		}
-		_running = true;
 		var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 		try
 		{
@@ -90,7 +95,7 @@ public static class PerformanceBenchmarkService
 			}
 			finally
 			{
-				_running = false;
+				EndSession();
 				_cts = null;
 			}
 			return result;
@@ -116,9 +121,10 @@ public static class PerformanceBenchmarkService
 		cpu.MultiCoreScore = NormalizeCpuMulti(multiRaw);
 		cpu.SingleCoreIterations = singleRaw;
 		cpu.MultiCoreIterations = multiRaw;
+		BenchmarkResultValidation.Cpu(cpu);
 		ct.ThrowIfCancellationRequested();
 		cpu.LatencyMatrix = null;
-		cpu.LatencyScore = 500;
+		cpu.LatencyScore = 0; // No measurement: do not substitute a score.
 		cpu.TotalScore = (int)((double)cpu.SingleCoreScore * 0.5 + (double)cpu.MultiCoreScore * 0.5);
 		cpu.Grade = ComputeGrade(cpu.TotalScore);
 		sw.Stop();
@@ -151,7 +157,7 @@ public static class PerformanceBenchmarkService
 			{
 				throw new InvalidOperationException("CPU-Z 进程启动失败");
 			}
-			var timeoutCts = new CancellationTokenSource(300000);
+			using var timeoutCts = new CancellationTokenSource(300000);
 			try
 			{
 				while (!process.WaitForExit(2000))
@@ -175,11 +181,13 @@ public static class PerformanceBenchmarkService
 				try { process.Kill(entireProcessTree: true); } catch { }
 				throw;
 			}
+			ct.ThrowIfCancellationRequested();
+			if (process.ExitCode != 0) throw new InvalidOperationException("CPU-Z 异常退出，未采用本次结果。");
 			int waitMs = 15000;
 			int waited = 0;
 			while (!File.Exists(benchFile) && waited < waitMs)
 			{
-				Thread.Sleep(500);
+				Task.Delay(500, ct).GetAwaiter().GetResult();
 				waited += 500;
 			}
 			if (!File.Exists(benchFile))
@@ -211,43 +219,26 @@ public static class PerformanceBenchmarkService
 
 	private static void CleanCpuzBenchFiles(string dir)
 	{
-		try
-		{
-			string path = Path.Combine(dir, Environment.MachineName + ".txt");
-			if (File.Exists(path))
-			{
-				try { File.Delete(path); return; }
-				catch { return; }
-			}
-		}
-		catch { }
+		string path = Path.Combine(dir, Environment.MachineName + ".txt");
+		if (File.Exists(path)) File.Delete(path);
 	}
 
-	private static (int singleCore, int multiCore) ParseCpuzBenchCsv(string content)
+	internal static (int singleCore, int multiCore) ParseCpuzBenchCsv(string content)
 	{
-		string[] parts = content.Trim().Trim('"').Split("\",\"", 2);
-		if (parts.Length == 2)
-		{
-			string s1 = parts[0].Trim('"');
-			string s2 = parts[1].Trim('"');
-			if (double.TryParse(s1, NumberStyles.Float, CultureInfo.InvariantCulture, out var v1) &&
-			    double.TryParse(s2, NumberStyles.Float, CultureInfo.InvariantCulture, out var v2))
-			{
-				return (singleCore: (int)Math.Round(v1), multiCore: (int)Math.Round(v2));
-			}
-		}
-		var matches = Regex.Matches(content, @"[\d.]+");
-		if (matches.Count >= 2 &&
-		    double.TryParse(matches[0].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var r1) &&
-		    double.TryParse(matches[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var r2))
-		{
-			return (singleCore: (int)Math.Round(r1), multiCore: (int)Math.Round(r2));
-		}
-		throw new InvalidOperationException("无法解析 CPU-Z 基准测试结果: " + content);
+		// Accept only a complete pair of numeric measurements, never numbers from an error message.
+		var match = Regex.Match(content.Trim(), """^"?([0-9]+(?:\.[0-9]+)?)"?\s*,\s*"?([0-9]+(?:\.[0-9]+)?)"?$""");
+		if (!match.Success) throw new InvalidDataException("CPU-Z 未返回完整的单核、多核测试数据。");
+		double single = double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+		double multi = double.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture);
+		BenchmarkResultValidation.RequirePositive(single, "CPU 单核测试");
+		BenchmarkResultValidation.RequirePositive(multi, "CPU 多核测试");
+		if (single > int.MaxValue || multi > int.MaxValue) throw new InvalidDataException("CPU-Z 返回的数据超出范围。");
+		return ((int)Math.Round(single), (int)Math.Round(multi));
 	}
 
 	public static void ApplyLatencyResult(CpuBenchmarkResult cpu, InterCoreLatencyMatrix latency)
 	{
+		BenchmarkResultValidation.Latency(latency);
 		cpu.LatencyMatrix = latency;
 		cpu.LatencyScore = NormalizeLatency(latency.AverageNs);
 		cpu.TotalScore = (int)((double)cpu.SingleCoreScore * 0.5 + (double)cpu.MultiCoreScore * 0.5);
@@ -272,22 +263,7 @@ public static class PerformanceBenchmarkService
 		}
 		gpu.GpuName = gpuName ?? "";
 		string furMarkExe = FindFurMarkExe()!;
-		if (furMarkExe == null)
-		{
-			progress?.Report(new BenchmarkProgress
-			{
-				Phase = "GPU",
-				SubPhase = "FurMark",
-				Detail = "未找到FurMark (烤鸡工具/FurMark_win64/furmark.exe)",
-				Progress = 0.6
-			});
-			gpu.FurMarkScore = 0;
-			gpu.AvgFps = 0.0;
-			gpu.TotalScore = 0;
-			gpu.Grade = "E";
-			gpu.Duration = TimeSpan.Zero;
-			return gpu;
-		}
+		if (furMarkExe == null) throw new InvalidOperationException("未找到 FurMark，请安装完整工具内核后重试。");
 		progress?.Report(new BenchmarkProgress
 		{
 			Phase = "GPU",
@@ -299,7 +275,7 @@ public static class PerformanceBenchmarkService
 		string logFile = Path.Combine(furMarkDir!, "_furmark_log.txt");
 		if (File.Exists(logFile))
 		{
-			try { File.Delete(logFile); } catch { }
+			File.Delete(logFile); // A stale log must never be reused when deletion fails.
 		}
 		int durationMs = durationSec * 1000;
 		string arguments = "--demo furmark-vk --width 1920 --height 1080 --benchmark --duration-ms " + durationMs + " --gpu-index " + gpuIndex + " --vsync 0 --hpgfx 1 --print-render-speed";
@@ -309,20 +285,8 @@ public static class PerformanceBenchmarkService
 			UseShellExecute = false,
 			CreateNoWindow = true
 		});
-		if (process == null)
-		{
-			progress?.Report(new BenchmarkProgress
-			{
-				Phase = "GPU",
-				SubPhase = "FurMark",
-				Detail = "FurMark进程启动失败",
-				Progress = 0.6
-			});
-			gpu.TotalScore = 0;
-			gpu.Grade = "E";
-			gpu.Duration = TimeSpan.Zero;
-			return gpu;
-		}
+		if (process == null) throw new InvalidOperationException("FurMark 启动失败。");
+		using var cancelProcess = ct.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { } });
 		progress?.Report(new BenchmarkProgress
 		{
 			Phase = "GPU",
@@ -355,7 +319,7 @@ public static class PerformanceBenchmarkService
 			if (sw.ElapsedMilliseconds > timeoutMs)
 			{
 				try { process.Kill(entireProcessTree: true); } catch { }
-				break;
+				throw new TimeoutException("FurMark 测试超时，本次结果无效。");
 			}
 		}
 		try
@@ -363,9 +327,12 @@ public static class PerformanceBenchmarkService
 			if (!process.HasExited) process.Kill(entireProcessTree: true);
 		}
 		catch { }
+		ct.ThrowIfCancellationRequested();
+		if (process.ExitCode != 0 || sw.Elapsed.TotalSeconds < durationSec)
+			throw new InvalidOperationException("FurMark 提前关闭或异常退出，未采用本次结果。");
 		for (int i = 0; i < 10; i++)
 		{
-			try { Task.Delay(500, ct).Wait(ct); } catch { }
+			Task.Delay(500, ct).GetAwaiter().GetResult();
 			if (!File.Exists(logFile)) continue;
 			try
 			{
@@ -393,9 +360,9 @@ public static class PerformanceBenchmarkService
 				var fpsMatch = Regex.Match(input, @"FPS \(min/avg/max\)\s*:\s*([\d.]+)\s*/\s*([\d.]+)\s*/\s*([\d.]+)");
 				if (fpsMatch.Success)
 				{
-					if (double.TryParse(fpsMatch.Groups[1].Value, out var minFps)) gpu.MinFps = minFps;
-					if (double.TryParse(fpsMatch.Groups[2].Value, out var avgFps)) gpu.AvgFps = avgFps;
-					if (double.TryParse(fpsMatch.Groups[3].Value, out var maxFps)) gpu.MaxFps = maxFps;
+					if (double.TryParse(fpsMatch.Groups[1].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var minFps)) gpu.MinFps = minFps;
+					if (double.TryParse(fpsMatch.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var avgFps)) gpu.AvgFps = avgFps;
+					if (double.TryParse(fpsMatch.Groups[3].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var maxFps)) gpu.MaxFps = maxFps;
 				}
 				progress?.Report(new BenchmarkProgress
 				{
@@ -426,6 +393,8 @@ public static class PerformanceBenchmarkService
 				Progress = 0.6
 			});
 		}
+		ct.ThrowIfCancellationRequested();
+		BenchmarkResultValidation.Gpu(gpu);
 		gpu.RenderScore = NormalizeFurMarkScore(gpu.FurMarkScore);
 		gpu.RenderFps = gpu.AvgFps;
 		gpu.TotalScore = gpu.RenderScore;
@@ -577,17 +546,9 @@ public static class PerformanceBenchmarkService
 		var sw = Stopwatch.StartNew();
 		var disk = new DiskBenchmarkResult();
 		string diskSpdExe = FindDiskSpdExe()!;
-		if (diskSpdExe == null)
-		{
-			disk.SeqReadMBs = 0.0;
-			disk.SeqWriteMBs = 0.0;
-			disk.Random4KReadIops = 0.0;
-			disk.Random4KWriteIops = 0.0;
-			disk.TotalScore = 0;
-			disk.Grade = "E";
-			return disk;
-		}
-		string tempDir = Path.Combine(Path.GetTempPath(), "TubaWinUi3_Benchmark");
+		if (diskSpdExe == null) throw new InvalidOperationException("未找到 DiskSpd，请安装完整工具内核后重试。");
+		// Each run owns its file: overlapping processes must not truncate or delete another run's data.
+		string tempDir = Path.Combine(Path.GetTempPath(), "TubaWinUi3_Benchmark", Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);
 		try
 		{
@@ -596,18 +557,22 @@ public static class PerformanceBenchmarkService
 			string fileSize = "1G";
 			progress?.Report(new BenchmarkProgress { Phase = "硬盘", SubPhase = "顺序读取", Progress = 0.6 });
 			disk.SeqReadMBs = RunDiskSpd(diskSpdExe, filePath, fileSize, "1M", 1, 8, 0, halfDuration, ct);
+			BenchmarkResultValidation.RequirePositive(disk.SeqReadMBs, "硬盘顺序读取");
 			disk.SeqReadScore = NormalizeDiskSeq(disk.SeqReadMBs);
 			ct.ThrowIfCancellationRequested();
 			progress?.Report(new BenchmarkProgress { Phase = "硬盘", SubPhase = "顺序写入", Progress = 0.65 });
 			disk.SeqWriteMBs = RunDiskSpd(diskSpdExe, filePath, fileSize, "1M", 1, 8, 100, halfDuration, ct);
+			BenchmarkResultValidation.RequirePositive(disk.SeqWriteMBs, "硬盘顺序写入");
 			disk.SeqWriteScore = NormalizeDiskSeq(disk.SeqWriteMBs);
 			ct.ThrowIfCancellationRequested();
 			progress?.Report(new BenchmarkProgress { Phase = "硬盘", SubPhase = "4K随机读取", Progress = 0.7 });
 			disk.Random4KReadIops = RunDiskSpdIops(diskSpdExe, filePath, fileSize, "4K", 1, 32, 0, halfDuration, ct);
+			BenchmarkResultValidation.RequirePositive(disk.Random4KReadIops, "硬盘随机读取");
 			disk.Random4KReadScore = NormalizeDisk4K(disk.Random4KReadIops);
 			ct.ThrowIfCancellationRequested();
 			progress?.Report(new BenchmarkProgress { Phase = "硬盘", SubPhase = "4K随机写入", Progress = 0.75 });
 			disk.Random4KWriteIops = RunDiskSpdIops(diskSpdExe, filePath, fileSize, "4K", 1, 32, 100, halfDuration, ct);
+			BenchmarkResultValidation.RequirePositive(disk.Random4KWriteIops, "硬盘随机写入");
 			disk.Random4KWriteScore = NormalizeDisk4K(disk.Random4KWriteIops);
 			progress?.Report(new BenchmarkProgress { Phase = "硬盘", SubPhase = "温度", Progress = 0.78 });
 			var temps = LiteMonitorService.ReadDiskTemperatures();
@@ -618,10 +583,13 @@ public static class PerformanceBenchmarkService
 		{
 			try
 			{
-				if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+				File.Delete(Path.Combine(tempDir, "bench_temp.dat"));
+				Directory.Delete(tempDir);
 			}
 			catch { }
 		}
+		ct.ThrowIfCancellationRequested();
+		BenchmarkResultValidation.Disk(disk);
 		disk.TotalScore = (int)((double)disk.SeqReadScore * 0.25 + (double)disk.SeqWriteScore * 0.2 + (double)disk.Random4KReadScore * 0.25 + (double)disk.Random4KWriteScore * 0.2 + (double)disk.TempScore * 0.1);
 		disk.Grade = ComputeGrade(disk.TotalScore);
 		sw.Stop();
@@ -678,18 +646,12 @@ public static class PerformanceBenchmarkService
 				UseShellExecute = false,
 				CreateNoWindow = true
 			});
-			if (process == null) return 0.0;
-			string output = process.StandardOutput.ReadToEnd();
-			process.WaitForExit();
-			string ioLabel = writePct == 0 ? "Read IO" : "Write IO";
-			int idx = output.IndexOf(ioLabel, StringComparison.Ordinal);
-			if (idx < 0) idx = output.IndexOf("Total IO", StringComparison.Ordinal);
-			if (idx < 0) return 0.0;
-			var match = Regex.Match(output.Substring(idx), @"total:\s+[\d]+\s+\|\s+[\d]+\s+\|\s+([\d.]+)\s+\|");
-			if (match.Success && double.TryParse(match.Groups[1].Value, out var result)) return result;
-			return 0.0;
+			if (process == null) throw new InvalidOperationException("DiskSpd 启动失败。");
+			string output = ReadDiskSpdOutput(process, durationSec, ct);
+			return ParseDiskSpdMeasurement(output, writePct != 0, iops: false);
 		}
-		catch { return 0.0; }
+		catch (OperationCanceledException) { throw; }
+		catch (Exception ex) { throw new InvalidOperationException("DiskSpd 测试失败：" + ex.Message, ex); }
 	}
 
 	private static double RunDiskSpdIops(string diskSpdPath, string filePath, string fileSize, string blockSize, int threads, int outstanding, int writePct, int durationSec, CancellationToken ct)
@@ -704,18 +666,49 @@ public static class PerformanceBenchmarkService
 				UseShellExecute = false,
 				CreateNoWindow = true
 			});
-			if (process == null) return 0.0;
-			string output = process.StandardOutput.ReadToEnd();
-			process.WaitForExit();
-			string ioLabel = writePct == 0 ? "Read IO" : "Write IO";
-			int idx = output.IndexOf(ioLabel, StringComparison.Ordinal);
-			if (idx < 0) idx = output.IndexOf("Total IO", StringComparison.Ordinal);
-			if (idx < 0) return 0.0;
-			var match = Regex.Match(output.Substring(idx), @"total:\s+[\d]+\s+\|\s+[\d]+\s+\|\s+[\d.]+\s+\|\s+([\d.]+)");
-			if (match.Success && double.TryParse(match.Groups[1].Value, out var result)) return result;
-			return 0.0;
+			if (process == null) throw new InvalidOperationException("DiskSpd 启动失败。");
+			string output = ReadDiskSpdOutput(process, durationSec, ct);
+			return ParseDiskSpdMeasurement(output, writePct != 0, iops: true);
 		}
-		catch { return 0.0; }
+		catch (OperationCanceledException) { throw; }
+		catch (Exception ex) { throw new InvalidOperationException("DiskSpd 测试失败：" + ex.Message, ex); }
+	}
+
+	private static double ParseDiskSpdMeasurement(string output, bool write, bool iops)
+	{
+		try { return DiskSpdResultParser.Measurement(output, write, iops); }
+		catch (InvalidDataException ex)
+		{
+			LogService.Error(LogService.App, $"DiskSpd 无效测量（write={write}, iops={iops}）\n{output}", ex);
+			throw;
+		}
+	}
+
+	private static string ReadDiskSpdOutput(Process process, int durationSec, CancellationToken ct)
+	{
+		using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		timeout.CancelAfter(TimeSpan.FromSeconds(durationSec + 90));
+		using var cancelProcess = timeout.Token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { } });
+		try
+		{
+			var outputTask = process.StandardOutput.ReadToEndAsync(timeout.Token);
+			var errorTask = process.StandardError.ReadToEndAsync(timeout.Token);
+			process.WaitForExitAsync(timeout.Token).GetAwaiter().GetResult();
+			string output = outputTask.GetAwaiter().GetResult();
+			string error = errorTask.GetAwaiter().GetResult();
+			ct.ThrowIfCancellationRequested();
+			try { DiskSpdResultParser.ValidateCompletion(output, error, process.ExitCode, durationSec); }
+			catch (InvalidDataException ex)
+			{
+				LogService.Error(LogService.App, $"DiskSpd 执行失败（exit={process.ExitCode}）\n{error}\n{output}", ex);
+				throw;
+			}
+			return output;
+		}
+		catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+		{
+			throw new TimeoutException("DiskSpd 测试超时，本次结果无效。");
+		}
 	}
 
 	public static string? FindCoreToCoreLatencyExe()
@@ -947,7 +940,7 @@ public static class PerformanceBenchmarkService
 
 	public static int NormalizeLatency(double ns)
 	{
-		if (ns <= 0.0) return 50;
+		if (!double.IsFinite(ns) || ns <= 0.0) return 0;
 		if (ns <= 20.0) return 100;
 		if (ns >= 300.0) return 0;
 		return Math.Max(0, (int)((300.0 - ns) / 280.0 * 100.0));

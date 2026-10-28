@@ -591,7 +591,7 @@ public static class PhoneLinkService
             case "/api/winget/search":
                 {
                     var q = ParseQuery(req).GetValueOrDefault("q") ?? "";
-                    var r = await WingetStoreService.SearchOnlineAsync(q, ct);
+                    var r = await WingetStoreService.SearchOnlineAsync(q, ct: ct);
                     await WriteJson(ctx, 200, new
                     {
                         error = r.Error,

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -125,214 +125,9 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	{
 		_cts = new CancellationTokenSource();
 		base.Content = BuildUI();
+		Unloaded += (_, _) => { _uiGeneration++; _cts.Cancel(); _runTimer.Stop(); };
 		// 导航返回 / 重启应用后，自动回填上一次测试的完整结果，避免重新跑分
 		_ = RestoreLastResultAsync();
-	}
-
-	private ScrollViewer BuildUI()
-	{
-		Brush cardBg = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"];
-		Brush cardBorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"];
-		Grid grid = new()
-		{
-			RowSpacing = 0.0,
-			Padding = new Thickness(24.0, 8.0, 24.0, 24.0)
-		};
-		grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-		grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
-		grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-		Grid grid2 = BuildTopCards();
-		grid.Children.Add(grid2);
-		Grid.SetRow(grid2, 0);
-		Grid grid3 = new()
-		{
-			ColumnSpacing = 12.0,
-			RowSpacing = 12.0,
-			Padding = new Thickness(0.0, 12.0, 0.0, 12.0)
-		};
-		grid3.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
-		grid3.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) });
-		grid3.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
-		grid3.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
-		grid3.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
-		grid3.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1.0, GridUnitType.Star) });
-		Border border = BuildSection("CPU 性能", "\ueea1", BuildCpuContent());
-		grid3.Children.Add(border);
-		Grid.SetRow(border, 0);
-		Grid.SetColumn(border, 0);
-		Border border2 = BuildSection("GPU 性能", "\ue950", BuildGpuContent());
-		grid3.Children.Add(border2);
-		Grid.SetRow(border2, 0);
-		Grid.SetColumn(border2, 1);
-		Border border3 = BuildSection("内存性能", "\ue90f", BuildMemoryContent());
-		grid3.Children.Add(border3);
-		Grid.SetRow(border3, 1);
-		Grid.SetColumn(border3, 0);
-		Border border4 = BuildSection("硬盘性能", "\ueda2", BuildDiskContent());
-		grid3.Children.Add(border4);
-		Grid.SetRow(border4, 1);
-		Grid.SetColumn(border4, 1);
-		Border border5 = BuildSection("浏览器流畅度", "\ue774", BuildBrowserContent());
-		grid3.Children.Add(border5);
-		Grid.SetRow(border5, 2);
-		Grid.SetColumn(border5, 0);
-		Grid.SetColumnSpan(border5, 2);
-		Border border6 = BuildSection("WinUI 性能", "\ue80f", BuildWinContent());
-		grid3.Children.Add(border6);
-		Grid.SetRow(border6, 3);
-		Grid.SetColumn(border6, 0);
-		Grid.SetColumnSpan(border6, 2);
-		ScrollViewer scrollViewer = new()
-		{
-			Content = grid3,
-			VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-			HorizontalScrollMode = ScrollMode.Disabled
-		};
-		grid.Children.Add(scrollViewer);
-		Grid.SetRow(scrollViewer, 1);
-		StackPanel stackPanel = BuildControlBar();
-		grid.Children.Add(stackPanel);
-		Grid.SetRow(stackPanel, 2);
-		return new ScrollViewer
-		{
-			Content = grid,
-			VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-			HorizontalScrollMode = ScrollMode.Disabled,
-			Transitions = new TransitionCollection
-			{
-				new EntranceThemeTransition { FromVerticalOffset = 16 }
-			}
-		};
-	}
-
-	private Grid BuildTopCards()
-	{
-		Grid obj = new()
-		{
-			ColumnSpacing = 12.0,
-			ColumnDefinitions =
-			{
-				new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) },
-				new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) },
-				new ColumnDefinition { Width = new GridLength(1.0, GridUnitType.Star) }
-			}
-		};
-		Border border = new()
-		{
-			Background = cardBg,
-			BorderBrush = cardBorderBrush,
-			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
-			Child = BuildScoreCard("游戏性能", out _gamingScoreText, out _gamingGradeText, out _gamingBar)
-		};
-		obj.Children.Add(border);
-		Grid.SetColumn(border, 0);
-		Border border2 = new()
-		{
-			Background = cardBg,
-			BorderBrush = cardBorderBrush,
-			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
-			Child = BuildScoreCard("办公性能", out _officeScoreText, out _officeGradeText, out _officeBar)
-		};
-		obj.Children.Add(border2);
-		Grid.SetColumn(border2, 1);
-		Border border3 = new()
-		{
-			Background = cardBg,
-			BorderBrush = cardBorderBrush,
-			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(16.0, 16.0, 16.0, 16.0),
-			Child = BuildScoreCard("Win性能", out _winScoreText, out _winGradeText, out _winBar)
-		};
-		obj.Children.Add(border3);
-		Grid.SetColumn(border3, 2);
-		return obj;
-	}
-
-	private StackPanel BuildScoreCard(string label, out TextBlock scoreText, out TextBlock gradeText, out ProgressBar bar)
-	{
-		TextBlock item = new()
-		{
-			Text = label,
-			FontSize = 12.0,
-			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-		};
-		scoreText = new TextBlock
-		{
-			Text = "—",
-			FontSize = 28.0,
-			FontWeight = FontWeights.SemiBold,
-			Foreground = new SolidColorBrush(ThemeColors.DimText)
-		};
-		gradeText = new TextBlock
-		{
-			Text = "",
-			FontSize = 14.0,
-			FontWeight = FontWeights.SemiBold,
-			Foreground = new SolidColorBrush(ThemeColors.DimText),
-			VerticalAlignment = VerticalAlignment.Center,
-			Margin = new Thickness(8.0, 0.0, 0.0, 0.0)
-		};
-		bar = new ProgressBar
-		{
-			Value = 0.0,
-			Maximum = 100.0,
-			Height = 6.0
-		};
-		StackPanel stackPanel = new()
-		{
-			Orientation = Orientation.Horizontal,
-			Spacing = 4.0
-		};
-		stackPanel.Children.Add(scoreText);
-		stackPanel.Children.Add(gradeText);
-		return new StackPanel
-		{
-			Spacing = 6.0,
-			Children =
-			{
-				(UIElement)item,
-				(UIElement)stackPanel,
-				(UIElement)bar
-			}
-		};
-	}
-
-	private Border BuildSection(string title, string glyph, Panel content)
-	{
-		StackPanel stackPanel = new()
-		{
-			Orientation = Orientation.Horizontal,
-			Spacing = 8.0
-		};
-		stackPanel.Children.Add(new FontIcon
-		{
-			Glyph = glyph,
-			FontSize = 16.0,
-			Foreground = new SolidColorBrush(AccentBlue)
-		});
-		stackPanel.Children.Add(new TextBlock
-		{
-			Text = title,
-			FontSize = 14.0,
-			FontWeight = FontWeights.SemiBold
-		});
-		StackPanel stackPanel2 = new() { Spacing = 8.0 };
-		stackPanel2.Children.Add(stackPanel);
-		stackPanel2.Children.Add(content);
-		return new Border
-		{
-			Background = cardBg,
-			BorderBrush = cardBorderBrush,
-			BorderThickness = new Thickness(1.0),
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(16.0, 12.0, 16.0, 12.0),
-			Child = stackPanel2
-		};
 	}
 
 	private Grid BuildScoreRow(string label, out TextBlock scoreText)
@@ -344,7 +139,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			{
 				new ColumnDefinition { Width = new GridLength(100.0) },
 				new ColumnDefinition { Width = GridLength.Auto },
-				new ColumnDefinition { Width = GridLength.Auto }
+				new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
 			}
 		};
 		TextBlock textBlock = new()
@@ -377,10 +172,16 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			Children =
 			{
 				(UIElement)BuildScoreRow("单核", out _cpuSingleScoreText),
-				(UIElement)BuildScoreRow("多核", out _cpuMultiScoreText),
-				(UIElement)BuildScoreRow("核间延迟", out _cpuLatencyScoreText)
+				(UIElement)BuildScoreRow("多核", out _cpuMultiScoreText)
 			}
 		};
+		return obj;
+	}
+
+	private StackPanel BuildLatencyContent()
+	{
+		var obj = new StackPanel { Spacing = 8 };
+		obj.Children.Add(BuildScoreRow("核间延迟", out _cpuLatencyScoreText));
 		_latencyHeatmapImage = new Image
 		{
 			MaxHeight = 400.0,
@@ -459,7 +260,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			{
 				new ColumnDefinition { Width = new GridLength(100.0) },
 				new ColumnDefinition { Width = GridLength.Auto },
-				new ColumnDefinition { Width = GridLength.Auto }
+				new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
 			}
 		};
 		TextBlock textBlock = new()
@@ -483,6 +284,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		Grid.SetColumn(scoreText, 1);
 		detailText = new TextBlock
 		{
+			TextWrapping = TextWrapping.Wrap,
 			Text = "",
 			FontSize = 12.0,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
@@ -593,315 +395,10 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		};
 	}
 
-	private StackPanel BuildControlBar()
-	{
-		_startBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue768", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "开始测试", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(16.0, 8.0, 16.0, 8.0)
-		};
-		_startBtn.Click += OnStartClick;
-		_stopBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue71a", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "停止", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
-			IsEnabled = false
-		};
-		_stopBtn.Click += OnStopClick;
-		_exportBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\uede1", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "导出 PDF", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0),
-			IsEnabled = false
-		};
-		_exportBtn.Click += OnExportClick;
-		_historyBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue81c", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "历史对比", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
-		};
-		_historyBtn.Click += OnHistoryClick;
-		_rankingBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue9d5", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "排行榜", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
-		};
-		_rankingBtn.Click += OnRankingClick;
-		_latencyOnlyBtn = new Button
-		{
-			Content = new StackPanel
-			{
-				Orientation = Orientation.Horizontal,
-				Spacing = 6.0,
-				Children =
-				{
-					(UIElement)new FontIcon { Glyph = "\ue9d9", FontSize = 14.0 },
-					(UIElement)new TextBlock { Text = "单独测核间延迟", FontSize = 14.0 }
-				}
-			},
-			CornerRadius = new CornerRadius(8.0),
-			Padding = new Thickness(12.0, 8.0, 12.0, 8.0)
-		};
-		_latencyOnlyBtn.Click += OnLatencyOnlyClick;
-		_globalProgress = new ProgressBar
-		{
-			Value = 0.0,
-			Maximum = 100.0,
-			Height = 4.0
-		};
-		_statusText = new TextBlock
-		{
-			Text = "",
-			FontSize = 12.0,
-			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
-		};
-		_chkCpu = new CheckBox { Content = "CPU", IsChecked = true, FontSize = 12.0 };
-		_chkGpu = new CheckBox { Content = "GPU", IsChecked = true, FontSize = 12.0 };
-		_chkMem = new CheckBox { Content = "内存", IsChecked = true, FontSize = 12.0 };
-		_chkDisk = new CheckBox { Content = "硬盘", IsChecked = true, FontSize = 12.0 };
-		_chkBrowser = new CheckBox { Content = "浏览器", IsChecked = true, FontSize = 12.0 };
-		_chkWin = new CheckBox { Content = "WinUI", IsChecked = true, FontSize = 12.0 };
-		StackPanel stackPanel = new()
-		{
-			Orientation = Orientation.Horizontal,
-			Spacing = 12.0
-		};
-		stackPanel.Children.Add(new TextBlock
-		{
-			Text = "测试项目:",
-			FontSize = 12.0,
-			VerticalAlignment = VerticalAlignment.Center,
-			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-		});
-		stackPanel.Children.Add(_chkCpu);
-		stackPanel.Children.Add(_chkGpu);
-		stackPanel.Children.Add(_chkMem);
-		stackPanel.Children.Add(_chkDisk);
-		stackPanel.Children.Add(_chkBrowser);
-		stackPanel.Children.Add(_chkWin);
-		_ = LoadAvailableGpusAsync();
-		StackPanel stackPanel2 = new()
-		{
-			Orientation = Orientation.Horizontal,
-			Spacing = 8.0
-		};
-		stackPanel2.Children.Add(_startBtn);
-		stackPanel2.Children.Add(_stopBtn);
-		stackPanel2.Children.Add(_exportBtn);
-		stackPanel2.Children.Add(_historyBtn);
-		stackPanel2.Children.Add(_rankingBtn);
-		stackPanel2.Children.Add(_latencyOnlyBtn);
-		return new StackPanel
-		{
-			Spacing = 8.0,
-			Children =
-			{
-				(UIElement)stackPanel,
-				(UIElement)stackPanel2,
-				(UIElement)_globalProgress,
-				(UIElement)_statusText
-			}
-		};
-	}
-
-	private async void OnStartClick(object sender, RoutedEventArgs e)
-	{
-		if (_isRunning) return;
-		_uiGeneration++; // 使仍在途的历史恢复回填失效
-		bool runCpu = _chkCpu.IsChecked == true;
-		bool runGpu = _chkGpu.IsChecked == true;
-		bool runMem = _chkMem.IsChecked == true;
-		bool runDisk = _chkDisk.IsChecked == true;
-		bool runBrowser = _chkBrowser.IsChecked == true;
-		bool runWin = _chkWin.IsChecked == true;
-		if (!runCpu && !runGpu && !runMem && !runDisk && !runBrowser && !runWin)
-		{
-			_statusText.Text = "请至少选择一个测试项目";
-			return;
-		}
-		_isRunning = true;
-		_startBtn.IsEnabled = false;
-		_stopBtn.IsEnabled = true;
-		_exportBtn.IsEnabled = false;
-		SetCheckboxesEnabled(false);
-		_cts = new CancellationTokenSource();
-		ResetUI();
-		int gpuIdx = 0;
-		string gpuName = "";
-		if (runGpu)
-		{
-			var picked = await ShowGpuSelectDialogAsync();
-			if (picked == null)
-			{
-				runGpu = false;
-				_statusText.Text = "已取消GPU测试，继续其他项目...";
-			}
-			else
-			{
-				gpuIdx = picked.Value.Index;
-				gpuName = picked.Value.Name;
-			}
-		}
-		try
-		{
-			var result = new PerformanceBenchmarkResult
-			{
-				TestTime = DateTime.Now,
-				DurationMode = "Deep"
-			};
-			await PerformanceBenchmarkService.PopulateHardwareInfoAsync(result);
-			Stopwatch sw = Stopwatch.StartNew();
-			var progress = new Progress<BenchmarkProgress>(p =>
-			{
-				DispatcherQueue.TryEnqueue(() =>
-				{
-					_statusText.Text = $"{p.Phase} · {p.SubPhase}  {p.Detail}  (可随时点击停止)";
-					_globalProgress.Value = p.Progress * 100.0;
-				});
-			});
-			if (runCpu)
-			{
-				result.Cpu = await Task.Run(() => PerformanceBenchmarkService.RunCpuBenchmark(60, progress, _cts.Token), _cts.Token);
-				_cts.Token.ThrowIfCancellationRequested();
-				DispatcherQueue.TryEnqueue(() => UpdateCpuUI(result));
-				string? coreToCoreExe = PerformanceBenchmarkService.FindCoreToCoreLatencyExe();
-				if (coreToCoreExe != null)
-				{
-					var (csv, _) = await ShowCoreToCoreLatencyDialog(coreToCoreExe);
-					if (!string.IsNullOrEmpty(csv))
-					{
-						int maxCores = Math.Min(Environment.ProcessorCount, 64);
-						var matrix = PerformanceBenchmarkService.ParseCoreToCoreCsv(csv, maxCores);
-						PerformanceBenchmarkService.ApplyLatencyResult(result.Cpu, matrix);
-						_latencyHeatmapPath = PerformanceBenchmarkService.GenerateLatencyHeatmap(matrix);
-						DispatcherQueue.TryEnqueue(() =>
-						{
-							ShowLatencyHeatmap(_latencyHeatmapPath);
-							UpdateScoreRow(_cpuLatencyScoreText, result.Cpu.LatencyScore);
-						});
-					}
-				}
-			}
-			if (runMem)
-			{
-				result.Memory = await Task.Run(() => PerformanceBenchmarkService.RunMemoryBenchmark(1, progress, _cts.Token), _cts.Token);
-				_cts.Token.ThrowIfCancellationRequested();
-				DispatcherQueue.TryEnqueue(() => UpdateMemoryUI(result));
-			}
-			if (runDisk)
-			{
-				result.Disk = await Task.Run(() => PerformanceBenchmarkService.RunDiskBenchmark(20, progress, _cts.Token), _cts.Token);
-				_cts.Token.ThrowIfCancellationRequested();
-				DispatcherQueue.TryEnqueue(() => UpdateDiskUI(result));
-			}
-			if (runGpu)
-			{
-				result.Gpu = await Task.Run(() => PerformanceBenchmarkService.RunGpuBenchmarkFurMark(60, progress, _cts.Token, gpuIdx, gpuName), _cts.Token);
-				if (!string.IsNullOrEmpty(result.Gpu.GpuName))
-					result.GpuName = result.Gpu.GpuName;
-				_cts.Token.ThrowIfCancellationRequested();
-				DispatcherQueue.TryEnqueue(() => UpdateGpuUI(result));
-			}
-			if (runBrowser)
-			{
-				result.Browser = new BrowserBenchmarkResult();
-				await RunBrowserTestsAsync(result, 60, _cts.Token);
-				_cts.Token.ThrowIfCancellationRequested();
-			}
-			if (runWin)
-			{
-				await RunWinBenchmarkAsync(result, _cts.Token);
-				_cts.Token.ThrowIfCancellationRequested();
-			}
-			result.GamingScore = PerformanceBenchmarkService.ComputeGamingScore(result);
-			result.GamingGrade = PerformanceBenchmarkService.ComputeGrade(result.GamingScore);
-			result.OfficeScore = PerformanceBenchmarkService.ComputeOfficeScore(result);
-			result.OfficeGrade = PerformanceBenchmarkService.ComputeGrade(result.OfficeScore);
-			sw.Stop();
-			result.TotalDuration = sw.Elapsed;
-			DispatcherQueue.TryEnqueue(() =>
-			{
-				UpdateTopCard(_gamingScoreText, _gamingGradeText, _gamingBar, result.GamingScore, result.GamingGrade);
-				UpdateTopCard(_officeScoreText, _officeGradeText, _officeBar, result.OfficeScore, result.OfficeGrade);
-				if (runWin)
-					UpdateTopCard(_winScoreText, _winGradeText, _winBar, result.Win.FinalScore, result.Win.Grade);
-			});
-			PerformanceBenchmarkService.SaveHistory(result);
-			_result = result;
-			_exportBtn.IsEnabled = true;
-			_statusText.Text = $"测试完成！总耗时: {result.TotalDuration:mm\\mss\\s}";
-			_globalProgress.Value = 100.0;
-		}
-		catch (OperationCanceledException)
-		{
-			_statusText.Text = "测试已取消";
-		}
-		catch (Exception ex)
-		{
-			_statusText.Text = "测试出错: " + ex.Message;
-		}
-		finally
-		{
-			_isRunning = false;
-			_startBtn.IsEnabled = true;
-			_stopBtn.IsEnabled = false;
-			SetCheckboxesEnabled(true);
-		}
-	}
-
 	private void SetCheckboxesEnabled(bool enabled)
 	{
 		_chkCpu.IsEnabled = enabled;
+		_chkLatency.IsEnabled = enabled;
 		_chkGpu.IsEnabled = enabled;
 		_chkMem.IsEnabled = enabled;
 		_chkDisk.IsEnabled = enabled;
@@ -926,8 +423,9 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			UpdateScoreRow(_cpuSingleScoreText, r.Cpu.SingleCoreScore);
 		if (r.Cpu.MultiCoreScore > 0)
 			UpdateScoreRow(_cpuMultiScoreText, r.Cpu.MultiCoreScore);
-		if (r.Cpu.LatencyScore > 0)
-			UpdateScoreRow(_cpuLatencyScoreText, r.Cpu.LatencyScore);
+		if (r.Cpu.LatencyMatrix != null && r.Cpu.LatencyScore >= 0)
+			if (r.Cpu.LatencyMatrix != null) UpdateScoreRow(_cpuLatencyScoreText, r.Cpu.LatencyScore);
+		else _cpuLatencyScoreText.Text = "未测量";
 
 		string gpuName = !string.IsNullOrEmpty(r.Gpu.GpuName) ? r.Gpu.GpuName : r.GpuName;
 		if (!string.IsNullOrEmpty(gpuName))
@@ -1004,6 +502,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	/// <summary>历史窗口点「载入到主页」：清空当前展示后回填所选历史记录。</summary>
 	private async void LoadResultIntoMainPage(PerformanceBenchmarkResult r)
 	{
+		if (_isRunning) return;
 		try
 		{
 			int generation = ++_uiGeneration;
@@ -1024,144 +523,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		catch { }
 	}
 
-	// ---------- WinUI 性能测试（弹窗运行） ----------
-
-	private async Task RunWinBenchmarkAsync(PerformanceBenchmarkResult result, CancellationToken ct)
-	{
-		DispatcherQueue.TryEnqueue(() => _statusText.Text = "正在准备 WinUI 性能测试数据...");
-		_winIconPaths = await Task.Run(() => WinPerformanceService.CollectIconImagePaths());
-		_winSortData = await Task.Run(() => WinPerformanceService.GenerateSortData());
-
-		// 弹窗：包含状态区 + 真实测试控件（用于布局计时）
-		var statusText = new TextBlock
-		{
-			Text = "正在初始化...",
-			FontSize = 14.0,
-			TextWrapping = TextWrapping.Wrap,
-			Margin = new Thickness(0.0, 4.0, 0.0, 0.0),
-			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
-		};
-		var progressBar = new ProgressBar { Value = 0.0, Maximum = 100.0, Height = 4.0 };
-		var logText = new TextBlock
-		{
-			FontSize = 12.0,
-			TextWrapping = TextWrapping.Wrap,
-			Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"]
-		};
-		var logScroll = new ScrollViewer
-		{
-			Content = logText,
-			MaxHeight = 90.0,
-			VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-			HorizontalScrollMode = ScrollMode.Disabled
-		};
-
-		var winControls = BuildWinTestControls();
-		StackPanel dialogContent = new() { Spacing = 6.0 };
-		dialogContent.Children.Add(statusText);
-		dialogContent.Children.Add(progressBar);
-		dialogContent.Children.Add(winControls);
-		dialogContent.Children.Add(logScroll);
-
-		ContentDialog dialog = new()
-		{
-			Title = "WinUI 性能测试",
-			Content = new ScrollViewer
-			{
-				Content = dialogContent,
-				MaxHeight = 620.0,
-				VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-				HorizontalScrollMode = ScrollMode.Disabled
-			},
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-
-		using var cancelReg = ct.Register(() =>
-		{
-			DispatcherQueue.TryEnqueue(() =>
-			{
-				try { dialog.Hide(); } catch { }
-			});
-		});
-
-		var showTask = dialog.ShowAsync().AsTask();
-		// 等对话框完全加载后再开始计时（首帧布局）
-		await Task.Delay(150);
-		if (showTask.IsCompleted)
-		{
-			// 用户直接点取消
-			ct.ThrowIfCancellationRequested();
-		}
-
-		var winResult = new WinPerformanceResult
-		{
-			TestTime = DateTime.Now,
-			RunCount = 5,
-			DroppedRunCount = 1
-		};
-
-		try
-		{
-			for (int round = 1; round <= winResult.RunCount; round++)
-			{
-				ct.ThrowIfCancellationRequested();
-				// 用户点了「取消」则中止
-				if (showTask.IsCompleted)
-				{
-					ct.ThrowIfCancellationRequested();
-				}
-				statusText.Text = $"WinUI 性能测试 第 {round}/{winResult.RunCount} 轮...";
-				var run = await RunWinRoundAsync(ct, statusText);
-				_winRuns.Add(run);
-				statusText.Text = $"第 {round}/{winResult.RunCount} 轮完成，耗时 {run.TotalMs:F0} ms";
-				progressBar.Value = round * 100.0 / winResult.RunCount;
-			}
-
-			winResult.Runs = new List<WinPerformanceRunResult>(_winRuns);
-			WinPerformanceService.FinalizeResult(winResult);
-			result.Win = winResult;
-			WinPerformanceService.SaveHistory(winResult);
-
-			statusText.Text = $"Win性能得分: {winResult.FinalScore} ({winResult.Grade})，最佳平均耗时: {winResult.BestAvgMs:F0} ms";
-			progressBar.Value = 100.0;
-			logText.Text = BuildWinLog(winResult);
-
-			DispatcherQueue.TryEnqueue(() =>
-			{
-				_winListLoadText.Text = $"{winResult.AvgListLoadMs:F0} ms";
-				_winImageListText.Text = $"{winResult.AvgImageListMs:F0} ms";
-				_winTabSwitchText.Text = $"{winResult.AvgTabSwitchMs:F0} ms";
-				_winScrollText.Text = $"{winResult.AvgScrollMs:F0} ms";
-				_winTreeExpandText.Text = $"{winResult.AvgTreeExpandMs:F0} ms";
-				_winSortFilterText.Text = $"{winResult.AvgSortFilterMs:F0} ms";
-				_winTextRenderText.Text = $"{winResult.AvgTextRenderMs:F0} ms";
-				_winTotalText.Text = $"{winResult.BestAvgMs:F0} ms";
-			});
-
-			// 得分已同步到主页面，稍作停留展示结果后自动关闭弹窗
-			await Task.Delay(1500);
-		}
-		finally
-		{
-			try { dialog.Hide(); } catch { }
-		}
-	}
-
-	private static string BuildWinLog(WinPerformanceResult r)
-	{
-		var sb = new System.Text.StringBuilder();
-		sb.AppendLine($"列表加载: {r.AvgListLoadMs:F0} ms");
-		sb.AppendLine($"图片列表({WinPerformanceService.ImageListCount}张): {r.AvgImageListMs:F0} ms");
-		sb.AppendLine($"标签切换: {r.AvgTabSwitchMs:F0} ms");
-		sb.AppendLine($"滚动: {r.AvgScrollMs:F0} ms");
-		sb.AppendLine($"树形展开({WinPerformanceService.TreeExpandCount}节点): {r.AvgTreeExpandMs:F0} ms");
-		sb.AppendLine($"排序过滤({WinPerformanceService.SortFilterCount}条): {r.AvgSortFilterMs:F0} ms");
-		sb.AppendLine($"长文本({WinPerformanceService.LongTextChars}字符): {r.AvgTextRenderMs:F0} ms");
-		sb.AppendLine($"平均总耗时: {r.BestAvgMs:F0} ms");
-		return sb.ToString();
-	}
+	// The original workloads run in an isolated worker. The controller remains responsive.
 
 	private FrameworkElement BuildWinTestControls()
 	{
@@ -1384,26 +746,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		return Task.CompletedTask;
 	}
 
-	private async Task LoadAvailableGpusAsync()
-	{
-		try
-		{
-			_availableGpus = await Task.Run(PerformanceBenchmarkService.GetFurMarkGpus);
-		}
-		catch { _availableGpus = []; }
-
-		if (_availableGpus.Count == 0)
-		{
-			try
-			{
-				_availableGpus = LiteMonitorService.GetAvailableGpus()
-					.Select(g => new FurMarkGpuInfo { Index = g.Index, Name = g.Name })
-					.ToList();
-			}
-			catch { _availableGpus = []; }
-		}
-	}
-
 	private static int GpuPriority(string name)
 	{
 		if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)) return 0;
@@ -1495,7 +837,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			PrimaryButtonText = "开始测试",
 			CloseButtonText = "取消",
 			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
+			RequestedTheme = ActualTheme
 		};
 		var result = await dialog.ShowAsync();
 		if (result != ContentDialogResult.Primary) return null;
@@ -1506,238 +848,163 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		}
 		string name = _availableGpus[selIdx].Name;
 		if (name == "GPU 0 (自动检测)") name = "";
-		return (selIdx, name);
+		return (_availableGpus[selIdx].Index, name);
 	}
 
 	private void OnStopClick(object sender, RoutedEventArgs e)
 	{
 		PerformanceBenchmarkService.Cancel();
 		_cts.Cancel();
+		_stopBtn.IsEnabled = false;
+		_statusText.Text = "正在停止测试并释放资源…";
 	}
 
-	private async Task<(string csv, string stderr)> ShowCoreToCoreLatencyDialog(string exePath)
+	private async Task<(string csv, string stderr)> ShowCoreToCoreLatencyDialog(string exePath, CancellationToken ct = default)
 	{
-		bool isC2CLatency = string.Equals(Path.GetFileName(exePath), "C2CLatency.exe", StringComparison.OrdinalIgnoreCase);
-		string toolName = isC2CLatency ? "C2CLatency" : "core-to-core-latency";
-		TextBlock outputText = new()
+		bool isC2C = string.Equals(Path.GetFileName(exePath), "C2CLatency.exe", StringComparison.OrdinalIgnoreCase);
+		using var local = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		local.CancelAfter(TimeSpan.FromMinutes(30));
+		var token = local.Token;
+		var detail = Label("正在启动测试进程…", 13, true);
+		var log = Label("", 11, true); log.IsTextSelectionEnabled = true;
+		var ring = new ProgressRing { Width = 36, Height = 36, IsActive = true, HorizontalAlignment = HorizontalAlignment.Left };
+		var dialog = new ContentDialog
 		{
-			FontFamily = new FontFamily("Consolas"),
-			FontSize = 12.0,
-			TextWrapping = TextWrapping.Wrap,
-			IsTextSelectionEnabled = true,
-			Text = $"正在运行 {toolName}...\n"
+			Title = "测量核间延迟", CloseButtonText = "停止测试", XamlRoot = XamlRoot,
+			RequestedTheme = ActualTheme,
+			Content = new StackPanel { Spacing = 16, Children =
+			{
+				ring, Label("正在测量处理器核心之间的通信延迟。", 16), detail,
+				Label("请保持窗口打开。关闭后会取消测试，不生成分数或热力图。", 12, true),
+				new Expander { Header = "查看工具输出", HorizontalAlignment = HorizontalAlignment.Stretch,
+					Content = new ScrollViewer { Content = log, MaxHeight = 220 } }
+			} }
 		};
-		ScrollViewer scroll = new()
-		{
-			Content = outputText,
-			MaxHeight = 400.0,
-			VerticalScrollBarVisibility = ScrollBarVisibility.Auto
-		};
-		ContentDialog dialog = new()
-		{
-			Title = $"核间延迟测试 — {toolName}",
-			Content = scroll,
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		var csvBuilder = new StringBuilder();
-		var stderrBuilder = new StringBuilder();
-		var tcs = new TaskCompletionSource<(string csv, string stderr)>();
-		bool procExited = false;
-		bool dialogShown = false;
-		string BuildCsv()
-		{
-			string csv = csvBuilder.ToString();
-			if (isC2CLatency)
-				csv = PerformanceBenchmarkService.ConvertC2CLatencyTextToCsv(stderrBuilder.ToString(), Math.Min(Environment.ProcessorCount, 64));
-			return csv;
-		}
-		ProcessStartInfo startInfo = new()
-		{
-			FileName = exePath,
-			Arguments = isC2CLatency ? "" : "--csv",
-			UseShellExecute = false,
-			RedirectStandardOutput = true,
-			RedirectStandardError = true,
-			RedirectStandardInput = isC2CLatency,
-			CreateNoWindow = true,
-			StandardOutputEncoding = Encoding.UTF8,
-			StandardErrorEncoding = Encoding.UTF8
-		};
-		Process? proc = null;
+		bool finished = false;
+		bool userCancelled = false;
+		dialog.Closing += (_, _) => { if (!finished && !local.IsCancellationRequested) { userCancelled = true; local.Cancel(); } };
+		var showTask = dialog.ShowAsync().AsTask();
+		using var closeOnCancel = token.Register(() => DispatcherQueue.TryEnqueue(() => dialog.Hide()));
 		try
 		{
-			proc = Process.Start(startInfo)!;
-			if (proc == null)
+			using var process = Process.Start(new ProcessStartInfo
 			{
-				outputText.Text = $"无法启动 {toolName}";
-				return (csv: "", stderr: "");
-			}
-			if (isC2CLatency)
+				FileName = exePath, Arguments = isC2C ? "" : "--csv", UseShellExecute = false,
+				RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = isC2C,
+				CreateNoWindow = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
+			}) ?? throw new InvalidOperationException("核间延迟工具启动失败。");
+			using var killOnCancel = token.Register(() => { try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { } });
+			if (isC2C) { await process.StandardInput.WriteLineAsync(); await process.StandardInput.FlushAsync(); }
+			var outputTask = process.StandardOutput.ReadToEndAsync(token);
+			var errorTask = ReadErrorsAsync();
+			await process.WaitForExitAsync(token);
+			string output = await outputTask;
+			string errors = await errorTask;
+			token.ThrowIfCancellationRequested();
+			if (process.ExitCode != 0 || (isC2C && !errors.Contains("Testing completed successfully", StringComparison.Ordinal)))
+				throw new InvalidDataException("核间延迟工具提前关闭或未正常完成，未采用本次数据。");
+			string csv = isC2C ? PerformanceBenchmarkService.ConvertC2CLatencyTextToCsv(errors, Math.Min(Environment.ProcessorCount, 64)) : output;
+			BenchmarkResultValidation.Latency(PerformanceBenchmarkService.ParseCoreToCoreCsv(csv, Math.Min(Environment.ProcessorCount, 64)));
+			return (csv, errors);
+
+			async Task<string> ReadErrorsAsync()
 			{
-				proc.StandardInput.WriteLine();
-				proc.StandardInput.Flush();
-			}
-			proc.OutputDataReceived += (_, e) =>
-			{
-				if (e.Data != null) csvBuilder.AppendLine(e.Data);
-			};
-			proc.ErrorDataReceived += (_, e) =>
-			{
-				if (e.Data != null)
+				var builder = new StringBuilder();
+				int pairs = 0;
+				while (await process.StandardError.ReadLineAsync(token) is string line)
 				{
-					stderrBuilder.AppendLine(e.Data);
-					string captured = e.Data;
-					DispatcherQueue.TryEnqueue(() =>
+					builder.AppendLine(line);
+					if (line.Contains(" to ")) pairs++;
+					if (isC2C && line.Contains("Testing completed successfully", StringComparison.Ordinal))
 					{
-						TextBlock textBlock = outputText;
-						textBlock.Text = textBlock.Text + captured + "\n";
-						scroll.ChangeView(null, scroll.ScrollableHeight, null);
-					});
-					if (isC2CLatency && captured.Contains("Testing completed successfully", StringComparison.Ordinal))
-					{
-						try
-						{
-							proc.StandardInput.WriteLine();
-							proc.StandardInput.Flush();
-						}
-						catch { }
+						await process.StandardInput.WriteLineAsync(); await process.StandardInput.FlushAsync();
 					}
+					// Keep raw output secondary; do not animate a fabricated completion percentage.
+					detail.Text = pairs > 0 ? $"已取得 {pairs} 组核心通信样本" : "工具正在初始化与测量…";
+					log.Text = builder.Length > 10000 ? builder.ToString(builder.Length - 10000, 10000) : builder.ToString();
 				}
-			};
-			proc.BeginOutputReadLine();
-			proc.BeginErrorReadLine();
-			proc.EnableRaisingEvents = true;
-			proc.Exited += (_, _) =>
-			{
-				procExited = true;
-				DispatcherQueue.TryEnqueue(() =>
-				{
-					outputText.Text += "\n--- 测试完成 ---\n";
-					scroll.ChangeView(null, scroll.ScrollableHeight, null);
-					if (!tcs.Task.IsCompleted)
-					{
-						tcs.SetResult((BuildCsv(), stderrBuilder.ToString()));
-					}
-					if (dialogShown)
-					{
-						try { dialog.Hide(); } catch { }
-					}
-				});
-			};
-		}
-		catch (Exception ex)
-		{
-			outputText.Text = "启动失败: " + ex.Message;
-			return (csv: "", stderr: "");
-		}
-		Task<ContentDialogResult> showTask;
-		try
-		{
-			showTask = dialog.ShowAsync().AsTask();
-			dialogShown = true;
-		}
-		catch (Exception ex)
-		{
-			outputText.Text = "对话框打开失败: " + ex.Message;
-			return (csv: "", stderr: "");
-		}
-		_ = showTask.ContinueWith(_ =>
-		{
-			dialogShown = false;
-			if (!procExited && proc != null)
-			{
-				try { if (!proc.HasExited) proc.Kill(); } catch { }
+				return builder.ToString();
 			}
-			DispatcherQueue.TryEnqueue(() =>
-			{
-				if (!tcs.Task.IsCompleted)
-				{
-					tcs.SetResult((BuildCsv(), stderrBuilder.ToString()));
-				}
-			});
-		}, TaskScheduler.Default);
-		(var csv, var stderr) = await tcs.Task;
-		try { await Task.WhenAny(showTask, Task.Delay(500)); } catch { }
-		return (csv, stderr);
+		}
+		catch (OperationCanceledException) when (!ct.IsCancellationRequested && !userCancelled)
+		{
+			throw new TimeoutException("核间延迟测量超时，未采用本次结果。");
+		}
+		finally
+		{
+			finished = true; ring.IsActive = false;
+			dialog.Hide();
+			try { await showTask; } catch { }
+		}
 	}
 
 	private async Task RunBrowserTestsAsync(PerformanceBenchmarkResult result, int gpuSec, CancellationToken ct)
 	{
-		WebView2 webView = new() { Width = 900.0, Height = 600.0 };
-		TextBlock item = new()
+		using var local = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		local.CancelAfter(TimeSpan.FromMinutes(10));
+		var webView = new WebView2 { Width = 900, Height = 600 };
+		var status = Label("正在加载浏览器测试…", 13, true);
+		var dialog = new ContentDialog
 		{
-			Text = "正在加载浏览器测试...",
-			FontSize = 14.0,
-			Margin = new Thickness(0.0, 4.0, 0.0, 0.0),
-			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
+			Title = "浏览器性能测试", CloseButtonText = "停止测试", XamlRoot = XamlRoot,
+			RequestedTheme = ActualTheme,
+			Content = new StackPanel { Spacing = 12, Children = { status,
+				new ScrollViewer { Content = webView, MaxWidth = 900, MaxHeight = 600,
+					HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } } }
 		};
-		StackPanel stackPanel = new() { Spacing = 4.0 };
-		stackPanel.Children.Add(webView);
-		stackPanel.Children.Add(item);
-		ContentDialog dialog = new()
+		var tcs = new TaskCompletionSource<BrowserBenchmarkResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+		bool finished = false;
+		dialog.Closing += (_, _) => { if (!finished) local.Cancel(); };
+		var showTask = dialog.ShowAsync().AsTask();
+		using var cancel = local.Token.Register(() => tcs.TrySetCanceled(local.Token));
+		try
 		{
-			Title = "浏览器性能测试",
-			Content = stackPanel,
-			CloseButtonText = "取消",
-			XamlRoot = XamlRoot,
-			RequestedTheme = ThemeService.CurrentElementTheme
-		};
-		await webView.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync());
-		var tcs = new TaskCompletionSource<BrowserBenchmarkResult>();
-		webView.CoreWebView2.WebMessageReceived += (_, args) =>
-		{
-			try
+			await webView.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync()).AsTask().WaitAsync(local.Token);
+			webView.CoreWebView2.NavigationCompleted += (_, args) =>
 			{
-				JsonElement root = JsonDocument.Parse(args.TryGetWebMessageAsString()).RootElement;
-				var br = new BrowserBenchmarkResult();
-				br.JsScore = root.TryGetProperty("jsScore", out var v1) ? v1.GetInt32() : 0;
-				br.JsDetail = root.TryGetProperty("jsDetail", out var v2) ? v2.GetString() ?? "" : "";
-				br.DomScore = root.TryGetProperty("domScore", out var v3) ? v3.GetInt32() : 0;
-				br.DomDetail = root.TryGetProperty("domDetail", out var v4) ? v4.GetString() ?? "" : "";
-				br.CardScore = root.TryGetProperty("cardScore", out var v5) ? v5.GetInt32() : 0;
-				br.CardDetail = root.TryGetProperty("cardDetail", out var v6) ? v6.GetString() ?? "" : "";
-				br.CssScore = root.TryGetProperty("cssScore", out var v7) ? v7.GetInt32() : 0;
-				br.CssDetail = root.TryGetProperty("cssDetail", out var v8) ? v8.GetString() ?? "" : "";
-				br.LayoutScore = root.TryGetProperty("layoutScore", out var v9) ? v9.GetInt32() : 0;
-				br.LayoutDetail = root.TryGetProperty("layoutDetail", out var v10) ? v10.GetString() ?? "" : "";
-				br.EventScore = root.TryGetProperty("eventScore", out var v11) ? v11.GetInt32() : 0;
-				br.EventDetail = root.TryGetProperty("eventDetail", out var v12) ? v12.GetString() ?? "" : "";
-				br.TotalScore = root.TryGetProperty("totalScore", out var v13) ? v13.GetInt32() : 0;
-				br.Grade = PerformanceBenchmarkService.ComputeGrade(br.TotalScore);
-				tcs.TrySetResult(br);
-			}
-			catch { }
-		};
-		_ = dialog.ShowAsync().AsTask().ContinueWith(_ =>
-		{
-			DispatcherQueue.TryEnqueue(() =>
+				if (!args.IsSuccess) tcs.TrySetException(new InvalidOperationException("浏览器测试加载失败：" + args.WebErrorStatus));
+			};
+			webView.CoreWebView2.ProcessFailed += (_, _) => tcs.TrySetException(new InvalidOperationException("浏览器测试进程异常退出。"));
+			webView.CoreWebView2.WebMessageReceived += (_, args) =>
 			{
-				if (!tcs.Task.IsCompleted) tcs.TrySetCanceled();
-			});
-		});
-		string uriString = Path.Combine(AppContext.BaseDirectory, "Assets", "Benchmark", "browser-benchmark.html");
-		webView.CoreWebView2.Navigate(new Uri(uriString).AbsoluteUri);
-		using (ct.Register(() => tcs.TrySetCanceled()))
-		{
-			try
-			{
-				BrowserBenchmarkResult br = await tcs.Task;
-				result.Browser = br;
-				DispatcherQueue.TryEnqueue(() =>
+				try
 				{
-					UpdateDetailRow(_brJsScoreText, _brJsDetailText, br.JsScore, br.JsDetail);
-					UpdateDetailRow(_brDomScoreText, _brDomDetailText, br.DomScore, br.DomDetail);
-					UpdateDetailRow(_brCardScoreText, _brCardDetailText, br.CardScore, br.CardDetail);
-					UpdateDetailRow(_brCssScoreText, _brCssDetailText, br.CssScore, br.CssDetail);
-					UpdateDetailRow(_brLayoutScoreText, _brLayoutDetailText, br.LayoutScore, br.LayoutDetail);
-					UpdateDetailRow(_brEventScoreText, _brEventDetailText, br.EventScore, br.EventDetail);
-				});
-				dialog.Hide();
-			}
-			catch (OperationCanceledException) { throw; }
-			catch { }
+					using var doc = JsonDocument.Parse(args.TryGetWebMessageAsString());
+					var root = doc.RootElement;
+					if (root.TryGetProperty("error", out var error)) throw new InvalidDataException("浏览器测试失败：" + error.GetString());
+					if (!root.TryGetProperty("completed", out var done) || done.ValueKind != JsonValueKind.True)
+						throw new InvalidDataException("浏览器测试未完整完成，未采用本次结果。");
+					int Score(string key) { int score = root.GetProperty(key).GetInt32(); if (score < 0) throw new InvalidDataException("浏览器分数无效。"); return score; }
+					string Detail(string key) => root.GetProperty(key).GetString() ?? "";
+					var br = new BrowserBenchmarkResult
+					{
+						JsScore = Score("jsScore"), JsDetail = Detail("jsDetail"), DomScore = Score("domScore"), DomDetail = Detail("domDetail"),
+						CardScore = Score("cardScore"), CardDetail = Detail("cardDetail"), CssScore = Score("cssScore"), CssDetail = Detail("cssDetail"),
+						LayoutScore = Score("layoutScore"), LayoutDetail = Detail("layoutDetail"), EventScore = Score("eventScore"), EventDetail = Detail("eventDetail"),
+						TotalScore = Score("totalScore")
+					};
+					br.Grade = PerformanceBenchmarkService.ComputeGrade(br.TotalScore);
+					tcs.TrySetResult(br);
+				}
+				catch (Exception ex) { tcs.TrySetException(ex); }
+			};
+			status.Text = "依次测量脚本、页面渲染、动画与交互。关闭窗口会取消本项测试。";
+			webView.CoreWebView2.Navigate(new Uri(Path.Combine(AppContext.BaseDirectory, "Assets", "Benchmark", "browser-benchmark.html")).AbsoluteUri);
+			var br = await tcs.Task;
+			local.Token.ThrowIfCancellationRequested();
+			result.Browser = br;
+			UpdateDetailRow(_brJsScoreText, _brJsDetailText, br.JsScore, br.JsDetail);
+			UpdateDetailRow(_brDomScoreText, _brDomDetailText, br.DomScore, br.DomDetail);
+			UpdateDetailRow(_brCardScoreText, _brCardDetailText, br.CardScore, br.CardDetail);
+			UpdateDetailRow(_brCssScoreText, _brCssDetailText, br.CssScore, br.CssDetail);
+			UpdateDetailRow(_brLayoutScoreText, _brLayoutDetailText, br.LayoutScore, br.LayoutDetail);
+			UpdateDetailRow(_brEventScoreText, _brEventDetailText, br.EventScore, br.EventDetail);
+		}
+		finally
+		{
+			finished = true; dialog.Hide();
+			try { await showTask; } catch { }
+			webView.Close();
 		}
 	}
 
@@ -1745,7 +1012,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	{
 		UpdateScoreRow(_cpuSingleScoreText, r.Cpu.SingleCoreScore);
 		UpdateScoreRow(_cpuMultiScoreText, r.Cpu.MultiCoreScore);
-		UpdateScoreRow(_cpuLatencyScoreText, r.Cpu.LatencyScore);
+		if (r.Cpu.LatencyMatrix != null) UpdateScoreRow(_cpuLatencyScoreText, r.Cpu.LatencyScore);
+		else _cpuLatencyScoreText.Text = "未测量";
 	}
 
 	private void UpdateMemoryUI(PerformanceBenchmarkResult r)
@@ -1827,13 +1095,13 @@ public sealed partial class PerformanceBenchmarkPage : Page
 	private void ResetUI()
 	{
 		_gamingScoreText.Text = "—";
-		_gamingGradeText.Text = "";
+		_gamingGradeText.Text = "待完成测试";
 		_gamingBar.Value = 0.0;
 		_officeScoreText.Text = "—";
-		_officeGradeText.Text = "";
+		_officeGradeText.Text = "待完成测试";
 		_officeBar.Value = 0.0;
 		_winScoreText.Text = "—";
-		_winGradeText.Text = "";
+		_winGradeText.Text = "待完成测试";
 		_winBar.Value = 0.0;
 		_winListLoadText.Text = "—";
 		_winImageListText.Text = "—";
@@ -1884,7 +1152,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 
 	private async void OnExportClick(object sender, RoutedEventArgs e)
 	{
-		if (_result == null) return;
+		if (_result == null || _isRunning) return;
 		try
 		{
 			_statusText.Text = "正在准备报告...";
@@ -1979,13 +1247,14 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			List<PerformanceBenchmarkResult> list = await Task.Run(PerformanceBenchmarkService.LoadHistory);
 			if (list.Count == 0)
 			{
+				_historyInProgress = false;
 				await new ContentDialog
 				{
 					Title = "历史对比",
 					Content = new TextBlock { Text = "暂无历史测试记录，先完成一次性能测试吧。", Margin = new Thickness(16.0) },
 					CloseButtonText = "关闭",
 					XamlRoot = XamlRoot,
-					RequestedTheme = ThemeService.CurrentElementTheme
+					RequestedTheme = ActualTheme
 				}.ShowAsync();
 				return;
 			}
@@ -2009,7 +1278,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 
 	private async void OnLatencyOnlyClick(object sender, RoutedEventArgs e)
 	{
-		if (_isRunning) return;
+		if (_isRunning || PerformanceBenchmarkService.IsRunning) return;
 		string? coreToCoreExe = PerformanceBenchmarkService.FindCoreToCoreLatencyExe();
 		if (coreToCoreExe == null)
 		{
@@ -2019,18 +1288,20 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Content = "未找到核间延迟测试程序（C2CLatency.exe），请确认 Tools/处理器工具/C2CLatency 目录完整。",
 				CloseButtonText = "确定",
 				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
+				RequestedTheme = ActualTheme
 			}.ShowAsync();
 			return;
 		}
-		_isRunning = true;
-		_latencyOnlyBtn.IsEnabled = false;
-		_startBtn.IsEnabled = false;
-		SetCheckboxesEnabled(false);
+		if (!PerformanceBenchmarkService.TryBeginSession()) return;
+		_uiGeneration++;
+		_cts.Dispose(); _cts = new CancellationTokenSource();
+		_result = null; _exportBtn.IsEnabled = false;
+		SetRunning(true);
+		_phaseTitle.Text = "正在测试 · 核间延迟";
 		try
 		{
 			_statusText.Text = "正在运行核间延迟测试...";
-			var (csv, _) = await ShowCoreToCoreLatencyDialog(coreToCoreExe);
+			var (csv, _) = await ShowCoreToCoreLatencyDialog(coreToCoreExe, _cts.Token);
 			if (string.IsNullOrEmpty(csv))
 			{
 				_statusText.Text = "核间延迟测试未完成";
@@ -2038,6 +1309,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			}
 			int maxCores = Math.Min(Environment.ProcessorCount, 64);
 			var matrix = PerformanceBenchmarkService.ParseCoreToCoreCsv(csv, maxCores);
+			BenchmarkResultValidation.Latency(matrix);
 			string? heatmapPath = PerformanceBenchmarkService.GenerateLatencyHeatmap(matrix);
 			_latencyHeatmapPath = heatmapPath;
 			DispatcherQueue.TryEnqueue(() =>
@@ -2052,7 +1324,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				PrimaryButtonText = "上传",
 				CloseButtonText = "不传",
 				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
+				RequestedTheme = ActualTheme
 			};
 			if (await ask.ShowAsync() != ContentDialogResult.Primary)
 			{
@@ -2072,7 +1344,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				Title = "正在上传",
 				Content = new ProgressBar { IsIndeterminate = true },
 				XamlRoot = XamlRoot,
-				RequestedTheme = ThemeService.CurrentElementTheme
+				RequestedTheme = ActualTheme
 			};
 			var progressTask = progressDialog.ShowAsync().AsTask();
 			try
@@ -2090,7 +1362,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 					PrimaryButtonText = "打开 PR",
 					CloseButtonText = "关闭",
 					XamlRoot = XamlRoot,
-					RequestedTheme = ThemeService.CurrentElementTheme
+					RequestedTheme = ActualTheme
 				}.ShowAsync() == ContentDialogResult.Primary)
 					await Launcher.LaunchUriAsync(new Uri(prUrl));
 			}
@@ -2104,20 +1376,20 @@ public sealed partial class PerformanceBenchmarkPage : Page
 					Content = ex.Message,
 					CloseButtonText = "确定",
 					XamlRoot = XamlRoot,
-					RequestedTheme = ThemeService.CurrentElementTheme
+					RequestedTheme = ActualTheme
 				}.ShowAsync();
 			}
 		}
+		catch (OperationCanceledException) { _statusText.Text = "核间延迟测试已取消，未生成分数。"; }
 		catch (Exception ex)
 		{
 			_statusText.Text = "核间延迟测试出错: " + ex.Message;
 		}
 		finally
 		{
-			_isRunning = false;
-			_latencyOnlyBtn.IsEnabled = true;
-			_startBtn.IsEnabled = true;
-			SetCheckboxesEnabled(true);
+			SetRunning(false);
+			PerformanceBenchmarkService.EndSession();
+			_phaseTitle.Text = "核间延迟测试已结束";
 		}
 	}
 }

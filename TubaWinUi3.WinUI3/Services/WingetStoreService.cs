@@ -192,9 +192,27 @@ public static class WingetStoreService
     }
 
     /// <summary>
-    /// 通过 winget CLI 搜索软件包，解析 stdout 输出
+    /// 在线搜索：优先读取 WinGet 官方源索引（cdn.winget.microsoft.com，不依赖本机 winget）；
+    /// 官方源不可达时回退到本机 winget CLI，保证老网络环境下仍能搜索。
     /// </summary>
-    public static async Task<WingetSearchResultList> SearchOnlineAsync(string query, CancellationToken ct = default)
+    public static async Task<WingetSearchResultList> SearchOnlineAsync(string query,
+        IProgress<string>? status = null, CancellationToken ct = default)
+    {
+        var empty = new WingetSearchResultList { Results = [] };
+        if (string.IsNullOrWhiteSpace(query)) return empty;
+
+        var rest = await WingetRestService.SearchAsync(query, status, ct).ConfigureAwait(false);
+        if (rest.Error is null) return rest;
+
+        LogService.Warn(LogService.App, $"WinGet 官方源搜索失败，尝试本机 winget：{rest.Error}");
+        if (!await IsWingetAvailableAsync().ConfigureAwait(false)) return rest;
+
+        var fallback = await SearchViaCliAsync(query, ct).ConfigureAwait(false);
+        return fallback.Error is null ? fallback : rest;
+    }
+
+    /// <summary>winget CLI 搜索（官方源不可用时的回退路径）。</summary>
+    private static async Task<WingetSearchResultList> SearchViaCliAsync(string query, CancellationToken ct)
     {
         var empty = new WingetSearchResultList { Results = [] };
         if (string.IsNullOrWhiteSpace(query)) return empty;
@@ -338,6 +356,68 @@ public static class WingetStoreService
         Directory.CreateDirectory(destination);
         return DownloadQueueService.Enqueue(package.Name, package.DownloadUrl!, destination,
             new InstallerLaunchProcessor(), "官方安装包 · 下载完成后启动安装", package.Glyph);
+    }
+
+    /// <summary>
+    /// 商店安装入口：直链包直接进下载队列；其余从 WinGet 官方源解析安装包地址后入队
+    /// （每份源数据按 SHA-256 校验，安装包下载完再校验一次才启动）。
+    /// 仅当官方源解析失败且本机确有 winget 时才回退到 winget install（覆盖 portable/MSIX 等直下不支持的格式）。
+    /// </summary>
+    public static async Task<StoreInstallResult> InstallStorePackageAsync(StorePackage package,
+        IProgress<string>? status = null, CancellationToken ct = default)
+    {
+        if (package.IsDirectDownload)
+        {
+            EnqueueDirectInstaller(package);
+            return new StoreInstallResult(true, "已加入下载中心，下载完成后启动安装程序。");
+        }
+
+        string? sourceError = null;
+        try
+        {
+            var plan = await WingetRestService.ResolveInstallerAsync(package.Id, status, ct).ConfigureAwait(false);
+            EnqueueResolvedInstaller(package, plan);
+            return new StoreInstallResult(true,
+                $"已加入下载中心：{plan.Version} · {plan.Architecture} 官方安装包，下载并校验 SHA-256 后启动安装。");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            sourceError = ex.Message;
+            LogService.Warn(LogService.App, $"从 WinGet 官方源解析 {package.Id} 失败：{ex.Message}");
+        }
+
+        if (await IsWingetAvailableAsync().ConfigureAwait(false))
+        {
+            status?.Report("官方源不可用，改为通过本机 WinGet 安装…");
+            await InstallPackageAsync(package.Id, status, ct).ConfigureAwait(false);
+            return new StoreInstallResult(false, "安装完成（通过本机 WinGet）");
+        }
+
+        throw new InvalidOperationException(
+            (sourceError ?? "无法解析该应用的官方安装包。") + "\n\n本机也没有可用的 WinGet，请检查网络后重试。");
+    }
+
+    /// <summary>把官方源解析出的安装包交给下载队列：下载 → SHA-256 校验 → 启动安装程序。</summary>
+    public static DownloadItem EnqueueResolvedInstaller(StorePackage package, WingetInstallPlan plan)
+    {
+        var destination = Path.Combine(Path.GetTempPath(), "TubaWinUi3_Store");
+        Directory.CreateDirectory(destination);
+
+        IDownloadPostProcessor processor = string.IsNullOrWhiteSpace(plan.InstallerSha256)
+            ? new InstallerLaunchProcessor()
+            : new VerifiedInstallerLaunchProcessor(plan.InstallerSha256);
+
+        return DownloadQueueService.EnqueueWithResolver(
+            package.Name,
+            _ => Task.FromResult(new ResolvedDownloadUrl(plan.InstallerUrl, plan.FileName)),
+            destination,
+            processor,
+            $"WinGet 官方源 · {plan.Version} · {plan.Architecture} · 下载完成后校验并启动安装",
+            package.Glyph);
     }
 
     /// <summary>以精确包 ID 交给 WinGet 安装，保留依赖、校验和及 portable 包处理。</summary>
@@ -592,3 +672,6 @@ public sealed record WingetSearchResultList
     public List<WingetSearchResult> Results { get; init; } = [];
     public string? Error { get; init; }
 }
+
+/// <summary>商店安装结果：Queued = 已交给下载队列（下载后启动安装），否则为已同步完成。</summary>
+public sealed record StoreInstallResult(bool Queued, string Message);

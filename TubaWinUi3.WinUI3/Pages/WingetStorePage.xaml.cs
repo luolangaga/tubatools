@@ -16,7 +16,6 @@ public sealed partial class WingetStorePage : Page
     private string _currentCategory = "精选";
     private string _currentQuery = "";
     private CancellationTokenSource? _searchCts;
-    private bool _wingetAvailable;
     private int _searchVersion;
     private bool _catalogLoaded;
 
@@ -36,7 +35,6 @@ public sealed partial class WingetStorePage : Page
     {
         if (!_catalogLoaded)
         {
-            _wingetAvailable = await WingetStoreService.IsWingetAvailableAsync();
             await LoadCatalogAsync();
         }
         else if (!string.IsNullOrEmpty(_currentQuery))
@@ -147,23 +145,23 @@ public sealed partial class WingetStorePage : Page
         {
             if (string.IsNullOrWhiteSpace(query)) { ApplyFilter(); return; }
             if (debounce) await Task.Delay(350, cts.Token);
-            ShowLoading("正在搜索本地目录与 WinGet…");
+            ShowLoading("正在搜索精选目录与 WinGet 官方源…");
             var combined = WingetStoreService.SearchLocal(query, _catalog);
-            string? onlineError = "未检测到 WinGet，当前仅搜索精选目录。";
-            if (_wingetAvailable)
+            var searchStatus = new Progress<string>(text =>
             {
-                var result = await WingetStoreService.SearchOnlineAsync(query, cts.Token);
-                onlineError = result.Error;
-                var known = combined.Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                foreach (var online in result.Results)
-                    if (known.Add(online.PackageIdentifier))
-                        combined.Add(new StorePackage
-                        {
-                            Id = online.PackageIdentifier, Name = online.PackageName,
-                            Description = online.Publisher ?? online.PackageIdentifier,
-                            Category = "在线搜索", Glyph = "\uE774", IsOnlineResult = true
-                        });
-            }
+                if (version == _searchVersion) LoadingText.Text = text;
+            });
+            var result = await WingetStoreService.SearchOnlineAsync(query, searchStatus, cts.Token);
+            var onlineError = result.Error;
+            var known = combined.Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var online in result.Results)
+                if (known.Add(online.PackageIdentifier))
+                    combined.Add(new StorePackage
+                    {
+                        Id = online.PackageIdentifier, Name = online.PackageName,
+                        Description = online.Publisher ?? online.PackageIdentifier,
+                        Category = "在线搜索", Glyph = "\uE774", IsOnlineResult = true
+                    });
             cts.Token.ThrowIfCancellationRequested();
             if (version != _searchVersion) return;
             HomeIntro.Visibility = Visibility.Collapsed;
@@ -221,15 +219,6 @@ public sealed partial class WingetStorePage : Page
         pkg.InstallState = "installing";
         try
         {
-            if (pkg.IsDirectDownload)
-            {
-                WingetStoreService.EnqueueDirectInstaller(pkg);
-                pkg.InstallState = "queued";
-                pkg.StatusText = "已加入下载中心，下载完成后启动安装程序。";
-                btn.Content = "已加入队列";
-                ToolTipService.SetToolTip(btn, pkg.StatusText);
-                return;
-            }
             var progress = new Progress<string>(status =>
             {
                 pkg.StatusText = status;
@@ -237,9 +226,12 @@ public sealed partial class WingetStorePage : Page
                 if (pkg.InstallState == "installing")
                     btn.Content = StoreVisuals.BuildResolvingContent(status.StartsWith("等待") ? "等待安装…" : "正在安装…");
             });
-            await WingetStoreService.InstallPackageAsync(pkg.Id, progress);
-            pkg.InstallState = "done";
-            btn.Content = "已安装";
+            var result = await WingetStoreService.InstallStorePackageAsync(pkg, progress);
+            pkg.InstallState = result.Queued ? "queued" : "done";
+            pkg.StatusText = result.Message;
+            btn.Content = result.Queued ? "已加入队列" : "已安装";
+            ToolTipService.SetToolTip(btn, result.Message);
+            if (result.Queued) return;
         }
         catch (Exception ex)
         {

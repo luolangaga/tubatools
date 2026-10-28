@@ -69,7 +69,7 @@ public sealed class StorePackage
     public string ActionLabel => CanInstall ? "安装" : "暂未收录";
 
     [JsonIgnore]
-    public string SourceLabel => IsDirectDownload ? "官方直链 · x64" : CanInstall ? "WinGet" : "WinGet 暂未收录";
+    public string SourceLabel => IsDirectDownload ? "官方直链 · x64" : CanInstall ? "WinGet 官方源" : "WinGet 暂未收录";
 
     [JsonIgnore]
     public string Monogram => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "A";

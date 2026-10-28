@@ -342,6 +342,7 @@ function finish(){
     (R.eventScore||0)*0.15
   );
   R.totalScore=total;
+  R.completed=true;
   try{window.chrome.webview.postMessage(JSON.stringify(R));}catch(e){}
 }
 
@@ -353,6 +354,8 @@ async function run(){
   benchLayout();
   benchEvent();
 }
-run();
+run().catch(function(error){
+  try{window.chrome.webview.postMessage(JSON.stringify({error:String(error)}));}catch(e){}
+});
 })();
 </script></body></html>

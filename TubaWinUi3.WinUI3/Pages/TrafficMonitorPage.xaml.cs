@@ -1,820 +1,664 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.Net;
 using System.Runtime.InteropServices;
-using LiveChartsCore;
+using System.Text;
+using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
-using Microsoft.UI.Windowing;
+using LiveChartsCore.SkiaSharpView.WinUI;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
+using CommunityToolkit.WinUI.Controls;
 using SkiaSharp;
 using TubaWinUi3.Services;
-using Microsoft.UI.Text;
-using Windows.Graphics;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace TubaWinUi3.Pages;
 
 public sealed partial class TrafficMonitorPage : Page
 {
-    private const int ChartMaxPoints = 120;
-
-    /// <summary>折线配色（系统图表系列色板，跟随主题）：下载用成功色系、上传用强调色系。</summary>
-    private static SKColor DownloadC => ToSk(ThemeColors.Series3);
-    private static SKColor UploadC => ToSk(ThemeColors.Series1);
-
-    private static SKColor ToSk(Windows.UI.Color color) => new(color.R, color.G, color.B);
-
-    private static readonly GridLength[] ColWidths =
-    [
-        new GridLength(1.7, GridUnitType.Star),
-        new GridLength(2.4, GridUnitType.Star),
-        new GridLength(1.0, GridUnitType.Star),
-        new GridLength(1.0, GridUnitType.Star),
-        new GridLength(1.0, GridUnitType.Star),
-        new GridLength(1.0, GridUnitType.Star),
-        new GridLength(0.9, GridUnitType.Star),
-        new GridLength(0.85, GridUnitType.Star)
-    ];
-
-    private readonly ObservableCollection<double> _dlChart = [];
-    private readonly ObservableCollection<double> _ulChart = [];
-    private readonly Dictionary<string, ConnRow> _rows = [];
-    private readonly Dictionary<string, (DateTime Time, long? Ms)> _latencyCache = [];
-    private readonly HashSet<string> _pinging = [];
+    private enum DisplayMode { Live, Paused, Review }
+    private sealed record ChartSample(DateTime Time, long Download, long Upload);
+    public ObservableCollection<TrafficMonitorRow> Rows { get; } = [];
     private readonly TrafficSnapshotRecorder _recorder = new();
-
+    private readonly List<ChartSample> _history = [];
+    private readonly Dictionary<string, TrafficMonitorRow> _rowCache = [];
     private TrafficSnapshot? _lastSample;
-    private bool _recording;
-    private bool _reviewing;
-    private bool _reviewChartFilled;
-    private bool _sliderReady;
-    private bool _disposed;
+    private TrafficSnapshot? _displaySample;
+    private DisplayMode _mode;
+    private bool _ready, _disposed, _recording, _sliderReady, _selectingAdapter, _refreshing, _detailOpen;
+    private int _adapterIndex = -1;
+    private string _adapterDescription = "";
+    private Window? _connWindow, _chartWindow;
+    private CartesianChart? _popoutChart;
+    private ChartSample[] _chartSamples = [];
+    private ChartSample[] _pausedHistory = [];
+    private bool _chartNeedsRecreate = true;
 
     public TrafficMonitorPage()
     {
         InitializeComponent();
         ChartInitializer.EnsureConfigured();
-
-        InitChart();
-        ConnHeaderGrid.Children.Add(MakeHeaderGrid());
-
-        // 代码构建的画刷（图表系列色/行文本色）不会随主题自动刷新，切换主题后按缓存数据重渲染
+        foreach (var section in new[] { OverviewSection, ConnectionsSection, TrendSection, RecordingSection })
+        {
+            var saved = AppSettings.Get("TrafficMonitor_" + section.Name);
+            if (bool.TryParse(saved, out var expanded)) section.IsExpanded = expanded;
+        }
+        OverviewSummary.Visibility = OverviewSection.IsExpanded ? Visibility.Collapsed : Visibility.Visible;
+        Loaded += (_, _) => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            () => PageScroll.ChangeView(null, 0, null, true));
+        ConfigureChart(TrafficChart);
+        AttachChartLifecycle(TrafficChart);
+        _ready = true;
+        PageScroll.ViewChanged += (_, args) =>
+        {
+            if (!args.IsIntermediate && TrendSection.IsExpanded) QueueChartRedraw(TrafficChart);
+        };
         ActualThemeChanged += (_, _) =>
         {
-            if (!IsLoaded) return;
-            InitChart();
-            if (_reviewing || _lastSample is not { } sample) return;
-            ConnPanel.Children.Clear();
-            _rows.Clear();
-            UpdateCards(sample);
-            UpdateConnections(sample);
+            if (!_ready) return;
+            ConfigureChart(TrafficChart);
+            if (_popoutChart is not null) ConfigureChart(_popoutChart);
+            RefreshChart();
+            if (_connWindow?.Content is FrameworkElement content) content.RequestedTheme = ActualTheme;
+            if (_chartWindow?.Content is FrameworkElement chart) chart.RequestedTheme = ActualTheme;
         };
     }
-
-    #region 生命周期
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         _disposed = false;
+        TrafficMonitorService.Tick -= OnServiceTick;
         TrafficMonitorService.Tick += OnServiceTick;
-        RefreshAdapters(preserveSelection: false);
-        _sliderReady = true;
+        _ = RefreshAdaptersAsync();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
-        if (App.IsLiteMode) return;
-
-        TrafficMonitorService.Tick -= OnServiceTick;
-        TrafficMonitorService.Stop();
-        ClosePopoutWindows();
         _disposed = true;
+        TrafficMonitorService.Tick -= OnServiceTick;
+        if (!App.IsLiteMode) TrafficMonitorService.Stop();
+        ClosePopoutWindows();
     }
-
-    private static void StopTrafficMonitoring() => TrafficMonitorService.Stop();
 
     private void MinimizeToTrayButton_Click(object sender, RoutedEventArgs e)
     {
         ClosePopoutWindows();
         App.IsLiteMode = true;
-        TrayIconService.Show("流量监控器", StopTrafficMonitoring);
+        TrayIconService.Show("流量监控器", TrafficMonitorService.Stop);
         App.MainWindow?.Close();
     }
 
-    #endregion
+    private async void RefreshAdapters_Click(object sender, RoutedEventArgs e) => await RefreshAdaptersAsync();
 
-    #region 网卡选择
-
-    private void RefreshAdapters_Click(object sender, RoutedEventArgs e) => RefreshAdapters(preserveSelection: true);
-
-    private void RefreshAdapters(bool preserveSelection)
+    private async Task RefreshAdaptersAsync()
     {
-        var prevIndex = (AdapterCombo.SelectedItem as ComboBoxItem)?.Tag is AdapterInfo prev ? prev.Index : -1;
-
-        AdapterCombo.Items.Clear();
-        var adapters = NetworkAdapterProxyService.GetAdapters();
-        foreach (var a in adapters)
+        if (_refreshing) return;
+        _refreshing = true;
+        RefreshAdaptersBtn.IsEnabled = false;
+        try
         {
-            AdapterCombo.Items.Add(new ComboBoxItem
+            var adapters = await Task.Run(NetworkAdapterProxyService.GetAdapters);
+            if (_disposed) return;
+            _selectingAdapter = true;
+            AdapterCombo.Items.Clear();
+            foreach (var a in adapters)
             {
-                Content = $"{a.Name}  ·  {a.TypeLabel}  ·  {NetworkAdapterProxyService.FormatSpeed(a.Speed)}",
-                Tag = a
-            });
-        }
-
-        ComboBoxItem? pick = null;
-        if (preserveSelection)
-            pick = AdapterCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (i.Tag as AdapterInfo)?.Index == prevIndex);
-        pick ??= AdapterCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => ((AdapterInfo)i.Tag).HasInternet);
-        pick ??= AdapterCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => ((AdapterInfo)i.Tag).IsUp);
-
-        if (pick is not null)
-        {
+                var item = new ComboBoxItem { Content = $"{a.Name} · {(a.IsUp ? "已连接" : "未连接")}", Tag = a };
+                ToolTipService.SetToolTip(item, $"{a.Description}\n{string.Join(" / ", a.Addresses)}\n链路速率 {NetworkAdapterProxyService.FormatSpeed(a.Speed)}");
+                AdapterCombo.Items.Add(item);
+            }
+            var items = AdapterCombo.Items.Cast<ComboBoxItem>().ToArray();
+            var pick = items.FirstOrDefault(i => ((AdapterInfo)i.Tag).Index == _adapterIndex)
+                ?? items.FirstOrDefault(i => ((AdapterInfo)i.Tag).HasInternet)
+                ?? items.FirstOrDefault(i => ((AdapterInfo)i.Tag).IsUp)
+                ?? items.FirstOrDefault();
             AdapterCombo.SelectedItem = pick;
+            _selectingAdapter = false;
+            if (pick?.Tag is AdapterInfo adapter)
+            {
+                if (_adapterIndex != adapter.Index || !TrafficMonitorService.IsRunning)
+                    await SelectAdapterAsync(adapter);
+            }
+            else
+            {
+                TrafficMonitorService.Stop();
+                _adapterIndex = -1;
+                ResetSession();
+                AdapterStatusText.Text = "未检测到网卡，请连接网络后刷新";
+                EmptyText.Text = "没有可监控的网卡";
+            }
         }
-        else
+        catch (Exception ex) { ShowNotice("无法读取网卡：" + ex.Message, InfoBarSeverity.Error); }
+        finally { _selectingAdapter = false; _refreshing = false; RefreshAdaptersBtn.IsEnabled = true; }
+    }
+
+    private async void AdapterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_ready || _selectingAdapter || AdapterCombo.SelectedItem is not ComboBoxItem { Tag: AdapterInfo adapter }) return;
+        await SelectAdapterAsync(adapter);
+    }
+
+    private async Task SelectAdapterAsync(AdapterInfo adapter)
+    {
+        if (_adapterIndex == adapter.Index && TrafficMonitorService.IsRunning) return;
+        if (_recorder.Count > 0)
         {
-            TrafficMonitorService.Stop();
-            AdapterStatusText.Text = "未检测到可用网卡";
+            var dialog = new ContentDialog
+            {
+                XamlRoot = XamlRoot, Title = "切换监控网卡？",
+                Content = "切换会重新统计累计流量并清除当前记录。需要保留时，请先导出记录。",
+                PrimaryButtonText = "切换并清除", CloseButtonText = "取消", DefaultButton = ContentDialogButton.Close
+            };
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                _selectingAdapter = true;
+                AdapterCombo.SelectedItem = AdapterCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => ((AdapterInfo)i.Tag).Index == _adapterIndex);
+                _selectingAdapter = false;
+                return;
+            }
         }
-    }
-
-    private void AdapterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (AdapterCombo.SelectedItem is not ComboBoxItem { Tag: AdapterInfo adapter }) return;
-        RestartForAdapter(adapter);
-    }
-
-    private void RestartForAdapter(AdapterInfo adapter)
-    {
         TrafficMonitorService.Stop();
-
-        _rows.Clear();
-        ConnPanel.Children.Clear();
-        _dlChart.Clear();
-        _ulChart.Clear();
-        _latencyCache.Clear();
-        _pinging.Clear();
-        _recorder.Clear();
-        _lastSample = null;
-        _recording = false;
-        _reviewing = false;
-        _reviewChartFilled = false;
-
-        _sliderReady = false;
-        SnapshotSlider.Value = 0;
-        SnapshotSlider.Maximum = 0;
-        SnapshotSlider.IsEnabled = false;
-        _sliderReady = true;
-
-        MarkerCanvas.Visibility = Visibility.Collapsed;
-        ReviewBannerText.Visibility = Visibility.Collapsed;
-        BackLiveBtn.Visibility = Visibility.Collapsed;
-        ConnCountText.Text = "0 条";
-        RecStatusText.Text = "未开始记录";
-        UpdateRecordUi();
-
-        AdapterStatusText.Text = $"{adapter.Description} · 速率 {NetworkAdapterProxyService.FormatSpeed(adapter.Speed)}";
+        _adapterIndex = adapter.Index;
+        _adapterDescription = $"{adapter.Description} · 链路 {NetworkAdapterProxyService.FormatSpeed(adapter.Speed)}";
+        ResetSession();
+        AdapterStatusText.Text = _adapterDescription + " · 等待采样";
         TrafficMonitorService.Start(adapter.Index);
     }
 
-    #endregion
-
-    #region 数据刷新（服务 Tick → UI）
+    private void ResetSession()
+    {
+        _lastSample = _displaySample = null;
+        _history.Clear();
+        _pausedHistory = [];
+        Rows.Clear();
+        _rowCache.Clear();
+        _recorder.Clear();
+        _recording = false;
+        _mode = DisplayMode.Live;
+        SpeedInText.Text = SpeedOutText.Text = "—";
+        OverviewSummary.Text = "等待采样";
+        TotalInText.Text = TotalOutText.Text = "本次累计 0 B";
+        EmptyState.Visibility = Visibility.Visible;
+        EmptyText.Text = "正在获取网络活动…";
+        ConnCountText.Text = "等待连接…";
+        NoticeBar.IsOpen = false;
+        RefreshChart();
+        UpdateRecordUi();
+        UpdateDisplayMode();
+    }
 
     private void OnServiceTick(TrafficSnapshot sample) => DispatcherQueue.TryEnqueue(() => ApplySample(sample));
 
     private void ApplySample(TrafficSnapshot sample)
     {
-        if (_disposed) return;
-        _lastSample = sample;
-
-        if (_recording)
+        if (_disposed || sample.AdapterIndex != _adapterIndex) return;
+        if (sample.ErrorMessage.Length > 0)
         {
-            _recorder.Add(sample);
-            UpdateSliderMax();
-            if (_reviewing) AppendReviewChart(sample);
-        }
-        UpdateRecordUi();
-
-        if (_reviewing) return;
-
-        UpdateCards(sample);
-        UpdateChart(sample);
-        UpdateConnections(sample);
-    }
-
-    private void UpdateCards(TrafficSnapshot s)
-    {
-        TotalInText.Text = NetworkAdapterProxyService.FormatBytes(s.TotalIn);
-        TotalOutText.Text = NetworkAdapterProxyService.FormatBytes(s.TotalOut);
-        SpeedInText.Text = $"{NetworkAdapterProxyService.FormatBytes(s.SpeedIn)}/s";
-        SpeedOutText.Text = $"{NetworkAdapterProxyService.FormatBytes(s.SpeedOut)}/s";
-    }
-
-    private void UpdateChart(TrafficSnapshot s)
-    {
-        PushChart(_dlChart, s.SpeedIn / (double)(1 << 20));
-        PushChart(_ulChart, s.SpeedOut / (double)(1 << 20));
-    }
-
-    private void PushChart(ObservableCollection<double> list, double value)
-    {
-        list.Add(value);
-        if (list.Count > ChartMaxPoints) list.RemoveAt(0);
-    }
-
-    private void UpdateConnections(TrafficSnapshot s)
-    {
-        var seen = new HashSet<string>();
-        foreach (var info in s.Connections)
-        {
-            seen.Add(info.Key);
-            if (_rows.TryGetValue(info.Key, out var row))
+            AdapterStatusText.Text = sample.ErrorMessage;
+            _lastSample = null;
+            if (_mode == DisplayMode.Live)
             {
-                // 域名可能异步解析出来后更新
-                row.RemoteMainText.Text = RemoteMainText(info);
-                row.RemoteSubText.Text = RemoteSubText(info);
-                row.TotalInText.Text = NetworkAdapterProxyService.FormatBytes(info.TotalIn);
-                row.TotalOutText.Text = NetworkAdapterProxyService.FormatBytes(info.TotalOut);
-                row.SpeedInText.Text = $"{NetworkAdapterProxyService.FormatBytes(info.SpeedIn)}/s";
-                row.SpeedOutText.Text = $"{NetworkAdapterProxyService.FormatBytes(info.SpeedOut)}/s";
+                _displaySample = null;
+                SpeedInText.Text = SpeedOutText.Text = "—";
+                Rows.Clear();
+                _rowCache.Clear();
+                EmptyState.Visibility = Visibility.Visible;
+                EmptyText.Text = "网络暂不可用，恢复后将自动继续监控";
+                ExportViewItem.IsEnabled = false;
+                ConnCountText.Text = "等待网络恢复";
+                ConnectionsSection.Description = ConnCountText.Text;
+                OverviewSummary.Text = "等待网络恢复";
+            }
+            return;
+        }
+        _lastSample = sample;
+        _history.Add(new(sample.Time, sample.SpeedIn, sample.SpeedOut));
+        _history.RemoveAll(s => s.Time < sample.Time.AddMinutes(-5));
+        if (_recording) _recorder.Add(sample);
+        UpdateRecordUi();
+        if (_mode != DisplayMode.Live) return;
+        DisplaySnapshot(sample);
+    }
+
+    private void DisplaySnapshot(TrafficSnapshot sample)
+    {
+        _displaySample = sample;
+        TotalInText.Text = "本次累计 " + FormatBytes(sample.TotalIn);
+        TotalOutText.Text = "本次累计 " + FormatBytes(sample.TotalOut);
+        SpeedInText.Text = FormatRate(sample.SpeedIn);
+        SpeedOutText.Text = FormatRate(sample.SpeedOut);
+        OverviewSummary.Text = $"↓ {FormatRate(sample.SpeedIn)}  ↑ {FormatRate(sample.SpeedOut)}";
+        var state = _mode switch { DisplayMode.Paused => "画面已暂停", DisplayMode.Review => "记录回放", _ => "实时监控" };
+        AdapterStatusText.Text = $"{_adapterDescription} · {state} · {sample.Time:HH:mm:ss}";
+        RefreshRows();
+        RefreshChart();
+    }
+
+    private void Filter_Changed(object sender, SelectionChangedEventArgs e) { if (_ready) RefreshRows(); }
+    private void Search_TextChanged(object sender, TextChangedEventArgs e) { if (_ready) RefreshRows(); }
+    private void ActiveOnly_Changed(object sender, RoutedEventArgs e) { if (_ready) RefreshRows(); }
+
+    private void RefreshRows()
+    {
+        if (_displaySample is not { } sample) return;
+        var entries = TrafficMonitorView.Build(sample.Connections, SearchBox.Text, ViewCombo.SelectedIndex == 0,
+            ActiveOnlyBox.IsChecked == true, (TrafficSort)Math.Max(0, SortCombo.SelectedIndex));
+        var wanted = entries.Select(e => e.Key).ToHashSet();
+        for (int i = Rows.Count - 1; i >= 0; i--)
+            if (!wanted.Contains(Rows[i].Entry.Key)) { _rowCache.Remove(Rows[i].Entry.Key); Rows.RemoveAt(i); }
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            if (!_rowCache.TryGetValue(entry.Key, out var row))
+            {
+                row = new TrafficMonitorRow(entry);
+                _rowCache[entry.Key] = row;
+                Rows.Insert(i, row);
             }
             else
             {
-                AddRow(info, frozen: false);
+                row.Update(entry);
+                var current = Rows.IndexOf(row);
+                if (current != i) Rows.Move(current, i);
             }
         }
-
-        if (_rows.Count != seen.Count)
-        {
-            foreach (var key in _rows.Keys.Where(k => !seen.Contains(k)).ToList())
-            {
-                ConnPanel.Children.Remove(_rows[key].Root);
-                _rows.Remove(key);
-            }
-        }
-
-        ConnCountText.Text = $"{_rows.Count} 条";
+        var shownConnections = entries.Sum(e => e.Connections.Count);
+        var count = Math.Max(sample.ConnectionCount, sample.Connections.Count);
+        ConnCountText.Text = ViewCombo.SelectedIndex == 0
+            ? $"{entries.Count} 个进程 · {shownConnections} / {count} 条连接"
+            : $"{shownConnections} / {count} 条连接";
+        ConnectionsSection.Description = ConnCountText.Text;
+        EmptyState.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        EmptyText.Text = sample.Connections.Count == 0 ? "当前网卡没有已建立的 TCP 连接" : "没有符合筛选条件的网络活动";
+        var unavailable = sample.Connections.Count(c => !c.HasTrafficStats);
+        ScopeText.Text = unavailable > 0
+            ? $"{unavailable} 条连接统计不可用（—），可能需要管理员权限；带 * 的汇总仅包含可用统计。"
+            : count > sample.Connections.Count
+                ? $"当前展示活跃度最高的 {sample.Connections.Count} 条 / 共 {count} 条 TCP 连接；汇总基于展示范围。"
+                : "明细仅含已建立的 TCP 连接；累计从连接启用统计起计算，整卡流量包含所有协议。";
+        ExportViewItem.IsEnabled = shownConnections > 0;
     }
 
-    private void AddRow(TrafficConnectionInfo info, bool frozen)
+    private void Pause_Click(object sender, RoutedEventArgs e)
     {
-        var row = MakeRow(info, frozen);
-        _rows[info.Key] = row;
-        ConnPanel.Children.Add(row.Root);
-    }
-
-    #endregion
-
-    #region 独立窗口
-
-    private Window? _connWindow;
-    private Window? _chartWindow;
-
-    private void ConnPopOut_Click(object sender, RoutedEventArgs e)
-    {
-        if (_connWindow is not null) return;
-        ConnContentHost.Children.Remove(ConnListContent);
-        ConnListContent.RequestedTheme = ThemeService.CurrentElementTheme;
-
-        _connWindow = CreatePopoutWindow("流量监控器 - 在线连接", 560, 760);
-        _connWindow.Content = ConnListContent;
-        _connWindow.Activate();
-
-        ConnPopoutPlaceholder.Visibility = Visibility.Visible;
-        ConnPopOutBtn.IsEnabled = false;
-    }
-
-    private void RestoreConnections_Click(object sender, RoutedEventArgs e) => RestoreConnections();
-
-    private void RestoreConnections()
-    {
-        var w = _connWindow;
-        _connWindow = null; // 先置空，避免 Closed 事件里递归关闭
-        if (w is not null)
-        {
-            // 先清窗口 Content 槽位再回挂：槽位不清时 Content=null 会把刚挂回页面的
-            // 元素从宿主里连带摘走（实测），回挂则必抛 0x800F1000（已由 ReattachToPage 兜住）
-            w.Content = null;
-            ReattachToPage(ConnListContent, ConnContentHost);
-            w.Close();
-        }
-        else if (!ReattachToPage(ConnListContent, ConnContentHost))
-        {
-            return; // 摘回失败：内容仍留在独立窗口岛，保持占位提示与禁用弹出按钮
-        }
-        ConnPopoutPlaceholder.Visibility = Visibility.Collapsed;
-        ConnPopOutBtn.IsEnabled = true;
-    }
-
-    private void ChartPopOut_Click(object sender, RoutedEventArgs e)
-    {
-        if (_chartWindow is not null) return;
-        ChartContentHost.Children.Remove(ChartListContent);
-        ChartListContent.RequestedTheme = ThemeService.CurrentElementTheme;
-
-        _chartWindow = CreatePopoutWindow("流量监控器 - 吞吐折线", 640, 420);
-        _chartWindow.Content = ChartListContent;
-        _chartWindow.Activate();
-
-        ChartPopoutPlaceholder.Visibility = Visibility.Visible;
-        ChartPopOutBtn.IsEnabled = false;
-    }
-
-    private void RestoreChart_Click(object sender, RoutedEventArgs e) => RestoreChart();
-
-    private void RestoreChart()
-    {
-        var w = _chartWindow;
-        _chartWindow = null; // 先置空，避免 Closed 事件里递归关闭
-        if (w is not null)
-        {
-            // 先清窗口 Content 槽位再回挂：槽位不清时 Content=null 会把刚挂回页面的
-            // 元素从宿主里连带摘走（实测），回挂则必抛 0x800F1000（已由 ReattachToPage 兜住）
-            w.Content = null;
-            ReattachToPage(ChartListContent, ChartContentHost);
-            w.Close();
-        }
-        else if (!ReattachToPage(ChartListContent, ChartContentHost))
-        {
-            return; // 摘回失败：内容仍留在独立窗口岛，保持占位提示与禁用弹出按钮
-        }
-        ChartPopoutPlaceholder.Visibility = Visibility.Collapsed;
-        ChartPopOutBtn.IsEnabled = true;
-    }
-
-    private void ClosePopoutWindows()
-    {
-        var cw = _connWindow;
-        _connWindow = null;
-        if (cw is not null)
-        {
-            // 先清窗口 Content 槽位再回挂：槽位不清时 Content=null 会把刚挂回页面的
-            // 元素从宿主里连带摘走（实测），回挂则必抛 0x800F1000（已由 ReattachToPage 兜住）
-            cw.Content = null;
-            ReattachToPage(ConnListContent, ConnContentHost);
-            cw.Close();
-        }
-        var chw = _chartWindow;
-        _chartWindow = null;
-        if (chw is not null)
-        {
-            // 先清窗口 Content 槽位再回挂（见上）
-            chw.Content = null;
-            ReattachToPage(ChartListContent, ChartContentHost);
-            chw.Close();
-        }
-        ConnPopoutPlaceholder.Visibility = Visibility.Collapsed;
-        ChartPopoutPlaceholder.Visibility = Visibility.Collapsed;
-        ConnPopOutBtn.IsEnabled = true;
-        ChartPopOutBtn.IsEnabled = true;
-    }
-
-    /// <summary>把弹出窗口里的内容挂回页面宿主；已在宿主中则无事。返回是否已成功挂回。</summary>
-    /// <remarks>
-    /// 实测从独立窗口岛挂回页面面板时，Children.Add 会抛 REGDB_E_CLASSNOTREG
-    /// （0x800F1000「没有检测到已安装的组件」）但元素实际已挂回，故吞掉异常后复查
-    /// Parent 判断真实结果。调用前必须先清掉窗口的 Content 槽位（w.Content = null），
-    /// 否则之后置空槽位会把刚挂回的从宿主里连带摘走。异常一律不许逃逸，避免打断导航/最小化。
-    /// </remarks>
-    private static bool ReattachToPage(FrameworkElement content, Panel host)
-    {
-        if (content.Parent is not null) return true;
-        try
-        {
-            host.Children.Add(content);
-        }
-        catch (COMException ex)
-        {
-            Debug.WriteLine($"[TrafficMonitor] 收回弹出内容时抛错(可能已生效): {ex.Message}");
-        }
-        if (content.Parent is null) return false;
-        try
-        {
-            content.RequestedTheme = ElementTheme.Default;
-        }
-        catch (COMException ex)
-        {
-            Debug.WriteLine($"[TrafficMonitor] 复位弹出内容主题失败: {ex.Message}");
-        }
-        return true;
-    }
-
-    private Window CreatePopoutWindow(string title, int width, int height)
-    {
-        var window = new Window();
-        BackdropService.ApplyBackdrop(window); // 跟随用户选择的背景材质
-        window.AppWindow.Title = title;
-        window.AppWindow.Resize(new SizeInt32(width, height));
-        if (window.AppWindow.Presenter is OverlappedPresenter presenter)
-        {
-            presenter.IsResizable = true;
-            presenter.IsMaximizable = true;
-        }
-        // 关闭窗口时自动收回内容
-        window.Closed += (_, _) =>
-        {
-            if (ReferenceEquals(window, _connWindow)) { _connWindow = null; RestoreConnections(); }
-            else if (ReferenceEquals(window, _chartWindow)) { _chartWindow = null; RestoreChart(); }
-        };
-        return window;
-    }
-
-    #endregion
-
-    #region 录制与回放
-
-    private void StartRecord_Click(object sender, RoutedEventArgs e)
-    {
-        _recorder.Clear();
-        _recording = true;
-        _reviewing = false;
-        _reviewChartFilled = false;
-
-        _sliderReady = false;
-        SnapshotSlider.Value = 0;
-        SnapshotSlider.Maximum = 0;
-        SnapshotSlider.IsEnabled = false;
-        _sliderReady = true;
-
-        MarkerCanvas.Visibility = Visibility.Collapsed;
-        ReviewBannerText.Visibility = Visibility.Collapsed;
-        BackLiveBtn.Visibility = Visibility.Collapsed;
-        RecStatusText.Text = "正在记录…";
-        UpdateRecordUi();
-
-        // 若此前在查看快照，立即恢复实时视图
-        if (_lastSample is { } s)
-        {
-            UpdateCards(s);
-            UpdateConnections(s);
-        }
-    }
-
-    private void StopRecord_Click(object sender, RoutedEventArgs e)
-    {
-        _recording = false;
-        RecStatusText.Text = _recorder.Count > 0
-            ? $"已记录 {_recorder.Count} 条（至 {_recorder.Latest?.Time:HH:mm:ss}）"
-            : "未开始记录";
-        UpdateRecordUi();
-    }
-
-    private void ClearRecord_Click(object sender, RoutedEventArgs e)
-    {
-        _recorder.Clear();
-        _recording = false;
-        _reviewing = false;
-        _reviewChartFilled = false;
-
-        _sliderReady = false;
-        SnapshotSlider.Value = 0;
-        SnapshotSlider.Maximum = 0;
-        SnapshotSlider.IsEnabled = false;
-        _sliderReady = true;
-
-        MarkerCanvas.Visibility = Visibility.Collapsed;
-        ReviewBannerText.Visibility = Visibility.Collapsed;
-        BackLiveBtn.Visibility = Visibility.Collapsed;
-        RecStatusText.Text = "记录已清除";
-        UpdateRecordUi();
-
-        if (_lastSample is { } s)
-        {
-            UpdateCards(s);
-            UpdateConnections(s);
-        }
+        if (_mode != DisplayMode.Live) { BackToLive(); return; }
+        if (_displaySample is null) return;
+        _mode = DisplayMode.Paused;
+        _pausedHistory = _history.ToArray();
+        UpdateDisplayMode();
+        DisplaySnapshot(_displaySample);
     }
 
     private void BackLive_Click(object sender, RoutedEventArgs e) => BackToLive();
-
-    private void UpdateSliderMax()
-    {
-        var count = _recorder.Count;
-        if (count == 0) return;
-
-        SnapshotSlider.IsEnabled = true;
-        SnapshotSlider.Maximum = count - 1;
-        if (!_reviewing) SnapshotSlider.Value = count - 1;
-        RecStatusText.Text = $"已记录 {count} 条 · {_recorder.Latest?.Time:HH:mm:ss}";
-    }
-
-    private void SnapshotSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (!_sliderReady) return;
-
-        var count = _recorder.Count;
-        if (count == 0) return;
-
-        var idx = (int)Math.Round(e.NewValue);
-        if (_recording && idx >= count - 1)
-        {
-            if (_reviewing) BackToLive();
-            return;
-        }
-
-        if (!_recorder.TryGet(idx, out var snap)) return;
-        EnterReview(idx, snap);
-    }
-
-    private void EnterReview(int idx, TrafficSnapshot snap)
-    {
-        _reviewing = true;
-
-        if (!_reviewChartFilled)
-        {
-            FillReviewChart();
-            _reviewChartFilled = true;
-        }
-
-        ShowSnapshot(idx, snap);
-        // 先显示 Canvas 再定位：布局未就绪时由 SizeChanged 补定位
-        MarkerCanvas.Visibility = Visibility.Visible;
-        UpdateMarker(idx);
-        ReviewBannerText.Visibility = Visibility.Visible;
-        BackLiveBtn.Visibility = Visibility.Visible;
-        RecStatusText.Text = $"快照 {snap.Time:HH:mm:ss} · 第 {idx + 1}/{_recorder.Count} 条";
-    }
-
     private void BackToLive()
     {
-        _reviewing = false;
-        ReviewBannerText.Visibility = Visibility.Collapsed;
-        BackLiveBtn.Visibility = Visibility.Collapsed;
-        MarkerCanvas.Visibility = Visibility.Collapsed;
+        _mode = DisplayMode.Live;
+        _pausedHistory = [];
+        UpdateDisplayMode();
+        if (_lastSample is not null) DisplaySnapshot(_lastSample);
+        UpdateRecordUi();
+    }
 
-        if (_lastSample is { } s)
+    private void UpdateDisplayMode()
+    {
+        PauseButton.Content = _mode == DisplayMode.Live ? "暂停显示" : "恢复实时";
+        BackLiveBtn.Visibility = _mode == DisplayMode.Live ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void Record_Click(object sender, RoutedEventArgs e)
+    {
+        if (_adapterIndex < 0) { ShowNotice("请先选择可用网卡", InfoBarSeverity.Warning); return; }
+        _recording = !_recording;
+        if (_recording && _lastSample is { } sample && _recorder.Latest?.Time != sample.Time) _recorder.Add(sample);
+        UpdateRecordUi();
+    }
+
+    private async void ClearRecord_Click(object sender, RoutedEventArgs e)
+    {
+        if (_recorder.Count == 0) return;
+        var result = await new ContentDialog
         {
-            UpdateCards(s);
-            UpdateConnections(s);
-        }
-        RecStatusText.Text = _recording
-            ? $"已记录 {_recorder.Count} 条 · {_recorder.Latest?.Time:HH:mm:ss}"
-            : $"已记录 {_recorder.Count} 条";
-    }
-
-    private void ShowSnapshot(int idx, TrafficSnapshot snap)
-    {
-        ConnPanel.Children.Clear();
-        _rows.Clear();
-        foreach (var info in snap.Connections) AddRow(info, frozen: true);
-        ConnCountText.Text = $"快照 · {_rows.Count} 条";
-
-        TotalInText.Text = NetworkAdapterProxyService.FormatBytes(snap.TotalIn);
-        TotalOutText.Text = NetworkAdapterProxyService.FormatBytes(snap.TotalOut);
-        SpeedInText.Text = $"{NetworkAdapterProxyService.FormatBytes(snap.SpeedIn)}/s";
-        SpeedOutText.Text = $"{NetworkAdapterProxyService.FormatBytes(snap.SpeedOut)}/s";
-    }
-
-    private void FillReviewChart()
-    {
-        _dlChart.Clear();
-        _ulChart.Clear();
-        var count = _recorder.Count;
-        for (int i = 0; i < count; i++)
-        {
-            if (!_recorder.TryGet(i, out var snap)) break;
-            _dlChart.Add(snap.SpeedIn / (double)(1 << 20));
-            _ulChart.Add(snap.SpeedOut / (double)(1 << 20));
-        }
-    }
-
-    private void AppendReviewChart(TrafficSnapshot snap)
-    {
-        _dlChart.Add(snap.SpeedIn / (double)(1 << 20));
-        _ulChart.Add(snap.SpeedOut / (double)(1 << 20));
-    }
-
-    private void UpdateMarker(int idx)
-    {
-        var count = _recorder.Count;
-        if (count <= 1)
-        {
-            MarkerCanvas.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        var w = MarkerCanvas.ActualWidth;
-        if (w <= 0) return; // 布局未就绪，等 SizeChanged 补定位
-        Canvas.SetLeft(MarkerLine, Math.Max(0, w * idx / (count - 1) - 1));
-    }
-
-    private void MarkerCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        // Canvas 不参与布局，手动同步 Marker 竖线高度
-        MarkerLine.Height = e.NewSize.Height;
-        if (_reviewing) UpdateMarker((int)SnapshotSlider.Value);
+            XamlRoot = XamlRoot, Title = "清除流量记录？", Content = $"将清除当前 {_recorder.Count} 次采样。需要保留时，请先导出记录。",
+            PrimaryButtonText = "清除记录", CloseButtonText = "取消", DefaultButton = ContentDialogButton.Close
+        }.ShowAsync();
+        if (result != ContentDialogResult.Primary) return;
+        _recording = false;
+        _recorder.Clear();
+        BackToLive();
     }
 
     private void UpdateRecordUi()
     {
-        StartRecordBtn.IsEnabled = !_recording;
-        StopRecordBtn.IsEnabled = _recording;
-        ClearRecordBtn.IsEnabled = _recorder.Count > 0;
-    }
-
-    #endregion
-
-    #region 连接行构建
-
-    private static Grid MakeHeaderGrid()
-    {
-        var grid = new Grid { ColumnSpacing = 8, Margin = new Thickness(0, 2, 0, 2) };
-        foreach (var w in ColWidths) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = w });
-
-        var cells = new[] { "进程", "远程地址:端口", "总下载", "总上传", "下载速度", "上传速度", "延迟", "操作" };
-        for (int i = 0; i < cells.Length; i++)
+        var count = _recorder.Count;
+        RecordButton.Content = _recording ? "停止记录" : count > 0 ? "继续记录" : "开始记录";
+        ClearRecordBtn.IsEnabled = ExportRecordItem.IsEnabled = count > 0;
+        _sliderReady = false;
+        SnapshotSlider.IsEnabled = count > 0;
+        SnapshotSlider.Maximum = Math.Max(1, count - 1);
+        if (_mode == DisplayMode.Live) SnapshotSlider.Value = Math.Max(0, count - 1);
+        else if (_mode == DisplayMode.Review && _displaySample is { } shown)
         {
-            var cell = new TextBlock
-            {
-                Text = cells[i],
-                FontSize = 12,
-                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                FontWeight = FontWeights.SemiBold,
-                TextTrimming = TextTrimming.CharacterEllipsis
-            };
-            Grid.SetColumn(cell, i);
-            grid.Children.Add(cell);
+            var idx = Array.FindIndex(_recorder.ToArray(), s => s.Time == shown.Time);
+            SnapshotSlider.Value = Math.Max(0, idx);
         }
-        return grid;
+        _sliderReady = true;
+        RecStatusText.Text = count == 0 ? "尚未记录 · 后台约每秒采样一次，支持时间轴回放"
+            : $"{(_recording ? "● 正在记录" : "记录已停止")} · {count} / {TrafficSnapshotRecorder.MaxSnapshots} 次采样 · 最新 {_recorder.Latest?.Time:HH:mm:ss}"
+                + (_mode == DisplayMode.Review ? $" · 正在回放 {_displaySample?.Time:HH:mm:ss}" : " · 拖动时间轴回看");
+        RecordingSection.Description = RecStatusText.Text;
     }
 
-    private ConnRow MakeRow(TrafficConnectionInfo info, bool frozen)
+    private void SnapshotSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-        var grid = new Grid { ColumnSpacing = 8 };
-        foreach (var w in ColWidths) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = w });
+        if (!_ready || !_sliderReady || !_recorder.TryGet(Math.Min(_recorder.Count - 1, (int)Math.Round(e.NewValue)), out var sample)) return;
+        _mode = DisplayMode.Review;
+        UpdateDisplayMode();
+        DisplaySnapshot(sample);
+        UpdateRecordUi();
+    }
 
-        var procName = new TextBlock
+    private int RangeSeconds => (ChartRangeCombo.SelectedItem as ComboBoxItem)?.Tag is string value && int.TryParse(value, out var seconds) ? seconds : 120;
+    private void ChartRange_Changed(object sender, SelectionChangedEventArgs e) { if (_ready) RefreshChart(); }
+    private void RefreshChart()
+    {
+        IEnumerable<ChartSample> source = _mode == DisplayMode.Review
+            ? _recorder.ToArray().Select(s => new ChartSample(s.Time, s.SpeedIn, s.SpeedOut))
+            : _mode == DisplayMode.Paused ? _pausedHistory : _history;
+        var end = _displaySample?.Time ?? DateTime.Now;
+        _chartSamples = source.Where(s => s.Time <= end && s.Time >= end.AddSeconds(-RangeSeconds)).ToArray();
+        SetChartValues(TrafficChart);
+        if (_popoutChart is not null) SetChartValues(_popoutChart);
+        ChartStatusText.Text = _chartSamples.Length == 0 ? "等待采样 · 整卡流量包含所有协议"
+            : $"{_chartSamples[0].Time:HH:mm:ss} — {_chartSamples[^1].Time:HH:mm:ss} · 峰值 ↓ {FormatRate(_chartSamples.Max(s => s.Download))}  ↑ {FormatRate(_chartSamples.Max(s => s.Upload))}";
+    }
+
+    private static SKColor ToSk(Windows.UI.Color c) => new(c.R, c.G, c.B);
+    private void ConfigureChart(CartesianChart chart)
+    {
+        var text = ToSk(ThemeColors.DimText);
+        chart.Series = new[]
         {
-            Text = info.ProcessName,
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxWidth = 150
+            MakeSeries("下载", ToSk(ThemeColors.Series3)), MakeSeries("上传", ToSk(ThemeColors.Series1))
         };
-        var procPid = new TextBlock
+        chart.XAxes = new[] { new Axis
         {
-            Text = $"PID {info.ProcessId}",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.DimText)
-        };
-        var procPanel = new StackPanel { Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
-        procPanel.Children.Add(procName);
-        procPanel.Children.Add(procPid);
-
-        var remoteText = new TextBlock
+            Labeler = v => v >= DateTime.MinValue.Ticks && v <= DateTime.MaxValue.Ticks ? new DateTime((long)v).ToString("HH:mm:ss") : "",
+            UnitWidth = TimeSpan.FromSeconds(1).Ticks, MinStep = TimeSpan.FromSeconds(30).Ticks,
+            TextSize = 11, LabelsPaint = new SolidColorPaint(text), SeparatorsPaint = null
+        } };
+        chart.YAxes = new[] { new Axis
         {
-            Text = RemoteMainText(info),
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            MaxWidth = 240
-        };
-        var localText = new TextBlock
+            MinLimit = 0, TextSize = 11, LabelsPaint = new SolidColorPaint(text),
+            Labeler = v => FormatRate((long)Math.Max(0, v)),
+            SeparatorsPaint = new SolidColorPaint(new SKColor(text.Red, text.Green, text.Blue, 35)) { StrokeThickness = 1 }
+        } };
+        chart.AnimationsSpeed = TimeSpan.Zero;
+        chart.EasingFunction = null;
+    }
+
+    private static LineSeries<DateTimePoint> MakeSeries(string name, SKColor color) => new()
+    {
+        Name = name, GeometrySize = 0, LineSmoothness = 0,
+        Stroke = new SolidColorPaint(color) { StrokeThickness = 2 },
+        Fill = new SolidColorPaint(new SKColor(color.Red, color.Green, color.Blue, 24))
+    };
+
+    private void SetChartValues(CartesianChart chart)
+    {
+        var series = chart.Series.Cast<LineSeries<DateTimePoint>>().ToArray();
+        series[0].Values = _chartSamples.Select(s => new DateTimePoint(s.Time, s.Download)).ToArray();
+        series[1].Values = _chartSamples.Select(s => new DateTimePoint(s.Time, s.Upload)).ToArray();
+    }
+
+    private void AttachChartLifecycle(CartesianChart chart)
+    {
+        chart.Loaded += (_, _) => QueueChartRedraw(chart);
+        chart.SizeChanged += (_, _) => QueueChartRedraw(chart);
+        chart.Unloaded += (_, _) =>
         {
-            Text = RemoteSubText(info),
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.DimText),
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
-        var addrPanel = new StackPanel { Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
-        addrPanel.Children.Add(remoteText);
-        addrPanel.Children.Add(localText);
-
-        var totalIn = MakeValueText(NetworkAdapterProxyService.FormatBytes(info.TotalIn));
-        var totalOut = MakeValueText(NetworkAdapterProxyService.FormatBytes(info.TotalOut));
-        var speedIn = MakeValueText($"{NetworkAdapterProxyService.FormatBytes(info.SpeedIn)}/s");
-        var speedOut = MakeValueText($"{NetworkAdapterProxyService.FormatBytes(info.SpeedOut)}/s");
-        var latency = MakeValueText(LatencyTextFor(info.RemoteAddress));
-
-        var pingBtn = new Button
-        {
-            Content = "测延迟",
-            FontSize = 12,
-            Padding = new Thickness(8, 4, 8, 4),
-            IsEnabled = !frozen,
-            Tag = info.RemoteAddress
-        };
-        pingBtn.Click += PingBtn_Click;
-
-        Grid.SetColumn(procPanel, 0);
-        Grid.SetColumn(addrPanel, 1);
-        Grid.SetColumn(totalIn, 2);
-        Grid.SetColumn(totalOut, 3);
-        Grid.SetColumn(speedIn, 4);
-        Grid.SetColumn(speedOut, 5);
-        Grid.SetColumn(latency, 6);
-        Grid.SetColumn(pingBtn, 7);
-
-        grid.Children.Add(procPanel);
-        grid.Children.Add(addrPanel);
-        grid.Children.Add(totalIn);
-        grid.Children.Add(totalOut);
-        grid.Children.Add(speedIn);
-        grid.Children.Add(speedOut);
-        grid.Children.Add(latency);
-        grid.Children.Add(pingBtn);
-
-        return new ConnRow
-        {
-            Root = grid,
-            RemoteIp = info.RemoteAddress,
-            RemoteMainText = remoteText,
-            RemoteSubText = localText,
-            TotalInText = totalIn,
-            TotalOutText = totalOut,
-            SpeedInText = speedIn,
-            SpeedOutText = speedOut,
-            LatencyText = latency
+            if (ReferenceEquals(chart, TrafficChart)) _chartNeedsRecreate = true;
         };
     }
 
-    private static string RemoteMainText(TrafficConnectionInfo info)
-        => info.RemoteDomain.Length > 0 ? $"{info.RemoteDomain}:{info.RemotePort}" : info.DisplayRemote;
-
-    private static string RemoteSubText(TrafficConnectionInfo info)
+    private void QueueChartRedraw(CartesianChart chart)
     {
-        var local = $"本地 {info.LocalAddress}:{info.LocalPort}";
-        return info.RemoteDomain.Length > 0 ? $"{info.DisplayRemote} · {local}" : local;
-    }
-
-    private static TextBlock MakeValueText(string text) => new() { Text = text, FontSize = 12 };
-
-    private string LatencyTextFor(string ip)
-    {
-        if (_latencyCache.TryGetValue(ip, out var c) && (DateTime.Now - c.Time).TotalSeconds < 15)
-            return c.Ms is { } ms ? $"{ms} ms" : "超时";
-        return "—";
-    }
-
-    private async void PingBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button { Tag: string ip }) return;
-        if (!_pinging.Add(ip)) return; // 同一 IP 已有进行中的 ping，跳过
-
-        foreach (var row in _rows.Values.Where(r => r.RemoteIp == ip))
-            row.LatencyText.Text = "测试中…";
-
-        var ms = await TrafficMonitorService.PingAsync(IPAddress.Parse(ip));
-        _pinging.Remove(ip);
-        _latencyCache[ip] = (DateTime.Now, ms);
-
-        if (_disposed) return;
-        foreach (var row in _rows.Values.Where(r => r.RemoteIp == ip))
-            row.LatencyText.Text = ms is { } v ? $"{v} ms" : "超时";
-    }
-
-    private sealed class ConnRow
-    {
-        public required Grid Root { get; init; }
-        public required string RemoteIp { get; init; }
-        public required TextBlock RemoteMainText { get; init; }
-        public required TextBlock RemoteSubText { get; init; }
-        public required TextBlock TotalInText { get; init; }
-        public required TextBlock TotalOutText { get; init; }
-        public required TextBlock SpeedInText { get; init; }
-        public required TextBlock SpeedOutText { get; init; }
-        public required TextBlock LatencyText { get; init; }
-    }
-
-    #endregion
-
-    #region 图表
-
-    private void InitChart()
-    {
-        TrafficChart.Series =
-        [
-            MakeSeries(_dlChart, DownloadC),
-            MakeSeries(_ulChart, UploadC)
-        ];
-        TrafficChart.XAxes = [new Axis { IsVisible = false }];
-        TrafficChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0 }];
-        TrafficChart.AnimationsSpeed = TimeSpan.FromMilliseconds(150);
-        TrafficChart.EasingFunction = null;
-    }
-
-    private static LineSeries<double> MakeSeries(ObservableCollection<double> values, SKColor color)
-    {
-        return new LineSeries<double>
+        // SettingsExpander/ItemsRepeater 会卸载 Skia 子画布，即使外层仍 IsLoaded。
+        // 仅对引擎调用 Load 不能恢复画布，必须在重新进入可见区域后创建新控件。
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
         {
-            Values = values,
-            Stroke = new SolidColorPaint(color) { StrokeThickness = 2.5f },
-            Fill = new SolidColorPaint(new SKColor(color.Red, color.Green, color.Blue, 50)),
-            GeometrySize = 0,
-            LineSmoothness = 0.4,
-            IsHoverable = true
-        };
+            if (_disposed || !chart.IsLoaded || chart.ActualWidth <= 0 || chart.ActualHeight <= 0) return;
+            if (ReferenceEquals(chart, TrafficChart))
+            {
+                var bounds = chart.TransformToVisual(PageScroll).TransformBounds(new Windows.Foundation.Rect(0, 0, chart.ActualWidth, chart.ActualHeight));
+                if (!TrendSection.IsExpanded || bounds.Bottom <= 0 || bounds.Top >= PageScroll.ActualHeight) return;
+                if (_chartNeedsRecreate || !chart.CoreChart.IsLoaded)
+                {
+                    RecreateMainChart();
+                    return;
+                }
+            }
+            if (!chart.CoreChart.IsLoaded) chart.CoreChart.Load();
+            chart.CoreChart.Update(new LiveChartsCore.Kernel.ChartUpdateParams
+            {
+                IsAutomaticUpdate = false,
+                Throttling = false
+            });
+        });
     }
 
-    #endregion
+    private void RecreateMainChart()
+    {
+        var old = TrafficChart;
+        if (old.Parent is not Grid host) return;
+        var chart = new CartesianChart { Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0)) };
+        ConfigureChart(chart);
+        SetChartValues(chart);
+        Grid.SetRow(chart, Grid.GetRow(old));
+        host.Children.Remove(old);
+        TrafficChart = chart;
+        _chartNeedsRecreate = false;
+        AttachChartLifecycle(chart);
+        host.Children.Add(chart);
+    }
+
+    private void ConnPopOut_Click(object sender, RoutedEventArgs e)
+    {
+        if (_connWindow is not null) { _connWindow.Activate(); return; }
+        // 独立视图共享数据，不跨 XamlRoot 搬运控件，避免关闭弹窗时的 COM 回挂错误。
+        var list = new ListView
+        {
+            ItemsSource = Rows, SelectionMode = ListViewSelectionMode.None, IsItemClickEnabled = true,
+            ItemTemplate = (DataTemplate)Resources["TrafficRowTemplate"],
+            ItemContainerStyle = (Style)Resources["TrafficListItemStyle"]
+        };
+        list.ItemClick += Connection_ItemClick;
+        AutomationProperties.SetAutomationId(list, "TrafficPopoutList");
+        AutomationProperties.SetName(list, "网络活动（跟随主页面筛选）");
+        var grid = MakePopoutRoot();
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition());
+        grid.Children.Add(new TextBlock { Text = "网络活动 · 跟随主页面的筛选与回放", Margin = new Thickness(0, 0, 0, 12) });
+        Grid.SetRow(list, 1);
+        grid.Children.Add(list);
+        _connWindow = CreatePopoutWindow("流量监控器 · 网络活动", grid, 820, 640);
+        _connWindow.Closed += (_, _) => _connWindow = null;
+        _connWindow.Activate();
+    }
+
+    private void ChartPopOut_Click(object sender, RoutedEventArgs e)
+    {
+        if (_chartWindow is not null) { _chartWindow.Activate(); return; }
+        _popoutChart = new CartesianChart();
+        ConfigureChart(_popoutChart);
+        AttachChartLifecycle(_popoutChart);
+        SetChartValues(_popoutChart);
+        var root = MakePopoutRoot();
+        root.Children.Add(_popoutChart);
+        _chartWindow = CreatePopoutWindow("流量监控器 · 流量趋势（跟随主页面）", root, 800, 400);
+        _chartWindow.Closed += (_, _) => { _popoutChart = null; _chartWindow = null; };
+        _chartWindow.Activate();
+    }
+
+    private Grid MakePopoutRoot()
+    {
+        var root = (Grid)XamlReader.Load("<Grid xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' Background='{ThemeResource SolidBackgroundFillColorBaseBrush}'/>");
+        root.Padding = new Thickness(16);
+        root.RequestedTheme = ActualTheme;
+        return root;
+    }
+
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(IntPtr hwnd);
+    private static Window CreatePopoutWindow(string title, Grid root, int width, int height)
+    {
+        var window = new Window { Title = title, Content = root };
+        BackdropService.ApplyBackdrop(window);
+        var scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(window)) / 96d;
+        window.AppWindow.Resize(new((int)(width * scale), (int)(height * scale)));
+        return window;
+    }
+
+    private void ClosePopoutWindows() { _connWindow?.Close(); _chartWindow?.Close(); }
+
+    private async void RowDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: TrafficMonitorRow row } button) await ShowDetailsAsync(row.Entry, button.XamlRoot);
+    }
+    private async void Connection_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is TrafficMonitorRow row && sender is FrameworkElement element) await ShowDetailsAsync(row.Entry, element.XamlRoot);
+    }
+
+    private async Task ShowDetailsAsync(TrafficViewEntry entry, XamlRoot root)
+    {
+        if (_detailOpen) return;
+        _detailOpen = true;
+        try
+        {
+            var details = new StringBuilder($"{entry.ProcessName} · PID {entry.ProcessId}\n{entry.Connections.Count} 条连接\n\n");
+            foreach (var c in entry.Connections)
+                details.AppendLine($"{c.Protocol}  {TrafficConnectionInfo.FormatEndpoint(c.LocalAddress, c.LocalPort)}\n→ {c.DisplayRemote}\n{c.RemoteDomain}\n↓ {(c.HasTrafficStats ? FormatRate(c.SpeedIn) : "统计不可用")}   ↑ {(c.HasTrafficStats ? FormatRate(c.SpeedOut) : "统计不可用")}\n");
+            var panel = new StackPanel { Spacing = 12 };
+            panel.Children.Add(new ScrollViewer { MaxHeight = 320, Content = new TextBlock { Text = details.ToString(), TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true } });
+            if (!entry.IsProcess && IPAddress.TryParse(entry.Connections[0].RemoteAddress, out var ip))
+            {
+                var ping = new Button { Content = "测试当前 ICMP 延迟" };
+                AutomationProperties.SetAutomationId(ping, "TrafficPing");
+                var resultText = new TextBlock { Text = "ICMP 无响应不代表连接异常；测试结果不属于历史快照。", TextWrapping = TextWrapping.Wrap, FontSize = 12 };
+                ping.Click += async (_, _) =>
+                {
+                    ping.IsEnabled = false;
+                    resultText.Text = "正在测试…";
+                    var ms = await TrafficMonitorService.PingAsync(ip);
+                    resultText.Text = ms is { } v ? $"ICMP 往返延迟：{v} ms" : "未收到 ICMP 响应，目标可能禁用了 Ping。";
+                    ping.IsEnabled = true;
+                };
+                panel.Children.Add(ping);
+                panel.Children.Add(resultText);
+            }
+            var dialog = new ContentDialog
+            {
+                XamlRoot = root, Title = "网络活动详情", Content = panel,
+                PrimaryButtonText = "只看此进程", SecondaryButtonText = "复制详情", CloseButtonText = "关闭"
+            };
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                ViewCombo.SelectedIndex = 1;
+                SearchBox.Text = $"pid:{entry.ProcessId}";
+            }
+            else if (result == ContentDialogResult.Secondary)
+            {
+                var data = new DataPackage(); data.SetText(details.ToString()); Clipboard.SetContent(data);
+                ShowNotice("连接详情已复制", InfoBarSeverity.Success);
+            }
+        }
+        catch (Exception ex) { ShowNotice("无法打开连接详情：" + ex.Message, InfoBarSeverity.Error); }
+        finally { _detailOpen = false; }
+    }
+
+    private async void ExportView_Click(object sender, RoutedEventArgs e)
+    {
+        if (_displaySample is not { } sample) return;
+        await SaveCsvAsync(TrafficMonitorView.ExportView(Rows.Select(r => r.Entry).ToArray(), sample.Time), "网络活动");
+    }
+    private async void ExportRecord_Click(object sender, RoutedEventArgs e)
+        => await SaveCsvAsync(TrafficMonitorView.ExportRecording(_recorder.ToArray()), "流量记录");
+
+    private async Task SaveCsvAsync(string csv, string prefix)
+    {
+        try
+        {
+            var path = Win32Dialogs.PickSave("CSV 表格\0*.csv\0\0", "csv", $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            if (path is null) return;
+            await File.WriteAllTextAsync(path, csv, new UTF8Encoding(true));
+            ShowNotice("已导出到 " + path, InfoBarSeverity.Success);
+        }
+        catch (Exception ex) { ShowNotice("导出失败：" + ex.Message, InfoBarSeverity.Error); }
+    }
+
+    private void ShowNotice(string text, InfoBarSeverity severity)
+    {
+        NoticeBar.Message = text; NoticeBar.Severity = severity; NoticeBar.IsOpen = true;
+    }
+
+    private void PageLayout_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!_ready) return;
+        var narrow = e.NewSize.Width < 720;
+        Grid.SetRow(SearchBox, narrow ? 1 : 0);
+        Grid.SetColumn(SearchBox, narrow ? 0 : 1);
+        Grid.SetColumnSpan(SearchBox, narrow ? 4 : 1);
+        // 列表有明确高度，外层滚动不会把 ListView 无限测量，仍可虚拟化。
+        ConnectionsBody.RowDefinitions[3].Height = new GridLength(Math.Clamp(e.NewSize.Height * 0.45, 200, 440));
+        SpeedInText.FontSize = SpeedOutText.FontSize = e.NewSize.Width < 620 ? 24 : 28;
+    }
+
+    private void Section_StateChanged(object? sender, EventArgs e)
+    {
+        if (_ready && sender is SettingsExpander section)
+        {
+            AppSettings.Set("TrafficMonitor_" + section.Name, section.IsExpanded.ToString());
+            OverviewSummary.Visibility = OverviewSection.IsExpanded ? Visibility.Collapsed : Visibility.Visible;
+            if (ReferenceEquals(section, TrendSection) && section.IsExpanded)
+            {
+                _chartNeedsRecreate = true;
+                RefreshChart();
+                QueueChartRedraw(TrafficChart);
+            }
+        }
+    }
+
+    internal static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1L << 30) return $"{bytes / (double)(1L << 30):0.##} GiB";
+        if (bytes >= 1L << 20) return $"{bytes / (double)(1L << 20):0.##} MiB";
+        if (bytes >= 1L << 10) return $"{bytes / (double)(1L << 10):0.##} KiB";
+        return $"{Math.Max(0, bytes)} B";
+    }
+    internal static string FormatRate(long bytes) => FormatBytes(bytes) + "/s";
+}
+
+public sealed partial class TrafficMonitorRow : INotifyPropertyChanged
+{
+    public TrafficViewEntry Entry { get; private set; }
+    public TrafficMonitorRow(TrafficViewEntry entry) => Entry = entry;
+    public string Title => $"{Entry.ProcessName} · {Entry.ProcessId}";
+    public string Subtitle => Entry.IsProcess
+        ? $"{Entry.Connections.Count} 条 TCP 连接" + (Entry.PartialStats ? " · 部分统计不可用" : !Entry.HasStats ? " · 统计不可用" : "")
+        : $"{Entry.Connections[0].Protocol} · {(string.IsNullOrEmpty(Entry.Connections[0].RemoteDomain) ? Entry.Connections[0].DisplayRemote : Entry.Connections[0].RemoteDomain + " · " + Entry.Connections[0].DisplayRemote)}";
+    public string Description => Title + "\n" + Subtitle;
+    public string Download => Entry.HasStats ? TrafficMonitorPage.FormatRate(Entry.SpeedIn) + (Entry.PartialStats ? " *" : "") : "—";
+    public string Upload => Entry.HasStats ? TrafficMonitorPage.FormatRate(Entry.SpeedOut) + (Entry.PartialStats ? " *" : "") : "—";
+    public string DownloadTotal => Entry.HasStats ? TrafficMonitorPage.FormatBytes(Entry.TotalIn) : "统计不可用";
+    public string UploadTotal => Entry.HasStats ? TrafficMonitorPage.FormatBytes(Entry.TotalOut) : "统计不可用";
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public void Update(TrafficViewEntry entry) { Entry = entry; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("")); }
 }

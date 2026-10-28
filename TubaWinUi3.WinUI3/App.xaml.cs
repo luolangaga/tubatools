@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Principal;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -41,6 +41,10 @@ public partial class App : Application
         // null 环境，不抛异常），表现为页面收不到消息、内容区空白。工具箱自己的 WebView2 统一经
         // WebView2EnvironmentService.GetAsync() 指定可写目录（%LocalAppData%\TubaWinUi3\WebView2）。
         InitializeComponent();
+
+        // This UI workload helper must not start monitoring, notifications, telemetry or the main-instance gate.
+        if (Environment.GetCommandLineArgs().Any(a => string.Equals(a, WinBenchmarkWorkerService.WorkerArgument, StringComparison.OrdinalIgnoreCase)))
+            return;
 
         // LiveCharts/SkiaSharp 不再于启动时初始化：首个图表页面首次访问时才配置（ChartInitializer）。
         // LiveCharts.Configure 在 App() 中已移除，启动不再加载 SkiaSharp 原生库。
@@ -211,6 +215,14 @@ public partial class App : Application
         // 流氓软件的克星「安全增强菜单 - 复制完整路径」配方通过 --copy-path <路径>
         // 唤醒本程序复制路径到剪贴板（后台模式，不显示主窗口）。
         var cmdLine = Environment.GetCommandLineArgs();
+        var winWorkerIndex = Array.FindIndex(cmdLine, a => string.Equals(a, WinBenchmarkWorkerService.WorkerArgument, StringComparison.OrdinalIgnoreCase));
+        if (winWorkerIndex >= 0)
+        {
+            if (winWorkerIndex + 3 < cmdLine.Length && int.TryParse(cmdLine[winWorkerIndex + 2], out int parentId))
+                WinBenchmarkWorkerService.StartWorker(cmdLine[winWorkerIndex + 1], parentId, cmdLine[winWorkerIndex + 3] == "dark");
+            else Exit();
+            return;
+        }
         var copyPathIndex = Array.FindIndex(cmdLine, a => string.Equals(a, "--copy-path", StringComparison.OrdinalIgnoreCase));
         if (copyPathIndex >= 0)
         {

@@ -38,7 +38,11 @@ public sealed partial class WingetStoreDetailPage : Page
         IdText.Text = pkg.IsDirectDownload ? "官方安装包（Windows x64）" : pkg.CanInstall ? pkg.Id : "WinGet 暂未收录";
         CategoryText.Text = string.IsNullOrEmpty(pkg.Category) ? "在线搜索" : pkg.Category;
 
-        SourceText.Text = pkg.IsDirectDownload ? pkg.DownloadUrl : pkg.CanInstall ? "WinGet 软件源 · 由 WinGet 下载、校验并安装" : pkg.UnavailableReason;
+        SourceText.Text = pkg.IsDirectDownload
+            ? pkg.DownloadUrl
+            : pkg.CanInstall
+                ? "WinGet 官方源 · 直接下载安装包，校验 SHA-256 后启动安装"
+                : pkg.UnavailableReason;
         InstallButton.IsEnabled = pkg.CanInstall && pkg.InstallState is not ("installing" or "queued" or "done");
         InstallButton.Content = pkg.InstallState switch
         {
@@ -62,15 +66,6 @@ public sealed partial class WingetStoreDetailPage : Page
         pkg.InstallState = "installing";
         try
         {
-            if (pkg.IsDirectDownload)
-            {
-                WingetStoreService.EnqueueDirectInstaller(pkg);
-                pkg.InstallState = "queued";
-                pkg.StatusText = "已加入下载中心，下载完成后启动安装程序。";
-                InstallButton.Content = "已加入队列";
-                ToolTipService.SetToolTip(InstallButton, pkg.StatusText);
-                return;
-            }
             var progress = new Progress<string>(status =>
             {
                 pkg.StatusText = status;
@@ -78,9 +73,12 @@ public sealed partial class WingetStoreDetailPage : Page
                 if (pkg.InstallState == "installing")
                     InstallButton.Content = StoreVisuals.BuildResolvingContent(status.StartsWith("等待") ? "等待安装…" : "正在安装…");
             });
-            await WingetStoreService.InstallPackageAsync(pkg.Id, progress);
-            pkg.InstallState = "done";
-            InstallButton.Content = "已安装";
+            var result = await WingetStoreService.InstallStorePackageAsync(pkg, progress);
+            pkg.InstallState = result.Queued ? "queued" : "done";
+            pkg.StatusText = result.Message;
+            InstallButton.Content = result.Queued ? "已加入队列" : "已安装";
+            ToolTipService.SetToolTip(InstallButton, result.Message);
+            return;
         }
         catch (Exception ex)
         {

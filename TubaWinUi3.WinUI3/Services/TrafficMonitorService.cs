@@ -29,12 +29,19 @@ public sealed class TrafficConnectionInfo
     public long SpeedIn { get; init; }
     /// <summary>本次采样区间上行速率（B/s）。</summary>
     public long SpeedOut { get; init; }
-    public string DisplayRemote => $"{RemoteAddress}:{RemotePort}";
+    /// <summary>统计不可用时不能把零误显示为无流量。</summary>
+    public bool HasTrafficStats { get; init; } = true;
+    public string DisplayRemote => FormatEndpoint(RemoteAddress, RemotePort);
+    public static string FormatEndpoint(string address, int port)
+        => address.Contains(':') ? $"[{address}]:{port}" : $"{address}:{port}";
 }
 
 /// <summary>一次采样快照：整卡会话统计 + 各连接明细。</summary>
 public sealed class TrafficSnapshot
 {
+    public int AdapterIndex { get; init; }
+    public int ConnectionCount { get; init; }
+    public string ErrorMessage { get; init; } = "";
     public DateTime Time { get; init; }
     /// <summary>本次监控会话累计下行字节（自服务启动起）。</summary>
     public long TotalIn { get; init; }
@@ -88,6 +95,11 @@ public sealed class TrafficSnapshotRecorder
     {
         lock (_lock) _items.Clear();
     }
+
+    public TrafficSnapshot[] ToArray()
+    {
+        lock (_lock) return _items.ToArray();
+    }
 }
 
 /// <summary>
@@ -106,10 +118,6 @@ public static class TrafficMonitorService
     private const int ESTABLISHED = 5;
     // TCP_ESTATS_TYPE 枚举：SynOpts=0, Data=1（26100 SDK 中 Data 不是 0，传 0 会导致 Set 返回 ERROR_INVALID_USER_BUFFER）
     private const int TCP_ESTATS_TYPE_DATA = 1;
-
-    // 已启用数据收集的连接 key（收集启用后该连接累计计数持续可用）
-    private static readonly HashSet<string> s_statsEnabled = [];
-    private static int s_statsRefreshTick;
 
     [DllImport("iphlpapi.dll")]
     private static extern int GetExtendedTcpTable(IntPtr pTcpTable, ref int pdwSize, [MarshalAs(UnmanagedType.Bool)] bool bOrder, int ulAf, int TableClass, int reserved);
@@ -168,15 +176,15 @@ public static class TrafficMonitorService
         [StructLayout(LayoutKind.Sequential)]
         internal struct MIB_TCP6ROW_OWNER_PID
         {
-            public uint dwState;
+            // OWNER_PID 与 MIB_TCP6ROW 的字段顺序不同，大小固定为 56 字节。
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] LocalAddr;
             public uint dwLocalScopeId;
             public uint dwLocalPort;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] RemoteAddr;
             public uint dwRemoteScopeId;
             public uint dwRemotePort;
+            public uint dwState;
             public uint dwOwningPid;
-            public ulong dwCreateTimestamp;
         }
 
         /// <summary>读/写配置：EnableCollection 用于启用/关闭该连接的统计收集（Set 传入）。</summary>
@@ -224,10 +232,13 @@ public static class TrafficMonitorService
         // 循环内部通过 Task.Delay(token) 响应取消，且整体 try/catch 保证任务总是正常完成。
         _ = Task.Run(async () =>
         {
-            AdapterScope? scope = ResolveScope(ifIndex);
+            AdapterScope? scope = null;
             long prevIn = -1, prevOut = -1;
+            long previousTimestamp = Stopwatch.GetTimestamp();
             long sessionIn = 0, sessionOut = 0;
             var prevStats = new Dictionary<string, ConnStat>();
+            // 每次运行拥有独立状态；切网卡时旧任务可能还在结束，不能共用 HashSet。
+            var statsEnabled = new HashSet<string>();
             int loop = 0;
 
             while (!token.IsCancellationRequested)
@@ -238,10 +249,24 @@ public static class TrafficMonitorService
                     if (scope is null)
                     {
                         scope = ResolveScope(ifIndex);
-                        if (scope is null) continue;
+                        if (scope is null)
+                        {
+                            if (!token.IsCancellationRequested)
+                                Tick?.Invoke(new TrafficSnapshot { AdapterIndex = ifIndex, Time = DateTime.Now, ErrorMessage = "网卡已移除，正在等待重新连接…" });
+                            continue;
+                        }
                     }
                     // 网卡可能重连/IP 变化，定期重新解析
-                    if (++loop % 10 == 0) scope = ResolveScope(ifIndex) ?? scope;
+                    if (++loop % 5 == 0) scope = ResolveScope(ifIndex);
+                    if (scope is null) continue;
+                    if (scope.Nic.OperationalStatus != OperationalStatus.Up)
+                    {
+                        prevIn = prevOut = -1;
+                        prevStats.Clear();
+                        if (!token.IsCancellationRequested)
+                            Tick?.Invoke(new TrafficSnapshot { AdapterIndex = ifIndex, Time = DateTime.Now, ErrorMessage = "网卡未连接，正在等待网络恢复…" });
+                        continue;
+                    }
 
                     long totIn, totOut;
                     try
@@ -250,22 +275,33 @@ public static class TrafficMonitorService
                         totIn = st.BytesReceived;
                         totOut = st.BytesSent;
                     }
-                    catch { continue; }
+                    catch
+                    {
+                        scope = null;
+                        continue;
+                    }
 
-                    var speedIn = prevIn >= 0 ? Math.Max(0, totIn - prevIn) : 0;
-                    var speedOut = prevOut >= 0 ? Math.Max(0, totOut - prevOut) : 0;
+                    var timestamp = Stopwatch.GetTimestamp();
+                    var elapsed = Stopwatch.GetElapsedTime(previousTimestamp, timestamp).TotalSeconds;
+                    var deltaIn = prevIn >= 0 ? Math.Max(0, totIn - prevIn) : 0;
+                    var deltaOut = prevOut >= 0 ? Math.Max(0, totOut - prevOut) : 0;
+                    var speedIn = CalculateRate(deltaIn, elapsed);
+                    var speedOut = CalculateRate(deltaOut, elapsed);
                     prevIn = totIn;
                     prevOut = totOut;
-                    sessionIn += speedIn;
-                    sessionOut += speedOut;
+                    previousTimestamp = timestamp;
+                    sessionIn += deltaIn;
+                    sessionOut += deltaOut;
 
-                    var (conns, next) = BuildConnections(scope, prevStats, StatsCap, DisplayCap);
+                    var (conns, next, totalCount) = BuildConnections(scope, prevStats, statsEnabled, StatsCap, DisplayCap);
                     prevStats = next;
 
                     RefreshDomains(conns, token);
 
                     var sample = new TrafficSnapshot
                     {
+                        AdapterIndex = ifIndex,
+                        ConnectionCount = totalCount,
                         Time = DateTime.Now,
                         TotalIn = sessionIn,
                         TotalOut = sessionOut,
@@ -274,7 +310,8 @@ public static class TrafficMonitorService
                         Connections = conns
                     };
 
-                    try { Tick?.Invoke(sample); } catch { }
+                    if (!token.IsCancellationRequested)
+                        try { Tick?.Invoke(sample); } catch { }
                 }
                 catch (OperationCanceledException) { break; }
                 catch { }
@@ -288,6 +325,10 @@ public static class TrafficMonitorService
         _cts?.Dispose();
         _cts = null;
     }
+
+    internal static long CalculateRate(long deltaBytes, double elapsedSeconds)
+        => deltaBytes <= 0 || !double.IsFinite(elapsedSeconds) || elapsedSeconds <= 0
+            ? 0 : (long)Math.Min(long.MaxValue, deltaBytes / elapsedSeconds);
 
     /// <summary>ICMP Ping 远程地址，返回毫秒延迟；失败/超时返回 null。</summary>
     public static async Task<long?> PingAsync(IPAddress address, int timeoutMs = 2000)
@@ -322,6 +363,7 @@ public static class TrafficMonitorService
     private static readonly HashSet<string> s_ptrPending = new();             // 正在 PTR 解析的 ip
     private static readonly object s_domainLock = new();
     private static int s_dnsTick;
+    private static int s_dnsRefreshing;
 
     /// <summary>查询远程 IP 的已知域名（缓存表优先，其次 PTR），无则返回 null。</summary>
     public static string? GetDomainForIp(string? ip)
@@ -331,7 +373,7 @@ public static class TrafficMonitorService
         lock (s_domainLock)
         {
             if (s_domainCache.TryGetValue(key, out var d)) return d;
-            if (s_ptrCache.TryGetValue(key, out var p)) return p;
+            if (s_ptrCache.TryGetValue(key, out var p)) return p == key ? null : p;
             return null;
         }
     }
@@ -339,9 +381,14 @@ public static class TrafficMonitorService
     private static void RefreshDomains(IReadOnlyList<TrafficConnectionInfo> conns, CancellationToken token)
     {
         // 定期刷新系统 DNS 缓存表（ipconfig /displaydns，无需权限）
-        if (++s_dnsTick % DnsTableRefreshEveryTicks == 1)
+        if (Interlocked.Increment(ref s_dnsTick) % DnsTableRefreshEveryTicks == 1
+            && Interlocked.CompareExchange(ref s_dnsRefreshing, 1, 0) == 0)
         {
-            try { RefreshDnsCacheTable(); } catch { }
+            _ = Task.Run(async () =>
+            {
+                try { await RefreshDnsCacheTableAsync(token); } catch { }
+                finally { Interlocked.Exchange(ref s_dnsRefreshing, 0); }
+            });
         }
 
         // 对缓存表未命中的 IP 异步发起 PTR 反向解析（限并发、失败不重试）
@@ -352,7 +399,7 @@ public static class TrafficMonitorService
 
             lock (s_domainLock)
             {
-                if (s_domainCache.ContainsKey(ip) || s_ptrCache.ContainsKey(ip) || s_ptrPending.Contains(ip)) continue;
+                if (s_domainCache.ContainsKey(ip) || s_ptrCache.ContainsKey(ip) || s_ptrPending.Contains(ip) || s_ptrPending.Count >= 8) continue;
                 s_ptrPending.Add(ip);
             }
 
@@ -424,7 +471,7 @@ public static class TrafficMonitorService
         return result;
     }
 
-    private static void RefreshDnsCacheTable()
+    private static async Task RefreshDnsCacheTableAsync(CancellationToken token)
     {
         using var proc = new Process
         {
@@ -438,8 +485,20 @@ public static class TrafficMonitorService
             }
         };
         proc.Start();
-        var output = proc.StandardOutput.ReadToEnd();
-        proc.WaitForExit(3000);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(3));
+        string output;
+        try
+        {
+            output = await proc.StandardOutput.ReadToEndAsync(timeout.Token);
+            await proc.WaitForExitAsync(timeout.Token);
+        }
+        catch
+        {
+            // 仅回收本次创建的 ipconfig 子进程，避免超时后遗留。
+            try { if (!proc.HasExited) proc.Kill(); } catch { }
+            throw;
+        }
 
         var map = ParseDisplayDnsOutput(output);
         lock (s_domainLock)
@@ -487,7 +546,7 @@ public static class TrafficMonitorService
         public Native.MIB_TCP6ROW Row6 { get; init; }
     }
 
-    private sealed record ConnStat(long BytesIn, long BytesOut);
+    private sealed record ConnStat(long BytesIn, long BytesOut, long Timestamp);
 
     private static AdapterScope? ResolveScope(int ifIndex)
     {
@@ -511,22 +570,14 @@ public static class TrafficMonitorService
         return null;
     }
 
-    private static (List<TrafficConnectionInfo> conns, Dictionary<string, ConnStat> next) BuildConnections(
-        AdapterScope scope, Dictionary<string, ConnStat> prev, int statsCap, int displayCap)
+    private static (List<TrafficConnectionInfo> conns, Dictionary<string, ConnStat> next, int totalCount) BuildConnections(
+        AdapterScope scope, Dictionary<string, ConnStat> prev, HashSet<string> statsEnabled, int statsCap, int displayCap)
     {
         var raw = ReadTcpRows(scope);
 
         // 池策略：保持上一轮已跟踪的连接（保证活跃连接持续统计），新连接最多补充 statsCap 条
-        var pool = new List<RawConn>();
-        int newCount = 0;
-        foreach (var c in raw)
-        {
-            if (prev.ContainsKey(c.Key) || newCount < statsCap)
-            {
-                pool.Add(c);
-                if (!prev.ContainsKey(c.Key)) newCount++;
-            }
-        }
+        var pool = raw.OrderByDescending(c => prev.ContainsKey(c.Key)).Take(statsCap).ToList();
+        statsEnabled.IntersectWith(pool.Select(c => c.Key));
 
         var procCache = new Dictionary<int, string>();
         var next = new Dictionary<string, ConnStat>(pool.Count);
@@ -534,27 +585,28 @@ public static class TrafficMonitorService
 
         foreach (var c in pool)
         {
-            var stat = QueryConnStats(c);
+            var stat = QueryConnStats(c, statsEnabled);
             if (stat is null)
             {
                 // 统计不可用（收集未启用/权限不足/连接关闭）——连接仍展示，流量按 0 计
-                result.Add(MakeConnection(c, procCache, 0, 0, 0, 0));
+                result.Add(MakeConnection(c, procCache, 0, 0, 0, 0, false));
                 continue;
             }
             next[c.Key] = stat;
 
             var old = prev.TryGetValue(c.Key, out var o) ? o : null;
-            var speedIn = old is null ? 0 : Math.Max(0, stat.BytesIn - old.BytesIn);
-            var speedOut = old is null ? 0 : Math.Max(0, stat.BytesOut - old.BytesOut);
+            var elapsed = old is null ? 0 : Stopwatch.GetElapsedTime(old.Timestamp, stat.Timestamp).TotalSeconds;
+            var speedIn = old is null ? 0 : CalculateRate(stat.BytesIn - old.BytesIn, elapsed);
+            var speedOut = old is null ? 0 : CalculateRate(stat.BytesOut - old.BytesOut, elapsed);
 
             result.Add(MakeConnection(c, procCache, stat.BytesIn, stat.BytesOut, speedIn, speedOut));
         }
 
-        return (SortAndCap(result, displayCap), next);
+        return (SortAndCap(result, displayCap), next, raw.Count);
     }
 
     private static TrafficConnectionInfo MakeConnection(RawConn c, Dictionary<int, string> procCache,
-        long totalIn, long totalOut, long speedIn, long speedOut)
+        long totalIn, long totalOut, long speedIn, long speedOut, bool hasTrafficStats = true)
     {
         return new TrafficConnectionInfo
         {
@@ -570,7 +622,8 @@ public static class TrafficMonitorService
             TotalIn = totalIn,
             TotalOut = totalOut,
             SpeedIn = speedIn,
-            SpeedOut = speedOut
+            SpeedOut = speedOut,
+            HasTrafficStats = hasTrafficStats
         };
     }
 
@@ -662,7 +715,7 @@ public static class TrafficMonitorService
                 if (row.dwState != ESTABLISHED) continue;
 
                 var local = new IPAddress(row.LocalAddr, row.dwLocalScopeId);
-                if (!scope.LocalAddrs.Contains(local) && row.dwLocalScopeId != scope.V6ScopeId) continue;
+                if (!scope.LocalAddrs.Contains(local)) continue;
 
                 var remote = new IPAddress(row.RemoteAddr, row.dwRemoteScopeId);
                 var localPort = ntohs(row.dwLocalPort);
@@ -696,16 +749,15 @@ public static class TrafficMonitorService
         }
     }
 
-    private static ConnStat? QueryConnStats(RawConn c)
+    private static ConnStat? QueryConnStats(RawConn c, HashSet<string> statsEnabled)
     {
         // 连接首次出现（或定期重刷）时启用该连接的统计收集；需要管理员权限
-        if (++s_statsRefreshTick % 60 == 0) s_statsEnabled.Clear();
-        if (!s_statsEnabled.Contains(c.Key))
+        if (!statsEnabled.Contains(c.Key))
         {
             var rwEnable = new Native.TCP_ESTATS_DATA_RW_v0 { EnableCollection = true };
             int sr = EnableCollection(c, ref rwEnable);
             if (sr != 0) return null; // 启用失败（非管理员等），该连接无统计
-            s_statsEnabled.Add(c.Key);
+            statsEnabled.Add(c.Key);
         }
 
         var rw = new Native.TCP_ESTATS_DATA_RW_v0();
@@ -721,7 +773,7 @@ public static class TrafficMonitorService
             EnableCollection(c, ref rwEnable);
         }
 
-        return new ConnStat((long)rod.DataBytesIn, (long)rod.DataBytesOut);
+        return rw.EnableCollection ? new ConnStat((long)rod.DataBytesIn, (long)rod.DataBytesOut, Stopwatch.GetTimestamp()) : null;
     }
 
     // 属性不能按 ref 传递，先拷贝到局部变量
