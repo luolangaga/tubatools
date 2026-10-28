@@ -1746,6 +1746,13 @@
       ]
     },
     {
+      "match": "运行日志",
+      "builtin": "log-viewer",
+      "categories": [
+        "系统工具"
+      ]
+    },
+    {
       "match": "文件占用查看",
       "builtin": "file-locksmith",
       "categories": [

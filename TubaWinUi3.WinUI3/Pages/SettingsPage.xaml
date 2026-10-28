@@ -969,7 +969,7 @@
                                 <toolkit:SettingsCard.Header>
                                     <StackPanel VerticalAlignment="Center" Spacing="2">
                                         <TextBlock Style="{StaticResource SettingsRowTitle}" Text="日志目录" l:Uids.Uid="Settings_LogDir_Title" TextWrapping="Wrap"/>
-                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="崩溃与启动诊断日志的保存位置；目录不存在或不可写时自动回退默认位置" l:Uids.Uid="Settings_LogDir_Desc"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="所有日志（启动轨迹、崩溃、AI 助手、联机、压力测试等）的统一保存位置；目录不存在或不可写时自动回退默认位置" l:Uids.Uid="Settings_LogDir_Desc"/>
                                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                                             <TextBlock x:Name="LogDirPathText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" Text=""/>
                                             <HyperlinkButton x:Name="ResetLogDirButton" Visibility="Collapsed" Padding="4,0,4,0" FontSize="12" Content="恢复默认" Click="ResetLogDirButton_Click" l:Uids.Uid="Settings_LogDir_Reset"/>
@@ -980,6 +980,12 @@
                                     <FontIcon FontSize="18" Glyph=""/>
                                 </toolkit:SettingsCard.HeaderIcon>
                                 <StackPanel VerticalAlignment="Center" Spacing="8">
+                                    <Button x:Name="ViewLogsButton" Padding="12,8" Click="ViewLogsButton_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="12" Glyph="&#xE9D9;"/>
+                                            <TextBlock Text="查看日志" l:Uids.Uid="Settings_LogDir_View" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Button>
                                     <Button x:Name="ChangeLogDirButton" Padding="12,8" Click="ChangeLogDirButton_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon FontSize="12" Glyph=""/>

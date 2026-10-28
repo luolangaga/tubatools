@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs>
+<linearGradient id="slBlue" x1="8" y1="6" x2="70" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#9BD8FF"/><stop offset=".5" stop-color="#4C9CF5"/><stop offset="1" stop-color="#2464D7"/></linearGradient>
+<linearGradient id="slCyan" x1="8" y1="82" x2="70" y2="120" gradientUnits="userSpaceOnUse"><stop stop-color="#9FE7FA"/><stop offset="1" stop-color="#2E9FCF"/></linearGradient>
+<linearGradient id="slOrange" x1="74" y1="8" x2="120" y2="52" gradientUnits="userSpaceOnUse"><stop stop-color="#FFD58F"/><stop offset="1" stop-color="#F0892A"/></linearGradient>
+<linearGradient id="slPurple" x1="74" y1="56" x2="120" y2="84" gradientUnits="userSpaceOnUse"><stop stop-color="#CBB9FF"/><stop offset="1" stop-color="#8867EC"/></linearGradient>
+<linearGradient id="slGreen" x1="74" y1="88" x2="120" y2="120" gradientUnits="userSpaceOnUse"><stop stop-color="#AFE68A"/><stop offset="1" stop-color="#3EA45F"/></linearGradient>
+</defs>
+<rect x="8" y="8" width="62" height="70" rx="8" fill="url(#slBlue)"/>
+<rect x="8" y="82" width="62" height="38" rx="8" fill="url(#slCyan)"/>
+<rect x="74" y="8" width="46" height="44" rx="8" fill="url(#slOrange)"/>
+<rect x="74" y="56" width="46" height="28" rx="8" fill="url(#slPurple)"/>
+<rect x="74" y="88" width="46" height="32" rx="8" fill="url(#slGreen)"/>
+</svg>

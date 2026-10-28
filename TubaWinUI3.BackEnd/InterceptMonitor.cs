@@ -147,7 +147,8 @@ public sealed class InterceptMonitor
     {
         // 1) 纠偏 pass：明确的"保持拦截"策略被第三方改回 → 无审核自动重拦
         var snapshot = ContextMenuScanner.Scan();
-        BackEndLog.Info($"扫描完成：{snapshot.Count} 项");
+        // 纯心跳，每轮 10 秒一次；只在控制台可见，不落盘（否则 backend.log 一天几千行）
+        BackEndLog.Debug($"扫描完成：{snapshot.Count} 项");
 
         var reconciledAny = ReconcileDisabledDrift(snapshot);
         if (reconciledAny)

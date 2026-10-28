@@ -107,9 +107,10 @@ internal sealed class GameMonitorService : IDisposable
         {
             _hits = 0;
             _untickCount++;
-            // 未命中诊断：每 15 个 tick（30 秒）记录一次前台窗口的判定明细，
+            // 未命中诊断：每 150 个 tick（约 5 分钟）记录一次前台窗口的判定明细，
             // 「开了游戏但不弹」时看这条就能定位卡在哪一关（进程排除/全屏/FPS）。
-            if (_untickCount >= 15)
+            // 别调回 30 秒级别：不开游戏时那等于一整天全在写心跳。
+            if (_untickCount >= 150)
             {
                 _untickCount = 0;
                 BackEndLog.Info($"游戏监控诊断：{DescribeForeground()}");

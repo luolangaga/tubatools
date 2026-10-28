@@ -276,8 +276,21 @@ public sealed partial class SpaceCleanupPage : Page
         }
         Treemap.Update(tiles, zoom, _view);
         EmptyMap.Visibility = tiles.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        EmptyTitle.Text = _scanning ? "正在读取目录…" : _filter.IsEmpty ? "这个位置还没有可显示的文件" : "没有匹配的文件";
-        EmptyDescription.Text = _scanning ? "扫描结果将逐步铺开，可以随时进入已发现的文件夹。" : "零字节文件与跳过的目录可在右侧列表查看。更换位置或调整筛选条件后重试。";
+        if (_scanning)
+        {
+            EmptyTitle.Text = "正在读取目录…";
+            EmptyDescription.Text = "方块会随着扫描逐步铺开，已发现的文件夹可以直接点进去。";
+        }
+        else if (_filter.IsEmpty)
+        {
+            EmptyTitle.Text = "这个位置还没有可显示的文件";
+            EmptyDescription.Text = "换一个位置，或回到上一级看看；零字节文件与跳过的目录在右侧列表里。";
+        }
+        else
+        {
+            EmptyTitle.Text = "没有匹配的文件";
+            EmptyDescription.Text = "清空或调整筛选条件再试一次。";
+        }
         _updatingList = true;
         if (_treeRoot != _view) { _treeRoots.Clear(); _treeRows.Clear(); _treeRoot = _view; }
         lock (_session.SyncRoot) SyncTreeRows(_treeRoots, rows);

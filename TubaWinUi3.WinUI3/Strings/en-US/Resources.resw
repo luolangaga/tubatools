@@ -549,6 +549,9 @@
   <data name="Tray_TooltipResident" xml:space="preserve">
     <value>{0}: minimized to the system tray</value>
   </data>
+  <data name="Tray_TooltipEnabled" xml:space="preserve">
+    <value>{0}: running, stays in the tray when the window is closed</value>
+  </data>
   <data name="Tray_TooltipTool" xml:space="preserve">
     <value>{0}: {1} is running in the background</value>
   </data>
@@ -5158,6 +5161,8 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>Junk cleanup</value></data>
   <data name="Dashboard_Copied" xml:space="preserve"><value>Group number copied</value></data>
   <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>Search for group 485079194 in QQ to request to join.</value></data>
+  <data name="Dashboard_CopyFailed" xml:space="preserve"><value>Copy failed</value></data>
+  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>The clipboard is busy with another app. Try again, or search for group 485079194 manually.</value></data>
   <data name="Dashboard_Description" xml:space="preserve"><value>Custom description (leave blank for default)</value></data>
   <data name="Dashboard_EditFailed" xml:space="preserve"><value>Unable to edit home</value></data>
   <data name="Dashboard_GameDesc" xml:space="preserve"><value>Track frame rates and other gaming performance data</value></data>
@@ -5281,4 +5286,44 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="SearchPicker_Registered" xml:space="preserve"><value>Registered {0} tools</value></data>
   <data name="SearchPicker_Unavailable" xml:space="preserve"><value>Another {0} tools are not downloaded or enabled and have not been registered.</value></data>
   <data name="SearchPicker_Synchronized" xml:space="preserve"><value>Start and Windows Search now match your selection. Selecting none removes all tool registrations.</value></data>
+
+  <!-- 运行日志（统一日志查看器） -->
+  <data name="Builtin_log-viewer_Name" xml:space="preserve"><value>Runtime logs</value></data>
+  <data name="Builtin_log-viewer_Desc" xml:space="preserve"><value>One place for startup trace, crash, AI assistant, game tunnel and stress-test logs — with live tail, level and keyword filters, copy, clear and open-folder actions</value></data>
+  <data name="LogViewer_PageHeader.Title" xml:space="preserve"><value>Runtime logs</value></data>
+  <data name="LogViewer_PageHeader.Subtitle" xml:space="preserve"><value>Startup trace, crash, AI assistant, game tunnel and stress-test logs live here — view live, search, or bundle them for feedback</value></data>
+  <data name="LogViewer_Live.Text" xml:space="preserve"><value>Live</value></data>
+  <data name="LogViewer_Refresh.Text" xml:space="preserve"><value>Refresh</value></data>
+  <data name="LogViewer_OpenFolder.Text" xml:space="preserve"><value>Open folder</value></data>
+  <data name="LogViewer_Copy.Text" xml:space="preserve"><value>Copy</value></data>
+  <data name="LogViewer_Clear.Text" xml:space="preserve"><value>Clear</value></data>
+  <data name="LogViewer_Files.Text" xml:space="preserve"><value>Log files</value></data>
+  <data name="LogViewer_SearchPlaceholder.PlaceholderText" xml:space="preserve"><value>Search keywords (case-insensitive)</value></data>
+  <data name="LogViewer_LevelAll.Content" xml:space="preserve"><value>All levels</value></data>
+  <data name="LogViewer_LevelInfo.Content" xml:space="preserve"><value>Info and above</value></data>
+  <data name="LogViewer_LevelWarn.Content" xml:space="preserve"><value>Warning and above</value></data>
+  <data name="LogViewer_LevelError.Content" xml:space="preserve"><value>Errors only</value></data>
+  <data name="LogViewer_Empty" xml:space="preserve"><value>(No log lines match the current filters)</value></data>
+  <data name="LogViewer_NoLogs" xml:space="preserve"><value>There are no log files in the log folder yet.</value></data>
+  <data name="LogViewer_CountFormat" xml:space="preserve"><value>Showing {0} / {1} lines</value></data>
+  <data name="LogViewer_DirUsage" xml:space="preserve"><value>{0}
+Using {1} of {2} (oldest logs are pruned automatically)</value></data>
+  <data name="LogViewer_CopyFailedTitle" xml:space="preserve"><value>Copy failed</value></data>
+  <data name="LogViewer_CopyFailedDesc" xml:space="preserve"><value>The clipboard is busy with another app. Please try again.</value></data>
+  <data name="LogViewer_ClearConfirmTitle" xml:space="preserve"><value>Clear this log?</value></data>
+  <data name="LogViewer_ClearConfirmDesc" xml:space="preserve"><value>"{0}" and its rotated copies will be deleted permanently.</value></data>
+  <data name="LogViewer_ClearConfirmOk" xml:space="preserve"><value>Clear</value></data>
+  <data name="LogViewer_ClearConfirmCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Log_File_app" xml:space="preserve"><value>App log</value></data>
+  <data name="Log_File_startup" xml:space="preserve"><value>Startup trace</value></data>
+  <data name="Log_File_crash" xml:space="preserve"><value>Crashes and errors</value></data>
+  <data name="Log_File_agent" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="Log_File_clipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="Log_File_game-tunnel" xml:space="preserve"><value>Game tunnel</value></data>
+  <data name="Log_File_game-overlay" xml:space="preserve"><value>Game overlay</value></data>
+  <data name="Log_File_stress-test" xml:space="preserve"><value>Stress test</value></data>
+  <data name="Log_File_backend" xml:space="preserve"><value>Intercept backend</value></data>
+  <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>Rogue cleaner</value></data>
+  <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
+  <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>View logs</value></data>
 </root>

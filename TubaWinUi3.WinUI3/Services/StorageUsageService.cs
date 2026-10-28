@@ -150,21 +150,13 @@ public static class StorageUsageService
         });
 
         // ── 日志与诊断 ─────────────────────────────────────
-        items.Add(FileItem(StorageGroupKind.Log, "stress-log", "压力测试日志",
-            "烤机与网络压力测试的过程记录。", Path.Combine(dataDir, "stress_test.log")));
-        items.Add(FileItem(StorageGroupKind.Log, "agent-log", "AI 调试日志",
-            "AI 助手运行时的调试输出。", Path.Combine(dataDir, "agent-debug.log")));
-        items.Add(FileItem(StorageGroupKind.Log, "overlay-log", "游戏监控日志",
-            "游戏覆盖层自动启动的记录。", Path.Combine(dataDir, "game_overlay_auto.log")));
+        items.Add(FileItem(StorageGroupKind.Log, "logs", "运行日志",
+            "启动轨迹、崩溃、AI 助手、联机、压力测试等全部日志（统一目录，可在设置页改位置或打开查看）。",
+            LogService.LogDirectory));
         items.Add(FileItem(StorageGroupKind.Log, "sensor-dump", "传感器转储",
             "硬件传感器信息导出的文本快照。", Path.Combine(dataDir, "sensor_dump.txt")));
         items.Add(FileItem(StorageGroupKind.Log, "error-reports", "错误报告存档",
             "崩溃与异常上报的存档，用于反馈问题。", Path.Combine(dataDir, "ErrorReports")));
-        items.Add(FileItem(StorageGroupKind.Log, "crash-log", "崩溃日志",
-            "应用数据目录中的崩溃记录。", DiagnosticLogService.CrashLogPath));
-
-        items.Add(FileItem(StorageGroupKind.Log, "startup-log", "启动诊断日志",
-            "最近一次启动的诊断记录。", DiagnosticLogService.StartupLogPath));
 
         // ── 系统临时目录残留 ────────────────────────────────
         items.Add(MultiItem(StorageGroupKind.Temp, "temp", "系统临时文件",

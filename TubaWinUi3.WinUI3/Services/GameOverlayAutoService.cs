@@ -22,7 +22,6 @@ public sealed class GameOverlayAutoService
 
     private const string SignalFileName = "game_overlay_signal.json";
     private const string SettingsPrefix = "GameOverlay_";
-    private const long MaxLogBytes = 2 * 1024 * 1024;
     /// <summary>信号超过该时长未刷新视为后端已退出/失效（后端每 ≤6s 刷新一次时间戳）。</summary>
     private static readonly TimeSpan SignalStaleAfter = TimeSpan.FromSeconds(60);
 
@@ -46,25 +45,8 @@ public sealed class GameOverlayAutoService
     /// 「打开了但没显示悬浮窗」这类问题必须靠文件日志定位。</summary>
     internal static void Log(string message)
     {
-        try
-        {
-            var path = Path.Combine(ConfigManager.GetDataDir(), "game_overlay_auto.log");
-            // 采样持续失败时会每秒写一条，超过上限就轮转一份 .1
-            try
-            {
-                var file = new FileInfo(path);
-                if (file.Exists && file.Length > MaxLogBytes)
-                {
-                    var old = path + ".1";
-                    if (File.Exists(old)) File.Delete(old);
-                    File.Move(path, old);
-                }
-            }
-            catch { }
-
-            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
-        }
-        catch { }
+        // 滚动/容量上限统一由 LogService 负责
+        LogService.Info(LogService.GameOverlay, message);
     }
 
     /// <summary>主程序启动时调用（幂等）。必须在 UI 线程。</summary>

@@ -190,32 +190,20 @@ public static class ErrorReportService
     internal static List<LogFileItem> CollectLogFiles()
     {
         var result = new List<LogFileItem>();
-        var dataDir = ConfigManager.GetDataDir();
         var tempDir = Path.GetTempPath();
 
-        AddLog("agent-debug.log", Path.Combine(dataDir, "agent-debug.log"));
-        AddLog("game_overlay_auto.log", Path.Combine(dataDir, "game_overlay_auto.log"));
-        AddLog("stress_test.log", Path.Combine(dataDir, "stress_test.log"));
-        AddLog("backend.log", Path.Combine(dataDir, "active_intercept", "backend.log"));
-        AddLog("app_crash.log", DiagnosticLogService.CrashLogPath);
-        AddLog("startup_trace.log", DiagnosticLogService.StartupLogPath);
+        // 统一日志目录：一个类别一个文件，全部收录（太长时由 AddFileWithCap 只留末尾）
+        foreach (var file in LogService.ListFiles())
+            AddLog(file.Category + ".log", file.Path);
+
+        // 目录被自定义后，两份历史位置可能还留着内容
         AddLog("legacy-app_crash.log", Path.Combine(tempDir, "app_crash.log"));
         AddLog("legacy-startup_trace.log", Path.Combine(tempDir, "startup_trace.log"));
 
-        try
-        {
-            var rogueDir = Path.Combine(dataDir, "RogueCleaner", "logs");
-            if (Directory.Exists(rogueDir))
-            {
-                foreach (var file in Directory.EnumerateFiles(rogueDir, "*.log")
-                             .OrderByDescending(File.GetLastWriteTimeUtc)
-                             .Take(5))
-                {
-                    AddLog($"RogueCleaner-{Path.GetFileName(file)}", file);
-                }
-            }
-        }
-        catch { }
+        // 独立组件进程自己的日志（由 Shell 扩展写，不在统一目录里）
+        AddLog("shell-menu-handler.log", Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TubaWinUi3", "shell-menu", "handler.log"));
 
         return result;
 

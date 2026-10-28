@@ -549,6 +549,9 @@
   <data name="Tray_TooltipResident" xml:space="preserve">
     <value>{0}：已最小化到系统托盘</value>
   </data>
+  <data name="Tray_TooltipEnabled" xml:space="preserve">
+    <value>{0}：正在运行，关闭窗口后留在托盘</value>
+  </data>
   <data name="Tray_TooltipTool" xml:space="preserve">
     <value>{0}：{1} 正在后台运行</value>
   </data>
@@ -5174,6 +5177,8 @@ else then stroke=#888888 visible=true
   <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>垃圾清理</value></data>
   <data name="Dashboard_Copied" xml:space="preserve"><value>群号已复制</value></data>
   <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>在 QQ 中搜索群号 485079194，即可申请加入。</value></data>
+  <data name="Dashboard_CopyFailed" xml:space="preserve"><value>复制失败</value></data>
+  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 485079194。</value></data>
   <data name="Dashboard_Description" xml:space="preserve"><value>自定义介绍（留空使用默认）</value></data>
   <data name="Dashboard_EditFailed" xml:space="preserve"><value>无法编辑首页</value></data>
   <data name="Dashboard_GameDesc" xml:space="preserve"><value>检测游戏帧率等数据，随时掌握游戏表现</value></data>
@@ -5297,4 +5302,44 @@ else then stroke=#888888 visible=true
   <data name="SearchPicker_Registered" xml:space="preserve"><value>已注册 {0} 个工具</value></data>
   <data name="SearchPicker_Unavailable" xml:space="preserve"><value>另有 {0} 个工具尚未下载或未启用，暂未注册。</value></data>
   <data name="SearchPicker_Synchronized" xml:space="preserve"><value>已按当前选择同步开始菜单与 Windows 搜索。一个都不选会移除全部工具注册。</value></data>
+
+  <!-- 运行日志（统一日志查看器） -->
+  <data name="Builtin_log-viewer_Name" xml:space="preserve"><value>运行日志</value></data>
+  <data name="Builtin_log-viewer_Desc" xml:space="preserve"><value>统一查看启动轨迹、崩溃、AI 助手、联机、压力测试等全部日志，支持实时跟随、级别与关键字过滤、复制、清空与打开日志目录</value></data>
+  <data name="LogViewer_PageHeader.Title" xml:space="preserve"><value>运行日志</value></data>
+  <data name="LogViewer_PageHeader.Subtitle" xml:space="preserve"><value>启动轨迹、崩溃、AI 助手、联机、压力测试等日志统一保存在这里，可实时查看、搜索与打包反馈</value></data>
+  <data name="LogViewer_Live.Text" xml:space="preserve"><value>实时</value></data>
+  <data name="LogViewer_Refresh.Text" xml:space="preserve"><value>刷新</value></data>
+  <data name="LogViewer_OpenFolder.Text" xml:space="preserve"><value>打开目录</value></data>
+  <data name="LogViewer_Copy.Text" xml:space="preserve"><value>复制</value></data>
+  <data name="LogViewer_Clear.Text" xml:space="preserve"><value>清空</value></data>
+  <data name="LogViewer_Files.Text" xml:space="preserve"><value>日志文件</value></data>
+  <data name="LogViewer_SearchPlaceholder.PlaceholderText" xml:space="preserve"><value>搜索关键字（不区分大小写）</value></data>
+  <data name="LogViewer_LevelAll.Content" xml:space="preserve"><value>全部级别</value></data>
+  <data name="LogViewer_LevelInfo.Content" xml:space="preserve"><value>信息及以上</value></data>
+  <data name="LogViewer_LevelWarn.Content" xml:space="preserve"><value>警告及以上</value></data>
+  <data name="LogViewer_LevelError.Content" xml:space="preserve"><value>仅错误</value></data>
+  <data name="LogViewer_Empty" xml:space="preserve"><value>（没有符合当前筛选条件的日志内容）</value></data>
+  <data name="LogViewer_NoLogs" xml:space="preserve"><value>日志目录里还没有任何日志文件。</value></data>
+  <data name="LogViewer_CountFormat" xml:space="preserve"><value>显示 {0} / {1} 行</value></data>
+  <data name="LogViewer_DirUsage" xml:space="preserve"><value>{0}
+占用 {1} / 上限 {2}（超出自动清理最旧日志）</value></data>
+  <data name="LogViewer_CopyFailedTitle" xml:space="preserve"><value>复制失败</value></data>
+  <data name="LogViewer_CopyFailedDesc" xml:space="preserve"><value>剪贴板正被其它程序占用，请稍后重试。</value></data>
+  <data name="LogViewer_ClearConfirmTitle" xml:space="preserve"><value>清空这份日志？</value></data>
+  <data name="LogViewer_ClearConfirmDesc" xml:space="preserve"><value>将删除「{0}」及其滚动副本，删除后无法恢复。</value></data>
+  <data name="LogViewer_ClearConfirmOk" xml:space="preserve"><value>清空</value></data>
+  <data name="LogViewer_ClearConfirmCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Log_File_app" xml:space="preserve"><value>应用日志</value></data>
+  <data name="Log_File_startup" xml:space="preserve"><value>启动轨迹</value></data>
+  <data name="Log_File_crash" xml:space="preserve"><value>崩溃与异常</value></data>
+  <data name="Log_File_agent" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="Log_File_clipboard" xml:space="preserve"><value>剪贴板</value></data>
+  <data name="Log_File_game-tunnel" xml:space="preserve"><value>游戏联机</value></data>
+  <data name="Log_File_game-overlay" xml:space="preserve"><value>游戏监控</value></data>
+  <data name="Log_File_stress-test" xml:space="preserve"><value>压力测试</value></data>
+  <data name="Log_File_backend" xml:space="preserve"><value>主动拦截后端</value></data>
+  <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>流氓软件清理</value></data>
+  <data name="Log_File_phone-link" xml:space="preserve"><value>连接手机</value></data>
+  <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>查看日志</value></data>
 </root>

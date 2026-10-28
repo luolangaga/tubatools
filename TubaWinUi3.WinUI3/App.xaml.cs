@@ -428,6 +428,9 @@ public partial class App : Application
         _window.Activate();
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
 
+        // 「关闭时最小化到系统托盘」已开启的用户，启动即注册托盘图标（不等第一次关闭窗口）
+        CloseToTrayService.EnsureTrayIconForEnabledSetting();
+
         // 连接手机：订阅消息/任务事件弹原生通知、注册 Toast 点击回跳、监听激活请求。
         PhoneLinkNotifier.Initialize();
         PhoneLinkActivation.StartWatcher(req => _window?.DispatcherQueue.TryEnqueue(() => OpenPhoneLinkActivation(req)));
@@ -608,7 +611,7 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// 启动失败兜底：把异常写进可上报的日志（错误报告打包会收录 数据目录 Logs/app_crash.log），
+    /// 启动失败兜底：把异常写进可上报的日志（错误报告打包会收录 日志目录/crash.log），
     /// 并尽力给用户一个能复制堆栈/打包日志/重新打开的窗口，而不是静默闪退。
     /// </summary>
     private void HandleLaunchFailure(Exception ex)
@@ -619,7 +622,7 @@ public partial class App : Application
                      $"程序: {Environment.ProcessPath}\n" +
                      $"{ex}\n" + new string('-', 80) + "\n";
 
-        DiagnosticLogService.AppendCrash(detail);
+        LogService.WriteBlock(LogService.Crash, detail);
         try { Services.GameOverlayAutoService.Log($"启动失败: {ex.Message}\n{ex.StackTrace}"); } catch { }
         Debug.WriteLine(detail);
 
@@ -641,7 +644,7 @@ public partial class App : Application
         {
             MessageBoxW(IntPtr.Zero,
                 $"图吧工具箱启动失败：\n\n{ex.GetType().Name}: {ex.Message}\n\n" +
-                $"诊断日志：{DiagnosticLogService.CrashLogPath}\n" +
+                $"诊断日志：{LogService.PathFor(LogService.Crash)}\n" +
                 "请在「设置 → 错误报告」中打包日志并反馈。",
                 "图吧工具箱", MB_OK | MB_ICONERROR);
         }
@@ -792,7 +795,8 @@ public partial class App : Application
         }
         _ = DelayThenRunAsync(TimeSpan.FromSeconds(30), () => Task.Run(() =>
         {
-            try { DiagnosticLogService.Prepare(); } catch { }
+            try { LogService.Prepare(); } catch { }
+            try { LogService.EnforceQuota(); } catch { }
             UpdateService.PruneDownloadedUpdates();
             TempCleanupService.CleanTempFiles(olderThanUtc: DateTime.UtcNow.AddDays(-7));
         }));
@@ -1177,7 +1181,7 @@ public partial class App : Application
         try
         {
             // 追加而非覆盖：连续崩溃时历史记录都在
-            DiagnosticLogService.AppendCrash(detail);
+            LogService.WriteBlock(LogService.Crash, detail);
             try
             {
                 Services.GameOverlayAutoService.Log($"WinUI 未处理异常: {e.Message}\n{e.Exception?.StackTrace}");

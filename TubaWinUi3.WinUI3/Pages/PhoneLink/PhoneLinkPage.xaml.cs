@@ -65,6 +65,7 @@ public sealed partial class PhoneLinkPage : Page
         if (!running)
         {
             DevicesText.Text = "";
+            DeviceListPanel.Children.Clear();
             return;
         }
         var ips = PhoneLinkService.GetLocalIps();
@@ -73,9 +74,53 @@ public sealed partial class PhoneLinkPage : Page
         AddressText.Text = "可连接地址（无需选择网卡）：\n" +
             string.Join("\n", ips.Select(address => $"{address}:{PhoneLinkService.Port}")) +
             (ip == "127.0.0.1" ? "\n未检测到局域网 IPv4 地址，请检查网络连接。" : "");
-        var names = PhoneLinkService.PairedDeviceNames;
-        DevicesText.Text = names.Count == 0 ? "暂无已连接的手机" : "已连接：" + string.Join("、", names);
+        RefreshDeviceList();
         _ = UpdateQrAsync(PhoneLinkService.BuildQrPayload(ip));
+    }
+
+    /// <summary>已配对设备列表：每台单独「断开」，不必把其他手机一起踢掉。</summary>
+    private void RefreshDeviceList()
+    {
+        var devices = PhoneLinkService.PairedDevices;
+        DevicesText.Text = devices.Count == 0 ? "暂无已连接的手机" : $"已连接 {devices.Count} 台手机";
+        DeviceListPanel.Children.Clear();
+        foreach (var device in devices)
+        {
+            var row = new Grid { ColumnSpacing = 8 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var info = new StackPanel { Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
+            info.Children.Add(new TextBlock
+            {
+                Text = device.Name,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            info.Children.Add(new TextBlock
+            {
+                Text = $"连接于 {device.Since:yyyy-MM-dd HH:mm}",
+                FontSize = 12,
+                Opacity = 0.7
+            });
+            row.Children.Add(info);
+
+            var revoke = new Button
+            {
+                Content = "断开",
+                Tag = device.Id,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            revoke.Click += DeviceRevokeBtn_Click;
+            Grid.SetColumn(revoke, 1);
+            row.Children.Add(revoke);
+
+            DeviceListPanel.Children.Add(row);
+        }
+    }
+
+    private void DeviceRevokeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is string id) PhoneLinkService.RevokeDevice(id);
     }
 
     private void ServiceToggle_Toggled(object sender, RoutedEventArgs e)

@@ -129,15 +129,9 @@ namespace TubaWinUi3.Services.RogueCleaner
 
         public static void Error(string message, Exception ex)
         {
-            try
-            {
-                if (store == null) return;
-                string path = Path.Combine(store.Logs, "error-" + DateTime.Now.ToString("yyyyMMdd") + ".log");
-                File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + message + Environment.NewLine + ex + Environment.NewLine, Encoding.UTF8);
-            }
-            catch
-            {
-            }
+            // 统一走日志服务（日志目录/rogue-cleaner.log），不再自己往 RogueCleaner/logs 里攒文件
+            if (store == null) return;
+            LogService.Error(LogService.RogueCleaner, message, ex);
         }
     }
 

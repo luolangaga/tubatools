@@ -127,6 +127,7 @@
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             TextWrapping="Wrap"
                                             Text="暂无已连接的手机" />
+                                        <StackPanel x:Name="DeviceListPanel" Spacing="6" />
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Spacing="8">

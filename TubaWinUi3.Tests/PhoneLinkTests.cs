@@ -16,6 +16,7 @@ public class PhoneLinkTests : IDisposable
         AppSettings.InvalidateCache();
         _previousApproval = PhoneLinkService.PairApprovalHandler;
         PhoneLinkService.RevokeAll();
+        PhoneLinkChatStore.ClearForTests();
         PhoneLinkService.PairApprovalHandler = null;
     }
 
@@ -368,5 +369,143 @@ public class PhoneLinkTests : IDisposable
         Assert.Equal("512 B/s", PhoneTransferProgress.FormatSpeed(512));
         Assert.Equal("1.5 KB/s", PhoneTransferProgress.FormatSpeed(1536));
         Assert.Equal("2.0 MB/s", PhoneTransferProgress.FormatSpeed(2 * 1024 * 1024));
+    }
+
+    // ───────────────────────── 令牌持久化 / 逐台撤销 ─────────────────────────
+
+    [Fact]
+    public void PairedToken_SurvivesRestartWithoutStoringPlaintext()
+    {
+        var token = PairedDeviceStore.Issue("persisted-phone", out _);
+        Assert.True(PairedDeviceStore.TryAuthorize(token, out var record));
+        Assert.Equal("persisted-phone", record.Name);
+
+        // 模拟进程重启 + 设置缓存清空：令牌仍能通过（已落盘）
+        PairedDeviceStore.ReloadForTests();
+        AppSettings.Flush();
+        AppSettings.InvalidateCache();
+        PairedDeviceStore.ReloadForTests();
+        Assert.True(PairedDeviceStore.TryAuthorize(token, out var restored));
+        Assert.Equal("persisted-phone", restored.Name);
+
+        // 磁盘上只有摘要，没有明文令牌
+        var stored = AppSettings.Get(PairedDeviceStore.SettingKey);
+        Assert.NotNull(stored);
+        Assert.DoesNotContain(token, stored);
+        Assert.Contains(PairedDeviceStore.HashToken(token), stored);
+    }
+
+    [Fact]
+    public void PairedToken_ExpiredIsRejectedAndRemoved()
+    {
+        var token = PairedDeviceStore.Issue("expired-phone", out var record);
+        record.ExpiresAt = DateTime.Now.AddMinutes(-1);
+        Assert.False(PairedDeviceStore.TryAuthorize(token, out _));
+        Assert.Equal(0, PairedDeviceStore.Count);
+    }
+
+    [Fact]
+    public void RevokeDevice_DisconnectsOnlyThatPhone()
+    {
+        var tokenA = PhoneLinkService.TryPair(PhoneLinkService.PairCode, "phone-a").Token!;
+        var tokenB = PhoneLinkService.TryPair(PhoneLinkService.PairCode, "phone-b").Token!;
+        Assert.Equal(2, PhoneLinkService.PairedDevices.Count);
+
+        var idA = PhoneLinkService.PairedDevices.First(d => d.Name == "phone-a").Id;
+        Assert.True(PhoneLinkService.RevokeDevice(idA));
+
+        var remaining = Assert.Single(PhoneLinkService.PairedDevices);
+        Assert.Equal("phone-b", remaining.Name);
+        Assert.False(PairedDeviceStore.TryAuthorize(tokenA, out _));
+        Assert.True(PairedDeviceStore.TryAuthorize(tokenB, out _));
+        Assert.False(PhoneLinkService.RevokeDevice(idA));
+    }
+
+    [Fact]
+    public void LogCategory_IsRegisteredForAuditing()
+    {
+        Assert.Contains(LogService.PhoneLink, LogService.KnownCategories);
+        Assert.NotEqual(LogService.PhoneLink, LogService.DisplayName(LogService.PhoneLink));
+    }
+
+    // ───────────────────────── 下载 Range ─────────────────────────
+
+    [Theory]
+    [InlineData("bytes=100-199", 1000L, 100L, 199L)]
+    [InlineData("bytes=900-", 1000L, 900L, 999L)]
+    [InlineData("bytes=-100", 1000L, 900L, 999L)]
+    [InlineData("bytes=0-9999", 1000L, 0L, 999L)]
+    [InlineData("bytes=-5000", 1000L, 0L, 999L)]
+    public void Range_ParsesSupportedForms(string header, long length, long expectedStart, long expectedEnd)
+    {
+        Assert.Equal(PhoneLinkService.RangeParseResult.Valid,
+            PhoneLinkService.ParseRange(header, length, out var start, out var end));
+        Assert.Equal(expectedStart, start);
+        Assert.Equal(expectedEnd, end);
+    }
+
+    [Fact]
+    public void Range_OutOfBoundsIsUnsatisfiable()
+    {
+        Assert.Equal(PhoneLinkService.RangeParseResult.Unsatisfiable,
+            PhoneLinkService.ParseRange("bytes=1000-", 1000, out _, out _));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("items=0-5")]
+    [InlineData("bytes=0-1,3-4")]
+    [InlineData("bytes=5-3")]
+    public void Range_IgnoredFormsServeWholeFile(string? header)
+    {
+        Assert.Equal(PhoneLinkService.RangeParseResult.None,
+            PhoneLinkService.ParseRange(header, 1000, out var start, out var end));
+        Assert.Equal(0, start);
+        Assert.Equal(999, end);
+    }
+
+    // ───────────────────────── 聊天落盘 / 分页 ─────────────────────────
+
+    [Fact]
+    public void ChatStore_PagesByCursor()
+    {
+        PhoneLinkChatStore.ClearForTests();
+        for (var i = 0; i < 10; i++) PhoneLinkChatStore.Add("phone", "text", $"m{i}", "", 0, null);
+        var all = PhoneLinkChatStore.Snapshot();
+
+        Assert.Equal(new long[] { 9, 10 }, PhoneLinkChatStore.Page(all, after: 8, before: 0, limit: 5).Select(m => m.Seq));
+        Assert.Equal(new long[] { 2, 3 }, PhoneLinkChatStore.Page(all, after: 0, before: 4, limit: 2).Select(m => m.Seq));
+        Assert.Equal(new long[] { 8, 9, 10 }, PhoneLinkChatStore.Page(all, after: 0, before: 0, limit: 3).Select(m => m.Seq));
+    }
+
+    [Fact]
+    public void ChatStore_KeepsNewestMessagesAndPersistsAcrossReload()
+    {
+        PhoneLinkChatStore.ClearForTests();
+        for (var i = 0; i < PhoneLinkChatStore.MaxMessages + 5; i++)
+            PhoneLinkChatStore.Add("phone", "text", $"m{i}", "", 0, null);
+
+        var messages = PhoneLinkChatStore.Snapshot();
+        Assert.Equal(PhoneLinkChatStore.MaxMessages, messages.Count);
+        Assert.Equal(6L, messages[0].Seq);
+        Assert.Equal(PhoneLinkChatStore.MaxMessages + 5L, messages[^1].Seq);
+
+        // 模拟重启：丢弃内存缓存，从会话文件重新加载
+        PhoneLinkChatStore.ReloadForTests();
+        var restored = PhoneLinkChatStore.Snapshot();
+        Assert.Equal(PhoneLinkChatStore.MaxMessages, restored.Count);
+        Assert.Equal(messages[0].Id, restored[0].Id);
+        Assert.Equal(messages[^1].Text, restored[^1].Text);
+    }
+
+    [Fact]
+    public void ChatStore_DropsFileMappingForTrimmedMessages()
+    {
+        PhoneLinkChatStore.ClearForTests();
+        var old = PhoneLinkChatStore.Add("phone", "file", "", "old.bin", 3, @"C:\tmp\old.bin");
+        for (var i = 0; i < PhoneLinkChatStore.MaxMessages; i++)
+            PhoneLinkChatStore.Add("phone", "text", "x", "", 0, null);
+        Assert.Null(PhoneLinkChatStore.GetFilePath(old.Id));
     }
 }

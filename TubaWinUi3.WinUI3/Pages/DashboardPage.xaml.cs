@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace TubaWinUi3.Pages;
 
@@ -157,8 +156,13 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
             if (card.Target == "hardware") { App.MainWindow?.NavigateToToolPage(typeof(HardwarePage)); return; }
             if (card.Target == "qq")
             {
-                var data = new DataPackage(); data.SetText("485079194"); Clipboard.SetContent(data);
-                ShowStatus(S("Copied", "群号已复制"), S("CopiedDesc", "在 QQ 中搜索群号 485079194，即可申请加入。"), InfoBarSeverity.Success); return;
+                // 统一走 ClipboardService（占用重试 + 失败只留痕）：这里曾经直连 WinRT，
+                // 剪贴板被别的程序占用时抛出的 COMException 会顶掉整次卡片点击。
+                if (ClipboardService.TrySetText("485079194").Success)
+                    ShowStatus(S("Copied", "群号已复制"), S("CopiedDesc", "在 QQ 中搜索群号 485079194，即可申请加入。"), InfoBarSeverity.Success);
+                else
+                    ShowStatus(S("CopyFailed", "复制失败"), S("CopyFailedDesc", "剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 485079194。"), InfoBarSeverity.Error);
+                return;
             }
             if (card.Target.StartsWith("builtin:"))
             {

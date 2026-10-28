@@ -139,10 +139,13 @@
                     <Grid>
                         <controls:SpaceTreemap x:Name="Treemap" Margin="4" SizeChanged="MapSizeChanged"
                             Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
-                        <StackPanel x:Name="EmptyMap" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="360" Margin="24" IsHitTestVisible="False">
-                            <FontIcon Glyph="&#xEDA8;" FontSize="40" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock x:Name="EmptyTitle" Text="空间都去哪儿了？" Style="{StaticResource SubtitleTextBlockStyle}" TextAlignment="Center"/>
-                            <TextBlock x:Name="EmptyDescription" Text="选择磁盘或文件夹开始扫描。矩形越大，占用越多；双击文件夹逐层探索。" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <StackPanel x:Name="EmptyMap" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" MaxWidth="400" Margin="24" IsHitTestVisible="False">
+                            <Image Width="104" Height="104" Margin="0,0,0,4" AutomationProperties.AccessibilityView="Raw">
+                                <Image.Source><SvgImageSource UriSource="ms-appx:///Assets/SpaceCleanup/empty-treemap.svg"/></Image.Source>
+                            </Image>
+                            <TextBlock x:Name="EmptyTitle" Text="先选一个位置开始扫描" Style="{StaticResource SubtitleTextBlockStyle}" TextAlignment="Center"/>
+                            <TextBlock x:Name="EmptyDescription" Text="选好磁盘或文件夹后点「开始扫描」。方块越大占用越多，双击方块可逐层深入。" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="EmptyHint" Text="扫描只读取文件信息，不会改动或删除任何文件。" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                         </StackPanel>
                     </Grid>
                 </Border>

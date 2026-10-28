@@ -185,7 +185,11 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
-    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    <!-- Microsoft.Win32.SystemEvents（CloseToTrayService 的注销/关机保护）与
+         System.Diagnostics.Eventing.Reader（ErrorReportService 读事件日志）以前都由
+         FrameworkReference Microsoft.WindowsDesktop.App.WindowsForms 间接提供。 -->
+    <PackageReference Include="System.Windows.Extensions" Version="10.0.13" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.13" />
     <PackageReference Include="System.Management" Version="10.0.8" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
 

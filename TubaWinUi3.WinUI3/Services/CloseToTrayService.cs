@@ -46,7 +46,22 @@ public static class CloseToTrayService
     /// <summary>当前设置值（默认关闭）。</summary>
     public static bool IsEnabled => AppSettings.GetBool(EnabledSettingKey, DefaultEnabled);
 
-    public static void SetEnabled(bool enabled) => AppSettings.Set(EnabledSettingKey, enabled);
+    /// <summary>
+    /// 写入开关。托盘图标立刻跟着走：开启就注册（不等第一次关闭窗口），关闭就收起
+    /// （除非还有后台工具在跑——那种情况图标由「后台工具」理由继续持有）。
+    /// </summary>
+    public static void SetEnabled(bool enabled)
+    {
+        AppSettings.Set(EnabledSettingKey, enabled);
+        TrayIconService.SetTrayEnabled(enabled);
+    }
+
+    /// <summary>
+    /// 启动时把托盘图标补注册好：设置已开启的用户不应该等到第一次关闭窗口才看到图标。
+    /// 必须在 UI 线程调用（托盘用隐藏消息窗口接收回调）。
+    /// </summary>
+    public static void EnsureTrayIconForEnabledSetting()
+        => TrayIconService.SetTrayEnabled(IsEnabled);
 
     /// <summary>
     /// 订阅系统会话结束事件。<see cref="SystemEvents.SessionEnding"/> 的回调依赖消息泵，

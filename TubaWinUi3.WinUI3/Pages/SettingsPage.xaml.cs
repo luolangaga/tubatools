@@ -2105,11 +2105,11 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private void RefreshLogDirCard()
     {
-        var custom = AppSettings.Get(DiagnosticLogService.LogDirSettingKey);
+        var custom = AppSettings.Get(LogService.LogDirSettingKey);
         var usingCustom = !string.IsNullOrWhiteSpace(custom) && Directory.Exists(custom);
         LogDirPathText.Text = usingCustom
             ? custom
-            : DiagnosticLogService.DefaultDirectoryPath + LocalizationService.L("Settings_LogDir_DefaultSuffix", "（默认）");
+            : LogService.DefaultLogDirectory + LocalizationService.L("Settings_LogDir_DefaultSuffix", "（默认）");
         ResetLogDirButton.Visibility = usingCustom ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -2118,7 +2118,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         var dir = await Win32Dialogs.PickFolderAsync();
         if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
 
-        if (!DiagnosticLogService.IsDirectoryWritable(dir))
+        if (!LogService.IsDirectoryWritable(dir))
         {
             await ShowMessageAsync(
                 LocalizationService.L("Settings_LogDir_UnwritableTitle", "目录不可写"),
@@ -2126,8 +2126,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             return;
         }
 
-        AppSettings.Set(DiagnosticLogService.LogDirSettingKey, dir);
-        DiagnosticLogService.Prepare();
+        AppSettings.Set(LogService.LogDirSettingKey, dir);
+        LogService.Prepare();
         RefreshLogDirCard();
     }
 
@@ -2135,16 +2135,21 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         try
         {
-            DiagnosticLogService.Prepare();
-            Process.Start(new ProcessStartInfo("explorer.exe", DiagnosticLogService.DirectoryPath) { UseShellExecute = true });
+            LogService.Prepare();
+            Process.Start(new ProcessStartInfo("explorer.exe", LogService.LogDirectory) { UseShellExecute = true });
         }
         catch { }
     }
 
+    private void ViewLogsButton_Click(object sender, RoutedEventArgs e)
+    {
+        App.MainWindow?.NavigateToToolPage(typeof(TubaWinUi3.Pages.LogViewerPage));
+    }
+
     private void ResetLogDirButton_Click(object sender, RoutedEventArgs e)
     {
-        AppSettings.Remove(DiagnosticLogService.LogDirSettingKey);
-        DiagnosticLogService.Prepare();
+        AppSettings.Remove(LogService.LogDirSettingKey);
+        LogService.Prepare();
         RefreshLogDirCard();
     }
 

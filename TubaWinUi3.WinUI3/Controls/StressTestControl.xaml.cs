@@ -1313,9 +1313,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
         StartStressBtn.IsEnabled = enabled;
     }
 
-    // 与游戏监控的 game_overlay_auto.log 同理：界面日志关掉就没了，烤机读不到传感器时得留下证据
-    private static string LogFilePath => Path.Combine(ConfigManager.GetDataDir(), "stress_test.log");
-
+    // 与游戏监控同理：界面日志关掉就没了，烤机读不到传感器时得留下证据
     private void Log(string msg)
     {
         var line = $"[{DateTime.Now:HH:mm:ss}] {msg}";
@@ -1323,13 +1321,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
         while (LogText.Inlines.Count > MaxLogLines)
             LogText.Inlines.RemoveAt(0);
         LogScrollViewer.ChangeView(null, LogScrollViewer.ScrollableHeight, null);
-        try
-        {
-            var dir = Path.GetDirectoryName(LogFilePath);
-            if (dir is not null) Directory.CreateDirectory(dir);
-            File.AppendAllText(LogFilePath, line + Environment.NewLine);
-        }
-        catch { }
+        LogService.Info(LogService.StressTest, msg);
     }
 
     private void ClearLog_Click(object sender, RoutedEventArgs e) => LogText.Inlines.Clear();

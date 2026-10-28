@@ -57,7 +57,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - 两个关闭入口都接了同一个判据：`AppWindow.Closing`（系统入口，`args.Cancel = true`，这是可取消的官方通道）与 `Window.Closed`（编程式 `App.MainWindow?.Close()`，`args.Handled = true`——后台工具页面走这条）。先到先得，不要只留一个。
 - **退出统一走 `App.RequestExit()`**：关闭主窗口 → `MainWindow_Closed` 跑完整清理（FPS 的 ETW 会话、LiteMonitor 句柄、遥测收尾、`AppSettings.Flush`、托盘图标移除）→ `Application.Exit()`；另有兜底看门狗：**先等 `MainWindow_Closed` 报「清理已跑完」（`App.NotifyCleanupFinished`，上限 20s）再宽限 2s 硬退**——固定 3 秒硬超时会砍在 ETW 会话释放中途，那正是最不能丢的一步；只有主窗口不存在/关闭请求排不进 UI 队列时才用 3 秒短兜底。**禁止**回到 `Process.Kill()` 的老写法：内核 ETW 会话不随进程终止回收，残留会让下次启动的帧率采集失效。
 - **所有「真的要退出/重启」的地方都必须走 `App.RequestExit()`**（`isExiting` 置位后关闭拦截才会放行）：更新安装器启动后退出（`UpdateService.LaunchScannedUpdate`/`StartPendingInstaller`、`DownloadQueueModels` 的安装分支）、提权重启（`GameOverlayPage`）、错误页「重开」、配置目录切换后重启。直接用 `Application.Current.Exit()` 或 `App.MainWindow?.Close()` 会被「最小化到托盘」解读成隐藏——安装器撞上仍在运行的程序、或留下两个实例。
-- `TrayIconService` 仍是全进程唯一 `NotifyIcon`，现在有两个独立的常驻理由：「后台工具在跑」（`Show(toolName, stopAction)`，流量监控器/网络调度器/防晕3D 在用）与「关闭后留在托盘」（`ShowForCloseToTray()`）。任一成立图标就可见，都没有就自动收起；托盘菜单 = 打开主窗口 / [停止「工具名」并退出] / 退出图吧工具箱（文案 `Tray_*` 资源键，中英双语）。
+- `TrayIconService` 仍是全进程唯一的托盘图标，**三套常驻理由共用一个图标**：「设置已开启」（`SetTrayEnabled(true)`，开启即注册，窗口在前台也显示，`CloseToTrayService.SetEnabled` 与启动时 `EnsureTrayIconForEnabledSetting` 两处驱动）、「关闭后留在托盘」（`ShowForCloseToTray()`）、「后台工具在跑」（`Show(toolName, stopAction)`，流量监控器/网络调度器/防晕3D 在用）。任一成立图标就可见，全部消失才自动收起；悬停文案按 后台工具 > 已隐藏 > 设置开启 的优先级选 `Tray_TooltipTool`/`Tray_TooltipResident`/`Tray_TooltipEnabled`；托盘菜单 = 打开主窗口 / [停止「工具名」并退出] / 退出图吧工具箱（文案 `Tray_*` 资源键，中英双语）。**实现直接走 Win32 `Shell_NotifyIcon`（隐藏消息窗口 + `TrackPopupMenu` + `WM_TRAYICON` 回调 + `TaskbarCreated` 重注册）**，不要改回 `System.Windows.Forms.NotifyIcon`：那需要在主项目加 `FrameworkReference Microsoft.WindowsDesktop.App.WindowsForms`，会把整个 WindowsDesktop 共享框架（Forms / Forms.Design / Accessibility 等约 26 MB）打进自包含产物，而这些类型只有托盘在用。同理，`Microsoft.Win32.SystemEvents` 与 `System.Diagnostics.Eventing.Reader` 现在是独立的 PackageReference（`System.Windows.Extensions` / `System.Diagnostics.EventLog`），以前是搭 WindowsDesktop 的便车。注意后端进程 `TubaWinUI3.BackEnd.exe` 有**自己的**托盘（`BackendTrayHost`，主动拦截/游戏监控用），与主程序图标互相独立，属于预期。
 - 首次隐藏弹一次气泡（`AppSettings["CloseToTrayHintShown"]` 只弹一次，且只在开关开启时消耗，后台工具页面自己点的「最小化到托盘」不弹）说明「程序还在后台、双击恢复、右键退出」。`EnergyStarService.Shutdown()` 只在真正退出时调用——隐藏到托盘后程序还在后台跑，而后台节流本身就是常驻功能，隐藏时解除等于把用户开着的省电功能关掉。
 - 会话结束保护：`CloseToTrayService.AttachSessionEndingWatch()`（`SystemEvents.SessionEnding`，App 构造函数里注册）在注销/关机时置位，放行关闭；窗口重新可见时 `ResetSessionEnding()` 复位（用户取消注销不会有「取消」事件，只能靠「还能操作窗口」反推）。`_sessionEnding` 由 SystemEvents 自己的监听线程写、主线程读，必须是 `volatile`。
 
@@ -194,8 +194,18 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 ### 排行榜页滚动折叠的布局震荡（LayoutCycleException，Issue #165）
 - `GpuRankingPage`/`CpuRankingPage` 的「滚动时折叠头部三行」有个经典死循环：折叠改变列表视口高度 → 底部附近偏移被钳制 → 再次触发 ViewChanged → 方向反转又展开 → 无限震荡直到 LayoutCycleException。**修复口径（勿回退）**：`CollapseNav`/`ExpandNav` 幂等，切换后 `ApplyNavVisibility` 里同步 `UpdateLayout()` 并把钳制后的偏移设为 `_lastScrollOffset` 新基线，`_navToggling` 期间忽略回声事件。两页是复制品，改就一起改。
 
-### 日志目录（Issue #165）与孤儿测试
-- 崩溃/启动诊断日志 = `DiagnosticLogService`（`app_crash.log` 按时间戳分隔追加、`startup_trace.log`），默认 `<DataDir>/Logs`；设置页「日志目录」卡片支持自定义（`AppSettings["LogDir"]`，目录不存在/不可写自动回退默认，切换前探测可写性）与一键打开。
+### 统一日志（LogService）与内置工具「运行日志」log-viewer
+- **所有日志只有一个写入点**：`Services/Logging/LogService`（`TubaWinUi3.Services.LogService`）。目录 = `<DataDir>/Logs`，设置页「日志目录」可自定义（`AppSettings["LogDir"]`，目录不存在/不可写自动回退默认，切换前探测可写性）；**一个类别一个文件** `<类别>.log`，超过 `MaxFileBytes`(1 MB) 滚动成 `.1/.2/.3`（保留 3 份），多行消息第二行起缩进。级别标签定宽：`[DEBUG]`/`[INFO ]`/`[WARN ]`/`[ERROR]`。
+- 类别常量（文件名即类别）：`App`=`app.log`、`Startup`=`startup.log`（启动轨迹，每轮 `ResetFile` 重写）、`Crash`=`crash.log`（崩溃 + 托盘面包屑）、`Agent`=`agent.log`、`GameTunnel`=`game-tunnel.log`、`GameOverlay`=`game-overlay.log`、`StressTest`=`stress-test.log`、`Backend`=`backend.log`、`RogueCleaner`=`rogue-cleaner.log`、`Clipboard`=`clipboard.log`、`PhoneLink`=`phone-link.log`（连接手机审计：配对/拒绝/exec/winget/撤销）。
+- **新增日志不要再自己拼路径/自己轮转**：`LogService.Info/Warn/Error/Debug(category, message)`、`WriteBlock`（原样多行，崩溃报告用）、`ReadTail(path, maxLines, maxBytes)`、`ListFiles()`、`Clear(category)`。写失败一律静默（崩溃路径也走这里）。要新类别就加常量 + `KnownCategories` + `DisplayName` 的 `Log_File_<category>` 本地化键。
+- 各功能保留自己的门面但全部转调 `LogService`：`StartupTrace`（启动面包屑）、`Services/Agent/AgentDebugLog`、`TunnelLog`、`GameOverlayAutoService.Log`、`StressTestControl.Log`、`ClipboardService`、`RogueCleanerCore.Logger`；`DiagnosticLogService` 已删除（不要恢复）。注意 `StartupTrace` 目前**没有任何调用点**（HEAD 起就是死代码，`startup.log` 只由旧文件迁移产生）——需要启动面包屑时在 `App.OnLaunched` 里调 `StartupTrace.Begin()` 并在关键阶段 `Mark(...)`。
+- `LogService.Prepare()`（启动 + 设置页改目录后调用）每进程跑一次：建目录 + **迁移旧位置**（数据目录根部的 `agent-debug.log`/`game_overlay_auto.log`/`stress_test.log`、`active_intercept/backend.log`、`Clipboard/error.log`、`RogueCleaner/logs/*.log`、旧的 `Logs/app_crash.log`+`startup_trace.log`、`%TEMP%/app_crash.log`+`startup_trace.log`）→ 追加进新文件后删旧文件。
+- **主动拦截后端**（独立进程）的日志目录由 `ActiveInterceptService.BuildConfigJson` 的 `LogFile` 指定 = `LogService.PathFor(LogService.Backend)`，后端自己 `CreateDirectory`。Shell 扩展的 `shell-menu/handler.log` 是 NativeAOT 组件自管，**不**进统一目录（错误报告打包单独收录）。
+- **两级上限，别让日志无限长**：①单文件 `MaxFileBytes`=1 MB 滚动成 `.1/.2/.3`；②**目录总量配额 `MaxTotalBytes`=10 MB**，超出后 `EnforceQuota` 按「最旧的滚动副本 → 最久没写过的非关键主文件」删到配额的 80%（`QuotaTargetRatio`），**`crash`/`startup`/`app` 三个关键类别的主文件永不删**（滚动副本照删）。写入路径里 60 秒节流检查一次；启动后 30 秒的延迟任务与打开「运行日志」页各显式调一次 `EnforceQuota()`——主程序几乎不写 app/crash 日志，不能只靠写入触发。
+- **后台组件 `TubaWinUI3.BackEnd` 自己降噪 + 自滚动**：`BackEndLog.Debug` 只进控制台、**不落盘**（每轮心跳走它，如 `InterceptMonitor` 的「扫描完成：N 项」，以前每 10 秒一条、一天几千行）；游戏监控的「未命中诊断」从 30 秒一条降到 5 分钟一条（150 tick，排查「开了游戏不弹窗」仍够用）；`BackEndLog` 自身 1 MB 轮转成 `.1/.2`（独立进程不能指望主程序的配额兜底）。**backend 里新增日志先想清楚频率：轮询/心跳级别的一律 `Debug`。**
+- 内置工具 `log-viewer`（`Pages/LogViewerPage`，分类「系统工具」）= 日志查看器：左侧文件列表（类别显示名 + 大小）、右侧内容（`Consolas`、可选中的 `TextBlock` + `ScrollViewer`），1 秒 `DispatcherQueueTimer` 实时跟随（用户上翻即停止跟随、滚回底部恢复）、级别过滤（`[INFO ]`/`[WARN ]`/`[ERROR]` 前缀匹配）、关键字过滤、复制（走 `ClipboardService`）、清空（`ContentDialogGuard` 确认）、打开目录。设置页「日志目录」卡片有「查看日志」按钮直达。
+- 存储清理：日志条目收敛为一条「运行日志」= `LogService.LogDirectory`；错误报告打包按 `LogService.ListFiles()` 全量收录（单文件截断保留末尾 2 MB）。
+- 新增内置工具的固定四件套仍然适用：注册表 `RegisterDefaults()` + `Metadata/tools.json` 的 `builtin` 挂载 + `Assets/BuiltinIcons/<id>.svg` + 本地化键（`Builtin_<id>_Name/_Desc`）。
 - `> 2026-10-25`：`TubaWinUi3.Tests/NativeHardwareSceneTests.cs` 引用的 `HardwareSceneModel`/`DeviceInspectionSession` 等类型只存在于 `.scene-verify/` 验证程序、从未进主项目，是 NavIconTests 同款孤儿——已在测试 csproj 用 `<Compile Remove>` 排除（文件保留在盘上）；3D 场景类型若真落地主项目，记得移除排除。
 
 
@@ -260,6 +270,18 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - **「以管理员身份重新启动」按钮**（FileLockPage 顶部操作条，未提权时显示；打包版默认非管理员）：`App.TryRelaunchElevated` —— 非打包直接 `Verb=runas`；打包版打包进程直接 runas 会 0x32 失败，改走 **PowerShell 载体** `Start-Process -Verb RunAs`（仓库既有实测写法），并追加 `--msix-admin-session` + 环境变量 `TUBA_MSIX_LOCALSTATE=<LocalState>`。提权进程会丢失包身份，`RuntimeHelper.IsPackagedContext`（= `IsMsixPackaged || MsixAdminSession`）为这类会话恢复打包语义（数据根指向 LocalState、跳过自更新、隐藏社区工具、不启动后端等）——**所有「商店版应如何表现」的新判定都应走 `IsPackagedContext` 而不是 `IsMsixPackaged`**（物理打包判断才用后者）。提权重启成功后必须走 `App.RequestExit()`。两条分支都**无条件追加 `--takeover`**：提权子进程要等旧实例退出后接管单实例互斥体，否则会被自己的旧实例当重复启动转发走（见「单实例 + 激活转发」）。
 - 单实例：点击右键菜单会唤醒已运行实例（不再多开），`--file-lock <路径>` 意图经单实例转发直达工具页（见「单实例 + 激活转发」）。其余限制：提权会话的 WebView2 依赖机器级 Evergreen 运行时（本工具链路不依赖 WebView2）。
 - 测试：`FileLockShellMenuTests`（契约纯逻辑：模式判定/命令构造/标记文件往返/提权脚本转义）、`ShellExtensionManifestTests`（四处清单 + 共享源码 + 发布开关一致性）。
+
+### 连接手机（PhoneLinkService / PhoneLinkPage）— 局域网控制 + 文件互传
+
+- 服务 = `Services/PhoneLinkService.cs`（`HttpListener`，默认 `http://+:18765/`，端口冲突自动 +1）+ `PhoneLinkDiscovery`（UDP 18764 局域网发现）+ Android 伴侣 App（`android-tuba-remote/`，Kotlin/Compose）。协议接口：`/api/ping`、`/api/pair`、`/api/info|hardware|monitor|screenshot`、`/api/exec`、`/api/jobs/{id}`、`/api/winget/*`、`/api/chat*`。
+- **审计日志类别 = `LogService.PhoneLink`（`phone-link.log`）**：配对成功/失败、电脑端拒绝、exec 命令与退出码、winget 安装、文件上传、撤销授权。exec/winget 是 RCE 级能力，新增任何高危接口都必须同样落这个类别——以前只有 `Debug.WriteLine`，Release 下等于没有痕迹。
+- **令牌持久化 = `Services/PhoneLink/PairedDeviceStore`**：24 字节随机令牌，落盘只存 SHA-256 摘要（设置键 `PhoneLinkPairedDevices`），有效期 90 天，过期自动清理并 401。**明文令牌永远不写盘**。进程重启后手机不必重新配对；页面手动关服务仍会清空全部令牌（沿用手动关闭 = 全部断开的语义）。
+- 电脑端设备列表支持**逐台断开**（`PhoneLinkService.PairedDevices` / `RevokeDevice(id)`），不再只有「撤销全部」。
+- **聊天 = `Services/PhoneLink/PhoneLinkChatStore`**：内存上限 500 条，落盘 `<DataDir>/phone_link/chat.json`（原子写），启动恢复；超限从最旧丢（同时清掉它的文件路径映射）。`/api/chat` 支持 `after` / `before` / `limit` 分页。
+- **长任务统一 Job 模型**：`/api/exec` 带 `background: true` 立即返回 `jobId`，客户端轮询 `/api/jobs/{id}`（`/api/jobs` 给列表）；同步响应模式保留给旧客户端。手机切后台 / 断网不会丢结果。
+- **文件下载支持 Range**（`PhoneLinkService.ParseRange`：`bytes=start-`、`start-end`、`-suffix`），可断点续传；上传按**实际收到字节数**强制 20 GB 上限（chunked 没有 Content-Length 也拦得住），超限删临时文件并 413。
+- 截图 `CaptureScreenJpeg` 带 150 ms 缓存（同宽度多设备/连点共用一帧）；`/api/ping` 与 `/api/info` 带 `apiVersion`（当前 = 2），手机端据此协商能力。
+- `Services/PhoneLink/PhoneLinkFirewall` 在服务启动时后台自动创建入站规则（TCP = 实际 HTTP 端口、UDP 18764），失败只记日志，不阻断服务。
 
 ### 硬件详细信息（HardwareDetailPage）— 瀑布流参数卡片
 

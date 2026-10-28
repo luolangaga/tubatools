@@ -8,8 +8,10 @@ namespace TubaWinUi3.Tests
     ///
     /// 背景：<c>Clipboard.SetContent</c> 在剪贴板被其他进程占用时抛 COMException
     /// （0x800401D0 / CLIPBRD_E_CANT_OPEN），从 Tapped 处理器里逃出去就是闪退
-    /// （硬件信息页点「运行时间」卡片必崩）。这里锁定三个不能退化的语义：
-    /// ① 瞬时占用要重试；② 稳定失败要立即返回（不白等）；③ 任何异常都变成失败结果，绝不外抛。
+    /// （硬件信息页点「运行时间」卡片必崩）。这里锁定四个不能退化的语义：
+    /// ① 瞬时占用要重试；② 确定性失败要立即返回（不白等）；③ 任何异常都变成失败结果，绝不外抛；
+    /// ④ 失败上报必须由调用方显式注入 —— 否则这些故意制造的失败会被写进用户的
+    ///    clipboard.log 并上报遥测（曾经每次 dotnet test 都留下 8 行假故障，一个多月攒到 94 KB）。
     ///
     /// 只测与 WinRT 解耦的 RetryCore —— 真实的 Clipboard.SetContent 需要 UI 线程，
     /// 无法在单测里调用。
@@ -17,10 +19,19 @@ namespace TubaWinUi3.Tests
     public class ClipboardServiceRetryTests
     {
         private const int CantOpen = ClipboardService.HResultClipboardCantOpen;
+        private const int CantSet = ClipboardService.HResultCantSetClipboard;
         private const int AccessDenied = ClipboardService.HResultAccessDenied;
         private const int WrongThread = ClipboardService.HResultWrongThread;
+        private const int CallRejected = ClipboardService.HResultCallRejected;
+        private const int ServerCallRetryLater = ClipboardService.HResultServerCallRetryLater;
+        private const int GenericFailure = ClipboardService.HResultGenericFailure;
+        private const int InvalidOperation = ClipboardService.HResultInvalidOperation;
+        private const int ObjectDisposed = ClipboardService.HResultObjectDisposed;
 
         private static readonly int[] NoDelays = [];
+
+        /// <summary>测试用上报钩子：所有故意失败的用例都必须传它（真实上报会写日志 + 遥测）。</summary>
+        private static readonly Action<ClipboardCopyResult> NoReport = _ => { };
 
         private static ClipboardCopyResult Ok() => new(true, 0, null);
 
@@ -52,7 +63,8 @@ namespace TubaWinUi3.Tests
                     return ++attempts == 1 ? Fail(CantOpen) : Ok();
                 },
                 delaysMs: [40, 120],
-                sleepMs: slept.Add);
+                sleepMs: slept.Add,
+                reportFailure: NoReport);
 
             Assert.True(result.Success);
             Assert.Equal(2, attempts);
@@ -60,53 +72,51 @@ namespace TubaWinUi3.Tests
             Assert.Equal(new[] { 40 }, slept);
         }
 
-        [Fact]
-        public void RetryCore_AccessDenied_FailsFastWithoutRetry()
+        [Theory]
+        [InlineData(CantOpen)]
+        [InlineData(CantSet)]
+        [InlineData(CallRejected)]
+        [InlineData(ServerCallRetryLater)]
+        public void RetryCore_TransientFailure_RetriesEveryDelay(int hresult)
         {
+            // 这四类都是「等一下就会好」：剪贴板被别人打开、COM 对方忙
             var attempts = 0;
             var slept = new List<int>();
 
             var result = ClipboardService.RetryCore(
-                attempt: _ => { attempts++; return Fail(AccessDenied); },
+                attempt: _ => { attempts++; return Fail(hresult); },
                 delaysMs: [40, 120, 300],
-                sleepMs: slept.Add);
-
-            Assert.False(result.Success);
-            Assert.Equal(1, attempts);
-            Assert.Empty(slept);
-        }
-
-        [Fact]
-        public void RetryCore_WrongThread_FailsFastWithoutRetry()
-        {
-            // 后台线程调用剪贴板 API —— 重试永远是同样的结果，必须立即返回
-            var attempts = 0;
-            var slept = new List<int>();
-
-            var result = ClipboardService.RetryCore(
-                attempt: _ => { attempts++; return Fail(WrongThread); },
-                delaysMs: [40, 120, 300],
-                sleepMs: slept.Add);
-
-            Assert.False(result.Success);
-            Assert.Equal(1, attempts);
-            Assert.Empty(slept);
-        }
-
-        [Fact]
-        public void RetryCore_UnknownFailure_RetriesEveryDelay()
-        {
-            var attempts = 0;
-            var slept = new List<int>();
-
-            var result = ClipboardService.RetryCore(
-                attempt: _ => { attempts++; return Fail(unchecked((int)0x80004005)); },
-                delaysMs: [40, 120, 300],
-                sleepMs: slept.Add);
+                sleepMs: slept.Add,
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.Equal(4, attempts); // 首次 + 3 次重试
             Assert.Equal(new[] { 40, 120, 300 }, slept);
+            Assert.Equal(4, result.Attempts);
+        }
+
+        [Theory]
+        [InlineData(AccessDenied)]
+        [InlineData(WrongThread)]
+        [InlineData(GenericFailure)]
+        [InlineData(InvalidOperation)]
+        [InlineData(ObjectDisposed)]
+        public void RetryCore_DeterministicFailure_FailsFastWithoutRetry(int hresult)
+        {
+            // 重试换不来不同结果，只会白拖 460ms 并掩盖真因
+            var attempts = 0;
+            var slept = new List<int>();
+
+            var result = ClipboardService.RetryCore(
+                attempt: _ => { attempts++; return Fail(hresult); },
+                delaysMs: [40, 120, 300],
+                sleepMs: slept.Add,
+                reportFailure: NoReport);
+
+            Assert.False(result.Success);
+            Assert.Equal(1, attempts);
+            Assert.Equal(1, result.Attempts);
+            Assert.Empty(slept);
         }
 
         [Fact]
@@ -115,12 +125,39 @@ namespace TubaWinUi3.Tests
             var result = ClipboardService.RetryCore(
                 attempt: _ => Fail(CantOpen),
                 delaysMs: [40],
-                sleepMs: _ => { });
+                sleepMs: _ => { },
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.Equal(CantOpen, result.HResult);
             Assert.Equal("0x800401D0", result.HResultHex);
             Assert.IsType<COMException>(result.Error);
+        }
+
+        [Fact]
+        public void RetryCore_ReportsActualAttemptCount_NeverTheConfiguredMaximum()
+        {
+            // 日志曾经固定写「已重试 3 次」，而 4 类确定性失败其实一次都没重试 —— 谎报
+            var result = ClipboardService.RetryCore(
+                attempt: _ => Fail(CantOpen),
+                delaysMs: [10, 20],
+                sleepMs: _ => { },
+                reportFailure: NoReport);
+
+            Assert.Equal(3, result.Attempts);
+        }
+
+        [Fact]
+        public void RetryCore_SuccessReportsSingleAttempt()
+        {
+            var result = ClipboardService.RetryCore(
+                attempt: _ => Ok(),
+                delaysMs: [40, 120, 300],
+                sleepMs: _ => { },
+                reportFailure: NoReport);
+
+            Assert.True(result.Success);
+            Assert.Equal(1, result.Attempts);
         }
 
         [Fact]
@@ -131,10 +168,41 @@ namespace TubaWinUi3.Tests
             var result = ClipboardService.RetryCore(
                 attempt: _ => Ok(),
                 delaysMs: [40, 120, 300],
-                sleepMs: slept.Add);
+                sleepMs: slept.Add,
+                reportFailure: NoReport);
 
             Assert.True(result.Success);
             Assert.Empty(slept);
+        }
+
+        [Fact]
+        public void RetryCore_FailureIsReportedOnceWithFinalResult()
+        {
+            var reported = new List<ClipboardCopyResult>();
+
+            var result = ClipboardService.RetryCore(
+                attempt: _ => Fail(CantOpen),
+                delaysMs: [10, 20],
+                sleepMs: _ => { },
+                reportFailure: reported.Add);
+
+            Assert.Single(reported);
+            Assert.Equal(result, reported[0]);
+        }
+
+        [Fact]
+        public void RetryCore_SuccessIsNotReportedAsFailure()
+        {
+            var reported = 0;
+
+            var result = ClipboardService.RetryCore(
+                attempt: _ => Ok(),
+                delaysMs: NoDelays,
+                sleepMs: _ => { },
+                reportFailure: _ => reported++);
+
+            Assert.True(result.Success);
+            Assert.Equal(0, reported);
         }
 
         [Fact]
@@ -144,7 +212,8 @@ namespace TubaWinUi3.Tests
             var result = ClipboardService.RetryCore(
                 attempt: _ => throw new InvalidOperationException("交付期间炸了"),
                 delaysMs: NoDelays,
-                sleepMs: _ => { });
+                sleepMs: _ => { },
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.IsType<InvalidOperationException>(result.Error);
@@ -159,7 +228,8 @@ namespace TubaWinUi3.Tests
             var result = ClipboardService.RetryCore(
                 attempt: _ => { attempts++; return Fail(CantOpen); },
                 delaysMs: [10],
-                sleepMs: _ => { });
+                sleepMs: _ => { },
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.Equal(2, attempts);
@@ -174,7 +244,8 @@ namespace TubaWinUi3.Tests
             var result = await ClipboardService.RetryCoreAsync(
                 attempt: _ => Task.FromResult(++attempts == 1 ? Fail(CantOpen) : Ok()),
                 delaysMs: [10, 20],
-                delayAsync: ms => { delays.Add(ms); return Task.CompletedTask; });
+                delayAsync: ms => { delays.Add(ms); return Task.CompletedTask; },
+                reportFailure: NoReport);
 
             Assert.True(result.Success);
             Assert.Equal(2, attempts);
@@ -184,17 +255,35 @@ namespace TubaWinUi3.Tests
         [Fact]
         public async Task RetryCoreAsync_WrongThread_FailsFastWithoutDelay()
         {
+            // 后台线程调用剪贴板 API —— 重试永远是同样的结果，必须立即返回
             var attempts = 0;
             var delays = new List<int>();
 
             var result = await ClipboardService.RetryCoreAsync(
                 attempt: _ => { attempts++; return Task.FromResult(Fail(WrongThread)); },
                 delaysMs: [10, 20],
-                delayAsync: ms => { delays.Add(ms); return Task.CompletedTask; });
+                delayAsync: ms => { delays.Add(ms); return Task.CompletedTask; },
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.Equal(1, attempts);
             Assert.Empty(delays);
+        }
+
+        [Fact]
+        public async Task RetryCoreAsync_ReportsActualAttemptCountOnFailure()
+        {
+            var reported = new List<ClipboardCopyResult>();
+
+            var result = await ClipboardService.RetryCoreAsync(
+                attempt: _ => Task.FromResult(Fail(CantOpen)),
+                delaysMs: [10, 20],
+                delayAsync: _ => Task.CompletedTask,
+                reportFailure: reported.Add);
+
+            Assert.Equal(3, result.Attempts);
+            Assert.Single(reported);
+            Assert.Equal(result, reported[0]);
         }
 
         [Fact]
@@ -205,7 +294,8 @@ namespace TubaWinUi3.Tests
             var result = await ClipboardService.RetryCoreAsync(
                 attempt: _ => throw new ObjectDisposedException("该对象已关闭"),
                 delaysMs: NoDelays,
-                delayAsync: _ => Task.CompletedTask);
+                delayAsync: _ => Task.CompletedTask,
+                reportFailure: NoReport);
 
             Assert.False(result.Success);
             Assert.IsType<ObjectDisposedException>(result.Error);

@@ -266,7 +266,7 @@ public static class ActiveInterceptService
         {
             PollIntervalSeconds = 10,
             DataDir = dataDir,
-            LogFile = Path.Combine(dataDir, "active_intercept", "backend.log"),
+            LogFile = LogService.PathFor(LogService.Backend),
             NotifyMode = AppSettings.Get("ActiveInterceptNotifyMode") ?? "always",
             NotifyCooldownMinutes = Math.Max(1, AppSettings.GetInt("ActiveInterceptNotifyCooldownMinutes", 30)),
             MaxEventRows = 1000,

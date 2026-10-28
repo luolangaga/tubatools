@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="TubaWinUi3.Pages.LogViewerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:WinUI3Localizer"
+    xmlns:local="using:TubaWinUi3.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded">
+
+    <Page.Resources>
+        <DataTemplate x:Key="LogFileTemplate" x:DataType="local:LogFileRow">
+            <Grid Padding="4,2" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="{x:Bind DisplayName}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind Category}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind SizeText, Mode=OneWay}" />
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <controls:ToolPageHeader
+            Grid.Row="0"
+            ToolId="log-viewer"
+            Title="运行日志"
+            Subtitle="启动轨迹、崩溃、AI 助手、联机、压力测试等日志统一保存在这里，可实时查看、搜索与打包反馈"
+            l:Uids.Uid="LogViewer_PageHeader"
+            Glyph="&#xE7C3;">
+            <controls:ToolPageHeader.Actions>
+                <ToggleButton x:Name="LiveToggle" IsChecked="True" Padding="12,5" MinHeight="32" VerticalAlignment="Center" Checked="LiveToggle_Toggled" Unchecked="LiveToggle_Toggled">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                        <TextBlock Text="实时" l:Uids.Uid="LogViewer_Live" />
+                    </StackPanel>
+                </ToggleButton>
+                <Button Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                        <TextBlock Text="刷新" l:Uids.Uid="LogViewer_Refresh" />
+                    </StackPanel>
+                </Button>
+                <Button Click="OpenFolderButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE838;" />
+                        <TextBlock Text="打开目录" l:Uids.Uid="LogViewer_OpenFolder" />
+                    </StackPanel>
+                </Button>
+                <Button Click="CopyButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                        <TextBlock Text="复制" l:Uids.Uid="LogViewer_Copy" />
+                    </StackPanel>
+                </Button>
+                <Button Click="ClearButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                        <TextBlock Text="清空" l:Uids.Uid="LogViewer_Clear" />
+                    </StackPanel>
+                </Button>
+            </controls:ToolPageHeader.Actions>
+        </controls:ToolPageHeader>
+
+        <Grid
+            Grid.Row="1"
+            Padding="24,4,24,24"
+            ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="256" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左：日志文件 -->
+            <Grid Grid.Column="0" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="日志文件" l:Uids.Uid="LogViewer_Files" />
+
+                <Border
+                    Grid.Row="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="4">
+                    <ListView
+                        x:Name="FilesList"
+                        ItemTemplate="{StaticResource LogFileTemplate}"
+                        SelectionChanged="FilesList_SelectionChanged"
+                        SelectionMode="Single" />
+                </Border>
+
+                <TextBlock
+                    x:Name="DirText"
+                    Grid.Row="2"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="Wrap" />
+            </Grid>
+
+            <!-- 右：日志内容 -->
+            <Grid Grid.Column="1" RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        MinWidth="220"
+                        QueryIcon="Find"
+                        PlaceholderText="搜索关键字（不区分大小写）"
+                        l:Uids.Uid="LogViewer_SearchPlaceholder"
+                        TextChanged="SearchBox_TextChanged" />
+
+                    <ComboBox
+                        x:Name="LevelCombo"
+                        Grid.Column="1"
+                        MinWidth="130"
+                        SelectedIndex="0"
+                        SelectionChanged="LevelCombo_SelectionChanged">
+                        <ComboBoxItem Content="全部级别" l:Uids.Uid="LogViewer_LevelAll" Tag="all" />
+                        <ComboBoxItem Content="信息及以上" l:Uids.Uid="LogViewer_LevelInfo" Tag="info" />
+                        <ComboBoxItem Content="警告及以上" l:Uids.Uid="LogViewer_LevelWarn" Tag="warn" />
+                        <ComboBoxItem Content="仅错误" l:Uids.Uid="LogViewer_LevelError" Tag="error" />
+                    </ComboBox>
+
+                    <TextBlock
+                        x:Name="CountText"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Grid>
+
+                <Border
+                    Grid.Row="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,8,12,8">
+                    <ScrollViewer
+                        x:Name="ContentScroller"
+                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollMode="Auto"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Auto"
+                        ViewChanged="ContentScroller_ViewChanged">
+                        <TextBlock
+                            x:Name="ContentText"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True"
+                            LineHeight="18"
+                            TextWrapping="NoWrap" />
+                    </ScrollViewer>
+                </Border>
+
+                <TextBlock
+                    x:Name="PathText"
+                    Grid.Row="2"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    IsTextSelectionEnabled="True"
+                    TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>

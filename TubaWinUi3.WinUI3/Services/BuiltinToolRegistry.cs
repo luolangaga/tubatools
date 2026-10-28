@@ -75,6 +75,7 @@ public static class BuiltinToolRegistry
         Register(new AiPlaygroundTool());
         Register(new MemoryManagerTool());
         Register(new DriverStoreTool());
+        Register(new LogViewerTool());
     }
 
     public static IReadOnlyList<string> GetCategories()
