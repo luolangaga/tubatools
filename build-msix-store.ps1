@@ -137,6 +137,10 @@ if (-not $Version) {
     }
 }
 
+# MSIX 的 Identity 是 4 段（1.8.0.0），MSBuild 的 Version 用 3 段更贴合 CI 发布产物的
+# FileVersion/ProductVersion 形态（1.8.0.0 / 1.8.0+<sha>）。
+$PublishVersion = ($Version.Split('.')[0..2] -join '.')
+
 $selfContainedFlag = -not $FrameworkDependent.IsPresent
 
 Write-Host ''
@@ -232,6 +236,7 @@ function Build-ArchPackage {
         -r "win-$Arch" `
         --self-contained:$selfContainedFlag `
         -p:Platform=$Arch `
+        -p:Version=$PublishVersion `
         -p:PublishTrimmed=false `
         -p:PublishReadyToRun=false `
         -p:ExcludeToolsFromPublish=true `
