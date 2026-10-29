@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
@@ -138,7 +138,7 @@ public sealed partial class MemoryManagerPage : Page
     {
         if (_state is null) throw new InvalidOperationException(L("ReadFirst", "请先刷新当前配置", "Refresh the current configuration first"));
         await Task.Run(() => PageFileService.Validate(draft));
-        var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = L("Confirm", "确认分页文件变更", "Confirm pagefile changes"), Content = new TextBlock { Text = L("Before", "原配置：", "Before:") + "\n" + Describe(_state.Configuration) + "\n\n" + L("After", "新配置：", "After:") + "\n" + Describe(draft) + "\n\n" + L("ConfirmHint", "将备份原配置。更改会影响提交上限和崩溃转储，重启电脑后生效。", "The original configuration will be backed up. Changes affect commit capacity and crash dumps and take effect after restart."), TextWrapping = TextWrapping.Wrap }, PrimaryButtonText = L("Apply", "应用配置", "Apply"), CloseButtonText = L("Cancel", "取消", "Cancel"), DefaultButton = ContentDialogButton.Close };
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog { XamlRoot = XamlRoot, Title = L("Confirm", "确认分页文件变更", "Confirm pagefile changes"), Content = new TextBlock { Text = L("Before", "原配置：", "Before:") + "\n" + Describe(_state.Configuration) + "\n\n" + L("After", "新配置：", "After:") + "\n" + Describe(draft) + "\n\n" + L("ConfirmHint", "将备份原配置。更改会影响提交上限和崩溃转储，重启电脑后生效。", "The original configuration will be backed up. Changes affect commit capacity and crash dumps and take effect after restart."), TextWrapping = TextWrapping.Wrap }, PrimaryButtonText = L("Apply", "应用配置", "Apply"), CloseButtonText = L("Cancel", "取消", "Cancel"), DefaultButton = ContentDialogButton.Close };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try { await PageFileService.ApplyAsync(_state.Configuration, draft); }
         catch { await ReadPageFiles(); throw; }
@@ -155,7 +155,7 @@ public sealed partial class MemoryManagerPage : Page
         var mode = (MemoryCleanMode)CleanMode.SelectedIndex;
         if (mode != MemoryCleanMode.Light)
         {
-            var confirm = new ContentDialog { XamlRoot = XamlRoot, Title = mode == MemoryCleanMode.Deep ? L("DeepConfirm", "深度内存清理", "Deep memory cleanup") : L("StandardConfirm", "标准内存清理", "Standard memory cleanup"),
+            var confirm = new TubaWinUi3.Controls.FluentContentDialog { XamlRoot = XamlRoot, Title = mode == MemoryCleanMode.Deep ? L("DeepConfirm", "深度内存清理", "Deep memory cleanup") : L("StandardConfirm", "标准内存清理", "Standard memory cleanup"),
                 Content = new TextBlock { Text = CleanHint.Text, TextWrapping = TextWrapping.Wrap }, PrimaryButtonText = L("Clean", "开始清理", "Clean now"), CloseButtonText = L("Cancel", "取消", "Cancel"), DefaultButton = ContentDialogButton.Close };
             if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
         }

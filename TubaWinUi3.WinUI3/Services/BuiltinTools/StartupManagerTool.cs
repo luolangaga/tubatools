@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -629,7 +629,7 @@ public sealed class StartupManagerTool : IBuiltinTool
 
         var bar = new ProgressBar { Minimum = 0, Maximum = 100, Value = 0 };
         var status = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
-        var dlg = new ContentDialog
+        var dlg = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "下载 Autoruns 命令行工具",
             Content = new StackPanel

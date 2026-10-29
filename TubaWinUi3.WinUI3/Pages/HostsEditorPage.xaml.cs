@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
@@ -276,7 +276,7 @@ public sealed partial class HostsEditorPage : Page
         panel.Children.Add(commentBox);
         panel.Children.Add(enabledCheck);
 
-        var dlg = new ContentDialog
+        var dlg = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "编辑 Hosts 规则",
             Content = panel,
@@ -367,7 +367,7 @@ public sealed partial class HostsEditorPage : Page
     {
         if (_dirty)
         {
-            var warn = new ContentDialog
+            var warn = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "未保存更改",
                 Content = "Hosts 文件已修改但未保存，是否放弃更改？",

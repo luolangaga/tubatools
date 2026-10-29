@@ -57,7 +57,7 @@ public sealed class ScreenTestTool : IBuiltinTool
     {
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "屏幕坏点检测 - 启动失败",
                 Content = new ScrollViewer

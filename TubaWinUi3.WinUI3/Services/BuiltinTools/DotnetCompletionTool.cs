@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -248,7 +248,7 @@ public sealed partial class DotnetCompletionPage : Page
 
     private async void OnHelpClick(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = ".NET 组件说明",
             XamlRoot = Content.XamlRoot,

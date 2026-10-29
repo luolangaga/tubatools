@@ -62,7 +62,7 @@ public sealed class LiteMonitorService : IDisposable
 
     /// <summary>传感器引擎自检信息（LHM 版本 + PawnIO 驱动状态），日志与 sensor_dump.txt 共用。</summary>
     public static string EngineDescription =>
-        $"LibreHardwareMonitor {typeof(Computer).Assembly.GetName().Version} · PawnIO "
+        $"LibreHardwareMonitor 源码 1d74d0ea (程序集 {typeof(Computer).Assembly.GetName().Version}) · PawnIO "
         + (PawnIoService.IsDeviceAvailable() ? "ready" : PawnIoService.IsInstalled() ? "installed but not loaded" : "missing");
 
     public MonitorSample Read(bool fpsEnabled = false)
@@ -179,8 +179,9 @@ public sealed class LiteMonitorService : IDisposable
                         s.GpuPower = sensor.Value.Value;
                     if (sensor.SensorType == SensorType.Load && Has(sensor.Name, "memory"))
                         s.GpuVramLoad = sensor.Value.Value;
-                    if (sensor.SensorType == SensorType.SmallData && Has(sensor.Name, "used") && (Has(sensor.Name, "memory") || Has(sensor.Name, "dedicated")))
-                        s.GpuVramUsedGB = sensor.Value.Value / 1024f;
+                    // LHM 0.9.7 reports all Data sensors in bytes.
+                    if (sensor.SensorType == SensorType.Data && Has(sensor.Name, "used") && (Has(sensor.Name, "memory") || Has(sensor.Name, "dedicated")))
+                        s.GpuVramUsedGB = sensor.Value.Value / (1024f * 1024 * 1024);
                 }
                 break;
 
@@ -190,10 +191,10 @@ public sealed class LiteMonitorService : IDisposable
                     if (!sensor.Value.HasValue) continue;
                     if (sensor.SensorType == SensorType.Load && (Has(sensor.Name, "memory") || sensor.Name.Equals("Load", StringComparison.OrdinalIgnoreCase)))
                         s.MemLoad = sensor.Value.Value;
-                    if ((sensor.SensorType == SensorType.Data || sensor.SensorType == SensorType.SmallData) && Has(sensor.Name, "used"))
-                        s.MemUsedGB = sensor.Value.Value;
-                    if ((sensor.SensorType == SensorType.Data || sensor.SensorType == SensorType.SmallData) && Has(sensor.Name, "available"))
-                        s.MemTotalGB = s.MemUsedGB >= 0 ? s.MemUsedGB + sensor.Value.Value : -1;
+                    if (sensor.SensorType == SensorType.Data && Has(sensor.Name, "used"))
+                        s.MemUsedGB = sensor.Value.Value / (1024f * 1024 * 1024);
+                    if (sensor.SensorType == SensorType.Data && Has(sensor.Name, "available"))
+                        s.MemTotalGB = s.MemUsedGB >= 0 ? s.MemUsedGB + sensor.Value.Value / (1024f * 1024 * 1024) : -1;
                 }
                 break;
 

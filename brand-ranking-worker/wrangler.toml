@@ -1,0 +1,9 @@
+name = "tuba-brand-ranking"
+main = "src/index.ts"
+compatibility_date = "2026-10-13"
+routes = [{ pattern = "rt.tubawinui3.cn", custom_domain = true }]
+[[d1_databases]]
+binding = "DB"
+database_name = "tuba-brand-ranking"
+database_id = "8dab37eb-6c4f-412b-8616-0712ecc7185c"
+migrations_dir = "migrations"

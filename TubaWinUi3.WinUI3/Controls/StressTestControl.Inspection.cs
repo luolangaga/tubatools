@@ -1,11 +1,16 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using System.Diagnostics;
+using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Controls;
 
 public sealed partial class StressTestControl
 {
+    private bool _openingInspectionHwInfo;
+    private TextBlock? _inspectionMonitorHint;
+    private Button? _inspectionMonitorButton;
     // A compact view over the existing runner: same monitoring, stop, log and report paths.
     // Inspection presets never overwrite the standalone tool's saved settings.
     private void BuildInspectionLayout()
@@ -17,6 +22,7 @@ public sealed partial class StressTestControl
         _settingsReady = true;
 
         var root = new Grid { RowSpacing = 8 };
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -51,6 +57,19 @@ public sealed partial class StressTestControl
             commands.Children.Add(button);
         }
         Grid.SetRow(commands, 1); root.Children.Add(commands);
+
+        var monitor = new Grid { ColumnSpacing = 8 };
+        monitor.ColumnDefinitions.Add(new ColumnDefinition());
+        monitor.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        _inspectionMonitorHint = (TextBlock)Microsoft.UI.Xaml.Markup.XamlReader.Load(
+            "<TextBlock xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' FontSize='12' TextWrapping='Wrap' Foreground='{ThemeResource TextFillColorSecondaryBrush}' />");
+        _inspectionMonitorHint.Text = "开始烤机时自动打开 HWiNFO。请在其“传感器 / Sensors”窗口查看温度、功耗和频率；本页读数仅供参考。";
+        monitor.Children.Add(_inspectionMonitorHint);
+        _inspectionMonitorButton = new Button { Content = "打开 HWiNFO", VerticalAlignment = VerticalAlignment.Top };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(_inspectionMonitorButton, "InspectionOpenHwInfo");
+        _inspectionMonitorButton.Click += async (_, _) => await OpenInspectionHwInfoAsync();
+        Grid.SetColumn(_inspectionMonitorButton, 1); monitor.Children.Add(_inspectionMonitorButton);
+        Grid.SetRow(monitor, 2); root.Children.Add(monitor);
         var metrics = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         for (var i = 0; i < 4; i++) metrics.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         metrics.ColumnDefinitions.Add(new ColumnDefinition()); metrics.ColumnDefinitions.Add(new ColumnDefinition());
@@ -70,11 +89,57 @@ public sealed partial class StressTestControl
             stack.Children.Add(value);
             Grid.SetColumn(stack, i % 2); Grid.SetRow(stack, i / 2); metrics.Children.Add(stack);
         }
-        Grid.SetRow(metrics, 2); root.Children.Add(metrics);
+        Grid.SetRow(metrics, 3); root.Children.Add(metrics);
         // Bounded log is the only scrollable region; settings and readings stay visible.
         Detach(LogScrollViewer); LogScrollViewer.Height = double.NaN; LogScrollViewer.MinHeight = 24;
-        Grid.SetRow(LogScrollViewer, 3); root.Children.Add(LogScrollViewer);
+        Grid.SetRow(LogScrollViewer, 4); root.Children.Add(LogScrollViewer);
         Content = root;
+    }
+
+    private async Task OpenInspectionHwInfoAsync(bool onlyWhileRunning = false)
+    {
+        if (_openingInspectionHwInfo) return;
+        _openingInspectionHwInfo = true;
+        if (_inspectionMonitorButton is { } openingButton) openingButton.IsEnabled = false;
+        try
+        {
+            // Catalog selection includes the existing x64 / ARM64 / x86 preference rules.
+            var tools = await ToolCatalog.GetAllToolsAsync();
+            if (!IsLoaded || (onlyWhileRunning && !_isRunning)) return;
+            var tool = tools.FirstOrDefault(t => !t.IsBuiltinLink &&
+                new[] { "HWiNFO", "HWiNFO32", "HWiNFO64", "HWiNFO_ARM64" }
+                    .Contains(Path.GetFileNameWithoutExtension(t.EffectivePath), StringComparer.OrdinalIgnoreCase));
+            string message;
+            if (tool is null || !File.Exists(tool.EffectivePath))
+                message = "未找到 HWiNFO，请先在“综合检测”中下载该工具，再点击“打开 HWiNFO”。本页监控数据可能不完整。";
+            else
+            {
+                var running = false;
+                foreach (var name in new[] { "HWiNFO", "HWiNFO32", "HWiNFO64", "HWiNFO_ARM64" })
+                {
+                    var processes = Process.GetProcessesByName(name);
+                    running |= processes.Length > 0;
+                    foreach (var process in processes) process.Dispose();
+                }
+                if (!running) ToolProcessLauncher.Launch(tool.EffectivePath, tool.EffectiveWorkingDir);
+                message = running
+                    ? "HWiNFO 已在运行，请切换到其“传感器 / Sensors”窗口查看监控数据。本页读数仅供参考。"
+                    : "已打开 HWiNFO，请进入“传感器 / Sensors”窗口查看监控数据。本页读数仅供参考。";
+            }
+            if (_inspectionMonitorHint is { } hint) hint.Text = message;
+            Log(message);
+        }
+        catch (Exception ex)
+        {
+            var message = $"HWiNFO 启动失败：{ex.Message}。可点击“打开 HWiNFO”重试，本页监控数据可能不完整。";
+            if (_inspectionMonitorHint is { } hint) hint.Text = message;
+            Log(message);
+        }
+        finally
+        {
+            _openingInspectionHwInfo = false;
+            if (_inspectionMonitorButton is { } button) button.IsEnabled = true;
+        }
     }
 
     private void Detach(FrameworkElement element)

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -373,7 +373,7 @@ public sealed partial class ScriptRunnerWindow : Window
 
     private async Task ConfirmCloseAsync()
     {
-        var dlg = new ContentDialog
+        var dlg = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "脚本正在运行",
             Content = "当前有脚本正在运行，是否强制终止并关闭窗口？",

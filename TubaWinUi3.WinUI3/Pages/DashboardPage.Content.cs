@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -50,7 +50,7 @@ public sealed partial class DashboardPage
             double height = Math.Max(160, root.Size.Height - (compactDialog ? 136 : 192));
             var editor = new DashboardContentEditor(options.OrderBy(o => o.External).ThenBy(o => o.Name, StringComparer.CurrentCultureIgnoreCase).ToList(),
                 draft, selected, width, height);
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = S("EditFeatured", "编辑大卡片"),
                 Content = editor,

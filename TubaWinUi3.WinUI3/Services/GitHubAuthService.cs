@@ -78,7 +78,7 @@ public static class GitHubAuthService
 
     public static async Task<string?> StartDeviceFlowAsync(XamlRoot xamlRoot, CancellationToken ct = default)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "登录 GitHub",
             CloseButtonText = "取消",

@@ -18,18 +18,21 @@
     <!-- 数据可视化系列色板（图表/仪表盘专用，跟随主题） -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="FluentIconForegroundBrush" Color="#287DAD" />
             <SolidColorBrush x:Key="DataSeries1Brush" Color="{ThemeResource SystemAccentColor}" />
             <SolidColorBrush x:Key="DataSeries2Brush" Color="{ThemeResource SystemAccentColorDark1}" />
             <SolidColorBrush x:Key="DataSeries3Brush" Color="{ThemeResource SystemFillColorSuccess}" />
             <SolidColorBrush x:Key="DataSeries4Brush" Color="{ThemeResource SystemFillColorCaution}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="FluentIconForegroundBrush" Color="#79D8FF" />
             <SolidColorBrush x:Key="DataSeries1Brush" Color="{ThemeResource SystemAccentColorLight2}" />
             <SolidColorBrush x:Key="DataSeries2Brush" Color="{ThemeResource SystemAccentColor}" />
             <SolidColorBrush x:Key="DataSeries3Brush" Color="{ThemeResource SystemFillColorSuccess}" />
             <SolidColorBrush x:Key="DataSeries4Brush" Color="{ThemeResource SystemFillColorCaution}" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="FluentIconForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
             <SolidColorBrush x:Key="DataSeries1Brush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="DataSeries2Brush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="DataSeries3Brush" Color="{ThemeResource SystemColorHighlightColor}" />

@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Window
     x:Class="TubaWinUi3.Pages.ScriptRunnerWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -123,7 +124,7 @@
 
                     <DropDownButton x:Name="EncodingButton" Grid.Column="4" CornerRadius="4" FontSize="12">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon Glyph="&#xE8BD;" FontSize="12" />
+                            <fluentIcons:FluentColorIcon Glyph="&#xE8BD;" FontSize="12" />
                             <TextBlock x:Name="EncodingLabel" Text="UTF-8" />
                         </StackPanel>
                         <DropDownButton.Flyout>
@@ -180,7 +181,7 @@
 
                         <Button x:Name="CopyOutputButton" Grid.Column="6" Click="CopyOutputButton_Click"
                                 Padding="4,2" CornerRadius="4" ToolTipService.ToolTip="复制输出">
-                            <FontIcon Glyph="&#xE8C8;" FontSize="12" />
+                            <fluentIcons:FluentColorIcon Glyph="&#xE8C8;" FontSize="12" />
                         </Button>
                     </Grid>
                 </Border>

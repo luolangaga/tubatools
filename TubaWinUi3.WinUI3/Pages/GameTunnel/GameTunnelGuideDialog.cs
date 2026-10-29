@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
@@ -77,7 +77,7 @@ public sealed class GameTunnelGuideDialog
             .Select(p => $"{p.Name} · {p.DefaultPort}（{p.Protocol.Describe()}）");
         body.Children.Add(Card(Section(portLines.Select(l => Line(l)).ToArray())));
 
-        _dialog = new ContentDialog
+        _dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "使用教程",
             Content = new ScrollViewer

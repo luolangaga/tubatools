@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Windows.System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -115,7 +115,7 @@ public sealed partial class ErrorWindow : Window
         if (string.IsNullOrEmpty(reproSteps))
         {
             ReproStepsBox.Header = "⚠️ 复现步骤为必填项";
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "请填写复现步骤",
                 Content = "提交 Issue 前请描述你遇到此错误时的操作步骤，这能帮助我们快速定位和修复问题。",
@@ -159,7 +159,7 @@ public sealed partial class ErrorWindow : Window
             if (!string.IsNullOrEmpty(result.Warning))
                 content += $"\n\n⚠ {result.Warning}";
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "错误日志打包完成",
                 Content = new TextBlock { Text = content, TextWrapping = TextWrapping.Wrap },
@@ -175,7 +175,7 @@ public sealed partial class ErrorWindow : Window
         }
         catch (Exception ex)
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "打包失败",
                 Content = ex.Message,

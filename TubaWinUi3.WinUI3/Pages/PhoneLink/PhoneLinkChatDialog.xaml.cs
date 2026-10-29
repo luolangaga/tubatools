@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml;
@@ -20,6 +20,7 @@ public sealed partial class PhoneLinkChatDialog : ContentDialog
     public PhoneLinkChatDialog(XamlRoot xamlRoot)
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = xamlRoot;
         RequestedTheme = ThemeService.CurrentElementTheme;
         MessageList.ItemsSource = _bubbles;

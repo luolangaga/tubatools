@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Management;
@@ -490,6 +490,7 @@ public sealed partial class StressTestControl : UserControl
         _modeName = BuildModeName(cpuSel, gpuSel, netSel);
 
         _isRunning = true;
+        if (_inspectionMode) _ = OpenInspectionHwInfoAsync(onlyWhileRunning: true);
         _monitorRetryCount = 0;
         _monitorInFlight = false;
         _cpuSelectedThisRun = cpuSel;
@@ -737,7 +738,7 @@ public sealed partial class StressTestControl : UserControl
                 return;
             }
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "读不到 CPU 温度/频率/功耗",
                 Content = new TextBlock

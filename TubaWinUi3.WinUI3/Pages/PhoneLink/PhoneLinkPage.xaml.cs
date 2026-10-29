@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -268,7 +268,7 @@ public sealed partial class PhoneLinkPage : Page
         var xamlRoot = XamlRoot ?? App.MainWindow?.Content?.XamlRoot;
         if (xamlRoot is null) return; // 窗口还没就绪：不消耗标记，下次打开再问
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = xamlRoot,
             RequestedTheme = ThemeService.CurrentElementTheme,

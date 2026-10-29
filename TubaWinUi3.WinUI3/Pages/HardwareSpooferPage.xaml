@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:TubaWinUi3.Controls" xmlns:toolkit="using:CommunityToolkit.WinUI.Controls" x:Class="TubaWinUi3.Pages.HardwareSpooferPage" mc:Ignorable="d">
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:TubaWinUi3.Controls" xmlns:toolkit="using:CommunityToolkit.WinUI.Controls" x:Class="TubaWinUi3.Pages.HardwareSpooferPage" mc:Ignorable="d">
     <Grid RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -165,19 +166,19 @@
                 </Button>
                 <Button Grid.Column="1" Click="RestoreButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE72C;"/>
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;"/>
                         <TextBlock Text="一键恢复"/>
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="2" Click="BackupButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE787;"/>
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE787;"/>
                         <TextBlock Text="备份当前"/>
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="4" Click="RefreshButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE72C;"/>
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;"/>
                         <TextBlock Text="刷新"/>
                     </StackPanel>
                 </Button>

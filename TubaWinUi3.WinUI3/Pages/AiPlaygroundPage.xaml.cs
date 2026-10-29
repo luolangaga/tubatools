@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using Microsoft.UI.Dispatching;
@@ -696,7 +696,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private async void ImportButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("AiPlayground_Import", "导入本地模型"),
             Content = L("AiPlayground_ImportHint",
@@ -731,7 +731,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         });
         panel.Children.Add(taskCombo);
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("AiPlayground_Import", "导入本地模型"),
             Content = panel,
@@ -778,7 +778,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         });
         panel.Children.Add(formatCombo);
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("AiPlayground_Import", "导入本地模型"),
             Content = panel,
@@ -1008,7 +1008,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         panel.Children.Add(new TextBlock { Text = help, TextWrapping = TextWrapping.Wrap, Foreground = Res("TextFillColorSecondaryBrush", Microsoft.UI.Colors.Gray) });
         panel.Children.Add(box);
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new ScrollViewer { MaxHeight = 460, Content = panel },
@@ -1055,7 +1055,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
                 return;
             }
             var combo = new ComboBox { MinWidth = 360, ItemsSource = windows.Select(w => w.Title).ToList(), SelectedIndex = 0 };
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = L("AiPlayground_PickWindow", "选择窗口"),
                 Content = combo,
@@ -1240,7 +1240,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
                 panel.Children.Add(cb);
             }
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = L("AiPlayground_ClassFilter", "类别过滤"),
                 Content = new ScrollViewer { MaxHeight = 420, Content = panel },
@@ -2401,7 +2401,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private async Task<bool> ConfirmAsync(string title, string message, string? primaryText = null)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
@@ -2415,7 +2415,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
@@ -2428,7 +2428,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private async Task ShowErrorAsync(string title, Exception ex)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new ScrollViewer

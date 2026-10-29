@@ -589,7 +589,7 @@ public partial class App : Application
             {
                 window.RestoreFromTray();
                 var confirmed = false;
-                var dialog = new ContentDialog
+                var dialog = new TubaWinUi3.Controls.FluentContentDialog
                 {
                     XamlRoot = window.Content?.XamlRoot,
                     RequestedTheme = ThemeService.CurrentElementTheme,

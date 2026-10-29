@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services.AiPlayground;
@@ -57,7 +57,7 @@ public static class AiRuntimeGate
         panel.Children.Add(bar);
         panel.Children.Add(detail);
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = xamlRoot,
             Title = "初始化 AI 运行库",
@@ -202,7 +202,7 @@ public static class AiRuntimeGate
     {
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = xamlRoot,
                 Title = title,

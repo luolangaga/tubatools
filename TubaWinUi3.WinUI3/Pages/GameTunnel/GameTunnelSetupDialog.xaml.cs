@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
 
@@ -21,6 +21,7 @@ public sealed partial class GameTunnelSetupDialog : ContentDialog
     public GameTunnelSetupDialog(XamlRoot xamlRoot)
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = xamlRoot;
         RequestedTheme = ThemeService.CurrentElementTheme;
         Closed += (_, _) => _cts?.Cancel();

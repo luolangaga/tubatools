@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Runtime.InteropServices;
 using TubaWinUi3.Services;
@@ -52,6 +52,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
     public ConfigManagerDialog()
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         InitPlaceholderList();
         RefreshUI();
     }
@@ -173,7 +174,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
 
         Hide();
 
-        var confirmDialog = new ContentDialog
+        var confirmDialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "切换配置目录",
             Content = "切换配置目录需要重启应用才能生效。\n\n是否将现有数据迁移到新目录？\n选择「迁移并切换」将复制配置文件到新目录并删除旧数据；\n选择「仅切换」将从空配置开始。",
@@ -208,7 +209,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
         if (success)
         {
             RefreshUI();
-            var restartDialog = new ContentDialog
+            var restartDialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "切换成功",
                 Content = "配置目录已切换，需要重启应用才能生效。\n点击「立即重启」将自动重新打开应用。",
@@ -334,7 +335,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
 
         Hide();
 
-        var confirmDialog = new ContentDialog
+        var confirmDialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "导入配置",
             Content = "导入配置将覆盖当前所有设置，是否继续？",
@@ -370,7 +371,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
     {
         Hide();
 
-        var confirmDialog = new ContentDialog
+        var confirmDialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "清除图标缓存",
             Content = "确定清除所有图标缓存？下次启动工具时会重新生成。",

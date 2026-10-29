@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentDialog
     x:Class="TubaWinUi3.Pages.ConfigManagerDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -98,7 +99,7 @@
                         VerticalAlignment="Center"
                         Click="CopyPathButton_Click"
                         ToolTipService.ToolTip="复制路径">
-                        <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
                     </Button>
                     <Button
                         x:Name="OpenDirButton"
@@ -107,7 +108,7 @@
                         VerticalAlignment="Center"
                         Click="OpenDirButton_Click"
                         ToolTipService.ToolTip="打开文件夹">
-                        <FontIcon FontSize="12" Glyph="&#xE8A7;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8A7;" />
                     </Button>
                 </Grid>
             </Border>
@@ -122,16 +123,16 @@
                 Style="{StaticResource SectionHeaderStyle}"
                 Text="数据操作" />
 
-            <StackPanel Orientation="Horizontal" Spacing="8">
+            <StackPanel Spacing="8" HorizontalAlignment="Stretch">
                 <Button x:Name="ExportButton" Click="ExportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE896;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE896;" />
                         <TextBlock Text="导出配置" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="ImportButton" Click="ImportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE8E5;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8E5;" />
                         <TextBlock Text="导入配置" />
                     </StackPanel>
                 </Button>

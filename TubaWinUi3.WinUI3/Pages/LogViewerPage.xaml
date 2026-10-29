@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.LogViewerPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:l="using:WinUI3Localizer"
@@ -49,13 +50,13 @@
             <controls:ToolPageHeader.Actions>
                 <ToggleButton x:Name="LiveToggle" IsChecked="True" Padding="12,5" MinHeight="32" VerticalAlignment="Center" Checked="LiveToggle_Toggled" Unchecked="LiveToggle_Toggled">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="实时" l:Uids.Uid="LogViewer_Live" />
                     </StackPanel>
                 </ToggleButton>
                 <Button Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="刷新" l:Uids.Uid="LogViewer_Refresh" />
                     </StackPanel>
                 </Button>
@@ -67,7 +68,7 @@
                 </Button>
                 <Button Click="CopyButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
                         <TextBlock Text="复制" l:Uids.Uid="LogViewer_Copy" />
                     </StackPanel>
                 </Button>

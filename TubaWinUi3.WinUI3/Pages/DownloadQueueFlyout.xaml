@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
     x:Class="TubaWinUi3.Pages.DownloadQueueFlyout"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -186,7 +187,7 @@
             HorizontalAlignment="Center"
             Spacing="8"
             Visibility="Visible">
-            <FontIcon
+            <fluentIcons:FluentColorIcon
                 FontSize="28"
                 HorizontalAlignment="Center"
                 Glyph="&#xE896;" />

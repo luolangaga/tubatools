@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
@@ -20,6 +20,7 @@ public sealed partial class ToolsBundleDownloadDialog : ContentDialog
     public ToolsBundleDownloadDialog()
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = App.MainWindow?.Content?.XamlRoot;
     }
 

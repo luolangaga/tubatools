@@ -444,7 +444,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
             });
         }
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "下载确认",
             Content = panel,

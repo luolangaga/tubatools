@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace TubaWinUi3.Services;
@@ -33,7 +33,7 @@ public sealed class BuiltinToolContext
 
     public ContentDialog CreateDialog(string title, string closeButtonText = "关闭")
     {
-        return new ContentDialog
+        return new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             CloseButtonText = closeButtonText,
@@ -54,7 +54,7 @@ public sealed class BuiltinToolContext
             FontSize = 12,
             TextWrapping = TextWrapping.Wrap
         };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new ScrollViewer

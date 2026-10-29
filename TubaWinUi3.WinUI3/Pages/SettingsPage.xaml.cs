@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -1314,7 +1314,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             tabs.Children.Add(selector);
             tabs.Children.Add(picker);
             tabs.Children.Add(enablePicker);
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot, RequestedTheme = ThemeService.CurrentElementTheme,
                 Title = LocalizationService.L("Settings_ToolVisibility_Title", "管理内置工具与开始菜单展示"),
@@ -1358,7 +1358,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[ToolVisibility] {ex}");
-            var error = new ContentDialog
+            var error = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot, RequestedTheme = ThemeService.CurrentElementTheme,
                 Title = LocalizationService.L("Settings_ToolVisibility_Title", "管理内置工具与开始菜单展示"),
@@ -1494,7 +1494,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             return;
         }
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot,
             Title = LocalizationService.L("Settings_CpuzDialogTitle", "切换硬件信息数据源"),
@@ -2002,7 +2002,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
         while (true)
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = LocalizationService.L("Settings_Feedback_Button", "提交反馈"),
                 Content = panel,
@@ -2019,7 +2019,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             var steps = stepsBox.Text.Trim();
             if (string.IsNullOrEmpty(steps))
             {
-                var warn = new ContentDialog
+                var warn = new TubaWinUi3.Controls.FluentContentDialog
                 {
                     Title = LocalizationService.L("Settings_FeedbackStepsRequiredTitle", "请填写复现步骤"),
                     Content = LocalizationService.L("Settings_FeedbackStepsRequiredMessage", "提交反馈前请描述复现步骤，这能帮助我们快速定位和修复问题。"),
@@ -2076,7 +2076,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             if (!string.IsNullOrEmpty(result.Warning))
                 content += $"\n\n⚠ {result.Warning}";
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot,
                 Title = LocalizationService.L("Settings_ErrorReportDoneTitle", "错误日志打包完成"),
@@ -2557,7 +2557,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot,
             Title = title,

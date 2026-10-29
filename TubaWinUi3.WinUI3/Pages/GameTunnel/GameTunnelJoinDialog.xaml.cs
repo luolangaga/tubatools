@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
@@ -24,6 +24,7 @@ public sealed partial class GameTunnelJoinDialog : ContentDialog
     public GameTunnelJoinDialog(XamlRoot xamlRoot)
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = xamlRoot;
         RequestedTheme = ThemeService.CurrentElementTheme;
         Closed += (_, _) =>

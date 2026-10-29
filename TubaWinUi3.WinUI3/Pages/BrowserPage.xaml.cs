@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
 
@@ -51,7 +51,7 @@ public sealed partial class BrowserPage : Page
         }
         catch (Exception ex)
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "WebView2 初始化失败",
                 Content = $"请确保已安装 WebView2 Runtime。\n\n{ex.Message}",

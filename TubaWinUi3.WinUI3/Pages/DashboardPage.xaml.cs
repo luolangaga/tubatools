@@ -27,6 +27,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     {
         InitializeComponent();
         ToolsGrid.ItemsSource = _tools;
+        _ = new CustomToolDropHandler(this, LoadCatalogAsync, ShowStatus);
         ToolsGrid.Loaded += (_, _) => UpdateCardLayout();
         _ready = true;
         ActualThemeChanged += (_, _) => DispatcherQueue.TryEnqueue(RenderCards);

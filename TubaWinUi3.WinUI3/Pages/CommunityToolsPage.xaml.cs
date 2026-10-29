@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -411,7 +411,7 @@ public sealed partial class CommunityToolsPage : Page
     {
         var authorName = string.IsNullOrWhiteSpace(tool.Author) ? "未知用户" : tool.Author;
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = $"下载「{tool.Name}」",
             PrimaryButtonText = $"我信任 {authorName}，开始下载",
@@ -492,7 +492,7 @@ public sealed partial class CommunityToolsPage : Page
     {
         if (tool.IsBusy) return;
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = $"卸载「{tool.Name}」",
             Content = new StackPanel
@@ -549,7 +549,7 @@ public sealed partial class CommunityToolsPage : Page
         var loggedIn = await GitHubAuthService.EnsureAuthenticatedAsync(XamlRoot);
         if (!loggedIn) return;
 
-        var confirm = new ContentDialog
+        var confirm = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = $"申请下架「{tool.Name}」",
             Content = new TextBlock
@@ -568,7 +568,7 @@ public sealed partial class CommunityToolsPage : Page
         using var cts = new CancellationTokenSource();
         var progressText = new TextBlock { Text = "准备中...", FontSize = 14, TextWrapping = TextWrapping.Wrap };
 
-        var progressDialog = new ContentDialog
+        var progressDialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "正在提交下架申请",
             Content = new StackPanel

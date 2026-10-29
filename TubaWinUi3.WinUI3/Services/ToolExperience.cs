@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Pages;
@@ -28,7 +28,7 @@ internal static class ToolExperience
             try { await action(); }
             catch (Exception ex)
             {
-                await new ContentDialog { XamlRoot = button.XamlRoot, Title = L("ActionFailed", "操作未完成"),
+                await new TubaWinUi3.Controls.FluentContentDialog { XamlRoot = button.XamlRoot, Title = L("ActionFailed", "操作未完成"),
                     Content = Text(ex.Message), CloseButtonText = L("Close", "关闭"),
                     RequestedTheme = ThemeService.CurrentElementTheme }.ShowAsync();
             }

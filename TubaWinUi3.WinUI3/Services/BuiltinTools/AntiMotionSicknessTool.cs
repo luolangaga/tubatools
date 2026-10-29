@@ -32,7 +32,7 @@ public sealed class AntiMotionSicknessTool : IBuiltinTool
     {
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "游戏防晕3D - 启动失败",
                 Content = new ScrollViewer

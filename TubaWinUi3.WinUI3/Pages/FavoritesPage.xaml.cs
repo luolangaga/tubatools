@@ -736,7 +736,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
 
     private void ClearAllButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = LocalizationService.L("Favorites_ClearAllDialogTitle", "清空全部收藏"),
             Content = LocalizationService.L("Favorites_ClearAllDialogMessage", "确定要取消所有工具的收藏吗？此操作不可撤销。"),

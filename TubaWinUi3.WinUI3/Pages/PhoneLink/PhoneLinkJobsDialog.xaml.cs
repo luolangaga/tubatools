@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,6 +19,7 @@ public sealed partial class PhoneLinkJobsDialog : ContentDialog
     public PhoneLinkJobsDialog(XamlRoot xamlRoot, string? initialJobId = null)
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = xamlRoot;
         RequestedTheme = ThemeService.CurrentElementTheme;
         _initialJobId = initialJobId;

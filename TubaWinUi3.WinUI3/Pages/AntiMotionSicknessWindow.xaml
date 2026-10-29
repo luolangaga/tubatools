@@ -3,6 +3,7 @@
     x:Class="TubaWinUi3.Pages.AntiMotionSicknessWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -94,7 +95,7 @@
                 <Expander IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="20" Glyph="&#xE790;" />
+                            <fluentIcons:FluentColorIcon FontSize="20" Glyph="&#xE790;" />
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="全局设置" />
                         </StackPanel>
                     </Expander.Header>
@@ -172,7 +173,7 @@
                 <Expander IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                     <Expander.Header>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="20" Glyph="&#xE945;" />
+                            <fluentIcons:FluentColorIcon FontSize="20" Glyph="&#xE945;" />
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="边缘标记设置" />
                         </StackPanel>
                     </Expander.Header>
@@ -235,7 +236,7 @@
                 <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="一键帮你节约13块钱！Steam某软件此功能居然收费！" />
                 <Button x:Name="ResetButton" Grid.Column="1" Click="ResetButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="重置默认" />
                     </StackPanel>
                 </Button>

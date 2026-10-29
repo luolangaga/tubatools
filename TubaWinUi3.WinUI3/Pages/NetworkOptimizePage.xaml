@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.NetworkOptimizePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:local="using:TubaWinUi3.Pages"
@@ -32,7 +33,7 @@
             <controls:ToolPageHeader.Actions>
                 <Button x:Name="RescanButton" Click="RescanButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                        <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
                         <TextBlock Text="重新扫描" />
                     </StackPanel>
                 </Button>
@@ -82,13 +83,13 @@
                             </StackPanel>
                             <Button Grid.Column="2" x:Name="CopyIpButton" Click="CopyIpButton_Click" Padding="12,5" CornerRadius="4" VerticalAlignment="Center" IsEnabled="False">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon Glyph="&#xE8C8;" FontSize="12" />
+                                    <fluentIcons:FluentColorIcon Glyph="&#xE8C8;" FontSize="12" />
                                     <TextBlock Text="复制" FontSize="14" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="3" x:Name="RefreshIpButton" Click="RefreshIpButton_Click" Padding="12,5" CornerRadius="4" VerticalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                                    <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
                                     <TextBlock Text="刷新" FontSize="14" />
                                 </StackPanel>
                             </Button>
@@ -110,7 +111,7 @@
                                 </Button>
                                 <Button x:Name="BatchDisableButton" Click="BatchDisableButton_Click" CornerRadius="4" Padding="12,5" Background="Transparent" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon Glyph="&#xE777;" FontSize="12" />
+                                        <fluentIcons:FluentColorIcon Glyph="&#xE777;" FontSize="12" />
                                         <TextBlock Text="全部恢复默认" FontSize="14" />
                                     </StackPanel>
                                 </Button>
@@ -242,7 +243,7 @@
                                     </StackPanel>
                                     <Button x:Name="ResetNetworkButton" Grid.Column="1" Click="ResetNetworkButton_Click" CornerRadius="4" Padding="12,5" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <FontIcon Glyph="&#xE777;" FontSize="12" />
+                                            <fluentIcons:FluentColorIcon Glyph="&#xE777;" FontSize="12" />
                                             <TextBlock Text="立即重置" FontSize="14" />
                                         </StackPanel>
                                     </Button>

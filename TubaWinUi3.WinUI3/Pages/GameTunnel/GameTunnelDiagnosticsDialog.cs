@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -22,7 +22,7 @@ public sealed class GameTunnelDiagnosticsDialog
 
     public GameTunnelDiagnosticsDialog(XamlRoot xamlRoot)
     {
-        _dialog = new ContentDialog
+        _dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "网络检测",
             Content = new ScrollViewer

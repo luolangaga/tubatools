@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using TubaWinUi3.Services;
@@ -13,6 +13,7 @@ public sealed partial class SetupWizardDialog : ContentDialog
     public SetupWizardDialog()
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         LayoutChoices.SelectedIndex = CompactModeService.IsCompactModeEnabled() ? 1 : 0;
         var backdrop = BackdropService.GetBackdropType().ToString();
         BackdropChoices.SelectedItem = BackdropChoices.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == backdrop)

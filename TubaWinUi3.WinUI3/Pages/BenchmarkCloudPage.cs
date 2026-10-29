@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1015,7 +1015,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		.ToList();
 		if (selected.Count < 2)
 		{
-			await new ContentDialog
+			await new TubaWinUi3.Controls.FluentContentDialog
 			{
 				Title = "提示",
 				Content = "请至少选择两个报告进行对比",
@@ -1523,7 +1523,7 @@ public sealed partial class BenchmarkCloudPage : Page
 			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
 		bool num = GitHubAuthService.IsLoggedIn && GitHubAuthService.GetToken() != null && _myReports.Any((BenchmarkReportEntry r) => r.Id == report.Id);
-		ContentDialog contentDialog = new ContentDialog
+		ContentDialog contentDialog = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "@" + report.Author + " 的测试报告",
 			Content = new ScrollViewer
@@ -1551,7 +1551,7 @@ public sealed partial class BenchmarkCloudPage : Page
 
 	private async Task DeleteReportAsync(BenchmarkReportEntry report)
 	{
-		if (await new ContentDialog
+		if (await new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "确认删除",
 			Content = $"确定要删除这份报告吗？\n\nCPU: {report.CpuName}\nGPU: {report.GpuName}\n游戏: {report.GamingScore} 办公: {report.OfficeScore}\n\n将通过 PR 删除，合并后生效。",
@@ -1563,7 +1563,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		{
 			return;
 		}
-		ContentDialog progressDlg = new ContentDialog
+		ContentDialog progressDlg = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "正在删除",
 			Content = new ProgressBar
@@ -1599,7 +1599,7 @@ public sealed partial class BenchmarkCloudPage : Page
 			});
 			string prUrl = await BenchmarkCloudService.DeleteReportAsync(report, progress, CancellationToken.None);
 			progressDlg.Hide();
-			if (await new ContentDialog
+			if (await new TubaWinUi3.Controls.FluentContentDialog
 			{
 				Title = "删除请求已提交",
 				Content = "报告删除 PR 已创建，合并后将从排行榜移除。\n\nPR 链接：" + prUrl,
@@ -1617,7 +1617,7 @@ public sealed partial class BenchmarkCloudPage : Page
 		catch (Exception ex)
 		{
 			progressDlg.Hide();
-			await new ContentDialog
+			await new TubaWinUi3.Controls.FluentContentDialog
 			{
 				Title = "删除失败",
 				Content = ex.Message,

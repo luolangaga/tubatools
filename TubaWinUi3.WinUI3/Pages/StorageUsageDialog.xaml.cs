@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -31,6 +31,7 @@ public sealed partial class StorageUsageDialog : ContentDialog
     public StorageUsageDialog()
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
 
         // 默认的 ContentDialogMaxWidth 只有 548，装不下分组清单会横向溢出
         Resources["ContentDialogMaxWidth"] = 840d;

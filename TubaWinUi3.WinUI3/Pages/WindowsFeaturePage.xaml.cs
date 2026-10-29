@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -235,7 +235,7 @@ public sealed partial class WindowsFeaturePage : Page
     private async void ResetFeature_Click(object sender, RoutedEventArgs e)
     {
         if (_busy || !_isAdmin || sender is not Button { Tag: FeatureRowVm vm }) return;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot,
             Title = $"恢复功能 #{vm.FeatureId} 的默认配置？",

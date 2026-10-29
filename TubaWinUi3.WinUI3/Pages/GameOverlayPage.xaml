@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.GameOverlayPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
@@ -65,7 +66,7 @@
                                   OnContent="" OffContent="" Padding="0,0">
                         <ToggleSwitch.Header>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon Glyph="&#xE7F4;" FontSize="12" />
+                                <fluentIcons:FluentColorIcon Glyph="&#xE7F4;" FontSize="12" />
                                 <TextBlock Text="后台自动监控" FontSize="12" />
                                 <TextBlock x:Name="TxtBackendStatus" FontSize="12" VerticalAlignment="Center"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -74,7 +75,7 @@
                     </ToggleSwitch>
                     <Button Click="ScanWindows_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                            <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
                             <TextBlock Text="扫描窗口" />
                         </StackPanel>
                     </Button>
@@ -126,7 +127,7 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTipService.ToolTip="将当前画布布局保存为自定义预设">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <FontIcon Glyph="&#xE74E;" FontSize="12" />
+                                        <fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" />
                                         <TextBlock Text="保存" />
                                     </StackPanel>
                                 </Button>
@@ -254,7 +255,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button Click="AddCustomWindow_Click" Padding="8,4" FontSize="14">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <FontIcon Glyph="&#xE710;" FontSize="12" />
+                                            <fluentIcons:FluentColorIcon Glyph="&#xE710;" FontSize="12" />
                                             <TextBlock Text="添加自定义" />
                                         </StackPanel>
                                     </Button>
@@ -297,7 +298,7 @@
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                             ToolTipService.ToolTip="记录指标、导出格式、输出目录">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <FontIcon Glyph="&#xE713;" FontSize="12" />
+                                            <fluentIcons:FluentColorIcon Glyph="&#xE713;" FontSize="12" />
                                             <TextBlock Text="记录设置" />
                                         </StackPanel>
                                     </Button>
@@ -357,7 +358,7 @@
                                             <Button Click="PickRecordDir_Click" Padding="8,4" FontSize="14"
                                                     ToolTipService.ToolTip="选择记录文件的输出目录">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <FontIcon Glyph="&#xE8B7;" FontSize="12" />
+                                                    <fluentIcons:FluentColorIcon Glyph="&#xE8B7;" FontSize="12" />
                                                     <TextBlock Text="选择输出目录" />
                                                 </StackPanel>
                                             </Button>
@@ -460,7 +461,7 @@
                                         <Button x:Name="BtnPickColor" Click="PickColor_Click"
                                                 Padding="8,4" FontSize="14">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <FontIcon Glyph="&#xE790;" FontSize="12" />
+                                                <fluentIcons:FluentColorIcon Glyph="&#xE790;" FontSize="12" />
                                                 <TextBlock Text="选择颜色" />
                                             </StackPanel>
                                         </Button>
@@ -478,7 +479,7 @@
                                         <Button x:Name="BtnPickTextColor" Click="PickTextColor_Click"
                                                 Padding="8,4" FontSize="14">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <FontIcon Glyph="&#xE790;" FontSize="12" />
+                                                <fluentIcons:FluentColorIcon Glyph="&#xE790;" FontSize="12" />
                                                 <TextBlock Text="选择颜色" />
                                             </StackPanel>
                                         </Button>

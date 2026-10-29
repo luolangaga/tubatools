@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
@@ -247,7 +247,7 @@ public sealed partial class HardwareSpooferPage : Page
             return;
         }
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认修改",
             Content = $"即将修改 {modified} 个注册表项。修改前会自动备份原始值。\n\n确定要继续吗？",
@@ -286,7 +286,7 @@ public sealed partial class HardwareSpooferPage : Page
             return;
         }
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认恢复",
             Content = "即将恢复所有注册表项到修改前的原始值。\n\n确定要继续吗？",

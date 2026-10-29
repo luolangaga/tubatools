@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -362,7 +362,7 @@ public sealed partial class LatencyImageQueryPage : Page
 			}
 		};
 		var content = new Grid { Children = { detailPanel, loadingPanel } };
-		var dialog = new ContentDialog
+		var dialog = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "核间延迟热力图",
 			Content = content,

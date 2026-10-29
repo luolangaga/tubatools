@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -252,7 +252,7 @@ public sealed partial class GameOverlayPage : Page
 
             GameMonitorBackendService.MarkPrompted();
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot,
                 Title = "开启游戏后台自动监控？",
@@ -1018,7 +1018,7 @@ public sealed partial class GameOverlayPage : Page
             grid.Children.Add(box);
         }
 
-        dialog = new ContentDialog
+        dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new StackPanel { Spacing = 8, Children = { grid } },
@@ -1396,7 +1396,7 @@ public sealed partial class GameOverlayPage : Page
     private async void ShowAddCustomWindowDialog()
     {
         var inputBox = new TextBox { PlaceholderText = "输入窗口标题关键字...", Width = 300 };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "添加自定义游戏窗口",
             Content = new StackPanel
@@ -1797,7 +1797,7 @@ public sealed partial class GameOverlayPage : Page
         _recordDialogOpen = true;
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "记录设置",
                 Content = new ScrollViewer { Content = RecordSettingsPanel, MaxHeight = 480, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
@@ -1970,7 +1970,7 @@ public sealed partial class GameOverlayPage : Page
                 TextWrapping = TextWrapping.Wrap
             });
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "数据记录完成",
                 Content = new ScrollViewer { Content = body, MaxHeight = 320 },
@@ -2333,7 +2333,7 @@ public sealed partial class GameOverlayPage : Page
 
         if (_widgets.Count > 0)
         {
-            var confirm = new ContentDialog
+            var confirm = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "应用预设",
                 Content = $"应用预设「{preset.Name}」将替换当前画布上的 {_widgets.Count} 个组件，确定继续吗？",
@@ -2404,7 +2404,7 @@ public sealed partial class GameOverlayPage : Page
         var existingNames = GetAllPresets().Where(p => !p.IsBuiltin).Select(p => p.Name).ToList();
         var input = new TextBox { PlaceholderText = "输入预设名称...", Text = SuggestPresetName(existingNames) };
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "保存当前布局为预设",
             Content = new StackPanel
@@ -2462,7 +2462,7 @@ public sealed partial class GameOverlayPage : Page
     {
         if (CmbPreset.SelectedItem is not ComboBoxItem ci || ci.Tag is not PresetItem preset || preset.IsBuiltin) return;
 
-        var confirm = new ContentDialog
+        var confirm = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "删除预设",
             Content = $"确定删除预设「{preset.Name}」吗？此操作不可恢复。",

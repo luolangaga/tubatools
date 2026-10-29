@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Security.Principal;
 using Microsoft.UI.Xaml;
@@ -274,7 +274,7 @@ public sealed partial class EnvironmentVariablesPage : Page, ILocalizablePage
         if (_selected is not { } entry) return;
 
         var confirmed = false;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("EnvVars_Delete", "删除"),
             Content = string.Format(
@@ -495,7 +495,7 @@ public sealed partial class EnvironmentVariablesPage : Page, ILocalizablePage
         }
 
         var confirmed = false;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("EnvVars_RestoreConfirmTitle", "恢复上次备份"),
             Content = string.Format(
@@ -537,7 +537,7 @@ public sealed partial class EnvironmentVariablesPage : Page, ILocalizablePage
     private async Task<bool> ConfirmDiscardAsync()
     {
         var discard = false;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("EnvVars_DirtyConfirmTitle", "未保存的更改"),
             Content = L("EnvVars_DirtyConfirmMsg", "环境变量有未保存的修改，是否放弃这些更改？"),

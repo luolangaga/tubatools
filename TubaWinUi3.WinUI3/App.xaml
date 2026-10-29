@@ -9,6 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <ResourceDictionary Source="ms-appx:///Styles/FluentTokens.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/DialogStyles.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/SettingsStyles.xaml" />
                 <ResourceDictionary Source="ms-appx:///Styles/ToolCardStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>

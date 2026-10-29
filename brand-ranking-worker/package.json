@@ -1,0 +1,1 @@
+{"name":"tuba-brand-ranking","private":true,"type":"module","scripts":{"dev":"wrangler dev","deploy":"wrangler deploy","test":"node --test","check":"tsc --noEmit"},"devDependencies":{"@cloudflare/workers-types":"^5.20260820.1","typescript":"^5.6.0","wrangler":"^4.125.0"}}

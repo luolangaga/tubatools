@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
 
@@ -19,6 +19,7 @@ public sealed partial class ToolDownloadDialog : ContentDialog
     public ToolDownloadDialog(string toolName, string toolDesc, string downloadUrl, string? filter, string destinationDir)
     {
         InitializeComponent();
+        TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         XamlRoot = App.MainWindow?.Content?.XamlRoot;
 
         _toolName = toolName;
@@ -142,7 +143,7 @@ public sealed partial class ToolDownloadDialog : ContentDialog
 
     private async Task ShowSuccessDialog(ToolDownloadInfo info)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "下载完成",
             XamlRoot = XamlRoot,

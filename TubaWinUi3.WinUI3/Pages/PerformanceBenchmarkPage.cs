@@ -825,7 +825,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			panel.Children.Add(rb);
 		}
 
-		var dialog = new ContentDialog
+		var dialog = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "选择要测试的GPU",
 			Content = new ScrollViewer
@@ -868,7 +868,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		var detail = Label("正在启动测试进程…", 13, true);
 		var log = Label("", 11, true); log.IsTextSelectionEnabled = true;
 		var ring = new ProgressRing { Width = 36, Height = 36, IsActive = true, HorizontalAlignment = HorizontalAlignment.Left };
-		var dialog = new ContentDialog
+		var dialog = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "测量核间延迟", CloseButtonText = "停止测试", XamlRoot = XamlRoot,
 			RequestedTheme = ActualTheme,
@@ -944,7 +944,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		local.CancelAfter(TimeSpan.FromMinutes(10));
 		var webView = new WebView2 { Width = 900, Height = 600 };
 		var status = Label("正在加载浏览器测试…", 13, true);
-		var dialog = new ContentDialog
+		var dialog = new TubaWinUi3.Controls.FluentContentDialog
 		{
 			Title = "浏览器性能测试", CloseButtonText = "停止测试", XamlRoot = XamlRoot,
 			RequestedTheme = ActualTheme,
@@ -1248,7 +1248,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			if (list.Count == 0)
 			{
 				_historyInProgress = false;
-				await new ContentDialog
+				await new TubaWinUi3.Controls.FluentContentDialog
 				{
 					Title = "历史对比",
 					Content = new TextBlock { Text = "暂无历史测试记录，先完成一次性能测试吧。", Margin = new Thickness(16.0) },
@@ -1282,7 +1282,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		string? coreToCoreExe = PerformanceBenchmarkService.FindCoreToCoreLatencyExe();
 		if (coreToCoreExe == null)
 		{
-			await new ContentDialog
+			await new TubaWinUi3.Controls.FluentContentDialog
 			{
 				Title = "未找到测试工具",
 				Content = "未找到核间延迟测试程序（C2CLatency.exe），请确认 Tools/处理器工具/C2CLatency 目录完整。",
@@ -1317,7 +1317,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				ShowLatencyHeatmap(_latencyHeatmapPath);
 				UpdateScoreRow(_cpuLatencyScoreText, PerformanceBenchmarkService.NormalizeLatency(matrix.AverageNs));
 			});
-			var ask = new ContentDialog
+			var ask = new TubaWinUi3.Controls.FluentContentDialog
 			{
 				Title = "核间延迟测试完成",
 				Content = "测试完成！是否将核间延迟热力图上传到社区，供其他用户查看对比？",
@@ -1339,7 +1339,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			}
 			var hardware = new PerformanceBenchmarkResult();
 			await PerformanceBenchmarkService.PopulateHardwareInfoAsync(hardware);
-			ContentDialog progressDialog = new()
+			ContentDialog progressDialog = new TubaWinUi3.Controls.FluentContentDialog()
 			{
 				Title = "正在上传",
 				Content = new ProgressBar { IsIndeterminate = true },
@@ -1355,7 +1355,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 				progressDialog.Hide();
 				try { await progressTask; } catch { }
 				_statusText.Text = "核间延迟热力图上传成功";
-				if (await new ContentDialog
+				if (await new TubaWinUi3.Controls.FluentContentDialog
 				{
 					Title = "上传成功",
 					Content = "核间延迟热力图已通过 PR 提交，合并后可在核间延迟查询中查看。\n\nPR 链接：" + prUrl,
@@ -1370,7 +1370,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			{
 				progressDialog.Hide();
 				try { await progressTask; } catch { }
-				await new ContentDialog
+				await new TubaWinUi3.Controls.FluentContentDialog
 				{
 					Title = "上传失败",
 					Content = ex.Message,

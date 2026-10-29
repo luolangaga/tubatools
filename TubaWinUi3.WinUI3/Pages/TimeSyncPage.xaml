@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.TimeSyncPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:l="using:WinUI3Localizer"
@@ -84,7 +85,7 @@
                 </Button>
                 <Button Click="HelpButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="12" Glyph="&#xE897;" />
+                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE897;" />
                         <TextBlock Text="说明" l:Uids.Uid="TimeSync_HelpButton" />
                     </StackPanel>
                 </Button>
@@ -154,7 +155,7 @@
                                     VerticalAlignment="Center" />
                                 <Button Click="CopySourceButton_Click" Padding="8,4" CornerRadius="4" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
                                         <TextBlock FontSize="12" Text="复制" l:Uids.Uid="TimeSync_CopyButton" />
                                     </StackPanel>
                                 </Button>
@@ -212,7 +213,7 @@
                             TextChanged="CustomHostBox_TextChanged" />
                         <Button x:Name="CustomProbeButton" Grid.Column="1" Click="CustomProbeButton_Click" Padding="12,8" CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="12" Glyph="&#xE9D9;" />
+                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE9D9;" />
                                 <TextBlock FontSize="14" Text="测速" l:Uids.Uid="TimeSync_ProbeCustomButton" />
                             </StackPanel>
                         </Button>
@@ -251,7 +252,7 @@
                         </Button>
                         <Button x:Name="RestoreButton" Grid.Column="2" Click="RestoreButton_Click" Padding="12,8" CornerRadius="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="12" Glyph="&#xE777;" />
+                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE777;" />
                                 <TextBlock FontSize="14" Text="恢复系统默认" l:Uids.Uid="TimeSync_RestoreButton" />
                             </StackPanel>
                         </Button>
@@ -346,19 +347,19 @@
                             </Grid.ColumnDefinitions>
                             <Button x:Name="ResetServiceButton" Click="ResetServiceButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon FontSize="12" Glyph="&#xE777;" />
+                                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE777;" />
                                     <TextBlock FontSize="14" Text="重置时间服务" l:Uids.Uid="TimeSync_ResetServiceButton" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="1" Click="CopyReportButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
                                     <TextBlock FontSize="14" Text="复制诊断报告" l:Uids.Uid="TimeSync_CopyReportButton" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="2" Click="OpenTimeSettingsButton_Click" Padding="12,8" CornerRadius="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon FontSize="12" Glyph="&#xE713;" />
+                                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE713;" />
                                     <TextBlock FontSize="14" Text="系统时间设置" l:Uids.Uid="TimeSync_OpenTimeSettings" />
                                 </StackPanel>
                             </Button>

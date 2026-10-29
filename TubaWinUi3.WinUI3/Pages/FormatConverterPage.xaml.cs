@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -653,7 +653,7 @@ public sealed partial class FormatConverterPage : Page
         EnsureParams();
         UpdatePreview();
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = $"转换为…（{CategoryName(_category)}）",
             // 参数较多的格式（如视频 11 项）会超出弹窗高度，必须放进滚动容器
@@ -1342,7 +1342,7 @@ public sealed partial class FormatConverterPage : Page
 
     private async Task<bool> ConfirmDownloadAsync(string engineName, string description)
     {
-        var d = new ContentDialog
+        var d = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = $"需要下载 {engineName}",
             Content = $"首次使用需要下载：{description}。下载后离线可用，不会增加应用安装包体积。",

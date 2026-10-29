@@ -167,7 +167,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="Downloader" Version="5.9.6" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <ProjectReference Include="..\third_party\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj" AdditionalProperties="GeneratePackageOnBuild=false" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.4" />
 
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
@@ -194,7 +194,7 @@
          FrameworkReference Microsoft.WindowsDesktop.App.WindowsForms 间接提供。 -->
     <PackageReference Include="System.Windows.Extensions" Version="10.0.13" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.13" />
-    <PackageReference Include="System.Management" Version="10.0.8" />
+    <PackageReference Include="System.Management" Version="10.0.14" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.0" />
 
     <!-- 内置工具彩色矢量图标（Assets/BuiltinIcons/*.svg）光栅化：界面走 WinUI 原生
@@ -253,16 +253,14 @@
     （onnxruntime-genai.dll / onnxruntime-genai-cuda.dll），ExcludeAssets 与复制项过滤都管不到：
     构建 / 发布完成后直接从输出目录删除（-p:BundleAiRuntime=true 的本地开发构建保留）。
   -->
-  <Target Name="StripAiRuntimeNativeCopiesAfterBuild" AfterTargets="Build"
-          Condition="'$(AiRuntimeExcludeAssets)' != ''">
+  <Target Name="StripAiRuntimeNativeCopiesAfterBuild" AfterTargets="Build" Condition="'$(AiRuntimeExcludeAssets)' != ''">
     <ItemGroup>
       <_AiRuntimeLeftover Include="$(OutDir)onnxruntime-genai.dll;$(OutDir)onnxruntime-genai-cuda.dll" />
     </ItemGroup>
     <Delete Files="@(_AiRuntimeLeftover)" TreatErrorsAsWarnings="true" />
   </Target>
 
-  <Target Name="StripAiRuntimeNativeCopiesAfterPublish" AfterTargets="Publish"
-          Condition="'$(AiRuntimeExcludeAssets)' != '' AND '$(PublishDir)' != ''">
+  <Target Name="StripAiRuntimeNativeCopiesAfterPublish" AfterTargets="Publish" Condition="'$(AiRuntimeExcludeAssets)' != '' AND '$(PublishDir)' != ''">
     <ItemGroup>
       <_AiRuntimeLeftoverPublish Include="$(PublishDir)onnxruntime-genai.dll;$(PublishDir)onnxruntime-genai-cuda.dll" />
     </ItemGroup>

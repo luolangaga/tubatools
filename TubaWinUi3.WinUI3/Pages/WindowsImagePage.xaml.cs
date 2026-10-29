@@ -331,7 +331,7 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
 
         if (!WindowsImageService.IsUltraIsoAvailable)
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = LocalizationService.L("WindowsImage_UltraIsoRequired", "需要 UltraISO"),
                 Content = LocalizationService.L("WindowsImage_UltraIsoContent", "ESD 转 ISO 需要安装 UltraISO。") + "\n\n" + LocalizationService.L("WindowsImage_UltraIsoContentAsk", "是否前往下载页面？"),

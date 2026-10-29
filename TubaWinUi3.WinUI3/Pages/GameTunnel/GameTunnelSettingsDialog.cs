@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
 using static TubaWinUi3.Pages.GameTunnelUi;
@@ -50,7 +50,7 @@ public sealed class GameTunnelSettingsDialog
         panel.Children.Add(_firewall);
         panel.Children.Add(_status);
 
-        _dialog = new ContentDialog
+        _dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "联机设置",
             Content = new ScrollViewer

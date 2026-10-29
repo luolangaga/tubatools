@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -187,7 +187,7 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         if (!FileLockShellMenuService.IsSupported) return;
         if (FileLockShellMenuService.IsEnabled()) return;   // 旧版本/其他入口已开启：不再打扰
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("FileLock_MenuPromptTitle", "添加右键菜单？"),
             Content = L("FileLock_MenuPromptBody", "要在资源管理器的右键菜单中加入「用图吧工具箱检测文件占用」吗？之后可在此页面随时开关。"),
@@ -274,7 +274,7 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
                 return;
             }
 
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = L("FileLock_AdminFailedTitle", "无法提权重启"),
                 Content = string.Format(L("FileLock_AdminFailedMessage", "提权请求未成功：{0}"), detail),
@@ -735,7 +735,7 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         }
 
         bool confirmed = false;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = L("FileLock_KillConfirmTitle", "结束进程"),
             Content = string.Format(

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Microsoft.UI.Dispatching;
@@ -1833,7 +1833,7 @@ public sealed partial class RogueCleanerPage : Page
     {
         if (_aiContextItem is null || string.IsNullOrWhiteSpace(_aiContextItem.ExePath)) return;
         if (!await AiEnsureBackendReadyAsync()) return;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "设置信任策略",
             Content = $"选择「{_aiContextItem.Name}」（{_aiContextItem.ExePath}）的信任策略：",
@@ -1920,7 +1920,7 @@ public sealed partial class RogueCleanerPage : Page
             }
         }
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "已停止追踪",
             Content = new ScrollViewer { Content = stack, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled },
@@ -1992,7 +1992,7 @@ public sealed partial class RogueCleanerPage : Page
 
     private async Task<bool> AiConfirmAsync(string title, string message, string confirmText)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
@@ -2112,7 +2112,7 @@ public sealed partial class RogueCleanerPage : Page
     private async void RowAction_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not Finding finding || !finding.CanClean) return;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "处理：" + finding.CompactTitle,
             Content = new TextBlock
@@ -2210,7 +2210,7 @@ public sealed partial class RogueCleanerPage : Page
             ? "\n\n部分项目属于系统范围，需要管理员权限；当前可能失败。"
             : "";
 
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认清理 " + selected.Count + " 项？",
             Content = new ScrollViewer
@@ -2285,7 +2285,7 @@ public sealed partial class RogueCleanerPage : Page
                 Findings = _allFindings,
                 Warnings = _scanner.Warnings
             });
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "证据报告已导出",
                 Content = new TextBlock
@@ -2718,7 +2718,7 @@ public sealed partial class RogueCleanerPage : Page
         expected.TextChanged += (_, _) => UpdatePreview();
 
         var panel = new StackPanel { Spacing = 8, Width = 440, Children = { types, expected, new TextBlock { Text = "预览（会自动脱敏用户名、路径、邮箱、URL、令牌）：", FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) }, preview } };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "反馈：" + finding.CompactTitle,
             Content = panel,
@@ -2761,7 +2761,7 @@ public sealed partial class RogueCleanerPage : Page
             "项目主页：https://github.com/aakk007/RogueCleaner\n" +
             "原版社区：https://www.52pojie.cn/home.php?mod=space&uid=286924\n\n" +
             "厂商识别依据本地规则库与数字签名；白名单为本地文件，不会上传任何数据。";
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "关于",
             Content = new TextBlock { Text = text, IsTextSelectionEnabled = true, TextWrapping = TextWrapping.Wrap },
@@ -2778,7 +2778,7 @@ public sealed partial class RogueCleanerPage : Page
 
     private async Task ShowInfo(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new TextBlock { Text = message, IsTextSelectionEnabled = true, TextWrapping = TextWrapping.Wrap },
@@ -2910,7 +2910,7 @@ public sealed partial class RogueCleanerPage : Page
     /// <summary>重启资源管理器：右键菜单改动要重启外壳才会刷新，这里提供一键入口。</summary>
     private async void CmRestartExplorer_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "重启资源管理器？",
             Content = new TextBlock { Text = "将关闭所有已打开的文件资源管理器窗口，任务栏与桌面会短暂消失后自动恢复。\n\n正在运行的程序不受影响。", TextWrapping = TextWrapping.Wrap },
@@ -3186,7 +3186,7 @@ public sealed partial class RogueCleanerPage : Page
             await ShowInfo("需要管理员权限", "该项目属于所有用户范围，需要管理员权限。");
             return;
         }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认右键菜单操作",
             Content = new TextBlock { Text = "将“" + entry.Name + "”" + (enabled ? "启用" : "禁用") + "？\n\n工具会先保存原值，操作后可在恢复中心还原。", TextWrapping = TextWrapping.Wrap },
@@ -3268,7 +3268,7 @@ public sealed partial class RogueCleanerPage : Page
         }
 
         var panel = new StackPanel { Spacing = 8, Width = 340, Children = { locationCombo, keyNameBox, displayNameBox, iconBox, commandBox, subCommandsBox, helpText } };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = existing == null ? "添加右键菜单" : "编辑右键菜单",
             Content = new ScrollViewer { MaxHeight = 560, Content = panel },
@@ -3335,7 +3335,7 @@ public sealed partial class RogueCleanerPage : Page
         var entry = CmList.SelectedItem as ContextMenuEntry;
         if (entry == null) return;
         if (entry.RequiresAdmin && !AdminUtil.IsAdministrator()) { await ShowInfo("需要管理员权限", "该项目属于所有用户范围，需要管理员权限。"); return; }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "删除右键菜单",
             Content = new TextBlock { Text = "确定删除“" + entry.Name + "”？\n\n完整注册表结构会先进入恢复中心。", TextWrapping = TextWrapping.Wrap },
@@ -3480,7 +3480,7 @@ public sealed partial class RogueCleanerPage : Page
         var entry = SpecialList.SelectedItem as SpecialMenuEntry;
         if (entry == null) return;
         if (entry.RequiresAdmin && !AdminUtil.IsAdministrator()) { await ShowInfo("需要管理员权限", "该项目属于所有用户范围，需要管理员权限。"); return; }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "删除专用菜单项",
             Content = new TextBlock { Text = "删除“" + entry.Name + "”？操作前会备份。", TextWrapping = TextWrapping.Wrap },
@@ -3511,7 +3511,7 @@ public sealed partial class RogueCleanerPage : Page
         string secondLabel = selected.StartsWith("ShellNew") ? "模板文件（可空）" : selected.StartsWith("OpenWith") ? "程序关联标识" : selected.StartsWith("SendTo") ? "目标路径" : "说明（可空）";
         var firstBox = new TextBox { Header = firstLabel, Width = 320, HorizontalAlignment = HorizontalAlignment.Left };
         var secondBox = new TextBox { Header = secondLabel, Width = 320, HorizontalAlignment = HorizontalAlignment.Left };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "添加 " + SpecialMenuDisplay.Name(selected),
             Content = new StackPanel { Spacing = 8, Children = { firstBox, secondBox } },
@@ -3642,7 +3642,7 @@ public sealed partial class RogueCleanerPage : Page
         var entry = AdvancedList.SelectedItem as AdvancedMenuEntry;
         if (entry == null) return;
         if (entry.RequiresAdmin && !AdminUtil.IsAdministrator()) { await ShowInfo("需要管理员权限", "该项目属于所有用户范围，需要管理员权限。"); return; }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "高级右键兼容",
             Content = new TextBlock { Text = "删除“" + entry.Name + "”？操作前会完整备份。", TextWrapping = TextWrapping.Wrap },
@@ -3674,7 +3674,7 @@ public sealed partial class RogueCleanerPage : Page
         var nameBox = new TextBox { Header = "菜单名称", Text = existing?.Name ?? "", Width = 320, HorizontalAlignment = HorizontalAlignment.Left };
         var urlBox = new TextBox { Header = "脚本或页面地址", Text = existing?.Detail ?? "", Width = 320, HorizontalAlignment = HorizontalAlignment.Left };
         var contextsBox = new NumberBox { Header = "适用位置代码", Minimum = 0, Maximum = int.MaxValue, Value = existing?.Contexts ?? 0, Width = 320, HorizontalAlignment = HorizontalAlignment.Left };
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = existing == null ? "添加 IE 旧式菜单" : "编辑 IE 旧式菜单",
             Content = new StackPanel { Spacing = 8, Children = { nameBox, urlBox, contextsBox } },
@@ -3748,7 +3748,7 @@ public sealed partial class RogueCleanerPage : Page
     {
         var batch = BatchList.SelectedItem as CleanupBatch;
         if (batch is null) return;
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认恢复该批次？",
             Content = new TextBlock { Text = $"批次 {batch.CreatedAt}，共 {(batch.Results?.Count ?? 0)} 项。\n\n将还原注册表项/值、文件、服务与计划任务到处理前的状态。", TextWrapping = TextWrapping.Wrap },
@@ -3779,7 +3779,7 @@ public sealed partial class RogueCleanerPage : Page
         if (batch is null) return;
         long size = 0;
         try { size = _cleaner.GetBatchStorageBytes(batch); } catch { }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认删除该批次？",
             Content = new TextBlock { Text = $"将永久删除批次 {batch.CreatedAt} 的备份数据（{(size > 0 ? FormatSize(size) : "无法计算大小")}），删除后无法恢复。\n\n建议先确认其中项目已不需要还原。", TextWrapping = TextWrapping.Wrap },
@@ -3810,7 +3810,7 @@ public sealed partial class RogueCleanerPage : Page
             await ShowInfo("清理旧记录", "没有超过 30 天且不在最近 20 批内的旧记录。");
             return;
         }
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "清理旧记录",
             Content = new TextBlock { Text = $"将删除 {old.Count} 个旧批次（超过 30 天且不在最近 20 批内）。删除后无法恢复。", TextWrapping = TextWrapping.Wrap },

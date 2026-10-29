@@ -240,7 +240,7 @@ public sealed partial class WingetStorePage : Page
             btn.IsEnabled = true;
             btn.Content = "重试";
             if (XamlRoot is null) return;
-            await new ContentDialog
+            await new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = $"无法安装 {pkg.Name}", Content = new TextBlock
                 {

@@ -69,7 +69,11 @@ public static class BatteryReportService
                 "SELECT * FROM BatteryCycleCount");
             foreach (var obj in cycleSearcher.Get())
             {
-                info.CycleCount = Convert.ToInt32(obj["CycleCount"]);
+                if (obj["CycleCount"] is { } cycle && int.TryParse(cycle.ToString(), out var count) && count >= 0)
+                {
+                    info.CycleCount = count;
+                    info.CycleCountAvailable = true;
+                }
                 break;
             }
         }
@@ -151,8 +155,11 @@ public static class BatteryReportService
             if (cycleMatch.Success)
             {
                 var val = cycleMatch.Groups[1].Value.Trim();
-                if (int.TryParse(val, out var c))
+                if (int.TryParse(val, out var c) && c >= 0)
+                {
                     info.CycleCount = c;
+                    info.CycleCountAvailable = true;
+                }
             }
         }
 
@@ -234,6 +241,7 @@ public sealed class BatteryInfo
     public double FullChargedCapacity { get; set; }
     public double HealthPercent { get; set; }
     public int CycleCount { get; set; }
+    public bool CycleCountAvailable { get; set; }
     public string ManufactureName { get; set; } = "";
     public string ManufactureDate { get; set; } = "";
     public string UniqueId { get; set; } = "";

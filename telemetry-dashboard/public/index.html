@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图吧工具箱 · 遥测看板</title>
+<style>
+  /* ============ Fluent 2 设计令牌（与 WinUI 应用同源） ============ */
+  :root, [data-theme="light"] {
+    --brand: #0F6CBD;
+    --brand-hover: #115EA3;
+    --brand-soft: #EFF6FC;
+    --bg: #F5F5F5;
+    --bg-elevated: #FFFFFF;
+    --card: #FFFFFF;
+    --card-2: #FAFAFA;
+    --card-hover: #F5F5F5;
+    --stroke: #E0E0E0;
+    --stroke-2: #EBEBEB;
+    --fg: #242424;
+    --fg-2: #424242;
+    --fg-3: #616161;
+    --fg-disabled: #BDBDBD;
+    --success: #107C10;
+    --warning: #986F0B;
+    --danger: #C50F1F;
+    --grid: #E5E5E5;
+    --shadow-2: 0 1px 2px rgba(0,0,0,.10), 0 0 2px rgba(0,0,0,.06);
+    --shadow-4: 0 2px 4px rgba(0,0,0,.12), 0 0 2px rgba(0,0,0,.08);
+    --radius: 8px;
+    --radius-sm: 4px;
+  }
+  [data-theme="dark"] {
+    --brand: #479EF5;
+    --brand-hover: #62ABF5;
+    --brand-soft: #1B2A3A;
+    --bg: #1B1B1B;
+    --bg-elevated: #242424;
+    --card: #292929;
+    --card-2: #2E2E2E;
+    --card-hover: #333333;
+    --stroke: #3D3D3D;
+    --stroke-2: #333333;
+    --fg: #FFFFFF;
+    --fg-2: #E0E0E0;
+    --fg-3: #ADADAD;
+    --fg-disabled: #6B6B6B;
+    --grid: #3D3D3D;
+    --shadow-2: 0 1px 2px rgba(0,0,0,.28), 0 0 2px rgba(0,0,0,.24);
+    --shadow-4: 0 2px 6px rgba(0,0,0,.36), 0 0 2px rgba(0,0,0,.24);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ 顶栏 App Bar ============ */
+  .appbar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 10px 20px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--stroke);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo {
+    width: 32px; height: 32px; border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, #0F6CBD, #479EF5);
+    display: grid; place-items: center; color: #fff;
+  }
+  .brand h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  .brand .sub { font-size: 12px; color: var(--fg-3); }
+  .spacer { flex: 1; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; font-size: 12px; border-radius: 999px;
+    border: 1px solid var(--stroke); color: var(--fg-2); background: var(--card-2);
+    white-space: nowrap;
+  }
+  .pill.live { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+  .pill.admin { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 45%, transparent); background: var(--brand-soft); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+  @keyframes pulse { 70% { opacity: .25; } 100% { opacity: 1; } }
+
+  /* Fluent 按钮 */
+  button {
+    font: inherit; font-size: 13px; font-weight: 600;
+    padding: 5px 12px; min-height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--stroke);
+    background: var(--card);
+    color: var(--fg);
+    cursor: pointer;
+    transition: background .1s ease, border-color .1s ease;
+  }
+  button:hover { background: var(--card-hover); }
+  button:active { background: var(--stroke-2); }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.primary:hover { background: var(--brand-hover); }
+  button.subtle { border-color: transparent; background: transparent; }
+  button.subtle:hover { background: var(--card-hover); }
+
+  /* Fluent 分段控件 */
+  .segmented {
+    display: inline-flex; padding: 2px; gap: 2px;
+    background: var(--card-2); border: 1px solid var(--stroke); border-radius: 6px;
+  }
+  .segmented button {
+    border: none; background: transparent; min-height: 26px; padding: 2px 10px;
+    font-weight: 500; color: var(--fg-2); border-radius: 4px;
+  }
+  .segmented button[aria-selected="true"] { background: var(--card); color: var(--fg); box-shadow: var(--shadow-2); }
+
+  /* ============ 布局 ============ */
+  main { padding: 16px 20px 48px; max-width: 1400px; margin: 0 auto; }
+  .cards {
+    display: grid; gap: 12px; margin-bottom: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  .cards.kpi { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-2);
+    padding: 14px 16px;
+    transition: box-shadow .12s ease;
+  }
+  .card:hover { box-shadow: var(--shadow-4); }
+  .card header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .card h2 { font-size: 13px; font-weight: 600; margin: 0; }
+  .card .tag { font-size: 12px; color: var(--fg-3); font-weight: 400; }
+  .card .note { font-size: 12px; color: var(--fg-3); margin: 8px 0 0; }
+  .card.span2 { grid-column: span 2; }
+  @media (max-width: 760px) { .card.span2 { grid-column: auto; } }
+
+  /* KPI 卡 */
+  .kpi { display: flex; gap: 12px; align-items: flex-start; }
+  .kpi .ico {
+    width: 34px; height: 34px; border-radius: var(--radius-sm); flex: none;
+    display: grid; place-items: center;
+    background: var(--brand-soft); color: var(--brand);
+  }
+  .kpi .k-label { font-size: 12px; color: var(--fg-3); }
+  .kpi .k-value { font-size: 25px; font-weight: 600; line-height: 30px; font-variant-numeric: tabular-nums; }
+  .kpi .k-hint { font-size: 12px; color: var(--fg-3); }
+  .kpi.danger .ico { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+  .kpi.success .ico { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+
+  /* 图表容器 */
+  .chart { width: 100%; }
+  .chart svg { display: block; width: 100%; }
+  .empty { color: var(--fg-3); font-size: 13px; text-align: center; padding: 34px 0; }
+
+  /* 图例 */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px; font-size: 12px; color: var(--fg-2); }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+  /* 表格（Fluent 风） */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--stroke-2); vertical-align: top; }
+  th { color: var(--fg-3); font-weight: 600; font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--card-hover); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .mono { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; font-size: 12px; }
+
+  /* 热力图 */
+  .heat { display: grid; grid-template-columns: 34px 1fr; gap: 6px; align-items: center; }
+  .heat-days { display: grid; gap: 3px; font-size: 11px; color: var(--fg-3); }
+  .heat-days div { height: 18px; display: flex; align-items: center; }
+  .heat-grid { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; }
+  .heat-cell { height: 18px; border-radius: 3px; background: var(--grid); }
+  .heat-hours { display: grid; grid-template-columns: repeat(24, 1fr); gap: 3px; font-size: 10px; color: var(--fg-3); margin-left: 40px; }
+
+  /* 信息条（Fluent InfoBar 样式） */
+  .infobar {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--brand-soft);
+    border: 1px solid color-mix(in srgb, var(--brand) 32%, transparent);
+    color: var(--fg-2); border-radius: var(--radius);
+    padding: 10px 14px; margin-bottom: 12px; font-size: 13px; line-height: 19px;
+  }
+  .infobar svg { color: var(--brand); flex: none; margin-top: 2px; }
+  .infobar b { color: var(--brand); }
+
+  /* 崩溃排行：可展开堆栈 */
+  tr.err-row { cursor: pointer; }
+  tr.err-row .chev { color: var(--fg-3); width: 22px; font-size: 11px; }
+  .bar-fill { display: inline-block; height: 6px; border-radius: 3px; background: var(--danger); min-width: 6px; }
+  td .bar-fill { min-width: 6px; }
+  tr.err-detail > td { background: var(--card-2); padding: 12px 14px; }
+  .stack-head { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--fg-3); margin-bottom: 8px; }
+  .stack-head button { min-height: 24px; padding: 1px 8px; font-size: 12px; }
+  .stack { max-height: 280px; overflow: auto; }
+  .frame { display: flex; gap: 10px; padding: 3px 0; font-size: 12px; align-items: baseline; }
+  .frame-no { color: var(--fg-3); width: 30px; flex: none; text-align: right; }
+  .frame-method { font-family: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+  .frame-loc { color: var(--fg-3); font-size: 11px; }
+  .muted { color: var(--fg-3); font-size: 12px; }
+
+  .locked {
+    color: var(--fg-3); text-align: center; padding: 22px 14px; font-size: 13px;
+    border: 1px dashed var(--stroke); border-radius: var(--radius);
+  }
+  .locked button { margin-left: 10px; }
+  .hidden { display: none !important; }
+
+  footer { color: var(--fg-3); font-size: 12px; text-align: center; padding: 6px 0 30px; }
+  a { color: var(--brand); }
+
+  /* 口令对话框 */
+  #gate {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(0,0,0,.4); backdrop-filter: blur(2px);
+    display: none; align-items: center; justify-content: center;
+  }
+  #gate.show { display: flex; }
+  #gate .dialog {
+    width: 360px; background: var(--bg-elevated); border: 1px solid var(--stroke);
+    border-radius: var(--radius); box-shadow: var(--shadow-4); padding: 20px 22px;
+  }
+  #gate h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  #gate p { margin: 0 0 14px; font-size: 12px; color: var(--fg-3); }
+  #gate input {
+    width: 100%; min-height: 32px; padding: 4px 10px; font: inherit;
+    border: 1px solid var(--stroke); border-radius: var(--radius-sm);
+    background: var(--card); color: var(--fg); margin-bottom: 14px;
+  }
+  #gate input:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: var(--brand); }
+  #gate .actions { display: flex; gap: 8px; justify-content: flex-end; }
+  #gate .err { color: var(--danger); font-size: 12px; min-height: 16px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="brand">
+    <div class="logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17.5 8.5 12l3.5 3.5L20.5 7"/><path d="M20.5 11.5V7h-4.5"/>
+      </svg>
+    </div>
+    <div>
+      <h1>图吧工具箱 · 遥测看板</h1>
+      <div class="sub" id="updated">加载中…</div>
+    </div>
+  </div>
+
+  <span class="pill live" id="live-pill" style="display:none">
+    <span class="dot"></span>在线 <b id="live-count">0</b> 台
+  </span>
+  <span class="pill" id="mode-badge">加载中</span>
+
+  <span class="spacer"></span>
+
+  <div class="segmented" id="theme-seg" role="tablist" aria-label="主题">
+    <button data-theme-mode="auto" aria-selected="true">跟随系统</button>
+    <button data-theme-mode="light" aria-selected="false">亮</button>
+    <button data-theme-mode="dark" aria-selected="false">暗</button>
+  </div>
+  <button id="btn-refresh">刷新</button>
+  <button id="btn-force" class="subtle">强制刷新</button>
+  <button id="btn-unlock" class="primary">解锁完整数据</button>
+  <button id="btn-lock" class="hidden">锁定</button>
+</header>
+
+<main>
+  <div class="infobar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>
+    </svg>
+    <span>
+      数据范围：<b>仅 1.6.5 及之后版本会上报遥测数据</b>，
+      因此「在线设备 / 活跃设备 / 新增设备 / 崩溃趋势 / 报错率 / 版本分布 / 活跃时段」都只统计这些版本，更早的版本不会产生任何数据。
+      「渠道下载量」为全量历史累计，不受版本限制。
+    </span>
+  </div>
+
+  <section class="cards kpi" id="kpis"></section>
+
+  <section class="cards">
+    <article class="card">
+      <header><h2>在线设备</h2><span class="tag">近 24 小时 · 30 分钟粒度</span></header>
+      <div class="chart" id="c-online"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>活跃设备</h2><span class="tag">近 30 天 · 按天</span></header>
+      <div class="chart" id="c-daily"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>新增设备</h2><span class="tag">近 30 天 · 首次出现</span></header>
+      <div class="chart" id="c-new"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>崩溃趋势</h2><span class="tag">近 30 天</span></header>
+      <div class="chart" id="c-crash"></div>
+      <div class="legend" id="lg-crash"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>报错率趋势</h2><span class="tag">近 30 天 · 报错设备 / 活跃设备</span></header>
+      <div class="chart" id="c-rate"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>版本分布</h2><span class="tag">近 7 天 · 按设备数</span></header>
+      <div class="chart" id="c-versions"></div>
+    </article>
+
+    <article class="card span2">
+      <header><h2>活跃时段</h2><span class="tag">近 7 天 · 北京时间 · 深色 = 设备多</span></header>
+      <div id="c-heatmap"></div>
+    </article>
+
+    <article class="card">
+      <header><h2>渠道下载量</h2><span class="tag">累计</span></header>
+      <div class="chart" id="c-downloads"></div>
+      <p class="note" id="dl-note"></p>
+    </article>
+
+    <article class="card" id="card-tools">
+      <header><h2>工具热度</h2><span class="tag">近 7 天 · 启动次数</span></header>
+      <div class="chart" id="c-tools"></div>
+      <div class="locked hidden" id="tools-locked">
+        🔒 工具使用明细仅管理员可见
+        <button id="btn-unlock-tools">输入口令解锁</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="card">
+    <header><h2>崩溃排行</h2><span class="tag">近 7 天 · 按异常类型</span></header>
+    <div id="error-table"></div>
+    <div class="locked hidden" id="errors-locked">
+      🔒 异常类型、示例消息与影响设备明细仅管理员可见
+      <button id="btn-unlock-errors">输入口令解锁</button>
+    </div>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+
+<div id="gate">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <h3 id="gate-title">管理员口令</h3>
+    <p>输入口令可查看异常详情、示例消息与工具热度</p>
+    <input id="gate-input" type="password" placeholder="访问口令" autocomplete="current-password">
+    <div class="actions">
+      <button id="gate-cancel" class="subtle">取消</button>
+      <button id="gate-ok" class="primary">解锁</button>
+    </div>
+    <div class="err" id="gate-err"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var REFRESH_MS = 60000;
+  var TOKEN_KEY = 'tuba-telemetry-token';
+  var THEME_KEY = 'tuba-telemetry-theme';
+
+  /* 与 WinUI 应用内置图标同一套 Fluent 2 色板，保证和软件视觉一致 */
+  var PALETTE = ['#0F6CBD', '#107C10', '#C50F1F', '#CA5010', '#5C2E91', '#038387', '#B626A9', '#986F0B'];
+  var DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  var token = '';
+  var countdown = REFRESH_MS / 1000;
+  var lastData = null;
+  var resizeTimer = null;
+  var stackTexts = {};
+
+  /* ================= 主题 ================= */
+
+  var themeMode = localStorage.getItem(THEME_KEY) || 'auto';
+  var media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function resolveTheme(mode) {
+    if (mode === 'auto') return media.matches ? 'dark' : 'light';
+    return mode;
+  }
+
+  function applyTheme(mode) {
+    themeMode = mode;
+    localStorage.setItem(THEME_KEY, mode);
+    document.documentElement.dataset.theme = resolveTheme(mode);
+    var seg = document.getElementById('theme-seg');
+    for (var i = 0; i < seg.children.length; i++) {
+      seg.children[i].setAttribute('aria-selected', String(seg.children[i].dataset.themeMode === mode));
+    }
+    if (lastData) render(lastData);
+  }
+
+  media.addEventListener('change', function () { if (themeMode === 'auto') applyTheme('auto'); });
+  document.getElementById('theme-seg').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-theme-mode]');
+    if (btn) applyTheme(btn.dataset.themeMode);
+  });
+
+  /* ================= 口令 ================= */
+
+  function readTokenFromUrl() {
+    var t = new URLSearchParams(location.search).get('token');
+    if (t) {
+      localStorage.setItem(TOKEN_KEY, t);
+      history.replaceState(null, '', location.pathname);
+    }
+    return t;
+  }
+
+  function showGate(message) {
+    document.getElementById('gate').classList.add('show');
+    document.getElementById('gate-err').textContent = message || '';
+    document.getElementById('gate-input').focus();
+  }
+
+  function hideGate() {
+    document.getElementById('gate').classList.remove('show');
+    document.getElementById('gate-input').value = '';
+  }
+
+  document.getElementById('gate-ok').addEventListener('click', function () {
+    var value = document.getElementById('gate-input').value.trim();
+    if (!value) return;
+    token = value;
+    load(true);
+  });
+  document.getElementById('gate-cancel').addEventListener('click', hideGate);
+  document.getElementById('gate-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('gate-ok').click();
+  });
+
+  ['btn-unlock', 'btn-unlock-tools', 'btn-unlock-errors'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', function () { showGate(''); });
+  });
+
+  document.getElementById('btn-lock').addEventListener('click', function () {
+    token = '';
+    localStorage.removeItem(TOKEN_KEY);
+    load(true);
+  });
+  document.getElementById('btn-refresh').addEventListener('click', function () { load(); });
+  document.getElementById('btn-force').addEventListener('click', function () { load(true); });
+
+  /* 崩溃排行：点行展开堆栈、点按钮复制 */
+  document.getElementById('error-table').addEventListener('click', function (e) {
+    var copyBtn = e.target.closest('[data-copy]');
+    if (copyBtn) {
+      var text = stackTexts[copyBtn.dataset.copy];
+      if (!text) return;
+      var done = function () {
+        copyBtn.textContent = '已复制';
+        setTimeout(function () { copyBtn.textContent = '复制堆栈'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { });
+      } else {
+        var area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); done(); } catch (err) { }
+        document.body.removeChild(area);
+      }
+      return;
+    }
+
+    var row = e.target.closest('tr.err-row');
+    if (!row) return;
+    var detail = document.querySelector('tr.err-detail[data-detail="' + row.dataset.idx + '"]');
+    if (!detail) return;
+    detail.classList.toggle('hidden');
+    var chev = row.querySelector('.chev');
+    if (chev) chev.textContent = detail.classList.contains('hidden') ? '▸' : '▾';
+  });
+
+  /* ================= 取数与渲染 ================= */
+
+  function load(force) {
+    document.getElementById('updated').textContent = '请求中…';
+    var options = token ? { headers: { 'x-dashboard-token': token } } : {};
+
+    fetch('/api/summary' + (force ? '?force=1' : ''), options)
+      .then(function (res) {
+        if (res.status === 401) {
+          token = '';
+          localStorage.removeItem(TOKEN_KEY);
+          showGate('口令不正确');
+          return fetch('/api/summary').then(function (r) { return r.json(); });
+        }
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+        if (data.error) { document.getElementById('updated').textContent = '服务端错误：' + data.error; return; }
+        render(data);
+        countdown = REFRESH_MS / 1000;
+        hideGate();
+      })
+      .catch(function (err) {
+        document.getElementById('updated').textContent = '请求失败：' + err.message;
+      });
+  }
+
+  function render(data) {
+    lastData = data;
+    var panels = data.panels || {};
+    var errors = data.errors || {};
+    var isFull = data.mode === 'full';
+
+    renderKpis(panels, isFull);
+    renderOnline(panels.onlineSeries);
+    renderDaily(panels.dailySeries);
+    renderNewDevices(panels.newDevices);
+    renderCrashTrend(panels.crashSeries);
+    renderErrorRate(panels.crashSeries, panels.dailySeries);
+    renderVersions(panels.versions);
+    renderHeatmap(panels.activeHours);
+    renderDownloads(panels.downloads, isFull);
+    renderTools(panels.tools, isFull);
+    renderErrors(panels.errors, isFull);
+
+    var stamp = new Date(data.generatedAt);
+    document.getElementById('updated').textContent =
+      '更新于 ' + stamp.toLocaleTimeString() + ' · ' + countdown + 's 后自动刷新';
+
+    var failed = Object.keys(errors);
+    var footer = document.getElementById('footer');
+    if (failed.length) {
+      footer.textContent = '以下面板查询失败：' + failed.join('、') + (isFull ? '（' + errors[failed[0]] + '）' : '');
+    } else {
+      footer.textContent = isFull
+        ? '数据源：Azure Application Insights · 入库延迟约 1–3 分钟 · 保留 30 天'
+        : '游客视图：仅展示聚合数据 · 输入口令可查看异常详情与工具热度';
+    }
+  }
+
+  /* ---------- KPI ---------- */
+
+  function renderKpis(panels, isFull) {
+    var online = value(panels.online, 0, 0);
+    var actives = firstRow(panels.actives);
+    var crashes = firstRow(panels.crashes24h);
+
+    var dau = Number(actives[0]) || 0;
+    var crashDevices = Number(crashes[1]) || 0;
+    var rate = dau > 0 ? (crashDevices / dau) * 100 : null;
+
+    document.getElementById('live-pill').style.display = online === null ? 'none' : '';
+    document.getElementById('live-count').textContent = fmt(online);
+
+    var badge = document.getElementById('mode-badge');
+    badge.textContent = isFull ? '管理视图' : '游客视图';
+    badge.className = 'pill' + (isFull ? ' admin' : '');
+    document.getElementById('btn-unlock').classList.toggle('hidden', isFull);
+    document.getElementById('btn-lock').classList.toggle('hidden', !isFull);
+
+    var items = [
+      { label: '在线设备', value: fmt(online), hint: '最近 15 分钟', icon: 'pulse' },
+      { label: '今日活跃', value: fmt(actives[0]), hint: '最近 24 小时', icon: 'users' },
+      { label: '7 日活跃', value: fmt(actives[1]), hint: '最近 7 天', icon: 'users' },
+      { label: '30 日活跃', value: fmt(actives[2]), hint: '最近 30 天', icon: 'users' },
+      { label: '累计设备', value: fmt(actives[3]), hint: '历史去重', icon: 'device' },
+      { label: '报错率', value: rate === null ? '—' : rate.toFixed(1) + '%', hint: '24h 报错设备 / 活跃设备', icon: 'alert', tone: rate && rate > 20 ? 'danger' : '' },
+      { label: '24h 报错', value: fmt(crashes[0]), hint: (Number(crashes[1]) || 0) + ' 台设备受影响', icon: 'alert', tone: (Number(crashes[0]) || 0) > 0 ? 'danger' : 'success' }
+    ];
+
+    document.getElementById('kpis').innerHTML = items.map(function (item) {
+      return '<div class="card kpi ' + (item.tone || '') + '">' +
+        '<div class="ico">' + icon(item.icon) + '</div>' +
+        '<div><div class="k-label">' + item.label + '</div>' +
+        '<div class="k-value">' + item.value + '</div>' +
+        '<div class="k-hint">' + item.hint + '</div></div></div>';
+    }).join('');
+  }
+
+  function icon(name) {
+    var paths = {
+      pulse: '<path d="M3 12h4l2.5-6 3.5 12 3-8 2 2h4"/>',
+      users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 6.5a3 3 0 0 1 0 5.6"/><path d="M18.5 20c0-2.4-.8-4.2-2.2-5.4"/>',
+      device: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>',
+      alert: '<path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4"/><path d="M12 17.2h.01"/>'
+    };
+    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      (paths[name] || '') + '</svg>';
+  }
+
+  /* ---------- 各图表 ---------- */
+
+  function renderOnline(panel) {
+    var points = pairs(panel, 1);
+    areaChart('c-online', points, { color: PALETTE[0], unit: '台', empty: '近 24 小时还没有心跳数据' });
+  }
+
+  function renderDaily(panel) {
+    barChart('c-daily', pairs(panel, 1), { color: PALETTE[0], unit: '台', empty: '近 30 天还没有活跃数据' });
+  }
+
+  function renderNewDevices(panel) {
+    barChart('c-new', pairs(panel, 1), { color: PALETTE[1], unit: '台', empty: '近 30 天没有新设备' });
+  }
+
+  function renderCrashTrend(panel) {
+    var rows = (panel && panel.rows) || [];
+    if (!rows.length) {
+      document.getElementById('c-crash').innerHTML = '<div class="empty">近 30 天没有上报异常 🎉</div>';
+      document.getElementById('lg-crash').innerHTML = '';
+      return;
+    }
+    var crashes = rows.map(function (r) { return [r[0], Number(r[1]) || 0]; });
+    var devices = rows.map(function (r) { return [r[0], Number(r[2]) || 0]; });
+    multiLineChart('c-crash', [
+      { name: '异常次数', points: crashes, color: PALETTE[2] },
+      { name: '影响设备', points: devices, color: PALETTE[3] }
+    ], { unit: '次', empty: '' });
+    legend('lg-crash', [{ name: '异常次数', color: PALETTE[2] }, { name: '影响设备', color: PALETTE[3] }]);
+  }
+
+  function renderErrorRate(crashPanel, dailyPanel) {
+    var crashMap = {};
+    ((crashPanel && crashPanel.rows) || []).forEach(function (r) { crashMap[dayKey(r[0])] = Number(r[2]) || 0; });
+    var active = pairs(dailyPanel, 1);
+    var points = active.map(function (p) {
+      var bad = crashMap[dayKey(p[0])] || 0;
+      var rate = p[1] > 0 ? (bad / p[1]) * 100 : 0;
+      return [p[0], Math.round(rate * 10) / 10];
+    });
+    areaChart('c-rate', points, { color: PALETTE[3], unit: '%', percent: true, empty: '还没有足够数据算出报错率' });
+  }
+
+  function renderVersions(panel) {
+    var rows = ((panel && panel.rows) || []).slice();
+    var el = document.getElementById('c-versions');
+    if (!rows.length) { el.innerHTML = '<div class="empty">近 7 天还没有版本数据</div>'; return; }
+
+    rows.sort(function (a, b) { return (Number(b[1]) || 0) - (Number(a[1]) || 0); });
+    var top = rows.slice(0, 5).map(function (r) { return { name: String(r[0] || '未知'), value: Number(r[1]) || 0 }; });
+    var rest = rows.slice(5).reduce(function (sum, r) { return sum + (Number(r[1]) || 0); }, 0);
+    if (rest > 0) top.push({ name: '其他版本', value: rest });
+
+    donut(el, top);
+  }
+
+  function renderHeatmap(panel) {
+    var el = document.getElementById('c-heatmap');
+    var rows = (panel && panel.rows) || [];
+    if (!rows.length) { el.innerHTML = '<div class="empty">近 7 天还没有活跃数据</div>'; return; }
+
+    var matrix = [];
+    var max = 0;
+    for (var d = 0; d < 7; d++) { matrix.push(new Array(24).fill(0)); }
+    rows.forEach(function (r) {
+      var day = Number(r[0]) || 0;
+      var hour = Number(r[1]) || 0;
+      var devices = Number(r[2]) || 0;
+      if (day >= 0 && day < 7 && hour >= 0 && hour < 24) {
+        matrix[day][hour] = devices;
+        if (devices > max) max = devices;
+      }
+    });
+
+    var html = '<div class="heat"><div class="heat-days">';
+    for (var i = 0; i < 7; i++) html += '<div>' + DAY_NAMES[i] + '</div>';
+    html += '</div><div><div class="heat-grid">';
+    for (var d2 = 0; d2 < 7; d2++) {
+      for (var h = 0; h < 24; h++) {
+        var v = matrix[d2][h];
+        var alpha = max > 0 && v > 0 ? Math.max(0.12, v / max) : 0;
+        var bg = v > 0 ? 'background:color-mix(in srgb, var(--brand) ' + Math.round(alpha * 100) + '%, transparent)' : '';
+        html += '<div class="heat-cell" style="' + bg + '" title="' + DAY_NAMES[d2] + ' ' + pad(h) + ':00 · ' + v + ' 台"></div>';
+      }
+    }
+    html += '</div><div class="heat-hours" style="margin-left:0">';
+    for (var h2 = 0; h2 < 24; h2++) html += '<div>' + (h2 % 3 === 0 ? pad(h2) : '') + '</div>';
+    html += '</div></div></div>';
+    el.innerHTML = html;
+  }
+
+  function renderDownloads(panel, isFull) {
+    var el = document.getElementById('c-downloads');
+    var note = document.getElementById('dl-note');
+
+    if (!panel) {
+      el.innerHTML = '<div class="empty">下载量暂时取不到</div>';
+      note.textContent = '';
+      return;
+    }
+
+    var total = Number(panel.total) || 0;
+    compareBars(el, [
+      { name: 'GitHub', value: Number(panel.github) || 0, color: PALETTE[4] },
+      { name: 'GitCode', value: Number(panel.gitcode) || 0, color: PALETTE[5] }
+    ], total);
+
+    note.textContent = '注：仅统计 GitHub 与 GitCode 两个渠道，不含微软应用商店、网盘及第三方下载渠道。';
+    var stale = [];
+    if (panel.stale && panel.stale.github) stale.push('GitHub');
+    if (panel.stale && panel.stale.gitcode) stale.push('GitCode');
+    if (stale.length) note.textContent += '（' + stale.join('、') + ' 接口暂时不可用，显示最近一次成功获取的数据）';
+    note.textContent += ' 合计 ' + total.toLocaleString() + ' 次。';
+  }
+
+  function renderTools(panel, isFull) {
+    var el = document.getElementById('c-tools');
+    var locked = document.getElementById('tools-locked');
+    locked.classList.toggle('hidden', isFull);
+
+    if (!isFull) { el.innerHTML = ''; return; }
+    var rows = ((panel && panel.rows) || []).slice(0, 8).map(function (r) {
+      return { name: String(r[0] || '未知'), value: Number(r[1]) || 0, sub: (Number(r[2]) || 0) + ' 台设备' };
+    });
+    hbar(el, rows, PALETTE[0], '还没有工具启动记录');
+  }
+
+  function renderErrors(panel, isFull) {
+    var el = document.getElementById('error-table');
+    var locked = document.getElementById('errors-locked');
+    locked.classList.toggle('hidden', isFull);
+
+    if (!isFull) { el.innerHTML = ''; return; }
+
+    var rows = (panel && panel.rows) || [];
+    if (!rows.length) { el.innerHTML = '<div class="empty">近 7 天没有上报异常 🎉</div>'; return; }
+
+    var max = rows.reduce(function (m, r) { return Math.max(m, Number(r[1]) || 0); }, 1);
+    var html = '<table><thead><tr>' +
+      '<th style="width:24px"></th><th>异常类型</th><th class="num">次数</th><th style="width:96px">占比</th>' +
+      '<th class="num">影响设备</th><th>最近发生</th><th>示例消息</th></tr></thead><tbody>';
+
+    stackTexts = {};
+
+    rows.forEach(function (r, index) {
+      var count = Number(r[1]) || 0;
+      var frames = parseFrames(r[6]);
+      var hasStack = frames.length > 0;
+      if (hasStack) stackTexts[index] = framesText(r, frames);
+
+      html += '<tr class="err-row" data-idx="' + index + '">' +
+        '<td class="chev">' + (hasStack ? '▸' : '') + '</td>' +
+        '<td class="mono">' + esc(shortType(r[0])) + '</td>' +
+        '<td class="num">' + count + '</td>' +
+        '<td><span class="bar-fill" style="width:' + Math.max(6, Math.round((count / max) * 100)) + '%"></span></td>' +
+        '<td class="num">' + (Number(r[2]) || 0) + '</td>' +
+        '<td class="muted">' + fmtTime(r[3]) + '</td>' +
+        '<td class="muted">' + esc(r[4] || '') + '</td></tr>';
+
+      if (hasStack) {
+        var inner = r[5] ? '<div class="muted" style="margin-bottom:8px">最内层消息：' + esc(r[5]) + '</div>' : '';
+        html += '<tr class="err-detail hidden" data-detail="' + index + '"><td colspan="7">' +
+          inner +
+          '<div class="stack-head">调用栈 · ' + frames.length + ' 帧（用户名与用户目录已在上报前脱敏）' +
+          '<button class="subtle copy-stack" data-copy="' + index + '">复制堆栈</button></div>' +
+          '<div class="stack">' + frames.map(frameHtml).join('') + '</div>' +
+          '</td></tr>';
+      }
+    });
+
+    el.innerHTML = html + '</tbody></table>';
+  }
+
+  /** details[0].parsedStack 是 JSON 字符串，解析失败就当没有堆栈。 */
+  function parseFrames(json) {
+    if (!json) return [];
+    try {
+      var parsed = JSON.parse(json);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function frameParts(frame) {
+    var file = frame && frame.fileName ? String(frame.fileName).split(/[\\/]/).pop() : '';
+    var line = frame && frame.line ? ':' + frame.line : '';
+    return {
+      method: (frame && frame.method) || '(未知方法)',
+      location: file ? file + line : ''
+    };
+  }
+
+  function frameHtml(frame, index) {
+    var parts = frameParts(frame);
+    return '<div class="frame">' +
+      '<span class="frame-no">#' + (frame && frame.level != null ? frame.level : index) + '</span>' +
+      '<span class="frame-method">' + esc(parts.method) + '</span>' +
+      (parts.location ? '<span class="frame-loc">' + esc(parts.location) + '</span>' : '') +
+      '</div>';
+  }
+
+  function framesText(row, frames) {
+    var head = String(row[0] || '') + '：' + String(row[4] || '') + '\n发生 ' + (Number(row[1]) || 0) +
+      ' 次 · 影响 ' + (Number(row[2]) || 0) + ' 台设备 · 最近 ' + fmtTime(row[3]) + '\n调用栈：\n';
+    return head + frames.map(function (frame) {
+      var parts = frameParts(frame);
+      return '  在 ' + parts.method + (parts.location ? ' 位置 ' + parts.location : '');
+    }).join('\n');
+  }
+
+  /* ================= 手绘 SVG 图表 ================= */
+
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function svg(width, height) {
+    var el = document.createElementNS(SVG_NS, 'svg');
+    el.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+    el.setAttribute('height', height);
+    el.setAttribute('preserveAspectRatio', 'none');
+    return el;
+  }
+
+  function node(tag, attrs) {
+    var el = document.createElementNS(SVG_NS, tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function widthOf(id) {
+    var el = document.getElementById(id);
+    return Math.max(260, Math.round(el.clientWidth || 320));
+  }
+
+  function niceMax(value) {
+    if (value <= 4) return Math.max(1, Math.ceil(value));
+    var pow = Math.pow(10, Math.floor(Math.log10(value)));
+    return Math.ceil(value / pow * 2) / 2 * pow;
+  }
+
+  function gridLines(g, pad, w, h, max, formatTick) {
+    var steps = 3;
+    for (var i = 0; i <= steps; i++) {
+      var y = pad.t + (h - pad.t - pad.b) * (i / steps);
+      var v = max * (1 - i / steps);
+      g.appendChild(node('line', { x1: pad.l, y1: y, x2: w - pad.r, y2: y, stroke: 'var(--grid)', 'stroke-width': 1 }));
+      var label = node('text', { x: pad.l - 6, y: y + 3.5, 'text-anchor': 'end', fill: 'var(--fg-3)', 'font-size': 10 });
+      label.textContent = formatTick ? formatTick(v) : String(Math.round(v));
+      g.appendChild(label);
+    }
+  }
+
+  function xAxisLabels(g, points, pad, w, h, format) {
+    if (!points.length) return;
+    var indexes = points.length <= 3
+      ? points.map(function (_, i) { return i; })
+      : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    indexes.forEach(function (i) {
+      var x = pad.l + (w - pad.l - pad.r) * (points.length === 1 ? 0 : i / (points.length - 1));
+      var t = node('text', { x: x, y: h - 5, 'text-anchor': i === 0 ? 'start' : (i === points.length - 1 ? 'end' : 'middle'), fill: 'var(--fg-3)', 'font-size': 10 });
+      t.textContent = format(points[i][0]);
+      g.appendChild(t);
+    });
+  }
+
+  function areaChart(id, points, opts) {
+    var host = document.getElementById(id);
+    if (!points.length) { host.innerHTML = '<div class="empty">' + (opts.empty || '暂无数据') + '</div>'; return; }
+
+    var w = widthOf(id), h = 176;
+    var pad = { l: 40, r: 12, t: 12, b: 22 };
+    var max = niceMax(Math.max.apply(null, points.map(function (p) { return p[1]; })));
+    var s = svg(w, h);
+    var g = node('g', {});
+    gridLines(g, pad, w, h, max, opts.percent ? function (v) { return v.toFixed(0) + '%'; } : null);
+
+    var stepX = points.length > 1 ? (w - pad.l - pad.r) / (points.length - 1) : 0;
+    var toY = function (v) { return pad.t + (h - pad.t - pad.b) * (1 - v / max); };
+    var coords = points.map(function (p, i) { return [pad.l + stepX * i, toY(p[1])]; });
+
+    var line = coords.map(function (c, i) { return (i ? 'L' : 'M') + c[0].toFixed(1) + ' ' + c[1].toFixed(1); }).join(' ');
+    var area = line + ' L' + coords[coords.length - 1][0].toFixed(1) + ' ' + (h - pad.b) + ' L' + coords[0][0].toFixed(1) + ' ' + (h - pad.b) + ' Z';
+
+    var defs = node('defs', {});
+    var grad = node('linearGradient', { id: 'g-' + id, x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(node('stop', { offset: '0%', 'stop-color': opts.color, 'stop-opacity': .35 }));
+    grad.appendChild(node('stop', { offset: '100%', 'stop-color': opts.color, 'stop-opacity': 0 }));
+    defs.appendChild(grad);
+    s.appendChild(defs);
+
+    s.appendChild(node('line', { x1: pad.l, y1: h - pad.b, x2: w - pad.r, y2: h - pad.b, stroke: 'var(--grid)' }));
+    g.appendChild(node('path', { d: area, fill: 'url(#g-' + id + ')' }));
+    g.appendChild(node('path', { d: line, fill: 'none', stroke: opts.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+
+    points.forEach(function (p, i) {
+      var dot = node('circle', { cx: coords[i][0].toFixed(1), cy: coords[i][1].toFixed(1), r: 6, fill: 'transparent' });
+      dot.appendChild(node('title', {})).textContent = fmtTime(p[0]) + ' · ' + p[1] + (opts.unit || '');
+      g.appendChild(dot);
+    });
+
+    xAxisLabels(g, points, pad, w, h, function (t) { return clock(t); });
+    s.appendChild(g);
+    host.innerHTML = '';
+    host.appendChild(s);
+  }
+
+  function barChart(id, points, opts) {
+    var host = document.getElementById(id);
+    if (!points.length) { host.innerHTML = '<div class="empty">' + (opts.empty || '暂无数据') + '</div>'; return; }
+
+    var w = widthOf(id), h = 176;
+    var pad = { l: 40, r: 12, t: 12, b: 22 };
+    var max = niceMax(Math.max.apply(null, points.map(function (p) { return p[1]; })));
+    var s = svg(w, h);
+    var g = node('g', {});
+    gridLines(g, pad, w, h, max);
+
+    var slot = (w - pad.l - pad.r) / points.length;
+    var barW = Math.max(3, slot * 0.62);
+    points.forEach(function (p, i) {
+      var barH = Math.max(p[1] > 0 ? 2 : 0, (h - pad.t - pad.b) * (p[1] / max));
+      var x = pad.l + slot * i + (slot - barW) / 2;
+      var rect = node('rect', {
+        x: x.toFixed(1), y: (h - pad.b - barH).toFixed(1), width: barW.toFixed(1), height: barH.toFixed(1),
+        rx: Math.min(3, barW / 2), fill: opts.color
+      });
+      rect.appendChild(node('title', {})).textContent = fmtDate(p[0]) + ' · ' + p[1] + (opts.unit || '');
+      g.appendChild(rect);
+    });
+
+    xAxisLabels(g, points, pad, w, h, function (t) { return dateLabel(t); });
+    s.appendChild(g);
+    host.innerHTML = '';
+    host.appendChild(s);
+  }
+
+  function multiLineChart(id, series, opts) {
+    var host = document.getElementById(id);
+    var all = [];
+    series.forEach(function (s) { all = all.concat(s.points); });
+    if (!all.length) { host.innerHTML = '<div class="empty">' + (opts.empty || '暂无数据') + '</div>'; return; }
+
+    var w = widthOf(id), h = 176;
+    var pad = { l: 40, r: 12, t: 12, b: 22 };
+    var max = niceMax(Math.max.apply(null, all.map(function (p) { return p[1]; })));
+    var s = svg(w, h);
+    var g = node('g', {});
+    gridLines(g, pad, w, h, max);
+
+    series.forEach(function (item) {
+      var pts = item.points;
+      var stepX = pts.length > 1 ? (w - pad.l - pad.r) / (pts.length - 1) : 0;
+      var d = pts.map(function (p, i) {
+        var x = pad.l + stepX * i;
+        var y = pad.t + (h - pad.t - pad.b) * (1 - p[1] / max);
+        return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+      }).join(' ');
+      g.appendChild(node('path', { d: d, fill: 'none', stroke: item.color, 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+
+      pts.forEach(function (p, i) {
+        var dot = node('circle', {
+          cx: (pad.l + stepX * i).toFixed(1),
+          cy: (pad.t + (h - pad.t - pad.b) * (1 - p[1] / max)).toFixed(1),
+          r: 7, fill: 'transparent'
+        });
+        dot.appendChild(node('title', {})).textContent = item.name + ' · ' + fmtDate(p[0]) + ' · ' + p[1] + (opts.unit || '');
+        g.appendChild(dot);
+      });
+    });
+
+    xAxisLabels(g, series[0].points, pad, w, h, function (t) { return dateLabel(t); });
+    s.appendChild(g);
+    host.innerHTML = '';
+    host.appendChild(s);
+  }
+
+  /** 环形图 + 图例（HTML 渲染，便于排布） */
+  function donut(host, items) {
+    var total = items.reduce(function (sum, item) { return sum + item.value; }, 0);
+    var size = 168, r = 62, stroke = 22;
+    var cx = size / 2, cy = size / 2;
+    var circumference = 2 * Math.PI * r;
+
+    var s = svg(size, size);
+    s.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    s.setAttribute('height', size);
+    s.setAttribute('style', 'max-width:' + size + 'px;margin:0 auto');
+
+    var offset = 0;
+    items.forEach(function (item, i) {
+      var frac = total > 0 ? item.value / total : 0;
+      var circle = node('circle', {
+        cx: cx, cy: cy, r: r, fill: 'none',
+        stroke: PALETTE[i % PALETTE.length], 'stroke-width': stroke,
+        'stroke-dasharray': (circumference * frac).toFixed(2) + ' ' + (circumference * (1 - frac)).toFixed(2),
+        'stroke-dashoffset': (-circumference * offset).toFixed(2),
+        transform: 'rotate(-90 ' + cx + ' ' + cy + ')'
+      });
+      circle.appendChild(node('title', {})).textContent = item.name + ' · ' + item.value + ' 台';
+      s.appendChild(circle);
+      offset += frac;
+    });
+
+    var center = node('text', { x: cx, y: cy - 2, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-size': 22, 'font-weight': 600 });
+    center.textContent = String(total);
+    s.appendChild(center);
+    var sub = node('text', { x: cx, y: cy + 16, 'text-anchor': 'middle', fill: 'var(--fg-3)', 'font-size': 11 });
+    sub.textContent = '台设备';
+    s.appendChild(sub);
+
+    host.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:16px;align-items:center;flex-wrap:wrap';
+    var chart = document.createElement('div');
+    chart.appendChild(s);
+    wrap.appendChild(chart);
+
+    var legend = document.createElement('div');
+    legend.className = 'legend';
+    legend.style.cssText = 'flex-direction:column;gap:6px;margin:0';
+    legend.innerHTML = items.map(function (item, i) {
+      var pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+      return '<div><i style="background:' + PALETTE[i % PALETTE.length] + '"></i>' +
+        esc(item.name) + ' <span style="color:var(--fg-3)">' + item.value + ' 台 · ' + pct + '%</span></div>';
+    }).join('');
+    wrap.appendChild(legend);
+    host.appendChild(wrap);
+  }
+
+  /** 横向条形（工具热度） */
+  function hbar(host, items, color, emptyText) {
+    if (!items.length) { host.innerHTML = '<div class="empty">' + emptyText + '</div>'; return; }
+    var max = Math.max.apply(null, items.map(function (i) { return i.value; }));
+    host.innerHTML = items.map(function (item) {
+      var pct = max > 0 ? Math.round((item.value / max) * 100) : 0;
+      return '<div style="margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">' +
+        '<span>' + esc(item.name) + '</span>' +
+        '<span style="color:var(--fg-3)">' + item.value + ' 次' + (item.sub ? ' · ' + item.sub : '') + '</span></div>' +
+        '<div style="height:6px;border-radius:3px;background:var(--grid)">' +
+        '<div style="height:6px;border-radius:3px;background:' + color + ';width:' + Math.max(2, pct) + '%"></div></div></div>';
+    }).join('');
+  }
+
+  /** 渠道下载量对比条 */
+  function compareBars(host, items, total) {
+    var max = Math.max.apply(null, items.map(function (i) { return i.value; }).concat([1]));
+    host.innerHTML =
+      '<div style="font-size:12px;color:var(--fg-3);margin-bottom:10px">合计 <b style="color:var(--fg);font-size:18px">' +
+      total.toLocaleString() + '</b> 次下载</div>' +
+      items.map(function (item) {
+        var pct = Math.round((item.value / max) * 100);
+        return '<div style="margin-bottom:12px">' +
+          '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">' +
+          '<span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + item.color + ';margin-right:6px"></i>' + item.name + '</span>' +
+          '<span class="mono">' + item.value.toLocaleString() + '</span></div>' +
+          '<div style="height:10px;border-radius:5px;background:var(--grid)">' +
+          '<div style="height:10px;border-radius:5px;background:' + item.color + ';width:' + Math.max(2, pct) + '%"></div></div></div>';
+      }).join('');
+  }
+
+  function legend(id, items) {
+    document.getElementById(id).innerHTML = items.map(function (item) {
+      return '<span><i style="background:' + item.color + '"></i>' + item.name + '</span>';
+    }).join('');
+  }
+
+  /* ================= 小工具 ================= */
+
+  function firstRow(panel) { return (panel && panel.rows && panel.rows[0]) || []; }
+  function value(panel, r, c) { var row = firstRow(panel); return row.length ? row[c] : null; }
+  function pairs(panel, columnIndex) {
+    return ((panel && panel.rows) || []).map(function (r) {
+      return [r[0], Number(r[columnIndex]) || 0];
+    });
+  }
+  function dayKey(value) { return new Date(value).toISOString().slice(0, 10); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(v) { return v === null || v === undefined || v === '' ? '—' : String(v); }
+  function esc(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtTime(v) { var d = new Date(v); return isNaN(d) ? String(v || '—') : d.toLocaleString(); }
+  function clock(v) { var d = new Date(v); return isNaN(d) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dateLabel(v) { var d = new Date(v); return isNaN(d) ? '' : (d.getMonth() + 1) + '/' + d.getDate(); }
+  function fmtDate(v) { var d = new Date(v); return isNaN(d) ? String(v || '') : d.toLocaleDateString(); }
+  function shortType(type) { var t = String(type || '未知'); var i = t.lastIndexOf('.'); return i >= 0 ? t.slice(i + 1) : t; }
+
+  /* ================= 启动 ================= */
+
+  applyTheme(themeMode);
+  token = readTokenFromUrl() || localStorage.getItem(TOKEN_KEY) || '';
+  load();
+
+  setInterval(function () {
+    countdown -= 1;
+    if (countdown <= 0) { load(); return; }
+    var el = document.getElementById('updated');
+    if (el && el.textContent.indexOf('更新于') === 0) {
+      el.textContent = el.textContent.replace(/·\s*\d+s 后自动刷新/, '· ' + countdown + 's 后自动刷新');
+    }
+  }, 1000);
+
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { if (lastData) render(lastData); }, 180);
+  });
+})();
+</script>
+</body>
+</html>

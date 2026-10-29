@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -59,9 +59,8 @@ public sealed partial class HomePage : Page, ILocalizablePage
         _compactMode = CompactModeService.IsCompactModeEnabled();
         ApplyCompactMode();
 
-        // 页面加载后安装 Win32 拖放钩子（绕过 UIPI，钩子为全局共享单例）
-        Loaded += (_, _) => InstallDropHook();
-        Unloaded += (_, _) => UninstallDropHook();
+        // 与首页共用导入流程；页面加载/卸载时自动订阅/取消文件拖放。
+        _ = new CustomToolDropHandler(this, LoadToolsAsync, ShowStatus);
     }
 
     private void SubscribeStaticEvents()
@@ -987,7 +986,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
 
     private async Task DeleteToolAsync(ToolItem tool)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = string.Format(LocalizationService.L("HomePage_DeleteDialogTitle", "删除「{0}」"), tool.Name),
             Content = new StackPanel
@@ -1503,147 +1502,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         return string.IsNullOrWhiteSpace(value) ? LocalizationService.L("Common_Unknown", "未知") : value;
     }
 
-    #region 拖放导入工具（Win32 API 绕过 UIPI）
-
-    private static readonly HashSet<string> DropImportableExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".zip", ".exe", ".bat", ".cmd", ".ps1", ".vbs"
-    };
-
-    private bool _dropEventSubscribed;
-
-    private void InstallDropHook()
-    {
-        // 获取主窗口句柄并安装拖放钩子；此调用依赖 App.MainWindow 的 WinRT 封送，
-        // 启动早期可能尚未就绪而抛异常，不能让一个非关键钩子打断启动流程。
-        try
-        {
-            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow);
-            if (hwnd != IntPtr.Zero) Win32DropHelper.EnsureInstalled(hwnd);
-        }
-        catch
-        {
-            // 拖放钩子失败不影响其余功能
-        }
-
-        if (!_dropEventSubscribed)
-        {
-            _dropEventSubscribed = true;
-            Win32DropHelper.FilesDropped += OnDropFiles;
-        }
-    }
-
-    private void UninstallDropHook()
-    {
-        _dropEventSubscribed = false;
-        Win32DropHelper.FilesDropped -= OnDropFiles;
-    }
-
-    private void OnDropFiles(IReadOnlyList<string> files)
-    {
-        var importable = files.FirstOrDefault(f => DropImportableExtensions.Contains(Path.GetExtension(f)));
-        if (importable is null) return;
-
-        DispatcherQueue.TryEnqueue(() => _ = ImportDroppedFileAsync(importable));
-    }
-
-    /// <summary>拖入文件后弹出导入弹窗；确认后导入、刷新导航与本页工具列表。</summary>
-    private async Task ImportDroppedFileAsync(string filePath)
-    {
-        try
-        {
-            await ImportDroppedFileCoreAsync(filePath);
-        }
-        catch (Exception ex)
-        {
-            // 兜底：弹窗链路任何异常都不能静默（旧版开独立窗口不依赖页面状态，
-            // 弹窗必须挂主窗口 XamlRoot 才能保证任何页面状态下都能弹出）
-            ShowStatus(LocalizationService.L("Common_ImportFailed", "导入失败"), ex.Message, InfoBarSeverity.Error);
-        }
-    }
-
-    private async Task ImportDroppedFileCoreAsync(string filePath)
-    {
-        // 弹窗挂主窗口的 XamlRoot（与旧窗口 Content.XamlRoot 等价），
-        // 不依赖 HomePage 是否正处于可视状态（离开首页后 HomePage.XamlRoot 为 null）
-        var xamlRoot = App.MainWindow?.Content?.XamlRoot ?? XamlRoot;
-        if (xamlRoot is null)
-        {
-            ShowStatus(
-                LocalizationService.L("Common_ImportFailed", "导入失败"),
-                LocalizationService.L("HomePage_ImportNoWindow", "无法获取窗口，请重试"),
-                InfoBarSeverity.Error);
-            return;
-        }
-
-        var isZip = Path.GetExtension(filePath).Equals(".zip", StringComparison.OrdinalIgnoreCase);
-
-        IReadOnlyList<ImportableExecutable> executables;
-        try
-        {
-            executables = isZip
-                ? CustomToolPackageService.GetExecutables(filePath)
-                : [new ImportableExecutable(Path.GetFileName(filePath))];
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(LocalizationService.L("HomePage_ImportUnreadable", "无法读取文件"), ex.Message, InfoBarSeverity.Error);
-            return;
-        }
-
-        if (executables.Count == 0)
-        {
-            await ShowMessageAsync(
-                LocalizationService.L("HomePage_ImportNoExeTitle", "未找到可导入工具"),
-                LocalizationService.L("HomePage_ImportNoExeMessage", "压缩包里需要至少包含一个 .exe 文件。"));
-            return;
-        }
-
-        var dialog = new CustomToolImportDialog(xamlRoot, filePath, executables);
-        var request = await dialog.ShowImportAsync();
-        if (request is null) return;
-
-        try
-        {
-            var result = isZip
-                ? await CustomToolPackageService.ImportAsync(request)
-                : await CustomToolPackageService.ImportSingleFileAsync(
-                    filePath,
-                    request.ToolName,
-                    request.Category,
-                    request.Description,
-                    request.Publisher,
-                    request.Tags);
-
-            // 新建分类：记录图标并追加到分类顺序，保持固定位置而非按字母序插入
-            if (dialog.IsNewCategory)
-            {
-                AppSettings.Set($"CategoryGlyph_{request.Category}", dialog.NewCategoryGlyph ?? "\uE8B7");
-                ToolCatalog.AppendCategoryOrder(request.Category);
-            }
-
-            ToolCatalog.InvalidateTagsCache();
-            if (App.MainWindow is MainWindow mainWindow)
-                mainWindow.RefreshToolCategories();
-
-            await LoadToolsAsync();
-            ShowStatus(
-                LocalizationService.L("Common_ImportSuccess", "导入成功"),
-                string.Format(LocalizationService.L("HomePage_ImportSuccessMessage", "已导入 {0}"), Path.GetFileName(result.ToolDirectory)),
-                InfoBarSeverity.Success);
-        }
-        catch (Exception ex)
-        {
-            // 分类下没有工具就删掉：新建分类导入失败时清理留下的空白目录
-            if (ToolCatalog.PruneCategoryIfEmpty(request.Category))
-            {
-                ToolCatalog.InvalidateTagsCache();
-                if (App.MainWindow is MainWindow mainWindow)
-                    mainWindow.RefreshToolCategories();
-            }
-            ShowStatus(LocalizationService.L("Common_ImportFailed", "导入失败"), ex.Message, InfoBarSeverity.Error);
-        }
-    }
+    #region 工具恢复与消息弹窗
 
     private async void RecoverToolsButton_Click(object sender, RoutedEventArgs e)
     {
@@ -1663,7 +1522,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
             content.Children.Add(new TextBlock { Text = LocalizationService.L("Recovery_ChooseTool",
                 "找到以下未登记工具。请选择要恢复的工具，确认名称和主程序后加入列表。"), TextWrapping = TextWrapping.Wrap });
             content.Children.Add(list);
-            var dialog = new ContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
                 Content = content, PrimaryButtonText = LocalizationService.L("Recovery_Next", "下一步"),
                 CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
                 DefaultButton = ContentDialogButton.Close, XamlRoot = XamlRoot,
@@ -1676,7 +1535,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
             var fields = new StackPanel { Spacing = 12 };
             fields.Children.Add(name);
             fields.Children.Add(executable);
-            var confirm = new ContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
+            var confirm = new TubaWinUi3.Controls.FluentContentDialog { Title = LocalizationService.L("Recovery_Title", "恢复工具"),
                 Content = fields, PrimaryButtonText = LocalizationService.L("Recovery_Register", "恢复登记"),
                 CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
                 DefaultButton = ContentDialogButton.Primary, XamlRoot = XamlRoot,
@@ -1703,7 +1562,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = App.MainWindow?.Content?.XamlRoot ?? XamlRoot,
             Title = title,

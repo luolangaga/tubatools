@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
@@ -262,7 +262,7 @@ public sealed partial class NewbieTutorialPage : Page
         }
         catch (Exception ex)
         {
-            await new ContentDialog
+            await new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = "打开工具失败",
                 Content = ex.Message,

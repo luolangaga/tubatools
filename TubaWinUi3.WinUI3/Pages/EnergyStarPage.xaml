@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <!--
     EnergyStarWindow — standalone window UI for the EcoQoS efficiency-mode tool.
     UI design ported from EnergyStarX (https://github.com/JasonWei512/EnergyStarX)
@@ -8,6 +8,7 @@
     x:Class="TubaWinUi3.Pages.EnergyStarPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
@@ -80,7 +81,7 @@
                 <StackPanel Spacing="8">
                     <TextBlock Text="节流选项" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,4" />
                     <toolkit:SettingsCard Header="接通电源时继续节流" Description="关闭时仅节流黑名单；开启时节流所有不在白名单中的后台进程。">
-                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE945;" /></toolkit:SettingsCard.HeaderIcon>
+                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE945;"  Foreground="{ThemeResource FluentIconForegroundBrush}" /></toolkit:SettingsCard.HeaderIcon>
                         <ToggleSwitch x:Name="ThrottleWhenPluggedInToggle" AutomationProperties.Name="接通电源时继续节流" OffContent="关" OnContent="开" Toggled="ThrottleWhenPluggedInToggle_Toggled" />
                     </toolkit:SettingsCard>
                     <toolkit:SettingsCard Header="登录时启动" Description="通过管理员计划任务自动启用效率模式。">
@@ -108,10 +109,10 @@
                                 <TextBlock x:Name="ToggleWhitelistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveWhitelist_Click" x:Name="SaveWhitelistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreWhitelist_Click" ToolTipService.ToolTip="还原为默认白名单">
-                                <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                                <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
                             </Button>
                         </Grid>
                         <TextBox x:Name="WhitelistEditor"
@@ -145,10 +146,10 @@
                                 <TextBlock x:Name="ToggleBlacklistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveBlacklist_Click" x:Name="SaveBlacklistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreBlacklist_Click" ToolTipService.ToolTip="还原为默认黑名单">
-                                <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                                <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
                             </Button>
                         </Grid>
                         <TextBox x:Name="BlacklistEditor"

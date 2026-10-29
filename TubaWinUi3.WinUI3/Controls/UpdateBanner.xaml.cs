@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -124,7 +124,7 @@ public sealed partial class UpdateBanner : UserControl
     {
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 Title = LocalizationService.L("UpdateBanner_LaunchFailedTitle", "更新文件不可用"),
                 Content = new TextBlock

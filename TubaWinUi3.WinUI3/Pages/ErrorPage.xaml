@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.ErrorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -59,7 +60,7 @@
                             Click="CopyButton_Click"
                             ToolTipService.ToolTip="复制到剪贴板">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="12" Glyph="&#xE8C8;" />
+                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
                                 <TextBlock FontSize="12" Text="复制" />
                             </StackPanel>
                         </Button>
@@ -82,7 +83,7 @@
                 CornerRadius="8">
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <FontIcon FontSize="14" Glyph="&#xE8BD;" />
+                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE8BD;" />
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="复现步骤" />
                         <TextBlock FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Text="*必填" />
                     </StackPanel>
@@ -107,7 +108,7 @@
                     Padding="16,8"
                     Click="ReportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE8F1;" />
+                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE8F1;" />
                         <TextBlock Text="提交 GitHub Issue" />
                     </StackPanel>
                 </Button>
@@ -116,7 +117,7 @@
                     Padding="16,8"
                     Click="RestartButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE72C;" />
                         <TextBlock Text="重启应用" />
                     </StackPanel>
                 </Button>

@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.FormatConverterPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
@@ -135,17 +136,17 @@
             <TextBlock x:Name="FfmpegStatusText" Text="检查中…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
 <Button x:Name="FfmpegActionBtn" Click="EngineActionBtn_Click" HorizontalAlignment="Left" /></StackPanel></Border><Border Style="{StaticResource FluentCardStyle}">
         <StackPanel Spacing="12">
-            <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon Glyph="&#xE91B;" FontSize="20" /><TextBlock Text="ImageMagick" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="12"><fluentIcons:FluentColorIcon Glyph="&#xE91B;" FontSize="20" /><TextBlock Text="ImageMagick" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
             <TextBlock Text="图片格式" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             <TextBlock x:Name="MagickStatusText" Text="检查中…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
 <Button x:Name="MagickActionBtn" Click="EngineActionBtn_Click" HorizontalAlignment="Left" /></StackPanel></Border><Border Style="{StaticResource FluentCardStyle}">
         <StackPanel Spacing="12">
-            <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon Glyph="&#xE8A5;" FontSize="20" /><TextBlock Text="OfficeCLI" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="12"><fluentIcons:FluentColorIcon Glyph="&#xE8A5;" FontSize="20" /><TextBlock Text="OfficeCLI" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
             <TextBlock Text="Office 文档渲染" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             <TextBlock x:Name="OfficeCliStatusText" Text="检查中…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
 <Button x:Name="OfficeCliActionBtn" Click="EngineActionBtn_Click" HorizontalAlignment="Left" /></StackPanel></Border><Border Style="{StaticResource FluentCardStyle}">
         <StackPanel Spacing="12">
-            <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon Glyph="&#xE945;" FontSize="20" /><TextBlock Text="系统组件" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="12"><fluentIcons:FluentColorIcon Glyph="&#xE945;" FontSize="20" /><TextBlock Text="系统组件" Style="{StaticResource BodyStrongTextBlockStyle}" /></StackPanel>
             <TextBlock Text="OCR · Office / WPS" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             <TextBlock x:Name="SystemStatusText" Text="检查中…" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
 </StackPanel></Border>

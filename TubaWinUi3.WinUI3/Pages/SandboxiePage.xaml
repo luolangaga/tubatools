@@ -1,7 +1,8 @@
-<Page
+﻿<Page
     x:Class="TubaWinUi3.Pages.SandboxiePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
     NavigationCacheMode="Disabled">
@@ -71,7 +72,7 @@
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
 
                     <toolkit:SettingsCard Header="文件夹右键菜单" Description="在文件夹空白处右键，快速在默认沙盒中打开这个文件夹。">
-                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE8B7;" /></toolkit:SettingsCard.HeaderIcon>
+                        <toolkit:SettingsCard.HeaderIcon><FontIcon Glyph="&#xE8B7;"  Foreground="{ThemeResource FluentIconForegroundBrush}" /></toolkit:SettingsCard.HeaderIcon>
                         <ToggleSwitch x:Name="ShellMenuToggle" OnContent="" OffContent="" AutomationProperties.Name="文件夹右键菜单中显示在沙箱中运行" Toggled="ShellMenuToggle_Toggled" />
                     </toolkit:SettingsCard>
                 </StackPanel>

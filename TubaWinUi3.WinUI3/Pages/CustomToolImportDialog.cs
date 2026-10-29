@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Services;
@@ -10,7 +10,7 @@ namespace TubaWinUi3.Pages;
 /// 由 HomePage 拖入文件后弹出；分类从 ToolCatalog（Tools 目录 + tools.json 排序）读取，
 /// 可选择已有分类或新建分类（含图标）。
 /// </summary>
-public sealed class CustomToolImportDialog : ContentDialog
+public sealed class CustomToolImportDialog : TubaWinUi3.Controls.FluentContentDialog
 {
     /// <summary>分类下拉框里的「新建分类」哨兵项。</summary>
     private sealed class NewCategoryItem
@@ -418,7 +418,7 @@ public sealed class CustomToolImportDialog : ContentDialog
 
     private async Task ShowMessageAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot,
             Title = title,

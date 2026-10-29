@@ -1,0 +1,19 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    xmlns:services="using:TubaWinUi3.Services">
+    <services:DialogTitleGlyphConverter x:Key="DialogTitleGlyphConverter" />
+    <DataTemplate x:Key="FluentDialogTitleTemplate">
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <controls:FluentColorIcon Glyph="{Binding Converter={StaticResource DialogTitleGlyphConverter}}"
+                FontSize="28" VerticalAlignment="Top" Margin="0,2,0,0" />
+            <TextBlock Grid.Column="1" Text="{Binding}" Style="{StaticResource SubtitleTextBlockStyle}"
+                TextWrapping="Wrap" />
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

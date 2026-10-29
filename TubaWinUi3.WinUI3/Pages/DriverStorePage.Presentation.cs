@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
@@ -105,7 +105,7 @@ public sealed partial class DriverStorePage
     private async void DetailsRow_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not MenuFlyoutItem { Tag: DriverPackageRow row }) return;
-        await RunAsync(async () => await new ContentDialog
+        await RunAsync(async () => await new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot, Title = "驱动版本详情", CloseButtonText = "关闭",
             RequestedTheme = ThemeService.CurrentElementTheme,

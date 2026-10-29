@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.Services;
@@ -115,7 +115,7 @@ public sealed partial class DriverStorePage : Page
 
     private async Task<bool> ConfirmAsync(string title, string text, string verb)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot, Title = title,
             Content = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap },

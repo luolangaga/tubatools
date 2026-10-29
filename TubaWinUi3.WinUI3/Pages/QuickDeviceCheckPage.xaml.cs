@@ -15,7 +15,10 @@ namespace TubaWinUi3.Pages;
 public sealed partial class QuickDeviceCheckPage : Page
 {
     private int _currentStep;
-    private const int TotalSteps = 8;
+    // Keep scene/keyboard step IDs stable; only the visible sequence varies by device.
+    private int[] _steps = [0, 1, 2, 3, 4, 5, 6, 7];
+    private int TotalSteps => _steps.Length;
+    private int StepPosition => Array.IndexOf(_steps, _currentStep);
     private Controls.StressTestControl? _stressControl;
     private DiskHealthPage? _diskHealthPage;
     private Controls.KeyboardTestControl? _keyboardTestControl;
@@ -38,9 +41,9 @@ public sealed partial class QuickDeviceCheckPage : Page
     private string? _focusLabel;
     private string? _wallpaper;
     private readonly Dictionary<int, bool> _exteriorChecks = [];
-    private static readonly string[] StepTitles = ["欢迎收到新电脑", "核对硬件配置", "检查硬盘状态", "检查屏幕", "检查键盘", "检查摄像头", "检查扬声器", "散热与稳定性"];
-    private static readonly string[] StepLabels = ["外观", "配置", "硬盘", "屏幕", "键盘", "摄像头", "音频", "烤机"];
-    private static readonly string[] StepDescriptions = ["先看整机全景，再检查机身外观。", "点击硬件条目定位整机上的对应区域，并核对订单配置。", "查看 SMART 信息，结合购买渠道与商家说明判断。", "在全屏纯色画面中检查坏点、色斑和漏光。", "逐个按下按键，已测试的键位会留下标记。", "开启预览，检查画面、对焦和颜色是否正常。", "播放测试语音，留意无声、杂音或破音。", "验机特别版：统一时长，实时观察温度与负载。"];
+    private static readonly string[] StepTitles = ["欢迎收到新电脑", "核对硬件配置", "检查硬盘状态", "检查屏幕", "检查键盘", "检查摄像头", "检查扬声器", "散热与稳定性", "检查电池与供电"];
+    private static readonly string[] StepLabels = ["外观", "配置", "硬盘", "屏幕", "键盘", "摄像头", "音频", "烤机", "电池"];
+    private static readonly string[] StepDescriptions = ["先看整机全景，再检查机身外观。", "点击硬件条目定位整机上的对应区域，并核对订单配置。", "查看 SMART 信息，结合购买渠道与商家说明判断。", "在全屏纯色画面中检查坏点、色斑和漏光。", "逐个按下按键，已测试的键位会留下标记。", "开启预览，检查画面、对焦和颜色是否正常。", "播放测试语音，留意无声、杂音或破音。", "验机特别版：统一时长，实时观察温度与负载。", "查看电池容量、循环次数和实时供电，拔插电源检查充放电切换。"];
 
     public QuickDeviceCheckPage()
     {
@@ -73,9 +76,11 @@ public sealed partial class QuickDeviceCheckPage : Page
             var laptopTask = Task.Run(HardwareInfoService.IsLaptop);
             var wallpaperTask = DesktopWallpaperService.LoadDataUriAsync();
             await Task.WhenAll(laptopTask, wallpaperTask);
+            if (_closed || _scene != scene) return;
             _laptop = laptopTask.Result;
             _wallpaper = wallpaperTask.Result;
-            if (_closed || _scene != scene) return;
+            _steps = _laptop ? [0, 1, 2, 8, 3, 4, 5, 6, 7] : [0, 1, 2, 3, 4, 5, 6, 7];
+            RefreshStepNavigation();
             await scene.InitializeAsync(SceneBackground);
             await Task.Delay(12000);
             if (!_closed && _scene == scene && !_sceneBooted) ShowSceneError("3D 场景加载超时，可继续完成右侧检测。");
@@ -219,6 +224,7 @@ public sealed partial class QuickDeviceCheckPage : Page
     }
     private void ReleaseStep()
     {
+        StopBatteryRefresh();
         StopKeyboardInput();
         PostScene(new { type = "keyboardMode", active = false });
         KeyboardToolbar.Visibility = Visibility.Collapsed;
@@ -246,28 +252,16 @@ public sealed partial class QuickDeviceCheckPage : Page
         _visitedSteps.Add(_currentStep);
         ReleaseStep();
         _contentVersion++;
-        StepIndicatorText.Text = $"{_currentStep + 1:00} / {TotalSteps:00}";
+        StepIndicatorText.Text = $"{StepPosition + 1:00} / {TotalSteps:00}";
         StepTitleText.Text = StepTitles[_currentStep];
         StepDescText.Text = StepDescriptions[_currentStep];
         BackButton.IsEnabled = _currentStep > 0;
-        NextButton.Content = _currentStep == 0 ? "开始验机" : _currentStep == TotalSteps - 1 ? "完成验机" : "下一步";
+        NextButton.Content = _currentStep == 0 ? "开始验机" : StepPosition == TotalSteps - 1 ? "完成验机" : "下一步";
         ActivityText.Text = "确认后继续";
         SceneHint.Text = "拖动旋转 · 镜头随检测步骤切换 · 模型为硬件示意";
         if (_currentStep != 4) AnimateWorkspace(false);
         UpdateCompactChrome();
-        StepProgressPanel.Children.Clear();
-        StepProgressPanel.ColumnDefinitions.Clear();
-        for (int i = 0; i < TotalSteps; i++)
-        {
-            StepProgressPanel.ColumnDefinitions.Add(new ColumnDefinition());
-            var step = i;
-            var button = new Button { Content = $"{i + 1:00}  {StepLabels[i]}", HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(4, 8, 4, 8) };
-            if (i == _currentStep) button.Style = Application.Current.Resources["AccentButtonStyle"] as Style;
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(button, $"InspectionStep{i}");
-            button.Click += (_, _) => GoToStep(step);
-            Grid.SetColumn(button, i);
-            StepProgressPanel.Children.Add(button);
-        }
+        RefreshStepNavigation();
         StepContentPanel.Children.Clear();
         switch (_currentStep)
         {
@@ -279,8 +273,30 @@ public sealed partial class QuickDeviceCheckPage : Page
             case 5: BuildCameraStep(); break;
             case 6: BuildAudioStep(); break;
             case 7: BuildStressTestStep(); break;
+            case 8: BuildBatteryStep(); break;
         }
-        FocusScene(_currentStep switch { 1 => "处理器", 2 => "硬盘", 3 => "显示器", 4 => "键盘", 5 => "摄像头", 6 => "声卡", 7 => "散热", _ => null });
+        FocusScene(_currentStep switch { 1 => "处理器", 2 => "硬盘", 3 => "显示器", 4 => "键盘", 5 => "摄像头", 6 => "声卡", 7 => "散热", 8 => "电池", _ => null });
+    }
+    private void RefreshStepNavigation()
+    {
+        if (!_isCompleted)
+        {
+            StepIndicatorText.Text = $"{StepPosition + 1:00} / {TotalSteps:00}";
+            NextButton.Content = _currentStep == 0 ? "开始验机" : StepPosition == TotalSteps - 1 ? "完成验机" : "下一步";
+        }
+        StepProgressPanel.Children.Clear();
+        StepProgressPanel.ColumnDefinitions.Clear();
+        for (int i = 0; i < TotalSteps; i++)
+        {
+            StepProgressPanel.ColumnDefinitions.Add(new ColumnDefinition());
+            var step = _steps[i];
+            var button = new Button { Content = $"{i + 1:00}  {StepLabels[step]}", HorizontalAlignment = HorizontalAlignment.Stretch, Padding = new Thickness(4, 8, 4, 8) };
+            if (step == _currentStep) button.Style = Application.Current.Resources["AccentButtonStyle"] as Style;
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(button, $"InspectionStep{step}");
+            button.Click += (_, _) => GoToStep(step);
+            Grid.SetColumn(button, i);
+            StepProgressPanel.Children.Add(button);
+        }
     }
     private void GoToStep(int step)
     {
@@ -298,13 +314,13 @@ public sealed partial class QuickDeviceCheckPage : Page
             _diskHealthPage = null;
             _currentStep = 0; UpdateStepUI(); return;
         }
-        if (_currentStep < TotalSteps - 1) GoToStep(_currentStep + 1);
+        if (StepPosition < TotalSteps - 1) GoToStep(_steps[StepPosition + 1]);
         else CompleteInspection();
     }
     private void BackButton_Click(object sender, RoutedEventArgs e)
     {
         if (_isCompleted) { LeaveCompletion(); return; }
-        if (_currentStep > 0) GoToStep(_currentStep - 1);
+        if (StepPosition > 0) GoToStep(_steps[StepPosition - 1]);
     }
 
     private void CompleteInspection()
@@ -334,7 +350,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         _isCompleted = false;
         PageTitle.Text = "快速验机";
         PageSubtitle.Text = "从外观到稳定性，逐项认识你的新电脑";
-        StepIndicatorText.Text = $"{_currentStep + 1:00} / {TotalSteps:00}";
+        StepIndicatorText.Text = $"{StepPosition + 1:00} / {TotalSteps:00}";
         StepTitleText.Text = StepTitles[_currentStep];
         StepDescText.Text = StepDescriptions[_currentStep];
         BackButton.Content = "上一步";
@@ -371,7 +387,7 @@ public sealed partial class QuickDeviceCheckPage : Page
     private void BuildWelcomeStep()
     {
         var panel = ContentStack();
-        panel.Children.Add(Copy("花几分钟完成 8 项检查。自动读取的配置与手动检测相结合，先从外观开始。", true));
+        panel.Children.Add(Copy("逐项完成检查。自动读取的配置与手动检测相结合，先从外观开始；笔记本还会检查电池与供电。", true));
         string[] checks = ["机身：没有划痕、磕碰与使用痕迹", "转轴 / 面板：无松动、异响或变形", "接口：无氧化、明显插拔痕迹", "屏幕表面：无划痕、压痕", "散热口：没有明显积灰或堵塞"];
         for (int i = 0; i < checks.Length; i++)
         {

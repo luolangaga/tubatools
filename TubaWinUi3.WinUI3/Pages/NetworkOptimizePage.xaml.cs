@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -559,7 +559,7 @@ public sealed partial class NetworkOptimizePage : Page
     {
         try
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot,
                 Title = title,

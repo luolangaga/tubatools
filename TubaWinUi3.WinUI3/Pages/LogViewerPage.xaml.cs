@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.UI.Dispatching;
@@ -267,7 +267,7 @@ public sealed partial class LogViewerPage : Page, ILocalizablePage
         if (_category is null) return;
 
         var confirmed = false;
-        var confirm = new ContentDialog
+        var confirm = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = LocalizationService.L("LogViewer_ClearConfirmTitle", "清空这份日志？"),
             Content = string.Format(
@@ -292,7 +292,7 @@ public sealed partial class LogViewerPage : Page, ILocalizablePage
 
     private async Task ShowDialogAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = title,
             Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },

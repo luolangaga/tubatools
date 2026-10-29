@@ -1,0 +1,22 @@
+name = "tuba-telemetry-dashboard"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# 面板站点：stats.tubawinui3.cn（Cloudflare 自动建解析记录的 Worker 自定义域）
+routes = [
+  { pattern = "stats.tubawinui3.cn", custom_domain = true }
+]
+
+# 页面由 Worker 直接吐出（src/index.js 以文本模块引入 public/index.html），
+# 不走静态资源托管——静态资源会被浏览器/边缘缓存，改版后用户看到旧界面。
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[observability]
+enabled = true
+
+# 需要的密钥（用 `wrangler secret put` 写入，不要写进仓库）：
+#   AI_API_KEY        —— Application Insights「读取遥测」只读 API 密钥
+#   DASHBOARD_TOKEN   —— 面板访问口令

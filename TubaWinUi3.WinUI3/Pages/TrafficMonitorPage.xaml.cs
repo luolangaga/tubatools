@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -151,7 +151,7 @@ public sealed partial class TrafficMonitorPage : Page
         if (_adapterIndex == adapter.Index && TrafficMonitorService.IsRunning) return;
         if (_recorder.Count > 0)
         {
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot, Title = "切换监控网卡？",
                 Content = "切换会重新统计累计流量并清除当前记录。需要保留时，请先导出记录。",
@@ -324,7 +324,7 @@ public sealed partial class TrafficMonitorPage : Page
     private async void ClearRecord_Click(object sender, RoutedEventArgs e)
     {
         if (_recorder.Count == 0) return;
-        var result = await new ContentDialog
+        var result = await new TubaWinUi3.Controls.FluentContentDialog
         {
             XamlRoot = XamlRoot, Title = "清除流量记录？", Content = $"将清除当前 {_recorder.Count} 次采样。需要保留时，请先导出记录。",
             PrimaryButtonText = "清除记录", CloseButtonText = "取消", DefaultButton = ContentDialogButton.Close
@@ -563,7 +563,7 @@ public sealed partial class TrafficMonitorPage : Page
                 panel.Children.Add(ping);
                 panel.Children.Add(resultText);
             }
-            var dialog = new ContentDialog
+            var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = root, Title = "网络活动详情", Content = panel,
                 PrimaryButtonText = "只看此进程", SecondaryButtonText = "复制详情", CloseButtonText = "关闭"
