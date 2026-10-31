@@ -278,7 +278,8 @@ public static class PerformanceBenchmarkService
 			File.Delete(logFile); // A stale log must never be reused when deletion fails.
 		}
 		int durationMs = durationSec * 1000;
-		string arguments = "--demo furmark-vk --width 1920 --height 1080 --benchmark --duration-ms " + durationMs + " --gpu-index " + gpuIndex + " --vsync 0 --hpgfx 1 --print-render-speed";
+		// The score dialog keeps FurMark running after the benchmark and makes the caller time out.
+		string arguments = "--demo furmark-vk --width 1920 --height 1080 --benchmark --duration-ms " + durationMs + " --gpu-index " + gpuIndex + " --vsync 0 --hpgfx 1 --print-render-speed --no-score-box";
 		using var process = Process.Start(new ProcessStartInfo(furMarkExe, arguments)
 		{
 			WorkingDirectory = furMarkDir,

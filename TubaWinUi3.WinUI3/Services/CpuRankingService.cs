@@ -42,6 +42,20 @@ public static class CpuRankingService
         try
         {
             var json = File.ReadAllText(path);
+            var bundled = JsonSerializer.Deserialize<CpuRankingData>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var cachePath = Path.Combine(GetCacheDir(), "Metadata", "cpu-ranking.json");
+            if (File.Exists(cachePath))
+            {
+                try
+                {
+                    var cacheJson = File.ReadAllText(cachePath);
+                    var cached = JsonSerializer.Deserialize<CpuRankingData>(cacheJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                    if (cached is not null && DateTime.TryParse(cached.LastUpdated, out var cacheDate)
+                        && DateTime.TryParse(bundled?.LastUpdated, out var bundledDate) && cacheDate >= bundledDate)
+                        json = cacheJson;
+                }
+                catch { /* Ignore an incomplete cache and keep the bundled data. */ }
+            }
             ParseAndSet(json);
         }
         catch
@@ -65,23 +79,17 @@ public static class CpuRankingService
 
         try
         {
-            var desktopResult = await TopCpuScraperService.ScrapeCpuRankingsAsync(
-                "cinebench-r23-multi-core", "desktop");
-            var laptopResult = await TopCpuScraperService.ScrapeCpuRankingsAsync(
-                "cinebench-r23-multi-core", "laptop");
-
+            var desktopResult = await ScrapeCombinedAsync("desktop");
+            var laptopResult = await ScrapeCombinedAsync("laptop");
             var desktopEntries = desktopResult.Entries;
             var laptopEntries = laptopResult.Entries;
-
-            if (desktopEntries.Count == 0 && laptopEntries.Count == 0)
-            {
-                return await RefreshFromFallbackAsync();
-            }
+            if (desktopEntries.Count == 0 || laptopEntries.Count == 0)
+                throw new InvalidDataException("CPU 榜单不完整");
 
             _desktop = desktopEntries;
             _laptop = laptopEntries;
             _lastRefreshTime = DateTime.Now;
-            LastUpdated = desktopResult.LastUpdated;
+            LastUpdated = DateTime.Now.ToString("yyyy-MM-dd");
             BenchName = desktopResult.BenchName;
 
             SaveCache();
@@ -106,6 +114,26 @@ public static class CpuRankingService
         {
             return await RefreshFromFallbackAsync($"TopCPU.net 刷新失败：{ex.Message}");
         }
+    }
+
+    private static async Task<TopCpuCpuResult> ScrapeCombinedAsync(string category)
+    {
+        var multi = await TopCpuScraperService.ScrapeCpuRankingsAsync("cinebench-r23-multi-core", category);
+        var single = await TopCpuScraperService.ScrapeCpuRankingsAsync("cinebench-r23-single-core", category);
+        if (multi.Entries.Count == 0 || single.Entries.Count == 0)
+            throw new InvalidDataException("CPU 单核或多核榜单为空");
+        var singles = single.Entries.GroupBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in multi.Entries)
+            entry.SingleCore = singles.GetValueOrDefault(entry.Name)?.SingleCore ?? 0;
+        var names = multi.Entries.Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in single.Entries.Where(e => !names.Contains(e.Name)))
+        {
+            entry.Rank = multi.Entries.Count + 1;
+            entry.Rating = 0;
+            multi.Entries.Add(entry);
+        }
+        return multi;
     }
 
     private static async Task<CpuRefreshResult> RefreshFromFallbackAsync(string? topCpuError = null)

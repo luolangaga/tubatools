@@ -134,7 +134,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button x:Name="RefreshCodeBtn" Click="RefreshCodeBtn_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                                             <TextBlock Text="刷新配对码" />
                                         </StackPanel>
                                     </Button>
@@ -172,7 +172,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Border Style="{StaticResource IconTileStyle}" Width="36" Height="36" VerticalAlignment="Center">
-                                    <fluentIcons:FluentColorIcon FontSize="16" Glyph="&#xE8BD;" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE8BD;" />
                                 </Border>
                                 <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="聊天与文件" />
@@ -202,7 +202,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Border Style="{StaticResource IconTileStyle}" Width="36" Height="36" VerticalAlignment="Center">
-                                    <fluentIcons:FluentColorIcon FontSize="16" Glyph="&#xE823;" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE823;" />
                                 </Border>
                                 <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="手机任务" />
@@ -266,7 +266,7 @@
                             VerticalAlignment="Center"
                             Click="OpenReceiveBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8B7;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8B7;" />
                                 <TextBlock Text="打开文件夹" />
                             </StackPanel>
                         </Button>

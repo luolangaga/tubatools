@@ -955,7 +955,7 @@ public sealed partial class PcTutorialPage : Page
                         {
                             var ctx = new BuiltinToolContext { XamlRoot = XamlRoot };
                             MainWindow.ActiveToolName = builtinTool.Name;
-                            _ = builtinTool.ExecuteAsync(ctx);
+                            _ = builtinTool.ExecuteTrackedAsync(ctx);
                         }
                     }
                     break;
@@ -973,7 +973,7 @@ public sealed partial class PcTutorialPage : Page
                         {
                             var ctx = new BuiltinToolContext { XamlRoot = XamlRoot };
                             MainWindow.ActiveToolName = builtinTool.Name;
-                            _ = builtinTool.ExecuteAsync(ctx);
+                            _ = builtinTool.ExecuteTrackedAsync(ctx);
                         }
                         break;
                     }
@@ -984,7 +984,7 @@ public sealed partial class PcTutorialPage : Page
                         {
                             var ctx = new BuiltinToolContext { XamlRoot = XamlRoot };
                             MainWindow.ActiveToolName = builtinTool.Name;
-                            _ = builtinTool.ExecuteAsync(ctx);
+                            _ = builtinTool.ExecuteTrackedAsync(ctx);
                         }
                         break;
                     }
@@ -1265,7 +1265,7 @@ public sealed partial class PcTutorialPage : Page
                     if (builtin is not null && XamlRoot is not null)
                     {
                         var ctx = new BuiltinToolContext { XamlRoot = XamlRoot };
-                        _ = builtin.ExecuteAsync(ctx);
+                        _ = builtin.ExecuteTrackedAsync(ctx);
                     }
                     break;
                 case "open_system":

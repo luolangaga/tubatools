@@ -94,14 +94,14 @@
                         Style="{StaticResource ToolHeaderActionButtonStyle}"
                         Click="RefreshButton_Click"
                         ToolTipService.ToolTip="刷新">
-                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE72C;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE72C;" />
                     </Button>
                     <Button
                         x:Name="SubmitButton"
                         Style="{StaticResource ToolHeaderActionButtonStyle}"
                         Click="SubmitButton_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE710;" />
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE710;" />
                             <TextBlock Text="提交工具" />
                         </StackPanel>
                     </Button>

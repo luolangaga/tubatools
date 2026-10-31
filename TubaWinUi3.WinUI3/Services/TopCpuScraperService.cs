@@ -7,7 +7,7 @@ namespace TubaWinUi3.Services;
 
 public static class TopCpuScraperService
 {
-    private static readonly HttpClient Http = new()
+    private static readonly HttpClient Http = new(new HttpClientHandler { UseProxy = false })
     {
         Timeout = TimeSpan.FromSeconds(60)
     };
@@ -26,6 +26,11 @@ public static class TopCpuScraperService
     {
         var url = BuildCpuUrl(bench, category);
         var html = await Http.GetStringAsync(url);
+        return ParseCpuRankingsHtml(html, bench, category, url);
+    }
+
+    internal static TopCpuCpuResult ParseCpuRankingsHtml(string html, string bench, string? category, string url = "")
+    {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -44,6 +49,11 @@ public static class TopCpuScraperService
             foreach (var node in nodes)
             {
                 var entry = ParseCpuEntry(node);
+                if (entry is not null && bench.Contains("single-core", StringComparison.Ordinal))
+                {
+                    entry.SingleCore = entry.Rating;
+                    entry.MultiCore = 0;
+                }
                 if (entry is not null)
                     entries.Add(entry);
             }
@@ -71,11 +81,16 @@ public static class TopCpuScraperService
     }
 
     public static async Task<TopCpuGpuResult> ScrapeGpuRankingsAsync(
-        string bench = "fp32",
+        string bench = "time-spy",
         string? category = null)
     {
         var url = BuildGpuUrl(bench, category);
         var html = await Http.GetStringAsync(url);
+        return ParseGpuRankingsHtml(html, bench, category, url);
+    }
+
+    internal static TopCpuGpuResult ParseGpuRankingsHtml(string html, string bench, string? category, string url = "")
+    {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -257,7 +272,8 @@ public static class TopCpuScraperService
                 Render = 0,
                 Tflops = tflops,
                 GeekbenchOpencl = "",
-                TimeSpy = vram,
+                TimeSpy = tflops.Length == 0 ? rating.ToString(System.Globalization.CultureInfo.InvariantCulture) : "",
+                Vram = vram,
                 Category = ""
             };
         }

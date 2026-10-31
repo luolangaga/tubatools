@@ -41,7 +41,7 @@ internal static class ToolExperience
     {
         var tool = BuiltinToolRegistry.Tools.FirstOrDefault(t => t.Id == id);
         if (tool is null) throw new InvalidOperationException(L("Unavailable", "此工具已隐藏或当前版本不支持，请到恢复工具中检查。"));
-        await tool.ExecuteAsync(new BuiltinToolContext { XamlRoot = root });
+        await tool.ExecuteTrackedAsync(new BuiltinToolContext { XamlRoot = root });
     }
 
     public static Task NavigateAsync(Type page, object? parameter = null)

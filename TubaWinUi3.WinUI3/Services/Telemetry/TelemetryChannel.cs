@@ -6,7 +6,7 @@ namespace TubaWinUi3.Services.Telemetry;
 
 /// <summary>
 /// 遥测通道：内存队列 + 后台批量上传 + 失败落盘续传。
-/// 桌面应用没有常驻服务端，网络失败（尤其国内到 Azure 采集端的链路）
+/// 桌面应用没有常驻服务端，网络失败（尤其跨境采集链路）
 /// 与进程随时退出都是常态，因此：
 /// <list type="bullet">
 /// <item>Send 永不阻塞、永不抛出，队列有上限，满了丢弃新条目（保内存）。</item>
@@ -37,6 +37,9 @@ internal sealed class TelemetryChannel : ITelemetryChannel
     private int _queuedCount;
     private int _disposed;
     private long _droppedCount;
+    private int _uploading;
+    private int _discardPending;
+    private DateTime _retryNotBeforeUtc;
 
     public TelemetryChannel(Uri trackUri, TelemetryTransport transport, string spoolDirectory)
     {
@@ -74,14 +77,18 @@ internal sealed class TelemetryChannel : ITelemetryChannel
     {
         Signal();
         var deadline = DateTime.UtcNow + FlushWait;
-        while (Volatile.Read(ref _queuedCount) > 0 && DateTime.UtcNow < deadline)
+        while ((Volatile.Read(ref _queuedCount) > 0 || Volatile.Read(ref _uploading) != 0)
+               && DateTime.UtcNow < deadline)
             Thread.Sleep(50);
     }
 
-    public void Dispose()
+    public void Dispose() => Stop(discardPending: false);
+
+    internal void Stop(bool discardPending)
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        try { Flush(); } catch { }
+        if (discardPending) Interlocked.Exchange(ref _discardPending, 1);
+        else try { Flush(); } catch { }
         try { _cts.Cancel(); } catch { }
         try { _worker.Wait(TimeSpan.FromSeconds(2)); } catch { }
         try { _transport.Dispose(); } catch { }
@@ -96,36 +103,51 @@ internal sealed class TelemetryChannel : ITelemetryChannel
 
     private async Task RunAsync(CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested)
+        try
         {
-            try
+            while (!ct.IsCancellationRequested)
             {
-                await _wake.WaitAsync(SendInterval, ct).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (ObjectDisposedException)
-            {
-                break;
-            }
+                try
+                {
+                    await _wake.WaitAsync(SendInterval, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
 
-            try
-            {
-                await DrainSpoolAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    if (DateTime.UtcNow < _retryNotBeforeUtc) continue;
+                    Interlocked.Exchange(ref _uploading, 1);
+                    await DrainSpoolAsync(ct).ConfigureAwait(false);
 
-                var batch = DequeueBatch();
-                if (batch.Count > 0)
-                    await UploadAsync(batch, ct).ConfigureAwait(false);
+                    var batch = DequeueBatch();
+                    if (batch.Count > 0)
+                        await UploadAsync(batch, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    AgentDebugLog.Error("[Telemetry] 发送循环异常", ex);
+                }
+                finally { Interlocked.Exchange(ref _uploading, 0); }
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        }
+        finally
+        {
+            // 正常退出取消上传时，也要持久化尚在内存中的条目。
+            while (DequeueBatch() is { Count: > 0 } pending)
             {
-                break;
-            }
-            catch (Exception ex)
-            {
-                AgentDebugLog.Error("[Telemetry] 发送循环异常", ex);
+                try { Spool(new Transmission(_trackUri, pending, UploadTimeout).Content); }
+                catch { }
             }
         }
     }
@@ -151,7 +173,10 @@ internal sealed class TelemetryChannel : ITelemetryChannel
                 .ConfigureAwait(false);
 
             if (result == TelemetrySendResult.RetryLater)
+            {
                 Spool(transmission.Content);
+                _retryNotBeforeUtc = DateTime.UtcNow.AddMinutes(1);
+            }
         }
         catch (Exception ex)
         {
@@ -162,6 +187,7 @@ internal sealed class TelemetryChannel : ITelemetryChannel
     /// <summary>把已序列化的批次写入落盘目录，等待后续补传。</summary>
     private void Spool(byte[] payload)
     {
+        if (Volatile.Read(ref _discardPending) != 0) return;
         try
         {
             Directory.CreateDirectory(_spoolDirectory);
@@ -198,7 +224,10 @@ internal sealed class TelemetryChannel : ITelemetryChannel
 
             var result = await _transport.PostAsync(payload, "gzip", "application/x-json-stream", ct).ConfigureAwait(false);
             if (result == TelemetrySendResult.RetryLater)
+            {
+                _retryNotBeforeUtc = DateTime.UtcNow.AddMinutes(1);
                 return; // 网络仍不通：本轮停止，保留文件待下次
+            }
 
             TryDelete(file);
             drained++;

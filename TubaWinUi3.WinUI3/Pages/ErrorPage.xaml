@@ -60,7 +60,7 @@
                             Click="CopyButton_Click"
                             ToolTipService.ToolTip="复制到剪贴板">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8C8;" />
                                 <TextBlock FontSize="12" Text="复制" />
                             </StackPanel>
                         </Button>
@@ -108,7 +108,7 @@
                     Padding="16,8"
                     Click="ReportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE8F1;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE8F1;" />
                         <TextBlock Text="提交 GitHub Issue" />
                     </StackPanel>
                 </Button>
@@ -117,7 +117,7 @@
                     Padding="16,8"
                     Click="RestartButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE72C;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE72C;" />
                         <TextBlock Text="重启应用" />
                     </StackPanel>
                 </Button>

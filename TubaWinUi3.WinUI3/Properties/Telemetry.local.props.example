@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- 复制为 Telemetry.local.props；仅放指定数据集的 Basic 只写凭据。 -->
+    <AxiomIngestToken>REPLACE_WITH_DATASET_INGEST_ONLY_TOKEN</AxiomIngestToken>
+  </PropertyGroup>
+</Project>

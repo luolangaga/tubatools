@@ -16,13 +16,13 @@ using AiStackFrame = Microsoft.ApplicationInsights.DataContracts.StackFrame;
 namespace TubaWinUi3.Services.Telemetry;
 
 /// <summary>
-/// 匿名遥测：在线用户统计（心跳）与错误日志收集，后端为 Azure Application Insights。
+/// 匿名遥测：在线用户统计（心跳）与错误日志收集，直接上报 Axiom（不经过 Cloudflare Worker）。
 /// 设计约束：
 /// <list type="bullet">
 /// <item>只收集匿名运行信息（版本/架构/系统版本/语言）与异常，不收集用户名、文件路径等可识别信息；
 /// 设备标识为「机器 GUID + 固定盐」的 SHA-256 截断值，不可反查，可随时在设置中关闭。</item>
 /// <item>上传全程静默：不弹窗、不阻塞界面、失败落盘续传，绝不影响主流程。</item>
-/// <item>国内 DNS 对采集端域名的污染由 <see cref="TelemetryEndpointResolver"/> 兜底。</item>
+/// <item>采集连接优先 IPv4，地址容错由 <see cref="TelemetryEndpointResolver"/> 兜底。</item>
 /// </list>
 /// </summary>
 public static class TelemetryService
@@ -32,24 +32,9 @@ public static class TelemetryService
 
     private const string DeviceIdSettingKey = "TelemetryDeviceId";
 
-    /// <summary>
-    /// Application Insights 连接字符串（客户端写入密钥，非机密；写入权限仅限上报）。
-    /// 资源：tubatool-telemetry（tubatool-monitoring / Japan East）。
-    /// </summary>
-    internal const string ConnectionString =
-        "InstrumentationKey=ff9e238f-9642-4aa9-a217-734434e79872;" +
-        "IngestionEndpoint=https://japaneast-1.in.applicationinsights.azure.com/;" +
-        "LiveEndpoint=https://japaneast.livediagnostics.monitor.azure.com/;" +
-        "ApplicationId=c5cae637-8b3c-43c5-b14e-3d228767c4c8";
-
-    /// <summary>采集端主机名；国内 DNS 常返回黑洞 IP，连接层会按候选顺序绕过。</summary>
-    private const string IngestionHost = "japaneast-1.in.applicationinsights.azure.com";
-
-    /// <summary>CNAME 链下游的 Traffic Manager 别名，国内解析通常不受污染。</summary>
-    private const string IngestionFallbackHost = "gig-ai-prod-japaneast-0.trafficmanager.net";
-
-    /// <summary>最后的兜底地址（解析全部失败时使用）。</summary>
-    private static readonly string[] IngestionFallbackAddresses = ["20.18.2.65"];
+    // 保留 SDK 的本地异常构造/序列化能力；SDK 默认通道不会被使用。
+    private const string SerializerConnectionString =
+        "InstrumentationKey=ff9e238f-9642-4aa9-a217-734434e79872";
 
     /// <summary>心跳间隔：在线用户 = 最近 15 分钟内有心跳/启动事件的设备数。</summary>
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(10);
@@ -94,7 +79,7 @@ public static class TelemetryService
     {
         AppSettings.Set(SettingKey, enabled);
         if (enabled) Start();
-        else Stop();
+        else Stop(discardPending: true);
     }
 
     /// <summary>记录自定义事件（失败静默）。</summary>
@@ -131,6 +116,29 @@ public static class TelemetryService
             ["tool"] = toolId,
             ["builtin"] = builtin ? "1" : "0",
         });
+    }
+
+    /// <summary>启动器只传入本地路径；上报前提取目录名/文件名，不上传路径。</summary>
+    internal static void TrackExternalToolLaunch(string executablePath)
+    {
+        if (_client is null) return;
+        try { TrackToolLaunch(BuildExternalToolId(executablePath, ToolCatalog.ToolsRoot), builtin: false); }
+        catch { } // 遥测不能影响工具启动
+    }
+
+    internal static string BuildExternalToolId(string executablePath, string toolsRoot)
+    {
+        if (string.IsNullOrWhiteSpace(executablePath)) return string.Empty;
+        var relative = Path.GetRelativePath(toolsRoot, executablePath);
+        if (!Path.IsPathRooted(relative) && relative != ".."
+            && !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            var parts = relative.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+                StringSplitOptions.RemoveEmptyEntries);
+            // Tools / 分类 / 工具目录 / 架构 / 程序，合并架构变体与程序名。
+            if (parts.Length >= 3) return parts[1];
+        }
+        return Path.GetFileNameWithoutExtension(executablePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
     }
 
     /// <summary>
@@ -261,7 +269,7 @@ public static class TelemetryService
     public static void Shutdown()
     {
         try { Flush(); } catch { }
-        Stop();
+        Stop(discardPending: false);
     }
 
     /// <summary>异常指纹：类型 + 消息前 200 字符（用于会话内限流）。</summary>
@@ -343,17 +351,17 @@ public static class TelemetryService
 
             try
             {
-                var ingestionEndpoint = ParseConnectionStringValue(ConnectionString, "IngestionEndpoint")
-                                        ?? "https://" + IngestionHost + "/";
-                var trackUri = new Uri(new Uri(ingestionEndpoint, UriKind.Absolute), "v2/track");
-
-                var resolver = new TelemetryEndpointResolver(IngestionHost, IngestionFallbackHost, IngestionFallbackAddresses);
-                var transport = new TelemetryTransport(resolver, trackUri, ProxyService.GetWebProxy());
+                if (string.IsNullOrWhiteSpace(AxiomTelemetryConfig.IngestToken))
+                    throw new InvalidOperationException("未配置 Axiom 只写凭据，遥测未启动");
+                var trackUri = new Uri(AxiomTelemetryConfig.Endpoint);
+                var resolver = new TelemetryEndpointResolver(trackUri.Host, "", []);
+                var transport = new TelemetryTransport(resolver, trackUri, ProxyService.GetWebProxy(),
+                    AxiomTelemetryConfig.IngestToken);
                 var channel = new TelemetryChannel(trackUri, transport, Path.Combine(ConfigManager.GetDataDir(), "Telemetry", "spool"));
 
                 var configuration = new TelemetryConfiguration
                 {
-                    ConnectionString = ConnectionString,
+                    ConnectionString = SerializerConnectionString,
                 };
                 configuration.TelemetryChannel = channel;
 
@@ -377,7 +385,7 @@ public static class TelemetryService
         }
     }
 
-    private static void Stop()
+    private static void Stop(bool discardPending)
     {
         TelemetryChannel? channel;
         TelemetryConfiguration? configuration;
@@ -395,10 +403,12 @@ public static class TelemetryService
         }
 
         try { timer?.Dispose(); } catch { }
-        try { channel?.Dispose(); } catch { }
+        try { channel?.Stop(discardPending); } catch { }
         try { configuration?.Dispose(); } catch { }
 
-        // 关闭采集后清空本地待传数据：不给用户留下"关了还在攒"的疑虑
+        if (!discardPending) return; // 正常退出保留离线批次，下次启动继续上传
+
+        // 用户关闭采集时才清空本地待传数据
         try
         {
             var spool = Path.Combine(ConfigManager.GetDataDir(), "Telemetry", "spool");
@@ -472,18 +482,4 @@ public static class TelemetryService
         }
     }
 
-    /// <summary>从连接字符串中取指定键的值（纯函数，可单测）。</summary>
-    internal static string? ParseConnectionStringValue(string connectionString, string key)
-    {
-        if (string.IsNullOrWhiteSpace(connectionString)) return null;
-
-        foreach (var segment in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var separator = segment.IndexOf('=');
-            if (separator <= 0) continue;
-            if (segment.AsSpan(0, separator).Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
-                return segment[(separator + 1)..].Trim();
-        }
-        return null;
-    }
 }

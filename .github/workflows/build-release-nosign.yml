@@ -32,6 +32,7 @@ permissions:
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
   DOTNET_NOLOGO: '1'
+  AxiomIngestToken: ${{ secrets.AXIOM_INGEST_TOKEN }}
 
 jobs:
   build-tools:

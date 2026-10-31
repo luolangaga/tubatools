@@ -258,7 +258,7 @@ public sealed partial class NewbieTutorialPage : Page
             // 强制独立窗口：页面型工具在新窗口打开，不占用主界面
             using var scope = BuiltinToolWindow.ForceWindowScope();
             MainWindow.ActiveToolName = tool.Name;
-            await tool.ExecuteAsync(new BuiltinToolContext { XamlRoot = XamlRoot });
+            await tool.ExecuteTrackedAsync(new BuiltinToolContext { XamlRoot = XamlRoot });
         }
         catch (Exception ex)
         {

@@ -109,10 +109,10 @@
                                 <TextBlock x:Name="ToggleWhitelistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveWhitelist_Click" x:Name="SaveWhitelistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="8"><fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreWhitelist_Click" ToolTipService.ToolTip="还原为默认白名单">
-                                <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="12" />
                             </Button>
                         </Grid>
                         <TextBox x:Name="WhitelistEditor"
@@ -146,10 +146,10 @@
                                 <TextBlock x:Name="ToggleBlacklistEditText" Text="编辑" />
                             </Button>
                             <Button Grid.Column="2" Click="SaveBlacklist_Click" x:Name="SaveBlacklistButton" Visibility="Collapsed">
-                                <StackPanel Orientation="Horizontal" Spacing="8"><fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74E;" FontSize="12" /><TextBlock Text="保存" /></StackPanel>
                             </Button>
                             <Button Grid.Column="3" Click="RestoreBlacklist_Click" ToolTipService.ToolTip="还原为默认黑名单">
-                                <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="12" />
                             </Button>
                         </Grid>
                         <TextBox x:Name="BlacklistEditor"

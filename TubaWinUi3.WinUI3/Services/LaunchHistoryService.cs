@@ -20,6 +20,7 @@ public class LaunchRecord
 
 public static class LaunchHistoryService
 {
+    public static event Action? HistoryChanged;
     private const int MaxEntries = 100;
 
     /// <summary>「常用」页面顶部常用推荐区块的显示开关（设置页 - 常规 可重新开启）。</summary>
@@ -126,12 +127,14 @@ public static class LaunchHistoryService
 
         _cache = records;
         Save(records);
+        HistoryChanged?.Invoke();
     }
 
     public static void Clear()
     {
         _cache = [];
         Save([]);
+        HistoryChanged?.Invoke();
     }
 
     public static void InvalidateCache()

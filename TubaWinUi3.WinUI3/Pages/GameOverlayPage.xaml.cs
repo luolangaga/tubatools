@@ -53,6 +53,7 @@ public sealed partial class GameOverlayPage : Page
     private readonly List<string> _customWindowTitles = new();
     private IntPtr _targetHwnd;
     private bool _isDesktopTarget;
+    private string? _lastSensorError;
     private bool _samplingInFlight;
     private double _scalePercent = 100;
     private bool _isDragging;
@@ -1533,6 +1534,13 @@ public sealed partial class GameOverlayPage : Page
         }
     }
 
+    private void RetrySensors_Click(object sender, RoutedEventArgs e)
+    {
+        LiteMonitorService.ReinitLhm();
+        SensorStatus.IsOpen = false;
+        _lastSensorError = null;
+    }
+
     private async void OnPollTick(object? sender, object e)
     {
         // 采样（LHM 全硬件树 + WMI + FPS 统计）可能超过 1s：首次 LHM 初始化可阻塞数秒、
@@ -1545,6 +1553,12 @@ public sealed partial class GameOverlayPage : Page
             var sample = await Task.Run(() => LiteMonitorService.Instance.Read(fpsEnabled: true));
             if (!_overlayRunning) return; // 覆盖层已停止，丢弃迟到的采样
             GameOverlayWindow.Instance?.UpdateData(sample);
+            if (_lastSensorError != sample.SensorError)
+            {
+                _lastSensorError = sample.SensorError;
+                SensorStatus.Message = sample.SensorError ?? "";
+                SensorStatus.IsOpen = sample.SensorError is not null;
+            }
             // 记录中：复用这次采样，不额外增加硬件读取开销
             if (_recording) AppendRecordSample(sample);
         }

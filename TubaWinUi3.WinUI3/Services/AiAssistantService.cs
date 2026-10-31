@@ -833,7 +833,7 @@ public sealed partial class AiAssistantService
 
                 using var scope = BuiltinToolWindow.ForceWindowScope();
                 MainWindow.ActiveToolName = builtin.Name;
-                await builtin.ExecuteAsync(new BuiltinToolContext { XamlRoot = xamlRoot });
+                await builtin.ExecuteTrackedAsync(new BuiltinToolContext { XamlRoot = xamlRoot });
             }
             catch (Exception ex)
             {

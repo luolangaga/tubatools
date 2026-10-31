@@ -99,7 +99,7 @@
                         VerticalAlignment="Center"
                         Click="CopyPathButton_Click"
                         ToolTipService.ToolTip="复制路径">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8C8;" />
                     </Button>
                     <Button
                         x:Name="OpenDirButton"
@@ -108,7 +108,7 @@
                         VerticalAlignment="Center"
                         Click="OpenDirButton_Click"
                         ToolTipService.ToolTip="打开文件夹">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8A7;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8A7;" />
                     </Button>
                 </Grid>
             </Border>
@@ -126,13 +126,13 @@
             <StackPanel Spacing="8" HorizontalAlignment="Stretch">
                 <Button x:Name="ExportButton" Click="ExportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE896;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE896;" />
                         <TextBlock Text="导出配置" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="ImportButton" Click="ImportButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8E5;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8E5;" />
                         <TextBlock Text="导入配置" />
                     </StackPanel>
                 </Button>

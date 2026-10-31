@@ -267,7 +267,7 @@
                             Padding="16,8"
                             Click="DetailButton_Click">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <fluentIcons:FluentColorIcon FontSize="16" Glyph="&#xE946;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE946;" />
                                 <TextBlock FontSize="14" Text="详细信息" l:Uids.Uid="Hw_DetailButton" />
                             </StackPanel>
                         </Button>

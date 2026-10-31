@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -12,8 +13,6 @@ namespace TubaWinUi3.Services;
 /// </summary>
 public static class HardwareIconService
 {
-    private const string UriPrefix = "ms-appx:///Assets/HwIcons/";
-
     private static readonly ConcurrentDictionary<string, ImageSource?> Cache = new(StringComparer.OrdinalIgnoreCase);
 
     internal static string KeyForLabel(string label) => label switch
@@ -62,15 +61,37 @@ public static class HardwareIconService
 
     private static ImageSource? Create(string key)
     {
-        if (ResolveSvgPath(key) is null) return null;
+        if (ResolveSvgPath(key) is not { } path) return null;
         try
         {
-            return new SvgImageSource(new Uri(UriPrefix + key + ".svg"));
+            // 从实际分发的文件加载，避免非打包运行时的 PRI/包资源 URI 解析失败。
+            var source = new SvgImageSource();
+            _ = LoadAsync(source, path, key);
+            return source;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[HardwareIcon] {key} 加载失败：{ex.Message}");
             return null;
+        }
+    }
+
+    private static async Task LoadAsync(SvgImageSource source, string path, string key)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            var status = await source.SetSourceAsync(stream.AsRandomAccessStream());
+            if (status != SvgImageSourceLoadStatus.Success)
+            {
+                Cache.TryRemove(key, out _);
+                Debug.WriteLine($"[HardwareIcon] {key} SVG 解码失败：{status}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Cache.TryRemove(key, out _);
+            Debug.WriteLine($"[HardwareIcon] {key} 加载失败：{ex.Message}");
         }
     }
 

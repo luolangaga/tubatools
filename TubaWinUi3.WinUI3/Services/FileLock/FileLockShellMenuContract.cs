@@ -194,7 +194,7 @@ internal static class FileLockShellMenuContract
     public static string BuildElevatedRelaunchScript(string targetExe, string localStateRoot, IReadOnlyList<string> arguments)
     {
         var builder = new StringBuilder();
-        builder.Append("$env:").Append(LocalStateEnvVar).Append("='").Append(Escape(localStateRoot)).Append("';");
+        builder.Append("$ErrorActionPreference='Stop';$env:").Append(LocalStateEnvVar).Append("='").Append(Escape(localStateRoot)).Append("';");
         builder.Append(" Start-Process -FilePath '").Append(Escape(targetExe)).Append("' -Verb RunAs");
         if (arguments.Count > 0)
         {

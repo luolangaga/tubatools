@@ -51,7 +51,7 @@
                     </ComboBox>
                     <Button x:Name="RefreshBtn" Grid.Column="2" VerticalAlignment="Bottom" Click="RefreshBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="12" />
                             <TextBlock Text="刷新" l:Uids.Uid="PortViewer_Refresh" />
                         </StackPanel>
                     </Button>

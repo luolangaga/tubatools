@@ -50,13 +50,13 @@
             <controls:ToolPageHeader.Actions>
                 <ToggleButton x:Name="LiveToggle" IsChecked="True" Padding="12,5" MinHeight="32" VerticalAlignment="Center" Checked="LiveToggle_Toggled" Unchecked="LiveToggle_Toggled">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="实时" l:Uids.Uid="LogViewer_Live" />
                     </StackPanel>
                 </ToggleButton>
                 <Button Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="刷新" l:Uids.Uid="LogViewer_Refresh" />
                     </StackPanel>
                 </Button>
@@ -68,7 +68,7 @@
                 </Button>
                 <Button Click="CopyButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8C8;" />
                         <TextBlock Text="复制" l:Uids.Uid="LogViewer_Copy" />
                     </StackPanel>
                 </Button>

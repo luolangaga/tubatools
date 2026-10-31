@@ -57,7 +57,7 @@
                             <TextBlock x:Name="ScheduleSummaryText" FontSize="12" Text="" VerticalAlignment="Center" TextWrapping="Wrap"/>
                             <Button x:Name="ResetBtn" Grid.Column="1" Click="ResetBtn_Click" CornerRadius="4" Padding="10,6" FontSize="14">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12"/>
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="12"/>
                                     <TextBlock Text="恢复默认"/>
                                 </StackPanel>
                             </Button>

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using TubaWinUi3.Models;
@@ -533,19 +533,13 @@ public static class ToolCatalog
         var allTools = GetAllToolsCached();
 
         return allTools
-            .Where(item =>
-            {
-                var matchesQuery = normalizedQuery.Length == 0 ||
-                    item.Name.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase) ||
-                    item.RelativePath.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase) ||
-                    (item.Tags?.Any(t => t.Contains(normalizedQuery, StringComparison.CurrentCultureIgnoreCase)) ?? false);
-
-                var matchesTag = string.IsNullOrEmpty(tag) ||
-                    (item.Tags?.Any(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false);
-
-                return matchesQuery && matchesTag;
-            })
-            .ToList();
+            .Where(item => string.IsNullOrEmpty(tag) ||
+                (item.Tags?.Any(t => t.Equals(tag, StringComparison.CurrentCultureIgnoreCase)) ?? false))
+            .Select(item => (Item: item, Score: ToolSearchMatcher.Score(normalizedQuery, item.Name,
+                new[] { item.Description, item.RelativePath }.Concat(item.Tags ?? []))))
+            .Where(hit => normalizedQuery.Length == 0 || hit.Score > 0)
+            .OrderByDescending(hit => hit.Score)
+            .Select(hit => hit.Item).ToList();
     }
 
     private static ToolItem CreateToolItemWithVariants(string category, string categoryRoot, string path, string toolDir,

@@ -113,7 +113,7 @@
                                 SelectionChanged="ModelCombo_SelectionChanged" />
                             <Button x:Name="ReloadModelButton" Click="ReloadModelButton_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <fluentIcons:FluentColorIcon FontSize="13" Glyph="&#xE72C;" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="13" Glyph="&#xE72C;" />
                                     <TextBlock x:Name="ReloadModelText" Text="重新加载" />
                                 </StackPanel>
                             </Button>
@@ -149,7 +149,7 @@
                                         SelectionChanged="SessionCombo_SelectionChanged" />
                                     <Button x:Name="NewSessionButton" Click="NewSessionButton_Click">
                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <fluentIcons:FluentColorIcon FontSize="13" Glyph="&#xE710;" />
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="13" Glyph="&#xE710;" />
                                             <TextBlock x:Name="NewSessionText" Text="新建对话" />
                                         </StackPanel>
                                     </Button>
@@ -237,7 +237,7 @@
                                                 </ComboBox>
                                                 <Button x:Name="PickWindowButton" Click="PickWindowButton_Click" Visibility="Collapsed">
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE8A7;" />
+                                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE8A7;" />
                                                         <TextBlock x:Name="PickWindowText" Text="选择窗口" />
                                                     </StackPanel>
                                                 </Button>
@@ -300,7 +300,7 @@
                                             </Button>
                                             <Button x:Name="DrawRulesButton" Click="DrawRulesButton_Click">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <fluentIcons:FluentColorIcon FontSize="13" Glyph="&#xE790;" />
+                                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="13" Glyph="&#xE790;" />
                                                     <TextBlock x:Name="DrawRulesText" Text="绘制规则" />
                                                 </StackPanel>
                                             </Button>
@@ -366,7 +366,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button x:Name="InstallAllButton" Click="InstallAllButton_Click">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <fluentIcons:FluentColorIcon FontSize="14" Glyph="&#xE896;" />
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="14" Glyph="&#xE896;" />
                                         <TextBlock x:Name="InstallAllText" Text="一键下载并注册推荐加速包" />
                                     </StackPanel>
                                 </Button>

@@ -63,13 +63,16 @@ public sealed partial class StressTestControl
         monitor.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         _inspectionMonitorHint = (TextBlock)Microsoft.UI.Xaml.Markup.XamlReader.Load(
             "<TextBlock xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' FontSize='12' TextWrapping='Wrap' Foreground='{ThemeResource TextFillColorSecondaryBrush}' />");
-        _inspectionMonitorHint.Text = "开始烤机时自动打开 HWiNFO。请在其“传感器 / Sensors”窗口查看温度、功耗和频率；本页读数仅供参考。";
+        _inspectionMonitorHint.Text = "内置传感器可能存在读数错误或不支持部分设备，建议打开 HWMonitor 查看温度、功耗和频率；开始烤机时仍会自动打开 HWiNFO。";
         monitor.Children.Add(_inspectionMonitorHint);
         _inspectionMonitorButton = new Button { Content = "打开 HWiNFO", VerticalAlignment = VerticalAlignment.Top };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(_inspectionMonitorButton, "InspectionOpenHwInfo");
         _inspectionMonitorButton.Click += async (_, _) => await OpenInspectionHwInfoAsync();
         Grid.SetColumn(_inspectionMonitorButton, 1); monitor.Children.Add(_inspectionMonitorButton);
         Grid.SetRow(monitor, 2); root.Children.Add(monitor);
+        var hwButton = new Button { Content = "打开 HWMonitor" };
+        hwButton.Click += OpenHwMonitor_Click;
+        commands.Children.Add(hwButton);
         var metrics = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         for (var i = 0; i < 4; i++) metrics.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         metrics.ColumnDefinitions.Add(new ColumnDefinition()); metrics.ColumnDefinitions.Add(new ColumnDefinition());
@@ -140,6 +143,27 @@ public sealed partial class StressTestControl
             _openingInspectionHwInfo = false;
             if (_inspectionMonitorButton is { } button) button.IsEnabled = true;
         }
+    }
+
+    private async void OpenHwMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+        if (button != null) button.IsEnabled = false;
+        try
+        {
+            var tools = await ToolCatalog.GetAllToolsAsync();
+            var tool = tools.FirstOrDefault(t => !t.IsBuiltinLink &&
+                Path.GetFileNameWithoutExtension(t.EffectivePath).StartsWith("HWMonitor", StringComparison.OrdinalIgnoreCase));
+            if (tool == null || !File.Exists(tool.EffectivePath))
+                throw new FileNotFoundException("未找到 HWMonitor，请先在工具箱中下载该工具。");
+            ToolProcessLauncher.Launch(tool.EffectivePath, tool.EffectiveWorkingDir);
+        }
+        catch (Exception ex)
+        {
+            var dialog = new ContentDialog { XamlRoot = XamlRoot, Title = "无法打开 HWMonitor", Content = ex.Message, CloseButtonText = "知道了" };
+            await dialog.ShowAsync();
+        }
+        finally { if (button != null) button.IsEnabled = true; }
     }
 
     private void Detach(FrameworkElement element)

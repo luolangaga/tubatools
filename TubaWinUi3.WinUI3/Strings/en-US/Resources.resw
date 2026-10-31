@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -5326,4 +5326,12 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>Rogue cleaner</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>View logs</value></data>
+  <data name="Builtin_steam-toolbox_Name" xml:space="preserve"><value>Steam Toolbox</value></data>
+  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Local Steam accounts, game libraries, built-in idling and website acceleration</value></data>
+  <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>Sponsor</value></data>
+  <data name="Settings_SponsorTitle.Text" xml:space="preserve"><value>Sponsor</value></data>
+  <data name="Settings_SponsorDisclaimer.Text" xml:space="preserve"><value>This software is not affiliated with “图吧工具箱” (Tuba Toolbox). We are Tuba Toolbox CE.</value></data>
+  <data name="Settings_SponsorThanks.Text" xml:space="preserve"><value>Thank you for supporting the development and maintenance of Tuba Toolbox CE. Scan a code below to make a voluntary donation.</value></data>
+  <data name="Settings_SponsorWeChat.Text" xml:space="preserve"><value>WeChat Appreciation</value></data>
+  <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>Alipay</value></data>
 </root>

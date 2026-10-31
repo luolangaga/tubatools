@@ -394,7 +394,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         try
         {
             MainWindow.ActiveToolName = vm.Name;
-            await vm.Tool.ExecuteAsync(context);
+            await vm.Tool.ExecuteTrackedAsync(context);
             StatusBar.IsOpen = false;
         }
         catch (OperationCanceledException)

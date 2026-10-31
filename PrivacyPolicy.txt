@@ -1,7 +1,7 @@
 隐私政策 / Privacy Policy
 
-图吧工具箱CE  —  最后更新：2026年9月
-Tuba Toolbox CE  —  Last updated: September 2026
+图吧工具箱CE  —  最后更新：2026年10月31日
+Tuba Toolbox CE  —  Last updated: October 31, 2026
 
 =======================================
 一、数据收集 / Data Collection
@@ -33,8 +33,8 @@ To count active users, diagnose crashes and improve the app, the app sends anony
 - 用于广告、用户画像或任何商业营销的数据
   Data used for advertising, profiling or any commercial marketing
 
-数据发送至 Microsoft Azure Application Insights（东亚·日本东部区域）。除该服务作为托管方外，我们不会将上述数据出售或分享给任何第三方。与所有网络服务一样，接收服务器可能在服务运维日志中记录来源 IP 地址。
-Data is sent to Microsoft Azure Application Insights (East Asia · Japan East). Apart from this service as the hosting provider, we do not sell or share this data with any third party. As with any network service, the receiving server may log source IP addresses for operational purposes.
+数据发送至 Axiom（美国东部区域）。除该服务作为托管方外，我们不会将上述数据出售或分享给任何第三方。与所有网络服务一样，接收服务器可能在服务运维日志中记录来源 IP 地址。
+Data is sent to Axiom (US East region). Apart from this service as the hosting provider, we do not sell or share this data with any third party. As with any network service, the receiving server may log source IP addresses for operational purposes.
 
 =======================================
 二、关闭数据发送 / Turning Data Collection Off
@@ -55,8 +55,8 @@ Because the collected data contains no identifiable information, we cannot trace
 三、数据保留 / Data Retention
 =======================================
 
-匿名遥测数据遵循 Azure Application Insights 的默认保留策略（当前为 30 天），到期后自动删除。
-Anonymous telemetry follows the default retention policy of Azure Application Insights (currently 30 days), after which it is deleted automatically.
+匿名遥测数据在 Axiom 中保留 30 天，到期后由服务自动清理。
+Anonymous telemetry is retained in Axiom for 30 days and is then automatically cleaned up by the service.
 
 =======================================
 四、本地数据存储 / Local Data Storage

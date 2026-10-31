@@ -1,4 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="Properties\Telemetry.local.props" Condition="Exists('Properties\Telemetry.local.props')" />
+  <Target Name="ValidateAxiomTelemetryForPublish" BeforeTargets="PrepareForPublish" Condition="'$(AxiomIngestToken)' == ''">
+    <Error Text="发布前必须配置 AxiomIngestToken（本地 Properties/Telemetry.local.props 或 CI 的 AXIOM_INGEST_TOKEN secret）。" />
+  </Target>
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -38,6 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="TubaWinUi3.Tests" />
+    <AssemblyMetadata Include="AxiomIngestToken" Value="$(AxiomIngestToken)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -167,6 +172,9 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="Downloader" Version="5.9.6" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+    <PackageReference Include="SteamKit2" Version="3.5.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     <ProjectReference Include="..\third_party\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj" AdditionalProperties="GeneratePackageOnBuild=false" />
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WinUI" Version="2.0.4" />
 

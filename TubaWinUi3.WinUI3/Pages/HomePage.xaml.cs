@@ -39,16 +39,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
 
     // 编辑排序模式（与收藏页同模式）：专用纵向列表 + 整行自实现拖拽
     private bool _isEditing;
-    private const double EditRowHeight = 64;
-    private const double EditRowSpacing = 8;
-    private static double EditRowStride => EditRowHeight + EditRowSpacing;
-    private Border? _dragRow;
-    private uint _dragPointerId;
-    private double _dragStartY; // 按下时指针相对 EditRowsPanel 的 Y
-    private int _dragStartIndex;
-    private int _dragCurrentIndex;
-    private bool _dragging;
-    private TranslateTransform? _dragTranslate;
+
 
     public HomePage()
     {
@@ -478,6 +469,12 @@ public sealed partial class HomePage : Page, ILocalizablePage
             }
         }
         catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            if (cts.IsCancellationRequested) return;
+            LogService.Warn(LogService.App, $"Tool list load failed: {ex.GetType().Name}");
+            ShowStatus("工具列表加载失败", "请检查工具目录是否可访问，然后切换分类重试。原有列表已保留。", InfoBarSeverity.Error);
+        }
     }
 
     /// <summary>
@@ -558,9 +555,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         TagBarArea.Visibility = Visibility.Collapsed;
         EmptyState.Visibility = Visibility.Collapsed;
 
-        EditRowsPanel.Children.Clear();
-        foreach (var tool in _tools)
-            EditRowsPanel.Children.Add(CreateEditRow(tool));
+        EditRowsList.ItemsSource = _tools;
         EditModeScroll.Visibility = Visibility.Visible;
     }
 
@@ -568,7 +563,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
     {
         if (!_isEditing) return;
         _isEditing = false;
-        FinishDrag(); // 拖动到一半退出时归位
+        EditRowsList.ItemsSource = null;
         EditOrderIcon.Glyph = "\uE70F"; // Edit:编辑排序
         EditOrderButtonText.Text = LocalizationService.L("HomePage_EditOrderButtonText", "编辑排序");
         EditModeScroll.Visibility = Visibility.Collapsed;
@@ -584,151 +579,25 @@ public sealed partial class HomePage : Page, ILocalizablePage
         UpdateDragReorderState();
     }
 
-    private Border CreateEditRow(ToolItem tool)
+    private void EditRowsList_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
     {
-        var row = new Border
-        {
-            Height = EditRowHeight,
-            Padding = new Thickness(12, 0, 12, 0),
-            Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-            BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Tag = tool
-        };
-        row.PointerPressed += EditRow_PointerPressed;
-        row.PointerMoved += EditRow_PointerMoved;
-        row.PointerReleased += EditRow_PointerReleased;
-        row.PointerCaptureLost += EditRow_PointerCaptureLost;
-
-        var grid = new Grid { ColumnSpacing = 12 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-        // 拖动手柄
-        grid.Children.Add(new FontIcon
-        {
-            Glyph = "\uE700",
-            FontSize = 16,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Opacity = 0.8
-        });
-
-        // 图标(与卡片相同的双元素绑定)
-        var iconGrid = new Grid
-        {
-            Width = 36,
-            Height = 36,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        var presenter = new TubaWinUi3.Controls.ToolIconPresenter { Width = 28, Height = 28, GlyphSize = 20 };
-        foreach (var (property, name) in new[] {
-            (TubaWinUi3.Controls.ToolIconPresenter.IconPathProperty, nameof(ToolItem.IconPath)),
-            (TubaWinUi3.Controls.ToolIconPresenter.IconSourceProperty, nameof(ToolItem.IconSource)),
-            (TubaWinUi3.Controls.ToolIconPresenter.GlyphProperty, nameof(ToolItem.IconGlyph)) })
-            presenter.SetBinding(property, new Microsoft.UI.Xaml.Data.Binding {
-                Path = new PropertyPath(name), Source = tool, Mode = Microsoft.UI.Xaml.Data.BindingMode.OneWay });
-        iconGrid.Children.Add(presenter);
-        Grid.SetColumn(iconGrid, 1);
-        grid.Children.Add(iconGrid);
-
-        // 名称 + 描述/分类
-        var textStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 2 };
-        textStack.Children.Add(new TextBlock
-        {
-            Text = tool.Name,
-            FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        textStack.Children.Add(new TextBlock
-        {
-            Text = string.IsNullOrWhiteSpace(tool.Description) ? tool.CategoryDisplay : tool.Description,
-            FontSize = 12,
-            Opacity = 0.7,
-            TextTrimming = TextTrimming.CharacterEllipsis
-        });
-        Grid.SetColumn(textStack, 2);
-        grid.Children.Add(textStack);
-
-        row.Child = grid;
-        return row;
+        if (_isEditing && _category is not null) PersistToolOrder(_category);
     }
 
-    private void EditRow_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private void EditRowsList_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (_dragging || sender is not Border row) return;
-        _dragRow = row;
-        _dragPointerId = e.Pointer.PointerId;
-        _dragStartY = e.GetCurrentPoint(EditRowsPanel).Position.Y;
-        _dragStartIndex = EditRowsPanel.Children.IndexOf(row);
-        _dragCurrentIndex = _dragStartIndex;
-        _dragging = false;
-        row.CapturePointer(e.Pointer);
-    }
-
-    private void EditRow_PointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        if (_dragRow is null || e.Pointer.PointerId != _dragPointerId) return;
-
-        // 移动超过阈值才开始拖动,避免把普通点击当成拖动
-        var deltaY = e.GetCurrentPoint(EditRowsPanel).Position.Y - _dragStartY;
-        if (!_dragging)
-        {
-            if (Math.Abs(deltaY) < 6) return;
-            _dragging = true;
-            _dragTranslate = new TranslateTransform();
-            _dragRow.RenderTransform = _dragTranslate;
-            _dragRow.Opacity = 0.75;
-        }
-
-        // 限制拖动范围,行不会飞出列表
-        var minDelta = -_dragStartIndex * EditRowStride;
-        var maxDelta = (EditRowsPanel.Children.Count - 1 - _dragStartIndex) * EditRowStride;
-        var clampedDelta = Math.Clamp(deltaY, minDelta, maxDelta);
-
-        // 目标索引变化时实时重排行与数据源
-        var target = _dragStartIndex + (int)Math.Round(clampedDelta / EditRowStride);
-        if (target != _dragCurrentIndex)
-        {
-            EditRowsPanel.Children.Move((uint)_dragCurrentIndex, (uint)target);
-            _tools.Move(_dragCurrentIndex, target);
-            _dragCurrentIndex = target;
-        }
-
-        // 被拖行始终跟随指针:抵消重排带来的布局位移
-        _dragTranslate!.Y = clampedDelta - (_dragCurrentIndex - _dragStartIndex) * EditRowStride;
-    }
-
-    private void EditRow_PointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        if (e.Pointer.PointerId == _dragPointerId)
-            FinishDrag();
-    }
-
-    private void EditRow_PointerCaptureLost(object sender, PointerRoutedEventArgs e)
-    {
-        if (e.Pointer.PointerId == _dragPointerId)
-            FinishDrag();
-    }
-
-    private void FinishDrag()
-    {
-        if (_dragRow is null) return;
-        if (_dragging)
-        {
-            _dragRow.RenderTransform = null;
-            _dragRow.Opacity = 1.0;
-            // 顺序已实时同步到 _tools,立即落盘
-            if (_category is not null && _searchQuery.Length == 0 && _selectedTag is null)
-                PersistToolOrder(_category);
-        }
-        _dragRow = null;
-        _dragTranslate = null;
-        _dragging = false;
+        var alt = (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu)
+            & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
+        if (!alt || e.Key is not (Windows.System.VirtualKey.Up or Windows.System.VirtualKey.Down)) return;
+        var from = EditRowsList.SelectedIndex;
+        var to = from + (e.Key == Windows.System.VirtualKey.Up ? -1 : 1);
+        if (from < 0 || to < 0 || to >= _tools.Count) return;
+        var item = _tools[from];
+        _tools.Move(from, to);
+        EditRowsList.SelectedItem = item;
+        EditRowsList.ScrollIntoView(item);
+        if (_category is not null) PersistToolOrder(_category);
+        e.Handled = true;
     }
 
     private void StartHighlight(string toolPath)
@@ -1274,209 +1143,8 @@ public sealed partial class HomePage : Page, ILocalizablePage
         ToolDetailTip.IsOpen = true;
     }
 
-    internal void LaunchTool(ToolItem tool, bool runAsAdmin)
-    {
-        if (tool.IsBuiltinLink)
-        {
-            _ = LaunchBuiltinToolAsync(tool);
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(tool.RemoteUrl))
-        {
-            Pages.BrowserPage.Open(tool.RemoteUrl, tool.Name);
-            LaunchHistoryService.RecordLaunch(tool.Path);
-            ShowStatus(LocalizationService.L("Common_Opened", "已打开"), tool.Name, InfoBarSeverity.Success);
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(tool.DownloadUrl) && !File.Exists(tool.EffectivePath))
-        {
-            _ = ShowDownloadDialogAsync(tool);
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(tool.WingetId) && !File.Exists(tool.EffectivePath))
-        {
-            _ = HandleWingetToolAsync(tool);
-            return;
-        }
-
-        var exePath = tool.EffectivePath;
-        if (!File.Exists(exePath))
-        {
-            ShowStatus(
-                LocalizationService.L("Common_LaunchFailed", "启动失败"),
-                string.Format(LocalizationService.L("HomePage_LaunchFileMissing", "找不到文件：{0}"), exePath),
-                InfoBarSeverity.Error);
-            return;
-        }
-
-        var ext = Path.GetExtension(exePath);
-        if (ext.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
-            ext.Equals(".cmd", StringComparison.OrdinalIgnoreCase) ||
-            ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase))
-        {
-            var command = ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase)
-                ? $"powershell -ExecutionPolicy Bypass -Command \"& '{exePath}'\""
-                : $"cmd.exe /c \"{exePath}\"";
-            ScriptRunnerWindow.ShowAndRun(command, tool.EffectiveWorkingDir, string.Format(LocalizationService.L("HomePage_InstallScriptTitle", "安装 {0}"), tool.Name));
-            LaunchHistoryService.RecordLaunch(tool.Path);
-            ShowStatus(LocalizationService.L("Common_Launched", "已启动"), tool.Name, InfoBarSeverity.Success);
-            return;
-        }
-
-        try
-        {
-            ToolProcessLauncher.Launch(exePath, tool.EffectiveWorkingDir, runAsAdmin);
-
-            LaunchHistoryService.RecordLaunch(tool.Path);
-            ShowStatus(
-                runAsAdmin
-                    ? LocalizationService.L("Common_LaunchedAsAdmin", "已以管理员身份启动")
-                    : LocalizationService.L("Common_Launched", "已启动"),
-                tool.Name,
-                InfoBarSeverity.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(LocalizationService.L("Common_LaunchFailed", "启动失败"), ex.Message, InfoBarSeverity.Error);
-        }
-    }
-
-    private async Task LaunchBuiltinToolAsync(ToolItem tool)
-    {
-        var builtinTool = BuiltinToolRegistry.GetById(tool.BuiltinToolId!);
-        if (builtinTool is null)
-        {
-            ShowStatus(
-                LocalizationService.L("Common_LaunchFailed", "启动失败"),
-                LocalizationService.L("HomePage_BuiltinNotFound", "找不到对应的内置工具"),
-                InfoBarSeverity.Error);
-            return;
-        }
-
-        try
-        {
-            var context = new BuiltinToolContext
-            {
-                XamlRoot = XamlRoot,
-                OnProgress = msg => DispatcherQueue.TryEnqueue(() =>
-                    ShowStatus(builtinTool.Name, msg, InfoBarSeverity.Informational))
-            };
-            MainWindow.ActiveToolName = builtinTool.Name;
-            await builtinTool.ExecuteAsync(context);
-            LaunchHistoryService.RecordLaunch(tool.Path);
-            ShowStatus(LocalizationService.L("Common_Launched", "已启动"), tool.Name, InfoBarSeverity.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(LocalizationService.L("Common_LaunchFailed", "启动失败"), ex.Message, InfoBarSeverity.Error);
-        }
-        finally
-        {
-            MainWindow.ActiveToolName = null;
-        }
-    }
-
-    private async Task HandleWingetToolAsync(ToolItem tool)
-    {
-        if (tool.IsWingetInstalling) return;
-
-        if (!tool.IsWingetInstalled)
-        {
-            var installed = await WingetService.IsInstalledAsync(tool.WingetId!);
-            if (installed)
-            {
-                tool.IsWingetInstalled = true;
-                LaunchInstalledWingetTool(tool);
-                return;
-            }
-
-            tool.IsWingetInstalling = true;
-            ShowStatus(
-                LocalizationService.L("Common_InstallingTitle", "正在安装"),
-                string.Format(LocalizationService.L("HomePage_WingetInstallingMessage", "正在通过 winget 安装「{0}」..."), tool.Name),
-                InfoBarSeverity.Informational);
-
-            var progress = new Progress<WingetInstallProgress>(p =>
-            {
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    tool.WingetInstallStatus = p.StatusLine;
-                    if (p.Percent > 0) tool.WingetInstallProgress = p.Percent;
-                });
-            });
-
-            var result = await WingetService.InstallAsync(tool.WingetId!, progress);
-            tool.IsWingetInstalling = false;
-
-            if (result.Success)
-            {
-                tool.IsWingetInstalled = true;
-                ShowStatus(
-                    LocalizationService.L("Common_InstallDone", "安装完成"),
-                    string.Format(LocalizationService.L("HomePage_WingetInstalledMessage", "「{0}」安装成功，点击打开即可使用。"), tool.Name),
-                    InfoBarSeverity.Success);
-            }
-            else
-            {
-                ShowStatus(LocalizationService.L("Common_InstallFailed", "安装失败"), result.Message, InfoBarSeverity.Error);
-            }
-            return;
-        }
-
-        LaunchInstalledWingetTool(tool);
-    }
-
-    private void LaunchInstalledWingetTool(ToolItem tool)
-    {
-        var exePath = WingetService.FindInstalledExePath(tool.WingetId!);
-        if (exePath is not null && File.Exists(exePath))
-        {
-            try
-            {
-                ToolProcessLauncher.Launch(exePath, Path.GetDirectoryName(exePath));
-                ShowStatus(LocalizationService.L("Common_Launched", "已启动"), tool.Name, InfoBarSeverity.Success);
-            }
-            catch (Exception ex)
-            {
-                ShowStatus(LocalizationService.L("Common_LaunchFailed", "启动失败"), ex.Message, InfoBarSeverity.Error);
-            }
-            return;
-        }
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c start \"\" winget run --id {tool.WingetId} --accept-source-agreements",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            });
-            ShowStatus(LocalizationService.L("Common_Launched", "已启动"), tool.Name, InfoBarSeverity.Success);
-        }
-        catch (Exception ex)
-        {
-            ShowStatus(LocalizationService.L("Common_LaunchFailed", "启动失败"), ex.Message, InfoBarSeverity.Error);
-        }
-    }
-
-    private async Task ShowDownloadDialogAsync(ToolItem tool)
-    {
-        var toolDir = Path.GetDirectoryName(tool.Path) ?? Path.Combine(ToolCatalog.ToolsRoot, tool.Category, tool.Folder);
-        Directory.CreateDirectory(toolDir);
-
-        var dialog = new ToolDownloadDialog(
-            tool.Name,
-            tool.Description ?? "",
-            tool.DownloadUrl!,
-            tool.DownloadFilter,
-            toolDir);
-
-        await dialog.ShowAsync();
-    }
+    internal void LaunchTool(ToolItem tool, bool runAsAdmin) =>
+        _ = CatalogToolLauncher.LaunchAsync(tool, DispatcherQueue, () => XamlRoot, ShowStatus, runAsAdmin);
 
     private DispatcherTimer? _statusBarTimer;
 

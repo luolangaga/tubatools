@@ -50,7 +50,7 @@
                 </Grid.RowDefinitions>
                 <ComboBox x:Name="AdapterCombo" HorizontalAlignment="Stretch" SelectionChanged="AdapterCombo_SelectionChanged" AutomationProperties.Name="监控网卡" AutomationProperties.AutomationId="TrafficAdapter" PlaceholderText="选择监控网卡" />
                 <Button Grid.Column="1" x:Name="RefreshAdaptersBtn" Click="RefreshAdapters_Click" Padding="9" ToolTipService.ToolTip="刷新网卡列表" AutomationProperties.Name="刷新网卡" AutomationProperties.AutomationId="TrafficRefresh">
-                    <fluentIcons:FluentColorIcon Glyph="" FontSize="14" />
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="" FontSize="14" />
                 </Button>
                 <Button Grid.Column="2" x:Name="PauseButton" Content="暂停显示" Click="Pause_Click" ToolTipService.ToolTip="冻结当前画面，后台采集与记录继续运行" AutomationProperties.AutomationId="TrafficPause" />
                 <DropDownButton Grid.Column="3" Content="导出" AutomationProperties.AutomationId="TrafficExport" ToolTipService.ToolTip="导出为可用 Excel 打开的 CSV 文件">
@@ -63,7 +63,7 @@
                 </DropDownButton>
                 <TextBlock x:Name="AdapterStatusText" Grid.Row="1" Grid.ColumnSpan="5" Text="正在启动监控…" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                 <Button x:Name="MinimizeToTrayButton" Click="MinimizeToTrayButton_Click" ToolTipService.ToolTip="隐藏主窗口并继续后台监控" AutomationProperties.AutomationId="TrafficTray" AutomationProperties.Name="后台监控" Padding="9" Grid.Column="4">
-                    <fluentIcons:FluentColorIcon Glyph="" FontSize="14" />
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="" FontSize="14" />
                 </Button>
             </Grid>
             <toolkit:SettingsExpander x:Name="OverviewSection" Header="流量概览" Description="当前网卡的下载、上传速率与本次累计流量" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Expanded="Section_StateChanged" Collapsed="Section_StateChanged" AutomationProperties.AutomationId="TrafficOverviewSection">
@@ -129,7 +129,7 @@
                                 <TextBlock x:Name="ConnCountText" Grid.Column="0" Text="等待连接…" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" Grid.ColumnSpan="2" />
                                 <Button x:Name="BackLiveBtn" Grid.Column="2" Content="返回实时" Click="BackLive_Click" Visibility="Collapsed" AutomationProperties.AutomationId="TrafficBackLive" />
                                 <Button x:Name="ConnPopOutBtn" Grid.Column="3" Click="ConnPopOut_Click" Style="{StaticResource SubtleButtonStyle}" Padding="8" ToolTipService.ToolTip="独立窗口查看网络活动" AutomationProperties.Name="弹出网络活动" AutomationProperties.AutomationId="TrafficConnectionsPopout">
-                                    <fluentIcons:FluentColorIcon Glyph="" FontSize="14" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="" FontSize="14" />
                                 </Button>
                             </Grid>
                             <Grid Grid.Row="1" x:Name="FiltersGrid" ColumnSpacing="8" RowSpacing="8">
@@ -209,7 +209,7 @@
                                     <ComboBoxItem Content="近 5 分钟" Tag="300" />
                                 </ComboBox>
                                 <Button Grid.Column="2" x:Name="ChartPopOutBtn" Click="ChartPopOut_Click" Padding="8" Style="{StaticResource SubtleButtonStyle}" ToolTipService.ToolTip="独立窗口查看趋势" AutomationProperties.Name="弹出趋势图" AutomationProperties.AutomationId="TrafficChartPopout">
-                                    <fluentIcons:FluentColorIcon Glyph="" FontSize="14" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="" FontSize="14" />
                                 </Button>
                             </Grid>
                             <lvc:CartesianChart x:Name="TrafficChart" Grid.Row="1" Background="Transparent" />

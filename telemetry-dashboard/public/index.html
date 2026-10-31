@@ -281,9 +281,8 @@
       <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>
     </svg>
     <span>
-      数据范围：<b>仅 1.6.5 及之后版本会上报遥测数据</b>，
-      因此「在线设备 / 活跃设备 / 新增设备 / 崩溃趋势 / 报错率 / 版本分布 / 活跃时段」都只统计这些版本，更早的版本不会产生任何数据。
-      「渠道下载量」为全量历史累计，不受版本限制。
+      数据范围：<b>仅统计已开启匿名遥测的设备</b>，活跃与异常数据保留 30 天；各图表按标注的时间范围展示。
+      「渠道下载量」为全量历史累计，不受遥测保留时间限制。
     </span>
   </div>
 
@@ -533,7 +532,7 @@
     renderVersions(panels.versions);
     renderHeatmap(panels.activeHours);
     renderDownloads(panels.downloads, isFull);
-    renderTools(panels.tools, isFull);
+    renderTools(panels.tools, isFull, errors.tools);
     renderErrors(panels.errors, isFull);
 
     var stamp = new Date(data.generatedAt);
@@ -546,8 +545,8 @@
       footer.textContent = '以下面板查询失败：' + failed.join('、') + (isFull ? '（' + errors[failed[0]] + '）' : '');
     } else {
       footer.textContent = isFull
-        ? '数据源：Azure Application Insights · 入库延迟约 1–3 分钟 · 保留 30 天'
-        : '游客视图：仅展示聚合数据 · 输入口令可查看异常详情与工具热度';
+        ? '数据源：Axiom · 软件直接上报 · 保留 30 天'
+        : '数据源：Axiom · 保留 30 天 · 游客仅展示聚合数据';
     }
   }
 
@@ -576,7 +575,7 @@
       { label: '今日活跃', value: fmt(actives[0]), hint: '最近 24 小时', icon: 'users' },
       { label: '7 日活跃', value: fmt(actives[1]), hint: '最近 7 天', icon: 'users' },
       { label: '30 日活跃', value: fmt(actives[2]), hint: '最近 30 天', icon: 'users' },
-      { label: '累计设备', value: fmt(actives[3]), hint: '历史去重', icon: 'device' },
+      { label: '累计设备', value: fmt(actives[3]), hint: '当前保留窗口内去重', icon: 'device' },
       { label: '报错率', value: rate === null ? '—' : rate.toFixed(1) + '%', hint: '24h 报错设备 / 活跃设备', icon: 'alert', tone: rate && rate > 20 ? 'danger' : '' },
       { label: '24h 报错', value: fmt(crashes[0]), hint: (Number(crashes[1]) || 0) + ' 台设备受影响', icon: 'alert', tone: (Number(crashes[0]) || 0) > 0 ? 'danger' : 'success' }
     ];
@@ -716,16 +715,20 @@
     note.textContent += ' 合计 ' + total.toLocaleString() + ' 次。';
   }
 
-  function renderTools(panel, isFull) {
+  function renderTools(panel, isFull, error) {
     var el = document.getElementById('c-tools');
     var locked = document.getElementById('tools-locked');
     locked.classList.toggle('hidden', isFull);
 
     if (!isFull) { el.innerHTML = ''; return; }
+    if (error || !panel) {
+      el.innerHTML = '<div class="empty">工具热度暂时查询失败，请稍后刷新</div>';
+      return;
+    }
     var rows = ((panel && panel.rows) || []).slice(0, 8).map(function (r) {
       return { name: String(r[0] || '未知'), value: Number(r[1]) || 0, sub: (Number(r[2]) || 0) + ' 台设备' };
     });
-    hbar(el, rows, PALETTE[0], '还没有工具启动记录');
+    hbar(el, rows, PALETTE[0], '暂无工具使用数据。更新到支持工具统计的版本后，使用工具即可逐步生成热度排行。');
   }
 
   function renderErrors(panel, isFull) {

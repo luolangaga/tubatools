@@ -27,7 +27,10 @@ public sealed partial class DashboardPage
         TitleText.Style = (Style)Application.Current.Resources[narrow ? "TitleTextBlockStyle" : "TitleLargeTextBlockStyle"];
         GreetingText.Style = (Style)Application.Current.Resources[narrow ? "BodyTextBlockStyle" : "BodyLargeTextBlockStyle"];
         FeatureScroll.Padding = new Thickness(margin, 0, margin, 12);
-        foreach (FrameworkElement tile in FeaturesPanel.Children) { tile.Width = 232; tile.Height = 172; }
+        var featureWidth = Math.Max(1, width - margin * 2);
+        var featureColumns = Math.Max(1, Math.Min(_features.Count, (int)((featureWidth + 12) / (280 + 12))));
+        var tileWidth = (featureWidth - (featureColumns - 1) * 12) / featureColumns;
+        foreach (FrameworkElement tile in FeaturesPanel.Children) { tile.Width = tileWidth; tile.Height = 172; }
         FeatureStrip.Visibility = _features.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         FilterBar.Margin = new Thickness(margin, 20, margin, 20);
         ToolsToolbar.Margin = new Thickness(margin, 0, margin, 12);
@@ -54,3 +57,4 @@ public sealed partial class DashboardPage
     private void FeaturePrevious_Click(object sender, RoutedEventArgs e) => FeatureScroll.ChangeView(Math.Max(0, FeatureScroll.HorizontalOffset - Math.Max(244, FeatureScroll.ViewportWidth - 244)), null, null);
     private void FeatureNext_Click(object sender, RoutedEventArgs e) => FeatureScroll.ChangeView(Math.Min(FeatureScroll.ScrollableWidth, FeatureScroll.HorizontalOffset + Math.Max(244, FeatureScroll.ViewportWidth - 244)), null, null);
 }
+

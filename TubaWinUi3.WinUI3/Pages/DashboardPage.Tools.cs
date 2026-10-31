@@ -12,6 +12,12 @@ public sealed partial class DashboardPage
 {
     private bool _updatingToolItems;
 
+    private void OnLaunchHistoryChanged()
+    {
+        if (!_favorites)
+            DispatcherQueue.TryEnqueue(ApplyToolFilter);
+    }
+
     private void ToolSearchBox_LosingFocus(UIElement sender, LosingFocusEventArgs e)
     {
         // 集合更新中的焦点迁移来自 GridView；在离开搜索框前取消，避免打断输入法组合。
@@ -33,12 +39,14 @@ public sealed partial class DashboardPage
         IEnumerable<ToolItem> result = _favorites
             ? favoritePaths.Select(path => _favoriteCatalog.FirstOrDefault(t => t.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
                 ?? catalog.FirstOrDefault(t => t.Path.Equals(path, StringComparison.OrdinalIgnoreCase))).OfType<ToolItem>()
-            : catalog.OrderByDescending(t => t.IsBuiltinLink);
+            : AllToolsSortService.Sort(catalog, LaunchHistoryService.GetRecords());
         result = result.Where(t => !t.IsBuiltinLink ||
             (ToolVisibilityService.IsBuiltinEnabled(t.BuiltinToolId!) && HomeDashboardContent.IsVisible(new() { Target = "builtin:" + t.BuiltinToolId }, RuntimeHelper.IsPackagedContext)));
         string query = ToolSearchBox.Text.Trim();
-        if (query.Length > 0) result = result.Where(t => (t.Name + " " + t.Description + " " + t.CategoryDisplay + " " + t.TagsText)
-            .Contains(query, StringComparison.CurrentCultureIgnoreCase));
+        if (query.Length > 0) result = result
+            .Select(t => (Tool: t, Score: ToolSearchMatcher.Score(query, t.Name,
+                new[] { t.Description, t.RelativePath, t.CategoryDisplay }.Concat(t.Tags ?? []))))
+            .Where(hit => hit.Score > 0).OrderByDescending(hit => hit.Score).Select(hit => hit.Tool);
         // 搜索框位于 GridView.Header；Clear 发出的 Reset 会重置虚拟化面板，
         // 导致正在编辑的 Header 搜索框失焦。保留集合，按差异更新可见项。
         var visibleTools = result.ToList();

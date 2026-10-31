@@ -181,7 +181,7 @@
 
                         <Button x:Name="CopyOutputButton" Grid.Column="6" Click="CopyOutputButton_Click"
                                 Padding="4,2" CornerRadius="4" ToolTipService.ToolTip="复制输出">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE8C8;" FontSize="12" />
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8C8;" FontSize="12" />
                         </Button>
                     </Grid>
                 </Border>

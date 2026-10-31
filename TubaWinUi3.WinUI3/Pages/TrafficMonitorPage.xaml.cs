@@ -576,8 +576,9 @@ public sealed partial class TrafficMonitorPage : Page
             }
             else if (result == ContentDialogResult.Secondary)
             {
-                var data = new DataPackage(); data.SetText(details.ToString()); Clipboard.SetContent(data);
-                ShowNotice("连接详情已复制", InfoBarSeverity.Success);
+                var copied = await ClipboardService.TrySetTextAsync(details.ToString());
+                ShowNotice(copied.Success ? "连接详情已复制" : "剪贴板暂不可用，请稍后重试。",
+                    copied.Success ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
             }
         }
         catch (Exception ex) { ShowNotice("无法打开连接详情：" + ex.Message, InfoBarSeverity.Error); }

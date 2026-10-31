@@ -11,6 +11,7 @@ public sealed class GpuRankingEntry
     public int Render { get; set; }
     public string Tflops { get; set; } = "";
     public string GeekbenchOpencl { get; set; } = "";
+    public string Vram { get; set; } = "";
     public string TimeSpy { get; set; } = "";
     public string Category { get; set; } = "";
 }

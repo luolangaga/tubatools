@@ -18,5 +18,6 @@ fallthrough = true
 enabled = true
 
 # 需要的密钥（用 `wrangler secret put` 写入，不要写进仓库）：
-#   AI_API_KEY        —— Application Insights「读取遥测」只读 API 密钥
+#   AXIOM_QUERY_TOKEN —— 仅查询 tuba-telemetry 的 Axiom API token
 #   DASHBOARD_TOKEN   —— 面板访问口令
+#   GITHUB_TOKEN      —— 下载量统计（可选）

@@ -21,6 +21,7 @@ public sealed partial class PerformanceBenchmarkPage
     private readonly string[] _stageIcons = ["NavIcons/cpu.svg", "BuiltinIcons/cpu-ranking.svg", "NavIcons/memory.svg", "NavIcons/disk.svg", "NavIcons/gpu.svg", "NavIcons/network.svg", "HwIcons/system.svg"];
     private readonly TextBlock[] _stageLabels = new TextBlock[StageCount];
     private readonly TextBlock[] _stageSummaries = new TextBlock[StageCount];
+    private readonly TextBlock[] _stageScores = new TextBlock[StageCount];
     private readonly ProgressRing[] _stageRings = new ProgressRing[StageCount];
     private readonly Expander[] _detailSections = new Expander[StageCount];
     private TextBlock _phaseTitle = null!;
@@ -134,12 +135,22 @@ public sealed partial class PerformanceBenchmarkPage
         for (int i = 0; i < StageCount; i++)
         {
             PrepareDetails(detailContent[i]);
+            _stageScores[i] = Label("", 16);
+            _stageScores[i].FontWeight = FontWeights.SemiBold;
+            _stageScores[i].VerticalAlignment = VerticalAlignment.Center;
+            _stageScores[i].HorizontalAlignment = HorizontalAlignment.Right;
+            AutomationProperties.SetAutomationId(_stageScores[i], "BenchmarkStageScore" + i);
+            var headerText = new StackPanel { Spacing = 4, Children = { Label(_stageNames[i], 14), _stageSummaries[i] } };
+            var detailHeader = new Grid { ColumnSpacing = 12, ColumnDefinitions = { new() { Width = new GridLength(1, GridUnitType.Star) }, new() { Width = GridLength.Auto } }, Children = { headerText, _stageScores[i] } };
+            Grid.SetColumn(_stageScores[i], 1);
             _detailSections[i] = new Expander
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Header = new StackPanel { Spacing = 4, Children = { Label(_stageNames[i], 14), _stageSummaries[i] } },
+                Header = detailHeader,
                 Content = detailContent[i]
             };
+            // Reserve the Expander header's own padding and its chevron, not just the chevron.
+            _detailSections[i].SizeChanged += (_, e) => detailHeader.Width = Math.Max(0, e.NewSize.Width - 120);
             AutomationProperties.SetAutomationId(_detailSections[i], "BenchmarkDetail" + i);
             details.Children.Add(_detailSections[i]);
         }

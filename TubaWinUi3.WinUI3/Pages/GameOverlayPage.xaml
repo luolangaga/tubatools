@@ -10,6 +10,13 @@
     mc:Ignorable="d">
 
     <Grid>
+        <InfoBar x:Name="SensorStatus" IsOpen="False" IsClosable="True" Severity="Warning"
+                 Title="硬件监控状态" Canvas.ZIndex="2000" Margin="24,80,24,0"
+                 VerticalAlignment="Top" HorizontalAlignment="Center" MaxWidth="640">
+            <InfoBar.ActionButton>
+                <Button Content="重试" Click="RetrySensors_Click" AutomationProperties.AutomationId="RetryMonitorSensors"/>
+            </InfoBar.ActionButton>
+        </InfoBar>
         <!-- Admin Required Overlay -->
         <Grid x:Name="AdminOverlay" Visibility="Collapsed"
               Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
@@ -75,7 +82,7 @@
                     </ToggleSwitch>
                     <Button Click="ScanWindows_Click" Style="{StaticResource ToolHeaderActionButtonStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE72C;" FontSize="12" />
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="12" />
                             <TextBlock Text="扫描窗口" />
                         </StackPanel>
                     </Button>
@@ -127,7 +134,7 @@
                                         HorizontalAlignment="Stretch"
                                         ToolTipService.ToolTip="将当前画布布局保存为自定义预设">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <fluentIcons:FluentColorIcon Glyph="&#xE74E;" FontSize="12" />
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74E;" FontSize="12" />
                                         <TextBlock Text="保存" />
                                     </StackPanel>
                                 </Button>
@@ -255,7 +262,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <Button Click="AddCustomWindow_Click" Padding="8,4" FontSize="14">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <fluentIcons:FluentColorIcon Glyph="&#xE710;" FontSize="12" />
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE710;" FontSize="12" />
                                             <TextBlock Text="添加自定义" />
                                         </StackPanel>
                                     </Button>
@@ -298,7 +305,7 @@
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                             ToolTipService.ToolTip="记录指标、导出格式、输出目录">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <fluentIcons:FluentColorIcon Glyph="&#xE713;" FontSize="12" />
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE713;" FontSize="12" />
                                             <TextBlock Text="记录设置" />
                                         </StackPanel>
                                     </Button>
@@ -358,7 +365,7 @@
                                             <Button Click="PickRecordDir_Click" Padding="8,4" FontSize="14"
                                                     ToolTipService.ToolTip="选择记录文件的输出目录">
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                                    <fluentIcons:FluentColorIcon Glyph="&#xE8B7;" FontSize="12" />
+                                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8B7;" FontSize="12" />
                                                     <TextBlock Text="选择输出目录" />
                                                 </StackPanel>
                                             </Button>
@@ -461,7 +468,7 @@
                                         <Button x:Name="BtnPickColor" Click="PickColor_Click"
                                                 Padding="8,4" FontSize="14">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <fluentIcons:FluentColorIcon Glyph="&#xE790;" FontSize="12" />
+                                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE790;" FontSize="12" />
                                                 <TextBlock Text="选择颜色" />
                                             </StackPanel>
                                         </Button>
@@ -479,7 +486,7 @@
                                         <Button x:Name="BtnPickTextColor" Click="PickTextColor_Click"
                                                 Padding="8,4" FontSize="14">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <fluentIcons:FluentColorIcon Glyph="&#xE790;" FontSize="12" />
+                                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE790;" FontSize="12" />
                                                 <TextBlock Text="选择颜色" />
                                             </StackPanel>
                                         </Button>

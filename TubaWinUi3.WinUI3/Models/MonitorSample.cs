@@ -1,7 +1,10 @@
-namespace TubaWinUi3.Models;
+﻿namespace TubaWinUi3.Models;
 
 public sealed class MonitorSample
 {
+    public DateTimeOffset CapturedAt { get; internal set; }
+    public string? SensorError { get; internal set; }
+    internal MonitorSample Copy() => (MonitorSample)MemberwiseClone();
     public float CpuLoad = -1, CpuTemp = -1, CpuClock = -1, CpuPower = -1;
     public string CpuName = "";
     /// <summary>传感器库实际创建的 CPU 温度传感器数量（0 = CPU 型号不认识，>0 但无值 = 驱动/ring0 不可用）。</summary>

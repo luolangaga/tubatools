@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using TubaWinUi3.Services;
 using TubaWinUi3.Services.AiPlayground;
@@ -288,7 +288,11 @@ public static class AiProviderStore
         return (endpoint, model, key);
     }
 
-    /// <summary>保存到磁盘（失败静默，与 AppSettings 一致）。</summary>
+    /// <summary>最近一次保存错误；内存中的修改不会因保存失败被丢弃。</summary>
+    public static string? LastSaveError { get; private set; }
+    public static event Action<string>? SaveFailed;
+    public static event Action<string>? LoadWarning;
+
     public static void Save()
     {
         lock (_lock)
@@ -299,10 +303,39 @@ public static class AiProviderStore
                 var dir = Path.GetDirectoryName(FilePath)!;
                 Directory.CreateDirectory(dir);
                 var json = JsonSerializer.Serialize(_cache, JsonOpts);
-                File.WriteAllText(FilePath, json);
+                // Rewrite the previous snapshot through the converter so backups never retain plaintext keys.
+                var previous = File.Exists(FilePath)
+                    ? JsonSerializer.Deserialize<StoreFile>(File.ReadAllText(FilePath), JsonOpts) : null;
+                WriteAtomic(FilePath + ".bak", previous is null ? json : JsonSerializer.Serialize(previous, JsonOpts));
+                WriteAtomic(FilePath, json);
+                LastSaveError = null;
+                if (StoragePathOverride is null && AppSettings.Get("AiApiKey") is not null)
+                    AppSettings.Remove("AiApiKey");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LastSaveError = "AI 配置保存失败，本次修改仅在当前运行期间有效。请检查数据目录权限和剩余空间后重试。";
+                LogService.Warn(LogService.Agent, $"Provider save failed: {ex.GetType().Name}");
+                SaveFailed?.Invoke(LastSaveError);
+            }
         }
+    }
+
+    private static void WriteAtomic(string path, string content)
+    {
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+                stream.Write(bytes);
+                stream.Flush(flushToDisk: true);
+            }
+            if (File.Exists(path)) File.Replace(temporary, path, null);
+            else File.Move(temporary, path);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
     /// <summary>清空缓存（测试用 / 数据目录切换后）。</summary>
@@ -323,16 +356,32 @@ public static class AiProviderStore
         if (_cache is not null) return;
 
         StoreFile? file = null;
-        try
+        Exception? loadError = null;
+        foreach (var candidate in new[] { FilePath, FilePath + ".bak" })
         {
-            if (File.Exists(FilePath))
-                file = JsonSerializer.Deserialize<StoreFile>(File.ReadAllText(FilePath), JsonOpts);
+            if (!File.Exists(candidate)) continue;
+            try
+            {
+                file = JsonSerializer.Deserialize<StoreFile>(File.ReadAllText(candidate), JsonOpts);
+                if (file?.Providers is not { Count: > 0 }) throw new JsonException("提供商列表为空。");
+                if (candidate != FilePath)
+                {
+                    if (File.Exists(FilePath)) File.Copy(FilePath, FilePath + ".damaged", true);
+                    WriteAtomic(FilePath, JsonSerializer.Serialize(file, JsonOpts));
+                    LogService.Warn(LogService.Agent, "Provider configuration recovered from backup.");
+                }
+                break;
+            }
+            catch (Exception ex) { loadError = ex; file = null; }
         }
-        catch { }
+        if (file is null && loadError is not null)
+            throw new IOException("AI 配置及备份无法读取，原文件已保留。请检查数据目录权限，或在原 Windows 用户下恢复配置。", loadError);
 
         if (file is not null && file.Providers.Count > 0)
         {
             _cache = file;
+            if (file.Providers.Any(p => p.RequiresApiKeyReentry))
+                LoadWarning?.Invoke("部分 AI 密钥属于其他 Windows 用户或无法解密，请在 AI 提供商设置中重新填写。地址与模型配置仍可使用，原密钥密文已保留。");
 
             // 老配置补入「本地模型」提供商（此前版本没有此项）
             if (_cache.Providers.All(p => p.Id != LocalProviderId))
@@ -389,6 +438,8 @@ public static class AiProviderStore
                 }
                 Save();
             }
+            // Also migrates legacy plaintext keys when no other migration was needed.
+            Save();
             return;
         }
 

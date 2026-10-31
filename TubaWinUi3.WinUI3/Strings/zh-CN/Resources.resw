@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -5342,4 +5342,12 @@ else then stroke=#888888 visible=true
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>流氓软件清理</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>连接手机</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>查看日志</value></data>
+  <data name="Builtin_steam-toolbox_Name" xml:space="preserve"><value>Steam 工具箱</value></data>
+  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Steam 本机账号、多存储库游戏管理、内置挂时长与网站加速</value></data>
+  <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>赞助</value></data>
+  <data name="Settings_SponsorTitle.Text" xml:space="preserve"><value>赞助</value></data>
+  <data name="Settings_SponsorDisclaimer.Text" xml:space="preserve"><value>本软件与“图吧工具箱”无关系，我们是图吧工具箱 CE。</value></data>
+  <data name="Settings_SponsorThanks.Text" xml:space="preserve"><value>感谢你支持图吧工具箱 CE 的开发与维护，可通过以下二维码自愿赞助。</value></data>
+  <data name="Settings_SponsorWeChat.Text" xml:space="preserve"><value>微信赞赏</value></data>
+  <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>支付宝</value></data>
 </root>

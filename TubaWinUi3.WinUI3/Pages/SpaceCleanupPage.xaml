@@ -105,7 +105,7 @@
                 <Grid Grid.Row="1" ColumnSpacing="8">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Button x:Name="UpButton" Click="GoUp" IsEnabled="False" ToolTipService.ToolTip="上一级（Backspace）" AutomationProperties.Name="上一级" AutomationProperties.AutomationId="SpaceUp"><FontIcon Glyph="&#xE74A;"/></Button>
-                    <Button x:Name="RootButton" Grid.Column="1" Click="GoHome" ToolTipService.ToolTip="返回扫描根目录" AutomationProperties.Name="扫描根目录" AutomationProperties.AutomationId="SpaceRoot"><fluentIcons:FluentColorIcon Glyph="&#xE80F;"/></Button>
+                    <Button x:Name="RootButton" Grid.Column="1" Click="GoHome" ToolTipService.ToolTip="返回扫描根目录" AutomationProperties.Name="扫描根目录" AutomationProperties.AutomationId="SpaceRoot"><FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE80F;"/></Button>
                     <BreadcrumbBar x:Name="Breadcrumb" Grid.Column="2" ItemClicked="BreadcrumbClicked" VerticalAlignment="Center" AutomationProperties.AutomationId="SpaceBreadcrumb"/>
                     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8">
                         <TextBlock x:Name="FilterLabel" Text="筛选" VerticalAlignment="Center"/>

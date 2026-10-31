@@ -27,10 +27,10 @@
                     <FontIcon FontSize="12" Glyph="&#xE72B;" />
                 </Button>
                 <Button x:Name="RefreshButton" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="刷新">
-                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                 </Button>
                 <Button x:Name="OpenInBrowserButton" Click="OpenInBrowserButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="在浏览器中打开">
-                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE774;" />
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE774;" />
                 </Button>
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>

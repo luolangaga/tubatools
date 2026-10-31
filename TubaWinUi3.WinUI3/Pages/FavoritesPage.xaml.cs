@@ -797,6 +797,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
         if (!string.IsNullOrWhiteSpace(tool.RemoteUrl))
         {
             Pages.BrowserPage.Open(tool.RemoteUrl, tool.Name);
+            Services.Telemetry.TelemetryService.TrackExternalToolLaunch(tool.Path);
             LaunchHistoryService.RecordLaunch(tool.Path);
             ShowStatus(LocalizationService.L("Common_Opened", "已打开"), tool.Name, InfoBarSeverity.Success);
             return;
@@ -851,7 +852,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
                     ShowStatus(builtinTool.Name, msg, InfoBarSeverity.Informational))
             };
             MainWindow.ActiveToolName = builtinTool.Name;
-            await builtinTool.ExecuteAsync(context);
+            await builtinTool.ExecuteTrackedAsync(context);
             LaunchHistoryService.RecordLaunch(tool.Path);
             ShowStatus(LocalizationService.L("Common_Launched", "已启动"), tool.Name, InfoBarSeverity.Success);
         }

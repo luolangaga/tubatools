@@ -13,10 +13,10 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class GpuRankingPage : Page
 {
-    private string _category = "desktop";
+    private string _category = "all";
     private string _brand = "全部";
     private string _keyword = "";
-    private string _sortBy = "tflops";
+    private string _sortBy = "timeSpy";
     private bool _isRefreshing;
     private double _lastScrollOffset;
     private bool _navCollapsed;
@@ -27,8 +27,7 @@ public sealed partial class GpuRankingPage : Page
     private AutoSuggestBox _searchBox = null!;
     private StackPanel _brandStack = null!;
     private ComboBox _sortCombo = null!;
-    private Button _desktopBtn = null!;
-    private Button _laptopBtn = null!;
+    private readonly List<Button> _categoryButtons = [];
 
     // 视觉色板（名次徽章用图表系列色、品牌芯片用系列色/语义强调色，均取自 ThemeColors，随主题解析）
     private static Color Gold => ThemeColors.Series4;            // 名次 1：金
@@ -54,6 +53,8 @@ public sealed partial class GpuRankingPage : Page
     private FrameworkElement _headerRow = null!;
     private FrameworkElement _filterRow = null!;
     private FrameworkElement _statsRow = null!;
+    private StackPanel _localRanking = null!;
+    private IReadOnlyList<string> _localHardwareNames = [];
 
     public GpuRankingPage()
     {
@@ -65,18 +66,14 @@ public sealed partial class GpuRankingPage : Page
         Content = root;
 
         RefreshList();
+        _ = LoadLocalRankingAsync();
 
         // 代码构建的画刷不会随主题自动刷新，切换主题后按当前筛选状态重渲染
         ActualThemeChanged += (_, _) =>
         {
             if (_brandStack is not null)
                 UpdateBrandButtons(_brandStack, _brand);
-            if (_desktopBtn is not null && _laptopBtn is not null)
-            {
-                var desktopActive = _category != "laptop";
-                UpdateCategoryButtons(desktopActive ? _desktopBtn : _laptopBtn,
-                                      desktopActive ? _laptopBtn : _desktopBtn);
-            }
+            UpdateCategoryStyles();
             RefreshList();
         };
     }
@@ -148,6 +145,11 @@ public sealed partial class GpuRankingPage : Page
         mainGrid.Children.Add(listRow);
         Grid.SetRow(listRow, 3);
 
+        mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        _localRanking = new StackPanel { Spacing = 8, Visibility = Visibility.Collapsed };
+        mainGrid.Children.Add(_localRanking);
+        Grid.SetRow(_localRanking, 4);
+
         return mainGrid;
     }
 
@@ -158,7 +160,7 @@ public sealed partial class GpuRankingPage : Page
             ToolId = "gpu-ranking",
             HeaderPadding = new Thickness(0, 16, 0, 0),
             Title = "GPU 天梯图",
-            Subtitle = $"数据来源 TopCPU.net · 更新于 {GpuRankingService.LastUpdated ?? "内置数据"} · FP32 浮点性能排列",
+            Subtitle = $"数据来源 TopCPU.net · 更新于 {GpuRankingService.LastUpdated ?? "内置数据"} · 按 3DMark Time Spy 分数排列",
             Glyph = "\uE9D5"
         };
 
@@ -233,7 +235,7 @@ public sealed partial class GpuRankingPage : Page
             _infoBar.Severity = InfoBarSeverity.Success;
             _infoBar.IsOpen = true;
 
-            _toolHeader.Subtitle = $"数据来源 TopCPU.net · 更新于 {GpuRankingService.LastUpdated} · FP32 浮点性能排列";
+            _toolHeader.Subtitle = $"数据来源 TopCPU.net · 更新于 {GpuRankingService.LastUpdated} · 按 3DMark Time Spy 分数排列";
             RefreshList();
         }
         else
@@ -282,15 +284,15 @@ public sealed partial class GpuRankingPage : Page
             SelectedIndex = 0,
             Header = null
         };
-        _sortCombo.Items.Add("TFLOPS");
-        _sortCombo.Items.Add("评分");
+        _sortCombo.Items.Add("Time Spy");
+        _sortCombo.Items.Add("Time Spy 分数");
         _sortCombo.Items.Add("排名顺序");
         _sortCombo.SelectionChanged += (s, e) =>
         {
             if (_suppressFilterEvents) return;
             _sortBy = _sortCombo.SelectedIndex switch
             {
-                0 => "tflops",
+                0 => "timeSpy",
                 1 => "rating",
                 _ => "rank"
             };
@@ -304,69 +306,24 @@ public sealed partial class GpuRankingPage : Page
 
     private Border BuildCategoryToggle()
     {
-        var desktopBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uE964", FontSize = 14 },
-                    new TextBlock { Text = "桌面", FontSize = 14 }
-                }
-            },
-            Padding = new Thickness(16, 8, 16, 8),
-            CornerRadius = new CornerRadius(8, 0, 0, 8),
-            Tag = "desktop"
-        };
-
-        var laptopBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uE7F7", FontSize = 14 },
-                    new TextBlock { Text = "笔记本", FontSize = 14 }
-                }
-            },
-            Padding = new Thickness(16, 8, 16, 8),
-            CornerRadius = new CornerRadius(0, 8, 8, 0),
-            Tag = "laptop"
-        };
-
         var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0 };
-        stack.Children.Add(desktopBtn);
-        stack.Children.Add(laptopBtn);
-
-        desktopBtn.Click += (s, e) =>
+        foreach (var (category, label) in new[] { ("all", "全部"), ("desktop", "桌面"), ("laptop", "笔记本") })
         {
-            _category = "desktop";
-            UpdateCategoryButtons(desktopBtn, laptopBtn);
-            RefreshList();
-        };
-        laptopBtn.Click += (s, e) =>
-        {
-            _category = "laptop";
-            UpdateCategoryButtons(laptopBtn, desktopBtn);
-            RefreshList();
-        };
+            var button = new Button { Content = label, Tag = category, Padding = new Thickness(14, 8, 14, 8) };
+            button.Click += (_, _) => { _category = category; UpdateCategoryStyles(); RefreshList(); };
+            _categoryButtons.Add(button);
+            stack.Children.Add(button);
+        }
+        UpdateCategoryStyles();
+        return new Border { CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1),
+            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor), Padding = new Thickness(2), Child = stack };
+    }
 
-        UpdateCategoryButtons(desktopBtn, laptopBtn);
-        _desktopBtn = desktopBtn;
-        _laptopBtn = laptopBtn;
-
-        return new Border
-        {
-            CornerRadius = new CornerRadius(8),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(2),
-            Child = stack
-        };
+    private void UpdateCategoryStyles()
+    {
+        var active = _categoryButtons.FirstOrDefault(b => (string)b.Tag == _category);
+        if (active is null) return;
+        foreach (var inactive in _categoryButtons.Where(b => b != active)) UpdateCategoryButtons(active, inactive);
     }
 
     private static void UpdateCategoryButtons(Button active, Button inactive)
@@ -556,7 +513,7 @@ public sealed partial class GpuRankingPage : Page
         AddHeader(headerGrid, "", 0);
         AddHeader(headerGrid, "排名", 1);
         AddHeader(headerGrid, "GPU", 2);
-        AddHeader(headerGrid, "TFLOPS", 3);
+        AddHeader(headerGrid, "Time Spy", 3);
         AddHeader(headerGrid, "显存", 4);
 
         var headerBorder = new Border
@@ -669,16 +626,41 @@ public sealed partial class GpuRankingPage : Page
         Grid.SetColumn(tb, column);
     }
 
+    private async Task LoadLocalRankingAsync()
+    {
+        try { _localHardwareNames = await Task.Run(HardwareInfoService.BuildGpuDeviceValues); }
+        catch { _localHardwareNames = []; }
+        UpdateLocalRanking();
+    }
+
+    private void UpdateLocalRanking()
+    {
+        if (_localRanking is null) return;
+        _localRanking.Children.Clear();
+        foreach (var name in _localHardwareNames)
+        {
+            var entry = LocalRankingMatcher.Find(name,
+                GpuRankingService.All, e => e.Name);
+            if (entry is null) continue;
+            entry = GpuRankingService.GetByCategory(_category).FirstOrDefault(e => e.Name == entry.Name);
+            if (entry is null) continue;
+            _localRanking.Children.Add(LocalRankingCard.Create("GPU", entry.Name,
+                $"第 {entry.Rank} 名 · Time Spy {entry.Rating:N0} · 显存 {entry.Vram}", () => LocateInFullRanking(entry)));
+        }
+        _localRanking.Visibility = _localRanking.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void RefreshList()
     {
         if (_listContainer is null) return;
+        UpdateLocalRanking();
 
         var entries = GpuRankingService.GetByCategory(_category);
         entries = GpuRankingService.Filter(entries, _brand, _keyword);
 
         entries = _sortBy switch
         {
-            "tflops" => entries.OrderByDescending(e => double.TryParse(e.Tflops, out var t) ? t : 0).ToList(),
+            "timeSpy" => entries.OrderByDescending(e => e.Rating).ToList(),
             "rating" => entries.OrderByDescending(e => e.Rating).ToList(),
             _ => entries.OrderBy(e => e.Rank).ToList()
         };
@@ -816,10 +798,10 @@ public sealed partial class GpuRankingPage : Page
             Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center
         };
 
-        var vramSubText = !string.IsNullOrWhiteSpace(entry.TimeSpy)
+        var vramSubText = !string.IsNullOrWhiteSpace(entry.Vram)
             ? new TextBlock
             {
-                Text = entry.TimeSpy, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
+                Text = entry.Vram, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
                 VerticalAlignment = VerticalAlignment.Center
             }
             : null;
@@ -828,21 +810,21 @@ public sealed partial class GpuRankingPage : Page
         namePanel.Children.Add(nameText);
         if (vramSubText is not null) namePanel.Children.Add(vramSubText);
 
-        var tflopsColor = entry.Rating >= 80 ? NvidiaGreen
-            : entry.Rating >= 50 ? ThemeColors.AccentBlue
-            : entry.Rating >= 20 ? ThemeColors.AccentOrange
+        var tflopsColor = entry.Rating >= 5000000 ? NvidiaGreen
+            : entry.Rating >= 10000 ? ThemeColors.AccentBlue
+            : entry.Rating >= 5000 ? ThemeColors.AccentOrange
             : ThemeColors.DimText;
 
         var tflopsText = new TextBlock
         {
-            Text = !string.IsNullOrWhiteSpace(entry.Tflops) ? entry.Tflops : "-",
+            Text = entry.Rating > 0 ? entry.Rating.ToString("N0") : "—",
             FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = new SolidColorBrush(tflopsColor), VerticalAlignment = VerticalAlignment.Center
         };
 
         var vramText = new TextBlock
         {
-            Text = !string.IsNullOrWhiteSpace(entry.TimeSpy) ? entry.TimeSpy : "-",
+            Text = !string.IsNullOrWhiteSpace(entry.Vram) ? entry.Vram : "-",
             FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
             VerticalAlignment = VerticalAlignment.Center
         };

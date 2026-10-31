@@ -1,0 +1,165 @@
+﻿using TubaWinUi3.Services;
+
+namespace TubaWinUi3.Tests;
+
+public sealed class SteamToolboxTests
+{
+    [Fact]
+    public void Vdf_ParsesEscapedPathsCommentsAndNestedObjects()
+    {
+        var data = SteamVdf.Parse("// test\n\"libraryfolders\" { \"1\" { \"path\" \"D:\\\\SteamLibrary\" } }");
+        Assert.Equal(@"D:\SteamLibrary", data["LIBRARYFOLDERS"]["1"]["path"].Value);
+    }
+    [Theory]
+    [InlineData("\"root\" { \"key\" \"value\"")]
+    [InlineData("\"key\" \"unterminated")]
+    [InlineData("}")]
+    public void Vdf_RejectsIncompleteInput(string input) => Assert.Throws<FormatException>(() => SteamVdf.Parse(input));
+
+    [Fact]
+    public void Scan_MultipleLibrariesLegacyPathsAndBrokenManifest()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "steam-test-" + Guid.NewGuid());
+        var extra = Path.Combine(root, "other");
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(root, "steamapps", "common", "GameOne"));
+            Directory.CreateDirectory(Path.Combine(extra, "steamapps", "common", "GameTwo"));
+            Directory.CreateDirectory(Path.Combine(root, "config"));
+            File.WriteAllText(Path.Combine(root, "config", "loginusers.vdf"), "\"users\" { \"76561197960265729\" { \"AccountName\" \"test\" \"PersonaName\" \"测试昵称\" \"MostRecent\" \"1\" } }");
+            File.WriteAllText(Path.Combine(root, "steamapps", "libraryfolders.vdf"), "\"libraryfolders\" { \"0\" { \"path\" \"" + root.Replace("\\", "\\\\") + "\" } \"1\" \"" + extra.Replace("\\", "\\\\") + "\" }");
+            File.WriteAllText(Path.Combine(root, "steamapps", "appmanifest_1.acf"), "\"AppState\" { \"appid\" \"1\" \"name\" \"Game 1\" \"installdir\" \"GameOne\" \"SizeOnDisk\" \"1024\" }");
+            File.WriteAllText(Path.Combine(extra, "steamapps", "appmanifest_2.acf"), "\"AppState\" { \"appid\" \"2\" \"name\" \"Game 2\" \"installdir\" \"GameTwo\" \"SizeOnDisk\" \"2048\" }");
+            File.WriteAllText(Path.Combine(root, "steamapps", "appmanifest_3.acf"), "\"AppState\" {");
+            File.WriteAllText(Path.Combine(root, "steamapps", "appmanifest_4.acf"), "\"AppState\" { \"appid\" \"4\" \"installdir\" \"../../escape\" }");
+            var result = SteamToolboxService.Scan(root);
+            Assert.Equal(2, result.Libraries.Count);
+            Assert.Equal(3072, result.Libraries.SelectMany(l => l.Games).Sum(g => g.Bytes));
+            Assert.All(result.Libraries.SelectMany(l => l.Games), g => Assert.True(g.Installed));
+            Assert.Equal("测试昵称", Assert.Single(result.Accounts).Name);
+            Assert.Equal(2, result.Warnings.Count);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+    [Fact]
+    public void Accelerator_HostsRollbackPreservesOtherEntries()
+    {
+        var before = System.Text.Encoding.UTF8.GetBytes("127.0.0.1 localhost\r\n# 用户条目\r\n");
+        var owned = System.Text.Encoding.ASCII.GetBytes("# TubaSteamAcceleration BEGIN\r\n127.0.0.1 github.com\r\n# TubaSteamAcceleration END\r\n");
+        var after = System.Text.Encoding.ASCII.GetBytes("192.0.2.1 example.test\r\n");
+        Assert.Equal(before.Concat(after), SteamAccelerationService.RemoveOwnedBlock(before.Concat(owned).Concat(after).ToArray()));
+        Assert.Equal(before, SteamAccelerationService.RemoveOwnedBlock(before));
+    }
+    [Fact]
+    public void Accelerator_RefusesToEraseAnIncompleteHostsBlock()
+    {
+        Assert.Throws<IOException>(() => SteamAccelerationService.RemoveOwnedBlock(System.Text.Encoding.ASCII.GetBytes("# TubaSteamAcceleration BEGIN\r\nuser entry")));
+    }
+    [Fact]
+    public async Task Accelerator_StartsTlsProxyForwardsAndRestoresHosts()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "steam-proxy-test-" + Guid.NewGuid());
+        Directory.CreateDirectory(directory);
+        var hosts = Path.Combine(directory, "hosts");
+        File.WriteAllText(hosts, "127.0.0.1 localhost\r\n");
+        int FreePort()
+        {
+            using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start(); return ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        SteamAccelerationService.TestDirectory = directory;
+        SteamAccelerationService.TestHostsPath = hosts;
+        SteamAccelerationService.TestHttpPort = FreePort();
+        SteamAccelerationService.TestHttpsPort = FreePort();
+        SteamAccelerationService.TestHttpFactory = () => new System.Net.Http.HttpMessageInvoker(new FixtureHandler());
+        try
+        {
+            await SteamAccelerationService.StartAsync(true, false);
+            Assert.True(SteamAccelerationService.Running);
+            Assert.Contains("127.0.0.1 github.com", File.ReadAllText(hosts));
+            using var handler = new System.Net.Http.SocketsHttpHandler
+            {
+                UseProxy = false,
+                ConnectCallback = async (_, token) =>
+                {
+                    var socket = new System.Net.Sockets.Socket(System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp);
+                    await socket.ConnectAsync(System.Net.IPAddress.Loopback, SteamAccelerationService.TestHttpsPort, token);
+                    return new System.Net.Sockets.NetworkStream(socket, true);
+                },
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    // Trust only our test certificate; never install it in a Windows trust store.
+                    RemoteCertificateValidationCallback = (_, certificate, _, _) => certificate is System.Security.Cryptography.X509Certificates.X509Certificate2 cert && cert.Subject == "CN=github.com" && cert.MatchesHostname("github.com")
+                }
+            };
+            using var client = new System.Net.Http.HttpClient(handler);
+            using var response = await client.GetAsync("https://github.com/test?q=1");
+            Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("https://github.com/test?q=1", await response.Content.ReadAsStringAsync());
+            Assert.Equal(1, SteamAccelerationService.Traffic.Requests);
+            Assert.Equal(0, SteamAccelerationService.Traffic.Failures);
+            await SteamAccelerationService.StopAsync();
+            Assert.False(SteamAccelerationService.Running);
+            Assert.DoesNotContain("TubaSteamAcceleration", File.ReadAllText(hosts));
+            Assert.Contains("127.0.0.1 localhost", File.ReadAllText(hosts));
+            Assert.False(File.Exists(Path.Combine(directory, "active.json")));
+        }
+        finally
+        {
+            await SteamAccelerationService.StopAsync();
+            SteamAccelerationService.TestDirectory = null; SteamAccelerationService.TestHostsPath = null;
+            SteamAccelerationService.TestHttpPort = 80; SteamAccelerationService.TestHttpsPort = 443;
+            SteamAccelerationService.TestHttpFactory = null;
+            Directory.Delete(directory, true);
+        }
+    }
+    private sealed class FixtureHandler : System.Net.Http.HttpMessageHandler
+    {
+        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new System.Net.Http.StringContent(request.RequestUri!.ToString()) });
+    }
+
+    [Fact]
+    public void CatalogueIncludesWattGroupsAndKeepsRestrictedRulesUnavailable()
+    {
+        var groups = SteamAccelerationCatalog.Load();
+        Assert.Contains(groups, g => g.Name == "Steam 服务");
+        Assert.Contains(groups, g => g.Name == "Twitch 直播");
+        Assert.Contains(groups, g => g.Name == "网盘服务");
+        Assert.Contains(groups, g => g.Name == "Github");
+        Assert.True(groups.Sum(g => g.Rules.Count) > 40);
+        Assert.All(groups.SelectMany(g => g.Rules).Where(r => r.ProxyType == 4), r => Assert.False(r.Available));
+        Assert.All(groups.SelectMany(g => g.Rules).SelectMany(r => r.Domains), d => Assert.DoesNotContain("*", d));
+    }
+    [Fact]
+    public void GuardSubmissionWithoutAnActiveChallengeIsRejected()
+    {
+        Assert.Throws<InvalidOperationException>(() => SteamIdleService.SubmitGuardCode("12345"));
+    }
+
+    [Fact]
+    public void StartupRecoveryRestoresHostsWithoutStartingAcceleration()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "steam-recovery-" + Guid.NewGuid());
+        Directory.CreateDirectory(directory);
+        string hosts = Path.Combine(directory, "hosts");
+        File.WriteAllText(hosts, "127.0.0.1 localhost\r\n# TubaSteamAcceleration BEGIN\r\n127.0.0.1 github.com\r\n# TubaSteamAcceleration END\r\n");
+        File.WriteAllText(Path.Combine(directory, "active.json"), "{\"Thumbprint\":\"0000000000000000000000000000000000000000\"}");
+        SteamAccelerationService.TestDirectory = directory; SteamAccelerationService.TestHostsPath = hosts;
+        try
+        {
+            Assert.False(SteamAccelerationService.Running);
+            SteamAccelerationService.RecoverOnStartup();
+            SteamAccelerationService.RecoverOnStartup();
+            Assert.False(SteamAccelerationService.Running);
+            Assert.Equal("127.0.0.1 localhost\r\n", File.ReadAllText(hosts));
+            Assert.False(File.Exists(Path.Combine(directory, "active.json")));
+        }
+        finally
+        {
+            SteamAccelerationService.TestDirectory = null; SteamAccelerationService.TestHostsPath = null;
+            Directory.Delete(directory, true);
+        }
+    }
+
+}

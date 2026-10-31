@@ -1,106 +1,18 @@
 /**
  * 图吧工具箱 · 遥测看板（Cloudflare Worker）
  *
- * 用只读 API 密钥查 Azure Application Insights（工作区型），把常用面板
+ * 用只读 API 密钥查 Axiom，把常用面板
  * （在线设备 / 活跃趋势 / 版本分布 / 崩溃排行 / 工具热度）一次返回给前端，
- * 免去每次打开 Azure 门户手写 KQL 的麻烦。
+ * 软件直接上报 Axiom，Worker 只负责查询和展示。
  *
- * 密钥与口令都放在 Worker Secrets（AI_API_KEY / DASHBOARD_TOKEN），不进仓库。
+ * 密钥与口令都放在 Worker Secrets（AXIOM_QUERY_TOKEN / DASHBOARD_TOKEN），不进仓库。
  */
 import pageHtml from '../public/index.html';
 
-const APP_ID = 'c5cae637-8b3c-43c5-b14e-3d228767c4c8';
-const QUERY_ENDPOINT = `https://api.applicationinsights.io/v1/apps/${APP_ID}/query`;
-const QUERY_TIMEOUT_MS = 25000;
-
-/** 心跳/启动事件即"这台设备活着"，全站活跃口径都用它们。 */
-const ALIVE = 'name in ("heartbeat", "app_start")';
-
-/** 面板定义：KQL + 缓存时长（秒）。
- *  在线与崩溃要新鲜（30s），趋势与榜单分钟级变化没意义（5 分钟）。 */
-const PANELS = {
-  online: {
-    ttl: 30,
-    query: `customEvents | where timestamp > ago(15m) and ${ALIVE} | summarize online = dcount(user_Id)`,
-  },
-  actives: {
-    ttl: 30,
-    query:
-      `customEvents | where ${ALIVE} ` +
-      `| summarize dau = dcountif(user_Id, timestamp > ago(1d)), ` +
-      `wau = dcountif(user_Id, timestamp > ago(7d)), ` +
-      `mau = dcountif(user_Id, timestamp > ago(30d)), ` +
-      `total = dcount(user_Id)`,
-  },
-  crashes24h: {
-    ttl: 30,
-    query: `exceptions | where timestamp > ago(24h) | summarize crashes = count(), devices = dcount(user_Id)`,
-  },
-  onlineSeries: {
-    ttl: 300,
-    query:
-      `customEvents | where timestamp > ago(24h) and ${ALIVE} ` +
-      `| summarize devices = dcount(user_Id) by bin(timestamp, 30m) | order by timestamp asc`,
-  },
-  dailySeries: {
-    ttl: 300,
-    query:
-      `customEvents | where timestamp > ago(30d) and ${ALIVE} ` +
-      `| summarize devices = dcount(user_Id) by bin(timestamp, 1d) | order by timestamp asc`,
-  },
-  hourlyStarts: {
-    ttl: 300,
-    query:
-      `customEvents | where timestamp > ago(24h) and name == "app_start" ` +
-      `| summarize starts = count() by bin(timestamp, 1h) | order by timestamp asc`,
-  },
-  crashSeries: {
-    ttl: 300,
-    query:
-      `exceptions | where timestamp > ago(30d) ` +
-      `| summarize crashes = count(), devices = dcount(user_Id) by bin(timestamp, 1d) | order by timestamp asc`,
-  },
-  newDevices: {
-    ttl: 300,
-    query:
-      `customEvents | where ${ALIVE} | summarize firstSeen = min(timestamp) by user_Id ` +
-      `| where firstSeen > ago(30d) | summarize devices = count() by bin(firstSeen, 1d) | order by firstSeen asc`,
-  },
-  activeHours: {
-    ttl: 300,
-    query:
-      `customEvents | where timestamp > ago(7d) and ${ALIVE} ` +
-      // 东八区本地时间：0=周日 … 6=周六，h=小时
-      `| extend local = timestamp + 8h ` +
-      `| extend h = hourofday(local), d = toint(dayofweek(local) / 1d) ` +
-      `| summarize devices = dcount(user_Id) by d, h`,
-  },
-  versions: {
-    ttl: 300,
-    query:
-      `customEvents | where name == "app_start" and timestamp > ago(7d) ` +
-      `| summarize devices = dcount(user_Id), starts = count() by version = tostring(customDimensions.version) ` +
-      `| order by devices desc`,
-  },
-  errors: {
-    ttl: 300,
-    query:
-      `exceptions | where timestamp > ago(7d) ` +
-      `| summarize cnt = count(), devices = dcount(user_Id), lastSeen = max(timestamp), ` +
-      `sample = any(outerMessage), inner = any(innermostMessage), frames = any(tostring(details[0].parsedStack)) ` +
-      `by type = tostring(type) | order by cnt desc | take 20`,
-  },
-  tools: {
-    ttl: 300,
-    query:
-      `customEvents | where name == "tool_launch" and timestamp > ago(7d) ` +
-      `| summarize uses = count(), devices = dcount(user_Id) by tool = tostring(customDimensions.tool) ` +
-      `| order by uses desc | take 20`,
-  },
-};
+import { PANELS, queryAxiom } from './axiom.js';
 
 /**
- * 外部数据面板：不走 App Insights，直接调各平台 API。
+ * 外部数据面板：不走遥测存储，直接调各平台 API。
  * 下载量缓存 6 小时——GitHub 未授权接口按 IP 限 60 次/小时，而 Worker 出口是共享 IP，
  * 拉得越勤越容易被限流；配了 GITHUB_TOKEN（可选密钥）配额升到 5000 次/小时。
  */
@@ -123,8 +35,9 @@ const PUBLIC_PANELS = [
   'newDevices', 'crashSeries', 'activeHours', 'versions', 'downloads',
 ];
 
-/** 进程内缓存（每个 isolate 一份，够了：小看板，省的是 Azure 查询次数）。 */
+/** 进程内缓存（每个 isolate 一份，够了：小看板，减少 Axiom 查询计算消耗）。 */
 const cache = new Map();
+const pending = new Map();
 
 export default {
   async fetch(request, env) {
@@ -160,15 +73,23 @@ async function handleSummary(request, env, url) {
   // 没带口令 = 游客：只回聚合面板；带对口令 = 管理视图：全部面板
   const authorized = Boolean(provided);
 
-  if (!env.AI_API_KEY) {
-    return json({ error: 'AI_API_KEY 未配置（wrangler secret put AI_API_KEY）' }, 500);
+  if (!env.AXIOM_QUERY_TOKEN) {
+    return json({ error: 'AXIOM_QUERY_TOKEN 未配置' }, 500);
   }
 
-  const force = url.searchParams.get('force') === '1';
+  const force = authorized && url.searchParams.get('force') === '1';
   const names = authorized
     ? Object.keys(PANELS).concat(Object.keys(EXTERNAL_PANELS))
     : PUBLIC_PANELS;
-  const results = await Promise.allSettled(names.map((name) => runPanel(env, name, force)));
+  const results = new Array(names.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: 3 }, async () => {
+    while (next < names.length) {
+      const i = next++;
+      try { results[i] = { status: 'fulfilled', value: await runPanel(env, names[i], force) }; }
+      catch (reason) { results[i] = { status: 'rejected', reason }; }
+    }
+  }));
 
   const panels = {};
   const errors = {};
@@ -183,6 +104,7 @@ async function handleSummary(request, env, url) {
 
   return json({
     generatedAt: new Date().toISOString(),
+    source: 'Axiom',
     mode: authorized ? 'full' : 'public',
     panels,
     errors,
@@ -212,10 +134,26 @@ async function runPanel(env, name, force) {
   const now = Date.now();
   const hit = cache.get(name);
   if (!force && hit && now - hit.at < panel.ttl * 1000) return hit.value;
-
-  const value = panel.query ? await runQuery(env, panel.query) : await panel.load(env);
-  cache.set(name, { at: now, value });
-  return value;
+  // 相同边缘节点的不同实例共享缓存；游客无法用 force 参数反复消耗查询额度。
+  const cacheKey = new Request(`https://stats.tubawinui3.cn/__panel-cache/axiom-v2/${name}`);
+  if (!force) {
+    const shared = await caches.default.match(cacheKey);
+    if (shared) return shared.json();
+  }
+  if (pending.has(name)) return pending.get(name);
+  const task = (async () => {
+    const value = panel.query
+      ? await queryAxiom(env, panel.query, { startTime: new Date(Date.now() - panel.rangeSeconds * 1000).toISOString() })
+      : await panel.load(env);
+    cache.set(name, { at: Date.now(), value });
+    await caches.default.put(cacheKey, new Response(JSON.stringify(value), {
+      headers: { 'content-type': 'application/json', 'cache-control': `max-age=${panel.ttl}` },
+    })).catch(() => {});
+    return value;
+  })();
+  pending.set(name, task);
+  try { return await task; }
+  finally { pending.delete(name); }
 }
 
 /**
@@ -326,30 +264,6 @@ async function loadGitCodeDownloads() {
   const detail = payload.download_statistics_detail || [];
   if (detail.length) return Number(detail[0].total_dl_cnt) || 0;
   throw new Error('GitCode 返回结构异常');
-}
-
-async function runQuery(env, query) {
-  const response = await fetch(`${QUERY_ENDPOINT}?query=${encodeURIComponent(query)}`, {
-    headers: { 'x-api-key': env.AI_API_KEY },
-    signal: AbortSignal.timeout(QUERY_TIMEOUT_MS),
-  });
-
-  const text = await response.text();
-  if (!response.ok) throw new Error(`App Insights ${response.status}: ${text.slice(0, 300)}`);
-
-  let payload;
-  try {
-    payload = JSON.parse(text);
-  } catch {
-    throw new Error(`查询结果不是 JSON：${text.slice(0, 200)}`);
-  }
-
-  const table = payload.tables && payload.tables[0];
-  if (!table) return { columns: [], rows: [] };
-  return {
-    columns: (table.columns || []).map((c) => c.name),
-    rows: table.rows || [],
-  };
 }
 
 function json(body, status = 200) {

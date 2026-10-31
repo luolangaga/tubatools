@@ -106,3 +106,6 @@ uupzip_inspect/
 .DS_Store
 .commandcode/
 .workbuddy/
+TubaWinUi3.WinUI3/Properties/Telemetry.local.props
+telemetry-dashboard/.dev.vars
+telemetry-dashboard/.wrangler/

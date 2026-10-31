@@ -54,6 +54,7 @@ public sealed partial class PerformanceBenchmarkPage
         {
             _stageLabels[i].Text = selected[i] ? "等待中" : "未选择";
             _stageSummaries[i].Text = selected[i] ? "等待测量" : "本次未选择";
+            _stageScores[i].Text = "";
             _stageRings[i].IsActive = false; _stageRings[i].Visibility = Visibility.Collapsed;
         }
         var result = new PerformanceBenchmarkResult { TestTime = DateTime.Now, DurationMode = "Deep" };
@@ -134,6 +135,18 @@ public sealed partial class PerformanceBenchmarkPage
                     _completedStages[stage] = true;
                     _stageLabels[stage].Text = $"已完成 · {stageClock.Elapsed.TotalSeconds:F0} 秒";
                     _stageSummaries[stage].Text = "测量完成 · 数据有效";
+                    int score = stage switch
+                    {
+                        0 => result.Cpu.TotalScore,
+                        1 => result.Cpu.LatencyScore,
+                        2 => result.Memory.TotalScore,
+                        3 => result.Disk.TotalScore,
+                        4 => result.Gpu.TotalScore,
+                        5 => result.Browser.TotalScore,
+                        6 => result.Win.FinalScore,
+                        _ => 0
+                    };
+                    _stageScores[stage].Text = $"{score:N0} 分";
                 }
                 catch (OperationCanceledException)
                 {

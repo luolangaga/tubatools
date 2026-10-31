@@ -24,6 +24,8 @@ public sealed partial class MainWindow : Window
     private bool _navFromSidebar;
     private bool _suppressSearch;
     private bool _searchDismissed;
+    private string? _searchResultsQuery;
+    private bool _searchSubmitting;
     private readonly ObservableCollection<SearchResult> _searchResults = [];
     private readonly DispatcherQueueTimer _searchDebounceTimer;
     private Flyout? _downloadFlyout;
@@ -131,6 +133,7 @@ public sealed partial class MainWindow : Window
 
     public MainWindow()
     {
+        try { SteamAccelerationService.RecoverOnStartup(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速恢复失败：" + ex.Message); }
         InitializeComponent();
 
         ApplyNavigationIcons();
@@ -513,6 +516,8 @@ public sealed partial class MainWindow : Window
         // enabled the scheduled-task auto-start, the next logon will re-enable it.
         // 必须放在「隐藏到托盘」分支之后：隐藏后程序还在后台跑（后台节流本身就是常驻功能），
         // 这时候解除节流等于把用户开着的省电功能关掉。
+        try { SteamIdleService.Disconnect(); } catch { }
+        try { SteamAccelerationService.Shutdown(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速还原失败：" + ex.Message); }
         try { EnergyStarService.Shutdown(); } catch { }
 
         BackdropService.BackdropChanged -= OnBackdropChanged;
@@ -912,9 +917,16 @@ public sealed partial class MainWindow : Window
 
     public void LaunchCatalogTool(ToolItem tool)
     {
-        // Reuse the catalog's download, script, architecture and launch handling.
-        NavFrame.Navigate(typeof(HomePage), new SearchNavigationTarget { HighlightToolPath = tool.Path });
-        if (NavFrame.Content is HomePage page) page.LaunchTool(tool, false);
+        _ = CatalogToolLauncher.LaunchAsync(tool, DispatcherQueue, () => NavFrame.XamlRoot, ShowCatalogToolStatus);
+    }
+
+    private void ShowCatalogToolStatus(string title, string message, InfoBarSeverity severity)
+    {
+        ToolUpdateToast.Title = title;
+        ToolUpdateToast.Message = message;
+        ToolUpdateToast.Severity = severity;
+        ToolUpdateToast.IsOpen = true;
+        StartToastAutoClose();
     }
 
     public void NavigateToToolPage(Type pageType, object? parameter = null)
@@ -963,6 +975,8 @@ public sealed partial class MainWindow : Window
         _searchResults.Clear();
         foreach (var item in items)
             _searchResults.Add(item);
+        _searchResultsQuery = string.Empty;
+        SearchListView.SelectedIndex = -1;
     }
 
     private void ShowSearchPopup()
@@ -983,7 +997,8 @@ public sealed partial class MainWindow : Window
 
     private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
     {
-        if (_suppressSearch || _searchDismissed) return;
+        if (_suppressSearch) return;
+        _searchDismissed = false;
         var query = SearchBox.Text.Trim();
         if (query.Length == 0)
             PopulateSearchSuggestions();
@@ -1015,6 +1030,7 @@ public sealed partial class MainWindow : Window
         }
 
         _searchDebounceTimer.Stop();
+        HideSearchPopup();
         _searchDebounceTimer.Start();
     }
 
@@ -1032,10 +1048,13 @@ public sealed partial class MainWindow : Window
         try
         {
             var results = await Task.Run(() => UnifiedSearchService.Search(query));
+            if (_searchDismissed || SearchBox.Text.Trim() != query) return;
             _searchResults.Clear();
             foreach (var r in results)
                 _searchResults.Add(r);
-            SearchPopup.IsOpen = true;
+            _searchResultsQuery = query;
+            SearchListView.SelectedIndex = -1;
+            ShowSearchPopup();
         }
         catch (Exception ex)
         {
@@ -1052,23 +1071,38 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    private async void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        var idx = SearchListView.SelectedIndex;
-        SearchResult? result = idx >= 0 && idx < _searchResults.Count
-            ? _searchResults[idx]
-            : _searchResults.FirstOrDefault();
+        if (_searchSubmitting) return;
+        _searchSubmitting = true;
+        try
+        {
+            _searchDebounceTimer.Stop();
+            var query = sender.Text.Trim();
+            if (_searchResultsQuery != query)
+            {
+                if (query.Length == 0)
+                    PopulateSearchSuggestions();
+                else
+                    await SearchInBackgroundAsync(query);
+            }
+            if (sender.Text.Trim() != query || _searchResultsQuery != query) return;
 
-        if (result is null) return;
-
-        HideSearchPopup();
-        HandleSearchResult(result);
+            var result = SearchListView.SelectedItem as SearchResult ?? _searchResults.FirstOrDefault();
+            if (result is not null)
+                HandleSearchResult(result);
+        }
+        finally
+        {
+            _searchSubmitting = false;
+        }
     }
 
     private void SearchBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key == Windows.System.VirtualKey.Escape)
         {
+            _searchDismissed = true;
             SearchListView.SelectedIndex = -1;
             HideSearchPopup();
             e.Handled = true;
@@ -1122,18 +1156,22 @@ public sealed partial class MainWindow : Window
 
     private void HandleSearchResult(SearchResult result)
     {
+        _searchDebounceTimer.Stop();
+        _searchDismissed = true;
+        HideSearchPopup();
         var frame = NavFrame;
 
         switch (result.Kind)
         {
             case SearchItemKind.ExternalTool:
             case SearchItemKind.CustomTool:
-                NavigateToTool(result.MatchKey);
+                if (!string.IsNullOrWhiteSpace(result.BuiltinToolId))
+                    _ = OpenSearchBuiltinAsync(result.BuiltinToolId, result.MatchKey);
+                else
+                    LaunchSearchTool(result.MatchKey);
                 break;
             case SearchItemKind.BuiltinTool:
-                frame.Navigate(typeof(BuiltinToolsPage),
-                    new SearchNavigationTarget { HighlightBuiltinId = result.MatchKey });
-                SyncNavSelection("builtin");
+                _ = OpenSearchBuiltinAsync(result.MatchKey);
                 break;
 
             case SearchItemKind.Setting:
@@ -1161,7 +1199,7 @@ public sealed partial class MainWindow : Window
         _syncingNavSelection = false;
     }
 
-    private void NavigateToTool(string toolPath)
+    private void LaunchSearchTool(string toolPath)
     {
         try
         {
@@ -1169,14 +1207,84 @@ public sealed partial class MainWindow : Window
             var tool = tools.FirstOrDefault(t => t.Path.Equals(toolPath, StringComparison.OrdinalIgnoreCase));
             if (tool is not null)
             {
-                NavFrame.Navigate(typeof(HomePage),
-                    new SearchNavigationTarget { HighlightToolPath = toolPath });
-
-                if (!string.IsNullOrEmpty(tool.Category))
-                    SyncNavSelection(tool.Category);
+                // 下载、安装和脚本沿用目录页的完整流程；已就绪的程序直接启动。
+                var ext = Path.GetExtension(tool.EffectivePath);
+                if (!string.IsNullOrWhiteSpace(tool.RemoteUrl))
+                {
+                    BrowserPage.Open(tool.RemoteUrl, tool.Name);
+                    Services.Telemetry.TelemetryService.TrackExternalToolLaunch(tool.Path);
+                    LaunchHistoryService.RecordLaunch(tool.Path);
+                }
+                else if (((!string.IsNullOrWhiteSpace(tool.DownloadUrl) || !string.IsNullOrWhiteSpace(tool.WingetId)) &&
+                    !File.Exists(tool.EffectivePath)) ||
+                    ext.Equals(".bat", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".cmd", StringComparison.OrdinalIgnoreCase) ||
+                    ext.Equals(".ps1", StringComparison.OrdinalIgnoreCase))
+                {
+                    LaunchCatalogTool(tool);
+                }
+                else
+                {
+                    ToolProcessLauncher.Launch(tool.EffectivePath, tool.EffectiveWorkingDir);
+                    LaunchHistoryService.RecordLaunch(tool.Path);
+                }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            ShowSearchLaunchError(ex);
+        }
+    }
+
+    private async Task OpenSearchBuiltinAsync(string id, string? catalogPath = null)
+    {
+        try
+        {
+            var tool = BuiltinToolRegistry.GetById(id)
+                ?? throw new InvalidOperationException(LocalizationService.L("HomePage_BuiltinNotFound", "找不到对应的内置工具"));
+            ActiveToolName = tool.Name;
+            await tool.ExecuteTrackedAsync(new BuiltinToolContext
+            {
+                XamlRoot = SearchBox.XamlRoot,
+                OnProgress = message => DispatcherQueue.TryEnqueue(() =>
+                {
+                    ToolUpdateToast.Title = tool.Name;
+                    ToolUpdateToast.Message = message;
+                    ToolUpdateToast.Severity = InfoBarSeverity.Informational;
+                    ToolUpdateToast.IsOpen = true;
+                    StartToastAutoClose();
+                }),
+                ConfirmDownload = async (name, description, size) =>
+                    await new FluentContentDialog
+                    {
+                        XamlRoot = SearchBox.XamlRoot,
+                        Title = name,
+                        Content = $"{description}\n{size}",
+                        PrimaryButtonText = LocalizationService.L("Common_Download", "下载"),
+                        CloseButtonText = LocalizationService.L("Common_Cancel", "取消"),
+                        RequestedTheme = ThemeService.CurrentElementTheme
+                    }.ShowAsync() == ContentDialogResult.Primary
+            });
+            if (catalogPath is not null)
+                LaunchHistoryService.RecordLaunch(catalogPath);
+        }
+        catch (Exception ex)
+        {
+            ShowSearchLaunchError(ex);
+        }
+        finally
+        {
+            ActiveToolName = null;
+        }
+    }
+
+    private void ShowSearchLaunchError(Exception ex)
+    {
+        ToolUpdateToast.Title = LocalizationService.L("Common_LaunchFailed", "启动失败");
+        ToolUpdateToast.Message = ex.Message;
+        ToolUpdateToast.Severity = InfoBarSeverity.Error;
+        ToolUpdateToast.IsOpen = true;
+        StartToastAutoClose();
     }
 
     private void HandleQuickAction(string action)

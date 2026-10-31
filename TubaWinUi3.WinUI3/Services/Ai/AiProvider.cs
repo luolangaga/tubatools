@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace TubaWinUi3.Services.Ai;
 
@@ -62,8 +62,28 @@ public sealed class AiProvider
     public string BaseUrl { get; set; } = "";
 
     /// <summary>API Key（OpenCode Zen 登录后自动写入登录 token）。</summary>
+    private string _apiKey = "";
+    private string? _unreadableKey;
+    [JsonIgnore]
+    public string ApiKey
+    {
+        get => _apiKey;
+        set { _apiKey = value ?? ""; _unreadableKey = null; }
+    }
+
+    [JsonIgnore] public bool RequiresApiKeyReentry => _unreadableKey is not null;
+
+    /// <summary>Keep unreadable ciphertext intact when importing another Windows user's configuration.</summary>
     [JsonPropertyName("apiKey")]
-    public string ApiKey { get; set; } = "";
+    public string StoredApiKey
+    {
+        get => _unreadableKey ?? ProtectedApiKeyConverter.Encode(_apiKey);
+        set
+        {
+            try { ApiKey = ProtectedApiKeyConverter.Decode(value ?? ""); }
+            catch (System.Text.Json.JsonException) { _apiKey = ""; _unreadableKey = value; }
+        }
+    }
 
     /// <summary>是否内置预设（预设锁定名称与地址，仅可改 Key 与模型列表）。</summary>
     [JsonPropertyName("isPreset")]

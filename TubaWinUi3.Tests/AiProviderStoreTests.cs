@@ -7,7 +7,7 @@ namespace TubaWinUi3.Tests;
 /// AI 提供商存储（AiProviderStore / AiService 配置解析）单元测试。
 /// 使用临时文件 + 静态路径覆盖，不触碰真实用户数据。
 /// </summary>
-public class AiProviderStoreTests : IDisposable
+public partial class AiProviderStoreTests : IDisposable
 {
     private readonly string _path;
 

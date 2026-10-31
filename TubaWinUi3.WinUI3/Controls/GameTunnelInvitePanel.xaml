@@ -46,13 +46,13 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button x:Name="CopyCodeButton" Click="CopyCode_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8C8;" />
                                 <TextBlock FontSize="13" Text="复制邀请码" />
                             </StackPanel>
                         </Button>
                         <Button x:Name="CopyMessageButton" Click="CopyMessage_Click" CornerRadius="7" Padding="14,7">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8A5;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8A5;" />
                                 <TextBlock FontSize="13" Text="复制完整说明" />
                             </StackPanel>
                         </Button>
@@ -85,7 +85,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button x:Name="SaveScriptButton" Click="SaveScript_Click" Style="{StaticResource AccentButtonStyle}" CornerRadius="7" Padding="14,7">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE74E;" />
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE74E;" />
                                 <TextBlock FontSize="13" Text="保存脚本…" />
                             </StackPanel>
                         </Button>

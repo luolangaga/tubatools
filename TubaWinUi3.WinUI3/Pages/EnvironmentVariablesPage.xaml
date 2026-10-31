@@ -52,7 +52,7 @@
                     <StackPanel Grid.Row="1" Margin="12,0,12,8" Orientation="Horizontal" Spacing="8">
                         <Button x:Name="NewBtn" Click="NewBtn_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE710;"/>
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE710;"/>
                                 <TextBlock Text="新建" l:Uids.Uid="EnvVars_New"/>
                             </StackPanel>
                         </Button>
@@ -119,10 +119,10 @@
                                             <FontIcon FontSize="12" Glyph="&#xE74B;"/>
                                         </Button>
                                         <Button Click="PathInsert_Click" ToolTipService.ToolTip="在其后插入" l:Uids.Uid="EnvVars_PathInsert">
-                                            <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE710;"/>
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE710;"/>
                                         </Button>
                                         <Button Click="PathCopy_Click" ToolTipService.ToolTip="复制该项" l:Uids.Uid="EnvVars_PathCopy">
-                                            <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE8C8;"/>
+                                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE8C8;"/>
                                         </Button>
                                         <Button Click="PathRemove_Click" ToolTipService.ToolTip="删除该项" l:Uids.Uid="EnvVars_PathRemove">
                                             <FontIcon FontSize="12" Glyph="&#xE74D;"/>
@@ -141,7 +141,7 @@
             <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                 <Button x:Name="SaveBtn" Click="SaveBtn_Click" IsEnabled="False" Style="{StaticResource AccentButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE74E;"/>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE74E;"/>
                         <TextBlock Text="保存" l:Uids.Uid="EnvVars_Save"/>
                     </StackPanel>
                 </Button>
@@ -153,7 +153,7 @@
                 </Button>
                 <Button x:Name="RestoreBtn" Click="RestoreBtn_Click">
                     <StackPanel Orientation="Horizontal" Spacing="6">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE777;"/>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE777;"/>
                         <TextBlock Text="恢复上次备份" l:Uids.Uid="EnvVars_RestoreLastBackup"/>
                     </StackPanel>
                 </Button>

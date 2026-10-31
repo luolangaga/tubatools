@@ -37,6 +37,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        LaunchHistoryService.HistoryChanged += OnLaunchHistoryChanged;
         _cards = HomeDashboardContent.LoadFeatured(AppSettings.Get(HomeDashboardContent.SettingsKey),
             AppSettings.Get(HomeDashboardContent.PreviousFeaturedSettingsKey) ?? AppSettings.Get(HomeDashboardContent.LegacyContentSettingsKey) ?? AppSettings.Get(HomeDashboardContent.LegacySettingsKey));
         if (AppSettings.Get(HomeDashboardContent.SettingsKey) is null)
@@ -51,7 +52,10 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
-    { _requestVersion++; _iconCts?.Cancel(); base.OnNavigatedFrom(e); }
+    {
+        LaunchHistoryService.HistoryChanged -= OnLaunchHistoryChanged;
+        _requestVersion++; _iconCts?.Cancel(); base.OnNavigatedFrom(e);
+    }
 
     public void ApplyLocalization()
     {
@@ -168,7 +172,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
             if (card.Target.StartsWith("builtin:"))
             {
                 var tool = BuiltinToolRegistry.GetById(card.Target[8..]) ?? throw new InvalidOperationException(S("Unavailable", "此工具暂不可用。"));
-                MainWindow.ActiveToolName = tool.Name; await tool.ExecuteAsync(new() { XamlRoot = XamlRoot });
+                MainWindow.ActiveToolName = tool.Name; await tool.ExecuteTrackedAsync(new() { XamlRoot = XamlRoot });
                 LaunchHistoryService.RecordLaunch(ToolCatalog.GetBuiltinFavoriteKey(tool)); return;
             }
             _catalog ??= await ToolCatalog.GetAllToolsAsync();

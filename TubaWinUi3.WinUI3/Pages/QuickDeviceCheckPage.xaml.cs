@@ -702,7 +702,7 @@ public sealed partial class QuickDeviceCheckPage : Page
             {
                 var context = new BuiltinToolContext { XamlRoot = XamlRoot };
                 MainWindow.ActiveToolName = screenTestTool.Name;
-                _ = screenTestTool.ExecuteAsync(context);
+                _ = screenTestTool.ExecuteTrackedAsync(context);
                 SendToast("屏幕检测已启动", "使用方向键切换颜色，ESC 退出");
             }
         }

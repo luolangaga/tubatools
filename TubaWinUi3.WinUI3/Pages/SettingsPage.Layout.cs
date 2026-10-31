@@ -99,6 +99,14 @@ public sealed partial class SettingsPage
         }
     }
 
+    private void SponsorCodes_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        bool stacked = e.NewSize.Width < 560;
+        SponsorCodesGrid.ColumnDefinitions[1].Width = stacked ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+        Grid.SetColumn(SponsorAlipayPanel, stacked ? 0 : 1);
+        Grid.SetRow(SponsorAlipayPanel, stacked ? 1 : 0);
+    }
+
     private void SettingsSection_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (SettingsSectionPicker.SelectedItem is ComboBoxItem { Tag: string name } &&

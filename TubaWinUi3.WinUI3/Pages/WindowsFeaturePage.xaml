@@ -41,7 +41,7 @@
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource ToolHeaderActionButtonStyle}" AutomationProperties.Name="使用说明" ToolTipService.ToolTip="使用说明">
-                    <fluentIcons:FluentColorIcon Glyph="&#xE897;" FontSize="16"/>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE897;" FontSize="16"/>
                     <Button.Flyout>
                         <Flyout>
                             <ScrollViewer MaxHeight="400" MaxWidth="440" VerticalScrollBarVisibility="Auto">

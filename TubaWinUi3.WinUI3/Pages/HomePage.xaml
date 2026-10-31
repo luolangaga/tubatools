@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="TubaWinUi3.Pages.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -6,7 +6,7 @@
     xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:l="using:WinUI3Localizer"
-    xmlns:local="using:TubaWinUi3.Pages"
+    xmlns:local="using:TubaWinUi3.Pages" xmlns:models="using:TubaWinUi3.Models"
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     NavigationCacheMode="Enabled"
@@ -380,36 +380,28 @@
                     </GridView.FooterTemplate>
                 </GridView>
 
-            <!-- 编辑排序模式：专用纵向列表，整行自实现拖拽（与收藏页同模式） -->
-            <ScrollViewer
-                x:Name="EditModeScroll"
-                Visibility="Collapsed">
-                <StackPanel Spacing="12" Margin="0,4,0,0">
-                    <Border
-                        Padding="12,8"
-                        HorizontalAlignment="Center"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontSize="14"
-                                Glyph="&#xE700;"
-                                VerticalAlignment="Center" />
-                            <TextBlock
-                                Text="按住任意行上下拖动即可调整顺序，完成后点击右上角“完成”。"
-                                l:Uids.Uid="HomePage_EditModeHint"
-                                VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Border>
-                    <StackPanel
-                        x:Name="EditRowsPanel"
-                        Spacing="8"
-                        MaxWidth="720"
-                        HorizontalAlignment="Center" />
-                </StackPanel>
-            </ScrollViewer>
+            <Grid x:Name="EditModeScroll" Visibility="Collapsed" RowSpacing="12" MaxWidth="720" HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <TextBlock Text="拖动调整顺序；选中后按 Alt + ↑ / ↓ 也可移动，完成后点击右上角“完成”。"
+                           TextWrapping="Wrap" Margin="12,8"/>
+                <ListView x:Name="EditRowsList" Grid.Row="1" SelectionMode="Single"
+                          CanReorderItems="True" CanDragItems="True" AllowDrop="True"
+                          DragItemsCompleted="EditRowsList_DragItemsCompleted" KeyDown="EditRowsList_KeyDown"
+                          AutomationProperties.AutomationId="ToolOrderList" AutomationProperties.Name="工具排序">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:ToolItem">
+                            <Grid ColumnSpacing="12" Padding="12,8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE700;" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{x:Bind Description, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
 
             <StackPanel
                 x:Name="EmptyState"
@@ -436,7 +428,7 @@
                     Visibility="Collapsed"
                     Click="DownloadToolsButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon Glyph="&#xE896;" FontSize="14" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
                         <TextBlock Text="下载工具包" l:Uids.Uid="HomePage_DownloadToolsButton" />
                     </StackPanel>
                 </Button>

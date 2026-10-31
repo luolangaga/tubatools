@@ -1779,6 +1779,7 @@
       "categories": [
         "其他工具"
       ]
-    }
+    },
+    { "match": "Steam 工具箱", "builtin": "steam-toolbox", "categories": ["游戏工具", "网络工具"] }
   ]
 }

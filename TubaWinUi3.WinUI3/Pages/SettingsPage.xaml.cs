@@ -139,6 +139,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "IntegrationSection",
         ["ActiveInterceptNotifyMode"] = "IntegrationSection",
         ["WindowsSearchIndex"] = "IntegrationSection",
+        ["AgentSkills"] = "AgentSkillsSection",
     };
 
     private static readonly Dictionary<string, string> SettingKeyToCardName = new(StringComparer.OrdinalIgnoreCase)
@@ -172,6 +173,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "SettingsActiveInterceptCard",
         ["ActiveInterceptNotifyMode"] = "SettingsActiveInterceptNotifyCard",
         ["WindowsSearchIndex"] = "SettingsSearchIndexCard",
+        ["AgentSkills"] = "AgentSkillsSection",
     };
 
     public SettingsPage()
@@ -1965,7 +1967,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 				CancellationToken = CancellationToken.None
 			};
 			MainWindow.ActiveToolName = tool.Name;
-			try { await tool.ExecuteAsync(context); } catch { }
+			try { await tool.ExecuteTrackedAsync(context); } catch { }
 			finally { MainWindow.ActiveToolName = null; }
 		}
 	}

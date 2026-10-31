@@ -1273,7 +1273,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		var tool = new BenchmarkCloudTool();
 		var context = new BuiltinToolContext { XamlRoot = XamlRoot };
 		MainWindow.ActiveToolName = tool.Name;
-		tool.ExecuteAsync(context);
+		tool.ExecuteTrackedAsync(context);
 	}
 
 	private async void OnLatencyOnlyClick(object sender, RoutedEventArgs e)
@@ -1316,6 +1316,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			{
 				ShowLatencyHeatmap(_latencyHeatmapPath);
 				UpdateScoreRow(_cpuLatencyScoreText, PerformanceBenchmarkService.NormalizeLatency(matrix.AverageNs));
+				_stageScores[1].Text = $"{PerformanceBenchmarkService.NormalizeLatency(matrix.AverageNs):N0} 分";
+				_stageSummaries[1].Text = "测量完成 · 数据有效";
 			});
 			var ask = new TubaWinUi3.Controls.FluentContentDialog
 			{

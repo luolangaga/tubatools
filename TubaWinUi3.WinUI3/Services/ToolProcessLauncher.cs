@@ -38,6 +38,7 @@ public static class ToolProcessLauncher
         {
             LaunchViaCmdStart(exePath, workingDirectory, runAsAdmin);
         }
+        Telemetry.TelemetryService.TrackExternalToolLaunch(exePath);
     }
 
     private static void LaunchViaCmdStart(string exePath, string? workingDirectory, bool runAsAdmin)

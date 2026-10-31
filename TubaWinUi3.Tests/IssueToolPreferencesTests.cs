@@ -78,6 +78,9 @@ public class ToolPreferencePersistenceTests
         {
             ConfigManager.DataDirectoryOverride = root;
             AppSettings.InvalidateCache();
+            Assert.False(ToolVisibilityService.IsSearchEnabled("builtin:energy-star"));
+            // Exclusion preferences are independent of the master opt-in switch.
+            AppSettings.Set("WindowsSearchIndex", true);
             ToolVisibilityService.Save(["energy-star"], ["builtin:unigetui"]);
             AppSettings.Flush();
             AppSettings.InvalidateCache();

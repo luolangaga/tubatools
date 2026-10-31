@@ -1,4 +1,6 @@
-using System.Linq;
+﻿using System.Linq;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Management;
 using LibreHardwareMonitor.Hardware;
 using TubaWinUi3.Models;
@@ -24,6 +26,8 @@ public sealed class LiteMonitorService : IDisposable
         lock (s_lock)
         {
             if (s_initDone && s_computer != null) return;
+            if (s_initDone && Stopwatch.GetElapsedTime(s_lastInitAttempt).TotalSeconds < 30) return;
+            s_lastInitAttempt = Stopwatch.GetTimestamp();
             s_initDone = true;
             try
             {
@@ -43,9 +47,18 @@ public sealed class LiteMonitorService : IDisposable
                     IsPsuEnabled = false
                 };
                 s_computer.Open();
+                s_initError = null;
                 s_debugLogged = false;
             }
-            catch { s_computer = null; }
+            catch (Exception ex)
+            {
+                try { s_computer?.Close(); } catch { }
+                s_computer = null;
+                s_initError = ex is UnauthorizedAccessException
+                    ? "传感器权限不足，请以管理员身份重试。"
+                    : "传感器初始化失败，请检查驱动；30 秒后会自动重试。";
+                LogService.Warn(LogService.GameOverlay, $"Sensor initialization failed: {ex.GetType().Name}");
+            }
         }
     }
 
@@ -65,22 +78,63 @@ public sealed class LiteMonitorService : IDisposable
         $"LibreHardwareMonitor 源码 1d74d0ea (程序集 {typeof(Computer).Assembly.GetName().Version}) · PawnIO "
         + (PawnIoService.IsDeviceAvailable() ? "ready" : PawnIoService.IsInstalled() ? "installed but not loaded" : "missing");
 
+    private readonly object _sampleGate = new();
+    private MonitorSample? _latestSample;
+    private long _lastSampleTick;
+    private static string? s_initError;
+    private static long s_lastInitAttempt;
+
     public MonitorSample Read(bool fpsEnabled = false)
+    {
+        MonitorSample sample;
+        lock (_sampleGate)
+        {
+            // Consumers receive independent copies; FPS is read separately at the requested cadence.
+            if (_latestSample is null || Stopwatch.GetElapsedTime(_lastSampleTick).TotalMilliseconds >= 200)
+            {
+                _latestSample = ReadHardwareSample();
+                _latestSample.CapturedAt = DateTimeOffset.UtcNow;
+                _lastSampleTick = Stopwatch.GetTimestamp();
+            }
+            sample = _latestSample.Copy();
+        }
+        if (fpsEnabled)
+        {
+            try
+            {
+                var (fps, proc, low1, low01, frameMs, latencyMs) = FpsService.GetFpsStats();
+                sample.Fps = fps; sample.FpsProcess = proc;
+                sample.FpsLow1 = low1; sample.FpsLow01 = low01;
+                sample.FrameTimeMs = frameMs; sample.RenderLatencyMs = latencyMs;
+            }
+            catch { sample.SensorError ??= "帧率采集暂不可用，请检查管理员权限后重试。硬件监控仍可使用。"; }
+        }
+        return sample;
+    }
+
+    private MonitorSample ReadHardwareSample()
     {
         EnsureInit();
         var sample = new MonitorSample();
         lock (s_lock)
         {
-            if (s_computer == null) return sample;
+            if (s_computer == null)
+            {
+                sample.SensorError = s_initError;
+                ReadSystemMemory(sample);
+                return sample;
+            }
             // 单个硬件读失败（传感器驱动/设备异常，烤机高负载时更容易发生）不再拖垮整份采样：
             // 否则 CPU 温度等全部字段会一起变成 -1，界面显示成「全部读不到」
             foreach (IHardware hw in s_computer.Hardware)
             {
-                try { hw.Update(); } catch { }
+                try { hw.Update(); }
+                catch { sample.SensorError ??= "部分传感器读取失败，请检查驱动或点击重试。其他可用数据仍会显示。"; }
             }
             foreach (IHardware hw in s_computer.Hardware)
             {
-                try { ReadHardware(hw, sample); } catch { }
+                try { ReadHardware(hw, sample); }
+                catch { sample.SensorError ??= "部分传感器数据解析失败，请点击重试或导出传感器日志。"; }
                 if (!s_debugLogged)
                 {
                     s_debugLogged = true;
@@ -104,23 +158,9 @@ public sealed class LiteMonitorService : IDisposable
             }
         }
 
-        ReadMemFromWmi(sample);
+        ReadSystemMemory(sample);
         ReadNetSpeedFromLhm(sample);
 
-        if (fpsEnabled)
-        {
-            try
-            {
-                var (fps, proc, low1, low01, frameMs, latencyMs) = FpsService.GetFpsStats();
-                sample.Fps = fps;
-                sample.FpsProcess = proc;
-                sample.FpsLow1 = low1;
-                sample.FpsLow01 = low01;
-                sample.FrameTimeMs = frameMs;
-                sample.RenderLatencyMs = latencyMs;
-            }
-            catch { }
-        }
 
         return sample;
     }
@@ -267,22 +307,25 @@ public sealed class LiteMonitorService : IDisposable
         return false;
     }
 
-    private static void ReadMemFromWmi(MonitorSample s)
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MemoryStatus
     {
-        if (s.MemTotalGB > 0) return;
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem");
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                var totalKB = Convert.ToInt64(obj["TotalVisibleMemorySize"]);
-                var freeKB = Convert.ToInt64(obj["FreePhysicalMemory"]);
-                s.MemTotalGB = totalKB / 1048576f;
-                s.MemUsedGB = (totalKB - freeKB) / 1048576f;
-                s.MemLoad = totalKB > 0 ? (float)(totalKB - freeKB) / totalKB * 100 : -1;
-            }
-        }
-        catch { }
+        public uint Length, Load;
+        public ulong TotalPhysical, AvailablePhysical, TotalPageFile, AvailablePageFile,
+            TotalVirtual, AvailableVirtual, AvailableExtendedVirtual;
+    }
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GlobalMemoryStatusEx(ref MemoryStatus status);
+
+    private static void ReadSystemMemory(MonitorSample sample)
+    {
+        if (sample.MemTotalGB > 0) return;
+        var status = new MemoryStatus { Length = (uint)Marshal.SizeOf<MemoryStatus>() };
+        if (!GlobalMemoryStatusEx(ref status) || status.TotalPhysical == 0) return;
+        sample.MemTotalGB = status.TotalPhysical / 1073741824f;
+        sample.MemUsedGB = (status.TotalPhysical - status.AvailablePhysical) / 1073741824f;
+        sample.MemLoad = (float)(100d * (status.TotalPhysical - status.AvailablePhysical) / status.TotalPhysical);
     }
 
     private static bool Has(string source, string sub) =>
@@ -437,6 +480,7 @@ public sealed class LiteMonitorService : IDisposable
 
     public void Dispose()
     {
+        lock (_sampleGate) { _latestSample = null; }
         _fpsService?.Dispose();
         lock (s_lock)
         {

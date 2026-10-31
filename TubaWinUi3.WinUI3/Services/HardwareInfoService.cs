@@ -749,7 +749,7 @@ public static class HardwareInfoService
         return devices.Count > 0 ? string.Join(GetSeparator(), devices) : null;
     }
 
-    private static IReadOnlyList<string> BuildGpuDeviceValues()
+    internal static IReadOnlyList<string> BuildGpuDeviceValues()
     {
         (string name, ulong dedicatedVram, ulong sharedVram)[] dxgiAdapters;
         try { dxgiAdapters = EnumerateDxgiAdapters(); }

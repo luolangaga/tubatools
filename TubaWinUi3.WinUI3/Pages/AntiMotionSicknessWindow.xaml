@@ -236,7 +236,7 @@
                 <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="一键帮你节约13块钱！Steam某软件此功能居然收费！" />
                 <Button x:Name="ResetButton" Grid.Column="1" Click="ResetButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                         <TextBlock Text="重置默认" />
                     </StackPanel>
                 </Button>

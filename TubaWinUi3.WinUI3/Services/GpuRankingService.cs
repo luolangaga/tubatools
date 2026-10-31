@@ -6,6 +6,7 @@ namespace TubaWinUi3.Services;
 
 public static class GpuRankingService
 {
+    private static List<GpuRankingEntry>? _all;
     private static List<GpuRankingEntry>? _desktop;
     private static List<GpuRankingEntry>? _laptop;
     private static DateTime _lastRefreshTime = DateTime.MinValue;
@@ -19,6 +20,7 @@ public static class GpuRankingService
         "https://raw.githubusercontent.com/luolangaga/tubatools/master/TubaWinUi3.WinUI3/Metadata/gpu-ranking.json"
     ];
 
+    public static List<GpuRankingEntry> All => _all ?? [];
     public static List<GpuRankingEntry> Desktop => _desktop ?? [];
     public static List<GpuRankingEntry> Laptop => _laptop ?? [];
     public static string LastUpdated { get; private set; } = "";
@@ -42,6 +44,20 @@ public static class GpuRankingService
         try
         {
             var json = File.ReadAllText(path);
+            var bundled = JsonSerializer.Deserialize<GpuRankingData>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            var cachePath = Path.Combine(GetCacheDir(), "Metadata", "gpu-ranking.json");
+            if (File.Exists(cachePath))
+            {
+                try
+                {
+                    var cacheJson = File.ReadAllText(cachePath);
+                    var cached = JsonSerializer.Deserialize<GpuRankingData>(cacheJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                    if (cached is not null && cached.SchemaVersion >= 2 && IsCompleteRanking(cached.All, cached.Desktop, cached.Laptop) && cached.Source.Contains("3dmark-time-spy", StringComparison.OrdinalIgnoreCase) && DateTime.TryParse(cached.LastUpdated, out var cacheDate)
+                        && DateTime.TryParse(bundled?.LastUpdated, out var bundledDate) && cacheDate >= bundledDate)
+                        json = cacheJson;
+                }
+                catch { /* Ignore an incomplete cache and keep the bundled data. */ }
+            }
             ParseAndSet(json);
         }
         catch
@@ -65,21 +81,23 @@ public static class GpuRankingService
 
         try
         {
-            var desktopResult = await TopCpuScraperService.ScrapeGpuRankingsAsync("fp32", "desktop");
-            var laptopResult = await TopCpuScraperService.ScrapeGpuRankingsAsync("fp32", "laptop");
+            var fullResult = await TopCpuScraperService.ScrapeGpuRankingsAsync("time-spy", "all");
+            var desktopResult = await TopCpuScraperService.ScrapeGpuRankingsAsync("time-spy", "desktop");
+            var laptopResult = await TopCpuScraperService.ScrapeGpuRankingsAsync("time-spy", "laptop");
 
             var desktopEntries = desktopResult.Entries;
             var laptopEntries = laptopResult.Entries;
 
-            if (desktopEntries.Count == 0 && laptopEntries.Count == 0)
+            if (!IsCompleteRanking(fullResult.Entries, desktopEntries, laptopEntries))
             {
                 return await RefreshFromFallbackAsync();
             }
 
+            _all = fullResult.Entries;
             _desktop = desktopEntries;
             _laptop = laptopEntries;
             _lastRefreshTime = DateTime.Now;
-            LastUpdated = desktopResult.LastUpdated;
+            LastUpdated = DateTime.Now.ToString("yyyy-MM-dd");
             BenchName = desktopResult.BenchName;
 
             SaveCache();
@@ -87,7 +105,7 @@ public static class GpuRankingService
             return new GpuRefreshResult
             {
                 Success = true,
-                Message = $"已从 TopCPU.net 刷新！桌面 {desktopEntries.Count} 款 / 笔记本 {laptopEntries.Count} 款",
+                Message = $"已从 TopCPU.net 刷新！全部 {fullResult.Entries.Count} 款 / 桌面 {desktopEntries.Count} 款 / 笔记本 {laptopEntries.Count} 款",
                 DesktopCount = desktopEntries.Count,
                 LaptopCount = laptopEntries.Count
             };
@@ -140,7 +158,7 @@ public static class GpuRankingService
             var data = JsonSerializer.Deserialize<GpuRankingData>(json,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
-            if (data is null || (data.Desktop.Count == 0 && data.Laptop.Count == 0))
+            if (data is null || data.SchemaVersion < 2 || !IsCompleteRanking(data.All, data.Desktop, data.Laptop) || !data.Source.Contains("3dmark-time-spy", StringComparison.OrdinalIgnoreCase) || (data.Desktop.Count == 0 || data.Laptop.Count == 0))
             {
                 return new GpuRefreshResult
                 {
@@ -154,6 +172,7 @@ public static class GpuRankingService
             foreach (var e in data.Desktop) e.Category = "desktop";
             foreach (var e in data.Laptop) e.Category = "laptop";
 
+            _all = data.All;
             _desktop = data.Desktop;
             _laptop = data.Laptop;
             _lastRefreshTime = DateTime.Now;
@@ -166,7 +185,7 @@ public static class GpuRankingService
             return new GpuRefreshResult
             {
                 Success = true,
-                Message = $"{prefix}桌面 {data.Desktop.Count} 款 / 笔记本 {data.Laptop.Count} 款",
+                Message = $"{prefix}全部 {data.All.Count} 款 / 桌面 {data.Desktop.Count} 款 / 笔记本 {data.Laptop.Count} 款",
                 DesktopCount = data.Desktop.Count,
                 LaptopCount = data.Laptop.Count
             };
@@ -186,7 +205,7 @@ public static class GpuRankingService
     public static void ForceAllowRefresh() => _lastRefreshTime = DateTime.MinValue;
 
     public static List<GpuRankingEntry> GetByCategory(string category) =>
-        category == "laptop" ? Laptop : Desktop;
+        category switch { "desktop" => Desktop, "laptop" => Laptop, _ => All };
 
     public static List<GpuRankingEntry> Filter(List<GpuRankingEntry> entries, string? brand, string? keyword)
     {
@@ -198,9 +217,19 @@ public static class GpuRankingService
             var kw = keyword.Trim();
             filtered = filtered.Where(e =>
                 e.Name.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
-                e.Tflops.Contains(kw, StringComparison.OrdinalIgnoreCase));
+                e.Vram.Contains(kw, StringComparison.OrdinalIgnoreCase));
         }
         return filtered.ToList();
+    }
+
+    internal static bool IsCompleteRanking(List<GpuRankingEntry> all, List<GpuRankingEntry> desktop, List<GpuRankingEntry> laptop)
+    {
+        if (all.Count == 0 || desktop.Count == 0 || laptop.Count == 0) return false;
+        var names = all.Select(e => e.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return all.Select(e => e.Rank).Distinct().Count() == all.Count
+            && all.Min(e => e.Rank) == 1 && all.Max(e => e.Rank) == all.Count
+            && all.All(e => e.Rating > 0)
+            && desktop.Concat(laptop).All(e => names.Contains(e.Name));
     }
 
     private static void ParseAndSet(string json)
@@ -217,6 +246,7 @@ public static class GpuRankingService
         foreach (var e in data.Desktop) e.Category = "desktop";
         foreach (var e in data.Laptop) e.Category = "laptop";
 
+        _all = data.All;
         _desktop = data.Desktop;
         _laptop = data.Laptop;
         LastUpdated = data.LastUpdated;
@@ -233,7 +263,9 @@ public static class GpuRankingService
             var data = new GpuRankingData
             {
                 LastUpdated = LastUpdated,
-                Source = "topcpu.net",
+                Source = "https://www.topcpu.net/gpu-r/3dmark-time-spy",
+                SchemaVersion = 2,
+                All = All,
                 Desktop = _desktop ?? [],
                 Laptop = _laptop ?? []
             };
@@ -274,6 +306,8 @@ public static class GpuRankingService
 
     private sealed class GpuRankingData
     {
+        public int SchemaVersion { get; set; }
+        public List<GpuRankingEntry> All { get; set; } = [];
         public string LastUpdated { get; set; } = "";
         public string Source { get; set; } = "";
         public List<GpuRankingEntry> Desktop { get; set; } = [];

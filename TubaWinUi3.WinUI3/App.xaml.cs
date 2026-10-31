@@ -42,6 +42,10 @@ public partial class App : Application
         // WebView2EnvironmentService.GetAsync() 指定可写目录（%LocalAppData%\TubaWinUi3\WebView2）。
         InitializeComponent();
 
+        // External Agent helpers return JSON without starting UI services or acquiring the main mutex.
+        if (Services.AgentCli.AgentCliService.IsInvocation(Environment.GetCommandLineArgs()))
+            return;
+
         // This UI workload helper must not start monitoring, notifications, telemetry or the main-instance gate.
         if (Environment.GetCommandLineArgs().Any(a => string.Equals(a, WinBenchmarkWorkerService.WorkerArgument, StringComparison.OrdinalIgnoreCase)))
             return;
@@ -57,6 +61,8 @@ public partial class App : Application
 
         // 界面语言必须在任何打了 Uid 的控件创建前就绪（MainWindow 在 OnLaunched 里创建）。
         LocalizationService.Initialize();
+        AiProviderStore.SaveFailed += QueueProviderNotice;
+        AiProviderStore.LoadWarning += QueueProviderNotice;
 
         // 通知身份（图吧工具箱）与点击回跳注册必须早于任何 Toast；工具包通知激活通道一并订阅。
         PhoneLinkNotifier.EnsureRegistered();
@@ -71,6 +77,32 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         UnhandledException += OnWinUIUnhandledException;
     }
+
+    private static int _providerNoticePending;
+    private static void QueueProviderNotice(string message) => MainWindow?.DispatcherQueue.TryEnqueue(async () =>
+    {
+        if (Interlocked.Exchange(ref _providerNoticePending, 1) != 0) return;
+        try
+        {
+            // Settings may already own a ContentDialog; show the notice after it closes.
+            for (var attempt = 0; attempt < 120 && !IsExiting; attempt++)
+            {
+                try
+                {
+                    if (MainWindow?.Content is not FrameworkElement { XamlRoot: { } root }) return;
+                    await new TubaWinUi3.Controls.FluentContentDialog
+                    {
+                        XamlRoot = root, RequestedTheme = ThemeService.CurrentElementTheme,
+                        Title = LocalizationService.L("Ai_ConfigNotice", "AI 配置提示"),
+                        Content = message, CloseButtonText = LocalizationService.L("Common_Close", "关闭")
+                    }.ShowAsync();
+                    return;
+                }
+                catch { await Task.Delay(1000); }
+            }
+        }
+        finally { Interlocked.Exchange(ref _providerNoticePending, 0); }
+    });
 
     internal static bool IsRunningAsAdmin()
     {
@@ -215,6 +247,11 @@ public partial class App : Application
         // 流氓软件的克星「安全增强菜单 - 复制完整路径」配方通过 --copy-path <路径>
         // 唤醒本程序复制路径到剪贴板（后台模式，不显示主窗口）。
         var cmdLine = Environment.GetCommandLineArgs();
+        if (Services.AgentCli.AgentCliService.IsInvocation(cmdLine))
+        {
+            RunAgentCliAndExit(cmdLine);
+            return;
+        }
         var winWorkerIndex = Array.FindIndex(cmdLine, a => string.Equals(a, WinBenchmarkWorkerService.WorkerArgument, StringComparison.OrdinalIgnoreCase));
         if (winWorkerIndex >= 0)
         {
@@ -412,12 +449,23 @@ public partial class App : Application
             return;
         }
 
-        if (!RuntimeHelper.IsPackagedContext && !IsRunningAsAdmin()
-            && Environment.GetEnvironmentVariable("TUBA_SCREENSHOT_NOELEVATE") != "1")
+        if (!IsRunningAsAdmin() && Environment.GetEnvironmentVariable("TUBA_SCREENSHOT_NOELEVATE") != "1")
         {
-            ElevateAndRestart();
-            Exit();
-            return;
+            if (RuntimeHelper.IsMsixPackaged)
+            {
+                // 失败或取消 UAC 时仍可使用普通权限模式，避免启动后直接消失。
+                if (TryRelaunchElevated(cmdLine.Skip(1).ToArray(), out _))
+                {
+                    Exit();
+                    return;
+                }
+            }
+            else if (!RuntimeHelper.IsPackagedContext)
+            {
+                ElevateAndRestart();
+                Exit();
+                return;
+            }
         }
 
         // ───────────────────────── 单实例闸门 ─────────────────────────
@@ -437,6 +485,7 @@ public partial class App : Application
         }
 
         _window = new MainWindow();
+        Services.AgentCli.AgentQueryBroker.StartForMainInstance();
         _window.Activate();
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
 
@@ -793,25 +842,20 @@ public partial class App : Application
         // 低配模式：跳过图标缓存清理与硬件 WMI 预热，避免冷启动抢盘/抢 CPU。
         if (!FastModeService.IsFastModeEnabled())
         {
-            _ = DelayThenRunAsync(TimeSpan.FromSeconds(15), () => Task.Run(() =>
+            _ = StartupMaintenance.ScheduleAsync("图标缓存清理", TimeSpan.FromSeconds(45), () =>
             {
-                if (FastModeService.IsFastModeEnabled()) return;
                 ToolIconService.CleanExpiredCache();
-            }));
-            _ = DelayThenRunAsync(TimeSpan.FromSeconds(10), () =>
-            {
-                if (FastModeService.IsFastModeEnabled()) return Task.CompletedTask;
-                HardwareInfoService.PreloadAsync();
                 return Task.CompletedTask;
             });
+            _ = StartupMaintenance.ScheduleAsync("硬件预热", TimeSpan.FromSeconds(20), HardwareInfoService.PreloadAsync);
         }
-        _ = DelayThenRunAsync(TimeSpan.FromSeconds(30), () => Task.Run(() =>
+        _ = StartupMaintenance.ScheduleAsync("日志与临时文件清理", TimeSpan.FromSeconds(60), () => Task.Run(() =>
         {
             try { LogService.Prepare(); } catch { }
             try { LogService.EnforceQuota(); } catch { }
             UpdateService.PruneDownloadedUpdates();
             TempCleanupService.CleanTempFiles(olderThanUtc: DateTime.UtcNow.AddDays(-7));
-        }));
+        }), skipInFastMode: false);
         _ = Task.Run(() => ConfigManager.AutoMigratePathsIfNeeded());
 
         // AI 运行库相关注册一律按需：加速包（NPU/GPU EP）注册会加载 Windows ML 原生运行时，
@@ -822,7 +866,7 @@ public partial class App : Application
         // 低配模式：跳过历史空白分类清理（后台磁盘扫描）。
         if (!FastModeService.IsFastModeEnabled())
         {
-            _ = DelayThenRunAsync(TimeSpan.FromSeconds(15), () => Task.Run(async () =>
+            _ = StartupMaintenance.ScheduleAsync("空分类清理", TimeSpan.FromSeconds(90), () => Task.Run(async () =>
             {
                 if (FastModeService.IsFastModeEnabled()) return;
 

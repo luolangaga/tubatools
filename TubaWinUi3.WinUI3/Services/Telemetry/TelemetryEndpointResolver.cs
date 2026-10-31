@@ -5,8 +5,8 @@ namespace TubaWinUi3.Services.Telemetry;
 
 /// <summary>
 /// 采集端点的地址解析与缓存。
-/// 国内网络对 *.in.applicationinsights.azure.com 的解析常被污染（返回黑洞 IP，
-/// TCP 永远连不上），因此按「上次成功的 IP → 系统 A 记录 → Traffic Manager 别名 →
+/// 部分网络的解析可能返回黑洞 IP（
+/// TCP 永远连不上），因此按「上次成功的 IP → 系统 A 记录 → 可选备用域名 →
 /// 内置兜底 IP」逐级回退，避免采集数据在坏地址上空耗超时。
 /// 连接层只负责拿到候选 IP，TLS 的 SNI 与证书校验仍使用原始域名
 /// （SocketsHttpHandler.ConnectCallback 的约定），因此不会引起证书不匹配。
@@ -33,7 +33,7 @@ internal sealed class TelemetryEndpointResolver
     /// <summary>采集端点主机名（连接与 SNI 均使用它）。</summary>
     public string Host { get; }
 
-    /// <summary>CNAME 链下游的 Traffic Manager 别名：国内解析该名字通常不受污染。</summary>
+    /// <summary>可选备用域名；留空时只解析采集端点，不访问旧提供商。</summary>
     public string FallbackHost { get; }
 
     /// <summary>内置兜底 IP（解析全部失败时使用，可能随服务端迁移失效）。</summary>
@@ -43,7 +43,9 @@ internal sealed class TelemetryEndpointResolver
     public async Task<IReadOnlyList<IPAddress>> GetCandidatesAsync(CancellationToken ct)
     {
         var system = await ResolveAsync(Host, ct).ConfigureAwait(false);
-        var fallback = await ResolveAsync(FallbackHost, ct).ConfigureAwait(false);
+        var fallback = string.IsNullOrWhiteSpace(FallbackHost)
+            ? Array.Empty<IPAddress>()
+            : await ResolveAsync(FallbackHost, ct).ConfigureAwait(false);
 
         lock (_gate)
         {

@@ -45,6 +45,7 @@ public static class BuiltinToolRegistry
         Register(new GameMonitorTool());
         Register(new GameMonitorRecordsTool());
         Register(new GameTunnelTool());
+        Register(new SteamToolboxTool());
         if (!RuntimeHelper.IsPackagedContext)
             Register(new CommunityToolBuiltinTool());
         Register(new ScreenTestTool());

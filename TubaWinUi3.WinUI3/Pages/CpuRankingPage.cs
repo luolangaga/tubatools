@@ -52,6 +52,8 @@ public sealed partial class CpuRankingPage : Page
     private FrameworkElement _headerRow = null!;
     private FrameworkElement _filterRow = null!;
     private FrameworkElement _statsRow = null!;
+    private StackPanel _localRanking = null!;
+    private string _localHardwareName = "";
 
     public CpuRankingPage()
     {
@@ -63,6 +65,7 @@ public sealed partial class CpuRankingPage : Page
         Content = root;
 
         RefreshList();
+        _ = LoadLocalRankingAsync();
 
         // 代码构建的画刷不会随主题自动刷新，切换主题后按当前筛选状态重渲染
         ActualThemeChanged += (_, _) =>
@@ -137,6 +140,11 @@ public sealed partial class CpuRankingPage : Page
         var listRow = BuildListArea();
         mainGrid.Children.Add(listRow);
         Grid.SetRow(listRow, 3);
+
+        mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        _localRanking = new StackPanel { Spacing = 8, Visibility = Visibility.Collapsed };
+        mainGrid.Children.Add(_localRanking);
+        Grid.SetRow(_localRanking, 4);
 
         return mainGrid;
     }
@@ -658,9 +666,32 @@ public sealed partial class CpuRankingPage : Page
         Grid.SetColumn(tb, column);
     }
 
+    private async Task LoadLocalRankingAsync()
+    {
+        try { _localHardwareName = await Task.Run(HardwareInfoService.GetCpuName); }
+        catch { _localHardwareName = "未知"; }
+        UpdateLocalRanking();
+    }
+
+    private void UpdateLocalRanking()
+    {
+        if (_localRanking is null) return;
+        _localRanking.Children.Clear();
+        foreach (var name in new[] { _localHardwareName })
+        {
+            var entry = LocalRankingMatcher.Find(name,
+                CpuRankingService.Desktop.Concat(CpuRankingService.Laptop), e => e.Name);
+            if (entry is null || !CpuRankingService.GetByCategory(_category).Contains(entry)) continue;
+            _localRanking.Children.Add(LocalRankingCard.Create("CPU", entry.Name,
+                $"第 {entry.Rank} 名 · 多核 {entry.MultiCore:N0} · 单核 {entry.SingleCore:N0}", () => LocateInFullRanking(entry)));
+        }
+        _localRanking.Visibility = _localRanking.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void RefreshList()
     {
         if (_listContainer is null) return;
+        UpdateLocalRanking();
 
         var entries = CpuRankingService.GetByCategory(_category);
         entries = CpuRankingService.Filter(entries, _brand, _keyword);

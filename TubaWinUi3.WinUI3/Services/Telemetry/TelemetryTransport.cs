@@ -32,9 +32,11 @@ internal sealed class TelemetryTransport : IDisposable
     private readonly TelemetryEndpointResolver _resolver;
     private readonly Uri _trackUri;
     private readonly HttpClient _http;
+    private readonly string _ingestToken;
 
-    public TelemetryTransport(TelemetryEndpointResolver resolver, Uri trackUri, WebProxy? proxy)
+    public TelemetryTransport(TelemetryEndpointResolver resolver, Uri trackUri, WebProxy? proxy, string ingestToken)
     {
+        _ingestToken = ingestToken;
         _resolver = resolver;
         _trackUri = trackUri;
 
@@ -64,17 +66,29 @@ internal sealed class TelemetryTransport : IDisposable
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, _trackUri)
             {
-                Content = new ByteArrayContent(gzipPayload),
+                Content = new ByteArrayContent(AxiomTelemetryPayload.ConvertBatch(gzipPayload, contentEncoding)),
             };
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-            if (!string.IsNullOrEmpty(contentEncoding))
-                request.Content.Headers.TryAddWithoutValidation("Content-Encoding", contentEncoding);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _ingestToken);
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            request.Content.Headers.ContentEncoding.Add("gzip");
 
             using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
             budget.CancelAfter(RequestTimeout);
 
             using var response = await _http.SendAsync(request, budget.Token).ConfigureAwait(false);
-            return ClassifyResponse((int)response.StatusCode);
+            var result = ClassifyResponse((int)response.StatusCode);
+            if (result != TelemetrySendResult.Delivered) return result;
+            var body = await response.Content.ReadAsStringAsync(budget.Token).ConfigureAwait(false);
+            return AxiomTelemetryPayload.IsFullyAccepted(body)
+                ? TelemetrySendResult.Delivered : TelemetrySendResult.RetryLater;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return TelemetrySendResult.Discard; // 损坏的离线条目不能无限重试
+        }
+        catch (InvalidDataException)
+        {
+            return TelemetrySendResult.Discard;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -95,7 +109,7 @@ internal sealed class TelemetryTransport : IDisposable
     /// </summary>
     internal static TelemetrySendResult ClassifyResponse(int statusCode) => statusCode switch
     {
-        200 or 206 => TelemetrySendResult.Delivered,
+        >= 200 and < 300 => TelemetrySendResult.Delivered,
         400 or 401 or 403 or 404 or 413 or 439 => TelemetrySendResult.Discard,
         _ => TelemetrySendResult.RetryLater,
     };

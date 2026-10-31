@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
     x:Class="TubaWinUi3.Controls.StressTestControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -48,6 +48,11 @@
                     </Grid>
                 </Border>
 
+                <StackPanel Spacing="8">
+                    <TextBlock Text="内置传感器可能存在读数错误或不支持部分设备，建议打开 HWMonitor 查看温度、功耗和频率。" TextWrapping="Wrap" />
+                    <Button Content="打开 HWMonitor" Click="OpenHwMonitor_Click" HorizontalAlignment="Left" />
+                </StackPanel>
+
                 <Border BorderThickness="1" CornerRadius="8" Padding="16"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
@@ -95,7 +100,7 @@
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="FurMark GPU 参数设置" VerticalAlignment="Center" />
                             <Button Grid.Column="1" Click="ResetFurMarkSettings_Click" Padding="8,4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                                     <TextBlock FontSize="12" Text="恢复默认" />
                                 </StackPanel>
                             </Button>
@@ -213,7 +218,7 @@
                             <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="网卡烤机参数设置" VerticalAlignment="Center" />
                             <Button Grid.Column="1" Click="ResetNetSettings_Click" Padding="8,4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;" />
+                                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
                                     <TextBlock FontSize="12" Text="恢复默认" />
                                 </StackPanel>
                             </Button>

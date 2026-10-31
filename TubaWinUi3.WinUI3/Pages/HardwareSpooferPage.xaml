@@ -166,19 +166,19 @@
                 </Button>
                 <Button Grid.Column="1" Click="RestoreButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;"/>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;"/>
                         <TextBlock Text="一键恢复"/>
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="2" Click="BackupButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE787;"/>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE787;"/>
                         <TextBlock Text="备份当前"/>
                     </StackPanel>
                 </Button>
                 <Button Grid.Column="4" Click="RefreshButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;"/>
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;"/>
                         <TextBlock Text="刷新"/>
                     </StackPanel>
                 </Button>

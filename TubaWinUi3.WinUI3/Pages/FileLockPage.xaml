@@ -42,19 +42,19 @@
                     <TextBox Grid.ColumnSpan="5" Header="文件或目录路径" x:Name="PathBox" MinWidth="240" PlaceholderText="输入或选择要检查的文件 / 目录路径" l:Uids.Uid="FileLock_PathPlaceholder"/>
                     <Button x:Name="PickFileBtn" Grid.Row="1" Grid.Column="0" Click="PickFileBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE8E5;" FontSize="12"/>
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8E5;" FontSize="12"/>
                             <TextBlock Text="选择文件" l:Uids.Uid="FileLock_PickFile"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="PickFolderBtn" Grid.Row="1" Grid.Column="1" Click="PickFolderBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE8B7;" FontSize="12"/>
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8B7;" FontSize="12"/>
                             <TextBlock Text="选择目录" l:Uids.Uid="FileLock_PickFolder"/>
                         </StackPanel>
                     </Button>
                     <Button x:Name="ScanBtn" Grid.Row="1" Grid.Column="2" Style="{StaticResource AccentButtonStyle}" Click="ScanBtn_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
-                            <fluentIcons:FluentColorIcon Glyph="&#xE721;" FontSize="12"/>
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE721;" FontSize="12"/>
                             <TextBlock Text="扫描" l:Uids.Uid="FileLock_Scan"/>
                         </StackPanel>
                     </Button>
@@ -112,7 +112,7 @@
                         <ToggleSwitch x:Name="ShellMenuToggle" MinWidth="0" Toggled="ShellMenuToggle_Toggled" VerticalAlignment="Center"/>
                         <Button x:Name="RestartExplorerBtn" Grid.Column="1" Click="RestartExplorerBtn_Click" Padding="12,5" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <fluentIcons:FluentColorIcon FontSize="12" Glyph="&#xE72C;"/>
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;"/>
                                 <TextBlock FontSize="12" Text="重启资源管理器" l:Uids.Uid="FileLock_MenuRestartExplorer"/>
                             </StackPanel>
                         </Button>

@@ -104,7 +104,8 @@ public class FavoritesServiceTests : IDisposable
 
         var json = File.ReadAllText(ConfigManager.GetFavoritesPath());
         var stored = JsonSerializer.Deserialize<List<string>>(json);
-        Assert.Equal([@"C:\tools\b.exe", @"C:\tools\a.exe"], stored);
+        // Portable favorites deliberately store root tokens rather than absolute paths.
+        Assert.Equal(new[] { @"C:\tools\b.exe", @"C:\tools\a.exe" }.Select(PathResolver.MakeRelative), stored);
     }
 
     [Fact]
@@ -118,6 +119,6 @@ public class FavoritesServiceTests : IDisposable
 
         Assert.Equal(
             [@"C:\tools\b.exe", @"C:\tools\a.exe"],
-            FavoritesService.GetFavorites());
+            FavoritesService.GetFavorites(), StringComparer.OrdinalIgnoreCase);
     }
 }

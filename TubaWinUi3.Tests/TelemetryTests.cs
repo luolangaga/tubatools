@@ -73,21 +73,60 @@ namespace TubaWinUi3.Tests
         }
 
         [Fact]
-        public void ParseConnectionStringValue_ReadsIngestionEndpoint()
+        public void Endpoint_UsesDirectAxiomIngest()
         {
-            var value = TelemetryService.ParseConnectionStringValue(
-                TelemetryService.ConnectionString, "IngestionEndpoint");
-
-            Assert.Equal("https://japaneast-1.in.applicationinsights.azure.com/", value);
+            var uri = new Uri(AxiomTelemetryConfig.Endpoint);
+            Assert.Equal("https", uri.Scheme);
+            Assert.Equal("us-east-1.aws.edge.axiom.co", uri.Host);
+            Assert.Equal("/v1/ingest/tuba-telemetry", uri.AbsolutePath);
         }
 
         [Fact]
-        public void ParseConnectionStringValue_IsCaseInsensitiveAndReturnsNullWhenMissing()
+        public void ConvertEnvelope_PreservesTimeDeviceAndExceptionDetails()
         {
-            Assert.Equal("x", TelemetryService.ParseConnectionStringValue("KEY=x;", "key"));
-            Assert.Null(TelemetryService.ParseConnectionStringValue("KEY=x;", "other"));
-            Assert.Null(TelemetryService.ParseConnectionStringValue("", "key"));
+            var envelope = System.Text.Json.Nodes.JsonNode.Parse("""
+                {"time":"2026-10-01T12:00:00Z","tags":{"ai.user.id":"anonymous","ai.session.id":"session"},
+                "data":{"baseType":"ExceptionData","baseData":{"properties":{"source":"test"},
+                "exceptions":[{"typeName":"System.Exception","message":"outer","parsedStack":[]},
+                {"typeName":"System.IO.IOException","message":"inner"}]}}}
+                """)!.AsObject();
+            var result = AxiomTelemetryPayload.ConvertEnvelope(envelope);
+            Assert.Equal("2026-10-01T12:00:00Z", result["_time"]!.GetValue<string>());
+            Assert.Equal("anonymous", result["user_Id"]!.GetValue<string>());
+            Assert.Equal("exception", result["kind"]!.GetValue<string>());
+            Assert.Equal("System.Exception", result["type"]!.GetValue<string>());
+            Assert.Equal("inner", result["innermostMessage"]!.GetValue<string>());
+            Assert.Equal(2, result["details"]!.AsArray().Count);
+            Assert.Equal(result["event_id"]!.GetValue<string>(),
+                AxiomTelemetryPayload.ConvertEnvelope(envelope)["event_id"]!.GetValue<string>());
         }
+
+        [Fact]
+        public void ConvertBatch_AcceptsLegacyGzipSpoolWithoutLosingEvents()
+        {
+            var telemetry = new Microsoft.ApplicationInsights.DataContracts.EventTelemetry("heartbeat");
+            telemetry.Context.User.Id = "anonymous";
+            telemetry.Context.InstrumentationKey = "ff9e238f-9642-4aa9-a217-734434e79872";
+            var transmission = new Microsoft.ApplicationInsights.Channel.Transmission(
+                new Uri(AxiomTelemetryConfig.Endpoint), [telemetry], TimeSpan.FromSeconds(10));
+            var batch = AxiomTelemetryPayload.ConvertBatch(transmission.Content, transmission.ContentEncoding);
+            using var input = new MemoryStream(batch);
+            using var gzip = new System.IO.Compression.GZipStream(input, System.IO.Compression.CompressionMode.Decompress);
+            using var result = System.Text.Json.JsonDocument.Parse(gzip);
+            Assert.Equal(1, result.RootElement.GetArrayLength());
+            Assert.Equal("heartbeat", result.RootElement[0].GetProperty("name").GetString());
+            Assert.Equal("anonymous", result.RootElement[0].GetProperty("user_Id").GetString());
+            Assert.False(result.RootElement[0].TryGetProperty("iKey", out _));
+        }
+
+        [Theory]
+        [InlineData("{\"ingested\":2,\"failed\":0}", true)]
+        [InlineData("{\"ingested\":1,\"failed\":1}", false)]
+        [InlineData("{\"ingested\":0,\"failed\":0}", false)]
+        [InlineData("{}", false)]
+        [InlineData("not json", false)]
+        public void AxiomAcceptance_DoesNotTreatPartialSuccessAsDelivered(string response, bool accepted)
+            => Assert.Equal(accepted, AxiomTelemetryPayload.IsFullyAccepted(response));
 
         [Fact]
         public void MergeCandidates_PrefersCachedThenSystemThenFallbackThenPinned()
