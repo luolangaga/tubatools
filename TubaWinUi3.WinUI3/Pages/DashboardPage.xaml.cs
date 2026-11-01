@@ -111,7 +111,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         for (int i = 0; i < _features.Count; i++)
         {
             var card = _features[i]; var choice = Describe(card.Target);
-            var tile = new Controls.DashboardGalleryTile { Title = card.Title ?? choice.Name,
+            var tile = new Controls.DashboardGalleryTile { Width = 232, Height = 172, Title = card.Title ?? choice.Name,
                 Description = card.Description ?? choice.Description, Source = CreateLogo(card, 36, _iconCts.Token) };
             AutomationProperties.SetAutomationId(tile.ActionButton, "DashboardTile" + i);
             AutomationProperties.SetName(tile.ActionButton, tile.Title + ", " + tile.Description);
@@ -120,7 +120,9 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
             tile.Click += async (_, _) => await OpenCardAsync(card);
             FeaturesPanel.Children.Add(tile);
         }
+        FeatureStrip.Visibility = _features.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         UpdateCardLayout();
+        UpdateFeatureButtons();
     }
 
     private MenuFlyout ContentMenu(HomeDashboardCard card)

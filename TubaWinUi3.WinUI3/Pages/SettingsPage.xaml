@@ -69,7 +69,7 @@
                         <Expander.Header>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="赞助" Style="{StaticResource SettingsRowTitle}" l:Uids.Uid="Settings_SponsorTitle"/>
-                                <TextBlock Text="本软件与“图吧工具箱”无关系，我们是图吧工具箱 CE。" Style="{StaticResource SettingsRowDescription}" l:Uids.Uid="Settings_SponsorDisclaimer"/>
+                                <TextBlock Text="本软件为图吧工具箱社区版（CE）。" Style="{StaticResource SettingsRowDescription}" l:Uids.Uid="Settings_SponsorDisclaimer"/>
                             </StackPanel>
                         </Expander.Header>
                         <StackPanel Spacing="20" Padding="20">
@@ -204,20 +204,6 @@
                                     <FontIcon FontSize="18" Glyph="" Foreground="{ThemeResource FluentIconForegroundBrush}" />
                                 </toolkit:SettingsCard.HeaderIcon>
                                 <ToggleSwitch x:Name="FastModeToggle" VerticalAlignment="Center" Toggled="FastModeToggle_Toggled"/>
-                            </toolkit:SettingsCard>
-                        </Border>
-                        <Border x:Name="SettingsShowFrequentCard" Style="{StaticResource SettingsRowSurface}">
-                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
-                                <toolkit:SettingsCard.Header>
-                                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="显示常用推荐" l:Uids.Uid="Settings_ShowFrequent_Title" TextWrapping="Wrap"/>
-                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="在「常用」页面顶部显示按使用频率排序的推荐工具" l:Uids.Uid="Settings_ShowFrequent_Desc"/>
-                                    </StackPanel>
-                                </toolkit:SettingsCard.Header>
-                                <toolkit:SettingsCard.HeaderIcon>
-                                    <FontIcon FontSize="18" Glyph=""/>
-                                </toolkit:SettingsCard.HeaderIcon>
-                                <ToggleSwitch x:Name="ShowFrequentToggle" VerticalAlignment="Center" Toggled="ShowFrequentToggle_Toggled"/>
                             </toolkit:SettingsCard>
                         </Border>
                         <Border x:Name="SettingsBuiltinToolOpenModeCard" Style="{StaticResource SettingsRowSurface}">

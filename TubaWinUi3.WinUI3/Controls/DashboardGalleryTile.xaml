@@ -10,8 +10,26 @@
 
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <AcrylicBrush x:Key="DashboardFeatureBackgroundBrush" TintColor="#FFFFFF"
+                                  TintOpacity="0.45" TintLuminosityOpacity="0.35" FallbackColor="#F3F3F3" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <AcrylicBrush x:Key="DashboardFeatureBackgroundBrush" TintColor="#202020"
+                                  TintOpacity="0.45" TintLuminosityOpacity="0.35" FallbackColor="#202020" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="DashboardFeatureBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid
-        Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+        Background="{ThemeResource DashboardFeatureBackgroundBrush}"
         BorderBrush="{ThemeResource SurfaceStrokeColorFlyoutBrush}"
         CornerRadius="8">
         <Grid.Resources>

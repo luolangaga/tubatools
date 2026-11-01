@@ -32,7 +32,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private bool _closeToTrayInitializing;
     private bool _fastModeInitializing;
     private bool _defaultPageInitializing;
-    private bool _showFrequentInitializing;
     private bool _languageInitializing;
     private bool _builtinToolOpenModeInitializing;
     private bool _backdropInitializing;
@@ -113,7 +112,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["CompactMode"] = "AppearanceExpander",
         ["NavLayoutMode"] = "AppearanceExpander",
         ["DefaultPage"] = "GeneralExpander",
-        ["ShowFrequentRecommendations"] = "GeneralExpander",
         ["FastMode"] = "GeneralExpander",
         ["RememberWindow"] = "GeneralExpander",
         ["CloseToTray"] = "GeneralExpander",
@@ -147,7 +145,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["CompactMode"] = "SettingsCompactModeCard",
         ["NavLayoutMode"] = "SettingsNavLayoutCard",
         ["DefaultPage"] = "SettingsDefaultPageCard",
-        ["ShowFrequentRecommendations"] = "SettingsShowFrequentCard",
         ["FastMode"] = "SettingsFastModeCard",
         ["RememberWindow"] = "SettingsRememberWindowCard",
         ["CloseToTray"] = "SettingsCloseToTrayCard",
@@ -192,7 +189,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitCompactModeToggle();
         InitNavLayoutComboBox();
         InitDefaultPageComboBox();
-        InitShowFrequentToggle();
         InitActiveInterceptToggle();
         InitLanguageComboBox();
         InitThemeSelector();
@@ -241,7 +237,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         DownloadQueueService.QueueChanged += UpdateDownloadQueueStatus;
 
         // 页面被缓存，构造后不再重跑：开关可能被其它入口改过（如常用页的关闭按钮），进入时重新读取
-        InitShowFrequentToggle();
         InitHardwareStyle();
         RefreshLogDirCard();
 
@@ -528,19 +523,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (_builtinToolOpenModeInitializing) return;
         AppSettings.Set("BuiltinToolsOpenInWindow", BuiltinToolOpenModeComboBox.SelectedIndex == 1);
-    }
-
-    private void InitShowFrequentToggle()
-    {
-        _showFrequentInitializing = true;
-        ShowFrequentToggle.IsOn = AppSettings.GetBool(LaunchHistoryService.ShowFrequentRecommendationsSettingKey, true);
-        _showFrequentInitializing = false;
-    }
-
-    private void ShowFrequentToggle_Toggled(object sender, RoutedEventArgs e)
-    {
-        if (_showFrequentInitializing) return;
-        AppSettings.Set(LaunchHistoryService.ShowFrequentRecommendationsSettingKey, ShowFrequentToggle.IsOn);
     }
 
     private void InitRememberWindowToggle()

@@ -29,6 +29,32 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
     private const int MaxPoints = 50;
     private HardwareDetailData? _lastDetailData;
     private bool _pageAlive;
+    private bool _monitorReadInFlight;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool IsIconic(IntPtr hwnd);
+
+    private bool CanUpdateRealtimeMonitor()
+    {
+        if (!_pageAlive) return false;
+        try
+        {
+            if (XamlRoot is null) return false;
+            // Check this page's host: hardware details can also live in a separate tool window.
+            var hwnd = Microsoft.UI.Win32Interop.GetWindowFromWindowId(XamlRoot.ContentIslandEnvironment.AppWindowId);
+            return hwnd != IntPtr.Zero && IsWindowVisible(hwnd) && !IsIconic(hwnd);
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // The owning window may have been torn down between timer callbacks.
+            return false;
+        }
+    }
 
     private readonly ObservableCollection<double> _cpuHist = [];
     private readonly ObservableCollection<double> _gpuHist = [];
@@ -287,6 +313,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
 
     private async Task UpdateMonitorAsync()
     {
+        if (_monitorReadInFlight || !CanUpdateRealtimeMonitor()) return;
+        _monitorReadInFlight = true;
         MonitorSample sample;
         try
         {
@@ -296,9 +324,13 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         {
             return;
         }
+        finally
+        {
+            _monitorReadInFlight = false;
+        }
 
         // 读取期间页面可能已销毁（用户快速返回）：不再触碰已卸载的 UI
-        if (!_pageAlive) return;
+        if (!CanUpdateRealtimeMonitor()) return;
 
         Push(_cpuHist, Val(sample.CpuLoad));
         Push(_gpuHist, Val(sample.GpuLoad));

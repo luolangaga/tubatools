@@ -5,12 +5,26 @@ namespace TubaWinUi3.Pages;
 
 public sealed partial class DashboardPage
 {
-    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateCardLayout();
+    private double _lastLayoutWidth = double.NaN;
+    private bool? _lastNarrowLayout;
+    private ItemsWrapGrid? _lastItemsPanel;
+
+    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // Keep the viewport and header in the same layout pass. Deferring these
+        // dimensions to a timer leaves stale bounds during native live resizing.
+        if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) >= 0.5)
+            UpdateCardLayout();
+    }
 
     private void UpdateCardLayout()
     {
         if (!_ready || ToolsGrid.ActualWidth <= 0) return;
         double width = ToolsGrid.ActualWidth;
+        var itemsPanel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
+        if (Math.Abs(width - _lastLayoutWidth) < 0.5 && ReferenceEquals(itemsPanel, _lastItemsPanel)) return;
+        _lastLayoutWidth = width;
+        _lastItemsPanel = itemsPanel;
         bool narrow = width < 720;
         double margin = narrow ? 20 : 36;
         ContentStack.Width = width;
@@ -23,19 +37,18 @@ public sealed partial class DashboardPage
         double artworkOffset = Math.Min(100, Math.Min(width * .08, width - HeroArtwork.Width));
         HeroArtwork.Margin = HeroLeftBlend.Margin = HeroRightBlend.Margin = new Thickness(0, 0, artworkOffset, 0);
         HeroRightBlend.Width = Math.Min(80, HeroArtwork.Width * .12);
-        HeaderPanel.Margin = new Thickness(margin, narrow ? 20 : 28, margin, 24);
-        TitleText.Style = (Style)Application.Current.Resources[narrow ? "TitleTextBlockStyle" : "TitleLargeTextBlockStyle"];
-        GreetingText.Style = (Style)Application.Current.Resources[narrow ? "BodyTextBlockStyle" : "BodyLargeTextBlockStyle"];
-        FeatureScroll.Padding = new Thickness(margin, 0, margin, 12);
-        var featureWidth = Math.Max(1, width - margin * 2);
-        var featureColumns = Math.Max(1, Math.Min(_features.Count, (int)((featureWidth + 12) / (280 + 12))));
-        var tileWidth = (featureWidth - (featureColumns - 1) * 12) / featureColumns;
-        foreach (FrameworkElement tile in FeaturesPanel.Children) { tile.Width = tileWidth; tile.Height = 172; }
-        FeatureStrip.Visibility = _features.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
-        FilterBar.Margin = new Thickness(margin, 20, margin, 20);
-        ToolsToolbar.Margin = new Thickness(margin, 0, margin, 12);
+        if (_lastNarrowLayout != narrow)
+        {
+            HeaderPanel.Margin = new Thickness(margin, narrow ? 20 : 28, margin, 24);
+            TitleText.Style = (Style)Application.Current.Resources[narrow ? "TitleTextBlockStyle" : "TitleLargeTextBlockStyle"];
+            GreetingText.Style = (Style)Application.Current.Resources[narrow ? "BodyTextBlockStyle" : "BodyLargeTextBlockStyle"];
+            FeatureScroll.Padding = new Thickness(margin, 0, margin, 12);
+            FilterBar.Margin = new Thickness(margin, 20, margin, 20);
+            ToolsToolbar.Margin = new Thickness(margin, 0, margin, 12);
+            _lastNarrowLayout = narrow;
+        }
         ToolSearchBox.Width = Math.Min(240, Math.Max(120, width * .4));
-        if (ToolsGrid.ItemsPanelRoot is ItemsWrapGrid panel)
+        if (itemsPanel is { } panel)
         {
             double available = Math.Max(1, width - margin * 2);
             int columns = Math.Max(1, (int)((available + 12) / (narrow ? 232 : 280)));

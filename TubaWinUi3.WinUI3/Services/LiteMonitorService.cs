@@ -38,10 +38,12 @@ public sealed class LiteMonitorService : IDisposable
                 {
                     IsCpuEnabled = true,
                     IsGpuEnabled = true,
-                    IsMemoryEnabled = true,
+                    // MemoryStatusEx supplies these values without a second LHM sampler.
+                    IsMemoryEnabled = false,
                     IsNetworkEnabled = true,
                     IsStorageEnabled = true,
-                    IsMotherboardEnabled = true,
+                    // MonitorSample does not consume motherboard / Super I/O sensors.
+                    IsMotherboardEnabled = false,
                     IsBatteryEnabled = true,
                     IsControllerEnabled = false,
                     IsPsuEnabled = false
@@ -318,7 +320,7 @@ public sealed class LiteMonitorService : IDisposable
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GlobalMemoryStatusEx(ref MemoryStatus status);
 
-    private static void ReadSystemMemory(MonitorSample sample)
+    internal static void ReadSystemMemory(MonitorSample sample)
     {
         if (sample.MemTotalGB > 0) return;
         var status = new MemoryStatus { Length = (uint)Marshal.SizeOf<MemoryStatus>() };

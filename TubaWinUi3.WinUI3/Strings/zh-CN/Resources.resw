@@ -446,12 +446,6 @@
   <data name="Search_SettingDefaultPageDesc" xml:space="preserve">
     <value>选择应用启动后默认打开的页面</value>
   </data>
-  <data name="Search_SettingShowFrequent" xml:space="preserve">
-    <value>显示常用推荐</value>
-  </data>
-  <data name="Search_SettingShowFrequentDesc" xml:space="preserve">
-    <value>在常用页面显示按使用频率排序的推荐工具</value>
-  </data>
   <data name="Search_SettingFastMode" xml:space="preserve">
     <value>低配模式</value>
   </data>
@@ -1348,12 +1342,6 @@
   </data>
   <data name="Settings_SearchIndex_Title.Text" xml:space="preserve">
     <value>注册到 Windows 搜索</value>
-  </data>
-  <data name="Settings_ShowFrequent_Desc.Text" xml:space="preserve">
-    <value>在「常用」页面顶部显示按使用频率排序的推荐工具</value>
-  </data>
-  <data name="Settings_ShowFrequent_Title.Text" xml:space="preserve">
-    <value>显示常用推荐</value>
   </data>
   <data name="Settings_StorageUsage_Button.Text" xml:space="preserve">
     <value>查看占用</value>
@@ -5346,7 +5334,7 @@ else then stroke=#888888 visible=true
   <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Steam 本机账号、多存储库游戏管理、内置挂时长与网站加速</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>赞助</value></data>
   <data name="Settings_SponsorTitle.Text" xml:space="preserve"><value>赞助</value></data>
-  <data name="Settings_SponsorDisclaimer.Text" xml:space="preserve"><value>本软件与“图吧工具箱”无关系，我们是图吧工具箱 CE。</value></data>
+  <data name="Settings_SponsorDisclaimer.Text" xml:space="preserve"><value>本软件为图吧工具箱社区版（CE）。</value></data>
   <data name="Settings_SponsorThanks.Text" xml:space="preserve"><value>感谢你支持图吧工具箱 CE 的开发与维护，可通过以下二维码自愿赞助。</value></data>
   <data name="Settings_SponsorWeChat.Text" xml:space="preserve"><value>微信赞赏</value></data>
   <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>支付宝</value></data>

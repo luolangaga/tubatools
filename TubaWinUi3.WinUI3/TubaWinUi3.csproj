@@ -14,6 +14,8 @@
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
     <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
+    <!-- Optional XAML performance changes must be enabled before Application.Start. -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <!-- 主程序使用 JIT + 不裁剪，AI 运行库按需加载。CsWinRT 的 AOT 全局类型表
          会在普通 XAML 控件封送时提前解析 Windows ML 类型，导致未下载运行库时启动失败。
          AOT 发布仍保留其必需的优化器；NativeAOT helper 项目不受此配置影响。 -->
@@ -194,7 +196,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
     <!-- Microsoft.Win32.SystemEvents（CloseToTrayService 的注销/关机保护）与
