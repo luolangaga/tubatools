@@ -6,6 +6,7 @@
         <span class="site-footer-copyright">{{ t('app.copyright') }}</span>
       </div>
       <div class="site-footer-right">
+        <RouterLink to="/sponsors" class="sponsors-link">赞助名单</RouterLink>
         <a href="https://github.com/luolangaga/tubatool" target="_blank" rel="noopener" :title="t('nav.github')">
           <span class="github-mark" aria-hidden="true"></span>
         </a>
@@ -85,6 +86,8 @@ const githubMarkSvg = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   background: var(--subtle-secondary);
   color: var(--text-primary);
 }
+
+.site-footer-right .sponsors-link { width: auto; padding: 0 10px; white-space: nowrap; }
 
 .site-footer-right .icon {
   font-size: 18px;

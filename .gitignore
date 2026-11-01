@@ -109,3 +109,4 @@ uupzip_inspect/
 TubaWinUi3.WinUI3/Properties/Telemetry.local.props
 telemetry-dashboard/.dev.vars
 telemetry-dashboard/.wrangler/
+!TubaWinUi3.WinUI3/CertBlock/Certificates/*.cer

@@ -1,0 +1,76 @@
+<Page x:Class="TubaWinUi3.Pages.WindowManagerPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:TubaWinUi3.Controls"
+    Unloaded="Page_Unloaded">
+    <Grid RowSpacing="12">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <controls:ToolPageHeader ToolId="window-manager" Title="窗口管理" Subtitle="选择应用窗口，查看信息并调整窗口状态" Glyph="&#xE737;" ShowDivider="False"/>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="16" Margin="24,0,24,24">
+                <InfoBar x:Name="StatusBar" IsOpen="False" IsClosable="True"/>
+                <Border Padding="24" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnSpacing="20">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Button x:Name="Picker" AutomationProperties.AutomationId="WindowCrosshair" Width="72" Height="72" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="1" AutomationProperties.Name="按住并拖动十字选择窗口">
+                                <FontIcon Glyph="&#xE8B0;" FontSize="32" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" IsHitTestVisible="False"/>
+                            </Button>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                <TextBlock Text="拖动十字到目标窗口，松开选择" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="PickerHint" Text="按 Esc 取消。也可以在下方列表选择窗口。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <ComboBox x:Name="WindowList" AutomationProperties.AutomationId="WindowPickerList" Header="应用窗口（包含本工具隐藏的窗口）" PlaceholderText="选择窗口" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" SelectionChanged="WindowList_SelectionChanged">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Grid Width="24" Height="24" Loaded="WindowIcon_Loaded" DataContextChanged="WindowIcon_DataContextChanged">
+                                                <FontIcon Glyph="&#xE737;" FontSize="20" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <Image Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"/>
+                                            </Grid>
+                                            <TextBlock Grid.Column="1" Text="{Binding Label}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Grid.Column="1" AutomationProperties.AutomationId="RefreshWindows" Content="刷新列表" VerticalAlignment="Bottom" Click="Refresh_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <Border Padding="20" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <StackPanel Spacing="16">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <Grid x:Name="SelectedIconHost" Width="32" Height="32" Visibility="Collapsed">
+                                    <FontIcon x:Name="SelectedIconFallback" Glyph="&#xE737;" FontSize="24" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <Image x:Name="SelectedIcon" Stretch="Uniform" AutomationProperties.AccessibilityView="Raw"/>
+                                </Grid>
+                                <TextBlock Text="窗口信息" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button x:Name="CopyButton" AutomationProperties.AutomationId="CopyWindowInfo" Content="复制信息" HorizontalAlignment="Right" Click="Copy_Click" IsEnabled="False"/>
+                        </Grid>
+                        <TextBlock x:Name="Details" Text="尚未选择窗口" IsTextSelectionEnabled="True" TextWrapping="Wrap"/>
+                        <GridView x:Name="Actions" IsEnabled="False" SelectionMode="None" IsItemClickEnabled="False">
+                            <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal"/></ItemsPanelTemplate></GridView.ItemsPanel>
+                            <Button Content="无边框窗口化" AutomationProperties.AutomationId="WindowAction_borderless" Tag="borderless" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="无边框全屏" AutomationProperties.AutomationId="WindowAction_fullscreen" Tag="fullscreen" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="最大化" AutomationProperties.AutomationId="WindowAction_maximize" Tag="maximize" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="最小化" AutomationProperties.AutomationId="WindowAction_minimize" Tag="minimize" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="普通窗口" AutomationProperties.AutomationId="WindowAction_normal" Tag="normal" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button x:Name="TopmostButton" Content="置顶" AutomationProperties.AutomationId="WindowAction_topmost" Tag="topmost" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="隐藏" AutomationProperties.AutomationId="WindowAction_hide" Tag="hide" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="显示" AutomationProperties.AutomationId="WindowAction_show" Tag="show" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="恢复操作前状态" AutomationProperties.AutomationId="WindowAction_restore" Tag="restore" Click="Action_Click" Margin="0,0,8,8"/>
+                            <Button Content="关闭窗口…" AutomationProperties.AutomationId="WindowAction_close" Tag="close" Click="Action_Click" Margin="0,0,8,8"/>
+                        </GridView>
+                        <TextBlock Text="全屏将铺满窗口所在显示器。恢复操作前状态可还原本次运行中首次操作前的边框、位置、大小和置顶状态。部分应用会自行管理边框或限制外部控制。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

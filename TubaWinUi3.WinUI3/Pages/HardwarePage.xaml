@@ -24,11 +24,6 @@
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                </Setter.Value>
-            </Setter>
         </Style>
 
         <Storyboard x:Name="EntranceStoryboard">
@@ -71,8 +66,8 @@
             </DoubleAnimation>
 
             <DoubleAnimation
-                Storyboard.TargetName="Card1"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                Storyboard.TargetName="Card1Scale"
+                Storyboard.TargetProperty="ScaleX"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
@@ -80,8 +75,8 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation
-                Storyboard.TargetName="Card1"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                Storyboard.TargetName="Card1Scale"
+                Storyboard.TargetProperty="ScaleY"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
@@ -90,8 +85,8 @@
             </DoubleAnimation>
 
             <DoubleAnimation
-                Storyboard.TargetName="Card2"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                Storyboard.TargetName="Card2Scale"
+                Storyboard.TargetProperty="ScaleX"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.23">
                 <DoubleAnimation.EasingFunction>
@@ -99,8 +94,8 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation
-                Storyboard.TargetName="Card2"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                Storyboard.TargetName="Card2Scale"
+                Storyboard.TargetProperty="ScaleY"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.23">
                 <DoubleAnimation.EasingFunction>
@@ -109,8 +104,8 @@
             </DoubleAnimation>
 
             <DoubleAnimation
-                Storyboard.TargetName="Card3"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                Storyboard.TargetName="Card3Scale"
+                Storyboard.TargetProperty="ScaleX"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.31">
                 <DoubleAnimation.EasingFunction>
@@ -118,8 +113,8 @@
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation
-                Storyboard.TargetName="Card3"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                Storyboard.TargetName="Card3Scale"
+                Storyboard.TargetProperty="ScaleY"
                 From="0.94" To="1" Duration="0:0:0.4"
                 BeginTime="0:0:0.31">
                 <DoubleAnimation.EasingFunction>
@@ -324,6 +319,9 @@
                     </Grid.ColumnDefinitions>
 
                     <Border x:Name="Card1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card1_Tapped" IsTapEnabled="True">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="Card1Scale" />
+                        </Border.RenderTransform>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />
@@ -348,6 +346,9 @@
                     </Border>
 
                     <Border x:Name="Card2" Grid.Column="1" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card2_Tapped" IsTapEnabled="True">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="Card2Scale" />
+                        </Border.RenderTransform>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />
@@ -372,6 +373,9 @@
                     </Border>
 
                     <Border x:Name="Card3" Grid.Column="2" Style="{StaticResource MetricCardStyle}" PointerEntered="Card_PointerEntered" PointerExited="Card_PointerExited" Tapped="Card3_Tapped" IsTapEnabled="True">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="Card3Scale" />
+                        </Border.RenderTransform>
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="48" />

@@ -30,7 +30,7 @@ export const features: FeatureEntry[] = [
   { id: 'home', cat: 'shell', image: '/screenshots/home.png' },
   { id: 'hardware', cat: 'hardware', image: '/screenshots/hardware.png', doc: '/guide/hardware' },
   { id: 'builtin-tools', cat: 'maintain', image: '/screenshots/builtin-tools.png', doc: '/guide/builtin' },
-  { id: 'ai-assistant', cat: 'ai', image: '/screenshots/ai-assistant.png' },
+  { id: 'ai-playground', cat: 'ai', image: '/screenshots/ai-playground.png' },
   { id: 'game-monitor', cat: 'perf', image: '/screenshots/game-monitor.png' },
   { id: 'game-tunnel', cat: 'network', image: '/screenshots/game-tunnel.png' },
   { id: 'stress-test', cat: 'perf', image: '/screenshots/stress-test.png' },
@@ -49,10 +49,13 @@ export const features: FeatureEntry[] = [
   { id: 'time-sync', cat: 'maintain', image: '/screenshots/time-sync.png' },
   { id: 'favorites', cat: 'shell', image: '/screenshots/favorites.png' },
   { id: 'community', cat: 'shell', image: '/screenshots/community.png' },
+  { id: 'steam-toolbox', cat: 'network', image: '/screenshots/steam-toolbox.png' },
+  { id: 'website-acceleration', cat: 'network', image: '/screenshots/website-acceleration.png' },
+  { id: 'window-manager', cat: 'maintain', image: '/screenshots/window-manager.png' },
   { id: 'settings', cat: 'shell', image: '/screenshots/settings.png' }
 ];
 
 /** 首页「进阶功能」精选（按顺序取 4 个） */
-export const homeSpotlightIds = ['ai-assistant', 'game-monitor', 'game-tunnel', 'format-converter'];
+export const homeSpotlightIds = ['ai-playground', 'game-monitor', 'game-tunnel', 'format-converter'];
 
 export const featureById = (id: string): FeatureEntry | undefined => features.find((item) => item.id === id);

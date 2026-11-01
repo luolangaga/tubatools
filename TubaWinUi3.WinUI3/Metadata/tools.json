@@ -1534,6 +1534,11 @@
       ]
     },
     {
+      "match": "窗口管理",
+      "builtin": "window-manager",
+      "categories": [ "游戏工具" ]
+    },
+    {
       "match": "证书禁用",
       "builtin": "cert-block",
       "categories": [
@@ -1780,6 +1785,7 @@
         "其他工具"
       ]
     },
-    { "match": "Steam 工具箱", "builtin": "steam-toolbox", "categories": ["游戏工具", "网络工具"] }
+    { "match": "Steam 工具箱", "builtin": "steam-toolbox", "categories": ["游戏工具"] },
+    { "match": "网站加速", "builtin": "website-acceleration", "categories": ["网络工具"] }
   ]
 }

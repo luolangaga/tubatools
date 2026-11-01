@@ -99,10 +99,33 @@ public sealed class CertBlockTool : IBuiltinTool
         actionBar.Children.Add(unblockAllBtn);
         actionBar.Children.Add(refreshBtn);
 
-        var vendorList = new StackPanel { Spacing = 2 };
+        var searchBox = new TextBox { PlaceholderText = "搜索厂商或证书名称", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var filter = new ComboBox { MinWidth = 130, HorizontalAlignment = HorizontalAlignment.Stretch };
+        filter.Items.Add("全部状态");
+        filter.Items.Add("已全部封锁");
+        filter.Items.Add("部分封锁");
+        filter.Items.Add("未封锁");
+        filter.SelectedIndex = 0;
+        filter.SelectionChanged += (_, _) => { if (_state is not null) { _state.VendorList.Children.Clear(); RefreshUI(); } };
+        var searchGrid = new Grid { ColumnSpacing = 8 };
+        searchGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        searchGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        searchGrid.Children.Add(searchBox);
+        searchGrid.Children.Add(filter); Grid.SetColumn(filter, 1);
+        var listHeading = new TextBlock { Text = "厂商列表", FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+        var resultText = new TextBlock { FontSize = 12, Opacity = 0.68 };
+        var emptyText = new TextBlock { Text = "没有找到符合条件的厂商", Opacity = 0.65, Margin = new Thickness(0, 24, 0, 24), HorizontalAlignment = HorizontalAlignment.Center, Visibility = Visibility.Collapsed };
+        var controls = new StackPanel { Spacing = 12 };
+        controls.Children.Add(actionBar);
+        controls.Children.Add(listHeading);
+        controls.Children.Add(searchGrid);
+        controls.Children.Add(resultText);
+        searchBox.TextChanged += (_, _) => { if (_state is not null) { _state.VendorList.Children.Clear(); RefreshUI(); } };
+
+        var vendorList = new StackPanel { Spacing = 6 };
         var listScroll = new ScrollViewer
         {
-            Content = vendorList,
+            Content = new StackPanel { Children = { vendorList, emptyText } },
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto
         };
 
@@ -125,7 +148,7 @@ public sealed class CertBlockTool : IBuiltinTool
         contentGrid.Children.Add(statsGrid); Grid.SetRow(statsGrid, 0);
         contentGrid.Children.Add(adminWarning); Grid.SetRow(adminWarning, 1);
         contentGrid.Children.Add(compatibilityWarning); Grid.SetRow(compatibilityWarning, 2);
-        contentGrid.Children.Add(actionBar); Grid.SetRow(actionBar, 3);
+        contentGrid.Children.Add(controls); Grid.SetRow(controls, 3);
         contentGrid.Children.Add(loadingPanel); Grid.SetRow(loadingPanel, 4);
         contentGrid.Children.Add(listScroll); Grid.SetRow(listScroll, 4);
 
@@ -146,6 +169,10 @@ public sealed class CertBlockTool : IBuiltinTool
             AdminText = adminText,
             AdminWarning = adminWarning,
             VendorList = vendorList,
+            SearchBox = searchBox,
+            Filter = filter,
+            ResultText = resultText,
+            EmptyText = emptyText,
             LoadingPanel = loadingPanel,
             ListScroll = listScroll,
             BlockAllBtn = blockAllBtn,
@@ -181,10 +208,23 @@ public sealed class CertBlockTool : IBuiltinTool
         state.LoadingPanel.Visibility = Visibility.Collapsed;
         state.ListScroll.Visibility = Visibility.Visible;
 
-        var vendors = CertBlockService.Vendors;
-        if (vendors.Count == 0) return;
+        var query = state.SearchBox.Text.Trim();
+        var vendors = CertBlockService.Vendors.Where(v =>
+            v.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+            v.Id.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+            v.Certificates.Any(c => c.CommonName.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .Where(v => state.Filter.SelectedIndex switch
+            {
+                1 => v.IsBlocked,
+                2 => v.IsPartiallyBlocked,
+                3 => !v.IsBlocked && !v.IsPartiallyBlocked,
+                _ => true
+            }).ToList();
+        state.ResultText.Text = $"显示 {vendors.Count} / {CertBlockService.VendorCount} 个厂商";
+        state.EmptyText.Visibility = vendors.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        if (state.VendorList.Children.Count != vendors.Count)
+        if (state.VendorList.Children.Count != vendors.Count ||
+            vendors.Where((vendor, index) => index >= state.VendorList.Children.Count || (state.VendorList.Children[index] as Border)?.Tag as string != vendor.Id).Any())
         {
             state.VendorList.Children.Clear();
             foreach (var vendor in vendors)
@@ -196,7 +236,9 @@ public sealed class CertBlockTool : IBuiltinTool
         {
             for (int i = 0; i < vendors.Count; i++)
             {
-                UpdateVendorRow(state.VendorList.Children[i] as Border, vendors[i]);
+                state.UpdatingRows = true;
+                try { UpdateVendorRow(state.VendorList.Children[i] as Border, vendors[i]); }
+                finally { state.UpdatingRows = false; }
             }
         }
     }
@@ -227,7 +269,7 @@ public sealed class CertBlockTool : IBuiltinTool
         };
         UpdateCountText(countText, vendor);
 
-        var infoPanel = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        var infoPanel = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         infoPanel.Children.Add(nameText);
         infoPanel.Children.Add(countText);
 
@@ -241,6 +283,7 @@ public sealed class CertBlockTool : IBuiltinTool
         };
         toggle.Toggled += (_, _) =>
         {
+            if (state.UpdatingRows) return;
             if (toggle.IsOn)
                 CertBlockService.BlockVendor(vendor);
             else
@@ -249,19 +292,37 @@ public sealed class CertBlockTool : IBuiltinTool
             UpdateCountText(countText, vendor);
         };
 
+        var details = new Button { Content = "证书明细", VerticalAlignment = VerticalAlignment.Center };
+        var detailsList = new StackPanel { Spacing = 8, MaxWidth = 440 };
+        foreach (var cert in vendor.Certificates)
+        {
+            detailsList.Children.Add(new TextBlock
+            {
+                Text = $"{cert.CommonName}\n指纹：{cert.Thumbprint}",
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 12
+            });
+        }
+        details.Flyout = new Flyout { Content = new ScrollViewer { Content = detailsList, MaxHeight = 360 } };
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        actions.Children.Add(details);
+        actions.Children.Add(toggle);
         var grid = new Grid { ColumnSpacing = 8 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.Children.Add(indicator); Grid.SetColumn(indicator, 0);
         grid.Children.Add(infoPanel); Grid.SetColumn(infoPanel, 1);
-        grid.Children.Add(toggle); Grid.SetColumn(toggle, 2);
+        grid.Children.Add(actions); Grid.SetColumn(actions, 2);
 
         var border = new Border
         {
-            Padding = new Thickness(10, 10, 10, 10),
+            Tag = vendor.Id,
+            Padding = new Thickness(14, 12, 14, 12),
+            Background = new SolidColorBrush(ThemeColors.CardBg),
+            CornerRadius = new CornerRadius(8),
             BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            BorderThickness = new Thickness(1),
             Child = grid
         };
 
@@ -286,10 +347,11 @@ public sealed class CertBlockTool : IBuiltinTool
                         UpdateCountText(countText, vendor);
                 }
             }
-            if (child is ToggleSwitch toggle)
+            if (child is StackPanel actions)
             {
-                if (toggle.IsOn != vendor.IsBlocked)
-                    toggle.IsOn = vendor.IsBlocked;
+                foreach (var item in actions.Children)
+                    if (item is ToggleSwitch toggle && toggle.IsOn != vendor.IsBlocked)
+                        toggle.IsOn = vendor.IsBlocked;
             }
         }
     }
@@ -306,7 +368,7 @@ public sealed class CertBlockTool : IBuiltinTool
 
     private static void UpdateCountText(TextBlock textBlock, CertBlockVendor vendor)
     {
-        textBlock.Text = $"{vendor.BlockedCount} / {vendor.TotalCount} 个证书";
+        textBlock.Text = $"{(vendor.IsBlocked ? "已全部封锁" : vendor.IsPartiallyBlocked ? "部分封锁" : "未封锁")} · {vendor.BlockedCount} / {vendor.TotalCount} 个证书";
     }
 
     private static Border MakeStatCard(string label, TextBlock value, string glyph)
@@ -349,6 +411,11 @@ public sealed class CertBlockTool : IBuiltinTool
         public TextBlock AdminText = null!;
         public InfoBar AdminWarning = null!;
         public StackPanel VendorList = null!;
+        public TextBox SearchBox = null!;
+        public ComboBox Filter = null!;
+        public TextBlock ResultText = null!;
+        public TextBlock EmptyText = null!;
+        public bool UpdatingRows;
         public StackPanel LoadingPanel = null!;
         public ScrollViewer ListScroll = null!;
         public Button BlockAllBtn = null!;

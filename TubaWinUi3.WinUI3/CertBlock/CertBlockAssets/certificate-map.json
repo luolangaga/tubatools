@@ -15,7 +15,8 @@
     "360 browser 256.2022.04.cer",
     "360 ludashi 2022.04.cer",
     "360 ludashi 256.2022.04.cer",
-    "360 browser 256.2023.08.cer"
+    "360 browser 256.2023.08.cer",
+    "360 browser 256.2026.05.cer"
   ],
   "2345": [
     "2345.cer",
@@ -67,7 +68,7 @@
   "DongfangToutiao": [
     "donfang toutiao.cer",
     "donfang toutiao 256.cer",
-	"donfang toutiao 2020.1.cer",
+    "donfang toutiao 2020.1.cer",
     "donfang toutiao 256.2020.1.cer"
   ],
   "DriverLife": [
@@ -90,7 +91,8 @@
     "grid verse (format factory) 2020.02.cer",
     "grid verse (format factory) 256.2020.02.cer",
     "grid verse (format factory) 256.2020.08.cer",
-    "grid verse (format factory) 256.2022.07.cer"
+    "grid verse (format factory) 256.2022.07.cer",
+    "grid verse (format factory) 256.2026.05.cer"
   ],
   "HeiNote": [
     "7654 note.cer",
@@ -132,7 +134,9 @@
     "kingsoft 256.2022.07.cer",
     "kingsoft 256.2024.06.cer",
     "kingsoft 2024.10.cer",
-    "kingsoft 256.2024.10.cer"
+    "kingsoft 256.2024.10.cer",
+    "kingsoft browser 256.2026.05.cer",
+    "kingsoft wps 256.2026.05.cer"
   ],
   "Kugou": [
     "kugou.cer",
@@ -169,7 +173,8 @@
     "qiyi 2020.02.cer",
     "qiyi 256.2020.02.cer",
     "qiyi 256.2021.02.cer",
-    "qiyi 256.2023.08.cer"
+    "qiyi 256.2023.08.cer",
+    "qiyi 256.2026.05.cer"
   ],
   "Qidian": [
     "qidian 256.2023.02.cer"
@@ -182,7 +187,8 @@
     "rising 2019.8.cer",
     "rising 256.2019.8.cer",
     "rising 2022.07.cer",
-    "rising 256.2022.07.cer"
+    "rising 256.2022.07.cer",
+    "rising 256.2026.05.cer"
   ],
   "Riyue": [
     "riyue (at).cer",
@@ -234,7 +240,8 @@
     "tencent 2021.02.cer",
     "tencent 256.2021.02.cer",
     "tencent 256.2024.02.cer",
-    "tencent 256.2024.10.cer"
+    "tencent 256.2024.10.cer",
+    "tencent 256.2026.05.cer"
   ],
   "Thunder": [
     "thunder.cer",
@@ -253,13 +260,15 @@
     "thunder player 256.2018.12.cer",
     "thunder 2020.1.cer",
     "thunder 256.2020.1.cer",
-    "thunder 256.2023.02.cer"
+    "thunder 256.2023.02.cer",
+    "thunder 256.2026.05.cer"
   ],
   "WindSoul": [
     "windsoul 256.2024.06.cer"
   ],
   "Xundu": [
-    "xundu 256.2022.04.cer"
+    "xundu 256.2022.04.cer",
+    "xundu 256.2026.05.cer"
   ],
   "Youku": [
     "youku.cer",

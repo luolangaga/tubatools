@@ -11,6 +11,9 @@ public sealed class SteamAccelerationRule : INotifyPropertyChanged
     public string[] Domains { get; init; } = [];
     public string Forward { get; init; } = "";
     public string Sni { get; init; } = "";
+    public string[] MatchPatterns { get; init; } = [];
+    public string UserAgent { get; init; } = "";
+    public int Order { get; init; }
     public int ProxyType { get; init; }
     public bool Available => ProxyType != 4;
     public string Details => Available ? $"{Domains.Length} 个域名 · {(ProxyType == 1 ? "资源重定向" : "本地反向代理")}" : "需要 Watt 服务器授权，当前不可用";
@@ -48,6 +51,8 @@ public static class SteamAccelerationCatalog
                     int type = rule.TryGetProperty("ProxyType", out var p) ? p.GetInt32() : 0;
                     if (domains.Length > 0)
                         rules.Add(new() { Id = Text("Id"), Name = Text("Name"), Category = category, Domains = domains, Forward = Text("ForwardDomainNames"), Sni = Text("FakeServerName"), ProxyType = type,
+                            MatchPatterns = Text("MatchDomainNames").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                            UserAgent = Text("FakeUserAgent"), Order = rule.TryGetProperty("Order", out var order) ? order.GetInt32() : 0,
                             IsSelected = type != 4 && (category.Contains("Steam") || category.Equals("Github", StringComparison.OrdinalIgnoreCase)) && !Text("Name").Contains("解锁") && !Text("Name").Contains("IPv6") });
                     if (rule.TryGetProperty("Items", out var children) && children.ValueKind == JsonValueKind.Array) AddRules(children);
                 }

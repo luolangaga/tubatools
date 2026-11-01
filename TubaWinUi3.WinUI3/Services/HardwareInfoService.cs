@@ -1421,8 +1421,8 @@ public static class HardwareInfoService
     private static string BuildWmiMonitorLabel(ManagementBaseObject item)
     {
         var mfr = DecodeWmiArray(item, "ManufacturerName");
-        var product = DecodeWmiArray(item, "ProductName");
-        var serial = DecodeWmiArray(item, "SerialNumberID");
+        // 概览、详情及分享共用此名称，仅显示品牌与型号，不附带设备序列号。
+        var product = DecodeWmiArray(item, "UserFriendlyName");
         var pnpCode = ExtractMonitorPnpCode(Get(item, "InstanceName"));
 
         var mfrLabel = ResolveManufacturer(mfr);
@@ -1435,9 +1435,7 @@ public static class HardwareInfoService
             if (!string.IsNullOrWhiteSpace(pnpMfr)) parts.Add(pnpMfr);
         }
 
-        var label = string.Join(" ", parts.Distinct());
-        if (!string.IsNullOrWhiteSpace(serial) && serial != "0") label += $" (SN:{serial})";
-        return label.Trim();
+        return string.Join(" ", parts.Distinct()).Trim();
     }
 
     internal static string ExtractMonitorPnpCode(string? deviceId)

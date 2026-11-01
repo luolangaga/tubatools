@@ -19,7 +19,7 @@
 
 **一台新电脑从验机、跑分、装驱动到日常清理维护，只用这一个工具箱。**
 
-89 款经典硬件工具随包收录，47 款 Fluent 原生工具开箱即用，还住着一个能直接操作你电脑的 AI 助手。
+经典硬件工具随包收录，Fluent 原生工具开箱即用，并提供支持 NPU / GPU / CPU 的本地 AI 试炼场。
 
 [官网文档](https://tubawinui3.cn) | [下载](https://github.com/luolangaga/tubatools/releases) | [反馈](https://github.com/luolangaga/tubatools/issues) | [讨论](https://github.com/luolangaga/tubatools/discussions)
 
@@ -39,14 +39,16 @@
 ## 项目介绍
 
 <p align="center">
-  <img src="images/screenshots/favorites.png" width="420" alt="常用与推荐">
-  <img src="images/screenshots/settings.png" width="420" alt="设置中心">
+  <img src="images/screenshots/favorites.png" width="880" alt="常用与推荐">
+  <img src="images/screenshots/settings.png" width="880" alt="设置中心">
 </p>
+
+[查看当前版本的全部功能截图](https://tubawinui3.cn/features)
 
 左侧导航按分类浏览全部工具，顶部一个搜索框能搜到任何一款工具，觉得好用就点星标收进常用页。
 **收录的 89 款经典工具 + 内置的 47 款原生工具，共用同一套卡片、收藏、排序与桌面快捷方式**——用起来没有「两套东西」的感觉。
 
-* **AI 助手** —— 内置智能系统代理：读硬件、分析磁盘、清理垃圾、读写文件、执行命令、联网搜索，28 个 Agent 工具 + 危险操作确认
+* **本地 AI 试炼场** — 本地模型管理、LLM 对话、图像分类、目标检测与图像特征对比，支持 NPU / GPU / CPU 加速
 * **硬件检测与性能** —— 温度 / 频率 / 功耗实时曲线、一键三烤、毒蘑菇测试、跑分排行、快速验机、磁盘健康
 * **格式转换** —— 图片 / 音视频 / Word / Excel / PPT / PDF 互转，OCR 识别、PDF 合并拆分、批量队列
 * **游戏工具箱** —— 可自定义布局的 FPS / 温度 / 负载悬浮层，虚拟局域网一键联机，运行库一键修复

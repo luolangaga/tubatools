@@ -2265,7 +2265,7 @@ Permissions
     <value>Toxic Mushroom Test</value>
   </data>
   <data name="Builtin_wifi-password_Desc" xml:space="preserve">
-    <value>View the names and passwords of WiFi networks this PC has connected to.</value>
+    <value>View saved WiFi passwords, scan LAN devices and kick them off through your router.</value>
   </data>
   <data name="Builtin_wifi-password_Name" xml:space="preserve">
     <value>WiFi Passwords</value>
@@ -5315,11 +5315,15 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>View logs</value></data>
   <data name="Builtin_steam-toolbox_Name" xml:space="preserve"><value>Steam Toolbox</value></data>
-  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Local Steam accounts, game libraries, built-in idling and website acceleration</value></data>
+  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Local Steam accounts, game libraries and built-in idling</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>Sponsor</value></data>
+  <data name="Settings_StarRequest.Text" xml:space="preserve"><value>If you like our project, please give us a Star on GitHub/GitCode!</value></data>
+  <data name="Settings_SponsorList.Content" xml:space="preserve"><value>Sponsors</value></data>
   <data name="Settings_SponsorTitle.Text" xml:space="preserve"><value>Sponsor</value></data>
   <data name="Settings_SponsorDisclaimer.Text" xml:space="preserve"><value>This software is Tuba Toolbox Community Edition (CE).</value></data>
   <data name="Settings_SponsorThanks.Text" xml:space="preserve"><value>Thank you for supporting the development and maintenance of Tuba Toolbox CE. Scan a code below to make a voluntary donation.</value></data>
   <data name="Settings_SponsorWeChat.Text" xml:space="preserve"><value>WeChat Appreciation</value></data>
   <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>Alipay</value></data>
+  <data name="Builtin_website-acceleration_Name" xml:space="preserve"><value>Website Acceleration</value></data>
+  <data name="Builtin_website-acceleration_Desc" xml:space="preserve"><value>Built-in website acceleration with service selection, live traffic charts and connection details</value></data>
 </root>

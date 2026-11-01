@@ -74,7 +74,10 @@ public sealed class SteamToolboxTests
         SteamAccelerationService.TestHttpFactory = () => new System.Net.Http.HttpMessageInvoker(new FixtureHandler());
         try
         {
-            await SteamAccelerationService.StartAsync(true, false);
+            await SteamAccelerationService.StartAsync([
+                new SteamAccelerationRule { Domains = ["github.com"] },
+                new SteamAccelerationRule { Id = "scoped", Domains = ["github.com"], MatchPatterns = ["https://github.com/scoped/*"], UserAgent = "Chrome/150; ${origin}" }
+            ]);
             Assert.True(SteamAccelerationService.Running);
             Assert.Contains("127.0.0.1 github.com", File.ReadAllText(hosts));
             using var handler = new System.Net.Http.SocketsHttpHandler
@@ -96,8 +99,19 @@ public sealed class SteamToolboxTests
             using var response = await client.GetAsync("https://github.com/test?q=1");
             Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("https://github.com/test?q=1", await response.Content.ReadAsStringAsync());
-            Assert.Equal(1, SteamAccelerationService.Traffic.Requests);
+            using var scopedRequest = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, "https://github.com/scoped/test");
+            scopedRequest.Headers.UserAgent.ParseAdd("ValveSteamClient/1.0");
+            scopedRequest.Headers.Add("X-Forwarded-For", "127.0.0.1");
+            using var scopedResponse = await client.SendAsync(scopedRequest);
+            Assert.Equal("github.com", Assert.Single(scopedResponse.Headers.GetValues("X-Observed-Host")));
+            Assert.Equal("Chrome/150; ValveSteamClient/1.0", Assert.Single(scopedResponse.Headers.GetValues("X-Observed-UA")));
+            Assert.Equal("False", Assert.Single(scopedResponse.Headers.GetValues("X-Observed-Forwarded")));
+            Assert.Equal(2, SteamAccelerationService.Traffic.Requests);
             Assert.Equal(0, SteamAccelerationService.Traffic.Failures);
+            using var failed = await client.GetAsync("https://github.com/error");
+            Assert.Equal(System.Net.HttpStatusCode.ServiceUnavailable, failed.StatusCode);
+            Assert.Equal(1, SteamAccelerationService.Traffic.Failures);
+            Assert.Contains("github.com · HTTP 503", SteamAccelerationService.LastFailure);
             await SteamAccelerationService.StopAsync();
             Assert.False(SteamAccelerationService.Running);
             Assert.DoesNotContain("TubaSteamAcceleration", File.ReadAllText(hosts));
@@ -116,7 +130,14 @@ public sealed class SteamToolboxTests
     private sealed class FixtureHandler : System.Net.Http.HttpMessageHandler
     {
         protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new System.Net.Http.StringContent(request.RequestUri!.ToString()) });
+        {
+            var response = new System.Net.Http.HttpResponseMessage(request.RequestUri!.AbsolutePath == "/error" ? System.Net.HttpStatusCode.ServiceUnavailable : System.Net.HttpStatusCode.OK)
+            { Content = new System.Net.Http.StringContent(request.RequestUri.ToString()) };
+            response.Headers.TryAddWithoutValidation("X-Observed-Host", request.Headers.Host);
+            response.Headers.TryAddWithoutValidation("X-Observed-UA", request.Headers.UserAgent.ToString());
+            response.Headers.TryAddWithoutValidation("X-Observed-Forwarded", request.Headers.Any(h => h.Key.StartsWith("X-Forwarded-", StringComparison.OrdinalIgnoreCase)).ToString());
+            return Task.FromResult(response);
+        }
     }
 
     [Fact]

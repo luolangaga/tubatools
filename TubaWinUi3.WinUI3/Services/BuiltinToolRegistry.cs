@@ -46,6 +46,7 @@ public static class BuiltinToolRegistry
         Register(new GameMonitorRecordsTool());
         Register(new GameTunnelTool());
         Register(new SteamToolboxTool());
+        Register(new WebsiteAccelerationTool());
         if (!RuntimeHelper.IsPackagedContext)
             Register(new CommunityToolBuiltinTool());
         Register(new ScreenTestTool());
@@ -77,6 +78,7 @@ public static class BuiltinToolRegistry
         Register(new MemoryManagerTool());
         Register(new DriverStoreTool());
         Register(new LogViewerTool());
+        Register(new WindowManagerTool());
     }
 
     public static IReadOnlyList<string> GetCategories()

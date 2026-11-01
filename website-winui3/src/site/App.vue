@@ -104,23 +104,28 @@ router.afterEach((to, from) => {
 const pageSeo = {
   home: {
     title: '图吧工具箱CE——PC硬件检测与系统维护工具集',
-    description: '图吧工具箱CE官方下载站。原版图吧工具箱的社区重构版（Community Edition），专业的PC硬件检测与系统维护工具集，收录134个工具条目与47款内置工具，支持CPU-Z、GPU-Z、CrystalDiskMark等一键启动，WinUI 3原生界面，完全免费离线运行，零数据收集。',
+    description: '图吧工具箱CE官方下载站。原版图吧工具箱的社区重构版（Community Edition），专业的PC硬件检测与系统维护工具集，收录138个工具条目与58款内置工具，支持CPU-Z、GPU-Z、CrystalDiskMark等一键启动，WinUI 3原生界面，完全免费离线运行，零数据收集。',
     url: 'https://tubawinui3.cn/'
   },
   download: {
     title: '图吧工具箱CE下载——免费PC硬件检测与系统维护工具集',
-    description: '图吧工具箱CE官方下载页。下载最新版图吧工具箱CE，完全免费、纯离线运行，支持x64/ARM64全架构，一键安装即可使用134个工具条目与47款内置硬件检测与系统维护工具。',
+    description: '图吧工具箱CE官方下载页。下载最新版图吧工具箱CE，完全免费、纯离线运行，支持x64/ARM64全架构，一键安装即可使用138个工具条目与58款内置硬件检测与系统维护工具。',
     url: 'https://tubawinui3.cn/download'
   },
   features: {
     title: '功能展示——图吧工具箱CE 截图与内置工具一览',
-    description: '图吧工具箱CE功能展示：134 个工具条目、47 款内置工具的实机截图，涵盖硬件信息、一键三烤、游戏监控覆盖层、游戏联机助手、AI 助手、垃圾清理、格式转换、网速测试、时间同步等。',
+    description: '图吧工具箱CE功能展示：138 个工具条目、58 款内置工具的实机截图，涵盖硬件信息、一键三烤、游戏监控覆盖层、游戏联机助手、AI 助手、垃圾清理、格式转换、网速测试、时间同步等。',
     url: 'https://tubawinui3.cn/features'
   },
   about: {
     title: '关于图吧工具箱CE——PC硬件检测与系统维护工具集',
     description: '图吧工具箱CE——原版图吧工具箱的社区重构版（Community Edition），免费、开源、注重隐私的PC硬件检测与系统维护工具集，WinUI 3原生界面，完全免费离线运行。',
     url: 'https://tubawinui3.cn/about'
+  },
+  sponsors: {
+    title: '赞助名单——图吧工具箱CE',
+    description: '感谢每一位支持图吧工具箱CE的朋友。每一份支持，都让免费、开源的工具箱继续向前。',
+    url: 'https://tubawinui3.cn/sponsors'
   },
   why: {
     title: '为什么选择图吧工具箱CE？——全面对比原版工具箱',
@@ -271,6 +276,9 @@ const onSearchQuerySubmitted = ({ QueryText, ChosenSuggestion }) => {
 
 const selectedNavigationItem = computed({
   get: () => {
+    if (currentPage.value === 'sponsors') {
+      return navMenuItems.find(entry => entry.Tag === 'about') ?? navMenuItems[0];
+    }
     if (currentPage.value === 'thanks') {
       return navMenuItems.find(entry => entry.Tag === 'download') ?? navMenuItems[0];
     }

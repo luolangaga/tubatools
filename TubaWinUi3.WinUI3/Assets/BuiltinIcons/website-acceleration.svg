@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+ <defs><linearGradient id="globe" x1="24" y1="14" x2="98" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#6ED8F6"/><stop offset="1" stop-color="#2865D1"/></linearGradient><linearGradient id="bolt" x1="80" y1="53" x2="102" y2="118" gradientUnits="userSpaceOnUse"><stop stop-color="#FFE891"/><stop offset="1" stop-color="#F5A642"/></linearGradient></defs>
+ <circle cx="58" cy="58" r="48" fill="url(#globe)"/>
+ <ellipse cx="58" cy="58" rx="23" ry="47" fill="none" stroke="#C4F1FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M13 44H102M13 72H94M58 13V101" fill="none" stroke="#C4F1FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M91 54 65 91H86L79 119 119 75H98L107 54Z" fill="url(#bolt)"/>
+ <circle cx="29" cy="29" r="6" fill="#E4FAFF"/>
+</svg>

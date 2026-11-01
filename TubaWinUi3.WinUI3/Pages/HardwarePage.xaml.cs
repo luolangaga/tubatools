@@ -303,14 +303,14 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     private void Card_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         if (FastModeService.IsFastModeEnabled()) return;
-        if (sender is not Border border) return;
+        if (sender is not Border { RenderTransform: ScaleTransform transform }) return;
         var sb = new Storyboard();
         var scaleX = new DoubleAnimation { To = 1.02, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
         var scaleY = new DoubleAnimation { To = 1.02, Duration = TimeSpan.FromMilliseconds(120), EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
-        Storyboard.SetTarget(scaleX, border);
-        Storyboard.SetTarget(scaleY, border);
-        Storyboard.SetTargetProperty(scaleX, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
-        Storyboard.SetTargetProperty(scaleY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
+        Storyboard.SetTarget(scaleX, transform);
+        Storyboard.SetTarget(scaleY, transform);
+        Storyboard.SetTargetProperty(scaleX, nameof(ScaleTransform.ScaleX));
+        Storyboard.SetTargetProperty(scaleY, nameof(ScaleTransform.ScaleY));
         sb.Children.Add(scaleX);
         sb.Children.Add(scaleY);
         sb.Begin();
@@ -319,14 +319,14 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     private void Card_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         if (FastModeService.IsFastModeEnabled()) return;
-        if (sender is not Border border) return;
+        if (sender is not Border { RenderTransform: ScaleTransform transform }) return;
         var sb = new Storyboard();
         var scaleX = new DoubleAnimation { To = 1.0, Duration = TimeSpan.FromMilliseconds(180), EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
         var scaleY = new DoubleAnimation { To = 1.0, Duration = TimeSpan.FromMilliseconds(180), EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
-        Storyboard.SetTarget(scaleX, border);
-        Storyboard.SetTarget(scaleY, border);
-        Storyboard.SetTargetProperty(scaleX, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
-        Storyboard.SetTargetProperty(scaleY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
+        Storyboard.SetTarget(scaleX, transform);
+        Storyboard.SetTarget(scaleY, transform);
+        Storyboard.SetTargetProperty(scaleX, nameof(ScaleTransform.ScaleX));
+        Storyboard.SetTargetProperty(scaleY, nameof(ScaleTransform.ScaleY));
         sb.Children.Add(scaleX);
         sb.Children.Add(scaleY);
         sb.Begin();
@@ -419,7 +419,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        if (FastModeService.IsFastModeEnabled())
+        if (UseSettingsStyle || FastModeService.IsFastModeEnabled())
         {
             SetElementStatesToVisible();
         }
@@ -436,9 +436,10 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         HeaderPanel.RenderTransform = new TranslateTransform { Y = 0 };
         MetricsPanel.Opacity = 1;
         MetricsPanel.RenderTransform = new TranslateTransform { Y = 0 };
-        Card1.RenderTransform = new ScaleTransform { ScaleX = 1, ScaleY = 1 };
-        Card2.RenderTransform = new ScaleTransform { ScaleX = 1, ScaleY = 1 };
-        Card3.RenderTransform = new ScaleTransform { ScaleX = 1, ScaleY = 1 };
+        // Keep the named instances: entrance and hover animations target them directly.
+        Card1Scale.ScaleX = Card1Scale.ScaleY = 1;
+        Card2Scale.ScaleX = Card2Scale.ScaleY = 1;
+        Card3Scale.ScaleX = Card3Scale.ScaleY = 1;
         DetailsPanel.Opacity = 1;
         DetailsPanel.RenderTransform = new TranslateTransform { Y = 0 };
     }

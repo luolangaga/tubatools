@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="Properties\Telemetry.local.props" Condition="Exists('Properties\Telemetry.local.props')" />
   <Target Name="ValidateAxiomTelemetryForPublish" BeforeTargets="PrepareForPublish" Condition="'$(AxiomIngestToken)' == ''">
     <Error Text="发布前必须配置 AxiomIngestToken（本地 Properties/Telemetry.local.props 或 CI 的 AXIOM_INGEST_TOKEN secret）。" />
@@ -27,7 +27,7 @@
     <CETCompat>false</CETCompat>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.8.0</Version>
+    <Version>1.8.1</Version>
     <SatelliteResourceLanguages>zh-Hans;zh-Hant;en</SatelliteResourceLanguages>
     <DefaultItemExcludes>$(DefaultItemExcludes);artifacts\**;publish*\**;bin-verify\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

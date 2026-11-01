@@ -2,7 +2,7 @@
 
 English | [中文](README.md)
 
-<img src="images/banner-en.png" width="880" alt="Tuba Toolbox CE — PC hardware toolbox">
+<img src="images/screenshots/home.png" width="880" alt="Tuba Toolbox CE — PC hardware toolbox">
 
 <sub>Note: this English README is translated by AI and may contain inaccuracies.</sub>
 
@@ -21,7 +21,7 @@ English | [中文](README.md)
 
 **One toolbox for a new PC — from first-boot checks and benchmarks to drivers, cleanup and repair.**
 
-89 classic hardware tools ship in the box, 47 native Fluent tools work out of the box, and an AI assistant lives inside that can actually operate your PC.
+Classic hardware tools and native Fluent utilities work out of the box, alongside a local AI playground with NPU / GPU / CPU acceleration.
 
 [Official Docs](https://tubawinui3.cn) | [Download](https://github.com/luolangaga/tubatools/releases) | [Issues](https://github.com/luolangaga/tubatools/issues) | [Discussions](https://github.com/luolangaga/tubatools/discussions)
 
@@ -41,14 +41,16 @@ English | [中文](README.md)
 ## About
 
 <p align="center">
-  <img src="images/screenshots/favorites.png" width="420" alt="Favorites and recommendations">
-  <img src="images/screenshots/settings.png" width="420" alt="Settings">
+  <img src="images/screenshots/favorites.png" width="880" alt="Favorites and recommendations">
+  <img src="images/screenshots/settings.png" width="880" alt="Settings">
 </p>
+
+[View all current feature screenshots](https://tubawinui3.cn/features)
 
 The left navigation browses every tool by category, the search box at the top finds any of them, and a star puts the ones you like on the favorites page.
 **The 89 bundled classic tools and the 47 built-in native tools share one card layout, one favorites list, one sort order and one desktop-shortcut path** — so it never feels like two separate products.
 
-* **AI Assistant** — a built-in system agent: reads hardware info, analyzes disk usage, cleans junk, reads/writes files, runs commands and searches the web, with 28 agent tools and confirmation for risky actions
+* **Local AI Playground** — local model management, LLM chat, image classification, object detection and image comparison, with NPU / GPU / CPU acceleration
 * **Hardware Detection & Performance** — live temperature / frequency / power curves, stress tests, fractal GPU test, benchmark leaderboards, new-PC check and disk health
 * **Format Converter** — images / audio & video / Word / Excel / PPT / PDF conversion, OCR, PDF merge & split and batch queues
 * **Gaming Toolbox** — a customizable FPS / temperature / load overlay, one-click virtual LAN co-op, and runtime repair

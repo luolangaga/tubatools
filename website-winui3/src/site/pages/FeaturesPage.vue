@@ -105,9 +105,9 @@ import { useI18n } from '../../components/i18n/index';
 const { t } = useI18n();
 
 const stats = [
-  { value: '134', key: 'features.stat.tools', icon: '\uE8F1' },
-  { value: '47', key: 'features.stat.builtin', icon: '\uE90F' },
-  { value: '26', key: 'features.stat.community', icon: '\uE902' },
+  { value: '138', key: 'features.stat.tools', icon: '\uE8F1' },
+  { value: '58', key: 'features.stat.builtin', icon: '\uE90F' },
+  { value: features.length, key: 'features.stat.screenshots', icon: '\uE902' },
   { value: 'x86 / x64 / ARM64', key: 'features.stat.arch', icon: '\uE950' }
 ];
 

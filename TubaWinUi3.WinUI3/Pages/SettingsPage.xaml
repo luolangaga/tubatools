@@ -65,15 +65,18 @@
                             </StackPanel>
                         </Grid>
                     </Border>
-                    <Expander x:Name="SponsorExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False" Margin="0,0,0,28" AutomationProperties.AutomationId="SponsorExpander">
+                    <Expander x:Name="SponsorExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False" Margin="0,0,0,4" AutomationProperties.AutomationId="SponsorExpander">
                         <Expander.Header>
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="赞助" Style="{StaticResource SettingsRowTitle}" l:Uids.Uid="Settings_SponsorTitle"/>
-                                <TextBlock Text="本软件为图吧工具箱社区版（CE）。" Style="{StaticResource SettingsRowDescription}" l:Uids.Uid="Settings_SponsorDisclaimer"/>
-                            </StackPanel>
+                            <Grid MinHeight="76">
+                                <StackPanel Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="赞助" Style="{StaticResource SettingsRowTitle}" l:Uids.Uid="Settings_SponsorTitle"/>
+                                    <TextBlock Text="本软件为图吧工具箱社区版（CE）。" Style="{StaticResource SettingsRowDescription}" l:Uids.Uid="Settings_SponsorDisclaimer"/>
+                                </StackPanel>
+                            </Grid>
                         </Expander.Header>
                         <StackPanel Spacing="20" Padding="20">
                             <TextBlock Text="感谢你支持图吧工具箱 CE 的开发与维护，可通过以下二维码自愿赞助。" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" l:Uids.Uid="Settings_SponsorThanks"/>
+                            <HyperlinkButton Content="赞助名单" NavigateUri="https://tubawinui3.cn/sponsors" HorizontalAlignment="Left" Padding="0,4" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" l:Uids.Uid="Settings_SponsorList"/>
                             <Grid x:Name="SponsorCodesGrid" ColumnSpacing="24" RowSpacing="24" SizeChanged="SponsorCodes_SizeChanged">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -94,6 +97,18 @@
                             </Grid>
                         </StackPanel>
                     </Expander>
+                    <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76" Margin="0,0,0,28">
+                        <toolkit:SettingsCard.Header>
+                            <TextBlock Text="如果你喜欢我们的项目可以在Github/GitCode给我们一个Star！" Style="{StaticResource SettingsRowTitle}" l:Uids.Uid="Settings_StarRequest"/>
+                        </toolkit:SettingsCard.Header>
+                        <toolkit:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Favorite"/>
+                        </toolkit:SettingsCard.HeaderIcon>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <HyperlinkButton Content="GitHub" NavigateUri="https://github.com/luolangaga/tubatool"/>
+                            <HyperlinkButton Content="GitCode" NavigateUri="https://gitcode.com/luolangaga/tubatool"/>
+                        </StackPanel>
+                    </toolkit:SettingsCard>
                     <StackPanel Spacing="4" Margin="0,0,0,28" x:Name="UpdatesSection">
                         <TextBlock Text="版本和更新" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2" l:Uids.Uid="Settings_GroupUpdates" TextWrapping="Wrap"/>
                         <Border x:Name="SettingsUpdateCard" Style="{StaticResource SettingsRowSurface}">
