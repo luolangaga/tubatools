@@ -224,6 +224,8 @@ public sealed partial class SteamToolboxPage : Page
     }
     private void RenderCurrentTask()
     {
+        var connectionStatus = SteamIdleService.ConnectionStatus;
+        IdleStatus.Text = SteamIdleService.Status + (connectionStatus.Length == 0 ? "" : "\n" + connectionStatus);
         var task = SteamIdleService.CurrentTask;
         bool running = task.State == SteamIdleTaskState.Running;
         bool paused = task.State == SteamIdleTaskState.Paused;

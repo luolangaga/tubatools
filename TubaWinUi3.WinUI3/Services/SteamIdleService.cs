@@ -16,6 +16,16 @@ public static class SteamIdleService
     private static string _accountName = "";
     private static IReadOnlyList<SteamOwnedGame> _ownedGames = [];
     private static bool _hasOwnedGameList;
+    private static DateTimeOffset? _lastOnlineCheck;
+    public static string ConnectionStatus
+    {
+        get
+        {
+            lock (Gate) return !_loggedIn ? "" : _lastOnlineCheck is { } checkedAt
+                ? $"在线检测：服务器已响应 · {checkedAt:HH:mm:ss}（每 15 秒检测）"
+                : "在线检测：正在确认服务器连接…";
+        }
+    }
     public static SteamIdleTaskSnapshot CurrentTask { get { lock (Gate) return Activity.Snapshot(DateTimeOffset.Now); } }
     public static string AccountLabel { get { lock (Gate) return _loggedIn ? $"{_accountName} · SteamID {_client?.SteamID}" : "未登录"; } }
     public static bool PlayingBlocked { get { lock (Gate) return _blocked; } }
@@ -42,18 +52,17 @@ public static class SteamIdleService
                 lock (Gate)
                 {
                     if (_client != client) return;
-                    Activity.End(SteamIdleTaskState.Disconnected, DateTimeOffset.Now); _ownedGames = []; _hasOwnedGameList = false;
-                    _loggedIn = false; QrUrl = null; GuardPrompt = null; _guardCode?.TrySetCanceled(); _guardCode = null; stop.Cancel();
-                    if (!Status.StartsWith("登录失败", StringComparison.Ordinal)) Update("连接已断开，请重新登录");
+                    EndDisconnected(client, stop, Status.StartsWith("登录失败", StringComparison.Ordinal) ? Status : "连接已断开，请重新登录");
                 }
             });
             manager.Subscribe<SteamUser.LoggedOnCallback>(c =>
             {
                 lock (Gate)
                 {
-                    if (_client != client) return;
+                    if (_client != client || stop.IsCancellationRequested) return;
                     _loggedIn = c.Result == EResult.OK; QrUrl = null;
                     Update(_loggedIn ? $"已登录 · SteamID {client.SteamID} · 选择游戏开始挂时长" : $"Steam 登录失败：{c.Result}");
+                    if (_loggedIn) _ = Task.Run(() => MonitorConnectionAsync(client, stop));
                 }
             });
             manager.Subscribe<SteamUser.LoggedOffCallback>(c =>
@@ -61,8 +70,7 @@ public static class SteamIdleService
                 lock (Gate)
                 {
                     if (_client != client) return;
-                    Activity.End(SteamIdleTaskState.Disconnected, DateTimeOffset.Now); _ownedGames = []; _hasOwnedGameList = false;
-                    _loggedIn = false; Update($"会话已退出：{c.Result}");
+                    EndDisconnected(client, stop, $"会话已退出：{c.Result}");
                 }
             });
             manager.Subscribe<SteamUser.PlayingSessionStateCallback>(c =>
@@ -70,7 +78,7 @@ public static class SteamIdleService
                 if (_client != client) return;
                 lock (Gate)
                 {
-                    if (_client != client) return;
+                    if (_client != client || stop.IsCancellationRequested) return;
                     _blocked = c.PlayingBlocked;
                     if (_blocked)
                     {
@@ -123,9 +131,54 @@ public static class SteamIdleService
                     client.Connect();
                     while (!stop.IsCancellationRequested) manager.RunWaitCallbacks(TimeSpan.FromMilliseconds(250));
                 }
-                catch (Exception e) { if (_client == client) Update("Steam 连接失败：" + e.Message); }
+                catch (Exception e) { EndDisconnected(client, stop, "Steam 连接失败：" + e.Message); }
                 finally { client.Disconnect(); }
             });
+        }
+    }
+    private static Task MonitorConnectionAsync(SteamClient client, CancellationTokenSource stop) =>
+        SteamIdleConnectionMonitor.RunAsync(async token =>
+        {
+            Task<SteamUnifiedMessages.ServiceMethodResponse<CPlayer_GetPlayerLinkDetails_Response>> responseTask;
+            lock (Gate)
+            {
+                token.ThrowIfCancellationRequested();
+                if (_client != client || !_loggedIn || !client.IsConnected || client.SteamID == null)
+                    throw new IOException("Steam 会话连接已断开");
+                // Round trip over THIS authenticated CM connection, not a public website reachability test.
+                // Persona state (including Invisible/Offline) is unrelated to session connectivity.
+                var player = client.GetHandler<SteamUnifiedMessages>()!.CreateService<SteamKit2.Internal.Player>();
+                var request = new CPlayer_GetPlayerLinkDetails_Request();
+                request.steamids.Add(client.SteamID.ConvertToUInt64());
+                responseTask = player.GetPlayerLinkDetails(request).ToTask();
+            }
+            var response = await responseTask.WaitAsync(token).ConfigureAwait(false);
+            if (response.Result != EResult.OK) throw new IOException($"Steam 在线检测失败：{response.Result}");
+        }, () =>
+        {
+            lock (Gate)
+            {
+                if (_client != client || stop.IsCancellationRequested || !_loggedIn) return;
+                _lastOnlineCheck = DateTimeOffset.Now;
+                Changed?.Invoke();
+            }
+        }, e => EndDisconnected(client, stop, e is TimeoutException
+            ? "Steam 在线检测超时，已中断挂时长，请重新登录。"
+            : "无法确认 Steam 会话在线，已中断挂时长，请重新登录。"), stop.Token);
+
+    private static void EndDisconnected(SteamClient client, CancellationTokenSource stop, string status)
+    {
+        lock (Gate)
+        {
+            // Late callbacks/probes from an old login must never end the replacement session.
+            if (_client != client || stop.IsCancellationRequested) return;
+            Activity.End(SteamIdleTaskState.Disconnected, DateTimeOffset.Now);
+            _ownedGames = []; _hasOwnedGameList = false; _lastOnlineCheck = null;
+            _loggedIn = false; _blocked = false; QrUrl = null; GuardPrompt = null;
+            _guardCode?.TrySetCanceled(); _guardCode = null;
+            stop.Cancel();
+            client.Disconnect();
+            Update(status);
         }
     }
     public static async Task<SteamOnlineSnapshot> GetOnlineInfoAsync()
@@ -206,7 +259,7 @@ public static class SteamIdleService
     private static void DisconnectCore()
     {
         Activity.End(SteamIdleTaskState.Stopped, DateTimeOffset.Now);
-        _ownedGames = []; _hasOwnedGameList = false;
+        _ownedGames = []; _hasOwnedGameList = false; _lastOnlineCheck = null;
         var previous = _client; _client = null;
         _stop?.Cancel(); _stop = null;
         _guardCode?.TrySetCanceled(); _guardCode = null; GuardPrompt = null;

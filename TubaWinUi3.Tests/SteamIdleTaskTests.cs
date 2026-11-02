@@ -36,6 +36,63 @@ public sealed class SteamIdleTaskTests
         Assert.Equal(SteamIdleTaskState.Stopped, task.Snapshot(Start.AddHours(3)).State);
     }
     [Fact]
+    public async Task OnlineMonitorRepeatsWithoutOverlappingAndStopsOnLogout()
+    {
+        using var stop = new CancellationTokenSource();
+        int requests = 0, confirmations = 0, active = 0;
+        await SteamIdleConnectionMonitor.RunAsync(async token =>
+        {
+            Assert.Equal(1, Interlocked.Increment(ref active));
+            Interlocked.Increment(ref requests);
+            await Task.Yield();
+            Interlocked.Decrement(ref active);
+        }, () => { if (++confirmations == 3) stop.Cancel(); }, _ => Assert.Fail("Unexpected disconnect"),
+            stop.Token, TimeSpan.FromMilliseconds(1));
+        Assert.Equal(3, requests);
+        Assert.Equal(3, confirmations);
+    }
+    [Fact]
+    public async Task OnlineMonitorTimeoutDisconnectsAndFreezesTaskTime()
+    {
+        var task = new SteamIdleTaskTracker();
+        task.Start(10, "Game", "art", "account", Start);
+        var pending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        int failures = 0;
+        await SteamIdleConnectionMonitor.RunAsync(_ => pending.Task, () => Assert.Fail("No server reply"), e =>
+        {
+            Assert.IsType<TimeoutException>(e);
+            failures++;
+            task.End(SteamIdleTaskState.Disconnected, Start.AddSeconds(10));
+        }, CancellationToken.None, timeout: TimeSpan.FromMilliseconds(20));
+        pending.SetResult(); // A late reply must not confirm or restart the ended task.
+        Assert.Equal(1, failures);
+        Assert.Equal(SteamIdleTaskState.Disconnected, task.Snapshot(Start.AddHours(1)).State);
+        Assert.Equal(TimeSpan.FromSeconds(10), task.Snapshot(Start.AddHours(1)).Elapsed);
+    }
+    [Fact]
+    public async Task OnlineMonitorCancellationIgnoresLateReplyFromPreviousLogin()
+    {
+        using var stop = new CancellationTokenSource();
+        var pending = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var run = SteamIdleConnectionMonitor.RunAsync(_ => pending.Task,
+            () => Assert.Fail("Old login confirmed"), _ => Assert.Fail("Old login disconnected"), stop.Token);
+        stop.Cancel();
+        await run;
+        pending.SetResult();
+    }
+    [Fact]
+    public async Task OnlineMonitorServerFailureEndsPolling()
+    {
+        int requests = 0, failures = 0;
+        await SteamIdleConnectionMonitor.RunAsync(_ =>
+        {
+            requests++;
+            throw new IOException("Connection lost");
+        }, () => Assert.Fail("No server reply"), e => { Assert.IsType<IOException>(e); failures++; }, CancellationToken.None);
+        Assert.Equal(1, requests);
+        Assert.Equal(1, failures);
+    }
+    [Fact]
     public async Task TrafficCountsActualBytesAndKeepsSessionsSeparate()
     {
         var session = new SteamTrafficSession(Start);
