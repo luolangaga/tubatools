@@ -1130,6 +1130,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
         try
         {
             var arguments = BuildFurMarkArgs(minutes);
+            furmarkExe = FurMarkLaunchPath.Prepare(furmarkExe, Path.GetDirectoryName(furmarkExe)).ExePath;
             _furmarkProcess = Process.Start(new ProcessStartInfo { FileName = furmarkExe, Arguments = arguments, UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(furmarkExe) });
             Log($"FurMark 已启动 (GPU 压力测试, {minutes} 分钟)");
             Log($"FurMark 参数: {arguments}");

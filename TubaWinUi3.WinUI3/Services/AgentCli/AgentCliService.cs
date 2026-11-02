@@ -135,6 +135,7 @@ internal static class AgentCliService
     {
         var (tool, timeout, toolArgs) = AgentCliRequest.ValidateRun(args);
         var exe = ResolveTool(tool) ?? throw new FileNotFoundException("工具未安装，请先在工具箱中下载对应工具。");
+        exe = FurMarkLaunchPath.Prepare(exe, Path.GetDirectoryName(exe)).ExePath;
         var start = new ProcessStartInfo(exe) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(exe)!, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var arg in toolArgs) start.ArgumentList.Add(arg);
         using var process = Process.Start(start) ?? throw new InvalidOperationException("启动工具失败。");

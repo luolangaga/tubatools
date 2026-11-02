@@ -14,6 +14,32 @@ namespace TubaWinUi3.Tests;
 public class DesktopShortcutTests
 {
     [Fact]
+    public void CreateDesktopShortcut_FurMark_UsesAsciiTargetAndWorkingDirectory()
+    {
+        var root = NewTempRoot();
+        string? alias = null;
+        try
+        {
+            var desktop = Path.Combine(root, "桌面");
+            Directory.CreateDirectory(desktop);
+            var exe = CreateTool(root, "烤鸡工具", "FurMark_win64", "FurMark_GUI.exe");
+            var tool = NewTool("FurMark", "烤鸡工具", exe, @"烤鸡工具\FurMark_win64\FurMark_GUI.exe");
+            var launch = FurMarkLaunchPath.Prepare(exe, Path.GetDirectoryName(exe));
+            alias = launch.WorkingDirectory;
+            var shortcut = ReadShortcut(WindowsSearchIndexService.CreateDesktopShortcut(tool, desktop));
+            Assert.Equal(launch.ExePath, shortcut.Target, ignoreCase: true);
+            Assert.Equal(alias, shortcut.WorkingDirectory, ignoreCase: true);
+            Assert.All(shortcut.Target, c => Assert.True(c <= 127));
+            Assert.True(File.Exists(shortcut.Target));
+        }
+        finally
+        {
+            if (alias is not null) Directory.Delete(alias);
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public void CreateDesktopShortcut_ChineseCategoryTarget_RoundTripsExactly()
     {
         var root = NewTempRoot();

@@ -24,6 +24,8 @@ public static class ToolProcessLauncher
         // 这类工具必须走 BuiltinToolRegistry + 内置工具窗口通道，绝不能直接 Launch。
         if (Directory.Exists(exePath))
             throw new InvalidOperationException($"路径是文件夹而非可执行程序，不能直接启动：{exePath}");
+        var originalPath = exePath;
+        (exePath, workingDirectory) = FurMarkLaunchPath.Prepare(exePath, workingDirectory);
         try
         {
             Process.Start(new ProcessStartInfo
@@ -38,7 +40,7 @@ public static class ToolProcessLauncher
         {
             LaunchViaCmdStart(exePath, workingDirectory, runAsAdmin);
         }
-        Telemetry.TelemetryService.TrackExternalToolLaunch(exePath);
+        Telemetry.TelemetryService.TrackExternalToolLaunch(originalPath);
     }
 
     private static void LaunchViaCmdStart(string exePath, string? workingDirectory, bool runAsAdmin)

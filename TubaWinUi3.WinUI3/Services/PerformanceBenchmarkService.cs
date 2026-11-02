@@ -264,6 +264,7 @@ public static class PerformanceBenchmarkService
 		gpu.GpuName = gpuName ?? "";
 		string furMarkExe = FindFurMarkExe()!;
 		if (furMarkExe == null) throw new InvalidOperationException("未找到 FurMark，请安装完整工具内核后重试。");
+		furMarkExe = FurMarkLaunchPath.Prepare(furMarkExe, Path.GetDirectoryName(furMarkExe)).ExePath;
 		progress?.Report(new BenchmarkProgress
 		{
 			Phase = "GPU",
@@ -507,6 +508,9 @@ public static class PerformanceBenchmarkService
 	{
 		try
 		{
+			var launch = FurMarkLaunchPath.Prepare(exe, dir);
+			exe = launch.ExePath;
+			dir = launch.WorkingDirectory!;
 			using var process = Process.Start(new ProcessStartInfo(exe, arguments)
 			{
 				WorkingDirectory = dir,

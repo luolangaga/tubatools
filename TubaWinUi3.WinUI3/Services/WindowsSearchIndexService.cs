@@ -79,9 +79,10 @@ internal static class WindowsSearchIndexService
 
             try
             {
-                CreateShortcut(shortcutPath, tool.EffectivePath, tool.EffectiveWorkingDir,
+                var launch = FurMarkLaunchPath.Prepare(tool.EffectivePath, tool.EffectiveWorkingDir);
+                CreateShortcut(shortcutPath, launch.ExePath, launch.WorkingDirectory!,
                     $"{name} - {tool.Category}");
-                VerifyShortcutTarget(shortcutPath, tool.EffectivePath);
+                VerifyShortcutTarget(shortcutPath, launch.ExePath);
                 registered++;
             }
             catch (Exception ex)
@@ -343,7 +344,9 @@ internal static class WindowsSearchIndexService
         var shortcutPath = BuildDesktopShortcutPath(
             ResolveDesktopDirectory(desktopDirectory), $"{tool.Name}{archSuffix}");
 
-        CreateShortcut(shortcutPath, target, tool.EffectiveWorkingDir, $"{tool.Name}{archSuffix}");
+        var launch = FurMarkLaunchPath.Prepare(target, tool.EffectiveWorkingDir);
+        target = launch.ExePath;
+        CreateShortcut(shortcutPath, target, launch.WorkingDirectory!, $"{tool.Name}{archSuffix}");
         VerifyShortcutTarget(shortcutPath, target);
         return shortcutPath;
     }
