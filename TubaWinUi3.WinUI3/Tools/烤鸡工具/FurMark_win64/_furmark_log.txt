@@ -1,77 +1,96 @@
-(16:43:53:739)	FurMark 2.10.2.0 (build: Oct 22 2025@12:39:49)
-(16:43:53:739)	(c)2007-2025 Geeks3D
-(16:43:53:739)	homepage: https://www.geeks3d.com/furmark/
-(16:43:53:739)	discord server : https://geeks3d.com/discord/
-(16:43:53:739)	FurMark (GeeXLab engine) initialization...
-(16:43:53:739)	command line: C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\¿¾¼¦¹¤¾ß\FurMark_win64\furmark.exe --demolist 
-(16:43:53:739)	FurMark home directory: C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\¿¾¼¦¹¤¾ß\FurMark_win64\
-(16:43:53:739)	[stb] STB image loader. Supported formats: *.JPEG, *.PNG, *.TGA, *.BMP, *.PSD, *.GIF, *.HDR, *.PIC
-(16:43:53:739)	[tinyexr] EXR image loader.
-(16:43:53:739)	[lib3ds] Lib3ds loader (core plugin).
-(16:43:53:739)	[ObjLoaderV1] OBJ 3D loader (core plugin).
-(16:43:53:739)	[ObjLoaderV2] OBJ loader based on Tiny OBJ Loader (core plugin).
-(16:43:53:739)	[STL] STL (StereoLithography) 3D loader (core plugin).
-(16:43:53:739)	[glTF] glTF 3D loader (core plugin).
-(16:43:53:739)	[SQLite3] SQLite3 version 3.50.4
-(16:43:53:739)	GraphX Core 0.60.1.0 (codename: Dirac) initialization ok.
-(16:43:53:739)	Windows version: Windows 11 build 26200
-(16:43:53:739)	HW platform type: PC
-(16:43:53:739)	SW platform type: Windows 64-bit
-(16:43:53:740)	[GpuMonitor] Operating system detected: Windows 11 build 26200
-(16:43:53:805)	[GpuMonitor] Intel - num adapters: 1 
-(16:43:53:806)	[GpuMonitor]       - driver version: 32.0.101.8509
-(16:43:53:806)	[GpuMonitor]       - firmware version: 26.0.61
-(16:43:53:806)	[GpuMonitor]       - frequency: 2500
-(16:43:53:806)	[GpuMonitor]       - GPU configuration:
-(16:43:53:806)	[GpuMonitor]       -   Intel(R) Arc(TM) B390 GPU
-(16:43:53:806)	[GpuMonitor]       -   6 Xe cores
-(16:43:53:806)	[GpuMonitor]       -   96 EUs
-(16:43:53:806)	[GpuMonitor]       -   2 slices / 6 sub slices per slice / 8 EUs per sub slice
-(16:43:53:806)	[GpuMonitor]       -   768 ALUs
-(16:43:53:806)	[GpuMonitor]       -   6 ray tracing cores
-(16:43:53:806)	[GpuMonitor]       - Resizable bar: supported: NO
-(16:43:53:806)	[GpuMonitor]       - ctlEnumMemoryModules - MemoryHandlerCount: 1
-(16:43:54:021)	[GpuMonitor]       - VRAM type: _UNKNOWN_
-(16:43:54:021)	[GpuMonitor]       - VRAM size: 18413 MB
-(16:43:54:091)	[GpuMonitor] Num GPUs detected: 3
-(16:43:54:091)	[GpuMonitor] > GPU0
-(16:43:54:091)	[GpuMonitor]   - name: Intel(R) Arc(TM) B390 GPU
-(16:43:54:091)	[GpuMonitor]   - PCI codes: 0x8086-0xB080
-(16:43:54:091)	[GpuMonitor]   - Bus ID: 0
-(16:43:54:091)	[GpuMonitor]   - VBIOS: 26.0.61
-(16:43:54:091)	[GpuMonitor]   - driver: 32.0.101.8509
-(16:43:54:091)	[GpuMonitor] > GPU1
-(16:43:54:091)	[GpuMonitor]   - name: IddDesk Device
-(16:43:54:091)	[GpuMonitor]   - PCI codes: 0xDFD4-0x110D5559
-(16:43:54:091)	[GpuMonitor]   - driver: 25.0.0.5 (10-28-2025)
-(16:43:54:091)	[GpuMonitor] > GPU2
-(16:43:54:091)	[GpuMonitor]   - name: GameViewer Virtual Display Adapter
-(16:43:54:091)	[GpuMonitor]   - PCI codes: 0x1002E-0xDEC2
-(16:43:54:091)	[GpuMonitor]   - driver: 15.6.5.199 (2-28-2026)
-(16:43:54:092)	[Vulkan2] Vulkan renderer plugin (Windows, Linux)
-(16:43:54:102)	[Vulkan2] instance API version: 4198400 (Vulkan 1.1)
-(16:43:54:123)	[Vulkan2] [ GPU 0 ]--------------------------------------
-(16:43:54:123)	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
-(16:43:54:123)	[Vulkan2] - PCI-ID: 8086-B080
-(16:43:54:124)	[Vulkan2] - Vulkan API version: 1.4.335
-(16:43:54:124)	[Vulkan2] - Device extensions: 161
-(16:43:54:124)	[Vulkan2] [ GPU 1 ]--------------------------------------
-(16:43:54:124)	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
-(16:43:54:124)	[Vulkan2] - PCI-ID: 8086-B080
-(16:43:54:124)	[Vulkan2] - Vulkan API version: 1.4.335
-(16:43:54:124)	[Vulkan2] - Device extensions: 161
-(16:43:54:124)	[Vulkan2] [ GPU 2 ]--------------------------------------
-(16:43:54:124)	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
-(16:43:54:124)	[Vulkan2] - PCI-ID: 8086-B080
-(16:43:54:124)	[Vulkan2] - Vulkan API version: 1.4.335
-(16:43:54:124)	[Vulkan2] - Device extensions: 161
-(16:43:54:178)	FurMark (GeeXLab engine) started ok.
-(16:43:54:178)	system DPI: 96
-(16:43:54:179)	Demos list:
-(16:43:54:179)	"furmark-gl" : GPU stress test - OpenGL 3.2
-(16:43:54:179)	"furmark-vk" : GPU stress test - Vulkan
-(16:43:54:179)	"furmark-knot-gl" : GPU stress test - OpenGL 3.2
-(16:43:54:179)	"furmark-knot-vk" : GPU stress test - Vulkan
-(16:43:54:283)	FurMark (GeeXLab engine) is shutting down...
-(16:43:54:293)	GraphX Core stopped ok.
-(16:43:54:293)	FurMark (GeeXLab engine) shutdown ok.
+(21:48:01:247)	FurMark 2.10.2.0 (build: Oct 22 2025@12:39:49)
+(21:48:01:247)	(c)2007-2025 Geeks3D
+(21:48:01:248)	homepage: https://www.geeks3d.com/furmark/
+(21:48:01:248)	discord server : https://geeks3d.com/discord/
+(21:48:01:248)	FurMark (GeeXLab engine) initialization...
+(21:48:01:248)	command line: C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\çƒ¤é¸¡å·¥å…·\FurMark_win64\furmark.exe --demo furmark-vk --width 1920 --height 1080 --benchmark --duration-ms 5000 --gpu-index 0 --vsync 0 --hpgfx 1 --print-render-speed --no-score-box 
+(21:48:01:248)	FurMark home directory: C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\çƒ¤é¸¡å·¥å…·\FurMark_win64\
+(21:48:01:248)	[stb] STB image loader. Supported formats: *.JPEG, *.PNG, *.TGA, *.BMP, *.PSD, *.GIF, *.HDR, *.PIC
+(21:48:01:248)	[tinyexr] EXR image loader.
+(21:48:01:248)	[lib3ds] Lib3ds loader (core plugin).
+(21:48:01:248)	[ObjLoaderV1] OBJ 3D loader (core plugin).
+(21:48:01:248)	[ObjLoaderV2] OBJ loader based on Tiny OBJ Loader (core plugin).
+(21:48:01:248)	[STL] STL (StereoLithography) 3D loader (core plugin).
+(21:48:01:248)	[glTF] glTF 3D loader (core plugin).
+(21:48:01:248)	[SQLite3] SQLite3 version 3.50.4
+(21:48:01:248)	GraphX Core 0.60.1.0 (codename: Dirac) initialization ok.
+(21:48:01:248)	Windows version: Windows 11 build 26300
+(21:48:01:248)	HW platform type: PC
+(21:48:01:248)	SW platform type: Windows 64-bit
+(21:48:01:249)	[GpuMonitor] Operating system detected: Windows 11 build 26300
+(21:48:01:311)	[GpuMonitor] Intel - num adapters: 1 
+(21:48:01:312)	[GpuMonitor]       - driver version: 32.0.101.8974
+(21:48:01:312)	[GpuMonitor]       - firmware version: 26.0.61
+(21:48:01:312)	[GpuMonitor]       - frequency: 2500
+(21:48:01:312)	[GpuMonitor]       - GPU configuration:
+(21:48:01:312)	[GpuMonitor]       -   Intel(R) Arc(TM) B390 GPU
+(21:48:01:312)	[GpuMonitor]       -   6 Xe cores
+(21:48:01:312)	[GpuMonitor]       -   96 EUs
+(21:48:01:312)	[GpuMonitor]       -   2 slices / 6 sub slices per slice / 8 EUs per sub slice
+(21:48:01:312)	[GpuMonitor]       -   768 ALUs
+(21:48:01:312)	[GpuMonitor]       -   6 ray tracing cores
+(21:48:01:312)	[GpuMonitor]       - Resizable bar: supported: NO
+(21:48:01:312)	[GpuMonitor]       - ctlEnumMemoryModules - MemoryHandlerCount: 1
+(21:48:01:731)	[GpuMonitor]       - VRAM type: _UNKNOWN_
+(21:48:01:731)	[GpuMonitor]       - VRAM size: 18413 MB
+(21:48:01:798)	[GpuMonitor] Num GPUs detected: 3
+(21:48:01:798)	[GpuMonitor] > GPU0
+(21:48:01:798)	[GpuMonitor]   - name: Intel(R) Arc(TM) B390 GPU
+(21:48:01:798)	[GpuMonitor]   - PCI codes: 0x8086-0xB080
+(21:48:01:798)	[GpuMonitor]   - Bus ID: 0
+(21:48:01:798)	[GpuMonitor]   - VBIOS: 26.0.61
+(21:48:01:798)	[GpuMonitor]   - driver: 32.0.101.8974
+(21:48:01:798)	[GpuMonitor] > GPU1
+(21:48:01:798)	[GpuMonitor]   - name: IddDesk Device
+(21:48:01:798)	[GpuMonitor]   - PCI codes: 0xDFD4-0x110D5559
+(21:48:01:798)	[GpuMonitor]   - driver: 25.0.0.5 (10-28-2025)
+(21:48:01:798)	[GpuMonitor] > GPU2
+(21:48:01:798)	[GpuMonitor]   - name: GameViewer Virtual Display Adapter
+(21:48:01:798)	[GpuMonitor]   - PCI codes: 0x1002E-0xDEC2
+(21:48:01:798)	[GpuMonitor]   - driver: 15.6.5.199 (2-28-2026)
+(21:48:01:798)	[Vulkan2] Vulkan renderer plugin (Windows, Linux)
+(21:48:01:812)	[Vulkan2] instance API version: 4198400 (Vulkan 1.1)
+(21:48:01:826)	[Vulkan2] [ GPU 0 ]--------------------------------------
+(21:48:01:826)	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
+(21:48:01:826)	[Vulkan2] - PCI-ID: 8086-B080
+(21:48:01:826)	[Vulkan2] - Vulkan API version: 1.4.356
+(21:48:01:826)	[Vulkan2] - Device extensions: 165
+(21:48:01:851)	FurMark (GeeXLab engine) started ok.
+(21:48:01:851)	system DPI: 96
+(21:48:01:921)	3D window size: 1946 x 1151
+(21:48:02:006)	current DPI: xdpi(192), ydpi(192) - DPI scale: 2.0
+(21:48:02:007)	[Vulkan2] Vulkan renderer plugin (Windows, Linux)
+(21:48:02:018)	[Vulkan2] instance API version: 4198400 (Vulkan 1.1)
+(21:48:02:030)	[Vulkan2] [ GPU 0 ]--------------------------------------
+(21:48:02:030)	[Vulkan2] - name: Intel(R) Arc(TM) B390 GPU
+(21:48:02:030)	[Vulkan2] - PCI-ID: 8086-B080
+(21:48:02:030)	[Vulkan2] - Vulkan API version: 1.4.356
+(21:48:02:030)	[Vulkan2] - Device extensions: 165
+(21:48:02:176)	[ArtifactScanner] Artifact scanner for GPU stability checking.
+(21:48:02:366)	frame 1 ; FPS: 0 ; dt: 0.001 ms ; time: 0.0 sec
+(21:48:03:266)	frame 59 ; FPS: 59 ; dt: 14.902 ms ; time: 1.0 sec
+(21:48:04:271)	frame 126 ; FPS: 67 ; dt: 14.548 ms ; time: 2.0 sec
+(21:48:05:281)	frame 193 ; FPS: 67 ; dt: 15.306 ms ; time: 3.0 sec
+(21:48:06:291)	frame 259 ; FPS: 66 ; dt: 15.325 ms ; time: 4.0 sec
+(21:48:07:308)	frame 324 ; FPS: 65 ; dt: 15.857 ms ; time: 0.0 sec
+(21:48:08:310)	frame 389 ; FPS: 65 ; dt: 13.745 ms ; time: 1.0 sec
+(21:48:09:324)	frame 456 ; FPS: 67 ; dt: 14.786 ms ; time: 2.0 sec
+(21:48:10:336)	frame 523 ; FPS: 67 ; dt: 15.196 ms ; time: 3.0 sec
+(21:48:11:339)	frame 588 ; FPS: 65 ; dt: 15.516 ms ; time: 4.0 sec
+(21:48:12:307)	[ Demo Quick Stats ]
+(21:48:12:307)	- demo                 : FurMark (VK) (built-in: YES)
+(21:48:12:307)	- renderer             : Intel(R) Arc(TM) B390 GPU
+(21:48:12:307)	- 3D API               : Vulkan 1.4.356
+(21:48:12:307)	- resolution           : 1920x1080
+(21:48:12:307)	- SCORE                : 326
+(21:48:12:307)	- duration             : 5013 ms
+(21:48:12:307)	- FPS (min/avg/max)    : 59 / 65 / 67
+(21:48:12:307)	- GPU 0: Intel(R) Arc(TM) B390 GPU [8086-B080]
+(21:48:12:307)	  .max usage: 14%
+(21:48:12:307)	  .max core clock: 2500 MHz
+(21:48:12:307)	  .min core clock: 950 MHz
+(21:48:12:307)	- GPU 1: IddDesk Device [DFD4-110D5559]
+(21:48:12:307)	- GPU 2: GameViewer Virtual Display Adapter [1002E-DEC2]
+(21:48:12:665)	FurMark (GeeXLab engine) is shutting down...
+(21:48:12:748)	GraphX Core stopped ok.
+(21:48:12:748)	FurMark (GeeXLab engine) shutdown ok.

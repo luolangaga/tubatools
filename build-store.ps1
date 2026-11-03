@@ -167,13 +167,8 @@ function Remove-UnnecessaryFiles {
         Where-Object { $_.Name -in $themeRemove } |
         Remove-Item -Force -ErrorAction SilentlyContinue
 
-    # Dism++ language zip + hu.xml
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.zip' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*Dism*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter 'hu.xml' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*Dism*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
+    # Dism++ Config ZIPs are runtime resources, including UI and language packs.
+    # Keep them intact; they are not leftover download archives.
 }
 
 function Build-ArchPackage {

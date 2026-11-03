@@ -29,6 +29,7 @@ export default {
   "nav.mushroom": "毒蘑菇测试",
   "nav.theme": "主题",
   "nav.github": "在 GitHub 查看源码",
+  "nav.telemetry": "遥测看板",
 
   "docs.cat-guide": "使用指南",
   "docs.cat-tools": "工具说明",

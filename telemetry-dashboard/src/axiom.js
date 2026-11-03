@@ -32,6 +32,7 @@ const events = `${base} | where kind == "event"`;
 const exceptions = `${base} | where kind == "exception" | summarize arg_max(_time, user_Id, type, outerMessage, innermostMessage, frames) by event_id`;
 const starts = `${events} | where name == "app_start" | summarize arg_max(_time, user_Id, version) by event_id`;
 const launches = `${events} | where name == "tool_launch" | summarize arg_max(_time, user_Id, tool) by event_id`;
+const toolUsage = `${launches} | where _time > ago(7d) and isnotempty(tool) | summarize uses = count(), devices = dcount(user_Id) by tool`;
 const alive = 'name in ("heartbeat", "app_start")';
 export const PANELS = {
   online: { rangeSeconds: 900, ttl: 30, query: `${events} | where _time > ago(15m) and ${alive} | summarize online = dcount(user_Id)` },
@@ -45,5 +46,6 @@ export const PANELS = {
   activeHours: { rangeSeconds: 604800, ttl: 300, query: `${events} | where _time > ago(7d) and ${alive} | extend local = _time + 8h | extend h = hourofday(local), d = dayofweek(local) | summarize devices = dcount(user_Id) by d, h | project d, h, devices` },
   versions: { rangeSeconds: 604800, ttl: 300, query: `${starts} | where _time > ago(7d) | summarize devices = dcount(user_Id), starts = count() by version | order by devices desc | project version, devices, starts` },
   errors: { rangeSeconds: 604800, ttl: 300, query: `${exceptions} | where _time > ago(7d) | summarize cnt = count(), devices = dcount(user_Id), arg_max(_time, outerMessage, innermostMessage, frames) by type | order by cnt desc | take 20 | project type, cnt, devices, lastSeen = _time, sample = outerMessage, inner = innermostMessage, frames` },
-  tools: { rangeSeconds: 604800, ttl: 300, query: `${launches} | where _time > ago(7d) | summarize uses = count(), devices = dcount(user_Id) by tool | order by uses desc | take 20 | project tool, uses, devices` },
+  tools: { rangeSeconds: 604800, ttl: 300, query: `${toolUsage} | order by uses desc, tool asc | take 10 | project tool, uses, devices` },
+  toolsLeast: { rangeSeconds: 604800, ttl: 300, query: `${toolUsage} | order by uses asc, tool asc | take 10 | project tool, uses, devices` },
 };

@@ -97,6 +97,9 @@ src/docs/
 node_modules/
 optimizerDuck-temp/
 *.zip
+# Dism++ reads these archives as runtime data, UI and language resources.
+!TubaWinUi3.WinUI3/Tools/其他工具/Dism++/Config/**/*.zip
+!TubaWinUi3.WinUI3/Tools/其他工具/Dism++/Config/*.zip
 /test_sc/
 /test_sc2/
 uupzip_inspect/

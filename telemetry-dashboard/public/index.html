@@ -51,7 +51,8 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  html { min-height: 100%; }
+  body { min-height: 100vh; }
   body {
     margin: 0;
     background: var(--bg);
@@ -126,7 +127,8 @@
     display: grid; gap: 12px; margin-bottom: 12px;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
-  .cards.kpi { grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+  .cards.kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); }
+  @media (min-width: 1100px) { .cards.kpi { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
 
   .card {
     background: var(--card);
@@ -240,6 +242,52 @@
   #gate input:focus { outline: 2px solid var(--brand); outline-offset: -1px; border-color: var(--brand); }
   #gate .actions { display: flex; gap: 8px; justify-content: flex-end; }
   #gate .err { color: var(--danger); font-size: 12px; min-height: 16px; margin-top: 8px; }
+  html { scroll-behavior: smooth; scroll-padding-top: 150px; }
+  .section-heading { margin: 28px 0 14px; }
+  .section-heading h2 { margin: 0 0 6px; font-size: 20px; line-height: 28px; }
+  .section-heading p { margin: 0; color: var(--fg-3); }
+  .section-nav, .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .section-nav { margin: 18px 0; }
+  .section-nav a { text-decoration: none; padding: 6px 12px; border-radius: 4px; background: var(--card); border: 1px solid var(--stroke); }
+  .toolbar { margin: 12px 0 16px; }
+  .toolbar label { display: flex; align-items: center; gap: 8px; color: var(--fg-2); font-size: 13px; }
+  select, input[type="search"] { font: inherit; min-height: 34px; max-width: 100%; border: 1px solid var(--stroke); border-radius: 4px; background: var(--card); color: var(--fg); padding: 5px 10px; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .card { min-width: 0; animation: card-in .4s ease both; }
+  .cards > :nth-child(2n) { animation-delay: .06s; }
+  .cards > :nth-child(3n) { animation-delay: .12s; }
+  .card header { flex-wrap: wrap; }
+  #error-table { overflow-x: auto; }
+  #error-table table { min-width: 740px; }
+  .chart svg { animation: chart-in .45s ease both; overflow: visible; }
+  .chart svg path[fill="none"] { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: draw-line 1.2s ease forwards; }
+  .chart svg rect, .tool-bar { transform-box: fill-box; transform-origin: bottom; animation: grow-bar .55s ease both; }
+  .tool-bar { transform-origin: left; animation-name: grow-tool; }
+  [data-tooltip] { cursor: crosshair; }
+  [data-tooltip]:hover, [data-tooltip]:focus { filter: brightness(1.25); stroke: var(--brand); stroke-width: 2; }
+  #chart-tooltip { position: fixed; z-index: 50; pointer-events: none; padding: 8px 12px; max-width: calc(100vw - 24px); background: var(--bg-elevated); color: var(--fg); border: 1px solid var(--stroke); border-radius: 6px; box-shadow: var(--shadow-4); font-size: 12px; }
+  #load-status { margin-bottom: 12px; color: var(--danger); }
+  @keyframes card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes chart-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes draw-line { to { stroke-dashoffset: 0; } }
+  @keyframes grow-bar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes grow-tool { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (max-width: 600px) {
+    main { padding: 12px 12px 32px; }
+    .appbar { padding: 10px 12px; gap: 8px; }
+    .cards { grid-template-columns: minmax(0, 1fr); }
+    .cards.kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card { padding: 12px; }
+    .kpi { gap: 8px; }
+    .kpi .k-value { font-size: 24px; }
+    #gate .dialog { width: min(360px, calc(100vw - 24px)); }
+    #c-heatmap { overflow-x: auto; }
+    .heat { min-width: 460px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; stroke-dashoffset: 0 !important; }
+  }
 </style>
 </head>
 <body>
@@ -263,6 +311,7 @@
   <span class="pill" id="mode-badge">加载中</span>
 
   <span class="spacer"></span>
+  <a href="https://tubawinui3.cn/" class="home-link">返回官网</a>
 
   <div class="segmented" id="theme-seg" role="tablist" aria-label="主题">
     <button data-theme-mode="auto" aria-selected="true">跟随系统</button>
@@ -270,12 +319,16 @@
     <button data-theme-mode="dark" aria-selected="false">暗</button>
   </div>
   <button id="btn-refresh">刷新</button>
-  <button id="btn-force" class="subtle">强制刷新</button>
+  <button id="btn-force" class="subtle hidden">强制刷新</button>
   <button id="btn-unlock" class="primary">解锁完整数据</button>
   <button id="btn-lock" class="hidden">锁定</button>
 </header>
 
 <main>
+  <nav class="section-nav" aria-label="面板分区">
+    <a href="#overview">运行概览</a><a href="#trends">趋势分析</a><a href="#tools">工具热度</a><a href="#errors">异常详情</a>
+  </nav>
+  <div id="load-status" role="status" aria-live="polite"></div>
   <div class="infobar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>
@@ -286,7 +339,15 @@
     </span>
   </div>
 
-  <section class="cards kpi" id="kpis"></section>
+  <div class="section-heading" id="overview"><h2>运行概览</h2><p>了解设备活跃与运行健康状况</p></div>
+  <section class="cards kpi" id="kpis" aria-label="关键指标"></section>
+
+  <div class="section-heading" id="trends"><h2>趋势分析</h2><p>悬停或聚焦图表数据点查看数值</p></div>
+  <div class="toolbar">
+    <label>按天趋势范围 <select id="trend-days"><option value="7">近 7 天</option><option value="14">近 14 天</option><option value="30" selected>近 30 天</option></select></label>
+    <label>活跃 / 新增图表 <select id="trend-type"><option value="bar">柱状图</option><option value="line">折线图</option></select></label>
+    <button id="btn-auto" aria-pressed="true">自动刷新：开</button>
+  </div>
 
   <section class="cards">
     <article class="card">
@@ -295,23 +356,23 @@
     </article>
 
     <article class="card">
-      <header><h2>活跃设备</h2><span class="tag">近 30 天 · 按天</span></header>
+      <header><h2>活跃设备</h2><span class="tag"><span data-trend-range>近 30 天</span> · 按天</span></header>
       <div class="chart" id="c-daily"></div>
     </article>
 
     <article class="card">
-      <header><h2>新增设备</h2><span class="tag">近 30 天 · 首次出现</span></header>
+      <header><h2>新增设备</h2><span class="tag"><span data-trend-range>近 30 天</span> · 首次出现</span></header>
       <div class="chart" id="c-new"></div>
     </article>
 
     <article class="card">
-      <header><h2>崩溃趋势</h2><span class="tag">近 30 天</span></header>
+      <header><h2>崩溃趋势</h2><span class="tag" data-trend-range>近 30 天</span></header>
       <div class="chart" id="c-crash"></div>
       <div class="legend" id="lg-crash"></div>
     </article>
 
     <article class="card">
-      <header><h2>报错率趋势</h2><span class="tag">近 30 天 · 报错设备 / 活跃设备</span></header>
+      <header><h2>报错率趋势</h2><span class="tag"><span data-trend-range>近 30 天</span> · 报错设备 / 活跃设备</span></header>
       <div class="chart" id="c-rate"></div>
     </article>
 
@@ -331,16 +392,31 @@
       <p class="note" id="dl-note"></p>
     </article>
 
+  </section>
+
+  <div class="section-heading" id="tools"><h2>工具热度</h2><p>近 7 天的热门与低热度工具，帮助了解工具的实际使用情况</p></div>
+  <div class="toolbar" id="tools-controls">
+    <label>统计指标 <select id="tools-metric"><option value="uses">启动次数</option><option value="devices">使用设备数</option></select></label>
+    <label>筛选当前榜单 <input type="search" id="tools-search" placeholder="输入工具名称" aria-label="筛选当前工具榜单"></label>
+  </div>
+  <section class="cards">
     <article class="card" id="card-tools">
-      <header><h2>工具热度</h2><span class="tag">近 7 天 · 启动次数</span></header>
+      <header><h2>最热门的工具</h2><span class="tag">前 10 名 · 从高到低</span></header>
       <div class="chart" id="c-tools"></div>
       <div class="locked hidden" id="tools-locked">
         🔒 工具使用明细仅管理员可见
         <button id="btn-unlock-tools">输入口令解锁</button>
       </div>
     </article>
+    <article class="card">
+      <header><h2>热度最低的工具</h2><span class="tag">后 10 名 · 从低到高</span></header>
+      <div class="chart" id="c-tools-least"></div>
+      <div class="locked hidden" id="tools-least-locked">🔒 工具使用明细仅管理员可见 <button id="btn-unlock-least">输入口令解锁</button></div>
+      <p class="note">仅统计近 7 天有启动记录的工具；未上报或零启动的工具不参与排名，次数相同按名称排序。</p>
+    </article>
   </section>
 
+  <div class="section-heading" id="errors"><h2>异常详情</h2><p>按异常类型定位问题，点击记录展开堆栈</p></div>
   <section class="card">
     <header><h2>崩溃排行</h2><span class="tag">近 7 天 · 按异常类型</span></header>
     <div id="error-table"></div>
@@ -352,6 +428,7 @@
 </main>
 
 <footer id="footer"></footer>
+<div id="chart-tooltip" role="tooltip" class="hidden"></div>
 
 <div id="gate">
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gate-title">
@@ -383,6 +460,12 @@
   var lastData = null;
   var resizeTimer = null;
   var stackTexts = {};
+  var activeRequest = null;
+  var requestGeneration = 0;
+  var autoRefresh = true;
+  var trendDays = 30;
+  var trendType = 'bar';
+  var toolMetric = 'uses';
 
   /* ================= 主题 ================= */
 
@@ -444,7 +527,7 @@
     if (e.key === 'Enter') document.getElementById('gate-ok').click();
   });
 
-  ['btn-unlock', 'btn-unlock-tools', 'btn-unlock-errors'].forEach(function (id) {
+  ['btn-unlock', 'btn-unlock-tools', 'btn-unlock-least', 'btn-unlock-errors'].forEach(function (id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('click', function () { showGate(''); });
   });
@@ -452,6 +535,7 @@
   document.getElementById('btn-lock').addEventListener('click', function () {
     token = '';
     localStorage.removeItem(TOKEN_KEY);
+    render({mode: 'public', panels: {}, errors: {}, generatedAt: new Date().toISOString()});
     load(true);
   });
   document.getElementById('btn-refresh').addEventListener('click', function () { load(); });
@@ -491,30 +575,49 @@
 
   /* ================= 取数与渲染 ================= */
 
-  function load(force) {
-    document.getElementById('updated').textContent = '请求中…';
-    var options = token ? { headers: { 'x-dashboard-token': token } } : {};
-
-    fetch('/api/summary' + (force ? '?force=1' : ''), options)
-      .then(function (res) {
-        if (res.status === 401) {
-          token = '';
-          localStorage.removeItem(TOKEN_KEY);
-          showGate('口令不正确');
-          return fetch('/api/summary').then(function (r) { return r.json(); });
-        }
-        return res.json();
-      })
-      .then(function (data) {
-        if (!data) return;
-        if (data.error) { document.getElementById('updated').textContent = '服务端错误：' + data.error; return; }
-        render(data);
+  async function load(force) {
+    if (activeRequest) activeRequest.abort();
+    var controller = new AbortController();
+    activeRequest = controller;
+    var generation = ++requestGeneration;
+    var requestedToken = token;
+    var invalidToken = false;
+    var timer = setTimeout(function () { controller.abort(); }, 45000);
+    countdown = REFRESH_MS / 1000;
+    document.getElementById('updated').textContent = '正在更新数据…';
+    document.getElementById('load-status').textContent = '';
+    ['btn-refresh', 'btn-force', 'gate-ok'].forEach(function (id) { document.getElementById(id).disabled = true; });
+    try {
+      var query = '?toolMetric=' + toolMetric + (force ? '&force=1' : '');
+      var res = await fetch('/api/summary' + query, { signal: controller.signal, headers: requestedToken ? { 'x-dashboard-token': requestedToken } : {} });
+      if (generation !== requestGeneration) return;
+      if (res.status === 401) {
+        invalidToken = true;
+        token = '';
+        localStorage.removeItem(TOKEN_KEY);
+        render({mode: 'public', panels: {}, errors: {}, generatedAt: new Date().toISOString()});
+        showGate('口令不正确，请重新输入');
+        res = await fetch('/api/summary', { signal: controller.signal });
+      }
+      if (!res.ok) throw new Error('服务暂时不可用（' + res.status + '）');
+      var data = await res.json();
+      if (generation !== requestGeneration) return;
+      if (data.error) throw new Error(data.error);
+      render(data);
+      if (data.mode === 'full' && requestedToken) localStorage.setItem(TOKEN_KEY, requestedToken);
+      if (!invalidToken && data.mode === 'full') hideGate();
+    } catch (err) {
+      if (generation !== requestGeneration) return;
+      document.getElementById('updated').textContent = '更新未完成';
+      document.getElementById('load-status').textContent = (err.name === 'AbortError' ? '请求超时，请稍后重试。' : '请求失败：' + err.message) + (lastData ? ' 当前保留上次成功的数据。' : '');
+    } finally {
+      clearTimeout(timer);
+      if (generation === requestGeneration) {
+        activeRequest = null;
         countdown = REFRESH_MS / 1000;
-        hideGate();
-      })
-      .catch(function (err) {
-        document.getElementById('updated').textContent = '请求失败：' + err.message;
-      });
+        ['btn-refresh', 'btn-force', 'gate-ok'].forEach(function (id) { document.getElementById(id).disabled = false; });
+      }
+    }
   }
 
   function render(data) {
@@ -525,15 +628,20 @@
 
     renderKpis(panels, isFull);
     renderOnline(panels.onlineSeries);
-    renderDaily(panels.dailySeries);
-    renderNewDevices(panels.newDevices);
-    renderCrashTrend(panels.crashSeries);
-    renderErrorRate(panels.crashSeries, panels.dailySeries);
+    renderDaily(windowPanel(panels.dailySeries));
+    renderNewDevices(windowPanel(panels.newDevices));
+    renderCrashTrend(windowPanel(panels.crashSeries));
+    renderErrorRate(windowPanel(panels.crashSeries), windowPanel(panels.dailySeries));
     renderVersions(panels.versions);
     renderHeatmap(panels.activeHours);
     renderDownloads(panels.downloads, isFull);
     renderTools(panels.tools, isFull, errors.tools);
-    renderErrors(panels.errors, isFull);
+    renderTools(panels.toolsLeast, isFull, errors.toolsLeast, true);
+    document.getElementById('tools-controls').classList.toggle('hidden', !isFull);
+    document.getElementById('btn-force').classList.toggle('hidden', !isFull);
+    document.querySelectorAll('[data-trend-range]').forEach(function (el) { el.textContent = '近 ' + trendDays + ' 天'; });
+    decorateCharts();
+    renderErrors(panels.errors, isFull, errors.errors);
 
     var stamp = new Date(data.generatedAt);
     document.getElementById('updated').textContent =
@@ -608,25 +716,25 @@
   }
 
   function renderDaily(panel) {
-    barChart('c-daily', pairs(panel, 1), { color: PALETTE[0], unit: '台', empty: '近 30 天还没有活跃数据' });
+    (trendType === 'line' ? areaChart : barChart)('c-daily', pairs(panel, 1), { color: PALETTE[0], unit: '台', empty: '当前范围还没有活跃数据' });
   }
 
   function renderNewDevices(panel) {
-    barChart('c-new', pairs(panel, 1), { color: PALETTE[1], unit: '台', empty: '近 30 天没有新设备' });
+    (trendType === 'line' ? areaChart : barChart)('c-new', pairs(panel, 1), { color: PALETTE[1], unit: '台', empty: '当前范围没有新设备' });
   }
 
   function renderCrashTrend(panel) {
     var rows = (panel && panel.rows) || [];
     if (!rows.length) {
-      document.getElementById('c-crash').innerHTML = '<div class="empty">近 30 天没有上报异常 🎉</div>';
+      document.getElementById('c-crash').innerHTML = '<div class="empty">当前范围没有上报异常 🎉</div>';
       document.getElementById('lg-crash').innerHTML = '';
       return;
     }
     var crashes = rows.map(function (r) { return [r[0], Number(r[1]) || 0]; });
     var devices = rows.map(function (r) { return [r[0], Number(r[2]) || 0]; });
     multiLineChart('c-crash', [
-      { name: '异常次数', points: crashes, color: PALETTE[2] },
-      { name: '影响设备', points: devices, color: PALETTE[3] }
+      { name: '异常次数', points: crashes, color: PALETTE[2], unit: '次' },
+      { name: '影响设备', points: devices, color: PALETTE[3], unit: '台' }
     ], { unit: '次', empty: '' });
     legend('lg-crash', [{ name: '异常次数', color: PALETTE[2] }, { name: '影响设备', color: PALETTE[3] }]);
   }
@@ -715,9 +823,9 @@
     note.textContent += ' 合计 ' + total.toLocaleString() + ' 次。';
   }
 
-  function renderTools(panel, isFull, error) {
-    var el = document.getElementById('c-tools');
-    var locked = document.getElementById('tools-locked');
+  function renderTools(panel, isFull, error, least) {
+    var el = document.getElementById(least ? 'c-tools-least' : 'c-tools');
+    var locked = document.getElementById(least ? 'tools-least-locked' : 'tools-locked');
     locked.classList.toggle('hidden', isFull);
 
     if (!isFull) { el.innerHTML = ''; return; }
@@ -725,19 +833,20 @@
       el.innerHTML = '<div class="empty">工具热度暂时查询失败，请稍后刷新</div>';
       return;
     }
-    var rows = ((panel && panel.rows) || []).slice(0, 8).map(function (r) {
-      return { name: String(r[0] || '未知'), value: Number(r[1]) || 0, sub: (Number(r[2]) || 0) + ' 台设备' };
+    var rows = ((panel && panel.rows) || []).filter(function (r) { return String(r[0]).toLowerCase().includes(document.getElementById('tools-search').value.toLowerCase().trim()); }).slice(0, 10).map(function (r) {
+      return { name: String(r[0] || '未知'), value: Number(r[toolMetric === 'devices' ? 2 : 1]) || 0, unit: toolMetric === 'devices' ? ' 台' : ' 次', sub: toolMetric === 'devices' ? (Number(r[1]) || 0) + ' 次启动' : (Number(r[2]) || 0) + ' 台设备' };
     });
-    hbar(el, rows, PALETTE[0], '暂无工具使用数据。更新到支持工具统计的版本后，使用工具即可逐步生成热度排行。');
+    hbar(el, rows, least ? PALETTE[5] : PALETTE[0], document.getElementById('tools-search').value.trim() ? '当前榜单没有匹配的工具' : '暂无工具使用数据。更新到支持工具统计的版本后，使用工具即可逐步生成热度排行。');
   }
 
-  function renderErrors(panel, isFull) {
+  function renderErrors(panel, isFull, error) {
     var el = document.getElementById('error-table');
     var locked = document.getElementById('errors-locked');
     locked.classList.toggle('hidden', isFull);
 
     if (!isFull) { el.innerHTML = ''; return; }
 
+    if (error || !panel) { el.innerHTML = '<div class="empty">异常详情暂时查询失败，请稍后刷新</div>'; return; }
     var rows = (panel && panel.rows) || [];
     if (!rows.length) { el.innerHTML = '<div class="empty">近 7 天没有上报异常 🎉</div>'; return; }
 
@@ -904,7 +1013,7 @@
       g.appendChild(dot);
     });
 
-    xAxisLabels(g, points, pad, w, h, function (t) { return clock(t); });
+    xAxisLabels(g, points, pad, w, h, function (t) { return id === 'c-online' ? clock(t) : dateLabel(t); });
     s.appendChild(g);
     host.innerHTML = '';
     host.appendChild(s);
@@ -969,7 +1078,7 @@
           cy: (pad.t + (h - pad.t - pad.b) * (1 - p[1] / max)).toFixed(1),
           r: 7, fill: 'transparent'
         });
-        dot.appendChild(node('title', {})).textContent = item.name + ' · ' + fmtDate(p[0]) + ' · ' + p[1] + (opts.unit || '');
+        dot.appendChild(node('title', {})).textContent = item.name + ' · ' + fmtDate(p[0]) + ' · ' + p[1] + (item.unit || opts.unit || '');
         g.appendChild(dot);
       });
     });
@@ -1042,9 +1151,9 @@
       return '<div style="margin-bottom:10px">' +
         '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">' +
         '<span>' + esc(item.name) + '</span>' +
-        '<span style="color:var(--fg-3)">' + item.value + ' 次' + (item.sub ? ' · ' + item.sub : '') + '</span></div>' +
+        '<span style="color:var(--fg-3)">' + item.value + (item.unit || ' 次') + (item.sub ? ' · ' + item.sub : '') + '</span></div>' +
         '<div style="height:6px;border-radius:3px;background:var(--grid)">' +
-        '<div style="height:6px;border-radius:3px;background:' + color + ';width:' + Math.max(2, pct) + '%"></div></div></div>';
+        '<div class="tool-bar" style="height:6px;border-radius:3px;background:' + color + ';width:' + Math.max(2, pct) + '%"></div></div></div>';
     }).join('');
   }
 
@@ -1094,6 +1203,68 @@
   function fmtDate(v) { var d = new Date(v); return isNaN(d) ? String(v || '') : d.toLocaleDateString(); }
   function shortType(type) { var t = String(type || '未知'); var i = t.lastIndexOf('.'); return i >= 0 ? t.slice(i + 1) : t; }
 
+  function windowPanel(panel) {
+    if (!panel) return panel;
+    var cutoff = Date.now() - trendDays * 86400000;
+    return { rows: (panel.rows || []).filter(function (r) { return new Date(r[0]).getTime() >= cutoff; }) };
+  }
+
+  function redraw() { if (lastData) render(lastData); }
+  document.getElementById('trend-days').addEventListener('change', function (e) { trendDays = Number(e.target.value); redraw(); });
+  document.getElementById('trend-type').addEventListener('change', function (e) { trendType = e.target.value; redraw(); });
+  document.getElementById('tools-search').addEventListener('input', function () {
+    if (!lastData) return;
+    var panels = lastData.panels || {}, errors = lastData.errors || {};
+    renderTools(panels.tools, lastData.mode === 'full', errors.tools);
+    renderTools(panels.toolsLeast, lastData.mode === 'full', errors.toolsLeast, true);
+  });
+  document.getElementById('tools-metric').addEventListener('change', function (e) { toolMetric = e.target.value; load(); });
+  document.getElementById('btn-auto').addEventListener('click', function () {
+    autoRefresh = !autoRefresh;
+    this.textContent = '自动刷新：' + (autoRefresh ? '开' : '关');
+    this.setAttribute('aria-pressed', String(autoRefresh));
+    if (!autoRefresh) document.getElementById('updated').textContent = '已暂停自动刷新，可手动刷新';
+    else load();
+  });
+  var gateOpener = null;
+  var originalShowGate = showGate;
+  showGate = function (message) { gateOpener = document.activeElement; originalShowGate(message); };
+  document.getElementById('gate').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { hideGate(); if (gateOpener) gateOpener.focus(); }
+    if (e.key !== 'Tab') return;
+    var controls = Array.from(this.querySelectorAll('input, button')).filter(function (el) { return !el.disabled; });
+    var first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  function decorateCharts() {
+    document.querySelectorAll('.chart svg title').forEach(function (title) {
+      var mark = title.parentElement;
+      mark.setAttribute('data-tooltip', title.textContent);
+      mark.setAttribute('tabindex', '0');
+      mark.setAttribute('aria-label', title.textContent);
+      title.remove();
+    });
+    document.querySelectorAll('.heat-cell[title]').forEach(function (cell) { cell.setAttribute('data-tooltip', cell.title); });
+  }
+  var tooltip = document.getElementById('chart-tooltip');
+  function showTooltip(e) {
+    var mark = e.target.closest('[data-tooltip]');
+    if (!mark) { tooltip.classList.add('hidden'); return; }
+    tooltip.textContent = mark.getAttribute('data-tooltip');
+    tooltip.classList.remove('hidden');
+    var box = mark.getBoundingClientRect();
+    var x = e.clientX === undefined ? box.left : e.clientX;
+    var y = e.clientY === undefined ? box.top : e.clientY;
+    tooltip.style.left = Math.max(12, Math.min(x + 12, window.innerWidth - tooltip.offsetWidth - 12)) + 'px';
+    tooltip.style.top = Math.max(12, Math.min(y + 16, window.innerHeight - tooltip.offsetHeight - 12)) + 'px';
+  }
+  document.addEventListener('pointermove', showTooltip);
+  document.addEventListener('focusin', showTooltip);
+  document.addEventListener('focusout', function () { tooltip.classList.add('hidden'); });
+  document.addEventListener('scroll', function () { tooltip.classList.add('hidden'); }, true);
+
   /* ================= 启动 ================= */
 
   applyTheme(themeMode);
@@ -1101,6 +1272,7 @@
   load();
 
   setInterval(function () {
+    if (!autoRefresh || document.hidden || activeRequest) return;
     countdown -= 1;
     if (countdown <= 0) { load(); return; }
     var el = document.getElementById('updated');

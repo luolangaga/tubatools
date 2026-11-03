@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <glslhacker_config 
 		enable_window_offsets="0"
-		window_offset_x="887"
-		window_offset_y="145"
+		window_offset_x="-32000"
+		window_offset_y="-32000"
 		lts="0"
 />

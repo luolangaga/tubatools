@@ -78,6 +78,7 @@ async function handleSummary(request, env, url) {
   }
 
   const force = authorized && url.searchParams.get('force') === '1';
+  const metric = url.searchParams.get('toolMetric') === 'devices' ? 'devices' : 'uses';
   const names = authorized
     ? Object.keys(PANELS).concat(Object.keys(EXTERNAL_PANELS))
     : PUBLIC_PANELS;
@@ -86,7 +87,7 @@ async function handleSummary(request, env, url) {
   await Promise.all(Array.from({ length: 3 }, async () => {
     while (next < names.length) {
       const i = next++;
-      try { results[i] = { status: 'fulfilled', value: await runPanel(env, names[i], force) }; }
+      try { results[i] = { status: 'fulfilled', value: await runPanel(env, names[i], force, metric) }; }
       catch (reason) { results[i] = { status: 'rejected', reason }; }
     }
   }));
@@ -129,31 +130,34 @@ function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-async function runPanel(env, name, force) {
+async function runPanel(env, name, force, metric = 'uses') {
   const panel = PANELS[name] || EXTERNAL_PANELS[name];
+  const isTool = name === 'tools' || name === 'toolsLeast';
+  const key = isTool ? `${name}:${metric}` : name;
+  const query = isTool && metric === 'devices' ? panel.query.replace('order by uses ', 'order by devices ') : panel.query;
   const now = Date.now();
-  const hit = cache.get(name);
+  const hit = cache.get(key);
   if (!force && hit && now - hit.at < panel.ttl * 1000) return hit.value;
   // 相同边缘节点的不同实例共享缓存；游客无法用 force 参数反复消耗查询额度。
-  const cacheKey = new Request(`https://stats.tubawinui3.cn/__panel-cache/axiom-v2/${name}`);
+  const cacheKey = new Request(`https://stats.tubawinui3.cn/__panel-cache/axiom-v3/${key}`);
   if (!force) {
     const shared = await caches.default.match(cacheKey);
     if (shared) return shared.json();
   }
-  if (pending.has(name)) return pending.get(name);
+  if (pending.has(key)) return pending.get(key);
   const task = (async () => {
     const value = panel.query
-      ? await queryAxiom(env, panel.query, { startTime: new Date(Date.now() - panel.rangeSeconds * 1000).toISOString() })
+      ? await queryAxiom(env, query, { startTime: new Date(Date.now() - panel.rangeSeconds * 1000).toISOString() })
       : await panel.load(env);
-    cache.set(name, { at: Date.now(), value });
+    cache.set(key, { at: Date.now(), value });
     await caches.default.put(cacheKey, new Response(JSON.stringify(value), {
       headers: { 'content-type': 'application/json', 'cache-control': `max-age=${panel.ttl}` },
     })).catch(() => {});
     return value;
   })();
-  pending.set(name, task);
+  pending.set(key, task);
   try { return await task; }
-  finally { pending.delete(name); }
+  finally { pending.delete(key); }
 }
 
 /**

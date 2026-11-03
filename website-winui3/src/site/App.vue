@@ -228,6 +228,7 @@ const navMenuItems = [
   { Tag: 'docs', Icon: '\uE8A1', Content: t('nav.docs') },
   { Tag: 'ranking', Icon: '\uE9D5', Content: t('nav.ranking') },
   { Tag: 'latency', Icon: '\uE9D9', Content: t('nav.latency') },
+  { Tag: 'telemetry', Icon: '\uE9D9', Content: t('nav.telemetry') },
   { Tag: 'mushroom', Icon: '\uE9F5', Content: t('nav.mushroom') },
   { Tag: 'about', Icon: '\uE946', Content: t('nav.about') }
 ];
@@ -291,6 +292,10 @@ const selectedNavigationItem = computed({
 });
 
 const navigate = tag => {
+  if (tag === 'telemetry') {
+    window.open('https://stats.tubawinui3.cn/', '_blank', 'noopener,noreferrer');
+    return;
+  }
   if (!tag || tag === currentPage.value || !pageTags.has(tag)) return;
   if (tag === 'docs') {
     router.push('/guide/getting-started');

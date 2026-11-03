@@ -29,6 +29,7 @@ export default {
   "nav.mushroom": "Mushroom Test",
   "nav.theme": "Theme",
   "nav.github": "View source on GitHub",
+  "nav.telemetry": "Telemetry",
 
   "docs.cat-guide": "User Guide",
   "docs.cat-tools": "Tools",

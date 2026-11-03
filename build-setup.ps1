@@ -45,12 +45,8 @@ function Remove-UnnecessaryFiles {
     Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*DDU*' -and $_.Name -notlike '*Chinese*' -and $_.Name -ne 'English.xml' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.zip' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*Dism*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter 'hu.xml' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*Dism*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
+    # Dism++ Config ZIPs are runtime resources, including UI and language packs.
+    # Keep them intact; they are not leftover download archives.
     Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.x86.dll' -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
