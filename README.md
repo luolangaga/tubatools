@@ -1,52 +1,51 @@
+<p align="center">
+  <a href="README_EN.md">English</a> · 中文
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="images/readme/hero-cn.svg#still">
+    <img src="images/readme/hero-cn.svg" width="880" alt="图吧工具箱 CE — 硬件检测、性能测试、系统维护与本地 AI">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/luolangaga/tubatools/releases/latest"><img src="images/readme/link-download-cn.svg" width="166" alt="下载最新版"></a>
+  <a href="guide/getting-started.md"><img src="images/readme/link-book-cn.svg" width="166" alt="使用指南"></a>
+  <a href="https://github.com/luolangaga/tubatools/issues"><img src="images/readme/link-issue-cn.svg" width="166" alt="反馈建议"></a>
+  <a href="https://github.com/luolangaga/tubatools/discussions"><img src="images/readme/link-chat-cn.svg" width="166" alt="参与讨论"></a>
+</p>
+
 <div align="center">
 
-[English](README_EN.md) | 中文
+[![Release](https://img.shields.io/github/v/release/luolangaga/tubatools?style=flat-square&labelColor=5b624a&color=a7bc77&logo=windows11&logoColor=white)](https://github.com/luolangaga/tubatools/releases/latest) [![Downloads](https://img.shields.io/github/downloads/luolangaga/tubatools/total?style=flat-square&labelColor=5b624a&color=a7bc77)](https://github.com/luolangaga/tubatools/releases) [![Platform](https://img.shields.io/badge/Windows-10%201809%2B-a8d6d9?style=flat-square&labelColor=5b624a&logo=windows&logoColor=white)](guide/getting-started.md#系统要求) [![.NET](https://img.shields.io/badge/.NET-10-b8c69a?style=flat-square&labelColor=5b624a&logo=dotnet&logoColor=white)](guide/getting-started.md#从源码构建) [![Toolkit](https://img.shields.io/badge/%E6%94%B6%E5%BD%95%E5%B7%A5%E5%85%B7-89%20%E6%AC%BE-b8c69a?style=flat-square&labelColor=5b624a)](guide/bundled-tools.md) [![License](https://img.shields.io/badge/License-GPL--3.0-a8d6d9?style=flat-square&labelColor=5b624a)](LICENSE)
 
-<img src="images/screenshots/home.png" width="880" alt="图吧工具箱CE — 主界面">
+一台新电脑，从验机、跑分、装驱动到日常清理维护，都能在这里找到工具。
 
-</div>
-
-<br>
-
-<div align="center">
-
-[![Release](https://img.shields.io/github/v/release/luolangaga/tubatools?style=for-the-badge&labelColor=1f2937&color=3b82f6&logo=windows11&logoColor=white)](https://github.com/luolangaga/tubatools/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/luolangaga/tubatools/total?style=for-the-badge&labelColor=1f2937&color=22c55e)](https://github.com/luolangaga/tubatools/releases)
-[![Platform](https://img.shields.io/badge/Windows-10%201809%2B-0078d6?style=for-the-badge&labelColor=1f2937&logo=windows&logoColor=white)](guide/getting-started.md#系统要求)
-[![.NET](https://img.shields.io/badge/.NET-10-512bd4?style=for-the-badge&labelColor=1f2937&logo=dotnet&logoColor=white)](guide/getting-started.md#从源码构建)
-[![Toolkit](https://img.shields.io/badge/%E6%94%B6%E5%BD%95%E5%B7%A5%E5%85%B7-89%20%E6%AC%BE-8b5cf6?style=for-the-badge&labelColor=1f2937)](guide/bundled-tools.md)
-[![License](https://img.shields.io/badge/License-GPL--3.0-0078d6?style=for-the-badge&labelColor=1f2937)](LICENSE)
-
-**一台新电脑从验机、跑分、装驱动到日常清理维护，只用这一个工具箱。**
-
-经典硬件工具随包收录，Fluent 原生工具开箱即用，并提供支持 NPU / GPU / CPU 的本地 AI 试炼场。
-
-[官网文档](https://tubawinui3.cn) | [下载](https://github.com/luolangaga/tubatools/releases) | [反馈](https://github.com/luolangaga/tubatools/issues) | [讨论](https://github.com/luolangaga/tubatools/discussions)
-
-<a href="https://hellogithub.com/repository/luolangaga/tubatools" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=f86864b693ec4f5ca75749cc152de2e8&claim_uid=9j2VeIwBLtJZzfr" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-<a href="https://atomgit.com/luolangaga/tubatool"><img alt="AtomGit G-Star" src="https://atomgit.com/luolangaga/tubatool/star/new_badge.svg" height="55"/></a>
-<a href="https://trendshift.io/repositories/51042?utm_source=repository-badge&utm_medium=badge&utm_campaign=badge-repository-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/51042" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
-<a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/daily?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
-<a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/monthly?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+[官网与文档](https://tubawinui3.cn) · [国内下载镜像](https://gitcode.com/luolangaga/tubatool)
 
 </div>
 
 > [!WARNING]
-> 近期有许多非官方下载渠道，请注意甄别风险！请仅通过官方文档「[安装](guide/getting-started.md#安装)」列出的官方渠道下载。
-
----
+> 请通过[官方安装指南](guide/getting-started.md#安装)列出的渠道下载，留意非官方下载站点。
 
 ## 项目介绍
 
 <p align="center">
-  <img src="images/screenshots/favorites.png" width="880" alt="常用与推荐">
-  <img src="images/screenshots/settings.png" width="880" alt="设置中心">
+  <a href="https://tubawinui3.cn/features"><img src="images/screenshots/home.png" width="880" alt="图吧工具箱 CE 主界面，按分类浏览工具并全局搜索"></a>
 </p>
 
-[查看当前版本的全部功能截图](https://tubawinui3.cn/features)
+**89 款经典工具与 47 款原生工具**，共用卡片、收藏、排序和桌面快捷方式。按分类浏览，搜索直达，常用的工具点一下星标就能收好。
 
-左侧导航按分类浏览全部工具，顶部一个搜索框能搜到任何一款工具，觉得好用就点星标收进常用页。
-**收录的 89 款经典工具 + 内置的 47 款原生工具，共用同一套卡片、收藏、排序与桌面快捷方式**——用起来没有「两套东西」的感觉。
+<p align="center">
+  <picture>
+    <source media="(max-width: 650px)" srcset="images/readme/features-cn-mobile.svg">
+    <img src="images/readme/features-cn.svg" width="880" alt="硬件检测、性能测试、格式转换、游戏工具、系统维护与本地 AI">
+  </picture>
+</p>
+
+<details>
+<summary>展开完整功能清单</summary>
 
 * **本地 AI 试炼场** — 本地模型管理、LLM 对话、图像分类、目标检测与图像特征对比，支持 NPU / GPU / CPU 加速
 * **硬件检测与性能** —— 温度 / 频率 / 功耗实时曲线、一键三烤、毒蘑菇测试、跑分排行、快速验机、磁盘健康
@@ -55,6 +54,20 @@
 * **系统优化与安全** —— 垃圾清理 / 启动项管理 / 右键菜单管理 / 恶意软件拦截 / 沙盒分析 / 时间同步
 * **网络工具** —— 网速测试 / 流量监控 / 端口占用 / Hosts 编辑 / 局域网文件分享
 * **原生 Fluent 体验** —— Mica 材质、亮暗主题、中英双语、全局搜索、收藏拖拽排序
+
+</details>
+
+<details>
+<summary>再看看常用页和设置中心</summary>
+
+<p align="center">
+  <img src="images/screenshots/favorites.png" width="880" alt="常用与推荐">
+  <img src="images/screenshots/settings.png" width="880" alt="设置中心">
+</p>
+
+</details>
+
+[查看当前版本的全部功能截图](https://tubawinui3.cn/features)
 
 ### 文档导航
 
@@ -71,6 +84,17 @@
 ---
 
 ## 荣誉与认可
+
+<details>
+<summary>查看项目收录与榜单</summary>
+
+<a href="https://hellogithub.com/repository/luolangaga/tubatools" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=f86864b693ec4f5ca75749cc152de2e8&claim_uid=9j2VeIwBLtJZzfr" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://atomgit.com/luolangaga/tubatool"><img alt="AtomGit G-Star" src="https://atomgit.com/luolangaga/tubatool/star/new_badge.svg" height="55"/></a>
+<a href="https://trendshift.io/repositories/51042?utm_source=repository-badge&utm_medium=badge&utm_campaign=badge-repository-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/51042" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/daily?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/monthly?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+
+</details>
 
 * **AtomGit G-Star 毕业项目** —— 通过 [AtomGit](https://atomgit.com) 官方评审取得毕业认证（编号 No.0614，2026.07.24），欢迎关注 [atomgit.com/luolangaga/tubatool](https://atomgit.com/luolangaga/tubatool)
 * **HelloGitHub 收录推荐** —— 在 [HelloGitHub](https://hellogithub.com/repository/luolangaga/tubatools) 项目库中获得推荐

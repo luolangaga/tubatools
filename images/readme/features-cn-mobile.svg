@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="428" height="402" viewBox="0 0 428 402" role="img" aria-labelledby="title">
+  <title id="title">硬件检测、性能测试、格式转换、游戏工具、系统维护与本地 AI</title>
+  <style>
+    svg { --paper:#fff8e9; --ink:#514334; --muted:#675749; --edge:#cbbfa0; --green:#e5efc8; --sky:#def0ef; --gold:#f6e4b7; --accent:#6d884c; }
+    @media(prefers-color-scheme:dark) { svg { --paper:#2b2c25; --ink:#fbefd9; --muted:#ded0b6; --edge:#62674c; --green:#3e4b32; --sky:#30474a; --gold:#4a4030; --accent:#b2c786; } }
+    text { font-family:"Segoe Print","Comic Sans MS","KaiTi","STKaiti","Microsoft YaHei",sans-serif; }
+  </style>
+  <g transform="translate(12 8)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--green)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h16v16H5Zm4 4h8v8H9ZM8 1v4m5-4v4m5-4v4M8 21v4m5-4v4m5-4v4M1 8h4m-4 5h4m-4 5h4m16-10h4m-4 5h4m-4 5h4"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">硬件检测</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">温度 · 频率 · 功耗</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">磁盘健康</text>
+    </g>
+  <g transform="translate(220 8)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--gold)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21a12 12 0 0 1 23 0ZM13 16l7-7M7 10l2 2m4-6v3m8 7h-3"/><circle cx="13" cy="19" r="2"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">性能测试</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">CPU / GPU 烤机</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">跑分 · 快速验机</text>
+    </g>
+  <g transform="translate(12 140)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--sky)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h12l5 5v17H4Zm12 0v6h5M0 11h12m-4-4 4 4-4 4m18 2H14m4-4-4 4 4 4"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">格式转换</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">图片 · 音视频 · 文档</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">OCR · 批量队列</text>
+    </g>
+  <g transform="translate(220 140)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--green)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7h11q5 0 6 7l1 7q-1 5-5 2l-4-3h-7l-4 3q-5 3-5-2l1-7q1-7 6-7Zm-2 6v6m-3-3h6m9-2v.2m4 3v.2"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">游戏工具</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">FPS 悬浮层 · 联机</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">运行库修复</text>
+    </g>
+  <g transform="translate(12 272)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--gold)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m13 1 10 4v8q-1 8-10 12Q3 20 3 13V5ZM8 13l3 4 7-8"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">系统维护</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">清理 · 启动项 · 网络</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">安全工具</text>
+    </g>
+  <g transform="translate(220 272)">
+      <path d="M13 3q98 -3 170 0 11 0 11 12v94q0 12-13 12-98 -2-171 0Q2 120 2 108V16Q1 4 13 3Z" fill="var(--paper)" stroke="var(--edge)" stroke-width="1.5"/>
+      <path d="m18 15 35-2 1 32-36 1Z" fill="var(--sky)"/>
+      <g transform="translate(22 18)" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5h15v17H6ZM13 1v4M2 9h4m-4 8h4m15-8h4m-4 8h4M9 12v2m8-2v2m-8 4h8"/></g>
+      <text x="17" y="74" fill="var(--ink)" font-weight="700" font-size="20">本地 AI</text>
+      <path d="M18 82q61 3 125-1" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <text x="17" y="100" fill="var(--muted)" font-size="12.5">LLM 对话 · 视觉推理</text>
+      <text x="17" y="118" fill="var(--muted)" font-size="12.5">NPU / GPU / CPU</text>
+    </g>
+</svg>

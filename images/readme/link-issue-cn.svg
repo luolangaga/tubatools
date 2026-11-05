@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="166" height="46" viewBox="0 0 166 46" role="img" aria-labelledby="title">
+  <title id="title">反馈建议</title>
+  <style>
+    svg { --paper:#fff8e9; --ink:#514334; --muted:#675749; --edge:#cbbfa0; --green:#e5efc8; --sky:#def0ef; --gold:#f6e4b7; --accent:#6d884c; }
+    @media(prefers-color-scheme:dark) { svg { --paper:#2b2c25; --ink:#fbefd9; --muted:#ded0b6; --edge:#62674c; --green:#3e4b32; --sky:#30474a; --gold:#4a4030; --accent:#b2c786; } }
+    text { font-family:"Segoe Print","Comic Sans MS","KaiTi","STKaiti","Microsoft YaHei",sans-serif; }
+  </style>
+  <path d="M16 4q63-2 134 0 13 0 13 15v8q0 15-14 15-64-2-133 0Q3 42 3 27v-9Q3 4 16 4Z" fill="var(--gold)" stroke="var(--edge)" stroke-width="1.6"/>
+  <g transform="translate(13 11) scale(.87)" stroke="var(--ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M3 2h19v15H11l-7 5v-5H3ZM12 6v5m0 3v.4"/></g>
+  <text x="43" y="29" fill="var(--ink)" font-size="19" font-weight="700">反馈建议</text>
+</svg>
