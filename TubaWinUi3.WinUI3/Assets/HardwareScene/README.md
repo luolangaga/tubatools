@@ -5,6 +5,27 @@ OrbitControls interaction and projected component anchors. Component GLBs and th
 Three.js 0.186.1 is MIT licensed (see THREE-LICENSE.txt). All component assets load from the local package, only when a card is expanded.
 The checked-in `scene.bundle.js` lets normal .NET builds run without Node.js.
 
+The computer and parts are illustrative. `geometry.js` batches fixed meshes by material
+within each rigid group. This keeps the keyboard legends, case details and swept fan
+blades cheap to draw without flattening the lid or rotor motion. The hardware anchors
+stay attached to their corresponding model groups.
+
+The chassis and procedural parts use bevelled profiles, open connector bores and
+cutouts. Desktop intake fans keep the original rotor and trail animation; their
+frames open into the chassis, behind a lightly tinted dust screen. The bundled GLBs
+and their textures are retained.
+
+`desktop-interior.js` models the installed parts separately from the component viewer.
+It uses one procedural PCB artwork texture for silkscreen, vias and traces; relief
+parts, cooler fins, fan frames, cables and drive sleds are geometry. It uses no GLBs.
+The front rotor behavior is retained. Separate pivots let the rear, cooler, GPU and
+power supply fans spin in the same frame loop; reduced motion keeps the added
+rotors still. The component viewer also turns the existing GPU asset's fan pivots.
+
+`desktop-mouse.js` builds the mouse with its click buttons and charging port facing
+the monitor. `monitor-back.js` shares the display's rear housing, vents and ports
+between the desktop scene and the component viewer.
+
 To rebuild the bundle, install dependencies in a directory **outside Assets** (so they
 are not copied into app output):
 
