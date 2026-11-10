@@ -67,8 +67,12 @@ ButtonNewFolder=新建文件夹(&M)
 SelectLanguageTitle=选择安装语言
 SelectLanguageLabel=选择安装过程中使用的语言：
 
+[CustomMessages]
+CreateTuiIcon=创建「图吧工具箱 TUI 兼容版」开始菜单快捷方式
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "tuishortcut"; Description: "{cm:CreateTuiIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "publish_x86_installer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -76,7 +80,7 @@ Source: "TubaWinUi3.Tui\Assets\{#MyTuiIconName}"; DestDir: "{app}"; Flags: ignor
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\{#MyAppName} TUI 兼容版"; Filename: "{app}\{#MyTuiExeName}"; IconFilename: "{app}\{#MyTuiIconName}"; Check: TuiShortcutAvailable
+Name: "{group}\{#MyAppName} TUI 兼容版"; Filename: "{app}\{#MyTuiExeName}"; IconFilename: "{app}\{#MyTuiIconName}"; Tasks: tuishortcut; Check: TuiShortcutAvailable
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
