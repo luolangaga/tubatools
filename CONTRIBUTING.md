@@ -23,7 +23,7 @@
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Visual Studio 2022 17.14+](https://visualstudio.microsoft.com/)（含 WinUI 3 工作负载）或 VS Code + C# Dev Kit
-- 最低支持 Windows 10 1809；支持 x86 / x64 / ARM64
+- 最低支持 Windows 10 2004（Build 19041，与 `TargetPlatformMinVersion` 及安装器门禁一致）；支持 x86 / x64 / ARM64
 - **注意**：应用启动时会自动请求管理员权限（`runas`），部分功能（内核监控、ETW 追踪、WMI）需要管理员
 
 ## 构建与测试
@@ -45,7 +45,8 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"   # 只跑某个测�
 - 所有服务为静态类、无 DI，从页面直接调用（唯一例外：`LiteMonitorService` 为单例 `Instance`）
 - 内置工具开发（仅限维护者规划的改动）：在 `TubaWinUi3.WinUI3/Services/BuiltinTools/` 下新建类实现 `IBuiltinTool`，在 `BuiltinToolRegistry.RegisterDefaults()` 注册（**重复 ID 会抛异常**），详情见[内置工具开发文档](https://tubawinui3.cn/dev/builtin-tools.html)
 - 对话框请通过 `context.CreateDialog(...)` 创建，使其跟随应用主题
-- UI 字符串为硬编码中文（当前无本地化系统），改动文案请保持中文，并同步更新英文文档/说明
+- 界面文案走本地化系统（WinUI3Localizer）：资源在 `TubaWinUi3.WinUI3/Strings/zh-CN|en-US/Resources.resw`，XAML 用 `l:Uids.Uid="Key"`，代码用 `LocalizationService.L("Key", "中文回退")`；新增或修改文案时中英文需一起加，键集一致性由 `LocalizationTests` 校验
+- 页面若用代码赋值文本并需要随语言切换刷新，需声明实现 `ILocalizablePage`；尚未迁移的页面可直接写中文（缺键会回退到 fallback），但新代码请走资源键；工具名称/描述的中英文覆盖层是 `Metadata/Tools_<lang>.json`
 
 ## 提交规范
 
