@@ -28,6 +28,7 @@ public sealed class GameMonitorRecordSession
     private int _intervalMs = 1000;
     private string _target = "";
     private string _cpu = "", _gpu = "", _fpsProcess = "";
+    private Task<(string? Cpu, IReadOnlyList<string> Gpus)>? _hardwareNames;
     private bool _truncated;
 
     public bool Active { get; private set; }
@@ -48,6 +49,7 @@ public sealed class GameMonitorRecordSession
         _startTime = DateTime.Now;
         _truncated = false;
         _cpu = _gpu = _fpsProcess = "";
+        _hardwareNames = Task.Run(() => (HardwareInfoService.GetCpuName(), HardwareInfoService.GetDisplayGpuNames()));
         Active = true;
         _watch.Restart();
     }
@@ -91,6 +93,15 @@ public sealed class GameMonitorRecordSession
 
         if (metrics.Count == 0 || samples.Count == 0) return null;
 
+        if (_hardwareNames is { IsCompletedSuccessfully: true } hardware)
+        {
+            _cpu = hardware.Result.Cpu ?? _cpu;
+            // 监控采样可能来自另一块卡，只有匹配上才使用盘点名称。
+            var names = hardware.Result.Gpus;
+            _gpu = names.FirstOrDefault(name => string.Equals(name, _gpu, StringComparison.OrdinalIgnoreCase))
+                ?? (string.IsNullOrWhiteSpace(_gpu) && names.Count == 1 ? names[0] : _gpu);
+        }
+
         var meta = new MonitorRecordMeta
         {
             StartTime = _startTime,
@@ -113,6 +124,7 @@ public sealed class GameMonitorRecordSession
         Active = false;
         _samples.Clear();
         _metrics.Clear();
+        _hardwareNames = null;
         _watch.Stop();
         _watch.Reset();
     }

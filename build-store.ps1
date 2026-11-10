@@ -102,6 +102,8 @@ function Write-CleanManifest {
         '  </Applications>'
         '  <Capabilities>'
         '    <rescap:Capability Name="runFullTrust" />'
+        '    <DeviceCapability Name="microphone" />'
+        '    <DeviceCapability Name="webcam" />'
         '  </Capabilities>'
         '</Package>'
     )
@@ -121,27 +123,6 @@ function Remove-UnnecessaryFiles {
 
     $tools = Join-Path $Root 'Tools'
     if (-not (Test-Path -LiteralPath $tools)) { return }
-
-    # Dism++ x86/ARM64 config dirs
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter 'x86' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'Config' -and $_.Parent.Parent.Name -like '*Dism*' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter 'arm64' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'Config' -and $_.Parent.Parent.Name -like '*Dism*' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
-    # Dism++ x86/ARM64 exe
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq 'Dism++x86.exe' -or $_.Name -eq 'Dism++ARM64.exe' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-
-    # Dism++ Plugin arch dlls
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.x86.dll' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.arm64.dll' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
 
     # DDU non-Chinese/English language XML
     Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
@@ -166,9 +147,6 @@ function Remove-UnnecessaryFiles {
     Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -in $themeRemove } |
         Remove-Item -Force -ErrorAction SilentlyContinue
-
-    # Dism++ Config ZIPs are runtime resources, including UI and language packs.
-    # Keep them intact; they are not leftover download archives.
 }
 
 function Build-ArchPackage {

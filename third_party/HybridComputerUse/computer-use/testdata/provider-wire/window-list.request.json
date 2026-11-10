@@ -1,0 +1,10 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-window-list",
+  "operation": "window_list",
+  "window_list": {
+    "protocol_version": 2,
+    "app": "Editor"
+  }
+}

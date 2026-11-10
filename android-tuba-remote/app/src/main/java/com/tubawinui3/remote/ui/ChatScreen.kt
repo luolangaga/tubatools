@@ -1,11 +1,7 @@
 package com.tubawinui3.remote.ui
 
-import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -50,12 +46,12 @@ import com.tubawinui3.remote.RemoteViewModel
 import com.tubawinui3.remote.data.ApiClient
 import com.tubawinui3.remote.data.ApiException
 import com.tubawinui3.remote.data.ChatMessage
+import com.tubawinui3.remote.data.DownloadQueue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStream
 import java.text.DateFormat
 import java.util.Date
@@ -65,7 +61,12 @@ private const val MAX_PREVIEW_BYTES = 12L * 1024 * 1024
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(vm: RemoteViewModel, client: ApiClient, onBack: () -> Unit) {
+fun ChatScreen(
+    vm: RemoteViewModel,
+    client: ApiClient,
+    onBack: () -> Unit,
+    onOpenDownloads: () -> Unit,
+) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
     var text by remember { mutableStateOf("") }
@@ -118,7 +119,13 @@ fun ChatScreen(vm: RemoteViewModel, client: ApiClient, onBack: () -> Unit) {
 
     Scaffold(
         modifier = Modifier.imePadding(),
-        topBar = { TopAppBar(title = { Text("传输助手") }, navigationIcon = { TextButton(onClick = onBack) { Text("返回") } }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("传输助手") },
+                navigationIcon = { TextButton(onClick = onBack) { Text("返回") } },
+                actions = { TextButton(onClick = onOpenDownloads) { Text("传输队列") } },
+            )
+        },
         bottomBar = {
             Column(Modifier.padding(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -145,17 +152,8 @@ fun ChatScreen(vm: RemoteViewModel, client: ApiClient, onBack: () -> Unit) {
         ) {
             items(vm.messages, key = { it.seq }) { m ->
                 Bubble(m, client, onSave = {
-                    scope.launch {
-                        try {
-                            val started = System.currentTimeMillis()
-                            saveToDownloads(ctx, client, m)
-                            val seconds = (System.currentTimeMillis() - started) / 1000.0
-                            val avg = if (m.size > 0 && seconds > 0.3) "（平均 ${fmtSpeed(m.size / seconds)}）" else ""
-                            toast("已保存到下载目录：${m.fileName}$avg")
-                        } catch (e: Exception) {
-                            toast("保存失败：${e.message}")
-                        }
-                    }
+                    DownloadQueue.enqueue(m, vm.currentPcId ?: "")
+                    toast("已加入下载队列")
                 })
             }
         }
@@ -239,30 +237,4 @@ private fun queryNameSize(ctx: Context, uri: Uri): Pair<String, Long> {
         }
     }
     return name to size
-}
-
-/** 保存到公共「下载」目录：Android 10+ 走 MediaStore（无需权限），更低版本直接写文件。 */
-private suspend fun saveToDownloads(ctx: Context, client: ApiClient, m: ChatMessage) {
-    val name = m.fileName.ifEmpty { "file" }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val values = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, name)
-            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/图吧工具箱")
-            put(MediaStore.Downloads.IS_PENDING, 1)
-        }
-        val uri = ctx.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            ?: throw ApiException("无法创建文件")
-        try {
-            ctx.contentResolver.openOutputStream(uri)!!.use { client.chatDownload(m.id, it) }
-            ctx.contentResolver.update(uri, ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }, null, null)
-        } catch (e: Exception) {
-            ctx.contentResolver.delete(uri, null, null)
-            throw e
-        }
-    } else {
-        withContext(Dispatchers.IO) {
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "图吧工具箱").apply { mkdirs() }
-            File(dir, name.replace('/', '_')).outputStream().use { client.chatDownload(m.id, it) }
-        }
-    }
 }

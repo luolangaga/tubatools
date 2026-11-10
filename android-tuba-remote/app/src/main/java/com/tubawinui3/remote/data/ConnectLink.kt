@@ -9,6 +9,7 @@ data class ConnectTarget(
     val port: Int = DEFAULT_PORT,
     val code: String? = null,
     val name: String? = null,
+    val fingerprint: String? = null,
 ) {
     override fun toString(): String = "ConnectTarget(host=$host, port=$port, code=<redacted>)"
 }
@@ -30,7 +31,7 @@ object ConnectLink {
             }
             s = s.substring(0, qi)
         }
-        s = s.removePrefix("tubalink://").removePrefix("http://").trimEnd('/')
+        s = s.removePrefix("tubalink://").removePrefix("https://").trimEnd('/')
         if (s.isEmpty() || s.contains('/') || s.contains(' ')) return null
         val colon = s.lastIndexOf(':')
         val host: String
@@ -40,7 +41,9 @@ object ConnectLink {
             port = s.substring(colon + 1).toIntOrNull()?.takeIf { it in 1..65535 } ?: return null
         } else host = s
         if (host.isEmpty()) return null
-        return ConnectTarget(host, port, query["code"]?.takeIf { it.isNotEmpty() }, query["name"])
+        val fingerprint = query["fp"]?.replace(":", "")?.uppercase()
+        if (fingerprint != null && !Regex("[0-9A-F]{64}").matches(fingerprint)) return null
+        return ConnectTarget(host, port, query["code"]?.takeIf { it.isNotEmpty() }, query["name"], fingerprint)
     }
 
     private fun decode(s: String) = try {

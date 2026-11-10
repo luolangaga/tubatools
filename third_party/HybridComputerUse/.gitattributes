@@ -1,0 +1,20 @@
+computer-use/** whitespace=-blank-at-eof
+
+# Source archives must not include local runtimes, results or build artifacts.
+/artifacts export-ignore
+/external export-ignore
+/runs export-ignore
+/.venv export-ignore
+/.pytest_cache export-ignore
+**/__pycache__ export-ignore
+*.pyc export-ignore
+*.log export-ignore
+*.qcow2 export-ignore
+*.qcow2.sha256 export-ignore
+/.env export-ignore
+/computer-use/computer-use export-ignore
+/computer-use/computer-use.exe export-ignore
+/computer-use/native/macos/.build export-ignore
+/computer-use/native/macos/build export-ignore
+**/bin export-ignore
+**/obj export-ignore

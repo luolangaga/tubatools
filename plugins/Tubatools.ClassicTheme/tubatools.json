@@ -1,0 +1,11 @@
+{
+  "apiVersion": 2,
+  "fullTrust": true,
+  "assembly": "plugin/Tubatools.ClassicTheme.dll",
+  "entryType": "Tubatools.ClassicTheme.ClassicThemePlugin",
+  "name": "经典样式",
+  "description": "经典蓝色渐变主题包：深蓝侧栏、浅蓝内容区、半透明白色卡片与白色文字",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

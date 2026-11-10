@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Security.Principal;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -42,6 +42,10 @@ public partial class App : Application
         // WebView2EnvironmentService.GetAsync() 指定可写目录（%LocalAppData%\TubaWinUi3\WebView2）。
         InitializeComponent();
 
+        // The computer-use MCP bridge is a stdio proxy: no settings, telemetry, UI or mutex.
+        if (Services.AiAgent.ComputerUseMcpProxy.IsInvocation(Environment.GetCommandLineArgs()))
+            return;
+
         // External Agent helpers return JSON without starting UI services or acquiring the main mutex.
         if (Services.AgentCli.AgentCliService.IsInvocation(Environment.GetCommandLineArgs()))
             return;
@@ -61,6 +65,8 @@ public partial class App : Application
 
         // 界面语言必须在任何打了 Uid 的控件创建前就绪（MainWindow 在 OnLaunched 里创建）。
         LocalizationService.Initialize();
+        // 旧版本把「逐次确认」当成默认写进了设置；默认应为全部权限，这里只修正一次。
+        Services.AiAgent.AgentPermissionPolicy.MigrateLegacyDefault();
         AiProviderStore.SaveFailed += QueueProviderNotice;
         AiProviderStore.LoadWarning += QueueProviderNotice;
 
@@ -247,6 +253,17 @@ public partial class App : Application
         // 流氓软件的克星「安全增强菜单 - 复制完整路径」配方通过 --copy-path <路径>
         // 唤醒本程序复制路径到剪贴板（后台模式，不显示主窗口）。
         var cmdLine = Environment.GetCommandLineArgs();
+
+        // stdio MCP bridge in front of the official Hybrid Computer Use server.
+        // Runs before elevation and the single-instance gate: the bridge must never open a
+        // window, forward a launch intent or pop UAC.
+        if (Services.AiAgent.ComputerUseMcpProxy.IsInvocation(cmdLine))
+        {
+            Environment.ExitCode = Services.AiAgent.ComputerUseMcpProxy.Run();
+            Exit();
+            return;
+        }
+
         if (Services.AgentCli.AgentCliService.IsInvocation(cmdLine))
         {
             RunAgentCliAndExit(cmdLine);
@@ -449,29 +466,19 @@ public partial class App : Application
             return;
         }
 
-        if (!IsRunningAsAdmin() && Environment.GetEnvironmentVariable("TUBA_SCREENSHOT_NOELEVATE") != "1")
+        // MSIX 默认以普通权限启动；需要管理员权限时由用户在工具页面主动重启提权。
+        if (!RuntimeHelper.IsPackagedContext && !IsRunningAsAdmin()
+            && Environment.GetEnvironmentVariable("TUBA_SCREENSHOT_NOELEVATE") != "1")
         {
-            if (RuntimeHelper.IsMsixPackaged)
-            {
-                // 失败或取消 UAC 时仍可使用普通权限模式，避免启动后直接消失。
-                if (TryRelaunchElevated(cmdLine.Skip(1).ToArray(), out _))
-                {
-                    Exit();
-                    return;
-                }
-            }
-            else if (!RuntimeHelper.IsPackagedContext)
-            {
-                ElevateAndRestart();
-                Exit();
-                return;
-            }
+            ElevateAndRestart();
+            Exit();
+            return;
         }
 
         // ───────────────────────── 单实例闸门 ─────────────────────────
         // 任何方式重复启动工具箱（双击 exe / 快捷方式 / 搜索 / 右键菜单 / 后端 Toast）都
         // 不再开第二个实例：转发导航意图给已运行实例并退出。
-        // 闸门只能在自动提权块之后——留下窗口的进程一定是管理员；且此前的 --copy-path /
+        // 闸门只能在非打包版的自动提权块之后（MSIX 默认普通权限）；且此前的 --copy-path /
         // --context-title-probe / --toast / --phone-toast-handler / --energystar-silent
         // 等无窗口辅助模式都已 return，绝不能被误拦。
         var intent = LaunchIntent.Parse(cmdLine);
@@ -484,9 +491,28 @@ public partial class App : Application
             return;
         }
 
+        // 插件加载是磁盘 IO + Assembly.Load：后台开始，主窗口不必等它完成才出首帧。
+        var pluginLoad = Services.Plugins.PluginManager.LoadInstalledAsync();
         _window = new MainWindow();
         Services.AgentCli.AgentQueryBroker.StartForMainInstance();
         _window.Activate();
+        // 插件启动钩子必须等主窗口完成首次加载：NavigationView 等控件在 Activate 前
+        // 还没有视觉父级，主题类插件移动/重排控件会抛异常（表现为启动不生效、停用再启用才生效）。
+        if (_window.Content is FrameworkElement pluginRoot)
+        {
+            if (pluginRoot.IsLoaded) Services.Plugins.PluginManager.StartPlugins();
+            else
+            {
+                void OnPluginRootLoaded(object sender, RoutedEventArgs e)
+                {
+                    pluginRoot.Loaded -= OnPluginRootLoaded;
+                    Services.Plugins.PluginManager.StartPlugins();
+                }
+                pluginRoot.Loaded += OnPluginRootLoaded;
+            }
+        }
+        else Services.Plugins.PluginManager.StartPlugins();
+        Services.AiAgent.ComputerControlService.Attach(_window);
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
 
         // 「关闭时最小化到系统托盘」已开启的用户，启动即注册托盘图标（不等第一次关闭窗口）
@@ -548,9 +574,45 @@ public partial class App : Application
         }
 
         // 首次启动按命令行意图导航（与重复启动转发共用同一分派逻辑）。
-        ApplyLaunchIntent(intent);
+        // 插件工具要等后台插件加载完成才注册；其余意图立即导航，不等插件。
+        var intentNeedsPlugins = intent.Kind == LaunchIntentKind.OpenBuiltin &&
+            intent.Arg?.StartsWith("plugin:", StringComparison.OrdinalIgnoreCase) == true;
+        if (!intentNeedsPlugins)
+            ApplyLaunchIntent(intent);
+
+        // 加载完成后刷新导航；插件工具的启动意图在此时补做。
+        _ = CompletePluginLoadingAsync(pluginLoad, intentNeedsPlugins ? intent : null);
 
         _ = RunStartupSequenceAsync();
+    }
+
+    /// <summary>
+    /// 后台插件加载完成后的收尾：刷新导航分类，（插件工具的 --open-builtin）补做首次导航。
+    /// 插件启动钩子只在主窗口内容已 Loaded 后调用——提前调用会因 NavigationView
+    /// 还没有视觉父级而让主题类插件抛异常（与原本的 Loaded 门控保持一致）。
+    /// </summary>
+    private async Task CompletePluginLoadingAsync(Task pluginLoad, LaunchIntent? deferredIntent)
+    {
+        try { await pluginLoad; } catch { }
+        var window = _window;
+        if (window is null) return;
+
+        window.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (IsExiting) return;
+            try { window.RefreshToolCategories(); } catch { }
+            try
+            {
+                if (window.Content is FrameworkElement root && root.IsLoaded)
+                    Services.Plugins.PluginManager.StartPlugins();
+            }
+            catch { }
+            if (deferredIntent is not null)
+            {
+                try { ApplyLaunchIntent(deferredIntent); }
+                catch { }
+            }
+        });
     }
 
     /// <summary>
@@ -827,6 +889,13 @@ public partial class App : Application
         {
             System.Diagnostics.Debug.WriteLine("[Startup] 警告：MSIX 包身份路径解析失败，数据根已回滚到共享 %LocalAppData%，工具根可能指向非打包路径");
         }
+
+        // Steam 加速恢复要读 Hosts / 证书、必要时刷新 DNS：放后台，不占启动首帧。
+        _ = Task.Run(() =>
+        {
+            try { SteamAccelerationService.RecoverOnStartup(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速恢复失败：" + ex.Message); }
+        });
 
         if (MainWindow?.DispatcherQueue is not null)
         {

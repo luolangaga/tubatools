@@ -1,0 +1,2 @@
+go test fuzz v1
+string("{\"actions\":[{\"postcondition\":{\"state\":\"00\",\"target\":{\"ref\":\"r1\"},\"timeout_ms\":1,\"type\":\"state\",\"value\":true},\"target\":{\"ref\":\"r10\"},\"type\":\"click\"}],\"mode\":\"act\"}")

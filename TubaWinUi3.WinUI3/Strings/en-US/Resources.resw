@@ -161,9 +161,7 @@
   <data name="MainWindow_NavBenchmark.Content" xml:space="preserve">
     <value>Benchmarks</value>
   </data>
-  <data name="MainWindow_NavCommunity.Content" xml:space="preserve">
-    <value>Community</value>
-  </data>
+  <data name="MainWindow_NavCommunity.Content" xml:space="preserve"><value>Plugins</value></data>
   <data name="MainWindow_NewbieTutorialButton" xml:space="preserve">
     <value>Getting Started</value>
   </data>
@@ -759,15 +757,9 @@
   <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
     <value>Minimize to the system tray when closing</value>
   </data>
-  <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve">
-    <value>Submit tool</value>
-  </data>
-  <data name="Settings_CommunitySubmit_Desc.Text" xml:space="preserve">
-    <value>Submit a tool to the community repository; visible to everyone after review</value>
-  </data>
-  <data name="Settings_CommunitySubmit_Title.Text" xml:space="preserve">
-    <value>Submit community tool</value>
-  </data>
+  <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve"><value>Upload plugin</value></data>
+  <data name="Settings_CommunitySubmit_Desc.Text" xml:space="preserve"><value>Open NuGet upload and read the plugin developer guide</value></data>
+  <data name="Settings_CommunitySubmit_Title.Text" xml:space="preserve"><value>Publish a plugin</value></data>
   <data name="Settings_Compact_Desc.Text" xml:space="preserve">
     <value>The classic Tuba Toolbox style</value>
   </data>
@@ -1988,12 +1980,8 @@ Permissions
   </data>
 
   <!-- 内置工具名称与简介（第三轮） -->
-  <data name="Builtin_ai-assistant_Desc" xml:space="preserve">
-    <value>An intelligent system agent that can diagnose problems, optimize settings, read/write files, run commands, search the web, and take actions.</value>
-  </data>
-  <data name="Builtin_ai-assistant_Name" xml:space="preserve">
-    <value>AI Assistant</value>
-  </data>
+  <data name="Builtin_ai-assistant_Desc" xml:space="preserve"><value>Solve problems and develop, build and load toolbox plugins with AI.</value></data>
+  <data name="Builtin_ai-assistant_Name" xml:space="preserve"><value>AI assistant</value></data>
   <data name="Builtin_anti-motion-sickness_Desc" xml:space="preserve">
     <value>Center crosshair plus edge markers to reduce 3D motion sickness. Saves you 13 yuan in one click!</value>
   </data>
@@ -2181,7 +2169,7 @@ Permissions
     <value>Port Usage</value>
   </data>
   <data name="Builtin_quick-device-check_Desc" xml:space="preserve">
-    <value>A new-PC inspection wizard: appearance, hardware info, disk power-on, screen defects, peripherals, camera, audio, and triple stress test — all in one place</value>
+    <value>A new-PC inspection wizard: appearance, hardware info, disk power-on, screen defects, peripherals, camera, audio recording and playback, and CPU / GPU stress tests — all in one place</value>
   </data>
   <data name="Builtin_quick-device-check_Name" xml:space="preserve">
     <value>Quick Device Check</value>
@@ -2229,10 +2217,10 @@ Permissions
     <value>Startup Manager</value>
   </data>
   <data name="Builtin_stress-test_Desc" xml:space="preserve">
-    <value>CPU / GPU / NIC stress testing with freely selectable items; NIC testing supports custom data sizes and rate reference, with live temperature, frequency, power, and throughput monitoring.</value>
+    <value>Run CPU and GPU stress tests separately or together, with live temperature, clock speed, and power monitoring.</value>
   </data>
   <data name="Builtin_stress-test_Name" xml:space="preserve">
-    <value>Triple Stress Test</value>
+    <value>CPU / GPU Stress Test</value>
   </data>
   <data name="Builtin_phone-link_Desc" xml:space="preserve">
     <value>Connect the Android companion app over LAN (QR code / pairing code / IP) to monitor hardware, view screenshots, run PowerShell, install apps via winget and chat / transfer files.</value>
@@ -5148,9 +5136,9 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="Dashboard_CleanupDesc" xml:space="preserve"><value>Free up disk space with a range of cleanup tools</value></data>
   <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>Junk cleanup</value></data>
   <data name="Dashboard_Copied" xml:space="preserve"><value>Group number copied</value></data>
-  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>Search for group 485079194 in QQ to request to join.</value></data>
+  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>Search for group 1124067964 in QQ to request to join.</value></data>
   <data name="Dashboard_CopyFailed" xml:space="preserve"><value>Copy failed</value></data>
-  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>The clipboard is busy with another app. Try again, or search for group 485079194 manually.</value></data>
+  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>The clipboard is busy with another app. Try again, or search for group 1124067964 manually.</value></data>
   <data name="Dashboard_Description" xml:space="preserve"><value>Custom description (leave blank for default)</value></data>
   <data name="Dashboard_EditFailed" xml:space="preserve"><value>Unable to edit home</value></data>
   <data name="Dashboard_GameDesc" xml:space="preserve"><value>Track frame rates and other gaming performance data</value></data>
@@ -5162,7 +5150,7 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="Dashboard_HardwareDesc" xml:space="preserve"><value>Check your computer&apos;s configuration</value></data>
   <data name="Dashboard_HardwareTitle" xml:space="preserve"><value>Hardware information</value></data>
   <data name="Dashboard_OpenFailed" xml:space="preserve"><value>Unable to open tool</value></data>
-  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · Share tips and ideas with the Tuba community</value></data>
+  <data name="Dashboard_QqDesc" xml:space="preserve"><value>1124067964 · Share tips and ideas with the Tuba community</value></data>
   <data name="Dashboard_QqTitle" xml:space="preserve"><value>QQ community</value></data>
   <data name="Dashboard_Remove" xml:space="preserve"><value>Remove card</value></data>
   <data name="Dashboard_Save" xml:space="preserve"><value>Save</value></data>
@@ -5221,7 +5209,7 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="Dashboard_BatteryTitle" xml:space="preserve"><value>Battery usage analysis</value></data>
   <data name="Dashboard_BatteryDesc" xml:space="preserve"><value>Review battery usage trends and power-hungry apps</value></data>
   <data name="Dashboard_StressTitle" xml:space="preserve"><value>Combined stress test</value></data>
-  <data name="Dashboard_StressDesc" xml:space="preserve"><value>Stress-test CPU, GPU and network while monitoring temperature and power</value></data>
+  <data name="Dashboard_StressDesc" xml:space="preserve"><value>Stress-test CPU and GPU while monitoring temperature and power</value></data>
   <data name="Settings_GroupUpdates.Text" xml:space="preserve"><value>Version and updates</value></data>
   <data name="Settings_GroupOptionUpdates.Content" xml:space="preserve"><value>Version and updates</value></data>
   <data name="Settings_GroupBehavior.Text" xml:space="preserve"><value>Startup and behavior</value></data>
@@ -5314,8 +5302,6 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>Rogue cleaner</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>View logs</value></data>
-  <data name="Builtin_steam-toolbox_Name" xml:space="preserve"><value>Steam Toolbox</value></data>
-  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Local Steam accounts, game libraries and built-in idling</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>Sponsor</value></data>
   <data name="Settings_StarRequest.Text" xml:space="preserve"><value>If you like our project, please give us a Star on GitHub/GitCode!</value></data>
   <data name="Settings_SponsorList.Content" xml:space="preserve"><value>Sponsors</value></data>
@@ -5326,4 +5312,333 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>Alipay</value></data>
   <data name="Builtin_website-acceleration_Name" xml:space="preserve"><value>Website Acceleration</value></data>
   <data name="Builtin_website-acceleration_Desc" xml:space="preserve"><value>Built-in website acceleration with service selection, live traffic charts and connection details</value></data>
+  <data name="UpdateBanner_DownloadedVerifyOnInstall" xml:space="preserve"><value>Update downloaded. The file will be verified before installation.</value></data>
+  <data name="Persistence_ErrorTitle" xml:space="preserve"><value>Save failed</value></data>
+  <data name="Persistence_SettingsError" xml:space="preserve"><value>Settings could not be saved. Check folder permissions and free disk space, then retry.</value></data>
+  <data name="Persistence_FavoritesError" xml:space="preserve"><value>Favorites could not be saved. Check folder permissions and free disk space, then retry.</value></data>
+  <data name="Hw_PortsButton.Content" xml:space="preserve"><value>Ports &amp; connections</value></data>
+  <data name="HwPorts_Hint" xml:space="preserve"><value>Internal USB devices and external hubs are excluded, and USB 2/3 companion ports are merged. Firmware may report unwired ports, so only capabilities are shown; logical port counts are not physical socket counts. Rates are standard signaling rates, not file transfer speeds.</value></data>
+  <data name="HwPorts_Empty" xml:space="preserve"><value>The system did not report interface information. This does not mean the device has no ports.</value></data>
+  <data name="HwPorts_Usb3" xml:space="preserve"><value>USB 3.x (SuperSpeed 5 Gb/s supported; higher maximum not reported)</value></data>
+  <data name="HwPorts_Unknown" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="HwPorts_SuperPlus" xml:space="preserve"><value>SuperSpeedPlus (10 Gb/s or higher; exact rate not reported)</value></data>
+  <data name="HwPorts_UsbShapeUnknown" xml:space="preserve"><value>USB (connector shape not reported)</value></data>
+  <data name="HwPorts_External" xml:space="preserve"><value>User connectable</value></data>
+  <data name="HwPorts_Internal" xml:space="preserve"><value>Internal / not user connectable</value></data>
+  <data name="HwPorts_LocationUnknown" xml:space="preserve"><value>Location not reported</value></data>
+  <data name="HwPorts_Disconnected" xml:space="preserve"><value>Disconnected</value></data>
+  <data name="HwPorts_Connected" xml:space="preserve"><value>Connected</value></data>
+  <data name="HwPorts_ConnectionError" xml:space="preserve"><value>Connection error</value></data>
+  <data name="HwPorts_Protocols" xml:space="preserve"><value>Port protocols / standard rates</value></data>
+  <data name="HwPorts_CurrentSpeed" xml:space="preserve"><value>Current link rate</value></data>
+  <data name="HwPorts_LinkDown" xml:space="preserve"><value>Disconnected or unavailable</value></data>
+  <data name="HwPorts_DisplayConnection" xml:space="preserve"><value>Current display connection type; interface version unavailable (adapters may affect the reported type)</value></data>
+  <data name="HwPorts_ControllerOnly" xml:space="preserve"><value>Controller detected; port count, version, and maximum rate not reported</value></data>
+  <data name="HwPorts_Firmware" xml:space="preserve"><value>Firmware-reported connector; protocol version and rate not reported</value></data>
+  <data name="HwPorts_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="HwPorts_Refresh" xml:space="preserve"><value>Scan again</value></data>
+  <data name="HwPorts_Group_USBHub" xml:space="preserve"><value>USB ports and link rates</value></data>
+  <data name="HwPorts_Group_SMBIOS" xml:space="preserve"><value>Firmware-reported connectors</value></data>
+  <data name="HwPorts_Group_Display" xml:space="preserve"><value>Current display connections</value></data>
+  <data name="HwPorts_Group_PnP" xml:space="preserve"><value>USB4 / Thunderbolt controllers</value></data>
+  <data name="HwPorts_Group_Network" xml:space="preserve"><value>Wired network connections</value></data>
+  <data name="Hw_PortsLabel.Text" xml:space="preserve"><value>Ports</value></data>
+  <data name="HwPorts_UsbOther" xml:space="preserve"><value>USB (other connectors)</value></data>
+  <data name="HwPorts_Usb3Summary" xml:space="preserve"><value>USB 3.x · 5 Gb/s or higher</value></data>
+  <data name="Builtin_plugins_Name" xml:space="preserve"><value>Plugins</value></data>
+  <data name="Builtin_plugins_Desc" xml:space="preserve"><value>Discover, install and manage plugins from NuGet.</value></data>
+  <data name="Plugins_Title.Text" xml:space="preserve"><value>Plugins</value></data>
+  <data name="Plugins_Source.Text" xml:space="preserve"><value>From nuget.org · Tubatools</value></data>
+  <data name="Plugins_Docs.Content" xml:space="preserve"><value>Developer guide</value></data>
+  <data name="Plugins_Upload.Content" xml:space="preserve"><value>Upload to NuGet</value></data>
+  <data name="Plugins_Search.PlaceholderText" xml:space="preserve"><value>Search plugins</value></data>
+  <data name="Plugins_Discover.Header" xml:space="preserve"><value>Discover</value></data>
+  <data name="Plugins_Installed.Header" xml:space="preserve"><value>Installed</value></data>
+  <data name="Plugins_Previous.Content" xml:space="preserve"><value>Previous</value></data>
+  <data name="Plugins_Next.Content" xml:space="preserve"><value>Next</value></data>
+  <data name="Plugins_AlreadyInstalled" xml:space="preserve"><value>Installed</value></data>
+  <data name="Plugins_Install" xml:space="preserve"><value>Install / update</value></data>
+  <data name="Plugins_Empty" xml:space="preserve"><value>No plugins found. Packages need the Tubatools tag and must be indexed by NuGet.</value></data>
+  <data name="Plugins_Disable" xml:space="preserve"><value>Disable</value></data>
+  <data name="Plugins_Enable" xml:space="preserve"><value>Enable</value></data>
+  <data name="Plugins_Uninstall" xml:space="preserve"><value>Uninstall</value></data>
+  <data name="Plugins_Enabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="Plugins_Disabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="Plugins_Loaded" xml:space="preserve"><value>Loaded in this session</value></data>
+  <data name="Plugins_Trust" xml:space="preserve"><value>Plugins execute code with the toolbox permissions. Install only packages from authors you trust.</value></data>
+  <data name="Plugins_Continue" xml:space="preserve"><value>Install</value></data>
+  <data name="Plugins_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Plugins_InstalledNotice" xml:space="preserve"><value>Installed. New plugins load immediately; restart to apply updates.</value></data>
+  <data name="Plugins_Restart" xml:space="preserve"><value>Saved. Restart the app to apply this change.</value></data>
+  <data name="Plugins_DocsTitle" xml:space="preserve"><value>Plugin developer guide</value></data>
+  <data name="Plugins_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Agent_Untitled" xml:space="preserve"><value>New conversation</value></data>
+  <data name="Agent_Free" xml:space="preserve"><value>Free</value></data>
+  <data name="Agent_Cancelled" xml:space="preserve"><value>Task stopped.</value></data>
+  <data name="Agent_Failed" xml:space="preserve"><value>The AI task did not complete. Check the network, model availability and AI component, then retry.</value></data>
+  <data name="Agent_ModelError" xml:space="preserve"><value>The model returned an error. Retry or choose another available model.</value></data>
+  <data name="Agent_ToolShell" xml:space="preserve"><value>Run command</value></data>
+  <data name="Agent_ToolRead" xml:space="preserve"><value>Read file</value></data>
+  <data name="Agent_ToolEdit" xml:space="preserve"><value>Edit file</value></data>
+  <data name="Agent_ToolSkill" xml:space="preserve"><value>Read skill</value></data>
+  <data name="Agent_ToolSearch" xml:space="preserve"><value>Search files</value></data>
+  <data name="Agent_ToolWeb" xml:space="preserve"><value>Look up information</value></data>
+  <data name="Agent_ToolTask" xml:space="preserve"><value>Run task</value></data>
+  <data name="Agent_Complete" xml:space="preserve"><value>Completed</value></data>
+  <data name="Agent_ToolFailed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Agent_Running" xml:space="preserve"><value>In progress</value></data>
+  <data name="Agent_Architecture" xml:space="preserve"><value>The AI component requires x64 or ARM64 Windows.</value></data>
+  <data name="Agent_Installing" xml:space="preserve"><value>Installing AI component</value></data>
+  <data name="Agent_ReadyToStart" xml:space="preserve"><value>AI component installed. Click Prepare to connect.</value></data>
+  <data name="Agent_Welcome" xml:space="preserve"><value>Install the AI component to get started. Models come from the component; a free model is preferred by default.</value></data>
+  <data name="Agent_Starting" xml:space="preserve"><value>Connecting to AI component…</value></data>
+  <data name="Agent_NoFreeModel" xml:space="preserve"><value>No free model is available. Select a model from the list or retry later.</value></data>
+  <data name="Agent_Ready" xml:space="preserve"><value>Ready. Ask a question or describe the plugin you want to build.</value></data>
+  <data name="Agent_You" xml:space="preserve"><value>You</value></data>
+  <data name="Agent_Title" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="Agent_Activity" xml:space="preserve"><value>Activity</value></data>
+  <data name="Agent_Working" xml:space="preserve"><value>Working. You can stop at any time.</value></data>
+  <data name="Agent_Done" xml:space="preserve"><value>Task completed.</value></data>
+  <data name="Agent_ApproveTitle" xml:space="preserve"><value>Allow this operation?</value></data>
+  <data name="Agent_AllowOnce" xml:space="preserve"><value>Allow once</value></data>
+  <data name="Agent_Reject" xml:space="preserve"><value>Reject</value></data>
+  <data name="Agent_NoPackages" xml:space="preserve"><value>No compiled plugin packages yet. Ask the assistant to build and pack your plugin first.</value></data>
+  <data name="Agent_LoadTrust" xml:space="preserve"><value>Loading runs generated code with toolbox permissions. Review the source and task results first.</value></data>
+  <data name="Agent_LoadPlugin" xml:space="preserve"><value>Load plugin</value></data>
+  <data name="Agent_Load" xml:space="preserve"><value>Load</value></data>
+  <data name="Agent_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Agent_Loaded" xml:space="preserve"><value>Plugin loaded. Open it from built-in tools or its category.</value></data>
+  <data name="Agent_LoadFailed" xml:space="preserve"><value>Plugin loading failed. Ask the assistant to check the manifest, entry point, version and dependencies.</value></data>
+  <data name="Agent_Title.Text" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="Agent_Subtitle.Text" xml:space="preserve"><value>Build plugins or solve computer problems with local diagnostics.</value></data>
+  <data name="Agent_Prepare.Content" xml:space="preserve"><value>Prepare AI component</value></data>
+  <data name="Agent_New.Content" xml:space="preserve"><value>New conversation</value></data>
+  <data name="Agent_Delete.Content" xml:space="preserve"><value>Delete conversation</value></data>
+  <data name="Agent_Model.PlaceholderText" xml:space="preserve"><value>Select model</value></data>
+  <data name="Agent_Workspace.Content" xml:space="preserve"><value>Workspace</value></data>
+  <data name="Agent_LoadPlugin.Content" xml:space="preserve"><value>Load plugin</value></data>
+  <data name="Agent_Prompt.PlaceholderText" xml:space="preserve"><value>Describe a problem, or ask me to build a plugin…</value></data>
+  <data name="Agent_Send.Content" xml:space="preserve"><value>Send</value></data>
+  <data name="Agent_Stop.Content" xml:space="preserve"><value>Stop</value></data>
+  <data name="MainWindow_NavAiAssistant.Content" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="Markdown_Copy" xml:space="preserve"><value>Copy code</value></data>
+  <data name="Agent_DevelopPrompt" xml:space="preserve"><value>Help me build a toolbox plugin: </value></data>
+  <data name="Plugins_Develop.Content" xml:space="preserve"><value>Build with AI</value></data>
+  <data name="Agent_Repair.Text" xml:space="preserve"><value>Reinstall AI component</value></data>
+  <data name="Agent_ModelBusy" xml:space="preserve"><value>The model is busy or its quota is exhausted. Retry later or select another model.</value></data>
+  <data name="Agent_ModelNetwork" xml:space="preserve"><value>Could not connect to the model service. Check the network and proxy settings, then retry.</value></data>
+  <data name="Agent_ToolLoad" xml:space="preserve"><value>Load plugin automatically</value></data>
+  <data name="Agent_PreparingArguments" xml:space="preserve"><value>Preparing arguments…</value></data>
+  <data name="Agent_CommandOutput" xml:space="preserve"><value>Command output</value></data>
+  <data name="Agent_FileContent" xml:space="preserve"><value>File content</value></data>
+  <data name="Agent_SkillContent" xml:space="preserve"><value>Skill content</value></data>
+  <data name="Agent_OperationResult" xml:space="preserve"><value>Operation result</value></data>
+  <data name="Agent_DiffTruncated" xml:space="preserve"><value>More changes omitted. Open the workspace to view the complete file.</value></data>
+  <data name="Agent_AutoLoaded" xml:space="preserve"><value>Plugin loaded automatically</value></data>
+  <data name="Agent_AutoLoadFailed" xml:space="preserve"><value>Automatic plugin loading failed; the previous version remains available</value></data>
+  <data name="Agent_RepairingPlugin" xml:space="preserve"><value>Plugin loading failed. The assistant is checking and repairing it…</value></data>
+  <data name="Agent_QuestionTitle" xml:space="preserve"><value>Your answer is needed</value></data>
+  <data name="Agent_SubmitAnswer" xml:space="preserve"><value>Submit answer</value></data>
+  <data name="Agent_SkipQuestion" xml:space="preserve"><value>Skip</value></data>
+  <data name="Agent_QuestionSkipped" xml:space="preserve"><value>Question skipped</value></data>
+  <data name="Agent_QuestionCancelled" xml:space="preserve"><value>Question ended</value></data>
+  <data name="Agent_AnswerSubmitted" xml:space="preserve"><value>Answer submitted</value></data>
+  <data name="Agent_OtherAnswer" xml:space="preserve"><value>Add your answer…</value></data>
+  <data name="Agent_CustomAnswer" xml:space="preserve"><value>Another answer</value></data>
+  <data name="Agent_AnswerYes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Agent_AnswerNo" xml:space="preserve"><value>No</value></data>
+  <data name="Agent_WaitingAnswer" xml:space="preserve"><value>Answer the question card in the conversation. The assistant will continue after you submit.</value></data>
+  <data name="Agent_AnswerRequired" xml:space="preserve"><value>Please answer all required questions.</value></data>
+  <data name="Agent_AnswerChoice" xml:space="preserve"><value>Choose a valid option.</value></data>
+  <data name="Agent_AnswerLength" xml:space="preserve"><value>The answer length does not meet the requirements.</value></data>
+  <data name="Agent_AnswerFormat" xml:space="preserve"><value>Enter an answer in the required format.</value></data>
+  <data name="Agent_AnswerNumber" xml:space="preserve"><value>Enter a valid number within the allowed range.</value></data>
+  <data name="Agent_AnswerSelection" xml:space="preserve"><value>Select the required number of options.</value></data>
+  <data name="Agent_ToolQuestion" xml:space="preserve"><value>Question</value></data>
+  <data name="Agent_Thinking" xml:space="preserve"><value>Analyzing and planning</value></data>
+  <data name="Agent_Responding" xml:space="preserve"><value>Writing a response</value></data>
+  <data name="Agent_WaitingPermission" xml:space="preserve"><value>Waiting for approval</value></data>
+  <data name="Agent_WaitingQuestion" xml:space="preserve"><value>Waiting for your answer</value></data>
+  <data name="Agent_WaitingModel" xml:space="preserve"><value>Waiting for the model’s next step</value></data>
+  <data name="Agent_ProgressElapsed" xml:space="preserve"><value>{0} · {1}s</value></data>
+  <data name="Agent_ModeNextTurn" xml:space="preserve"><value>Selected {0} for the next message. This conversation, files, and draft are preserved.</value></data>
+  <data name="Agent_Inactive" xml:space="preserve"><value>The model has returned no new progress for 3 minutes, so the task has stopped. Your conversation and files are preserved. Send “continue” or select another model to retry.</value></data>
+  <data name="PluginUi_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="PluginUi_Cancelled" xml:space="preserve"><value>Operation stopped.</value></data>
+  <data name="PluginUi_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="PluginUi_Confirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="PluginUi_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="PluginUi_Settings" xml:space="preserve"><value>Plugin settings</value></data>
+  <data name="Plugins_NuGetPage" xml:space="preserve"><value>NuGet page</value></data>
+  <data name="Plugins_InstallAction" xml:space="preserve"><value>Install</value></data>
+  <data name="Plugins_UpdateAction" xml:space="preserve"><value>Update</value></data>
+  <data name="Plugins_UpdateTo" xml:space="preserve"><value>Update to {0}</value></data>
+  <data name="Plugins_UpToDate" xml:space="preserve"><value>Installed · up to date</value></data>
+  <data name="Plugins_InstalledVersion" xml:space="preserve"><value>Installed {0}</value></data>
+  <data name="Plugins_AuthorFormat" xml:space="preserve"><value>By {0}</value></data>
+  <data name="Plugins_DownloadsFormat" xml:space="preserve"><value>{0:N0} downloads</value></data>
+  <data name="Plugins_CommunityTitle" xml:space="preserve"><value>Provided by the community</value></data>
+  <data name="Plugins_InstallTitle" xml:space="preserve"><value>Install plugin</value></data>
+  <data name="Plugins_UpdateTitle" xml:space="preserve"><value>Update plugin</value></data>
+  <data name="Plugins_UpdateFrom" xml:space="preserve"><value>Current version</value></data>
+  <data name="Plugins_VersionLabel" xml:space="preserve"><value>Version</value></data>
+  <data name="Plugins_AuthorLabel" xml:space="preserve"><value>Author</value></data>
+  <data name="Plugins_DownloadsLabel" xml:space="preserve"><value>Downloads</value></data>
+  <data name="Plugins_UnknownAuthor" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Plugins_NoInstalled" xml:space="preserve"><value>No plugins installed.</value></data>
+  <data name="Plugins_DisabledNotice" xml:space="preserve"><value>Disabled. Plugin tools were removed from the list; background code stops after a restart.</value></data>
+  <data name="Plugins_EnabledNotice" xml:space="preserve"><value>Enabled. Plugin tools were restored.</value></data>
+  <data name="Plugins_UninstalledNotice" xml:space="preserve"><value>Uninstalled. Plugin tools were removed from the list; files are cleaned up after a restart.</value></data>
+  <data name="Agent_WorkspaceTitle.Text" xml:space="preserve"><value>Workspace</value></data>
+  <data name="Agent_OpenWorkspace.Text" xml:space="preserve"><value>Open workspace</value></data>
+  <data name="Agent_PrepareMenu.Text" xml:space="preserve"><value>Prepare AI component</value></data>
+  <data name="Agent_NewLabel.Text" xml:space="preserve"><value>New session</value></data>
+  <data name="Agent_Retry.Content" xml:space="preserve"><value>Continue</value></data>
+  <data name="Agent_Older.Content" xml:space="preserve"><value>Show earlier messages</value></data>
+  <data name="Agent_EmptyTitle.Text" xml:space="preserve"><value>Start with a task</value></data>
+  <data name="Agent_EmptyDescription.Text" xml:space="preserve"><value>Describe the feature you want to build or the computer problem you have. The assistant loads the right skills automatically.</value></data>
+  <data name="Agent_AttachFiles.Text" xml:space="preserve"><value>Reference local files…</value></data>
+  <data name="Agent_ComposerPrompt.PlaceholderText" xml:space="preserve"><value>Ask anything…</value></data>
+  <data name="Agent_FullAccess" xml:space="preserve"><value>Full access</value></data>
+  <data name="Agent_AskAccess" xml:space="preserve"><value>Ask each time</value></data>
+  <data name="Agent_WorkspaceMenu" xml:space="preserve"><value>Workspace menu</value></data>
+  <data name="Agent_SessionMenu" xml:space="preserve"><value>Session menu</value></data>
+  <data name="Agent_ModelName" xml:space="preserve"><value>Model</value></data>
+  <data name="Agent_PermissionName" xml:space="preserve"><value>Permissions</value></data>
+  <data name="Agent_Jump" xml:space="preserve"><value>Jump to latest</value></data>
+  <data name="Agent_ClearAttachments" xml:space="preserve"><value>Clear referenced files</value></data>
+  <data name="Agent_AddContext" xml:space="preserve"><value>Add context</value></data>
+  <data name="Agent_WaitingShort" xml:space="preserve"><value>Waiting for you</value></data>
+  <data name="Agent_RunningShort" xml:space="preserve"><value>Running</value></data>
+  <data name="Agent_Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Agent_Export" xml:space="preserve"><value>Export Markdown…</value></data>
+  <data name="Agent_RenameSession" xml:space="preserve"><value>Rename session</value></data>
+  <data name="Agent_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Agent_SwitchSession" xml:space="preserve"><value>Switch session</value></data>
+  <data name="Agent_CopyMessage" xml:space="preserve"><value>Copy message</value></data>
+  <data name="Agent_HostActions" xml:space="preserve"><value>Host actions</value></data>
+  <data name="Agent_ContinuePrompt" xml:space="preserve"><value>Continue the previous task.</value></data>
+  <data name="Agent_AllFiles" xml:space="preserve"><value>All files</value></data>
+  <data name="Agent_ReadAttached" xml:space="preserve"><value>Please review the referenced files.</value></data>
+  <data name="Agent_ReferencedFiles" xml:space="preserve"><value>Referenced files (local paths):</value></data>
+  <data name="Agent_Send" xml:space="preserve"><value>Send</value></data>
+  <data name="Agent_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Agent_Delete" xml:space="preserve"><value>Delete session</value></data>
+  <data name="Agent_NewLabel" xml:space="preserve"><value>New session</value></data>
+  <data name="Agent_AttachFiles" xml:space="preserve"><value>Reference local files</value></data>
+  <data name="Agent_Draft" xml:space="preserve"><value>Draft</value></data>
+  <data name="Agent_ToolCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="Agent_ToolPending" xml:space="preserve"><value>Pending</value></data>
+  <data name="Agent_ChangedFiles" xml:space="preserve"><value>{0} files</value></data>
+  <data name="Agent_RetryAttempt" xml:space="preserve"><value>Service retry · attempt {0}</value></data>
+  <data name="Agent_ExecutingTool" xml:space="preserve"><value>Executing tool</value></data>
+  <data name="Agent_PreparingTool" xml:space="preserve"><value>Preparing tool call</value></data>
+  <data name="Agent_Compacting" xml:space="preserve"><value>Compacting context</value></data>
+  <data name="Agent_RetryingModel" xml:space="preserve"><value>Model service retrying</value></data>
+  <data name="Agent_Reconnecting" xml:space="preserve"><value>Reconnecting to AI component</value></data>
+  <data name="Agent_WaitingLong" xml:space="preserve"><value>Still waiting for the model; you can stop or switch models later</value></data>
+  <data name="Agent_Providers" xml:space="preserve"><value>AI providers</value></data>
+  <data name="Agent_ProviderMenu.Text" xml:space="preserve"><value>AI providers…</value></data>
+  <data name="Agent_ProviderChoose" xml:space="preserve"><value>Edit or add a provider</value></data>
+  <data name="Agent_ProviderName" xml:space="preserve"><value>Name</value></data>
+  <data name="Agent_ProviderProtocol" xml:space="preserve"><value>API type</value></data>
+  <data name="Agent_ProviderEndpoint" xml:space="preserve"><value>API base URL</value></data>
+  <data name="Agent_ProviderKey" xml:space="preserve"><value>API key (optional for local services)</value></data>
+  <data name="Agent_ProviderModels" xml:space="preserve"><value>Model IDs (one per line)</value></data>
+  <data name="Agent_ProviderDiscover" xml:space="preserve"><value>Read models from service</value></data>
+  <data name="Agent_ProviderRemove" xml:space="preserve"><value>Remove this provider</value></data>
+  <data name="Agent_ProviderHint" xml:space="preserve"><value>Use a custom endpoint and multiple models. Keys are encrypted for your Windows account. Saved models appear in the assistant.</value></data>
+  <data name="Agent_ProviderSave" xml:space="preserve"><value>Save and apply</value></data>
+  <data name="Agent_ProviderNew" xml:space="preserve"><value>Add a provider</value></data>
+  <data name="Agent_ProviderDiscovering" xml:space="preserve"><value>Reading model list…</value></data>
+  <data name="Agent_ProviderFound" xml:space="preserve"><value>Found {0} models. Keep the models you need or add IDs manually.</value></data>
+  <data name="Agent_ProviderDiscoverFailed" xml:space="preserve"><value>Could not read models. Check the endpoint, key and network, or enter model IDs manually.</value></data>
+  <data name="Agent_ProviderSaveFailed" xml:space="preserve"><value>Could not save provider settings. Check the data directory. Changes have not been applied.</value></data>
+  <data name="Agent_ProviderOpenFailed" xml:space="preserve"><value>Could not read provider settings. Check the data directory and Windows account.</value></data>
+  <data name="Agent_ProviderDeferred" xml:space="preserve"><value>Provider settings saved. They will apply automatically after all current tasks finish.</value></data>
+  <data name="Agent_ProviderDuplicate" xml:space="preserve"><value>Duplicate provider ID.</value></data>
+  <data name="Agent_ProviderInvalidId" xml:space="preserve"><value>Invalid provider ID.</value></data>
+  <data name="Agent_ProviderInvalidName" xml:space="preserve"><value>Enter a provider name and choose an API type.</value></data>
+  <data name="Agent_ProviderInvalidModels" xml:space="preserve"><value>Enter at least one valid model ID, one per line.</value></data>
+  <data name="Agent_ProviderInvalidUrl" xml:space="preserve"><value>Enter an HTTP/HTTPS API base URL without credentials, query parameters or fragments.</value></data>
+  <data name="Agent_ProviderDiscoverHttp" xml:space="preserve"><value>Could not read models (HTTP {0}). Check the endpoint and key or enter model IDs manually.</value></data>
+  <data name="Agent_ProviderListTooLarge" xml:space="preserve"><value>The model list is too large.</value></data>
+  <data name="Agent_ProviderInvalidList" xml:space="preserve"><value>The service did not return a model list. Enter model IDs manually.</value></data>
+  <data name="PluginUi_NotButton" xml:space="preserve"><value>{0} is a {1}. Use BindValueChanged for value changes; BindClick supports buttons and switches.</value></data>
+  <data name="PluginUi_AlreadyBound" xml:space="preserve"><value>{0} already has an action bound. Do not bind the same control twice.</value></data>
+  <data name="PluginUi_NotValueControl" xml:space="preserve"><value>{0} is a {1} and does not support value-change binding.</value></data>
+  <data name="PluginUi_Failed" xml:space="preserve"><value>The plugin operation failed.</value></data>
+  <data name="Agent_DropAttachments" xml:space="preserve"><value>Add images or files</value></data>
+  <data name="Agent_ImageTooLarge" xml:space="preserve"><value>Each image must be at most 20 MB.</value></data>
+  <data name="Agent_ImagePixels" xml:space="preserve"><value>Images must not exceed 40 megapixels.</value></data>
+  <data name="Agent_AttachmentLimit" xml:space="preserve"><value>Add up to 10 attachments per message.</value></data>
+  <data name="Agent_AttachmentMissing" xml:space="preserve"><value>File not found or unreadable (folders are not supported).</value></data>
+  <data name="Agent_PasteFailed" xml:space="preserve"><value>Unable to read the clipboard or attachment. Copy it again and retry.</value></data>
+  <data name="Agent_RemoveAttachment" xml:space="preserve"><value>Remove attachment</value></data>
+  <data name="Agent_VisionModelRequired" xml:space="preserve"><value>Select a model that supports image input. For custom providers, enable image input in the provider settings.</value></data>
+  <data name="Agent_ProviderImages" xml:space="preserve"><value>These models support image input (provider support required)</value></data>
+  <data name="Agent_ClipboardImage" xml:space="preserve"><value>Clipboard image</value></data>
+  <data name="Agent_ImageInput" xml:space="preserve"><value>Images</value></data>
+  <data name="Agent_ModeChat" xml:space="preserve"><value>Chat</value></data>
+  <data name="Agent_ModeTeach" xml:space="preserve"><value>Teaching</value></data>
+  <data name="Agent_CanvasTitle" xml:space="preserve"><value>Teaching canvas</value></data>
+  <data name="Agent_CanvasShow" xml:space="preserve"><value>Show canvas</value></data>
+  <data name="Agent_CanvasHide" xml:space="preserve"><value>Hide canvas</value></data>
+  <data name="Agent_CanvasEmpty" xml:space="preserve"><value>The assistant builds your lesson page here.</value></data>
+  <data name="Agent_CanvasEmptyHint" xml:space="preserve"><value>Ask for a topic and the page appears automatically.</value></data>
+  <data name="Agent_CanvasHint" xml:space="preserve"><value>Buttons inside the page talk straight back to the assistant</value></data>
+  <data name="Agent_CanvasMenu" xml:space="preserve"><value>Canvas options</value></data>
+  <data name="Agent_CanvasSize" xml:space="preserve"><value>Canvas height</value></data>
+  <data name="Agent_CanvasSizeCompact" xml:space="preserve"><value>Compact</value></data>
+  <data name="Agent_CanvasSizeNormal" xml:space="preserve"><value>Standard</value></data>
+  <data name="Agent_CanvasSizeTall" xml:space="preserve"><value>Tall</value></data>
+  <data name="Agent_CanvasRefresh" xml:space="preserve"><value>Refresh canvas</value></data>
+  <data name="Agent_CanvasRetry" xml:space="preserve"><value>Refresh canvas</value></data>
+  <data name="Agent_CanvasClose" xml:space="preserve"><value>Hide canvas</value></data>
+  <data name="Agent_CanvasImage" xml:space="preserve"><value>Insert image</value></data>
+  <data name="Agent_CanvasImageAdded" xml:space="preserve"><value>Added {0} image(s) to assets/. Ask the assistant to use them on this page.</value></data>
+  <data name="Agent_CanvasImageFailed" xml:space="preserve"><value>That image cannot be inserted. Choose PNG, JPG, GIF, WEBP, BMP or SVG.</value></data>
+  <data name="Agent_CanvasOpenFolder" xml:space="preserve"><value>Open canvas folder</value></data>
+  <data name="Agent_CanvasOpenBrowser" xml:space="preserve"><value>Open in browser</value></data>
+  <data name="Agent_CanvasOpenHtml" xml:space="preserve"><value>Open in canvas</value></data>
+  <data name="Agent_CanvasNoHtml" xml:space="preserve"><value>This message has no usable HTML page.</value></data>
+  <data name="Agent_CanvasUpdated" xml:space="preserve"><value>Canvas updated</value></data>
+  <data name="Agent_CanvasUpdating" xml:space="preserve"><value>Canvas is updating</value></data>
+  <data name="Agent_CanvasFailed" xml:space="preserve"><value>The canvas could not start. Check the WebView2 runtime.</value></data>
+  <data name="Agent_CanvasCrashed" xml:space="preserve"><value>The canvas stopped and is recovering…</value></data>
+  <data name="Agent_CanvasBusy" xml:space="preserve"><value>The assistant is unavailable right now. Try again shortly.</value></data>
+  <data name="Agent_CanvasNeedsSession" xml:space="preserve"><value>Send a message first and the canvas will appear in the conversation.</value></data>
+  <data name="Agent_CanvasModeHint" xml:space="preserve"><value>Teaching mode: replies are also written as an interactive page</value></data>
+  <data name="Agent_CanvasBanner.Message" xml:space="preserve"><value>Teaching mode is on: explanations arrive as interactive canvas messages in the conversation.</value></data>
+  <data name="Agent_CanvasFullScreen" xml:space="preserve"><value>Full screen</value></data>
+  <data name="Agent_CanvasExitFullScreen" xml:space="preserve"><value>Exit full screen</value></data>
+  <data name="Agent_CanvasMissing" xml:space="preserve"><value>The content of this canvas message has been cleaned up.</value></data>
+  <data name="Agent_Undo" xml:space="preserve"><value>Undo</value></data>
+  <data name="Agent_Redo" xml:space="preserve"><value>Redo</value></data>
+  <data name="Agent_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Agent_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Agent_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Agent_SelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="Agent_ImageTotalLimit" xml:space="preserve"><value>Images in one message must total at most 20 MB.</value></data>
+  <data name="Agent_ComputerControlWindow" xml:space="preserve"><value>AI computer control</value></data>
+  <data name="Agent_ComputerControlling" xml:space="preserve"><value>AI is controlling your computer</value></data>
+  <data name="Agent_ComputerControlHint" xml:space="preserve"><value>Avoid keyboard and mouse input. You can stop at any time.</value></data>
+  <data name="Agent_ComputerControlStop" xml:space="preserve"><value>Stop now</value></data>
+  <data name="Agent_ComputerProgressWindow" xml:space="preserve"><value>AI task progress</value></data>
+  <data name="Agent_ComputerProgressTitle" xml:space="preserve"><value>AI is controlling your computer</value></data>
+  <data name="Agent_ComputerProgressStop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Agent_ComputerProgressRespond" xml:space="preserve"><value>Answer / review</value></data>
+  <data name="Agent_ComputerProgressThinking" xml:space="preserve"><value>Planning the next action</value></data>
+  <data name="Agent_ComputerProgressAnalyzing" xml:space="preserve"><value>Planning the next step</value></data>
+  <data name="Agent_ComputerProgressResponding" xml:space="preserve"><value>Preparing the result</value></data>
+  <data name="Agent_ComputerProgressTool" xml:space="preserve"><value>Working in the interface</value></data>
+  <data name="Agent_ComputerProgressStalled" xml:space="preserve"><value>Still waiting for the model</value></data>
+  <data name="Agent_ComputerProgressPreparing" xml:space="preserve"><value>Preparing computer control</value></data>
+  <data name="Agent_ComputerProgressWaiting" xml:space="preserve"><value>Waiting for your answer</value></data>
+  <data name="Agent_ComputerProgressReconnecting" xml:space="preserve"><value>Reconnecting</value></data>
+  <data name="Agent_ComputerProgressFallback" xml:space="preserve"><value>Working on the computer issue</value></data>
+  <data name="Agent_ComputerProgressCurrentWindow" xml:space="preserve"><value>Current window: {0}</value></data>
+  <data name="Agent_ComputerProgressOtherWindow" xml:space="preserve"><value>Other window</value></data>
+  <data name="Agent_ToolAx" xml:space="preserve"><value>Interface actions</value></data>
+  <data name="Agent_ToolGui" xml:space="preserve"><value>Screen actions</value></data>
 </root>

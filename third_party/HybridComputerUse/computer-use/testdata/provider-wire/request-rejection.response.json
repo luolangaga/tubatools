@@ -1,0 +1,12 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-ordered-rejected",
+  "operation": "ordered_input",
+  "request_rejection": {
+    "code": "invalid_arguments",
+    "phase": "request_validation",
+    "dispatch_attempted": false,
+    "message": "ordered-input requires a final canonical snapshot boundary"
+  }
+}

@@ -586,7 +586,7 @@ body {
       </div>
     </div>
     <div class="connect-qr">
-      <img id="qrImage" src="/qr" width="120" height="120" alt="QR Code" />
+      <img id="qrImage" width="120" height="120" alt="QR Code" />
     </div>
   </div>
 
@@ -685,8 +685,21 @@ function formatTime(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// The access secret travels only in the URL fragment, never in HTTP URLs/referrers.
+const shareSession = (async () => {
+  const token = new URLSearchParams(location.hash.slice(1)).get('access');
+  history.replaceState(null, '', location.pathname);
+  if (token) {
+    const response = await fetch('/api/session', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+    if (!response.ok) throw new Error('分享链接已失效，请重新从电脑复制');
+  }
+  document.getElementById('qrImage').src = '/qr';
+})();
 async function fetchApi(path, opts = {}) {
+  await shareSession;
   const res = await fetch(path, opts);
+  if (!res.ok) throw new Error(res.status === 401 ? '请使用电脑上复制的完整分享链接' : '操作失败：' + res.status);
   return res.json();
 }
 
@@ -723,7 +736,9 @@ function escHtml(s) {
 }
 
 function escAttr(s) {
-  return s.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\r/g, '\\r').replace(/\n/g, '\\n');
 }
 
 function renderBreadcrumb() {
@@ -881,6 +896,7 @@ async function uploadFiles(fileList) {
     formData.append('files', file, relPath);
   }
 
+  await shareSession;
   const xhr = new XMLHttpRequest();
   xhr.open('POST', '/api/upload');
 
@@ -895,7 +911,15 @@ async function uploadFiles(fileList) {
   xhr.onload = () => {
     prog.classList.remove('show');
     fill.style.width = '0%';
-    showToast(`已上传 ${fileList.length}个文件`);
+    if (xhr.status >= 200 && xhr.status < 300) {
+      showToast(`已上传 ${fileList.length}个文件`);
+      document.getElementById('fileInput').value = '';
+      document.getElementById('folderInput').value = '';
+    } else {
+      let message = `上传失败（HTTP ${xhr.status}），请重试`;
+      try { const result = JSON.parse(xhr.responseText); message = result.error || message; } catch {}
+      showToast(message);
+    }
     refreshFiles();
   };
 
@@ -906,8 +930,6 @@ async function uploadFiles(fileList) {
 
   xhr.send(formData);
 
-  document.getElementById('fileInput').value = '';
-  document.getElementById('folderInput').value = '';
 }
 
 const dropZone = document.getElementById('dropZone');
@@ -1036,7 +1058,7 @@ async function pollFiles() {
 setInterval(pollFiles, 3000);
 
 loadInfo();
-refreshFiles();
+refreshFiles().catch(e => showToast(e.message));
 </script>
 </body>
 </html>

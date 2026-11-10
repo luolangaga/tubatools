@@ -30,6 +30,7 @@ public static class HardwareIconService
         "电池" => "battery",
         "声卡" => "sound",
         "网卡" => "network",
+        "接口支持" => "usb",
         _ => "devices"
     };
 

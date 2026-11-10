@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>图吧工具箱TUI兼容版</AssemblyName>
+    <Version>1.0.0</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>annotations</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>true</PublishAot>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+    <IlcTreatWarningsAsErrors>true</IlcTreatWarningsAsErrors>
+    <CetCompat>false</CetCompat>
+    <Platforms>x64;ARM64;AnyCPU</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Keep the .NET 8 compiler/runtime pack on the patched version across SDKs. -->
+    <KnownILCompilerPack Update="Microsoft.DotNet.ILCompiler" ILCompilerPackVersion="8.0.33" />
+    <PackageReference Include="Spectre.Console" Version="0.57.2" />
+    <Compile Include="..\TubaWinUi3.WinUI3\Services\FurMarkLaunchPath.cs" Link="Services\FurMarkLaunchPath.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" Link="Storage\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

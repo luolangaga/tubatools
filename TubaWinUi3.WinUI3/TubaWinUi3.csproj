@@ -27,9 +27,9 @@
     <CETCompat>false</CETCompat>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.8.1</Version>
+    <Version>1.8.2</Version>
     <SatelliteResourceLanguages>zh-Hans;zh-Hant;en</SatelliteResourceLanguages>
-    <DefaultItemExcludes>$(DefaultItemExcludes);artifacts\**;publish*\**;bin-verify\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**;artifacts\**;publish*\**;bin-verify\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>CA2252;CA2014;NU1510</NoWarn>
     <!-- 界面本地化 resw 由 WinUI3Localizer 直接读取（exe 旁 Strings/<lang>/*.resw），不参与 PRI：
@@ -43,6 +43,8 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);Tools\**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" />
+    <Content Include="..\插件开发文档.md" Link="Metadata\插件开发文档.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <InternalsVisibleTo Include="TubaWinUi3.Tests" />
     <AssemblyMetadata Include="AxiomIngestToken" Value="$(AxiomIngestToken)" />
   </ItemGroup>
@@ -50,6 +52,18 @@
   <ItemGroup>
     <Content Include="Assets\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Microsoft Hybrid Computer Use is bundled once per supported architecture. -->
+    <Content Remove="Assets\HybridComputerUse\**\*" />
+    <Content Include="Assets\HybridComputerUse\win-x64\**\*" Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+    <Content Include="Assets\HybridComputerUse\win-arm64\**\*" Condition="'$(RuntimeIdentifier)' == 'win-arm64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
   </ItemGroup>
 
@@ -120,6 +134,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
+    <Content Include="Tools\其他工具\PresentMon\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
   </ItemGroup>
 
   <Target Name="PrepareOfficialToolCatalog" BeforeTargets="PrepareForBuild">
@@ -138,15 +156,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-    <!-- CLI 工具文档单一事实来源：仓库根目录（AI Agent 解析用）。
-         注意：根目录文档已于提交 7442ad2 删除，此处引用会导致 MSB3030 构建失败故移除。
-         如后续恢复该文档，请将下面三行加回。 -->
-    <!--
-    <Content Include="..\CLI工具使用文档.md" Link="Metadata\CLI工具使用文档.md">
+    <!-- 随内置诊断技能提供实际工具参数；精简源码包缺少此文档时仍可构建。 -->
+    <Content Include="..\CLI工具使用文档.md" Link="Metadata\CLI工具使用文档.md" Condition="Exists('..\CLI工具使用文档.md')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
-    -->
     <Content Include="CertBlock\Certificates\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -174,7 +189,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="Downloader" Version="5.9.6" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="SteamKit2" Version="3.5.0" />
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     <ProjectReference Include="..\third_party\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj" AdditionalProperties="GeneratePackageOnBuild=false" />
@@ -382,4 +397,7 @@
       </ContentWithTargetPath>
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" Link="Storage\%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>

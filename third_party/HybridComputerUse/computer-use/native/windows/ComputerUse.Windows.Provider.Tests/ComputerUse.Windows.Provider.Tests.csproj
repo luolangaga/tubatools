@@ -1,0 +1,193 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>ComputerUse.Windows.Provider.Tests</AssemblyName>
+    <RootNamespace>ComputerUse.Windows.Runtime</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../ComputerUse.Windows.Runtime/WindowsKeyboardFocus.cs"
+      Link="WindowsKeyboardFocus.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/WindowsWindowReferenceRead.cs"
+      Link="WindowsWindowReferenceRead.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/DocumentTextRead.cs"
+      Link="DocumentTextRead.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/UiaSelectionPolicy.cs"
+      Link="UiaSelectionPolicy.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/UiaSemanticWindowPredicate.cs"
+      Link="UiaSemanticWindowPredicate.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/LogicalWindowBoundary.cs"
+      Link="LogicalWindowBoundary.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/LogicalWindowNativeOwner.cs"
+      Link="LogicalWindowNativeOwner.cs" />
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsAccessibilityBridgeNote.cs"
+      Link="WindowsAccessibilityBridgeNote.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsProcessIdentity.cs"
+      Link="WindowsProcessIdentity.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/BoundedTreeDiscovery.cs"
+      Link="BoundedTreeDiscovery.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/CanonicalNodeIdentitySet.cs"
+      Link="CanonicalNodeIdentitySet.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaSpreadsheetGrid.cs"
+      Link="UiaSpreadsheetGrid.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/SpreadsheetReadback.cs"
+      Link="SpreadsheetReadback.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ExactFocusSettlement.cs"
+      Link="ExactFocusSettlement.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderServer.cs"
+      Link="ProviderServer.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderRequestValidation.cs"
+      Link="ProviderRequestValidation.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderActionValidation.cs"
+      Link="ProviderActionValidation.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderProtocolSupport.cs"
+      Link="ProviderProtocolSupport.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderDesktopValidation.cs"
+      Link="ProviderDesktopValidation.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsKeyMapping.cs"
+      Link="WindowsKeyMapping.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsWindowExpectation.cs"
+      Link="WindowsWindowExpectation.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsToggleState.cs"
+      Link="WindowsToggleState.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsUiaVisibility.cs"
+      Link="WindowsUiaVisibility.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsVisibilityRead.cs"
+      Link="WindowsVisibilityRead.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsPointerPreflight.cs"
+      Link="WindowsPointerPreflight.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/PointerPreparationState.cs"
+      Link="PointerPreparationState.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/PointerPreparationFailureAttribution.cs"
+      Link="PointerPreparationFailureAttribution.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderTargetResolutionPolicy.cs"
+      Link="ProviderTargetResolutionPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderResolutionCandidatePolicy.cs"
+      Link="ProviderResolutionCandidatePolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsForegroundActivationPolicy.cs"
+      Link="WindowsForegroundActivationPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsWindowIdentityPolicy.cs"
+      Link="WindowsWindowIdentityPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsCaptureBounds.cs"
+      Link="WindowsCaptureBounds.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsDesktopImageGeometry.cs"
+      Link="WindowsDesktopImageGeometry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsDesktopZoom.cs"
+      Link="WindowsDesktopZoom.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsDesktopLayoutIdentityPolicy.cs"
+      Link="WindowsDesktopLayoutIdentityPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsDesktopLayoutDiagnostics.cs"
+      Link="WindowsDesktopLayoutDiagnostics.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/BoundedObservationRetry.cs"
+      Link="BoundedObservationRetry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/PostActionObservationRetry.cs"
+      Link="PostActionObservationRetry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/PostActionOwnerTransitionPolicy.cs"
+      Link="PostActionOwnerTransitionPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/DesktopObservationRetry.cs"
+      Link="DesktopObservationRetry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaMutationFailureAttribution.cs"
+      Link="UiaMutationFailureAttribution.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/FailurePreservingDisposable.cs"
+      Link="FailurePreservingDisposable.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/LiveValueReadback.cs"
+      Link="LiveValueReadback.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaSetValueRouting.cs"
+      Link="UiaSetValueRouting.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaClickRouting.cs"
+      Link="UiaClickRouting.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/SemanticResolutionRetry.cs"
+      Link="SemanticResolutionRetry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ResolutionCandidateScope.cs"
+      Link="ResolutionCandidateScope.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/CanonicalResolutionRecord.cs"
+      Link="CanonicalResolutionRecord.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/AuthorizedCanonicalResolutionPolicy.cs"
+      Link="AuthorizedCanonicalResolutionPolicy.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ObservedElementLeaseRegistry.cs"
+      Link="ObservedElementLeaseRegistry.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/OwnedNativeWindowProjection.cs"
+      Link="OwnedNativeWindowProjection.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProjectedUiaRootSelection.cs"
+      Link="ProjectedUiaRootSelection.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/BoundedSiblingTraversal.cs"
+      Link="BoundedSiblingTraversal.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaTreeTraversal.cs"
+      Link="UiaTreeTraversal.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/UiaSnapshotNodeReads.cs"
+      Link="UiaSnapshotNodeReads.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsProviderFailures.cs"
+      Link="WindowsProviderFailures.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ProviderFailureException.cs"
+      Link="ProviderFailureException.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsUiaAutomationFactory.cs"
+      Link="WindowsUiaAutomationFactory.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/WindowsAppInventory.cs"
+      Link="WindowsAppInventory.cs" />
+    <Compile
+      Include="../ComputerUse.Windows.Runtime/ActionEvidencePolicy.cs"
+      Link="ActionEvidencePolicy.cs" />
+  </ItemGroup>
+</Project>

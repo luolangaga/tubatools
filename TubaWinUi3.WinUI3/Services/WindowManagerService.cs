@@ -137,7 +137,36 @@ internal static class WindowManagerService
     }
     private static void Check(bool ok) { if (!ok) throw new Win32Exception(Marshal.GetLastPInvokeError()); }
     [StructLayout(LayoutKind.Sequential)] internal struct Point { public int X, Y; }
-    [StructLayout(LayoutKind.Sequential)] internal struct Rect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Rect
+    {
+        public int Left, Top, Right, Bottom;
+        public readonly int Width => Right - Left;
+        public readonly int Height => Bottom - Top;
+    }
+
+    internal readonly record struct InspectionState(Rect Bounds, uint Dpi, bool Visible, bool Topmost);
+
+    internal static InspectionState? GetInspectionState(WindowInfo target)
+    {
+        var hwnd = target.Handle;
+        if (GetWindowThreadProcessId(hwnd, out uint pid) != target.ThreadId || pid != target.ProcessId ||
+            !GetWindowRect(hwnd, out var bounds))
+            return null;
+
+        // UI Automation bounds and DWM frame bounds both use physical screen pixels.
+        if (DwmGetWindowAttribute(hwnd, 9, out Rect frame, Marshal.SizeOf<Rect>()) == 0 &&
+            frame.Width > 0 && frame.Height > 0 && !IsIconic(hwnd))
+            bounds = frame;
+
+        bool visible = IsWindowVisible(hwnd) && !IsIconic(hwnd) &&
+            (DwmGetWindowAttribute(hwnd, 14, out int cloaked, sizeof(int)) != 0 || cloaked == 0);
+        return new(bounds, GetDpiForWindow(hwnd), visible, (GetWindowLong(hwnd, -20) & 8) != 0);
+    }
+
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint hwnd);
+    [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(nint hwnd, uint attribute, out Rect value, int size);
+    [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(nint hwnd, uint attribute, out int value, int size);
     [StructLayout(LayoutKind.Sequential)] private struct Placement { public int Length, Flags, ShowCmd; public Point Min, Max; public Rect Normal; }
     [StructLayout(LayoutKind.Sequential)] private struct MonitorInfo { public int Size; public Rect Monitor, Work; public uint Flags; }
     private delegate bool EnumProc(nint h, nint param);

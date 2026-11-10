@@ -1,0 +1,25 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-combo-edit",
+  "operation": "resolve_and_act",
+  "action": {
+    "protocol_version": 2,
+    "intent": "set_value",
+    "app": "Editor",
+    "target": {
+      "selector": "combobox \"Find\"",
+      "windowHandle": "w2:fixture",
+      "role": "combobox",
+      "name": "Find",
+      "hasName": true,
+      "editTarget": {
+        "providerBusName": ":1.42",
+        "providerObjectPath": "/org/a11y/atspi/accessible/editor",
+        "processGeneration": "4242:100"
+      }
+    },
+    "input": {"value": "Ada"},
+    "observation": {"include_screenshot": false}
+  }
+}

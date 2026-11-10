@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -30,7 +31,7 @@ public sealed class PhoneChatMessage
 }
 
 /// <summary>
-/// 「连接手机」局域网控制服务：HttpListener + JSON。
+/// 「连接手机」局域网控制服务：Kestrel HTTPS + JSON，身份由二维码中的证书指纹绑定。
 /// 配对码（或二维码里携带的同一配对码）换取会话令牌，之后所有接口都要带 X-Token。
 /// 接口：info / hardware(电脑配置) / monitor(实时数据，?fps=1 含帧率) / screenshot / exec(PowerShell) / winget / chat。
 /// </summary>
@@ -42,7 +43,7 @@ public static class PhoneLinkService
     /// <summary>文件传输 I/O 缓冲 1 MB：把局域网直传吞吐拉到接近链路理论速度。</summary>
     private const int IoBufferSize = 1 << 20;
 
-    private static HttpListener? _listener;
+    private static LanHttpsServer? _server;
     private static PhoneLinkDiscovery? _discovery;
     private static CancellationTokenSource? _cts;
     private static readonly object _stateLock = new();
@@ -54,7 +55,8 @@ public static class PhoneLinkService
     private static DateTime _lockedUntil = DateTime.MinValue;
 
     /// <summary>接口版本：手机端与电脑端解耦升级时据此协商能力。</summary>
-    public const int ApiVersion = 2;
+    public const int ApiVersion = 4;
+    public static string CertificateFingerprint => LanHttpsServer.Fingerprint;
 
     public static bool IsRunning { get; private set; }
     public static int Port { get; private set; } = DefaultPort;
@@ -147,7 +149,7 @@ public static class PhoneLinkService
 
     /// <summary>二维码内容：tubalink://IP:端口?code=配对码&amp;name=电脑名。</summary>
     public static string BuildQrPayload(string ip) =>
-        $"tubalink://{ip}:{Port}?code={PairCode}&name={Uri.EscapeDataString(Environment.MachineName)}";
+        $"tubalink://{ip}:{Port}?code={PairCode}&fp={CertificateFingerprint}&name={Uri.EscapeDataString(Environment.MachineName)}";
 
     internal static string NewPairCode() => RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 
@@ -288,18 +290,18 @@ public static class PhoneLinkService
     }
 
     /// <summary>校验请求令牌；成功时返回设备名，供审计日志使用。</summary>
-    private static bool TryAuthorize(HttpListenerRequest req, out string deviceName)
+    private static bool TryAuthorize(HttpRequest req, out string deviceName)
     {
         deviceName = "";
-        var token = req.Headers["X-Token"];
+        var token = req.Headers["X-Token"].ToString();
         if (string.IsNullOrEmpty(token)) return false;
         if (!PairedDeviceStore.TryAuthorize(token, out var record)) return false;
         deviceName = record.Name;
         return true;
     }
 
-    private static string RemoteOf(HttpListenerRequest req) =>
-        req.RemoteEndPoint?.Address.ToString() ?? "未知地址";
+    private static string RemoteOf(HttpRequest req) =>
+        req.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "未知地址";
 
     private static int _approvalGeneration;
 
@@ -342,39 +344,33 @@ public static class PhoneLinkService
     private static void StartCore()
     {
         if (IsRunning) return;
+        if (AppSettings.Get("PhoneLinkSecureTransportVersion") != "3")
+        {
+            // Previously issued bearer tokens and pairing codes may have crossed a cleartext network.
+            RevokeAll();
+            AppSettings.Set("PhoneLinkSecureTransportVersion", "3");
+            AppSettings.Flush();
+        }
         try { Directory.CreateDirectory(ReceiveDir); } catch { }
         _cts = new CancellationTokenSource();
-        var listener = new HttpListener();
-        for (var attempt = 0; ; attempt++)
+        try
         {
-            try
+            for (var attempt = 0; ; attempt++)
             {
-                listener.Prefixes.Clear();
-                listener.Prefixes.Add($"http://+:{Port}/");
-                listener.Start();
-                break;
-            }
-            catch when (attempt < 9)
-            {
-                listener.Close();
-                listener = new HttpListener();
-                Port++;
-            }
-            catch
-            {
-                listener.Close();
-                _cts.Dispose();
-                _cts = null;
-                throw;
+                try
+                {
+                    _server = Task.Run(() => LanHttpsServer.StartAsync(Port, MaxUploadBytes,
+                        ctx => HandleSafe(ctx, ctx.RequestAborted))).GetAwaiter().GetResult();
+                    break;
+                }
+                catch (IOException) when (attempt < 9 && Port < 65535) { Port++; }
             }
         }
-        _listener = listener;
+        catch { _cts.Dispose(); _cts = null; throw; }
         IsRunning = true;
         _discovery = PhoneLinkDiscovery.TryStart(Port);
-        var ct = _cts.Token;
-        _ = Task.Run(() => ListenLoop(listener, ct));
         LogService.Info(LogService.PhoneLink,
-            $"服务已启动：http://+:{Port}/（局域网发现 UDP {PhoneLinkDiscovery.DiscoveryPort}）");
+            $"服务已启动：https://+:{Port}/（局域网发现 UDP {PhoneLinkDiscovery.DiscoveryPort}）");
         PhoneLinkFirewall.EnsureInBackground(Port);
         StateChanged?.Invoke();
     }
@@ -395,8 +391,8 @@ public static class PhoneLinkService
         _discovery = null;
         lock (_stateLock) _approvalGeneration++;
         foreach (var job in GetJobs().Where(j => j.IsRunning)) CancelJob(job.Id);
-        try { _listener?.Stop(); _listener?.Close(); } catch { }
-        _listener = null;
+        try { _server?.Dispose(); } catch { }
+        _server = null;
         PairedDeviceStore.RevokeAll();
         LogService.Info(LogService.PhoneLink, "服务已停止，所有已配对设备授权已清空");
         StateChanged?.Invoke();
@@ -462,34 +458,24 @@ public static class PhoneLinkService
         }
     }
 
-    private static async Task ListenLoop(HttpListener listener, CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested && listener.IsListening)
-        {
-            HttpListenerContext ctx;
-            try { ctx = await listener.GetContextAsync().ConfigureAwait(false); }
-            catch { break; }
-            _ = Task.Run(() => HandleSafe(ctx, ct), ct);
-        }
-    }
-
-    private static async Task HandleSafe(HttpListenerContext ctx, CancellationToken ct)
+    private static async Task HandleSafe(HttpContext ctx, CancellationToken ct)
     {
         try { await Handle(ctx, ct).ConfigureAwait(false); }
-        catch (Exception ex)
+        catch (BadHttpRequestException) { throw; }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception)
         {
-            try { await WriteJson(ctx, 500, new { error = ex.Message }).ConfigureAwait(false); } catch { }
+            if (!ctx.Response.HasStarted) await WriteJson(ctx, 500, new { error = "请求处理失败" }).ConfigureAwait(false);
         }
-        finally { try { ctx.Response.Close(); } catch { } }
     }
 
     // ───────────────────────── 路由 ─────────────────────────
 
-    private static async Task Handle(HttpListenerContext ctx, CancellationToken ct)
+    private static async Task Handle(HttpContext ctx, CancellationToken ct)
     {
         var req = ctx.Request;
-        var path = req.Url?.AbsolutePath.TrimEnd('/') ?? "";
-        var method = req.HttpMethod;
+        var path = req.Path.Value?.TrimEnd('/') ?? "";
+        var method = req.Method;
 
         if (path == "/api/ping")
         {
@@ -540,7 +526,7 @@ public static class PhoneLinkService
                 return;
             case "/api/hardware":
                 {
-                    var sections = await HardwareInfoService.LoadAsync();
+                    var sections = await HardwareInfoService.LoadForDisplayAsync();
                     await WriteJson(ctx, 200, new
                     {
                         sections = sections.Select(sec => new
@@ -557,8 +543,134 @@ public static class PhoneLinkService
                     int.TryParse(q.GetValueOrDefault("width"), out var w);
                     var jpg = CaptureScreenJpeg(w is >= 320 and <= 3840 ? w : 1280);
                     ctx.Response.ContentType = "image/jpeg";
-                    ctx.Response.ContentLength64 = jpg.Length;
-                    await ctx.Response.OutputStream.WriteAsync(jpg, ct);
+                    ctx.Response.ContentLength = jpg.Length;
+                    await ctx.Response.Body.WriteAsync(jpg, ct);
+                    return;
+                }
+            case "/api/camera/list":
+                {
+                    if (!PhoneCameraService.Enabled)
+                    {
+                        await WriteJson(ctx, 403, new { error = "电脑未开启摄像头共享，请在电脑上打开「允许手机查看摄像头」" });
+                        return;
+                    }
+                    try
+                    {
+                        var cameras = await PhoneCameraService.ListAsync();
+                        var defaults = CameraStreamOptions.FromSettings();
+                        await WriteJson(ctx, 200, new
+                        {
+                            cameras = cameras.Select(c => new { id = c.Id, name = c.Name, index = c.Index }),
+                            defaults = new { width = defaults.Width, fps = defaults.Fps, quality = defaults.Quality },
+                            preferredId = AppSettings.Get("PhoneLinkCameraId")
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        await WriteJson(ctx, 503, new { error = "无法枚举摄像头：" + ex.Message });
+                    }
+                    return;
+                }
+            case "/api/camera/snapshot":
+                {
+                    if (!PhoneCameraService.Enabled)
+                    {
+                        await WriteJson(ctx, 403, new { error = "电脑未开启摄像头共享，请在电脑上打开「允许手机查看摄像头」" });
+                        return;
+                    }
+                    var q = ParseQuery(req);
+                    var cameraIndex = ParseInt(q.GetValueOrDefault("camera"), 0);
+                    var width = Math.Clamp(ParseInt(q.GetValueOrDefault("width"), 1280), 320, 1920);
+                    var quality = Math.Clamp(ParseInt(q.GetValueOrDefault("quality"), 70), 30, 90);
+                    try
+                    {
+                        var jpeg = await PhoneCameraService.SnapshotAsync(cameraIndex, width, quality, ct);
+                        ctx.Response.ContentType = "image/jpeg";
+                        ctx.Response.ContentLength = jpeg.Length;
+                        await ctx.Response.Body.WriteAsync(jpeg, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!ctx.Response.HasStarted) await WriteJson(ctx, 503, new { error = ex.Message });
+                    }
+                    return;
+                }
+            case "/api/camera/stream":
+                {
+                    if (!PhoneCameraService.Enabled)
+                    {
+                        await WriteJson(ctx, 403, new { error = "电脑未开启摄像头共享，请在电脑上打开「允许手机查看摄像头」" });
+                        return;
+                    }
+                    var q = ParseQuery(req);
+                    var cameraIndex = ParseInt(q.GetValueOrDefault("camera"), 0);
+                    var options = CameraStreamOptions.Create(
+                        ParseInt(q.GetValueOrDefault("width"), 960),
+                        ParseInt(q.GetValueOrDefault("fps"), 10),
+                        ParseInt(q.GetValueOrDefault("quality"), 60));
+                    CameraStreamSubscription? subscription = null;
+                    try
+                    {
+                        subscription = await PhoneCameraService.SubscribeAsync(cameraIndex, options, ct);
+                        if (subscription is null)
+                        {
+                            await WriteJson(ctx, 409, new { error = "已有手机在观看这个摄像头，或请求参数与当前会话不一致" });
+                            return;
+                        }
+
+                        // 先等首帧，这样摄像头不可用的错误还能以 JSON 返回，而不是坏掉的 multipart 流
+                        byte[]? first = null;
+                        using (var firstCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
+                        {
+                            firstCts.CancelAfter(TimeSpan.FromSeconds(5));
+                            try
+                            {
+                                if (await subscription.Frames.WaitToReadAsync(firstCts.Token) &&
+                                    subscription.Frames.TryRead(out var frame))
+                                {
+                                    first = frame;
+                                }
+                            }
+                            catch (OperationCanceledException)
+                            {
+                            }
+                        }
+                        if (first is null)
+                        {
+                            await WriteJson(ctx, 503, new { error = "摄像头没有画面，请检查是否被其他程序占用" });
+                            return;
+                        }
+
+                        ctx.Response.ContentType = "multipart/x-mixed-replace; boundary=frame";
+                        ctx.Response.Headers["Cache-Control"] = "no-store";
+                        await ctx.Response.StartAsync(ct);
+                        await WriteCameraPartAsync(ctx.Response.Body, first, ct);
+                        LogService.Info(LogService.PhoneLink,
+                            $"设备「{device}」开始观看摄像头（{options.Width}px / {options.Fps}fps / 质量 {options.Quality}）");
+                        try
+                        {
+                            while (await subscription.Frames.WaitToReadAsync(ct))
+                            {
+                                while (subscription.Frames.TryRead(out var jpeg))
+                                    await WriteCameraPartAsync(ctx.Response.Body, jpeg, ct);
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                        finally
+                        {
+                            LogService.Info(LogService.PhoneLink, $"设备「{device}」结束观看摄像头");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!ctx.Response.HasStarted) await WriteJson(ctx, 503, new { error = ex.Message });
+                    }
+                    finally
+                    {
+                        subscription?.Dispose();
+                    }
                     return;
                 }
             case "/api/exec" when method == "POST":
@@ -650,11 +762,11 @@ public static class PhoneLinkService
                     var q = ParseQuery(req);
                     var name = SanitizeFileName(q.GetValueOrDefault("name"));
                     var isImage = q.GetValueOrDefault("kind") == "image";
-                    if (req.ContentLength64 > MaxUploadBytes) { await WriteJson(ctx, 413, new { error = "文件过大" }); return; }
+                    if ((req.ContentLength ?? -1) > MaxUploadBytes) { await WriteJson(ctx, 413, new { error = "文件过大" }); return; }
                     Directory.CreateDirectory(ReceiveDir);
                     var dest = UniquePath(ReceiveDir, name);
                     var reporter = new TransferSpeedReporter(Guid.NewGuid().ToString("N"), Path.GetFileName(dest),
-                        PhoneTransferDirection.Upload, req.ContentLength64, p => TransferProgress?.Invoke(p));
+                        PhoneTransferDirection.Upload, (req.ContentLength ?? -1), p => TransferProgress?.Invoke(p));
                     long size;
                     long received = 0;
                     var tooLarge = false;
@@ -666,7 +778,7 @@ public static class PhoneLinkService
                         {
                             var buffer = new byte[IoBufferSize];
                             int read;
-                            while ((read = await req.InputStream.ReadAsync(buffer, ct)) > 0)
+                            while ((read = await req.Body.ReadAsync(buffer, ct)) > 0)
                             {
                                 received += read;
                                 // chunked 传输没有 Content-Length，按实际收到的字节数兜底
@@ -682,6 +794,7 @@ public static class PhoneLinkService
                     catch
                     {
                         reporter.Fail(received);
+                        try { File.Delete(dest); } catch { }
                         throw;
                     }
                     if (tooLarge)
@@ -719,18 +832,18 @@ public static class PhoneLinkService
             if (range == RangeParseResult.Unsatisfiable)
             {
                 ctx.Response.StatusCode = 416;
-                ctx.Response.AddHeader("Content-Range", $"bytes */{fi.Length}");
-                ctx.Response.ContentLength64 = 0;
+                ctx.Response.Headers.Append("Content-Range", $"bytes */{fi.Length}");
+                ctx.Response.ContentLength = 0;
                 return;
             }
             var offset = range == RangeParseResult.Valid ? rangeStart : 0;
             var length = range == RangeParseResult.Valid ? rangeEnd - rangeStart + 1 : fi.Length;
             ctx.Response.ContentType = "application/octet-stream";
-            ctx.Response.ContentLength64 = length;
-            ctx.Response.AddHeader("Accept-Ranges", "bytes");
+            ctx.Response.ContentLength = length;
+            ctx.Response.Headers.Append("Accept-Ranges", "bytes");
             if (range == RangeParseResult.Valid)
-                ctx.Response.AddHeader("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{fi.Length}");
-            ctx.Response.AddHeader("Content-Disposition", "attachment; filename*=UTF-8''" + Uri.EscapeDataString(fi.Name));
+                ctx.Response.Headers.Append("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{fi.Length}");
+            ctx.Response.Headers.Append("Content-Disposition", "attachment; filename*=UTF-8''" + Uri.EscapeDataString(fi.Name));
             var downloadReporter = new TransferSpeedReporter(id, fi.Name, PhoneTransferDirection.Download,
                 length, p => TransferProgress?.Invoke(p));
             long sent = 0;
@@ -746,7 +859,7 @@ public static class PhoneLinkService
                     var want = (int)Math.Min(buffer.Length, length - sent);
                     var read = await fs.ReadAsync(buffer.AsMemory(0, want), ct);
                     if (read <= 0) break;
-                    await ctx.Response.OutputStream.WriteAsync(buffer.AsMemory(0, read), ct);
+                    await ctx.Response.Body.WriteAsync(buffer.AsMemory(0, read), ct);
                     sent += read;
                     downloadReporter.Report(sent);
                 }
@@ -1081,23 +1194,16 @@ public static class PhoneLinkService
         return RangeParseResult.Valid;
     }
 
-    private static async Task WriteJson(HttpListenerContext ctx, int status, object obj)
+    private static async Task WriteJson(HttpContext ctx, int status, object obj)
     {
         var bytes = JsonSerializer.SerializeToUtf8Bytes(obj, JsonOpts);
         ctx.Response.StatusCode = status;
         ctx.Response.ContentType = "application/json; charset=utf-8";
-        ctx.Response.ContentLength64 = bytes.Length;
-        await ctx.Response.OutputStream.WriteAsync(bytes);
+        ctx.Response.ContentLength = bytes.Length;
+        await ctx.Response.Body.WriteAsync(bytes);
     }
 
-    private static async Task<JsonElement> ReadJson(HttpListenerRequest req)
-    {
-        using var sr = new StreamReader(req.InputStream, Encoding.UTF8);
-        var s = await sr.ReadToEndAsync();
-        if (string.IsNullOrWhiteSpace(s)) return default;
-        try { return JsonDocument.Parse(s).RootElement.Clone(); }
-        catch { return default; }
-    }
+    private static Task<JsonElement> ReadJson(HttpRequest req) => RequestLimits.ReadJsonAsync(req);
 
     private static string? Str(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
@@ -1109,10 +1215,10 @@ public static class PhoneLinkService
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) &&
         v.ValueKind is JsonValueKind.True or JsonValueKind.False && v.GetBoolean();
 
-    private static Dictionary<string, string> ParseQuery(HttpListenerRequest req)
+    private static Dictionary<string, string> ParseQuery(HttpRequest req)
     {
         var d = new Dictionary<string, string>();
-        var q = req.Url?.Query ?? "";
+        var q = req.QueryString.Value ?? "";
         if (q.StartsWith('?')) q = q[1..];
         foreach (var part in q.Split('&', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -1122,5 +1228,21 @@ public static class PhoneLinkService
             d[k] = v;
         }
         return d;
+    }
+
+    private static int ParseInt(string? value, int fallback) =>
+        int.TryParse(value, out var result) ? result : fallback;
+
+    private static readonly byte[] CrlfBytes = [13, 10];
+
+    /// <summary>写一帧 multipart MJPEG（客户端按 Content-Length 读，不依赖边界扫描）。</summary>
+    private static async Task WriteCameraPartAsync(Stream body, byte[] jpeg, CancellationToken ct)
+    {
+        var header = Encoding.ASCII.GetBytes(
+            $"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {jpeg.Length}\r\n\r\n");
+        await body.WriteAsync(header, ct);
+        await body.WriteAsync(jpeg, ct);
+        await body.WriteAsync(CrlfBytes, ct);
+        await body.FlushAsync(ct);
     }
 }

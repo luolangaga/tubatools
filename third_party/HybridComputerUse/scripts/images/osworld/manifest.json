@@ -1,0 +1,35 @@
+{
+  "distribution": "ubuntu",
+  "ubuntu_version": "22.04",
+  "architecture": "amd64",
+  "gtk_packages": ["d-feet", "flameshot", "pavucontrol", "inkscape", "bluefish", "darktable"],
+  "qt_packages": ["okular", "krita", "kate", "spyder"],
+  "special_packages": ["solvespace", "mpv"],
+  "support_packages": ["libnss3-tools", "gir1.2-ibus-1.0", "ibus", "ibus-gtk", "ibus-gtk3"],
+  "joplin": {
+    "version": "3.5.13",
+    "file": "Joplin-3.5.13.AppImage",
+    "source": "https://github.com/laurent22/joplin/releases/download/v3.5.13/Joplin-3.5.13.AppImage"
+  },
+  "geogebra": {
+    "file": "GeoGebra-Linux-Portable-5-4-925-3.tar.bz2",
+    "directory": "GeoGebra-Linux-Portable-5-4-925-3",
+    "java_directory": "zulu25.30.17-ca-jre25.0.1-linux_x64"
+  },
+  "kicad": {
+    "version": "10.0.6",
+    "file": "kicad-10.0.6-ubuntu22.04-amd64-offline.zip"
+  },
+  "freecad": {
+    "file": "freecad-private.tar",
+    "package_manifest": "freecad-packages.json"
+  },
+  "slicer": {
+    "version": "5.6.2",
+    "file": "Slicer-5.6.2-linux-amd64.tar.gz",
+    "directory": "Slicer-5.6.2-linux-amd64",
+    "source": "https://download.slicer.org/download?version=5.6.2&os=linux&stability=release"
+  },
+  "openboard_channel": "latest/stable",
+  "musescore_skipped_version": "4.7.5"
+}

@@ -1,10 +1,15 @@
 using System.Text.Json;
+using System.Globalization;
+using TubaWinUi3.Storage;
+using TubaWinUi3.Services.Ai;
 
 namespace TubaWinUi3.Services;
 
 public static class AppSettings
 {
     public static event Action<string>? SettingChanged;
+    public static event Action<string>? SaveFailed;
+    public static string? LastSaveError { get; private set; }
 
     private static string SettingsPath => ConfigManager.GetSettingsPath();
 
@@ -21,15 +26,24 @@ public static class AppSettings
 
     public static Dictionary<string, string> Load()
     {
+        lock (_gate) return new Dictionary<string, string>(LoadLocked());
+    }
+
+    private static Dictionary<string, string> LoadLocked()
+    {
         lock (_gate)
         {
             if (_cache is not null) return _cache;
             try
             {
-                if (File.Exists(SettingsPath))
+                if (File.Exists(SettingsPath) || File.Exists(SettingsPath + ".bak"))
                 {
-                    var json = File.ReadAllText(SettingsPath);
-                    _cache = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? [];
+                    using var lease = AtomicFile.Lock(SettingsPath);
+                    var json = AtomicFile.ReadText(SettingsPath, text => _ = JsonSerializer.Deserialize<Dictionary<string, string>>(text) ?? throw new JsonException("设置格式无效。"));
+                    _cache = JsonSerializer.Deserialize<Dictionary<string, string>>(json!) ?? [];
+                    if (_cache.Any(p => IsSecretKey(p.Key) && !string.IsNullOrEmpty(p.Value)
+                        && !p.Value.StartsWith("dpapi:v1:", StringComparison.Ordinal)))
+                    { _dirty = true; Save(); }
                 }
                 else
                 {
@@ -53,13 +67,33 @@ public static class AppSettings
             {
                 var dir = Path.GetDirectoryName(SettingsPath)!;
                 Directory.CreateDirectory(dir);
+                foreach (var key in _cache.Keys.Where(IsSecretKey).ToArray())
+                    if (_cache[key]?.StartsWith("dpapi:v1:", StringComparison.Ordinal) != true)
+                        _cache[key] = ProtectedApiKeyConverter.Encode(_cache[key] ?? "");
                 var json = JsonSerializer.Serialize(_cache);
-                File.WriteAllText(SettingsPath, json);
+                using var lease = AtomicFile.Lock(SettingsPath);
+                AtomicFile.WriteText(SettingsPath, json);
+                if (File.Exists(SettingsPath + ".bak"))
+                {
+                    var previous = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(SettingsPath + ".bak"));
+                    if (previous is not null)
+                    {
+                        foreach (var key in previous.Keys.Where(IsSecretKey).ToArray())
+                            if (previous[key]?.StartsWith("dpapi:v1:", StringComparison.Ordinal) != true)
+                                previous[key] = ProtectedApiKeyConverter.Encode(previous[key] ?? "");
+                        AtomicFile.WriteText(SettingsPath + ".bak", JsonSerializer.Serialize(previous), backup: false);
+                    }
+                }
+                LastSaveError = null;
                 _dirty = false;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AppSettings] Save failed: {ex.Message}");
+                LastSaveError = LocalizationService.L("Persistence_SettingsError", "设置保存失败，请检查数据目录权限和剩余空间后重试。");
+                // Invoke outside the storage lock and isolate subscriber exceptions.
+                var message = LastSaveError;
+                ThreadPool.QueueUserWorkItem(_ => { try { SaveFailed?.Invoke(message); } catch { } });
             }
         }
     }
@@ -92,8 +126,8 @@ public static class AppSettings
     {
         lock (_gate)
         {
-            var s = Load();
-            s[key] = value;
+            var s = LoadLocked();
+            s[key] = IsSecretKey(key) ? ProtectedApiKeyConverter.Encode(value) : value;
             _dirty = true;
             SchedulePersist();
         }
@@ -101,14 +135,14 @@ public static class AppSettings
     }
 
     public static void Set(string key, bool value) => Set(key, value.ToString().ToLowerInvariant());
-    public static void Set(string key, int value) => Set(key, value.ToString());
-    public static void Set(string key, double value) => Set(key, value.ToString("F2"));
+    public static void Set(string key, int value) => Set(key, value.ToString(CultureInfo.InvariantCulture));
+    public static void Set(string key, double value) => Set(key, value.ToString("R", CultureInfo.InvariantCulture));
 
     public static void Remove(string key)
     {
         lock (_gate)
         {
-            var s = Load();
+            var s = LoadLocked();
             s.Remove(key);
             _dirty = true;
             SchedulePersist();
@@ -118,8 +152,24 @@ public static class AppSettings
 
     public static string? Get(string key)
     {
-        var s = Load();
-        return s.TryGetValue(key, out var v) ? v : null;
+        lock (_gate)
+        {
+            var s = LoadLocked();
+            if (!s.TryGetValue(key, out var v) || v is null) return null;
+            if (!IsSecretKey(key)) return v;
+            try
+            {
+                var decoded = ProtectedApiKeyConverter.Decode(v);
+                if (!v.StartsWith("dpapi:v1:", StringComparison.Ordinal) && decoded.Length > 0)
+                {
+                    s[key] = ProtectedApiKeyConverter.Encode(decoded);
+                    _dirty = true;
+                    Save();
+                }
+                return decoded;
+            }
+            catch (JsonException) { return null; }
+        }
     }
 
     public static bool GetBool(string key, bool defaultValue = false)
@@ -137,8 +187,16 @@ public static class AppSettings
     public static double GetDouble(string key, double defaultValue = 0)
     {
         var v = Get(key);
-        return v is not null && double.TryParse(v, out var d) ? d : defaultValue;
+        if (v is null) return defaultValue;
+        // Old versions wrote the decimal separator of the current culture. Never allow
+        // thousands separators: "1.50" must not become 150 after a region change.
+        var normalized = v.Contains(',') && !v.Contains('.') ? v.Replace(',', '.') : v;
+        return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out var d)
+            && double.IsFinite(d) ? d : defaultValue;
     }
+
+    internal static bool IsSecretKey(string key) => key is "GitHubToken" or "ProxyPassword" or "AiApiKey"
+        or "OpenCodeZenToken" or "SearchApiKey";
 
     public static void InvalidateCache()
     {

@@ -264,7 +264,9 @@ public static class ToolMetadataService
 
     private static async Task<IReadOnlyList<RemoteToolVersion>?> TryFetchGitCodeToolsJsonAsync(CancellationToken ct)
     {
-        const string url = "https://raw.gitcode.com/luolangaga/tubatool/raw/master/TubaWinUi3.WinUI3/Metadata/tools.json";
+        // GitCode / AtomGit 的 raw 域名预览链接可能返回 403「暂不支持预览」。
+        // 使用公开的 raw API，直接返回文件内容，不经过网页预览。
+        const string url = "https://api.atomgit.com/api/v5/repos/luolangaga/tubatool/raw/TubaWinUi3.WinUI3%2FMetadata%2Ftools.json?ref=master";
 
         using var client = ProxyService.CreateClient(TimeSpan.FromSeconds(15));
         if (!client.DefaultRequestHeaders.Contains("User-Agent"))
@@ -400,24 +402,13 @@ public static class ToolMetadataService
             if (Directory.Exists(migratedBackups)) legacy.AddRange(Directory.GetFiles(migratedBackups, "*.json").OrderBy(File.GetLastWriteTimeUtc));
             try
             {
-                var merged = UserToolLibrary.Load(official, legacy);
-                // 即使旧 tools.json 已被覆盖，社区安装记录仍能恢复启动目标与分类。
-                foreach (var record in CommunityToolRegistry.GetInstalledRecords())
-                {
-                    if (merged.Any(t => t["directory"] is not null &&
-                        (t["source"]?.GetValue<string>() is "community" or "legacy") &&
-                        string.Equals(t["match"]?.GetValue<string>(), record.ToolId, StringComparison.OrdinalIgnoreCase) &&
-                        string.Equals(t["category"]?.GetValue<string>(), record.Category, StringComparison.OrdinalIgnoreCase))) continue;
-                    var directory = Path.Combine(ToolCatalog.ToolsRoot, record.Category, record.ToolId);
-                    if (!System.IO.Directory.Exists(directory)) continue;
-                    UserToolLibrary.Upsert(new JsonObject
-                    {
-                        ["match"] = record.ToolId, ["name"] = record.ToolId,
-                        ["category"] = record.Category, ["launchTarget"] = record.LaunchTarget,
-                        ["publisher"] = record.Author
-                    }, directory, record.ToolId);
-                }
+                var retiredCommunityDirectories = CommunityToolRegistry.GetInstalledRecords()
+                    .Select(record => Path.GetFullPath(Path.Combine(ToolCatalog.ToolsRoot, record.Category, record.ToolId)))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
                 _metadata = UserToolLibrary.Load(official, legacy)
+                    .Where(t => t["source"]?.GetValue<string>() != "community" &&
+                        (t["directory"] is null || !retiredCommunityDirectories.Contains(
+                            Path.GetFullPath(UserToolLibrary.ResolveDirectory(t["directory"]!.GetValue<string>())))))
                     .Select(t => t.Deserialize<JsonToolMetadata>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!)
                     .ToList();
             }

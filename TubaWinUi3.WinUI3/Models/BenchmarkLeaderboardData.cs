@@ -79,6 +79,8 @@ public sealed class BenchmarkLeaderboardRankEntry
 
     public string OsName { get; set; } = "";
 
+    public string GpuInfo { get; set; } = "";
+
     public string MotherboardName { get; set; } = "";
 
     public string MemoryInfo { get; set; } = "";
@@ -114,6 +116,7 @@ public sealed class BenchmarkLeaderboardRankEntry
             GamingGrade = GamingGrade,
             OfficeGrade = OfficeGrade,
             OsName = OsName,
+            GpuInfo = GpuInfo,
             MotherboardName = MotherboardName,
             MemoryInfo = MemoryInfo,
             DiskInfo = DiskInfo,

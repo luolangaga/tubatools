@@ -22,6 +22,7 @@ import com.tubawinui3.remote.data.SavedPc
 import com.tubawinui3.remote.data.DiscoveryProtocol
 import com.tubawinui3.remote.data.LanDiscovery
 import com.tubawinui3.remote.data.SavedReconnect
+import com.tubawinui3.remote.service.LinkService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -54,6 +55,25 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var screenshotError by mutableStateOf<String?>(null)
         private set
+
+    /** 当前连接的电脑（副屏/摄像头/下载页用）。 */
+    var currentPcId by mutableStateOf<String?>(null)
+        private set
+    var currentPcName by mutableStateOf("")
+        private set
+
+    /** 通知点击后要打开的工具；连接成功后再消费。 */
+    var pendingTool by mutableStateOf<String?>(null)
+        private set
+
+    /** 后台接收电脑消息（前台服务）。 */
+    var bgEnabled by mutableStateOf(prefs.getBoolean("bgEnabled", true))
+        private set
+
+    /** 电脑推送文件时自动下载。 */
+    var autoDownload by mutableStateOf(prefs.getBoolean("autoDownload", false))
+        private set
+
     val messages = mutableStateListOf<ChatMessage>()
 
     /** 已记住的电脑（最近连接优先）。 */
@@ -114,6 +134,11 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
         connecting = false
         pairTarget = null
         if (clientPcId == id) disconnect()
+        if (currentPcId == id) {
+            LinkService.stop(getApplication())
+            currentPcId = null
+            currentPcName = ""
+        }
         saveDevices(PcStore.remove(devices, id))
         statuses.remove(id)
         if (prefs.getString(lastPcPrefKey, null) == id) prefs.edit().remove(lastPcPrefKey).apply()
@@ -126,7 +151,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
             if (statuses[pc.id] == PcStatus.Checking) continue
             if (statuses[pc.id] == null) statuses[pc.id] = PcStatus.Checking
             viewModelScope.launch {
-                val name = runCatching { ApiClient(pc.host, pc.port).ping() }.getOrNull()
+                val name = runCatching { ApiClient(pc.host, pc.port, fingerprint = pc.fingerprint).ping() }.getOrNull()
                 if (devices.none { it.id == pc.id }) return@launch
                 statuses[pc.id] = if (name != null) PcStatus.Online else PcStatus.Offline
 
@@ -144,10 +169,15 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
 
     fun requestConnect(pc: SavedPc) {
         if (connecting) return
+        if (pc.fingerprint == null) {
+            error = "安全连接已升级，请扫描电脑上的新二维码重新配对"
+            pairTarget = ConnectTarget(pc.host, pc.port, name = pc.name)
+            return
+        }
         connecting = true
         error = null
         connectionJob = viewModelScope.launch {
-            val c = ApiClient(pc.host, pc.port)
+            val c = ApiClient(pc.host, pc.port, fingerprint = pc.fingerprint)
             var pairingAttempted = false
             try {
                 val token = SavedReconnect.token(pc,
@@ -162,7 +192,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
                 )
                 if (token == null) {
                     updateToken(pc.id, null)
-                    pairTarget = ConnectTarget(pc.host, pc.port, name = pc.name.ifEmpty { null })
+                    pairTarget = ConnectTarget(pc.host, pc.port, name = pc.name.ifEmpty { null }, fingerprint = pc.fingerprint)
                     return@launch
                 }
                 c.token = token
@@ -173,7 +203,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: ApiException) {
                 if (e.code == 401 || (pairingAttempted && e.code in listOf(400, 403))) {
                     saveDevices(devices.map { if (it.id == pc.id) it.copy(token = null, pairingCode = null) else it })
-                    pairTarget = ConnectTarget(pc.host, pc.port, name = pc.name.ifEmpty { null })
+                    pairTarget = ConnectTarget(pc.host, pc.port, name = pc.name.ifEmpty { null }, fingerprint = pc.fingerprint)
                     error = "配对已失效，请输入电脑上的新配对码"
                 } else {
                     error = "暂时无法连接电脑，请检查网络和电脑服务后重试；也可手动输入地址与连接码。"
@@ -225,11 +255,12 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
     /** 用配对码连接（添加新电脑 / 重新配对都走这里）。 */
     fun connect(target: ConnectTarget, code: String) {
         if (connecting) return
+        if (target.fingerprint == null) { error = "请扫码连接，或粘贴电脑上的完整连接信息以验证电脑身份"; return }
         if (!Regex("[0-9]{6}").matches(code.trim())) { error = "请输入电脑上显示的 6 位配对码"; return }
         connecting = true
         error = null
         connectionJob = viewModelScope.launch {
-            val c = ApiClient(target.host, target.port)
+            val c = ApiClient(target.host, target.port, fingerprint = target.fingerprint)
             try {
                 val name = c.pair(code.trim(), "${Build.MANUFACTURER} ${Build.MODEL}")
                 val pc = SavedPc(
@@ -238,6 +269,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
                     name = name,
                     token = c.token,
                     pairingCode = code.trim(),
+                    fingerprint = target.fingerprint,
                     lastConnectedAt = System.currentTimeMillis(),
                 )
                 saveDevices(PcStore.upsert(devices, pc))
@@ -256,11 +288,41 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
         error = msg
     }
 
+    /** 通知点击导航；连接成功后再打开对应工具。 */
+    fun navigateTo(tool: String) {
+        pendingTool = tool.uppercase()
+    }
+
+    fun consumePendingTool() {
+        pendingTool = null
+    }
+
+    fun updateBgEnabled(enabled: Boolean) {
+        if (bgEnabled == enabled) return
+        bgEnabled = enabled
+        prefs.edit().putBoolean("bgEnabled", enabled).apply()
+        val id = currentPcId
+        if (enabled && id != null) {
+            runCatching { LinkService.start(getApplication(), id) }
+        } else if (!enabled) {
+            LinkService.stop(getApplication())
+        }
+    }
+
+    fun updateAutoDownload(enabled: Boolean) {
+        if (autoDownload == enabled) return
+        autoDownload = enabled
+        prefs.edit().putBoolean("autoDownload", enabled).apply()
+    }
+
     /** 断开当前连接（回到列表）：保留条目与令牌，再次连接无需重新配对。 */
     fun disconnect() {
         pollJob?.cancel()
+        LinkService.stop(getApplication())
         client = null
         clientPcId = null
+        currentPcId = null
+        currentPcName = ""
         hardware = null
         screenshot = null
         messages.clear()
@@ -273,10 +335,13 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
     private fun onConnected(c: ApiClient, pc: SavedPc) {
         client = c
         clientPcId = pc.id
+        currentPcId = pc.id
+        currentPcName = pc.name.ifBlank { pc.host }
         error = null
         messages.clear()
         prefs.edit().putString(lastPcPrefKey, pc.id).apply()
         saveDevices(PcStore.touch(devices, pc.id, System.currentTimeMillis()))
+        if (bgEnabled) runCatching { LinkService.start(getApplication(), pc.id) }
         refreshScreenshot()
         loadHardware()
         pollJob?.cancel()
@@ -308,7 +373,13 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app) {
     private suspend fun pollChat(c: ApiClient) {
         val last = messages.lastOrNull()?.seq ?: 0
         val fresh = c.chatList(last)
-        if (fresh.isNotEmpty()) messages.addAll(fresh.filter { m -> messages.none { it.seq == m.seq } })
+        if (fresh.isNotEmpty()) {
+            messages.addAll(fresh.filter { m -> messages.none { it.seq == m.seq } })
+            // 让后台服务的游标跟上 UI，避免重新启动服务时补发已看过的消息
+            val latest = messages.lastOrNull()?.seq ?: last
+            val stored = prefs.getLong("bgCursor", 0L)
+            if (latest > stored) prefs.edit().putLong("bgCursor", latest).apply()
+        }
     }
 
     fun addMessage(m: ChatMessage) {

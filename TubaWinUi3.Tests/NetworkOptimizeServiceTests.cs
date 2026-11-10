@@ -114,15 +114,46 @@ public class NetworkOptimizeServiceTests
     // ───────────────────────────── 预设配置 ─────────────────────────────
 
     [Fact]
-    public void DnsPresets_MatchesNexbox()
+    public void DnsPresets_PreservesOriginalPresetsAndAddsDnsPodDoh()
     {
-        Assert.Equal(6, NetworkOptimizeService.DnsPresets.Length);
+        Assert.Equal(7, NetworkOptimizeService.DnsPresets.Length);
         Assert.Equal("阿里 DNS", NetworkOptimizeService.DnsPresets[0].Name);
         Assert.Equal("223.5.5.5", NetworkOptimizeService.DnsPresets[0].Primary);
         Assert.Equal("223.6.6.6", NetworkOptimizeService.DnsPresets[0].Secondary);
-        Assert.Equal("Cloudflare", NetworkOptimizeService.DnsPresets[^1].Name);
-        Assert.Equal("1.0.0.1", NetworkOptimizeService.DnsPresets[^1].Secondary);
+        Assert.Equal("Cloudflare", NetworkOptimizeService.DnsPresets[5].Name);
+        Assert.Equal("1.0.0.1", NetworkOptimizeService.DnsPresets[5].Secondary);
+        var encrypted = Assert.Single(NetworkOptimizeService.DnsPresets, p => p.DohTemplate is not null);
+        Assert.Equal("https://doh.pub/dns-query", encrypted.DohTemplate);
+        Assert.Equal("doh.pub", encrypted.Primary);
+        Assert.Empty(encrypted.Secondary);
     }
+
+    [Fact]
+    public void DnsScript_RequiresEncryptionAndHandlesExistingRegistrations()
+    {
+        var script = NetworkOptimizeService.BuildSetDnsScript("203.0.113.1", "203.0.113.2", "https://doh.pub/dns-query");
+        Assert.Contains("-AutoUpgrade $true -AllowFallbackToUdp $false", script);
+        Assert.Contains("Add-DnsClientDohServerAddress", script);
+        Assert.Contains("Set-DnsClientDohServerAddress", script);
+        Assert.Contains("$ErrorActionPreference = 'Stop'", script);
+        Assert.True(script.IndexOf("Add-DnsClientDohServerAddress", StringComparison.Ordinal)
+            < script.IndexOf("Set-DnsClientServerAddress", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DnsScript_SingleServerDoesNotIncludeEmptyAddressOrDohCommands()
+    {
+        var script = NetworkOptimizeService.BuildSetDnsScript("180.76.76.76", "");
+        Assert.Contains("@('180.76.76.76')", script);
+        Assert.DoesNotContain("DohServerAddress", script);
+    }
+
+    [Theory]
+    [InlineData("1.2.3.4'; Start-Process calc; #", "", null)]
+    [InlineData("1.2.3.4", "bad", null)]
+    [InlineData("1.2.3.4", "", "http://doh.pub/dns-query")]
+    public void DnsScript_RejectsInvalidInput(string primary, string secondary, string? template)
+        => Assert.Throws<ArgumentException>(() => NetworkOptimizeService.BuildSetDnsScript(primary, secondary, template));
 
     [Fact]
     public void OptimizerItems_MatchesNexbox_PlusExtensions()

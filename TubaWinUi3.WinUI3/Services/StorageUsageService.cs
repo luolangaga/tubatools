@@ -181,6 +181,8 @@ public static class StorageUsageService
             "「文件传输」共享目录中的文件，删除后无法再通过链接取回。", Path.Combine(dataDir, "LanShare")));
         items.Add(FileItem(StorageGroupKind.UserData, "backgrounds", "自定义背景图",
             "设置中导入的界面背景图片。", Path.Combine(dataDir, "Backgrounds")));
+        items.Add(FileItem(StorageGroupKind.UserData, "plugin-customization", "插件界面自定义",
+            "插件保存的导航布局、名称与图标。删除后刷新或重启恢复默认导航。", Path.Combine(dataDir, "PluginCustomization")));
         items.Add(FileItem(StorageGroupKind.UserData, "monitor-records", "游戏监控数据",
             "游戏内实时监控采集的帧率与硬件数据记录。", Path.Combine(dataDir, "GameMonitorRecords")));
         items.Add(FileItem(StorageGroupKind.UserData, "startup-manager", "启动项管理数据",

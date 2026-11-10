@@ -15,6 +15,7 @@
 - 第三方内容仅按其各自许可证、版权声明或权利人授权使用。
 - 分发本仓库产物（源码包、安装包、便携包、镜像等）时，分发者应自行核对并遵守对应第三方条款。
 - 本项目不对第三方内容进行再许可，也不将其声明为本项目原创。
+- 随包分发的第三方图标：TUI 兼容版快捷方式图标 `TubaWinUi3.Tui/Assets/AppIconTui.ico` 由本项目应用图标与 Microsoft **Windows Terminal** 图标（取自其官方仓库，MIT License，Copyright (c) Microsoft Corporation）合成，仅用于标识该兼容版本入口。
 
 ## 3. 许可证查阅指引
 
@@ -88,6 +89,10 @@ This file clarifies rights boundaries for third-party content in this repository
 - Third-party content is used only under each item’s own license, copyright notice, or rightsholder authorization.
 - Redistributors (source/package/installer/portable/mirror) must independently verify and comply with all applicable third-party terms.
 - This project does not relicense third-party content and does not claim it as original work.
+- Bundled third-party icon: the TUI compatibility shortcut icon `TubaWinUi3.Tui/Assets/AppIconTui.ico`
+  combines this project's app icon with the Microsoft **Windows Terminal** icon (taken from its official
+  repository, MIT License, Copyright (c) Microsoft Corporation) and is used only to identify that
+  compatibility entry point.
 
 ## 3. Where to Find Third-Party License Texts
 
@@ -146,3 +151,19 @@ and are independent programs governed by their own licenses:
   The room-code / port-forwarding / Minecraft LAN-discovery design is modelled on the public implementation of
   **Campfire** (https://github.com/Xocio/Campfire); no source code was copied. Campfire's own license terms are
   those stated in its repository.
+
+
+## FrameScope statistics
+
+FPS statistics v2 in `Services/FrameScopeFrameStatistics.cs` is adapted from
+Misakamiro/FrameScopeMonitor (GPL-3.0, repository LICENSE), inspected 2026-11-05.
+Upstream: https://github.com/Misakamiro/FrameScopeMonitor
+Source: src/core/FrameScopeFrameStatistics.cs, blob b242dafb3bb5b78848cef58a325c75bba2084c22.
+Track selection follows src/core/FrameScopeLiveFrameStats.cs, blob 71c0995c8abfb12fd87bf7b030f972f6a04f699f.
+Local adaptations: namespace/accessibility, track scoring helper, QPC streaming integration.
+The GPL-3.0 license text is included in the repository LICENSE.
+
+
+## AI 助手按需组件
+
+AI 助手调用 OpenCode CLI V2（本次验证版本 2.2.5），上游 https://github.com/anomalyco/opencode ，MIT License，Copyright (c) 2025 opencode。该组件不随主程序打包，按需从上游官方地址下载；许可原文随应用资源保留于 `Assets/AiAgent/COMPONENT-LICENSE.txt`，安装时复制到组件目录。产品交互文案使用「AI 组件」，不改变第三方权利归属。

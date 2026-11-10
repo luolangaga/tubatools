@@ -21,6 +21,8 @@ public static class BuiltinIconService
     internal static string? ResolveSvgPath(string? toolId)
     {
         if (string.IsNullOrWhiteSpace(toolId)) return null;
+        if (toolId.StartsWith("plugin:", StringComparison.OrdinalIgnoreCase) && BuiltinToolRegistry.GetById(toolId) is Plugins.PluginXamlTool plugin)
+            return plugin.IconPath?.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) == true ? plugin.IconPath : null;
         try
         {
             var path = Path.Combine(AppContext.BaseDirectory, "Assets", "BuiltinIcons", toolId + ".svg");
@@ -33,7 +35,7 @@ public static class BuiltinIconService
     }
 
     /// <summary>该内置工具是否有专属彩色图标。只做文件探测，任意线程可调用。</summary>
-    public static bool Has(string? toolId) => ResolveSvgPath(toolId) is not null;
+    public static bool Has(string? toolId) => toolId is not null && BuiltinToolRegistry.GetById(toolId) is Plugins.PluginXamlTool { IconPath: not null } || ResolveSvgPath(toolId) is not null;
 
     /// <summary>
     /// 彩色图标；没有 SVG 或加载失败返回 null。同一 id 复用同一个实例。
@@ -45,7 +47,15 @@ public static class BuiltinIconService
     public static ImageSource? Get(string? toolId)
     {
         if (string.IsNullOrWhiteSpace(toolId)) return null;
+        if (BuiltinToolRegistry.GetById(toolId) is Plugins.PluginXamlTool { IconPath: { } path })
+            return Cache.GetOrAdd(path, LoadAsset);
         return Cache.GetOrAdd(toolId, Create);
+    }
+
+    internal static ImageSource? LoadAsset(string path)
+    {
+        try { return path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) ? new SvgImageSource(new Uri(path)) : new BitmapImage(new Uri(path)); }
+        catch { return null; }
     }
 
     private static ImageSource? Create(string toolId)

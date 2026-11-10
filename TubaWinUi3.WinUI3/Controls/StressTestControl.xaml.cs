@@ -1,9 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Management;
-using System.Net;
-using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 using LiveChartsCore;
@@ -25,7 +22,6 @@ public sealed partial class StressTestControl : UserControl
     private const int MaxLogLines = 200;
 
     private static string FurMarkSettingsPath => Path.Combine(ConfigManager.GetDataDir(), "furmark_settings.json");
-    private static string NetSettingsPath => Path.Combine(ConfigManager.GetDataDir(), "net_stress_settings.json");
 
     // 监控曲线配色：统一取共享语义色 / 图表系列色（ThemeColors），不再硬编码品牌色。
     // 折线画刷由代码构造，不会随主题自动刷新，故由 ActualThemeChanged 重建系列。
@@ -36,8 +32,6 @@ public sealed partial class StressTestControl : UserControl
     private static SKColor GpuTempC => Sk(ThemeColors.AccentOrange);
     private static SKColor GpuClockC => Sk(ThemeColors.Series2);
     private static SKColor GpuPowerC => Sk(ThemeColors.AccentRed);
-    private static SKColor NetTxC => Sk(ThemeColors.Series1);
-    private static SKColor NetRxC => Sk(ThemeColors.AccentRed);
 
     private static SKColor Sk(Windows.UI.Color c) => new(c.R, c.G, c.B, 255);
 
@@ -48,8 +42,6 @@ public sealed partial class StressTestControl : UserControl
     private readonly ObservableCollection<double> _gpuTempChart = [];
     private readonly ObservableCollection<double> _gpuClockChart = [];
     private readonly ObservableCollection<double> _gpuPowerChart = [];
-    private readonly ObservableCollection<double> _netTxChart = [];
-    private readonly ObservableCollection<double> _netRxChart = [];
 
     private readonly List<double> _cpuTempReport = [];
     private readonly List<double> _cpuUsageReport = [];
@@ -58,8 +50,6 @@ public sealed partial class StressTestControl : UserControl
     private readonly List<double> _gpuTempReport = [];
     private readonly List<double> _gpuClockReport = [];
     private readonly List<double> _gpuPowerReport = [];
-    private readonly List<double> _netTxReport = [];
-    private readonly List<double> _netRxReport = [];
 
     private DispatcherTimer? _monitorTimer;
     private DispatcherTimer? _elapsedTimer;
@@ -87,22 +77,16 @@ public sealed partial class StressTestControl : UserControl
     private int _cpuSensorMissingTicks;
     private bool _sensorDriverHintShown;
 
-    private NetworkStressRunner? _netRunner;
-    private bool _netRunnerActive;
-    private bool _netOnlyMode;
     private string _modeName = "烤机";
-    private double _netTxPeak, _netRxPeak;
-    private double _netTxSum, _netRxSum;
-    private int _netSampleCount;
-    private string _nicSpeedText = "--";
-    private bool _netErrorLogged;
-    private int _netHeartbeatCount;
-    private long _lastNetSent, _lastNetRecv;
-    private DateTime _lastNetSampleUtc;
 
     public event EventHandler? StressStarted;
     public event EventHandler? StressStopped;
     internal event Action<MonitorSample>? InspectionSampled;
+
+    private int? _savedGpuIndex;
+    private string? _runMonitorGpuId;
+    private string? _runMonitorGpuLabel;
+    private bool _loadingGpuChoices;
 
     public Window? OwnerWindow { get; set; }
 
@@ -117,60 +101,24 @@ public sealed partial class StressTestControl : UserControl
         InitCharts();
         // 曲线画刷在代码里构造，切换主题后按现有数据集合重建系列
         ActualThemeChanged += (_, _) => InitCharts();
-        _settingsReady = true;
+        StressGpuBox.Items.Add(new ComboBoxItem { Content = "自动（按渲染 API）" });
+        StressGpuBox.SelectedIndex = 0;
+        MonitorGpuBox.Items.Add(new ComboBoxItem { Content = "自动（优先匹配烤机显卡）" });
+        MonitorGpuBox.SelectedIndex = 0;
         LoadFurMarkSettings();
+        _settingsReady = true;
         UpdateDxt5Availability();
-        LoadNetSettings();
-        UpdateNetReference();
         if (inspectionMode) BuildInspectionLayout();
+        Loaded += async (_, _) =>
+        {
+            if (_loadingGpuChoices || StressGpuBox.Items.Count > 1) return;
+            _loadingGpuChoices = true;
+            try { await LoadGpuChoicesAsync(); }
+            finally { _loadingGpuChoices = false; }
+        };
     }
 
     public void Cleanup() => StopStress();
-
-    private sealed class NetSettings
-    {
-        public double DataRateMbps { get; set; } = 100;
-        public int DurationMinutes { get; set; } = 15;
-        public int TargetModeIndex { get; set; }
-    }
-
-    private void LoadNetSettings()
-    {
-        try
-        {
-            if (File.Exists(NetSettingsPath))
-            {
-                var s = JsonSerializer.Deserialize<NetSettings>(File.ReadAllText(NetSettingsPath));
-                if (s is not null) ApplyNetSettings(s);
-            }
-        }
-        catch { }
-    }
-
-    private void ApplyNetSettings(NetSettings s)
-    {
-        if (s.DataRateMbps >= 1) NetDataRateBox.Value = Math.Clamp(s.DataRateMbps, 1, 10000);
-        if (s.DurationMinutes >= 1) NetDurationBox.Value = Math.Clamp(s.DurationMinutes, 1, 1440);
-        if (NetTargetModeBox.Items.Count > s.TargetModeIndex && s.TargetModeIndex >= 0) NetTargetModeBox.SelectedIndex = s.TargetModeIndex;
-    }
-
-    private void SaveNetSettings()
-    {
-        if (_inspectionMode) return;
-        try
-        {
-            var s = new NetSettings
-            {
-                DataRateMbps = SafeNetDataRate(),
-                DurationMinutes = SafeNetDuration(),
-                TargetModeIndex = Math.Clamp(NetTargetModeBox.SelectedIndex, 0, 2),
-            };
-            var dir = Path.GetDirectoryName(NetSettingsPath);
-            if (dir is not null) Directory.CreateDirectory(dir);
-            File.WriteAllText(NetSettingsPath, JsonSerializer.Serialize(s));
-        }
-        catch { }
-    }
 
     private sealed class FurMarkSettings
     {
@@ -178,7 +126,7 @@ public sealed partial class StressTestControl : UserControl
         public int ResolutionIndex { get; set; } = 1;
         public int MsaaIndex { get; set; } = 2;
         public int VramIndex { get; set; }
-        public int GpuIndex { get; set; }
+        public int? GpuIndex { get; set; }
         public int VsyncIndex { get; set; }
         public int BkgImgIndex { get; set; }
         public int FurImgIndex { get; set; }
@@ -212,7 +160,10 @@ public sealed partial class StressTestControl : UserControl
         if (VsyncBox.Items.Count > s.VsyncIndex && s.VsyncIndex >= 0) VsyncBox.SelectedIndex = s.VsyncIndex;
         if (BkgImgBox.Items.Count > s.BkgImgIndex && s.BkgImgIndex >= 0) BkgImgBox.SelectedIndex = s.BkgImgIndex;
         if (FurImgBox.Items.Count > s.FurImgIndex && s.FurImgIndex >= 0) FurImgBox.SelectedIndex = s.FurImgIndex;
-        GpuIndexBox.Value = Math.Clamp(s.GpuIndex, 0, 15);
+        _savedGpuIndex = s.GpuIndex is >= 0 ? s.GpuIndex : null;
+        var match = StressGpuBox.Items.OfType<ComboBoxItem>()
+            .FirstOrDefault(item => item.Tag is FurMarkGpuInfo gpu && gpu.Index == _savedGpuIndex);
+        StressGpuBox.SelectedItem = s.ApiIndex is 1 or 3 && match is not null ? match : StressGpuBox.Items[0];
         FullscreenToggle.IsOn = s.Fullscreen;
         BfcToggle.IsOn = s.BackfaceCulling;
         Dxt5Toggle.IsOn = s.Dxt5;
@@ -232,7 +183,7 @@ public sealed partial class StressTestControl : UserControl
                 ResolutionIndex = ResolutionBox.SelectedIndex,
                 MsaaIndex = MsaaBox.SelectedIndex,
                 VramIndex = VramBox.SelectedIndex,
-                GpuIndex = SafeGpuIndex(),
+                GpuIndex = _savedGpuIndex,
                 VsyncIndex = VsyncBox.SelectedIndex,
                 BkgImgIndex = BkgImgBox.SelectedIndex,
                 FurImgIndex = FurImgBox.SelectedIndex,
@@ -252,7 +203,10 @@ public sealed partial class StressTestControl : UserControl
 
     private void ResetFurMarkSettings_Click(object sender, RoutedEventArgs e)
     {
+        _settingsReady = false;
         ApplyFurMarkSettings(new FurMarkSettings());
+        _settingsReady = true;
+        UpdateDxt5Availability();
         SaveFurMarkSettings();
         Log("FurMark 参数已恢复默认");
     }
@@ -260,80 +214,17 @@ public sealed partial class StressTestControl : UserControl
     private void FurMarkSetting_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (!_settingsReady) return;
-        SaveFurMarkSettings();
+        if (ReferenceEquals(sender, ApiBox) && ApiBox.SelectedIndex is 0 or 2)
+            StressGpuBox.SelectedIndex = 0;
         UpdateDxt5Availability();
+        SaveFurMarkSettings();
     }
+
     private void FurMarkToggle_Changed(object sender, RoutedEventArgs e)
     {
         if (!_settingsReady) return;
         SaveFurMarkSettings();
     }
-    private void FurMarkNumber_Changed(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        if (!_settingsReady) return;
-        SaveFurMarkSettings();
-    }
-
-    private void NetSetting_Changed(object sender, SelectionChangedEventArgs e)
-    {
-        if (!_settingsReady) return;
-        SaveNetSettings();
-        UpdateNetReference();
-    }
-
-    private void NetSetting_NumberChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        if (!_settingsReady) return;
-        SaveNetSettings();
-        UpdateNetReference();
-    }
-
-    private void ResetNetSettings_Click(object sender, RoutedEventArgs e)
-    {
-        ApplyNetSettings(new NetSettings());
-        SaveNetSettings();
-        UpdateNetReference();
-        Log("网卡烤机参数已恢复默认");
-    }
-
-    private double SafeNetDataRate() => double.IsNaN(NetDataRateBox.Value) ? 100 : Math.Clamp(NetDataRateBox.Value, 1, 10000);
-    private int SafeNetDuration() => double.IsNaN(NetDurationBox.Value) ? 15 : Math.Clamp((int)NetDurationBox.Value, 1, 1440);
-
-    private void UpdateNetReference()
-    {
-        if (NetRefText is null) return;
-        var mbps = SafeNetDataRate();
-        var minutes = SafeNetDuration();
-        var totalGb = mbps * 60d * minutes / 1024d;
-        var linkMbps = ParseLinkMbps(GetNicLinkSpeed());
-
-        NetRefText.Text = $"参考指标 — 每秒 {mbps:0.#} MB/s × {minutes} 分钟 ≈ 总传输量 {totalGb:0.#} GB。"
-            + (linkMbps > 0
-                ? $"当前链路约 {linkMbps:0.#} Mbps（上限 {linkMbps / 8:0.#} MB/s），建议每秒数据量 ≤ {Math.Max(1, linkMbps / 8 * 0.5):0.#} MB/s。"
-                : "WiFi 实际可达通常只有链路速率的 20%-50%，广播模式更慢。")
-            + $"（链路上限换算：100M=12 MB/s，千兆=117 MB/s，2.5G=290 MB/s，5G=585 MB/s，10G=1170 MB/s）";
-    }
-
-    private string GetNicLinkSpeed()
-    {
-        try
-        {
-            var nic = NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up &&
-                            n.NetworkInterfaceType is not (NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel))
-                .OrderByDescending(n => n.Speed)
-                .FirstOrDefault();
-            if (nic is null || nic.Speed <= 0) return "未知";
-            var speed = nic.Speed >= 1_000_000_000 ? $"{nic.Speed / 1e9:0.#} Gbps" : $"{nic.Speed / 1e6:0.#} Mbps";
-            return $"{nic.Name} ({speed})";
-        }
-        catch { return "未知"; }
-    }
-
-    private static string FormatBps(double bps) => bps >= 1e9 ? $"{bps / 1e9:0.0} GB/s" : bps >= 1e6 ? $"{bps / 1e6:0.0} MB/s" : bps >= 1e3 ? $"{bps / 1e3:0.0} KB/s" : $"{bps:0} B/s";
-
-    private static string FormatBytes(double b) => b >= 1024 * 1024 * 1024 ? $"{b / (1024 * 1024 * 1024):0.0} GB" : b >= 1024 * 1024 ? $"{b / (1024 * 1024):0.0} MB" : b >= 1024 ? $"{b / 1024:0} KB" : $"{b:0} B";
-
     private void UpdateDxt5Availability()
     {
         if (ApiBox is null || Dxt5Toggle is null) return;
@@ -344,7 +235,76 @@ public sealed partial class StressTestControl : UserControl
         if (!isGl && GlCoreToggle.IsOn) GlCoreToggle.IsOn = false;
     }
 
-    private int SafeGpuIndex() => double.IsNaN(GpuIndexBox.Value) ? 0 : Math.Clamp((int)GpuIndexBox.Value, 0, 15);
+    private FurMarkGpuInfo? SelectedStressGpu => (StressGpuBox.SelectedItem as ComboBoxItem)?.Tag as FurMarkGpuInfo;
+
+    private async Task LoadGpuChoicesAsync()
+    {
+        var monitorTask = Task.Run(LiteMonitorService.GetGpuMonitorDevices);
+        var stressTask = Task.Run(PerformanceBenchmarkService.GetFurMarkVulkanDevices);
+        try
+        {
+            foreach (var device in await monitorTask)
+            {
+                if (MonitorGpuBox.Items.OfType<ComboBoxItem>().Any(item => Equals(item.Tag, device.Id))) continue;
+                MonitorGpuBox.Items.Add(new ComboBoxItem { Content = $"{device.Name} ({device.Id})", Tag = device.Id });
+            }
+        }
+        catch (Exception ex) { Log($"无法枚举显卡传感器：{ex.Message}"); }
+
+        try
+        {
+            foreach (var gpu in await stressTask)
+                StressGpuBox.Items.Add(new ComboBoxItem { Content = $"{gpu.Name} (Vulkan #{gpu.Index})", Tag = gpu });
+            if (!_isRunning && ApiBox.SelectedIndex is 1 or 3)
+            {
+                var saved = StressGpuBox.Items.OfType<ComboBoxItem>()
+                    .FirstOrDefault(item => item.Tag is FurMarkGpuInfo gpu && gpu.Index == _savedGpuIndex);
+                if (saved is not null) StressGpuBox.SelectedItem = saved;
+            }
+            if (StressGpuBox.Items.Count == 1)
+                Log("未检测到可指定的 Vulkan 显卡。请确认 FurMark 已安装且显卡驱动支持 Vulkan。");
+        }
+        catch (Exception ex) { Log($"无法枚举 Vulkan 显卡：{ex.Message}"); }
+    }
+
+    private void StressGpu_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_settingsReady || StressGpuBox.SelectedItem is null) return;
+        _savedGpuIndex = SelectedStressGpu?.Index;
+        if (SelectedStressGpu is not null && ApiBox.SelectedIndex is 0 or 2)
+            ApiBox.SelectedIndex++;
+        SaveFurMarkSettings();
+    }
+
+    private void SelectRunMonitorGpu(bool gpuStress)
+    {
+        var item = MonitorGpuBox.SelectedItem as ComboBoxItem;
+        _runMonitorGpuId = item?.Tag as string;
+        _runMonitorGpuLabel = _runMonitorGpuId is not null ? item?.Content?.ToString() : null;
+        if (_runMonitorGpuId is not null || !gpuStress) return;
+        var gpu = SelectedStressGpu;
+        if (gpu is null && ApiBox.SelectedIndex is 1 or 3)
+            gpu = StressGpuBox.Items.OfType<ComboBoxItem>().Select(choice => choice.Tag as FurMarkGpuInfo)
+                .FirstOrDefault(device => device?.Index == (_savedGpuIndex ?? 0));
+        if (gpu is null) return;
+
+        var matches = MonitorGpuBox.Items.OfType<ComboBoxItem>()
+            .Where(choice => choice.Tag is string &&
+                (choice.Content as string)?.StartsWith(gpu.Name + " (", StringComparison.OrdinalIgnoreCase) == true)
+            .ToArray();
+        if (matches.Length == 1)
+        {
+            _runMonitorGpuId = (string)matches[0].Tag;
+            _runMonitorGpuLabel = gpu.Name;
+        }
+        else
+        {
+            // 不把其他显卡的读数误认成烤机显卡。
+            _runMonitorGpuId = "";
+            _runMonitorGpuLabel = $"{gpu.Name}（未匹配传感器）";
+            Log("未能唯一匹配烤机显卡的传感器。可停止烤机后手动选择监测显卡。");
+        }
+    }
 
     private string BuildFurMarkArgs(int minutes)
     {
@@ -367,8 +327,10 @@ public sealed partial class StressTestControl : UserControl
         var vram = int.TryParse(TagOf(VramBox), out var v) ? v : 0;
         if (vram > 0) args.Add($"--furmark-vram-test-gb {vram}");
 
-        var gpuIdx = SafeGpuIndex();
-        if (gpuIdx > 0) args.Add($"--gpu-index {gpuIdx}");
+        if (api.EndsWith("-vk", StringComparison.Ordinal) && SelectedStressGpu is { } gpu)
+            args.Add($"--gpu-index {gpu.Index}");
+        else if (api.EndsWith("-vk", StringComparison.Ordinal) && _savedGpuIndex > 0 && StressGpuBox.Items.Count == 1)
+            args.Add($"--gpu-index {_savedGpuIndex}");
 
         args.Add($"--vsync {TagOf(VsyncBox)}");
         args.Add("--hpgfx 1");
@@ -436,11 +398,6 @@ public sealed partial class StressTestControl : UserControl
         GpuPowerChart.AnimationsSpeed = fast;
         GpuPowerChart.EasingFunction = null;
 
-        NetChart.Series = [MakeSeries(_netTxChart, NetTxC), MakeSeries(_netRxChart, NetRxC)];
-        NetChart.XAxes = [new Axis { IsVisible = false }];
-        NetChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0 }];
-        NetChart.AnimationsSpeed = fast;
-        NetChart.EasingFunction = null;
     }
 
     private static LineSeries<double> MakeSeries(ObservableCollection<double> values, SKColor color)
@@ -462,37 +419,36 @@ public sealed partial class StressTestControl : UserControl
     private void StartStress_Click(object sender, RoutedEventArgs e) => StartStress();
     private void Stop_Click(object sender, RoutedEventArgs e) => StopStress();
 
-    private void TripleStress_Click(object sender, RoutedEventArgs e)
+    private void CpuGpuStress_Click(object sender, RoutedEventArgs e)
     {
         CpuSelBox.IsChecked = true;
         GpuSelBox.IsChecked = true;
-        NetSelBox.IsChecked = true;
         StartStress();
     }
 
     private bool CpuSelected => CpuSelBox.IsChecked == true;
     private bool GpuSelected => GpuSelBox.IsChecked == true;
-    private bool NetSelected => NetSelBox.IsChecked == true;
 
     public void StartStress(int? durationMinutes = null)
     {
-        if (_isRunning) return;
+        if (_isRunning || !StartStressBtn.IsEnabled) return;
 
         var cpuSel = CpuSelected;
         var gpuSel = GpuSelected;
-        var netSel = NetSelected;
-        if (!cpuSel && !gpuSel && !netSel)
+        if (!cpuSel && !gpuSel)
         {
-            Log("请至少勾选一项烤机项目（CPU / GPU / 网卡）");
+            Log("请至少勾选一项烤机项目（CPU / GPU）");
             return;
         }
-        _netOnlyMode = netSel && !cpuSel && !gpuSel;
-        _modeName = BuildModeName(cpuSel, gpuSel, netSel);
+        _modeName = BuildModeName(cpuSel, gpuSel);
+        SelectRunMonitorGpu(gpuSel);
+        GpuTempText.Text = GpuClockText.Text = GpuPowerText.Text = "--";
+        if (_inspectionGpuLoad is { } load) load.Text = "--";
+        if (_runMonitorGpuLabel is { } gpuLabel) Log($"监测显卡：{gpuLabel}");
 
         _isRunning = true;
         if (_inspectionMode) _ = OpenInspectionHwInfoAsync(onlyWhileRunning: true);
         _monitorRetryCount = 0;
-        _monitorInFlight = false;
         _cpuSelectedThisRun = cpuSel;
         _cpuSensorMissingTicks = 0;
         _sensorDriverHintShown = false;
@@ -508,41 +464,21 @@ public sealed partial class StressTestControl : UserControl
         _gpuTempChart.Clear(); _gpuClockChart.Clear(); _gpuPowerChart.Clear();
         _cpuTempReport.Clear(); _cpuUsageReport.Clear(); _cpuClockReport.Clear(); _cpuPowerReport.Clear();
         _gpuTempReport.Clear(); _gpuClockReport.Clear(); _gpuPowerReport.Clear();
-        _netTxChart.Clear(); _netRxChart.Clear();
-        _netTxReport.Clear(); _netRxReport.Clear();
-        _netTxPeak = _netRxPeak = 0; _netTxSum = _netRxSum = 0; _netSampleCount = 0;
-        _netRunnerActive = false;
-        _netErrorLogged = false;
-        _lastNetSent = _lastNetRecv = 0;
-        _lastNetSampleUtc = DateTime.UtcNow;
-        NetTxRateText.Text = NetRxRateText.Text = NetSentText.Text = "--";
-        NetLinkText.Text = "--";
-
         SetButtonsEnabled(false);
         StopBtn.IsEnabled = true;
         ExportBtn.IsEnabled = false;
 
         var cpuDuration = durationMinutes ?? (int)CpuDurationBox.Value;
         var gpuDuration = durationMinutes ?? (int)GpuDurationBox.Value;
-        var netDuration = durationMinutes ?? SafeNetDuration();
-        _targetMinutes = Math.Max(
-            Math.Max(cpuSel ? cpuDuration : 0, gpuSel ? gpuDuration : 0),
-            netSel ? netDuration : 0);
+        _targetMinutes = Math.Max(cpuSel ? cpuDuration : 0, gpuSel ? gpuDuration : 0);
 
         var started = new List<string>();
         if (cpuSel) { started.Add("CPU (Prime95)"); StartPrime95(cpuDuration); }
-        if (gpuSel) { started.Add("GPU (FurMark)"); StartFurMarkGpuStress(gpuDuration); }
-        if (netSel)
+        if (gpuSel && StartFurMarkGpuStress(gpuDuration)) started.Add("GPU (FurMark)");
+        if (started.Count == 0)
         {
-            started.Add("网卡");
-            if (!StartNetworkStress(netDuration) && _netOnlyMode)
-            {
-                _isRunning = false;
-                SetButtonsEnabled(true);
-                StopBtn.IsEnabled = false;
-                Log("网卡烤机无法启动，本次烤机未开始");
-                return;
-            }
+            StopStress();
+            return;
         }
 
         Log($"烤机开始 — {string.Join(" + ", started)}，总时长 {_targetMinutes} 分钟");
@@ -563,16 +499,6 @@ public sealed partial class StressTestControl : UserControl
 
     public void StopStress()
     {
-        _netRunnerActive = false;
-        var netRunner = _netRunner;
-        _netRunner = null;
-        if (netRunner is not null)
-        {
-            netRunner.Stop();
-            netRunner.Dispose();
-            Log("网卡烤机已停止");
-        }
-
         if (!_isRunning) return;
 
         _isRunning = false;
@@ -627,8 +553,6 @@ public sealed partial class StressTestControl : UserControl
         var elapsed = DateTime.UtcNow - _startTime;
         ElapsedText.Text = $"{(int)elapsed.TotalMinutes}:{elapsed.Seconds:D2}";
 
-        UpdateNetworkStats();
-
         if (_targetMinutes > 0 && elapsed.TotalMinutes >= _targetMinutes)
         {
             Log($"已达到设定时长 {_targetMinutes} 分钟，自动停止");
@@ -657,8 +581,12 @@ public sealed partial class StressTestControl : UserControl
     private async Task UpdateMonitorCoreAsync()
     {
         // 与「游戏监控」共用同一硬件监控引擎（LibreHardwareMonitor）
-        var sample = await Task.Run(() => LiteMonitorService.Instance.Read());
-        if (!_isRunning) return;
+        var timer = _monitorTimer;
+        var gpuId = _runMonitorGpuId;
+        var sample = await Task.Run(() => gpuId is null
+            ? LiteMonitorService.Instance.Read()
+            : LiteMonitorService.Instance.ReadForGpu(gpuId));
+        if (!_isRunning || !ReferenceEquals(timer, _monitorTimer)) return;
         if (_inspectionMode) InspectionSampled?.Invoke(sample);
 
         if (!HasMonitorData(sample))
@@ -706,6 +634,7 @@ public sealed partial class StressTestControl : UserControl
         CpuClockText.Text = Fi(cpuClock, " MHz");
         CpuPowerText.Text = F(cpuPower, "W");
 
+        if (_inspectionGpuLoad is { } load) load.Text = sample.GpuLoad >= 0 ? $"{sample.GpuLoad:0}%" : "--";
         GpuTempText.Text = Fi(gpuTemp, "°C");
         GpuClockText.Text = Fi(gpuClock, " MHz");
         GpuPowerText.Text = F(gpuPower, "W");
@@ -804,7 +733,7 @@ public sealed partial class StressTestControl : UserControl
 
     private async void Export_Click(object sender, RoutedEventArgs e)
     {
-        if (_sampleCount == 0 && _netSampleCount == 0) return;
+        if (_sampleCount == 0) return;
 
         var elapsed = DateTime.UtcNow - _startTime;
         var modeStr = _modeName;
@@ -812,10 +741,7 @@ public sealed partial class StressTestControl : UserControl
         var cpuTempAvg = Avg(_cpuTempSum, _cpuTempCount); var cpuUsageAvg = Avg(_cpuUsageSum, _cpuUsageCount); var cpuClockAvg = Avg(_cpuClockSum, _cpuClockCount); var cpuPowerAvg = Avg(_cpuPowerSum, _cpuPowerCount);
         var gpuTempAvg = Avg(_gpuTempSum, _gpuTempCount); var gpuClockAvg = Avg(_gpuClockSum, _gpuClockCount); var gpuPowerAvg = Avg(_gpuPowerSum, _gpuPowerCount);
 
-        var netSentTotal = _netRunner?.BytesSent ?? 0;
-        var netTxAvg = Avg(_netTxSum, _netSampleCount); var netRxAvg = Avg(_netRxSum, _netSampleCount);
-
-        var html = GenerateReportHtml(modeStr, elapsed, cpuTempAvg, cpuUsageAvg, cpuClockAvg, cpuPowerAvg, gpuTempAvg, gpuClockAvg, gpuPowerAvg, netSentTotal, netTxAvg, netRxAvg);
+        var html = GenerateReportHtml(modeStr, elapsed, cpuTempAvg, cpuUsageAvg, cpuClockAvg, cpuPowerAvg, gpuTempAvg, gpuClockAvg, gpuPowerAvg);
 
         try
         {
@@ -857,12 +783,10 @@ public sealed partial class StressTestControl : UserControl
 
     private string GenerateReportHtml(string mode, TimeSpan elapsed,
         double cpuTempAvg, double cpuUsageAvg, double cpuClockAvg, double cpuPowerAvg,
-        double gpuTempAvg, double gpuClockAvg, double gpuPowerAvg,
-        double netSentTotal, double netTxAvg, double netRxAvg)
+        double gpuTempAvg, double gpuClockAvg, double gpuPowerAvg)
     {
         var cpuTempPeak = Peak(_cpuTempPeak); var cpuUsagePeak = Peak(_cpuUsagePeak); var cpuClockPeak = Peak(_cpuClockPeak); var cpuPowerPeak = Peak(_cpuPowerPeak);
         var gpuTempPeak = Peak(_gpuTempPeak); var gpuClockPeak = Peak(_gpuClockPeak); var gpuPowerPeak = Peak(_gpuPowerPeak);
-        var netTxPeak = Peak(_netTxPeak); var netRxPeak = Peak(_netRxPeak);
 
         string ChartJs(string canvasId, string label, string color, string unit, List<double> data)
         {
@@ -918,8 +842,6 @@ public sealed partial class StressTestControl : UserControl
         charts += ChartJs("gpuTempChart", "GPU 温度", "#fb923c", "°C", _gpuTempReport);
         charts += ChartJs("gpuClockChart", "GPU 频率", "#a78bfa", " MHz", _gpuClockReport);
         charts += ChartJs("gpuPowerChart", "GPU 功耗", "#f472b6", "W", _gpuPowerReport);
-        charts += ChartJs("netTxChart", "网卡发送", "#38bdf8", " MB/s", _netTxReport);
-        charts += ChartJs("netRxChart", "网卡接收", "#fb7185", " MB/s", _netRxReport);
 
         string S(string title, string val, string pk, string avg, string c) =>
             $@"<div class=""stat-card""><div class=""stat-title"" style=""color:{c}"">{title}</div><div class=""stat-value"">{val}</div><div class=""stat-detail"">峰值 {pk} · 均值 {avg}</div></div>";
@@ -966,7 +888,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
 {S("CPU 频率",Fi(cpuClockAvg," MHz"),Fi(cpuClockPeak," MHz"),Fi(cpuClockAvg," MHz"),"#fbbf24")}
 {S("CPU 功耗",F(cpuPowerAvg,"W"),F(cpuPowerPeak,"W"),F(cpuPowerAvg,"W"),"#34d399")}
 </div>
-<h2 style=""font-size:16px;font-weight:600;margin-bottom:12px"">GPU 传感器</h2>
+<h2 style=""font-size:16px;font-weight:600;margin-bottom:12px"">GPU 传感器 · {System.Net.WebUtility.HtmlEncode(_runMonitorGpuLabel ?? "自动")}</h2>
 <div class=""stats-grid"">
 {S("GPU 温度",Fi(gpuTempAvg,"°C"),Fi(gpuTempPeak,"°C"),Fi(gpuTempAvg,"°C"),"#fb923c")}
 {S("GPU 频率",Fi(gpuClockAvg," MHz"),Fi(gpuClockPeak," MHz"),Fi(gpuClockAvg," MHz"),"#a78bfa")}
@@ -983,17 +905,6 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
 <div><div class=""chart-label"">温度 (°C)</div><div class=""chart-box""><canvas id=""gpuTempChart""></canvas></div></div>
 <div><div class=""chart-label"">频率 (MHz)</div><div class=""chart-box""><canvas id=""gpuClockChart""></canvas></div></div>
 <div><div class=""chart-label"">功耗 (W)</div><div class=""chart-box""><canvas id=""gpuPowerChart""></canvas></div></div>
-</div></div>
-<h2 style=""font-size:16px;font-weight:600;margin-bottom:12px"">网卡</h2>
-<div class=""stats-grid"">
-{S("发送峰值",F(netTxPeak/1e6," MB/s"),F(netTxPeak/1e6," MB/s"),F(netTxAvg/1e6," MB/s"),"#38bdf8")}
-{S("接收峰值",F(netRxPeak/1e6," MB/s"),F(netRxPeak/1e6," MB/s"),F(netRxAvg/1e6," MB/s"),"#fb7185")}
-<div class=""stat-card""><div class=""stat-title"" style=""color:#38bdf8"">发送总量</div><div class=""stat-value"">{FormatBytes(netSentTotal)}</div><div class=""stat-detail"">设定 {_targetMinutes} 分钟</div></div>
-<div class=""stat-card""><div class=""stat-title"" style=""color:#888"">链路速率</div><div class=""stat-value"">{_nicSpeedText}</div><div class=""stat-detail"">发送均值 {F(netTxAvg/1e6," MB/s")} · 接收均值 {F(netRxAvg/1e6," MB/s")}</div></div>
-</div>
-<div class=""section""><h2>网卡监控曲线</h2><div class=""charts-grid"">
-<div><div class=""chart-label"">发送速率 (MB/s)</div><div class=""chart-box""><canvas id=""netTxChart""></canvas></div></div>
-<div><div class=""chart-label"">接收速率 (MB/s)</div><div class=""chart-box""><canvas id=""netRxChart""></canvas></div></div>
 </div></div>
 <div class=""footer"">图吧工具箱CE · 数据来源: LibreHardwareMonitor 传感器（与「游戏监控」同引擎）· {DateTime.Now:yyyy/MM/dd}</div>
 </div>
@@ -1062,13 +973,18 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
             ? File.ReadAllLines(path).Where(l => !string.IsNullOrWhiteSpace(l)).ToList()
             : [];
 
+        var cores = HardwareInfoService.GetPhysicalCoreCount();
+        if (cores <= 0) cores = Math.Max(1, Environment.ProcessorCount / 2);
+        var memoryMb = HardwareInfoService.GetInstalledMemoryBytes() / 1048576;
+        if (memoryMb <= 0) memoryMb = 8192;
+
         var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            ["TortureCores"] = GetPhysicalCoreCount().ToString(),
+            ["TortureCores"] = cores.ToString(),
             ["TortureHyperthreading"] = "1",
             ["MinTortureFFT"] = "4",
             ["MaxTortureFFT"] = "4096",
-            ["TortureMem"] = (GetTotalRamMb() >= 8192 ? 1024 : GetTotalRamMb() >= 4096 ? 512 : 128).ToString(),
+            ["TortureMem"] = (memoryMb >= 8192 ? 1024 : memoryMb >= 4096 ? 512 : 128).ToString(),
             ["TortureTime"] = Math.Clamp(stressMinutes, 3, 180).ToString(),
             ["TortureWeak"] = "0",
         };
@@ -1090,163 +1006,21 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
         File.WriteAllLines(path, result, Encoding.UTF8);
     }
 
-    private static int GetPhysicalCoreCount()
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT NumberOfCores FROM Win32_Processor");
-            var cores = 0;
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                cores += Convert.ToInt32(obj["NumberOfCores"]);
-                obj.Dispose();
-            }
-            if (cores > 0) return cores;
-        }
-        catch { }
-        return Math.Max(1, Environment.ProcessorCount / 2);
-    }
-
-    private static long GetTotalRamMb()
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                var bytes = Convert.ToInt64(obj["TotalPhysicalMemory"]);
-                obj.Dispose();
-                return bytes / 1048576;
-            }
-        }
-        catch { }
-        return 8192; // 未知时按内存充足取值，TortureMem 给到 1024 MB
-    }
-
-    private void StartFurMarkGpuStress(int minutes)
+    private bool StartFurMarkGpuStress(int minutes)
     {
         var furmarkExe = PerformanceBenchmarkService.FindFurMarkExe();
-        if (furmarkExe is null) { Log("未找到 FurMark (烤鸡工具/FurMark_win64/furmark.exe)"); return; }
+        if (furmarkExe is null) { Log("未找到 FurMark (烤鸡工具/FurMark_win64/furmark.exe)"); return false; }
         try
         {
             var arguments = BuildFurMarkArgs(minutes);
             furmarkExe = FurMarkLaunchPath.Prepare(furmarkExe, Path.GetDirectoryName(furmarkExe)).ExePath;
             _furmarkProcess = Process.Start(new ProcessStartInfo { FileName = furmarkExe, Arguments = arguments, UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(furmarkExe) });
+            if (_furmarkProcess is null) { Log("FurMark 未能启动"); return false; }
             Log($"FurMark 已启动 (GPU 压力测试, {minutes} 分钟)");
             Log($"FurMark 参数: {arguments}");
+            return true;
         }
-        catch (Exception ex) { Log($"FurMark 启动失败: {ex.Message}"); }
-    }
-
-    private bool StartNetworkStress(int minutes)
-    {
-        if (NetworkInterface.GetAllNetworkInterfaces().All(n =>
-                n.OperationalStatus != OperationalStatus.Up ||
-                n.NetworkInterfaceType is NetworkInterfaceType.Loopback or NetworkInterfaceType.Tunnel))
-        {
-            Log("未检测到活动的网卡（有线/无线），无法进行网卡烤机");
-            return false;
-        }
-
-        var mbps = SafeNetDataRate();
-        var runner = new NetworkStressRunner();
-        _netRunner = runner;
-        _netRunnerActive = true;
-        _netErrorLogged = false;
-        _lastNetSent = _lastNetRecv = 0;
-        _lastNetSampleUtc = DateTime.UtcNow;
-        _netHeartbeatCount = 0;
-        _nicSpeedText = GetNicLinkSpeed();
-        NetLinkText.Text = _nicSpeedText;
-
-        if (!runner.Start(mbps, minutes, (NetStressTarget)Math.Clamp(NetTargetModeBox.SelectedIndex, 0, 2)))
-        {
-            Log($"网卡烤机启动失败: {runner.ErrorMessage}");
-            _netRunnerActive = false;
-            return false;
-        }
-        Log($"网卡烤机启动 — 目标 {runner.TargetName}，每秒 {mbps:0.#} MB/s，时长 {minutes} 分钟，链路 {_nicSpeedText}");
-        if (runner.IsUnicast) Log("单播模式：接收为 0 属正常（路由器不回包），本模式以发送压测为主");
-        if (runner.WarningMessage is not "") Log($"网卡烤机警告: {runner.WarningMessage}");
-
-        var linkMbps = ParseLinkMbps(_nicSpeedText);
-        if (linkMbps > 0 && mbps > linkMbps / 8)
-            Log($"提示：目标 {mbps:0.#} MB/s 超过链路速率上限 {linkMbps / 8:0.#} MB/s，实测将受网络本身限制（WiFi 通常只能达到链路的 20%-50%），属正常现象");
-        return true;
-    }
-
-    private static double ParseLinkMbps(string nicText)
-    {
-        var m = System.Text.RegularExpressions.Regex.Match(nicText, @"([\d.]+)\s*(G|M)bps");
-        if (!m.Success) return 0;
-        var v = double.TryParse(m.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out var d) ? d : 0;
-        return m.Groups[2].Value == "G" ? v * 1000 : v;
-    }
-
-    private void UpdateNetworkStats()
-    {
-        if (_netRunner is null || !_netRunnerActive)
-        {
-            if (_netRunner is null) { NetTxRateText.Text = NetRxRateText.Text = NetSentText.Text = "--"; }
-            return;
-        }
-
-        var runner = _netRunner;
-        var sent = runner.BytesSent;
-        var recv = runner.BytesReceived;
-
-        var now = DateTime.UtcNow;
-        var dt = (now - _lastNetSampleUtc).TotalSeconds;
-        var txBps = 0d;
-        var rxBps = 0d;
-        if (dt >= 0.25)
-        {
-            txBps = (sent - _lastNetSent) / dt;
-            rxBps = (recv - _lastNetRecv) / dt;
-            _lastNetSent = sent;
-            _lastNetRecv = recv;
-            _lastNetSampleUtc = now;
-        }
-        if (txBps <= 0) txBps = runner.SendRateBps;
-        if (rxBps <= 0) rxBps = runner.ReceiveRateBps;
-
-        _netTxSum += txBps; _netRxSum += rxBps; _netSampleCount++;
-        if (txBps > _netTxPeak) _netTxPeak = txBps;
-        if (rxBps > _netRxPeak) _netRxPeak = rxBps;
-
-        NetTxRateText.Text = FormatBps(txBps);
-        NetRxRateText.Text = runner.IsUnicast ? "—" : FormatBps(rxBps);
-        NetSentText.Text = FormatBytes(sent);
-
-        PushChart(_netTxChart, txBps / 1e6);
-        if (!runner.IsUnicast) PushChart(_netRxChart, rxBps / 1e6);
-        PushReport(_netTxReport, txBps / 1e6);
-        if (!runner.IsUnicast) PushReport(_netRxReport, rxBps / 1e6);
-
-        if (++_netHeartbeatCount % 5 == 0)
-            Log(runner.IsUnicast
-                ? $"网卡烤机运行中 — 已发送 {FormatBytes(sent)}，发送 {FormatBps(txBps)}，目标 {SafeNetDataRate():0.#} MB/s"
-                : $"网卡烤机运行中 — 已发送 {FormatBytes(sent)}，发送 {FormatBps(txBps)}，接收 {FormatBps(rxBps)}，目标 {SafeNetDataRate():0.#} MB/s");
-
-        if (runner.ErrorMessage is not "" && !_netErrorLogged)
-        {
-            _netErrorLogged = true;
-            Log($"网卡烤机异常: {runner.ErrorMessage}");
-        }
-
-        if (!runner.IsActive)
-        {
-            _netRunnerActive = false;
-            Log(runner.ErrorMessage is not ""
-                ? $"网卡烤机异常结束: {runner.ErrorMessage}"
-                : $"网卡烤机完成 — {runner.FinishedReason}");
-
-            if (_netOnlyMode)
-            {
-                Log("网卡烤机结束，自动停止");
-                StopStress();
-            }
-        }
+        catch (Exception ex) { Log($"FurMark 启动失败: {ex.Message}"); return false; }
     }
 
     private static string? FindExecutable(params string[] names)
@@ -1264,7 +1038,7 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
 
     /// <summary>递归查找单个文件；遇到无权限目录时跳过，不中断整个查找。</summary>
     /// <remarks>不能退回 Directory.GetFiles(root, name, SearchOption.AllDirectories)：该重载 IgnoreInaccessible=false，
-    /// 在 Program Files 下碰到拒绝访问的目录（如系统 ReparsePoint「Windows NT\附件」）会抛 UnauthorizedAccessException，导致一键三烤直接报错。</remarks>
+    /// 在 Program Files 下碰到拒绝访问的目录（如系统 ReparsePoint「Windows NT\附件」）会抛 UnauthorizedAccessException，导致烤机直接报错。</remarks>
     internal static string? TryFindFile(string root, string name)
     {
         try
@@ -1290,28 +1064,17 @@ h1{{font-size:28px;font-weight:600;margin-bottom:4px}}
         proc = null;
     }
 
-    private string BuildModeName(bool cpu, bool gpu, bool net)
-    {
-        var parts = new List<string>();
-        if (cpu) parts.Add("CPU");
-        if (gpu) parts.Add("GPU");
-        if (net) parts.Add("网卡");
-        return parts.Count switch
-        {
-            3 => "一键三烤",
-            0 => "烤机",
-            1 => $"{parts[0]} 单烤",
-            _ => $"{parts[0]}+{parts[1]} 双烤"
-        };
-    }
+    private static string BuildModeName(bool cpu, bool gpu) =>
+        cpu && gpu ? "CPU + GPU 双烤" : cpu ? "CPU 单烤" : "GPU 单烤";
 
     private void SetButtonsEnabled(bool enabled)
     {
         if (_inspectionDuration is not null) _inspectionDuration.IsEnabled = enabled;
-        TripleStressBtn.IsEnabled = enabled;
+        CpuGpuStressBtn.IsEnabled = enabled;
         CpuSelBox.IsEnabled = enabled;
         GpuSelBox.IsEnabled = enabled;
-        NetSelBox.IsEnabled = enabled;
+        StressGpuBox.IsEnabled = MonitorGpuBox.IsEnabled = MsaaBox.IsEnabled = ApiBox.IsEnabled = enabled;
+        ResetFurMarkSettingsButton.IsEnabled = enabled;
         StartStressBtn.IsEnabled = enabled;
     }
 

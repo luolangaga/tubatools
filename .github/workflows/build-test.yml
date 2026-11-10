@@ -23,7 +23,10 @@ env:
   AxiomIngestToken: ${{ secrets.AXIOM_INGEST_TOKEN }}
 
 jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
   build-test-x64:
+    needs: quality
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,10 +57,12 @@ jobs:
 
           Write-Host "Version updated to $ver"
 
-      - name: Setup .NET 10
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: |
+            10.0.400
+            8.0.x
 
       - name: Setup fonttools (build-time font subsetting)
         run: pip install fonttools
@@ -117,21 +122,19 @@ jobs:
               Remove-Item -Force -ErrorAction SilentlyContinue
           }
 
-      - name: Publish PE compatible edition (self-contained single-file)
+      - name: Publish TUI compatibility edition (Native AOT)
         shell: pwsh
         run: |
-          dotnet publish TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj `
+          dotnet publish TubaWinUi3.Tui/TubaWinUi3.Tui.csproj `
             -c Release `
             -r win-x64 `
-            -o publish_pecompat_x64
-          $peExe = "publish_pecompat_x64/图吧工具箱PE兼容版.exe"
-          if (Test-Path -LiteralPath $peExe) {
-            Write-Host "PE compatible edition published successfully"
-            $size = [math]::Round((Get-Item -LiteralPath $peExe).Length / 1MB, 1)
-            Write-Host "  Size: $size MB"
-          } else {
-            Write-Host "::warning::PE compatible edition exe not found at $peExe"
-          }
+            -p:Version=${{ steps.ver.outputs.version }} `
+            -o publish_tui_x64
+          $tuiExe = "publish_tui_x64/图吧工具箱TUI兼容版.exe"
+          if ($LASTEXITCODE -ne 0) { throw "Native AOT publish failed ($LASTEXITCODE)" }
+          if (-not (Test-Path -LiteralPath $tuiExe -PathType Leaf)) { throw "Missing TUI executable: $tuiExe" }
+          & (Join-Path $PWD $tuiExe) --version
+          if ($LASTEXITCODE -ne 0) { throw "Native TUI smoke test failed ($LASTEXITCODE)" }
 
       - name: Build Inno Setup installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
@@ -152,11 +155,8 @@ jobs:
 
           Copy-Item -LiteralPath "Launcher\bin\图吧工具箱WinUI3_x64.exe" -Destination (Join-Path $stagingDir '图吧工具箱WinUI3.exe') -Force
 
-          $peExe = "publish_pecompat_x64/图吧工具箱PE兼容版.exe"
-          if (Test-Path -LiteralPath $peExe) {
-            Copy-Item -LiteralPath $peExe -Destination (Join-Path $stagingDir '图吧工具箱PE兼容版.exe') -Force
-            Write-Host "Added PE compatible edition to portable zip"
-          }
+          $tuiExe = "publish_tui_x64/图吧工具箱TUI兼容版.exe"
+          Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $stagingDir '图吧工具箱TUI兼容版.exe') -Force
 
           Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Portable_${version}_x64.zip"

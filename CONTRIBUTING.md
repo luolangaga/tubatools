@@ -13,7 +13,7 @@
 | 目录 | 说明 |
 |---|---|
 | `TubaWinUi3.WinUI3/` | 主程序（WinUI 3 / .NET 10），绝大多数开发都在这里 |
-| `TubaWinUi3.Compatible/` | .NET Framework 4.5 WinForms 兼容版（独立工具链，勿混用其模式） |
+| `TubaWinUi3.Tui/` | .NET 8 控制台 TUI 兼容版（Native AOT） |
 | `TubaWinUi3.Tests/` | xUnit 单元测试 |
 | `src/docs/` | VitePress 文档站点源码 |
 | `website-winui3/` | 新官网（Vue 3 + WinUIonWeb） |

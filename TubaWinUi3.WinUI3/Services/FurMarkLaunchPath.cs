@@ -29,24 +29,34 @@ internal static class FurMarkLaunchPath
         try
         {
             var root = GetAliasRoot();
-            return (Path.Combine(AliasDirectory(Path.GetDirectoryName(exePath)!, root), Path.GetFileName(exePath)),
-                AliasDirectory(workingDirectory, root));
+            var launchPath = Path.Combine(AliasDirectory(Path.GetDirectoryName(exePath)!, root), Path.GetFileName(exePath));
+            var launchDirectory = AliasDirectory(workingDirectory, root);
+            LogService.Debug(LogService.App, $"FurMark: MSIX={RuntimeHelper.IsMsixPackaged}; " +
+                $"source={exePath}; launch={launchPath}; cwd={launchDirectory}; " +
+                $"gxc(source/launch)={File.Exists(Path.Combine(Path.GetDirectoryName(exePath)!, "gxc_x64.dll"))}/" +
+                $"{File.Exists(Path.Combine(Path.GetDirectoryName(launchPath)!, "gxc_x64.dll"))}");
+            return (launchPath, launchDirectory);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
         {
+            LogService.Error(LogService.App, $"FurMark 路径准备失败：{exePath}", ex);
             throw new IOException("无法为 FurMark 建立英文路径兼容入口。请检查目录权限及磁盘是否支持目录联接，或将 FurMark 整个文件夹移至纯英文路径后运行。", ex);
         }
     }
 
     private static bool IsAscii(string value) => value.All(c => c <= 127);
 
-    internal static string GetAliasRoot(string? localData = null, string? commonData = null)
+    internal static string GetAliasRoot(string? localData = null, string? commonData = null) =>
+        GetAliasRoot(localData, commonData, useCommonData: false);
+
+    private static string GetAliasRoot(string? localData, string? commonData, bool useCommonData)
     {
         var user = WindowsIdentity.GetCurrent().User
             ?? throw new IOException("无法识别当前用户。");
         // 通常使用用户私有目录；中文用户名时转到 ProgramData 下按 SID 隔离的目录。
-        var root = Path.Combine(localData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TubaWinUi3.FurMark");
-        if (!IsAscii(root))
+        // MSIX 用明确的 LocalState，不在可能被虚拟化的通用 AppData 视图下创建启动入口。
+        var root = Path.Combine(localData ?? RuntimeHelper.GetLocalAppDataRoot(), "TubaWinUi3.FurMark");
+        if (useCommonData || !IsAscii(root) || !FitsLegacyLaunchPath(root))
             root = Path.Combine(commonData ?? Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TubaWinUi3.FurMark-" + user.Value);
         if (!Path.IsPathFullyQualified(root) || !IsAscii(root))
             throw new IOException("无法找到可用的纯英文兼容目录。");
@@ -69,13 +79,22 @@ internal static class FurMarkLaunchPath
                 !r.IdentityReference.Equals(new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null)) &&
                 !r.IdentityReference.Equals(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null))))
             throw new IOException("兼容目录的权限或类型不安全。");
-        return root;
+        // 创建目录时可能发生 MSIX 重定向。子进程/快捷方式需要真实落点，不能继续使用合并视图的路径。
+        var physicalRoot = ResolvePhysicalDirectory(root);
+        if (!IsAscii(physicalRoot) || !FitsLegacyLaunchPath(physicalRoot))
+        {
+            if (!useCommonData) return GetAliasRoot(localData, commonData, useCommonData: true);
+            throw new IOException("FurMark 兼容目录的实际路径不是可用的短英文路径。");
+        }
+        return physicalRoot;
     }
+
+    private static bool FitsLegacyLaunchPath(string root) =>
+        root.Length + 1 + 64 + 1 + "FurMark_GUI.exe".Length < 260;
 
     internal static string AliasDirectory(string target, string root)
     {
-        target = Path.TrimEndingDirectorySeparator(Path.GetFullPath(target));
-        if (!Directory.Exists(target)) throw new DirectoryNotFoundException(target);
+        target = ResolvePhysicalDirectory(target);
         if (target.StartsWith(@"\\", StringComparison.Ordinal))
             throw new IOException("目录联接不支持网络目标。");
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.Unicode.GetBytes(target.ToUpperInvariant())));
@@ -110,6 +129,33 @@ internal static class FurMarkLaunchPath
         finally { mutex.ReleaseMutex(); }
     }
 
+    internal static string ResolvePhysicalDirectory(string path)
+    {
+        path = Path.GetFullPath(path);
+        // 跟随目录联接并取得真实打开的目录。MSIX 的合并视图路径不能直接写进内核联接目标：
+        // 联接与没有包身份的工具进程均不会再次经过父进程的文件重定向。
+        var extendedPath = path.StartsWith(@"\\?\", StringComparison.Ordinal) ? path
+            : path.StartsWith(@"\\", StringComparison.Ordinal) ? @"\\?\UNC\" + path[2..] : @"\\?\" + path;
+        using var handle = CreateFileW(extendedPath, 0, 7, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+        if (handle.IsInvalid)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), $"无法打开 FurMark 目录：{path}");
+        var buffer = new StringBuilder(512);
+        var length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+        if (length >= buffer.Capacity)
+        {
+            buffer.EnsureCapacity(checked((int)length + 1));
+            length = GetFinalPathNameByHandleW(handle, buffer, (uint)buffer.Capacity, 0);
+        }
+        if (length == 0 || length >= buffer.Capacity)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), $"无法解析 FurMark 目录：{path}");
+        var physicalPath = buffer.ToString();
+        if (physicalPath.StartsWith(@"\\?\UNC\", StringComparison.OrdinalIgnoreCase))
+            physicalPath = @"\\" + physicalPath[8..];
+        else if (physicalPath.StartsWith(@"\\?\", StringComparison.Ordinal))
+            physicalPath = physicalPath[4..];
+        return Path.TrimEndingDirectorySeparator(physicalPath);
+    }
+
     private static void CreateJunction(string alias, string target)
     {
         var substitute = Encoding.Unicode.GetBytes(@"\??\" + target);
@@ -136,6 +182,9 @@ internal static class FurMarkLaunchPath
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
     private static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+    private static extern uint GetFinalPathNameByHandleW(SafeFileHandle file, StringBuilder path, uint capacity, uint flags);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

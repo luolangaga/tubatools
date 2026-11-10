@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../ComputerUse.Windows.Runtime/NativeDesktop.Input.cs" Link="NativeDesktop.Input.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/NativeDesktop.TextInput.cs" Link="NativeDesktop.TextInput.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/WindowsKeyMapping.cs" Link="WindowsKeyMapping.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/WindowsDesktopImageGeometry.cs" Link="WindowsDesktopImageGeometry.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/DesktopProvider.cs" Link="DesktopProvider.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/ProviderFailureException.cs" Link="ProviderFailureException.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/PointerPreparationState.cs" Link="PointerPreparationState.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/ExactFocusSettlement.cs" Link="ExactFocusSettlement.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/DesktopStillness.cs" Link="DesktopStillness.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/DesktopObservationRetry.cs" Link="DesktopObservationRetry.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/BoundedObservationRetry.cs" Link="BoundedObservationRetry.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/NativeDesktop.StableCapture.cs" Link="NativeDesktop.StableCapture.cs" />
+    <Compile Include="../ComputerUse.Windows.Runtime/WindowsCaptureBounds.cs" Link="WindowsCaptureBounds.cs" />
+  </ItemGroup>
+</Project>

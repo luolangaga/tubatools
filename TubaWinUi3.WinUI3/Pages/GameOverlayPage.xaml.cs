@@ -2697,10 +2697,13 @@ public sealed partial class GameOverlayPage : Page
         {
             if (!string.IsNullOrEmpty(path) && File.Exists(path))
             {
-                using var stream = File.OpenRead(path);
-                var bmp = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
-                bmp.SetSourceAsync(stream.AsRandomAccessStream()).GetAwaiter().GetResult();
-                return bmp;
+                // UriSource loads asynchronously. Bound decoded width avoids retaining the
+                // full-resolution source for the small editor preview.
+                return new Microsoft.UI.Xaml.Media.Imaging.BitmapImage
+                {
+                    DecodePixelWidth = 512,
+                    UriSource = new Uri(Path.GetFullPath(path))
+                };
             }
         }
         catch { }

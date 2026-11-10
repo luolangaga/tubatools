@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "protocol": "computer-use-provider",
+  "required_operations": [
+    "observe_apps",
+    "observe",
+    "resolve_and_act",
+    "desktop_execute_batch",
+    "window_list",
+    "window_action"
+  ],
+  "required_failure_phases": [
+    "precondition",
+    "emission",
+    "timeout"
+  ],
+  "fixtures": [
+    {"name": "observe-apps", "direction": "request", "file": "observe-apps.request.json"},
+    {"name": "observe", "direction": "request", "file": "observe.request.json"},
+    {"name": "resolve-and-act", "direction": "request", "file": "resolve-and-act.request.json"},
+    {"name": "combo-edit", "direction": "request", "file": "combo-edit.request.json"},
+    {"name": "semantic-write-constraint", "direction": "request", "file": "semantic-write-constraint.request.json"},
+    {"name": "desktop-batch", "direction": "request", "file": "desktop-batch.request.json"},
+    {"name": "window-list", "direction": "request", "file": "window-list.request.json"},
+    {"name": "window-action", "direction": "request", "file": "window-action.request.json"},
+    {"name": "accessibility-success", "direction": "response", "file": "accessibility-success.response.json"},
+    {"name": "observe-apps-partial", "direction": "response", "file": "observe-apps-partial.response.json"},
+    {"name": "desktop-success", "direction": "response", "file": "desktop-success.response.json"},
+    {"name": "window-success", "direction": "response", "file": "window-success.response.json"},
+    {"name": "precondition-failure", "direction": "response", "file": "precondition-failure.response.json"},
+    {"name": "emission-failure", "direction": "response", "file": "emission-failure.response.json"},
+    {"name": "semantic-reply-lost", "direction": "response", "file": "semantic-reply-lost.response.json"},
+    {"name": "timeout-failure", "direction": "response", "file": "timeout-failure.response.json"},
+    {"name": "text-first-message-unknown", "direction": "response", "file": "text-first-message-unknown.response.json"},
+    {"name": "text-focus-changed", "direction": "response", "file": "text-focus-changed.response.json"},
+    {"name": "text-segment-unknown", "direction": "response", "file": "text-segment-unknown.response.json"}
+  ]
+}

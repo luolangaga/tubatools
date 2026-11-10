@@ -16,6 +16,8 @@ public sealed class BenchmarkReportEntry
 
     public string OsName { get; set; } = "";
 
+    public string GpuInfo { get; set; } = "";
+
     public string MotherboardName { get; set; } = "";
 
     public string MemoryInfo { get; set; } = "";

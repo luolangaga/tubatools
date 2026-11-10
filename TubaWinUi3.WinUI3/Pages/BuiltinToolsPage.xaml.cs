@@ -1,7 +1,8 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
 using System.ComponentModel;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
@@ -13,7 +14,6 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
     private CancellationTokenSource? _activeCts;
     private CancellationTokenSource? _highlightCts;
     private string? _pendingHighlightId;
-    private string? _autoExecuteBuiltinId;
     private bool _builtinToolOpenModeInitializing;
     private bool _compactMode;
     private readonly Dictionary<string, GridView> _gridsByCategory = new(StringComparer.CurrentCultureIgnoreCase);
@@ -26,7 +26,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         LoadTools();
     }
 
-    protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         CompactModeService.CompactModeChanged += OnCompactModeChanged;
@@ -41,6 +41,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
             RebuildPivot();
         }
 
+        string? autoExecuteBuiltinId = null;
         if (e.Parameter is SearchNavigationTarget target && target.HighlightBuiltinId is not null)
         {
             _pendingHighlightId = target.HighlightBuiltinId;
@@ -49,7 +50,9 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         else if (e.Parameter is string id && !string.IsNullOrWhiteSpace(id))
         {
             _pendingHighlightId = id;
-            _autoExecuteBuiltinId = id;
+            // 返回列表时导航历史仍带有工具 ID，只在新导航中自动执行。
+            if (e.NavigationMode == NavigationMode.New)
+                autoExecuteBuiltinId = id;
         }
 
         // 与设置页共用同一配置，导航回来时同步选择框状态
@@ -65,15 +68,11 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         RefreshFavoriteStates();
 
         // --open-builtin 模式：高亮后自动执行工具
-        if (_autoExecuteBuiltinId is not null)
-        {
-            var builtinId = _autoExecuteBuiltinId;
-            _autoExecuteBuiltinId = null;
-            _ = AutoExecuteBuiltinToolAsync(builtinId);
-        }
+        if (autoExecuteBuiltinId is not null)
+            _ = AutoExecuteBuiltinToolAsync(autoExecuteBuiltinId);
     }
 
-    protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
         CompactModeService.CompactModeChanged -= OnCompactModeChanged;

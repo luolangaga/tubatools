@@ -27,6 +27,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     {
         InitializeComponent();
         ToolsGrid.ItemsSource = _tools;
+        _filterDebounce.Tick += (_, _) => ApplyToolFilter();
         _ = new CustomToolDropHandler(this, LoadCatalogAsync, ShowStatus);
         ToolsGrid.Loaded += (_, _) => UpdateCardLayout();
         _ready = true;
@@ -38,6 +39,8 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     {
         base.OnNavigatedTo(e);
         LaunchHistoryService.HistoryChanged += OnLaunchHistoryChanged;
+        _baseCatalog = null;
+        _historyDirty = true;
         _cards = HomeDashboardContent.LoadFeatured(AppSettings.Get(HomeDashboardContent.SettingsKey),
             AppSettings.Get(HomeDashboardContent.PreviousFeaturedSettingsKey) ?? AppSettings.Get(HomeDashboardContent.LegacyContentSettingsKey) ?? AppSettings.Get(HomeDashboardContent.LegacySettingsKey));
         if (AppSettings.Get(HomeDashboardContent.SettingsKey) is null)
@@ -54,6 +57,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         LaunchHistoryService.HistoryChanged -= OnLaunchHistoryChanged;
+        _filterDebounce.Stop();
         _requestVersion++; _iconCts?.Cancel(); base.OnNavigatedFrom(e);
     }
 
@@ -74,7 +78,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     private ToolChoice Describe(string target) => target switch
     {
         "hardware" => new(target, S("HardwareTitle", "硬件信息"), S("HardwareDesc", "检查你的电脑的配置"), "\uE977"),
-        "qq" => new(target, S("QqTitle", "QQ 交流群"), S("QqDesc", "485079194 · 和图吧小伙伴一起交流折腾心得"), "\uE902"),
+        "qq" => new(target, S("QqTitle", "QQ 交流群"), S("QqDesc", "1124067964 · 和图吧小伙伴一起交流折腾心得"), "\uE902"),
         "builtin:quick-device-check" => new(target, S("CheckTitle", "快速验机"), S("CheckDesc", "新电脑到手，快速排查问题"), "\uE9D5"),
         "builtin:space-cleanup" => new(target, S("CleanupTitle", "垃圾清理"), S("CleanupDesc", "通过多种方式，快速清理电脑空间"), "\uEDA8"),
         "builtin:game-monitor" => new(target, S("GameTitle", "游戏监控"), S("GameDesc", "检测游戏帧率等数据，随时掌握游戏表现"), "\uE9F5"),
@@ -82,7 +86,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         "builtin:context-menu-mgr" => new(target, S("ContextMenuTitle", "右键菜单管理"), S("ContextMenuDesc", "整理右键菜单，管理常用菜单项"), "\uE8FD"),
         "builtin:startup-manager" => new(target, S("StartupTitle", "开机自启动管理"), S("StartupDesc", "管理开机启动项目，让电脑启动更清爽"), "\uE7E8"),
         "builtin:battery-analyzer" => new(target, S("BatteryTitle", "电池消耗分析"), S("BatteryDesc", "分析电池消耗趋势，查看应用耗电排行"), "\uE8BE"),
-        "builtin:stress-test" => new(target, S("StressTitle", "一键三烤"), S("StressDesc", "同时测试 CPU、GPU 和网卡，监控温度与功耗"), "\uE9D9"),
+        "builtin:stress-test" => new(target, S("StressTitle", "CPU / GPU 烤机"), S("StressDesc", "同时测试 CPU 和 GPU，监控温度与功耗"), "\uE9D9"),
         _ => DescribeOther(target)
     };
 
@@ -165,10 +169,10 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
             {
                 // 统一走 ClipboardService（占用重试 + 失败只留痕）：这里曾经直连 WinRT，
                 // 剪贴板被别的程序占用时抛出的 COMException 会顶掉整次卡片点击。
-                if (ClipboardService.TrySetText("485079194").Success)
-                    ShowStatus(S("Copied", "群号已复制"), S("CopiedDesc", "在 QQ 中搜索群号 485079194，即可申请加入。"), InfoBarSeverity.Success);
+                if (ClipboardService.TrySetText("1124067964").Success)
+                    ShowStatus(S("Copied", "群号已复制"), S("CopiedDesc", "在 QQ 中搜索群号 1124067964，即可申请加入。"), InfoBarSeverity.Success);
                 else
-                    ShowStatus(S("CopyFailed", "复制失败"), S("CopyFailedDesc", "剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 485079194。"), InfoBarSeverity.Error);
+                    ShowStatus(S("CopyFailed", "复制失败"), S("CopyFailedDesc", "剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 1124067964。"), InfoBarSeverity.Error);
                 return;
             }
             if (card.Target.StartsWith("builtin:"))

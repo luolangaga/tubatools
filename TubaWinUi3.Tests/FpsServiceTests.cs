@@ -32,118 +32,6 @@ public class FpsServiceTests
     }
 
     [Fact]
-    public void Tracker_Regular60Hz_ReadsNear60Fps()
-    {
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60; // 60Hz
-        for (int i = 1; i <= 300; i++)
-            tracker.OnPresent(i * frameTicks);
-
-        Assert.InRange(tracker.Fps, 55, 65);
-        // 300 presents → 299 frame intervals (the first present is the baseline)
-        Assert.Equal(299, tracker.TotalFrames);
-    }
-
-    [Fact]
-    public void Tracker_SparseOneHzProcess_ReadsOneFps()
-    {
-        // A desktop process presenting ~1x/sec used to be picked up by the
-        // "first tracker with FPS > 0" fallback → the old stuck-at-1 symptom.
-        var tracker = new FpsTracker();
-        long secondTicks = TimeSpan.TicksPerSecond;
-        for (int i = 1; i <= 10; i++)
-            tracker.OnPresent(i * secondTicks);
-
-        Assert.Equal(1.0, tracker.Fps, 3);
-        Assert.Equal(9, tracker.TotalFrames); // gaps between events
-    }
-
-    [Fact]
-    public void Tracker_StalePresents_DecaysToZero()
-    {
-        // When presents stop (menu, loading, dead ETW session) the readout must
-        // zero out quickly instead of lingering on the last value for minutes.
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        for (int i = 1; i <= 120; i++)
-            tracker.OnPresent(i * frameTicks);
-        Assert.True(tracker.Fps > 30);
-
-        var now = DateTime.UtcNow;
-        tracker.Decay(now);                    // fresh — stays alive
-        Assert.True(tracker.Fps > 30);
-
-        tracker.Decay(now.AddSeconds(5));      // stale — zeroed
-        Assert.Equal(0, tracker.Fps, 3);
-    }
-
-    [Fact]
-    public void Tracker_PercentileLow_UsesAverageFrameTimeOfWorstFrames()
-    {
-        // 1000 帧里混入 10% 的 33.3ms 帧（30 FPS），其余 60 FPS。
-        // 1% low 应 ≈ 最差 1% 帧的平均帧时间 → 30 FPS（旧实现取瞬时 FPS 平均会偏高）。
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
-        long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
-        long t = 0;
-        for (int i = 0; i < 1000; i++)
-        {
-            t += (i % 10 == 0) ? slow : fast;       // 每 10 帧一卡
-            tracker.OnPresent(t);
-        }
-        Assert.True(tracker.TotalFrames >= 900);
-        Assert.InRange(tracker.OnePercentLow, 28, 32);
-    }
-
-    [Fact]
-    public void Tracker_PercentileLow_InsufficientSamples_ReturnsMinusOne()
-    {
-        // 样本不足时返回 -1（上层显示 "--"），而不是拿 1-2 帧噪声填数字
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        for (int i = 1; i <= 50; i++)
-            tracker.OnPresent(i * frameTicks);
-
-        Assert.Equal(-1, tracker.OnePercentLow);
-        Assert.Equal(-1, tracker.PointOnePercentLow);
-    }
-
-    [Fact]
-    public void Tracker_SubMillisecondFakeFrames_AreExcludedFromStats()
-    {
-        // 双源重复事件会产生 0.1ms 的假帧 —— 必须被帧时间下限过滤，否则
-        // Avg/Max/1%low 全被污染。
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        long t = 0;
-        for (int i = 0; i < 120; i++)
-        {
-            t += frameTicks;                 // 真实帧
-            tracker.OnPresent(t);
-            tracker.OnPresent(t + 1_000);    // 0.1ms 假帧（同帧重复）
-        }
-
-        Assert.Equal(119, tracker.TotalFrames);   // 只有真实帧进入统计
-        Assert.InRange(tracker.AvgFps, 55, 65);
-        Assert.InRange(tracker.MaxFps, 55, 65);
-    }
-
-    [Fact]
-    public void Tracker_AvgFps_IsTotalFramesOverTotalTime()
-    {
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 60;
-        long slow = TimeSpan.TicksPerSecond / 30;
-        long t = 0;
-        for (int i = 0; i < 310; i++)
-        {
-            t += (i % 31 == 0) ? slow : fast;   // ~10 个卡顿帧
-            tracker.OnPresent(t);
-        }
-        Assert.InRange(tracker.AvgFps, 55, 62);
-    }
-
-    [Fact]
     public void TryRecordPresent_PresentHistoryDominatesAllTiers()
     {
         // PresentHistory (0xAB/0xD7) is the authoritative per-frame source on
@@ -236,244 +124,85 @@ public class FpsServiceTests
     }
 
     [Fact]
-    public void Tracker_FrameTime_ReflectsLatestValidInterval()
+    public void Tracker_OneSecondWindowIncludesSubMillisecondAndLongFrames()
     {
-        // 帧生成时间 = 最近一次有效帧间隔（60 FPS → ≈16.7ms）
         var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        for (int i = 1; i <= 120; i++)
-            tracker.OnPresent(i * frameTicks);
-
-        Assert.InRange(tracker.LastFrameTimeMs, 16, 17);
+        long t = TimeSpan.TicksPerSecond;
+        tracker.OnPresent(t);
+        tracker.OnPresent(t += 5000); // 0.5ms is a valid upstream frame.
+        Assert.Equal(2000, tracker.Fps);
+        Assert.Equal(2000, tracker.OnePercentLow);
+        tracker.OnPresent(t += TimeSpan.TicksPerSecond * 2);
+        Assert.Equal(1, tracker.Fps); // 0.5 rounds away from zero.
+        Assert.Equal(1, tracker.PointOnePercentLow);
+        for (int i = 0; i < 101; i++) tracker.OnPresent(t += 100000);
+        Assert.Equal(100, tracker.Fps);
+        Assert.Equal(100, tracker.OnePercentLow);
+        Assert.Equal(100, tracker.PointOnePercentLow);
     }
 
     [Fact]
-    public void Tracker_FrameTime_IgnoresSubMillisecondFakeFrames()
+    public void LowUsesFloorTailAndHalfUpRoundingWithoutWarmup()
     {
-        // 0.1ms 假帧不更新帧时间读数 —— 否则卡顿监测会被双源重复事件污染
+        var values = Enumerable.Repeat(10d, 148).Concat(new[] { 20d, 100d }).ToList();
+        var stats = FrameScopeFrameStatistics.Snapshot(values);
+        Assert.Equal(10, stats.Low1); // floor(150 * .01) = one slowest frame.
+        Assert.Equal(10, stats.Low01);
+        Assert.Equal(3, FrameScopeFrameStatistics.Rounded(2.5));
+        Assert.Null(FrameScopeFrameStatistics.Snapshot(new List<double>()).Average);
+    }
+
+    [Fact]
+    public void ReplayAndTrackerReportUseSamePerSecondFilteredSummary()
+    {
         var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        long t = 0;
-        for (int i = 0; i < 60; i++)
-        {
-            t += frameTicks;
-            tracker.OnPresent(t);
-            tracker.OnPresent(t + 1_000); // 0.1ms 假帧
+        long ticks = TimeSpan.TicksPerSecond;
+        tracker.OnPresent(ticks);
+        var frames = new List<FrameScopeFrameStatistics.Frame>();
+        for (int i = 0; i < 500; i++) {
+            double ms = i < 50 ? 50 : 10;
+            ticks += (long)(ms * TimeSpan.TicksPerMillisecond);
+            tracker.OnPresent(ticks);
+            frames.Add(new FrameScopeFrameStatistics.Frame(ticks / (double)TimeSpan.TicksPerMillisecond, ms));
         }
-
-        Assert.InRange(tracker.LastFrameTimeMs, 16, 17);
+        var expected = FrameScopeFrameStatistics.Replay(frames);
+        var actual = tracker.TakeSnapshot("game");
+        Assert.Equal(expected.Filtered.Average, actual.AvgFps);
+        Assert.Equal(expected.Filtered.Low1, actual.OnePercentLow);
+        Assert.Equal(expected.Filtered.Low01, actual.PointOnePercentLow);
+        Assert.Equal(500, actual.TotalFrames);
     }
 
     [Fact]
-    public void ReadFrameMetrics_FrameTime_ExpiresAfterTwoSeconds()
+    public void EtwFallbackDoesNotInventRenderLatency()
     {
-        // 无新帧 2s 后帧时间读数过期（与 FPS 过期口径一致）→ -1，覆盖层显示 "--"
         var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        for (int i = 1; i <= 60; i++)
-            tracker.OnPresent(i * frameTicks);
-
-        var now = DateTime.UtcNow;
-        FpsService.ReadFrameMetrics(tracker, now, out var freshMs, out _);
-        Assert.InRange(freshMs, 16, 17);
-        FpsService.ReadFrameMetrics(tracker, now.AddSeconds(5), out var staleMs, out _);
-        Assert.Equal(-1, staleMs);
+        tracker.OnPresent(TimeSpan.TicksPerSecond);
+        tracker.OnPresent(TimeSpan.TicksPerSecond + 100000);
+        FpsService.ReadFrameMetrics(tracker, DateTime.UtcNow, out var frame, out var latency);
+        Assert.Equal(10, frame);
+        Assert.Equal(-1, latency);
+        FpsService.ReadFrameMetrics(tracker, DateTime.UtcNow.AddSeconds(1.1), out frame, out latency);
+        Assert.Equal(-1, frame);
+        Assert.Equal(-1, latency);
     }
 
     [Fact]
-    public void RenderLatency_PairsComposeWithPendingSubmit()
-    {
-        // 提交 T → DWM 合成(0xC9) T+12ms → 渲染延迟 ≈ 12ms
-        var tracker = new FpsTracker();
-        long submit = 100_000_000;
-        tracker.EnqueueSubmit(submit);
-        tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
-        Assert.InRange(tracker.LastRenderLatencyMs, 11.9, 12.1);
-
-        // 无待配对提交的合成事件（桌面闪烁等）→ 忽略，保留上一读数
-        double before = tracker.LastRenderLatencyMs;
-        tracker.TryRecordComposed(submit + 100_000);
-        Assert.Equal(before, tracker.LastRenderLatencyMs);
-    }
-
-    [Fact]
-    public void RenderLatency_ComposeWithoutSubmit_NeverSamples()
+    public async Task Tracker_ConcurrentReadsAndPresents_KeepWindowConsistent()
     {
         var tracker = new FpsTracker();
-        tracker.TryRecordComposed(100_000_000);
-        Assert.Equal(-1, tracker.LastRenderLatencyMs);
-    }
-
-    [Fact]
-    public void RenderLatency_OutOfWindowPair_Discarded()
-    {
-        // 切出/停顿后的陈旧配对（Δ 超 1000ms）不记为有效样本
-        var tracker = new FpsTracker();
-        long submit = 100_000_000;
-        tracker.EnqueueSubmit(submit);
-        tracker.TryRecordComposed(submit + TimeSpan.TicksPerSecond * 5);
-        Assert.Equal(-1, tracker.LastRenderLatencyMs);
-    }
-
-    [Fact]
-    public void RenderLatency_MultipleFrames_StrictFifo()
-    {
-        // 多帧排队：合成事件必须按提交顺序配对
-        var tracker = new FpsTracker();
-        long f1 = 100_000_000;
-        long f2 = f1 + TimeSpan.TicksPerSecond / 60; // 帧2在帧1后 16.7ms 提交
-        tracker.EnqueueSubmit(f1);
-        tracker.EnqueueSubmit(f2);
-        tracker.TryRecordComposed(f1 + TimeSpan.TicksPerMillisecond * 8);   // 帧1: Δ8ms
-        Assert.InRange(tracker.LastRenderLatencyMs, 7.9, 8.1);
-        tracker.TryRecordComposed(f2 + TimeSpan.TicksPerMillisecond * 12);  // 帧2: Δ12ms
-        Assert.InRange(tracker.LastRenderLatencyMs, 11.9, 12.1);
-    }
-
-    [Fact]
-    public void ReadFrameMetrics_RenderLatency_ExpiresAfterThreeSeconds()
-    {
-        var tracker = new FpsTracker();
-        long submit = 100_000_000;
-        tracker.EnqueueSubmit(submit);
-        tracker.TryRecordComposed(submit + TimeSpan.TicksPerMillisecond * 12);
-
-        var now = DateTime.UtcNow;
-        FpsService.ReadFrameMetrics(tracker, now, out _, out var freshMs);
-        Assert.InRange(freshMs, 11.9, 12.1);
-        FpsService.ReadFrameMetrics(tracker, now.AddSeconds(5), out _, out var staleMs);
-        Assert.Equal(-1, staleMs);
-    }
-
-    [Fact]
-    public void Tracker_PercentileLow_RollsOldFramesOutOfWindow()
-    {
-        // 滚动窗口语义：启动/加载期的慢帧必须随窗口滚动自然退出，
-        // 1% low 反映「当前画面」而不是整个会话的累计。
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
-        long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
-        long t = 0;
-
-        for (int i = 0; i < 5000; i++) { t += fast; tracker.OnPresent(t); }
-        Assert.InRange(tracker.OnePercentLow, 55, 65);      // 纯 60fps
-
-        for (int i = 0; i < 100; i++) { t += slow; tracker.OnPresent(t); }
-        Assert.InRange(tracker.OnePercentLow, 28, 32);      // 慢帧进了窗口 → 1% low 掉到 ~30
-
-        for (int i = 0; i < 3000; i++) { t += fast; tracker.OnPresent(t); }
-        Assert.InRange(tracker.OnePercentLow, 55, 65);      // 慢帧滚出窗口 → 恢复 ~60
-    }
-
-    [Fact]
-    public void Tracker_PointOnePercentLow_NeedsEnoughFramesInWindow()
-    {
-        // 0.1% low 要有统计意义必须有足够多的帧 —— 样本不够必须返回 -1，
-        // 而不是拿一两帧最差帧的噪声填数字。门槛按「窗口内帧数」（900 帧）算。
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        long t = 0;
-
-        for (int i = 0; i < 500; i++) { t += frameTicks; tracker.OnPresent(t); }
-        Assert.Equal(-1, tracker.PointOnePercentLow);
-
-        // 1900 帧 ≈ 31.7s ≥ 30s 窗口：帧数门槛（900）和时间填满门槛同时满足才出数
-        for (int i = 0; i < 1400; i++) { t += frameTicks; tracker.OnPresent(t); }
-        Assert.InRange(tracker.PointOnePercentLow, 55, 65);
-    }
-
-    [Fact]
-    public void Tracker_PercentileLow_MaskedUntilWindowFilled()
-    {
-        // 开测头几秒窗口只有半截：启动期（着色器编译、垂直同步爬坡、加载关卡）的坏帧
-        // 会把 1%/0.1% low 放大成离谱读数 —— 这段时间必须显示 "--"，不能拿半截窗口硬算。
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        long t = 0;
-
-        for (int i = 0; i < 300; i++) { t += frameTicks; tracker.OnPresent(t); }   // 5s：帧数够（299 ≥ 100）但 10s 窗口没填满
-        Assert.Equal(-1, tracker.OnePercentLow);
-        Assert.Equal(-1, tracker.PointOnePercentLow);
-
-        for (int i = 0; i < 400; i++) { t += frameTicks; tracker.OnPresent(t); }   // 累计 ≈11.7s：1% 窗口填满
-        Assert.InRange(tracker.OnePercentLow, 55, 65);
-        Assert.Equal(-1, tracker.PointOnePercentLow);                              // 30s 窗口仍未填满 → 继续屏蔽
-    }
-
-    [Fact]
-    public void Tracker_Snapshot_ShortSession_UsesBestEffortPercentile()
-    {
-        // 报告/快照是「整段会话」语义：会话比窗口短时按已有帧算（CapFrameX 对整段
-        // 录制的口径），不能因为滚动窗口没填满就在报告里开天窗。
-        var tracker = new FpsTracker();
-        long frameTicks = TimeSpan.TicksPerSecond / 60;
-        long t = 0;
-        for (int i = 0; i < 300; i++) { t += frameTicks; tracker.OnPresent(t); }   // 5s 短会话
-
-        Assert.Equal(-1, tracker.OnePercentLow);        // 实时读数：窗口没填满 → 屏蔽
-        var snap = tracker.TakeSnapshot("test");
-        Assert.InRange(snap.OnePercentLow, 55, 65);     // 报告：整段会话口径 → 正常出数
-    }
-
-    // ------------------------------------------- 低帧率百分位口径（窗口按时间过期）
-
-    [Fact]
-    public void Tracker_OnePercentLow_RecoversWithinWindowSeconds()
-    {
-        // 「刷新特别慢」的回归测试：一次卡顿必须在窗口时长（1% low = 10s）内滚干净。
-        // 旧实现固定 2048 帧窗口，60fps 下要 34 秒才恢复，读数像被钉住。
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 60;   // 16.67ms @60FPS
-        long slow = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
-        long t = 0;
-
-        for (int i = 0; i < 3000; i++) { t += fast; tracker.OnPresent(t); }   // 50s 平稳
-        Assert.InRange(tracker.OnePercentLow, 55, 65);
-
-        for (int i = 0; i < 60; i++) { t += slow; tracker.OnPresent(t); }     // 2s 卡顿
-        Assert.InRange(tracker.OnePercentLow, 28, 34);
-
-        for (int i = 0; i < 660; i++) { t += fast; tracker.OnPresent(t); }    // 11s 平稳 → 卡顿滚出窗口
-        Assert.InRange(tracker.OnePercentLow, 55, 65);
-    }
-
-    [Fact]
-    public void Tracker_OnePercentLow_WindowIsTimeBasedNotFrameCount()
-    {
-        // 帧数窗口在低帧率下会变得极长（2048 帧 @30fps = 68 秒）。改成时间窗口后，
-        // 30fps 下同样只需 ~10 秒就能恢复 —— 同一段画面在高低帧率下口径一致。
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 30;   // 33.33ms @30FPS
-        long slow = TimeSpan.TicksPerSecond / 15;   // 66.67ms @15FPS
-        long t = 0;
-
-        for (int i = 0; i < 900; i++) { t += fast; tracker.OnPresent(t); }    // 30s 平稳
-        Assert.InRange(tracker.OnePercentLow, 28, 34);
-
-        for (int i = 0; i < 60; i++) { t += slow; tracker.OnPresent(t); }     // 4s 卡顿
-        Assert.InRange(tracker.OnePercentLow, 13, 17);
-
-        for (int i = 0; i < 330; i++) { t += fast; tracker.OnPresent(t); }    // 11s → 卡顿滚出
-        Assert.InRange(tracker.OnePercentLow, 28, 34);
-    }
-
-    [Fact]
-    public void Tracker_OnePercentLow_UsesTruePercentileCount()
-    {
-        // 真 1% —— 不再有「最少取 3 帧」的兜底：那会把口径悄悄放大成 3%
-        // （n=200 时 1% 只有 2 帧，兜底会取 3 帧，把快帧混进来抬高读数）。
-        // 20fps（50ms/帧）→ 10s 窗口 ≈ 200 帧 → 真 1% = 最差 2 帧。
-        var tracker = new FpsTracker();
-        long fast = TimeSpan.TicksPerSecond / 20;   // 50ms
-        long slow = TimeSpan.TicksPerSecond / 10;   // 100ms
-        long t = 0;
-
-        for (int i = 0; i < 300; i++) { t += fast; tracker.OnPresent(t); }   // 15s 平稳
-        t += slow; tracker.OnPresent(t);                                     // 两帧慢帧
-        t += slow; tracker.OnPresent(t);
-
-        // 最差 2 帧都是 100ms → 平均帧时间 100ms → 10 FPS。
-        // 若兜底取 3 帧，会混进一帧 50ms → 83ms → 12 FPS，不再落在这个区间。
-        Assert.InRange(tracker.OnePercentLow, 9.5, 10.5);
+        var writer = Task.Run(() => {
+            for (int i = 1; i <= 40000; i++) tracker.OnPresent(i * 100000L);
+        });
+        var readers = Enumerable.Range(0, 3).Select(_ => Task.Run(() => {
+            for (int i = 0; i < 100; i++) {
+                double value = tracker.OnePercentLow;
+                Assert.True(value == -1 || value == 100);
+                value = tracker.PointOnePercentLow;
+                Assert.True(value == -1 || value == 100);
+            }
+        }));
+        await Task.WhenAll(readers.Append(writer));
+        Assert.Equal(39999, tracker.TotalFrames);
     }
 }

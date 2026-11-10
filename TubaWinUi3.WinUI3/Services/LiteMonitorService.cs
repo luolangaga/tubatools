@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Management;
 using LibreHardwareMonitor.Hardware;
 using TubaWinUi3.Models;
 
@@ -86,7 +85,13 @@ public sealed class LiteMonitorService : IDisposable
     private static string? s_initError;
     private static long s_lastInitAttempt;
 
-    public MonitorSample Read(bool fpsEnabled = false)
+    private readonly Dictionary<string, MonitorSample> _gpuSamples = new(StringComparer.Ordinal);
+
+    public MonitorSample Read(bool fpsEnabled = false) => ReadCore(fpsEnabled, null);
+
+    internal MonitorSample ReadForGpu(string gpuId) => ReadCore(false, gpuId);
+
+    private MonitorSample ReadCore(bool fpsEnabled, string? gpuId)
     {
         MonitorSample sample;
         lock (_sampleGate)
@@ -99,6 +104,17 @@ public sealed class LiteMonitorService : IDisposable
                 _lastSampleTick = Stopwatch.GetTimestamp();
             }
             sample = _latestSample.Copy();
+            if (gpuId is not null)
+            {
+                _gpuSamples.TryGetValue(gpuId, out var gpu);
+                sample.GpuName = gpu?.GpuName ?? "";
+                sample.GpuTemp = gpu?.GpuTemp ?? -1;
+                sample.GpuLoad = gpu?.GpuLoad ?? -1;
+                sample.GpuClock = gpu?.GpuClock ?? -1;
+                sample.GpuPower = gpu?.GpuPower ?? -1;
+                sample.GpuVramLoad = gpu?.GpuVramLoad ?? -1;
+                sample.GpuVramUsedGB = gpu?.GpuVramUsedGB ?? -1;
+            }
         }
         if (fpsEnabled)
         {
@@ -118,6 +134,7 @@ public sealed class LiteMonitorService : IDisposable
     {
         EnsureInit();
         var sample = new MonitorSample();
+        _gpuSamples.Clear();
         lock (s_lock)
         {
             if (s_computer == null)
@@ -135,7 +152,16 @@ public sealed class LiteMonitorService : IDisposable
             }
             foreach (IHardware hw in s_computer.Hardware)
             {
-                try { ReadHardware(hw, sample); }
+                try
+                {
+                    ReadHardware(hw, sample);
+                    if (IsGpu(hw))
+                    {
+                        var gpu = new MonitorSample { GpuName = hw.Name };
+                        ReadGpuSensors(hw, gpu);
+                        _gpuSamples[hw.Identifier.ToString()] = gpu;
+                    }
+                }
                 catch { sample.SensorError ??= "部分传感器数据解析失败，请点击重试或导出传感器日志。"; }
                 if (!s_debugLogged)
                 {
@@ -208,23 +234,7 @@ public sealed class LiteMonitorService : IDisposable
             case HardwareType.GpuIntel:
                 if (string.IsNullOrEmpty(s.GpuName) || HwPriority(hw) < HwPriorityOfName(s.GpuName))
                     s.GpuName = hw.Name;
-                foreach (var sensor in hw.Sensors)
-                {
-                    if (!sensor.Value.HasValue) continue;
-                    if (sensor.SensorType == SensorType.Load && (Has(sensor.Name, "core") || Has(sensor.Name, "d3d")) && s.GpuLoad < 0)
-                        s.GpuLoad = sensor.Value.Value;
-                    if (sensor.SensorType == SensorType.Temperature && s.GpuTemp < sensor.Value.Value)
-                        s.GpuTemp = sensor.Value.Value;
-                    if (sensor.SensorType == SensorType.Clock && (Has(sensor.Name, "graphics") || Has(sensor.Name, "core") || Has(sensor.Name, "shader")) && sensor.Value.Value <= 6000 && s.GpuClock < 0)
-                        s.GpuClock = sensor.Value.Value;
-                    if (sensor.SensorType == SensorType.Power && (Has(sensor.Name, "package") || Has(sensor.Name, "ppt") || Has(sensor.Name, "board") || Has(sensor.Name, "core") || Has(sensor.Name, "gpu")) && sensor.Value.Value > 0 && sensor.Value.Value <= 1200 && s.GpuPower < 0)
-                        s.GpuPower = sensor.Value.Value;
-                    if (sensor.SensorType == SensorType.Load && Has(sensor.Name, "memory"))
-                        s.GpuVramLoad = sensor.Value.Value;
-                    // LHM 0.9.7 reports all Data sensors in bytes.
-                    if (sensor.SensorType == SensorType.Data && Has(sensor.Name, "used") && (Has(sensor.Name, "memory") || Has(sensor.Name, "dedicated")))
-                        s.GpuVramUsedGB = sensor.Value.Value / (1024f * 1024 * 1024);
-                }
+                ReadGpuSensors(hw, s);
                 break;
 
             case HardwareType.Memory:
@@ -355,6 +365,38 @@ public sealed class LiteMonitorService : IDisposable
         return 4;
     }
 
+    private static bool IsGpu(IHardware hw) =>
+        hw.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
+
+    private static void ReadGpuSensors(IHardware hw, MonitorSample s)
+    {
+        foreach (var sensor in hw.Sensors)
+        {
+            if (!sensor.Value.HasValue) continue;
+            if (sensor.SensorType == SensorType.Load && (Has(sensor.Name, "core") || Has(sensor.Name, "d3d")) && s.GpuLoad < 0)
+                s.GpuLoad = sensor.Value.Value;
+            if (sensor.SensorType == SensorType.Temperature && s.GpuTemp < sensor.Value.Value)
+                s.GpuTemp = sensor.Value.Value;
+            if (sensor.SensorType == SensorType.Clock && (Has(sensor.Name, "graphics") || Has(sensor.Name, "core") || Has(sensor.Name, "shader")) && sensor.Value.Value <= 6000 && s.GpuClock < 0)
+                s.GpuClock = sensor.Value.Value;
+            if (sensor.SensorType == SensorType.Power && (Has(sensor.Name, "package") || Has(sensor.Name, "ppt") || Has(sensor.Name, "board") || Has(sensor.Name, "core") || Has(sensor.Name, "gpu")) && sensor.Value.Value > 0 && sensor.Value.Value <= 1200 && s.GpuPower < 0)
+                s.GpuPower = sensor.Value.Value;
+            if (sensor.SensorType == SensorType.Load && Has(sensor.Name, "memory"))
+                s.GpuVramLoad = sensor.Value.Value;
+            // LHM 0.9.7 reports all Data sensors in bytes.
+            if (sensor.SensorType == SensorType.Data && Has(sensor.Name, "used") && (Has(sensor.Name, "memory") || Has(sensor.Name, "dedicated")))
+                s.GpuVramUsedGB = sensor.Value.Value / (1024f * 1024 * 1024);
+        }
+    }
+
+    internal static (string Id, string Name)[] GetGpuMonitorDevices()
+    {
+        Instance.EnsureInit();
+        lock (s_lock)
+            return s_computer?.Hardware.Where(hw => IsGpu(hw) && !IsVirtualGpu(hw.Name))
+                .Select(hw => (hw.Identifier.ToString(), hw.Name)).ToArray() ?? [];
+    }
+
     public static List<GpuInfo> GetAvailableGpus()
     {
         var result = new List<GpuInfo>();
@@ -386,22 +428,8 @@ public sealed class LiteMonitorService : IDisposable
             }
         }
 
-        // WMI mirrors the 硬件信息 page, so the GPU selection list always matches
-        // what users see there. LibreHardwareMonitor alone often misses adapters.
-        var wmiNames = new List<string>();
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                var name = obj["Name"]?.ToString()?.Trim();
-                if (string.IsNullOrWhiteSpace(name) || IsVirtualGpu(name)) continue;
-                wmiNames.Add(name);
-            }
-        }
-        catch { }
-
-        var gpuList = wmiNames.Count > 0 ? wmiNames : lhmGpus.Select(g => g.Name).ToList();
+        var names = HardwareInfoService.GetPhysicalGpuNames();
+        var gpuList = names.Count > 0 ? names : lhmGpus.Select(g => g.Name);
         int idx = 0;
         var added = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var name in gpuList)
@@ -441,9 +469,11 @@ public sealed class LiteMonitorService : IDisposable
         return false;
     }
 
-    public static Dictionary<string, float> ReadDiskTemperatures()
+    internal readonly record struct DiskTemperatureSample(int? Index, string Model, float Temperature);
+
+    internal static IReadOnlyList<DiskTemperatureSample> ReadDiskTemperatures()
     {
-        var result = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<DiskTemperatureSample>();
         lock (s_lock)
         {
             // 硬件概览只读磁盘，不为温度查询启动 CPU/GPU 监控或 PawnIO 驱动。
@@ -468,8 +498,10 @@ public sealed class LiteMonitorService : IDisposable
                         if (Has(sensor.Name, "warning") || Has(sensor.Name, "critical")) continue;
                         var value = sensor.Value.Value;
                         if (!float.IsFinite(value) || value <= -40 || value >= 150) continue;
-                        if (result.ContainsKey(hw.Name)) continue;
-                        result[hw.Name] = value;
+                        var index = hw is LibreHardwareMonitor.Hardware.Storage.StorageDevice disk
+                            && disk.Storage.StorageDeviceNumber is { } number && number <= int.MaxValue
+                            ? (int?)number : null;
+                        result.Add(new DiskTemperatureSample(index, hw.Name, value));
                         break;
                     }
                 }

@@ -38,30 +38,11 @@ public static class FfmpegService
         Directory.CreateDirectory(FfmpegDir);
 
         var postProcessor = new FfmpegExtractProcessor(FfmpegPath, FfprobePath);
-        var isArm64 = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
-
         Func<CancellationToken, Task<ResolvedDownloadUrl>> urlResolver = async ct =>
         {
-            var mirrorArch = isArm64 ? "winarm64" : "win64";
-            var mirrorVersion = "8.1.2-2";
-            var mirrorFile = isArm64
-                ? $"jellyfin-ffmpeg_{mirrorVersion}_portable_winarm64-clang-gpl.zip"
-                : $"jellyfin-ffmpeg_{mirrorVersion}_portable_win64-clang-gpl.zip";
-            var mirrorUrl = $"http://mirror.lzu.edu.cn/jellyfin/ffmpeg/windows/8.x/{mirrorVersion}/{mirrorArch}/{mirrorFile}";
-            var fallbackUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip";
-            var fileName = isArm64 ? "ffmpeg-arm64.zip" : "ffmpeg-x64.zip";
-
-            try
-            {
-                using var client = ProxyService.CreateClient(TimeSpan.FromSeconds(15));
-                using var req = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Head, mirrorUrl);
-                using var resp = await client.SendAsync(req, ct);
-                if (resp.IsSuccessStatusCode)
-                    return new ResolvedDownloadUrl(mirrorUrl, fileName, resp.Content.Headers.ContentLength ?? 0);
-            }
-            catch { }
-
-            return new ResolvedDownloadUrl(fallbackUrl, fileName, 0);
+            var asset = await GetTrustedFfmpegAsync(ct);
+            postProcessor.ExpectedSha256 = asset.Sha256;
+            return new ResolvedDownloadUrl(asset.Url, asset.Name, asset.Size);
         };
 
         _downloadItem = DownloadQueueService.EnqueueWithResolver(
@@ -69,10 +50,19 @@ public static class FfmpegService
             urlResolver,
             FfmpegDir,
             postProcessor,
-            description: "格式转换核心组件 (镜像优先)",
+            description: "格式转换核心组件（官方源 · SHA-256 校验）",
             glyph: "\uE8B2");
 
         return _downloadItem;
+    }
+
+    internal static async Task<TrustedReleaseAsset> GetTrustedFfmpegAsync(CancellationToken ct)
+    {
+        var suffix = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+            ? "_portable_winarm64-clang-gpl.zip" : "_portable_win64-clang-gpl.zip";
+        var assets = await TrustedDownloads.LatestAssetsAsync("jellyfin/jellyfin-ffmpeg", ct);
+        return assets.FirstOrDefault(a => a.Name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidDataException("官方 FFmpeg 发布缺少适用的已校验组件，请稍后重试");
     }
 
     public static async Task EnsureFfmpegAsync(IProgress<(int percent, string message)>? progress = null)
@@ -454,6 +444,7 @@ public sealed class FfmpegExtractProcessor : IDownloadPostProcessor
 {
     private readonly string _ffmpegDest;
     private readonly string _ffprobeDest;
+    internal string? ExpectedSha256 { get; set; }
 
     public string DisplayName => "解压 FFmpeg";
 
@@ -468,9 +459,12 @@ public sealed class FfmpegExtractProcessor : IDownloadPostProcessor
     {
         statusProgress?.Report("正在解压 FFmpeg...");
 
+        var hash = ExpectedSha256 ?? (await FfmpegService.GetTrustedFfmpegAsync(ct)).Sha256;
+        await using var archiveFile = new FileStream(downloadedFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+        await DownloadIntegrityPolicy.VerifyAsync(archiveFile, hash, Path.GetFileName(downloadedFilePath), ct, DownloadIntegrityDialog.ConfirmAsync);
         await Task.Run(() =>
         {
-            using var archive = ZipFile.OpenRead(downloadedFilePath);
+            using var archive = new ZipArchive(archiveFile, ZipArchiveMode.Read, leaveOpen: true);
 
             var ffmpegEntry = archive.Entries.FirstOrDefault(e =>
                     e.FullName.EndsWith("bin/ffmpeg.exe", StringComparison.OrdinalIgnoreCase))
@@ -488,16 +482,17 @@ public sealed class FfmpegExtractProcessor : IDownloadPostProcessor
                     e.FullName.EndsWith("/ffprobe.exe", StringComparison.OrdinalIgnoreCase)
                     && !e.FullName.Contains("doc", StringComparison.OrdinalIgnoreCase));
 
-            if (ffmpegEntry is null)
-                throw new FileNotFoundException("压缩包中未找到 ffmpeg.exe");
+            if (ffmpegEntry is null || ffprobeEntry is null)
+                throw new FileNotFoundException("官方压缩包中未找到 ffmpeg.exe 或 ffprobe.exe");
 
             Directory.CreateDirectory(Path.GetDirectoryName(_ffmpegDest)!);
             ffmpegEntry.ExtractToFile(_ffmpegDest, true);
-            ffprobeEntry?.ExtractToFile(_ffprobeDest, true);
+            ffprobeEntry.ExtractToFile(_ffprobeDest, true);
 
             statusProgress?.Report("正在清理临时文件...");
         }, ct);
 
+        await archiveFile.DisposeAsync();
         try { if (File.Exists(downloadedFilePath)) File.Delete(downloadedFilePath); } catch { }
     }
 }

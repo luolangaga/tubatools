@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<defs>
+<linearGradient id="bg" x1="16" y1="10" x2="112" y2="118" gradientUnits="userSpaceOnUse"><stop stop-color="#6FD3FF"/><stop offset="1" stop-color="#1E48B8"/></linearGradient>
+<linearGradient id="win" x1="36" y1="26" x2="96" y2="94" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#D9EBFF"/></linearGradient>
+<linearGradient id="tool" x1="70" y1="62" x2="114" y2="114" gradientUnits="userSpaceOnUse"><stop stop-color="#B7FF8A"/><stop offset="1" stop-color="#22A06B"/></linearGradient>
+</defs>
+<rect x="6" y="6" width="116" height="116" rx="28" fill="url(#bg)"/>
+<rect x="26" y="24" width="76" height="68" rx="9" fill="url(#win)"/>
+<path d="M64 24v68M26 58h76" stroke="#4A8FE0" stroke-width="4" stroke-linecap="round"/>
+<circle cx="45" cy="41" r="5" fill="#FFB84D"/>
+<circle cx="83" cy="41" r="4" fill="#7FD3A8"/>
+<path d="M91 57a18 18 0 0 0-20 23l-11 11a7 7 0 1 0 10 10l11-11a18 18 0 0 0 23-20l-11 10-8-3-3-8 10-12Z" fill="url(#tool)"/>
+<path d="M101 90l4 8 8 4-8 4-4 8-4-8-8-4 8-4 4-8Z" fill="#FFE07A"/>
+</svg>

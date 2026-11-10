@@ -535,6 +535,14 @@
                     <TextBlock x:Name="SettingsStyleModel" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     <TextBlock x:Name="SettingsStyleUptime" Style="{StaticResource CaptionTextBlockStyle}" />
                 </StackPanel>
+                <Grid ColumnSpacing="12" Padding="16,8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE88E;" FontSize="20" />
+                        <TextBlock Text="接口支持" l:Uids.Uid="Hw_PortsLabel" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock x:Name="SettingsStylePorts" Grid.Column="1" FontWeight="SemiBold" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                </Grid>
                 <Grid x:Name="HardwareDiagram" Height="640" Background="Transparent" SizeChanged="HardwareDiagram_SizeChanged">
                     <Canvas x:Name="HardwareCalloutCanvas" Canvas.ZIndex="2" />
                     <Grid x:Name="HardwareDeviceStage">

@@ -1,0 +1,15 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-observe",
+  "operation": "observe",
+  "accessibility": {
+    "ok": false,
+    "error": "provider timed out after 30s",
+    "failure": {
+      "code": "provider_timeout",
+      "phase": "timeout",
+      "facts_complete": true
+    }
+  }
+}

@@ -16,8 +16,8 @@
 
         <ctrl:ToolPageHeader ToolId="stress-test"
             Grid.Row="0"
-            Title="一键三烤"
-            Subtitle="CPU / GPU / 网卡压力测试 — 实时监控温度、频率、功耗与网卡吞吐"
+            Title="CPU / GPU 烤机"
+            Subtitle="CPU 和 GPU 压力测试 · 实时监控温度、频率和功耗"
             Glyph="&#xECAD;" />
 
         <ctrl:StressTestControl x:Name="StressControl" Grid.Row="1" />

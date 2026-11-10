@@ -11,7 +11,6 @@ public sealed class SearchRegistrationTests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "tuba-search-test-" + Guid.NewGuid().ToString("N"));
     private readonly string? _previousData = ConfigManager.DataDirectoryOverride;
     private readonly string? _previousStartMenu = WindowsSearchIndexService.StartMenuDirectoryOverride;
-    private readonly Dictionary<string, string> _previousSettings;
     private readonly List<IBuiltinTool> _registry;
     private readonly IBuiltinTool[] _previousTools;
     private string Menu => Path.Combine(_root, "开始菜单");
@@ -19,9 +18,8 @@ public sealed class SearchRegistrationTests : IDisposable
     public SearchRegistrationTests()
     {
         AppSettings.Flush();
-        _previousSettings = new(AppSettings.Load());
         ConfigManager.DataDirectoryOverride = _root;
-        AppSettings.Load().Clear();
+        AppSettings.InvalidateCache();
         WindowsSearchIndexService.StartMenuDirectoryOverride = Menu;
         _registry = (List<IBuiltinTool>)typeof(BuiltinToolRegistry).GetField("_tools", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         _previousTools = _registry.ToArray();
@@ -114,13 +112,11 @@ public sealed class SearchRegistrationTests : IDisposable
     public void Dispose()
     {
         AppSettings.Flush();
-        var settings = AppSettings.Load();
-        settings.Clear();
-        foreach (var (key, value) in _previousSettings) settings[key] = value;
         _registry.Clear();
         _registry.AddRange(_previousTools);
         WindowsSearchIndexService.StartMenuDirectoryOverride = _previousStartMenu;
         ConfigManager.DataDirectoryOverride = _previousData;
+        AppSettings.InvalidateCache();
         Directory.Delete(_root, recursive: true);
     }
 }

@@ -1,0 +1,2 @@
+go test fuzz v1
+string("{\"assertion\":{\"state\":\"0\",\"target\":{\"ref\":\"r1\"},\"type\":\"state\",\"value\":false},\"mode\":\"assert_ax\",\"window_ref\":\"w2\"}")

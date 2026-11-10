@@ -165,6 +165,7 @@ public static class LocalizationService
         "电池" => L("Hw_Label_Battery", "电池"),
         "安全" => L("Hw_Label_Security", "安全"),
         "USB" => L("Hw_Label_Usb", "USB"),
+        "接口支持" => L("Hw_PortsButton.Content", "接口支持"),
         "其他设备" => L("Hw_Label_Devices", "其他设备"),
         // Windows 系统分区字段
         "操作系统" => L("Hw_Field_OperatingSystem", "操作系统"),

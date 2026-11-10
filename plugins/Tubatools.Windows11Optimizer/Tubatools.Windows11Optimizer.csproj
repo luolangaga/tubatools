@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.Windows11Optimizer</PackageId>
+    <Version>1.0.2</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>Windows 11 优化插件：去快捷方式箭头与盾牌、隐私遥测、性能游戏、Windows 更新、电源声音、通知建议、预装应用清理与常用软件安装</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TubaWinUi3.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <!-- 仅编译引用 WinUI；运行时类型由宿主提供，禁止把框架 DLL 打进插件包。 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="assets\**\*" />
+    <Content Remove="assets\**\*" />
+    <PRIResource Remove="assets\**\*" />
+    <None Remove="assets\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Pack="true" PackagePath="assets/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+
+  <Target Name="CollectPluginDependencies" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_PluginDependency Include="$(OutputPath)*.dll"
+          Exclude="$(OutputPath)$(AssemblyName).dll;$(OutputPath)TubaWinUi3.PluginSdk.dll;$(OutputPath)Microsoft.*.dll;$(OutputPath)WinRT.Runtime.dll;$(OutputPath)*.resources.dll" />
+      <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
+    </ItemGroup>
+  </Target>
+</Project>

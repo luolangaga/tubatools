@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手绘风教学页范例</title>
+<style>
+  :root{
+    color-scheme: light dark;
+    --paper:#fdf8f0; --ink:#3b3226; --ink-soft:#7a6a55; --on-ink:#fffaf2;
+    --peach:#ffd8c2; --mint:#c9ecd8; --sky:#cfe6ff; --lemon:#fff2b8; --lilac:#e4d8ff;
+    --line:#e6dccd; --hard:2px 3px 0 rgba(59,50,38,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#201d19; --ink:#f3ece0; --ink-soft:#b5a894; --on-ink:#231f1a;
+      --peach:#5a4034; --mint:#2f4a3c; --sky:#2c3d52; --lemon:#514a2c; --lilac:#3d3554;
+      --line:#3a342c; --hard:2px 3px 0 rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink)}
+  body{
+    font:15px/1.7 "Segoe UI Variable Text","Segoe UI","Microsoft YaHei UI",system-ui,sans-serif;
+    background-image:repeating-linear-gradient(180deg, rgba(120,100,70,.05) 0 1px, transparent 1px 5px);
+    -webkit-font-smoothing:antialiased;
+  }
+  main{max-width:760px;margin:0 auto;padding:26px 22px 34px}
+  .eyebrow{margin:0 0 6px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft)}
+  h1{margin:0 0 6px;font-size:27px;line-height:1.28;font-weight:700;letter-spacing:-.01em}
+  .squiggle{display:block;margin:2px 0 16px}
+  .lead{margin:0 0 20px;color:var(--ink-soft)}
+  .card{
+    border:2px solid var(--ink);
+    border-radius:15px 19px 13px 21px / 19px 13px 21px 15px;
+    background:#fff; box-shadow:var(--hard);
+    padding:16px 18px; margin:0 0 16px;
+    transform:rotate(-.4deg);
+  }
+  @media (prefers-color-scheme: dark){ .card{background:#26221d} }
+  .card:nth-of-type(even){transform:rotate(.35deg)}
+  .card h2{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .sticker{
+    display:inline-block;padding:2px 9px;border:2px solid var(--ink);border-radius:9px 12px 8px 13px;
+    font-size:12px;font-weight:700;transform:rotate(-3deg);background:var(--lemon)
+  }
+  .sticker.hot{background:var(--peach);transform:rotate(2.5deg)}
+  .sticker.ok{background:var(--mint);transform:rotate(-2deg)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin:0 0 18px}
+  .chip{
+    border:2px solid var(--ink);border-radius:13px 17px 12px 18px/16px 12px 18px 13px;
+    padding:10px 12px;background:var(--sky);box-shadow:var(--hard);
+  }
+  .chip:nth-child(3n+2){background:var(--peach);transform:rotate(.6deg)}
+  .chip:nth-child(3n+3){background:var(--mint);transform:rotate(-.5deg)}
+  .chip b{display:block;font-size:14px;margin-bottom:2px}
+  .chip span{font-size:13px;color:var(--ink-soft)}
+  .stage{display:grid;place-items:center;padding:14px 0 6px}
+  .scene{width:210px;height:210px;perspective:820px;cursor:grab;touch-action:none}
+  .scene:active{cursor:grabbing}
+  .cube{position:relative;width:130px;height:130px;margin:40px auto;transform-style:preserve-3d;
+        transform:rotateX(-22deg) rotateY(-32deg);transition:transform .06s linear}
+  .face{
+    position:absolute;width:130px;height:130px;display:grid;place-items:center;
+    border:2px solid var(--ink);border-radius:10px;background:var(--lemon);
+    font-size:13px;font-weight:700;text-align:center;padding:8px;backface-visibility:visible;
+  }
+  .f1{transform:translateZ(65px);background:var(--lemon)}
+  .f2{transform:rotateY(180deg) translateZ(65px);background:var(--mint)}
+  .f3{transform:rotateY(90deg) translateZ(65px);background:var(--sky)}
+  .f4{transform:rotateY(-90deg) translateZ(65px);background:var(--peach)}
+  .f5{transform:rotateX(90deg) translateZ(65px);background:var(--lilac)}
+  .f6{transform:rotateX(-90deg) translateZ(65px);background:#fff0e6}
+  @media (prefers-color-scheme: dark){ .f6{background:#3a332b} }
+  .hint{margin:6px 0 0;font-size:12px;color:var(--ink-soft);text-align:center}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  button{
+    font:inherit;font-weight:700;cursor:pointer;color:var(--on-ink);background:var(--ink);
+    border:2px solid var(--ink);border-radius:11px 15px 10px 16px/15px 10px 16px 11px;
+    padding:8px 15px;box-shadow:var(--hard);transition:transform .12s ease;
+  }
+  button:hover{transform:translateY(-1px)}
+  button:active{transform:translateY(1px)}
+  button.ghost{background:transparent;color:var(--ink)}
+  input[type=range]{width:100%;accent-color:var(--ink)}
+  .meter{height:14px;border:2px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--paper);margin:8px 0 0}
+  .meter>i{display:block;height:100%;background:var(--peach);width:40%;transition:width .12s ease}
+  .quiz{border:2px dashed var(--ink);border-radius:14px;padding:14px 16px;margin:0 0 16px}
+  .quiz button{margin:6px 8px 0 0;font-weight:600}
+  .quiz .why{font-size:13px;color:var(--ink-soft);margin-top:8px}
+  .foot{font-size:12px;color:var(--ink-soft);margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">手绘风范例 · 可直接照抄</p>
+  <h1>一台电脑里到底有什么</h1>
+  <svg class="squiggle" width="230" height="12" viewBox="0 0 230 12" aria-hidden="true">
+    <path d="M2 7c22-5 40 4 62 1s38-6 60-2 40 7 62 2 28-5 42-3" fill="none"
+          stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
+  </svg>
+  <p class="lead">拖动下面这个立方体转一圈：每一面写着一个部件的作用。再往下拖滑块，看瓶颈怎么转移。</p>
+
+  <div class="grid">
+    <div class="chip"><b>CPU</b><span>决定每一步算得快不快</span></div>
+    <div class="chip"><b>内存</b><span>决定同时能摆下多少东西</span></div>
+    <div class="chip"><b>显卡</b><span>决定画面能刷多快</span></div>
+    <div class="chip"><b>硬盘</b><span>决定打开要等多久</span></div>
+  </div>
+
+  <div class="card">
+    <h2>3D：六个面，六个职责 <span class="sticker">拖我</span></h2>
+    <div class="stage">
+      <div class="scene" id="scene">
+        <div class="cube" id="cube">
+          <div class="face f1">运算<br>CPU</div>
+          <div class="face f2">存储<br>SSD</div>
+          <div class="face f3">画面<br>GPU</div>
+          <div class="face f4">临时<br>内存</div>
+          <div class="face f5">供电<br>电源</div>
+          <div class="face f6">连接<br>主板</div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">这是 CSS 3D（无第三方库）：每个面用 <code>translateZ</code> 推开，外层的 <code>preserve-3d</code> 负责透视。</p>
+  </div>
+
+  <div class="card">
+    <h2>可操作演示：CPU 与显卡谁先成为瓶颈</h2>
+    <label for="cpu">CPU 性能 <b id="cpuOut">40</b></label>
+    <input id="cpu" type="range" min="10" max="100" value="40">
+    <label for="gpu">显卡性能 <b id="gpuOut">40</b></label>
+    <input id="gpu" type="range" min="10" max="100" value="40">
+    <div class="meter"><i id="bar"></i></div>
+    <p class="hint" id="verdict">两者都低，整机都慢。</p>
+    <div class="row" style="margin-top:12px">
+      <button data-tuba-prompt="帮我读一下这台电脑的真实配置，并用生活类的比响再解释一遍">读我的配置</button>
+      <button class="ghost" data-tuba-prompt="用预算帮我配一台电脑，重点说清哪些部件不能省">帮我配一台</button>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h2 style="margin:0 0 6px;font-size:16px">小测：显卡很强，CPU 很弱，玩 3A 会怎样？</h2>
+    <button data-answer="0">帧数很高</button>
+    <button data-answer="1">帧数被 CPU 卡住</button>
+    <button data-answer="0">完全没影响</button>
+    <p class="why" id="why"></p>
+  </div>
+
+  <p class="foot">这是风格与代码结构的范例：配色变量、歪斜卡片、贴纸标签、CSS 3D、滑块联动、就地判题。照抄这些再换成你的内容即可。</p>
+</main>
+
+<script>
+(function () {
+  // ---- CSS 3D: drag to rotate (no auto-spin, no library) ----
+  var scene = document.getElementById('scene');
+  var cube = document.getElementById('cube');
+  var rx = -22, ry = -32, dragging = false, px = 0, py = 0;
+  function apply() { cube.style.transform = 'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)'; }
+  apply();
+  scene.addEventListener('pointerdown', function (e) {
+    dragging = true; px = e.clientX; py = e.clientY;
+    scene.setPointerCapture(e.pointerId);
+  });
+  scene.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    ry += (e.clientX - px) * 0.55;
+    rx = Math.max(-80, Math.min(80, rx - (e.clientY - py) * 0.4));
+    px = e.clientX; py = e.clientY; apply();
+  });
+  scene.addEventListener('pointerup', function () { dragging = false; });
+  scene.addEventListener('pointercancel', function () { dragging = false; });
+
+  // ---- slider demo ----
+  var cpu = document.getElementById('cpu'), gpu = document.getElementById('gpu');
+  var cpuOut = document.getElementById('cpuOut'), gpuOut = document.getElementById('gpuOut');
+  var bar = document.getElementById('bar'), verdict = document.getElementById('verdict');
+  function sync() {
+    var c = +cpu.value, g = +gpu.value;
+    cpuOut.textContent = c; gpuOut.textContent = g;
+    var worst = Math.min(c, g);
+    bar.style.width = worst + '%';
+    bar.style.background = worst > 75 ? 'var(--mint)' : worst > 40 ? 'var(--lemon)' : 'var(--peach)';
+    verdict.textContent = c < g
+      ? '瓶颈在 CPU：显卡再强也只能等它算完（显卡利用率会掉）。'
+      : g < c
+        ? '瓶颈在显卡：CPU 大部分时间在等画面渲染。'
+        : '两者相当，整机比较均衡。';
+  }
+  cpu.addEventListener('input', sync);
+  gpu.addEventListener('input', sync);
+  sync();
+
+  // ---- quiz ----
+  var why = document.getElementById('why');
+  document.querySelectorAll('.quiz button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var right = btn.getAttribute('data-answer') === '1';
+      why.textContent = right
+        ? '对。游戏每帧都要 CPU 先算完逻辑再交给显卡，CPU 弱时显卡在空转。'
+        : '再想想：显卡再快，也得等 CPU 把这一帧该发生什么算完。';
+      why.style.color = right ? 'var(--ink)' : '#c0392b';
+    });
+  });
+
+  // ---- host bridge (absent when the page is opened in a normal browser) ----
+  if (window.tuba) {
+    tuba.ready();
+    tuba.onState(function (s) {
+      document.querySelectorAll('button[data-tuba-prompt]').forEach(function (b) {
+        b.disabled = !!(s && s.running);
+        b.style.opacity = s && s.running ? '.55' : '1';
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

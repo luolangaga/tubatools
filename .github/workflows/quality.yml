@@ -1,0 +1,50 @@
+name: Build and test
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  dotnet:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.400
+            8.0.x
+      - name: Install font build dependency
+        run: python -m pip install fonttools
+      - name: Build and run tests
+        run: dotnet test TubaWinUi3.Tests/TubaWinUi3.Tests.csproj -c Release -m:1 -p:BuildInParallel=false -p:UseSharedCompilation=false -p:ExcludeToolsFromPublish=true --filter "Category!=DesktopIntegration" --logger "trx;LogFileName=quality.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TubaWinUi3.Tests/TestResults/*.trx
+      - name: Verify TUI Native AOT
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP 'tuba-tui-quality'
+          dotnet publish TubaWinUi3.Tui/TubaWinUi3.Tui.csproj -c Release -r win-x64 -o $output
+          if ($LASTEXITCODE -ne 0) { throw 'TUI publish failed' }
+          & (Join-Path $output '图吧工具箱TUI兼容版.exe') --version
+          if ($LASTEXITCODE -ne 0) { throw 'TUI smoke test failed' }
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+        working-directory: telemetry-dashboard
+      - name: Verify LAN upload response handling
+        run: node --test TubaWinUi3.Tests/lan-share-upload.test.mjs

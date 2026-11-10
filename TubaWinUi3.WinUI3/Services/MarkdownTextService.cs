@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -80,8 +80,9 @@ public static partial class MarkdownTextService
         };
         var fontWeight = level <= 2 ? FontWeights.Bold : FontWeights.Normal;
 
-        var run = new Run { Text = text, FontSize = fontSize, FontWeight = fontWeight };
-        para.Inlines.Add(run);
+        para.FontSize = fontSize;
+        para.FontWeight = fontWeight;
+        AddInlineContent(para, text);
         rtb.Blocks.Add(para);
     }
 
@@ -288,9 +289,15 @@ public static partial class MarkdownTextService
             {
                 var linkText = match.Groups[1].Value;
                 var linkUrl = match.Groups[2].Value;
+                if (!Uri.TryCreate(linkUrl, UriKind.Absolute, out var safeUri) || safeUri.Scheme is not ("http" or "https"))
+                {
+                    para.Inlines.Add(new Run { Text = linkText });
+                    pos = match.Index + match.Length;
+                    continue;
+                }
                 var hyperlink = new Hyperlink
                 {
-                    NavigateUri = new Uri(linkUrl),
+                    NavigateUri = safeUri,
                     UnderlineStyle = UnderlineStyle.Single
                 };
                 hyperlink.Inlines.Add(new Run { Text = linkText, Foreground = GetBrush("AccentTextFillColorPrimaryBrush") });
@@ -325,9 +332,15 @@ public static partial class MarkdownTextService
             else if (match.Groups[6].Success)
             {
                 var url = match.Groups[6].Value;
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var autoUri) || autoUri.Scheme is not ("http" or "https"))
+                {
+                    para.Inlines.Add(new Run { Text = url });
+                    pos = match.Index + match.Length;
+                    continue;
+                }
                 var hyperlink = new Hyperlink
                 {
-                    NavigateUri = new Uri(url),
+                    NavigateUri = autoUri,
                     UnderlineStyle = UnderlineStyle.Single
                 };
                 hyperlink.Inlines.Add(new Run { Text = url, Foreground = GetBrush("AccentTextFillColorPrimaryBrush") });

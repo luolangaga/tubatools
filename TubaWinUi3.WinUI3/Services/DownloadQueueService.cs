@@ -426,6 +426,15 @@ public static class DownloadQueueService
         MarkDirty();
     }
 
+    internal static void OnIntegrityInstallationCancelled(DownloadItem item)
+    {
+        // Processing-stage cancellation is not a paused download. Preserve the completed file,
+        // finish the queue item, and require a fresh confirmation on any retry.
+        DispatchState(item, DownloadItemState.Cancelled);
+        DecrementPending();
+        MarkDirty();
+    }
+
     private static async Task ProcessItemAsync(DownloadItem item)
     {
         var ct = item.Cts?.Token ?? CancellationToken.None;
@@ -461,6 +470,10 @@ public static class DownloadQueueService
             }
 
             DispatchCompleted(item);
+        }
+        catch (DownloadIntegrityCancelledException)
+        {
+            OnIntegrityInstallationCancelled(item);
         }
         catch (OperationCanceledException)
         {

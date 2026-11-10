@@ -1,0 +1,1860 @@
+[
+ {
+  "actions": [
+   {
+    "ref": "r2",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Reload",
+      "role": "menuitemcheckbox"
+     },
+     "timeout_ms": 3000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r70",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Sheet2",
+      "role": "tab"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w2",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "SHIFT",
+     "F11"
+    ],
+    "type": "keypress",
+    "until": {
+     "selector": {
+      "name": "Sheet2",
+      "role": "tab"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r152",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "Save As Template",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r162",
+    "type": "click",
+    "until": {
+     "selector": {
+      "role": "dialog"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r181",
+    "type": "click",
+    "until": {
+     "ref": "r181",
+     "state": "checked",
+     "type": "state"
+    }
+   },
+   {
+    "ref": "r190",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w2",
+    "type": "close"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "negate": true,
+   "text": "H2O_Factsheet_WA.docx",
+   "timeout_ms": 5000,
+   "type": "title"
+  }
+ },
+ {
+  "app": "soffice",
+  "mode": "observe",
+  "observe": "screenshot",
+  "until": {
+   "text": "H2O_Factsheet_WA.docx",
+   "timeout_ms": 15000,
+   "type": "title"
+  }
+ },
+ {
+  "app": "soffice",
+  "mode": "observe",
+  "observe": "screenshot",
+  "until": {
+   "text": "H2O_Factsheet_WA.docx",
+   "timeout_ms": 30000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "r81",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "negate": true,
+   "text": "LibreOffice 7.3 Document Recovery",
+   "timeout_ms": 15000,
+   "type": "title"
+  },
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r44",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Sheet2",
+      "role": "tab"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r8",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Insert Sheet",
+      "role": "menu item"
+     },
+     "timeout_ms": 3000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r125",
+    "type": "click",
+    "until": {
+     "selector": {
+      "role": "dialog"
+     },
+     "timeout_ms": 3000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r144",
+    "type": "click",
+    "until": {
+     "ref": "r144",
+     "state": "checked",
+     "type": "state"
+    }
+   },
+   {
+    "ref": "r153",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r6",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Merge Cells",
+      "role": "menu"
+     },
+     "timeout_ms": 3000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r31",
+    "type": "click",
+    "until": {
+     "text": "Account Settings",
+     "timeout_ms": 10000,
+     "type": "text"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r90",
+    "type": "set_value",
+    "until": {
+     "ref": "r90",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "Anonym\nXYZ Lab"
+    },
+    "value": "Anonym\nXYZ Lab"
+   }
+  ],
+  "mode": "act",
+  "observe": "full",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "N"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "text": "Untitled",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r54",
+    "type": "set_value",
+    "until": {
+     "match": "contains",
+     "ref": "r54",
+     "type": "value",
+     "value": "Preferences: Open Settings (UI)"
+    },
+    "value": "Preferences: Open Settings (UI)"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r54",
+    "type": "click",
+    "until": {
+     "ref": "r54",
+     "state": "focused",
+     "type": "state"
+    }
+   },
+   {
+    "keys": [
+     "CTRL",
+     "A"
+    ],
+    "type": "keypress"
+   },
+   {
+    "text": "Preferences: Open Settings (UI)",
+    "type": "type",
+    "until": {
+     "match": "contains",
+     "ref": "r54",
+     "type": "value",
+     "value": "Preferences: Open Settings (UI)"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r83",
+    "type": "set_value",
+    "until": {
+     "match": "contains",
+     "ref": "r83",
+     "type": "value",
+     "value": "auto save"
+    },
+    "value": "auto save"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r140",
+    "type": "set_value",
+    "until": {
+     "ref": "r140",
+     "type": "value",
+     "value": "afterDelay"
+    },
+    "value": "afterDelay"
+   },
+   {
+    "ref": "r144",
+    "type": "set_value",
+    "until": {
+     "ref": "r144",
+     "type": "value",
+     "value": 500
+    },
+    "value": "500"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w1",
+    "type": "close",
+    "until": {
+     "negate": true,
+     "text": "GNU Image Manipulation Program",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "none"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w1",
+    "type": "close",
+    "until": {
+     "negate": true,
+     "text": "GNU Image Manipulation Program",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff"
+ },
+ {
+  "app": "gimp",
+  "mode": "observe",
+  "observe": "tree",
+  "until": {
+   "text": "GNU Image Manipulation Program",
+   "timeout_ms": 30000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "r97",
+    "type": "click",
+    "until": {
+     "ref": "r97",
+     "state": "selected",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "UP"
+    ],
+    "type": "keypress"
+   },
+   {
+    "keys": [
+     "UP"
+    ],
+    "type": "keypress"
+   },
+   {
+    "keys": [
+     "UP"
+    ],
+    "type": "keypress"
+   },
+   {
+    "keys": [
+     "UP"
+    ],
+    "type": "keypress"
+   },
+   {
+    "keys": [
+     "ENTER"
+    ],
+    "type": "keypress",
+    "until": {
+     "text": "Preferences",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r79",
+    "type": "set_value",
+    "until": {
+     "ref": "r79",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "100"
+    },
+    "value": "100"
+   },
+   {
+    "ref": "r81",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "Preferences",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w2",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "text": "Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r22",
+    "type": "click",
+    "until": {
+     "ref": "r22",
+     "state": "checked",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r58",
+    "type": "click",
+    "until": {
+     "ref": "r58",
+     "state": "checked",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r60",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "Simple Preferences",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   },
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "selector": {
+    "name": "Simple Preferences",
+    "role": "dialog"
+   },
+   "timeout_ms": 5000,
+   "type": "exists"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r388",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "selector": {
+    "role": "dialog"
+   },
+   "timeout_ms": 5000,
+   "type": "exists"
+  },
+  "window_ref": "w5"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w2",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "selector": {
+    "name": "Simple Preferences",
+    "role": "window"
+   },
+   "timeout_ms": 5000,
+   "type": "exists"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r58",
+    "type": "click",
+    "until": {
+     "ref": "r58",
+     "state": "checked",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r60",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "negate": true,
+   "text": "Simple Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r82",
+    "type": "set_value",
+    "until": {
+     "ref": "r82",
+     "timeout_ms": 3000,
+     "type": "value",
+     "value": "200"
+    },
+    "value": "200"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r82",
+    "type": "set_value",
+    "until": {
+     "ref": "r82",
+     "timeout_ms": 3000,
+     "type": "value",
+     "value": "0"
+    },
+    "value": "0"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "ESC"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "negate": true,
+   "selector": {
+    "role": "menu"
+   },
+   "timeout_ms": 3000,
+   "type": "exists"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r133",
+    "type": "set_value",
+    "until": {
+     "ref": "r133",
+     "type": "value",
+     "value": "COMPANY"
+    },
+    "value": "COMPANY"
+   },
+   {
+    "ref": "r137",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r141",
+    "type": "set_value",
+    "until": {
+     "ref": "r141",
+     "type": "value",
+     "value": "UNIVERSITY"
+    },
+    "value": "UNIVERSITY"
+   },
+   {
+    "ref": "r145",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r6",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Character...",
+      "role": "menu item"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r7",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Properties...",
+      "role": "menuitem"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r144",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "text": "Slide Properties",
+   "timeout_ms": 10000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r183",
+    "type": "click",
+    "until": {
+     "ref": "r183",
+     "state": "selected",
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r211",
+    "type": "click",
+    "until": {
+     "ref": "r211",
+     "state": "selected",
+     "type": "state"
+    }
+   },
+   {
+    "ref": "r188",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "text": "16_2.pptx - LibreOffice Impress",
+   "timeout_ms": 10000,
+   "type": "title"
+  },
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r6",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Character...",
+      "role": "menuitem"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r100",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "text": "Character",
+   "timeout_ms": 10000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r427",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "text": "16_2.pptx - LibreOffice Impress",
+   "timeout_ms": 10000,
+   "type": "title"
+  },
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r2",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Reload",
+      "role": "menuitem"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r464",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Reload",
+      "role": "menuitemcheckbox"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r602",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Reload",
+      "role": "menuitemcheckbox"
+     },
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r13",
+    "type": "set_value",
+    "value": "chrome://settings/fonts"
+   },
+   {
+    "keys": [
+     "ENTER"
+    ],
+    "type": "keypress",
+    "until": {
+     "text": "Fonts",
+     "timeout_ms": 15000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r8",
+    "type": "click",
+    "until": {
+     "selector": {
+      "role": "menu item"
+     },
+     "timeout_ms": 3000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r174",
+    "type": "click",
+    "until": {
+     "text": "workbook-with-sample-database.xlsx - LibreOffice Calc",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r178",
+    "type": "click"
+   },
+   {
+    "keys": [
+     "DOWN"
+    ],
+    "type": "keypress",
+    "until": {
+     "ref": "r179",
+     "state": "selected",
+     "timeout_ms": 1000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r60",
+    "type": "click",
+    "until": {
+     "ref": "r60",
+     "state": "selected",
+     "timeout_ms": 3000,
+     "type": "state"
+    }
+   },
+   {
+    "ref": "r8",
+    "type": "click"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r6",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Paragraph",
+      "role": "menu item"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r44",
+    "type": "click",
+    "until": {
+     "selector": {
+      "name": "Sheet2",
+      "role": "tab"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r141",
+    "type": "set_value",
+    "until": {
+     "ref": "r141",
+     "timeout_ms": 2000,
+     "type": "value",
+     "value": "Sheet2"
+    },
+    "value": "Sheet2"
+   },
+   {
+    "ref": "r144",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "Append Sheet",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "w1",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "CTRL",
+     ","
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "text": "Settings",
+   "timeout_ms": 10000,
+   "type": "title"
+  },
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r54",
+    "type": "set_value",
+    "until": {
+     "ref": "r54",
+     "type": "value",
+     "value": ">Preferences: Open Settings (UI)"
+    },
+    "value": ">Preferences: Open Settings (UI)"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r147",
+    "type": "set_value",
+    "until": {
+     "ref": "r147",
+     "type": "value",
+     "value": "afterDelay"
+    },
+    "value": "afterDelay"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r111",
+    "type": "click",
+    "until": {
+     "ref": "r111",
+     "state": "focused",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   },
+   {
+    "text": "auto save delay",
+    "type": "type",
+    "until": {
+     "match": "contains",
+     "ref": "r111",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "auto save delay"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r220",
+    "type": "set_value",
+    "until": {
+     "ref": "r220",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": 500
+    },
+    "value": "500"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w1"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "ALT",
+     "F4"
+    ],
+    "type": "keypress",
+    "until": {
+     "negate": true,
+     "text": "GNU Image Manipulation Program",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w1"
+ },
+ {
+  "app": "gimp",
+  "mode": "observe",
+  "observe": "full",
+  "until": {
+   "text": "GNU Image Manipulation Program",
+   "timeout_ms": 15000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "r133",
+    "type": "click",
+    "until": {
+     "ref": "r133",
+     "state": "checked",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   },
+   {
+    "ref": "r134",
+    "type": "set_value",
+    "until": {
+     "ref": "r134",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "20 cm"
+    },
+    "value": "20 cm"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "app": "soffice",
+  "mode": "observe",
+  "observe": "tree",
+  "until": {
+   "text": "30_1.pptx - LibreOffice Impress",
+   "timeout_ms": 20000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "text": "Simple Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r22",
+    "type": "click",
+    "until": {
+     "text": "Input & Codecs Settings",
+     "timeout_ms": 5000,
+     "type": "text"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r22",
+    "type": "click",
+    "until": {
+     "ref": "r22",
+     "state": "checked",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "Q"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "app": "vlc",
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "negate": true,
+   "text": "VLC media player",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "title": "Advanced Preferences",
+    "type": "activate",
+    "until": {
+     "text": "Advanced Preferences",
+     "timeout_ms": 3000,
+     "type": "title"
+    }
+   },
+   {
+    "keys": [
+     "CTRL",
+     "Q"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "negate": true,
+   "text": "VLC media player",
+   "timeout_ms": 5000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "w3",
+    "type": "close",
+    "until": {
+     "negate": true,
+     "text": "Advanced Preferences",
+     "timeout_ms": 3000,
+     "type": "title"
+    }
+   },
+   {
+    "ref": "w2",
+    "type": "close"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "negate": true,
+   "text": "VLC media player",
+   "timeout_ms": 5000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "w3",
+    "type": "close"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "negate": true,
+   "text": "Advanced Preferences",
+   "timeout_ms": 3000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "w2",
+    "type": "close"
+   }
+  ],
+  "mode": "act",
+  "observe": "none",
+  "until": {
+   "negate": true,
+   "text": "VLC media player",
+   "timeout_ms": 5000,
+   "type": "title"
+  }
+ },
+ {
+  "app": "vlc",
+  "mode": "observe",
+  "observe": "none",
+  "until": {
+   "text": "VLC media player",
+   "timeout_ms": 10000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "until": {
+   "text": "Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r60",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "Simple Preferences",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "keys": [
+     "CTRL",
+     "P"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "text": "Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  },
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r136",
+    "type": "click",
+    "until": {
+     "ref": "r136",
+     "state": "expanded",
+     "timeout_ms": 3000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "title": "Advanced Preferences",
+    "type": "close"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "until": {
+   "negate": true,
+   "text": "Advanced Preferences",
+   "timeout_ms": 5000,
+   "type": "title"
+  }
+ },
+ {
+  "actions": [
+   {
+    "ref": "r118",
+    "type": "click",
+    "until": {
+     "ref": "r118",
+     "state": "selected",
+     "timeout_ms": 3000,
+     "type": "state"
+    }
+   },
+   {
+    "keys": [
+     "DOWN"
+    ],
+    "type": "keypress",
+    "until": {
+     "ref": "r119",
+     "state": "selected",
+     "timeout_ms": 3000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r27",
+    "type": "click",
+    "until": {
+     "ref": "r27",
+     "state": "selected",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r150",
+    "type": "click",
+    "until": {
+     "selector": {
+      "role": "dialog"
+     },
+     "timeout_ms": 5000,
+     "type": "exists"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "tree",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r162",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "New Folder",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w3"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r164",
+    "type": "click",
+    "until": {
+     "text": "New Folder",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r168",
+    "type": "set_value",
+    "until": {
+     "ref": "r168",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "COMPANY"
+    },
+    "value": "COMPANY"
+   },
+   {
+    "ref": "r172",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "New Folder",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w4"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r175",
+    "type": "set_value",
+    "until": {
+     "ref": "r175",
+     "timeout_ms": 5000,
+     "type": "value",
+     "value": "UNIVERSITY"
+    },
+    "value": "UNIVERSITY"
+   },
+   {
+    "ref": "r179",
+    "type": "click",
+    "until": {
+     "negate": true,
+     "text": "New Folder",
+     "timeout_ms": 5000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w5"
+ },
+ {
+  "actions": [
+   {
+    "title": "New Tab - Google Chrome",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "CTRL",
+     "L"
+    ],
+    "type": "keypress"
+   },
+   {
+    "text": "chrome://settings/fonts",
+    "type": "type"
+   },
+   {
+    "keys": [
+     "ENTER"
+    ],
+    "type": "keypress",
+    "until": {
+     "text": "Fonts",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "app": "Google Chrome",
+  "mode": "act",
+  "observe": "diff"
+ },
+ {
+  "actions": [
+   {
+    "title": "New Tab - Google Chrome",
+    "type": "activate"
+   },
+   {
+    "keys": [
+     "CTRL",
+     "L"
+    ],
+    "type": "keypress"
+   },
+   {
+    "text": "chrome://settings/fonts",
+    "type": "type"
+   },
+   {
+    "keys": [
+     "ENTER"
+    ],
+    "type": "keypress",
+    "until": {
+     "text": "Fonts",
+     "timeout_ms": 10000,
+     "type": "title"
+    }
+   }
+  ],
+  "mode": "act",
+  "observe": "diff"
+ },
+ {
+  "actions": [
+   {
+    "ref": "r70",
+    "type": "click",
+    "until": {
+     "ref": "r70",
+     "state": "focused",
+     "timeout_ms": 5000,
+     "type": "state"
+    }
+   },
+   {
+    "keys": [
+     "END"
+    ],
+    "type": "keypress"
+   }
+  ],
+  "mode": "act",
+  "observe": "diff",
+  "window_ref": "w2"
+ }
+]

@@ -1,0 +1,15 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-action",
+  "operation": "resolve_and_act",
+  "accessibility": {
+    "ok": false,
+    "error": "semantic_target_not_found; no input was emitted",
+    "failure": {
+      "code": "semantic_target_not_found",
+      "phase": "precondition",
+      "facts_complete": true
+    }
+  }
+}

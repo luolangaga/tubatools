@@ -15,7 +15,8 @@ internal static class NavigationIconService
             "hardware" => "HomeTiles/hardware",
             "builtin" => "NavIcons/toolbox",
             "benchmark" => "BuiltinIcons/performance-benchmark",
-            "community" => "NavIcons/community",
+            "community" => "BuiltinIcons/plugins",
+            "ai-assistant" => "BuiltinIcons/ai-assistant",
             "settings" => "NavIcons/settings",
             _ => null
         };

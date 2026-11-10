@@ -122,11 +122,21 @@ public static class ToolUpdateService
     }
 
     private static async Task<List<ResolvedDownloadUrl>> BuildFileListAsync(ToolUpdateEntry update, CancellationToken ct)
+        => await BuildFileListAsync(update, ToolDownloaderService.ListGitCodeDirAsync,
+            ToolDownloaderService.ListGitHubDirAsync, ct);
+
+    internal static async Task<List<ResolvedDownloadUrl>> BuildFileListAsync(ToolUpdateEntry update,
+        Func<string, CancellationToken, Task<List<(string RelPath, string Sha, string FileName)>?>> listGitCode,
+        Func<string, CancellationToken, Task<List<(string RelPath, string Sha, string FileName)>?>> listGitHub,
+        CancellationToken ct)
     {
-        var remoteFiles = await ToolDownloaderService.ListGitCodeDirAsync(update.RepoPath, ct);
+        var remoteFiles = await listGitCode(update.RepoPath, ct);
+        var useGitHub = false;
         if (remoteFiles is null || remoteFiles.Count == 0)
         {
-            remoteFiles = await ToolDownloaderService.ListGitHubDirAsync(update.RepoPath, ct);
+            ct.ThrowIfCancellationRequested();
+            remoteFiles = await listGitHub(update.RepoPath, ct);
+            useGitHub = true;
             if (remoteFiles is null || remoteFiles.Count == 0)
                 throw new InvalidOperationException("无法获取远程文件列表");
         }
@@ -146,7 +156,10 @@ public static class ToolUpdateService
                 catch { }
             }
 
-            var blobUrl = $"https://raw.gitcode.com/luolangaga/tubatool/blobs/{sha}/{Uri.EscapeDataString(fileName)}";
+            // GitHub 的 blob SHA 不能用于 GitCode 镜像（镜像可能尚未同步）。
+            var blobUrl = useGitHub
+                ? $"https://raw.githubusercontent.com/luolangaga/tubatool/master/{string.Join('/', (update.RepoPath + "/" + relPath).Split('/').Select(Uri.EscapeDataString))}"
+                : $"https://raw.gitcode.com/luolangaga/tubatool/blobs/{sha}/{Uri.EscapeDataString(fileName)}";
             result.Add(new ResolvedDownloadUrl(blobUrl, relPath));
         }
 

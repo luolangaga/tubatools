@@ -1,0 +1,24 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-action",
+  "operation": "resolve_and_act",
+  "accessibility": {
+    "ok": false,
+    "error": "effect_unknown: input may have been emitted before an accessibility runtime failure; inspect fresh state before retrying.",
+    "failure": {
+      "code": "effect_unknown",
+      "phase": "post_action_observation"
+    },
+    "mutation": {
+      "partial_input_possible": true,
+      "mutation_unknown": true
+    },
+    "action_evidence": {
+      "route": "",
+      "geometry_sampled": false,
+      "readback_sampled": false,
+      "input_emitted": false
+    }
+  }
+}

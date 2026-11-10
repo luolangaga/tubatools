@@ -22,7 +22,7 @@ TubaWinUi3.WinUI3/            主程序（WinUI 3 / .NET 10 / Windows App SDK）
   Strings/<lang>/             界面语言资源（zh-CN / en-US）
   Metadata/tools.json         工具元数据的单一事实源（描述 / 排序 / 跨分类 / 内置工具挂载）
 TubaWinUI3.BackEnd/           NativeAOT 辅助进程（主动拦截）
-TubaWinUi3.Compatible/        .NET Framework 4.8 WinForms 兼容版（旧系统）
+TubaWinUi3.Tui/               .NET 8 Native AOT 控制台 TUI 兼容版
 TubaWinUi3.Tests/             xUnit 测试（工具目录 / 时间同步 / 联机 / 垃圾清理 / 本地化……）
 Tools/                        随包收录的第三方工具（按中文分类目录存放）
 installer*.iss · Launcher/    Inno Setup 安装脚本与原生启动器

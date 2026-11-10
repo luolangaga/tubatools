@@ -1,0 +1,117 @@
+{
+  "distribution": "Ubuntu 22.04",
+  "architecture": "amd64",
+  "freecad_version": "0.19.2+dfsg1-3ubuntu1",
+  "occt_version": "7.5.1+dfsg1-2ubuntu1",
+  "dependencies": [
+    "libboost-filesystem1.74.0",
+    "libboost-program-options1.74.0",
+    "libboost-regex1.74.0",
+    "libboost-thread1.74.0",
+    "libc6",
+    "libcoin80c",
+    "libfontconfig1",
+    "libfreeimage3",
+    "libfreetype6",
+    "libgcc-s1",
+    "libgl1",
+    "libglu1-mesa",
+    "libmedc11",
+    "libopengl0",
+    "libpyside2-py3-5.15",
+    "libpython3.10",
+    "libqt5concurrent5",
+    "libqt5core5a",
+    "libqt5gui5",
+    "libqt5network5",
+    "libqt5opengl5",
+    "libqt5printsupport5",
+    "libqt5svg5",
+    "libqt5webkit5",
+    "libqt5widgets5",
+    "libqt5xml5",
+    "libqt5xmlpatterns5",
+    "libshiboken2-py3-5.15",
+    "libspnav0",
+    "libstdc++6",
+    "libtbb2",
+    "libtbbmalloc2",
+    "libvtk9.1",
+    "libx11-6",
+    "libxerces-c3.2",
+    "libzipios++0v5",
+    "python3-matplotlib",
+    "python3-pivy",
+    "python3-ply",
+    "python3-pyside2.qtcore",
+    "python3-pyside2.qtgui",
+    "python3-pyside2.qtsvg",
+    "python3-pyside2.qtuitools",
+    "python3-pyside2.qtwidgets",
+    "python3-pyside2.qtxml",
+    "python3-yaml",
+    "zlib1g"
+  ],
+  "packages": [
+    {
+      "file": "freecad-common_0.19.2+dfsg1-3ubuntu1_all.deb",
+      "Package": "freecad-common",
+      "Version": "0.19.2+dfsg1-3ubuntu1",
+      "Architecture": "all"
+    },
+    {
+      "file": "freecad_0.19.2+dfsg1-3ubuntu1_all.deb",
+      "Package": "freecad",
+      "Version": "0.19.2+dfsg1-3ubuntu1",
+      "Architecture": "all"
+    },
+    {
+      "file": "freecad-python3_0.19.2+dfsg1-3ubuntu1_amd64.deb",
+      "Package": "freecad-python3",
+      "Version": "0.19.2+dfsg1-3ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libfreecad-python3-0.19_0.19.2+dfsg1-3ubuntu1_amd64.deb",
+      "Package": "libfreecad-python3-0.19",
+      "Version": "0.19.2+dfsg1-3ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-foundation-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-foundation-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-data-exchange-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-data-exchange-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-ocaf-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-ocaf-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-visualization-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-visualization-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-modeling-algorithms-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-modeling-algorithms-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    },
+    {
+      "file": "libocct-modeling-data-7.5_7.5.1+dfsg1-2ubuntu1_amd64.deb",
+      "Package": "libocct-modeling-data-7.5",
+      "Version": "7.5.1+dfsg1-2ubuntu1",
+      "Architecture": "amd64"
+    }
+  ]
+}

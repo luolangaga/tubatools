@@ -668,7 +668,11 @@ public sealed partial class CpuRankingPage : Page
 
     private async Task LoadLocalRankingAsync()
     {
-        try { _localHardwareName = await Task.Run(HardwareInfoService.GetCpuName); }
+        try
+        {
+            await HardwareInfoService.LoadConfiguredCpuzAsync();
+            _localHardwareName = await Task.Run(HardwareInfoService.GetCpuName) ?? "";
+        }
         catch { _localHardwareName = "未知"; }
         UpdateLocalRanking();
     }

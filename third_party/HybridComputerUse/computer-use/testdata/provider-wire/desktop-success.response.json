@@ -1,0 +1,28 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-desktop",
+  "operation": "desktop_execute_batch",
+  "desktop": {
+    "ok": true,
+    "snapshot": {
+        "app": {"name": "", "pid": 0, "inputCapable": false},
+      "sampledAt": "2000-01-01T00:00:00Z",
+      "screenshotPngBase64": "aW1hZ2U=",
+      "screenshotMimeType": "image/png",
+      "screenshotEncoding": "png",
+      "coordinateSpace": "screen_image_px",
+      "frameId": "layout-v1-fixture",
+      "width": 1920,
+      "height": 1080
+    },
+    "gui_result": {
+      "dispatched": 3,
+      "input_events_emitted": true,
+      "input_actions_dispatched": 3,
+      "effect_unknown": true,
+      "quiescent": true,
+      "visual_change_observed": true
+    }
+  }
+}

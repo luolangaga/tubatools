@@ -234,35 +234,4 @@ public static class WinPerformanceService
         }
         catch { }
     }
-
-    public static void PopulateHardwareInfo(WinPerformanceResult result)
-    {
-        try
-        {
-            var monitor = LiteMonitorService.Instance;
-            monitor.EnsureInit();
-            var sample = monitor.Read();
-            result.CpuName = sample.CpuName;
-        }
-        catch { }
-        try
-        {
-            var searcher = new System.Management.ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem");
-            try
-            {
-                using var enumerator = searcher.Get().GetEnumerator();
-                if (enumerator.MoveNext())
-                {
-                    result.OsName = enumerator.Current["Caption"]?.ToString() ?? "";
-                }
-            }
-            finally
-            {
-                searcher.Dispose();
-            }
-        }
-        catch { }
-        if (string.IsNullOrWhiteSpace(result.OsName))
-            result.OsName = Environment.OSVersion.VersionString;
-    }
 }

@@ -1,0 +1,1821 @@
+{
+  "initialize": {
+    "2025-03-26": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "capabilities": {
+          "tools": {
+            "listChanged": false
+          }
+        },
+        "instructions": "Two tools for the running desktop. AX reads and operates application windows through accessibility: it lists windows, returns controls as rN refs, acts on them, and waits with wait steps. GUI takes full-desktop screenshots and sends pixel input. Use AX for named controls, values, menus, dialogs, windows, and keys. Use GUI for pixels, canvases, dragging, and controls that AX does not expose; after one targeted AX find misses a visible control, use GUI for it. Send all desktop input (window activation, keys, text, mouse) through these tools, not shell input utilities or scripted accessibility calls: the tools check the target window before input and report what changed, and outside input makes their refs and diffs stale. After GUI input, read AX again before reusing refs.",
+        "protocolVersion": "2025-03-26",
+        "serverInfo": {
+          "name": "computer-use",
+          "version": "\u003cversion\u003e"
+        }
+      }
+    },
+    "2025-06-18": {
+      "id": 1,
+      "jsonrpc": "2.0",
+      "result": {
+        "capabilities": {
+          "tools": {
+            "listChanged": false
+          }
+        },
+        "instructions": "Two tools for the running desktop. AX reads and operates application windows through accessibility: it lists windows, returns controls as rN refs, acts on them, and waits with wait steps. GUI takes full-desktop screenshots and sends pixel input. Use AX for named controls, values, menus, dialogs, windows, and keys. Use GUI for pixels, canvases, dragging, and controls that AX does not expose; after one targeted AX find misses a visible control, use GUI for it. Send all desktop input (window activation, keys, text, mouse) through these tools, not shell input utilities or scripted accessibility calls: the tools check the target window before input and report what changed, and outside input makes their refs and diffs stale. After GUI input, read AX again before reusing refs.",
+        "protocolVersion": "2025-06-18",
+        "serverInfo": {
+          "name": "computer-use",
+          "version": "\u003cversion\u003e"
+        }
+      }
+    }
+  },
+  "tools_list": {
+    "id": 2,
+    "jsonrpc": "2.0",
+    "result": {
+      "tools": [
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "title": "Accessibility"
+          },
+          "description": "Accessibility for application windows. Modes: apps lists confirmed windows (wN, title, app, active) and reports incomplete inventories; missing windows then remain unknown. observe returns the window tree with rN refs. find returns matching rN. act runs ordered steps, checks them before input, stops at the first failed step, and reports each target's change, windows opened/closed/focused, and a diff. Copy rN/wN exactly; stale refs fail. keypress/type without ref go to the focused window. select marks ref, its text substring, or ref..to_ref (paragraphs, cells) and reports the selection read back. activate/close take a title substring or wN. A wait step sends no input and fails the batch on timeout: window (title, any app), query (as find), ref with value/state/text, or text; gone inverts. settle needs no prediction: it waits until the UI changes after the step before it and stops changing; it fails only if nothing changed. After a window wait, keys go to that window, after settle to the focused one. Skip waits the report answers. Errors return code and hint. Examples:\n{\"mode\":\"act\",\"actions\":[{\"type\":\"click\",\"ref\":\"r12\"},{\"type\":\"wait\",\"window\":\"Export\"},{\"type\":\"type\",\"text\":\"q3.csv\"},{\"type\":\"keypress\",\"keys\":[\"ENTER\"]}]}\n{\"mode\":\"find\",\"window_ref\":\"w2\",\"query\":{\"role\":\"button\",\"name_contains\":\"Save\"}}",
+          "inputSchema": {
+            "$defs": {
+              "query": {
+                "additionalProperties": false,
+                "description": "At least one filter; ANDed, case-insensitive.",
+                "properties": {
+                  "name_contains": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  "name_equals": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  "role": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  "state": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  "text_contains": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  },
+                  "text_equals": {
+                    "pattern": "\\S",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "additionalProperties": false,
+            "not": {
+              "required": [
+                "app",
+                "window_ref"
+              ]
+            },
+            "properties": {
+              "actions": {
+                "description": "act: ordered steps; a failed step stops the batch. Wait timeouts total at most 60000 ms; an omitted timeout counts as 5000 ms.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "direction": {
+                      "enum": [
+                        "up",
+                        "down",
+                        "left",
+                        "right"
+                      ],
+                      "type": "string"
+                    },
+                    "gone": {
+                      "description": "wait until it is absent.",
+                      "type": "boolean"
+                    },
+                    "keys": {
+                      "description": "One chord, e.g. [\"CTRL\",\"S\"].",
+                      "items": {
+                        "maxLength": 64,
+                        "pattern": "^\\S(.*\\S)?$",
+                        "type": "string"
+                      },
+                      "maxItems": 8,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "pages": {
+                      "exclusiveMinimum": 0,
+                      "maximum": 100,
+                      "type": "number"
+                    },
+                    "query": {
+                      "$ref": "#/$defs/query"
+                    },
+                    "ref": {
+                      "description": "rN element; wN for activate/close. Omit for keys/text to the focused window.",
+                      "pattern": "^[rw][1-9][0-9]*$",
+                      "type": "string"
+                    },
+                    "settle": {
+                      "description": "wait: true waits until the UI changes after the step before it, then stops changing.",
+                      "type": "boolean"
+                    },
+                    "state": {
+                      "description": "wait: ref state, e.g. checked.",
+                      "pattern": "\\S",
+                      "type": "string"
+                    },
+                    "text": {
+                      "description": "wait: text in the ref element, or anywhere in the window. select: substring of ref to select.",
+                      "maxLength": 10000,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "timeout_ms": {
+                      "description": "wait: default 5000.",
+                      "maximum": 60000,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "title": {
+                      "description": "activate/close: unique window-title substring, instead of wN.",
+                      "pattern": "\\S",
+                      "type": "string"
+                    },
+                    "to_ref": {
+                      "description": "select: range end; ref..to_ref spans text or cells.",
+                      "pattern": "^r[1-9][0-9]*$",
+                      "type": "string"
+                    },
+                    "type": {
+                      "enum": [
+                        "click",
+                        "type",
+                        "keypress",
+                        "set_value",
+                        "select",
+                        "scroll",
+                        "activate",
+                        "close",
+                        "wait"
+                      ],
+                      "type": "string"
+                    },
+                    "value": {
+                      "maxLength": 10000,
+                      "type": "string"
+                    },
+                    "window": {
+                      "description": "wait: a top-level window whose title contains this, on the whole desktop.",
+                      "pattern": "\\S",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 64,
+                "minItems": 1,
+                "type": "array"
+              },
+              "app": {
+                "description": "App name, app id, or PID; use once, then window_ref.",
+                "pattern": "\\S",
+                "type": "string"
+              },
+              "cursor": {
+                "description": "find: next_cursor from a truncated result; send with mode find only.",
+                "pattern": "^f[1-9][0-9]*$",
+                "type": "string"
+              },
+              "limit": {
+                "description": "find page size; default 20.",
+                "maximum": 50,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "mode": {
+                "description": "apps lists confirmed top-level windows (wN, title, app, active) and reports incomplete inventories; observe returns a tree or diff with rN; find returns matching rN; act runs actions.",
+                "enum": [
+                  "apps",
+                  "observe",
+                  "find",
+                  "act"
+                ],
+                "type": "string"
+              },
+              "observe": {
+                "description": "Returned evidence. act: default diff; explicit tree returns the complete window tree, full adds the full-desktop GUI screenshot. observe: default tree. none only with act.",
+                "enum": [
+                  "diff",
+                  "tree",
+                  "full",
+                  "screenshot",
+                  "none"
+                ],
+                "type": "string"
+              },
+              "query": {
+                "$ref": "#/$defs/query"
+              },
+              "root": {
+                "description": "observe: subtree at rN or the focused element.",
+                "pattern": "^(focused|r[1-9][0-9]*)$",
+                "type": "string"
+              },
+              "scope": {
+                "description": "observe/find; default window.",
+                "enum": [
+                  "window",
+                  "content"
+                ],
+                "type": "string"
+              },
+              "window_ref": {
+                "description": "observe/find: window to read. act: omit when actions have refs, which name the window; it only sends ref-less keys/text to wN instead of the focused window.",
+                "pattern": "^w[1-9][0-9]*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          "name": "AX",
+          "title": "Accessibility"
+        },
+        {
+          "annotations": {
+            "destructiveHint": true,
+            "openWorldHint": false,
+            "title": "Desktop screenshot and input"
+          },
+          "description": "Full-desktop screenshot and pixel input. {\"actions\":[{\"type\":\"screenshot\"}]} alone observes; {\"type\":\"zoom\",\"region\":[x0,y0,x1,y1]} alone enlarges a frame region to read small text and icons. Any other batch is checked before input and returns one final screenshot. x/y are pixels of the latest full-desktop image (screen width x height) from GUI or AX full/screenshot, which return the same frame. type/keypress go to the current focus, so click the field first. Batch the actions planned from one screenshot; end the batch after an action that may open, close, or move a window, and plan the rest from the returned image. GUI cannot address windows; AX activates and closes them by title. wait is one second with no observation, at most 20 s per batch. Errors return code and hint like AX; gui_frame_stale means nothing was sent: replan from the returned screenshot. Example: {\"actions\":[{\"type\":\"click\",\"x\":640,\"y\":412},{\"type\":\"type\",\"text\":\"hello\"},{\"type\":\"keypress\",\"keys\":[\"ENTER\"]}]}",
+          "inputSchema": {
+            "description": "One screenshot or zoom action observes; otherwise run an input batch.",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "actions": {
+                    "items": {
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "const": "screenshot",
+                              "description": "Capture the final full desktop; this must be the only action.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "region": {
+                              "description": "[x0,y0,x1,y1] frame pixels; sides \u003e= 8.",
+                              "items": {
+                                "minimum": 0,
+                                "type": "number"
+                              },
+                              "maxItems": 4,
+                              "minItems": 4,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "zoom",
+                              "description": "Look only: enlarge a frame region; alone.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "region"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "maxItems": 1,
+                    "minItems": 1,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "actions"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "actions": {
+                    "description": "Ordered GUI actions.",
+                    "items": {
+                      "description": "One GUI action.",
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "button": {
+                              "description": "Mouse button. Defaults to left.",
+                              "enum": [
+                                "left",
+                                "right",
+                                "wheel",
+                                "back",
+                                "forward"
+                              ],
+                              "type": "string"
+                            },
+                            "keys": {
+                              "description": "Held modifiers.",
+                              "items": {
+                                "enum": [
+                                  "CTRL",
+                                  "CONTROL",
+                                  "SHIFT",
+                                  "ALT",
+                                  "SUPER"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "click",
+                              "description": "Click.",
+                              "type": "string"
+                            },
+                            "x": {
+                              "description": "Screenshot X pixel.",
+                              "type": "number"
+                            },
+                            "y": {
+                              "description": "Screenshot Y pixel.",
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "x",
+                            "y"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "keys": {
+                              "description": "Held modifiers.",
+                              "items": {
+                                "enum": [
+                                  "CTRL",
+                                  "CONTROL",
+                                  "SHIFT",
+                                  "ALT",
+                                  "SUPER"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "double_click",
+                              "description": "Double click.",
+                              "type": "string"
+                            },
+                            "x": {
+                              "description": "Screenshot X pixel.",
+                              "type": "number"
+                            },
+                            "y": {
+                              "description": "Screenshot Y pixel.",
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "x",
+                            "y"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "keys": {
+                              "description": "Held modifiers.",
+                              "items": {
+                                "enum": [
+                                  "CTRL",
+                                  "CONTROL",
+                                  "SHIFT",
+                                  "ALT",
+                                  "SUPER"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "move",
+                              "description": "Move pointer.",
+                              "type": "string"
+                            },
+                            "x": {
+                              "description": "Screenshot X pixel.",
+                              "type": "number"
+                            },
+                            "y": {
+                              "description": "Screenshot Y pixel.",
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "x",
+                            "y"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "keys": {
+                              "description": "Held modifiers.",
+                              "items": {
+                                "enum": [
+                                  "CTRL",
+                                  "CONTROL",
+                                  "SHIFT",
+                                  "ALT",
+                                  "SUPER"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "path": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "x": {
+                                    "description": "X pixel in the exact returned full-desktop image",
+                                    "type": "number"
+                                  },
+                                  "y": {
+                                    "description": "Y pixel in the exact returned full-desktop image",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "x",
+                                  "y"
+                                ],
+                                "type": "object"
+                              },
+                              "maxItems": 256,
+                              "minItems": 2,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "drag",
+                              "description": "Drag path.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "path"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "scroll_x": {
+                                  "not": {
+                                    "const": 0
+                                  }
+                                }
+                              },
+                              "required": [
+                                "scroll_x"
+                              ]
+                            },
+                            {
+                              "properties": {
+                                "scroll_y": {
+                                  "not": {
+                                    "const": 0
+                                  }
+                                }
+                              },
+                              "required": [
+                                "scroll_y"
+                              ]
+                            }
+                          ],
+                          "properties": {
+                            "keys": {
+                              "description": "Held modifiers.",
+                              "items": {
+                                "enum": [
+                                  "CTRL",
+                                  "CONTROL",
+                                  "SHIFT",
+                                  "ALT",
+                                  "SUPER"
+                                ],
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "scroll_x": {
+                              "maximum": 2000,
+                              "minimum": -2000,
+                              "type": "number"
+                            },
+                            "scroll_y": {
+                              "maximum": 2000,
+                              "minimum": -2000,
+                              "type": "number"
+                            },
+                            "type": {
+                              "const": "scroll",
+                              "description": "Scroll at a point.",
+                              "type": "string"
+                            },
+                            "x": {
+                              "description": "Screenshot X pixel.",
+                              "type": "number"
+                            },
+                            "y": {
+                              "description": "Screenshot Y pixel.",
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "x",
+                            "y"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "text": {
+                              "maxLength": 10000,
+                              "type": "string"
+                            },
+                            "type": {
+                              "const": "type",
+                              "description": "Type literal text.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "text"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "keys": {
+                              "description": "PAGEUP/PAGE_UP/PAGEDOWN/PAGE_DOWN.",
+                              "items": {
+                                "maxLength": 64,
+                                "pattern": "\\S",
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            "type": {
+                              "const": "keypress",
+                              "description": "Press one key chord.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "keys"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "type": {
+                              "const": "wait",
+                              "description": "Wait exactly one second without an intermediate observation; do not stack waits.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "maxItems": 64,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "settle_ms": {
+                    "description": "Visual stillness: default 800ms, max 3000ms. Final screenshot stillness, not semantic success and not extra sleep. After wait, usually omit it. At the cap inspect the screenshot or use an AX wait step.",
+                    "maximum": 3000,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "actions"
+                ],
+                "type": "object"
+              }
+            ],
+            "properties": {
+              "actions": {},
+              "settle_ms": {}
+            },
+            "type": "object"
+          },
+          "name": "GUI",
+          "title": "Desktop screenshot and input"
+        }
+      ]
+    }
+  },
+  "protocol": [
+    {
+      "request": "ping",
+      "response": {
+        "id": 3,
+        "jsonrpc": "2.0",
+        "result": {}
+      }
+    },
+    {
+      "request": "bogus/method",
+      "response": {
+        "error": {
+          "code": -32601,
+          "message": "Method not found: bogus/method"
+        },
+        "id": 3,
+        "jsonrpc": "2.0"
+      }
+    }
+  ],
+  "calls": [
+    {
+      "request": {
+        "arguments": {},
+        "tool": "AX"
+      },
+      "response": {
+        "id": 10,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"mode\",\"message\":\"mode is required: apps, observe, find, or act\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "bogus"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 11,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"mode\",\"message\":\"mode must be apps, observe, find, or act; got \\\"bogus\\\"\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "assert_ax"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 12,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"mode\",\"message\":\"mode \\\"assert_ax\\\" was removed; wait with an act call that has only wait steps\",\"hint\":\"{\\\"mode\\\":\\\"act\\\",\\\"actions\\\":[{\\\"type\\\":\\\"wait\\\",\\\"ref\\\":\\\"r1\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "bogus": 1,
+          "mode": "observe"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 13,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"bogus\",\"message\":\"mode \\\"observe\\\" does not accept \\\"bogus\\\"; accepted: mode, app, window_ref, scope, observe, root\",\"hint\":\"{\\\"mode\\\":\\\"observe\\\",\\\"window_ref\\\":\\\"w1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "observe",
+          "observation_target": "apps"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 14,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"observation_target\",\"message\":\"observation_target was removed; list windows with mode \\\"apps\\\"\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app_ref": "a1",
+          "mode": "observe"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 15,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"app_ref\",\"message\":\"\\\"app_ref\\\" is not a field here; use \\\"app\\\"\",\"hint\":\"{\\\"mode\\\":\\\"observe\\\",\\\"app\\\":\\\"a1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "observe"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 16,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"app\",\"message\":\"observe needs app or window_ref\",\"hint\":\"{\\\"mode\\\":\\\"observe\\\",\\\"window_ref\\\":\\\"w1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "observe",
+          "window_ref": "w1"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 17,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"window_ref\",\"message\":\"use app or window_ref, not both; window_ref already identifies its app\",\"hint\":\"{\\\"mode\\\":\\\"observe\\\",\\\"window_ref\\\":\\\"w1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 18,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions\",\"message\":\"act requires actions\",\"hint\":\"{\\\"mode\\\":\\\"act\\\",\\\"actions\\\":[{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 19,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions\",\"message\":\"act needs at least one action; use mode \\\"observe\\\" to read\",\"hint\":\"[{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}]\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "click"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 20,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].ref\",\"message\":\"click needs ref: an rN copied from observe or find\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ref": "r1",
+              "type": "click"
+            }
+          ],
+          "app": "x",
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 21,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"app\",\"message\":\"mode \\\"act\\\" does not accept \\\"app\\\"; accepted: mode, window_ref, actions, observe\",\"hint\":\"{\\\"mode\\\":\\\"act\\\",\\\"actions\\\":[{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ref": "r1",
+              "type": "bogus"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 22,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].type\",\"message\":\"type must be one of click, type, keypress, set_value, select, scroll, activate, close, wait; got \\\"bogus\\\"\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "action": "close",
+              "ref": "w1"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 23,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].action\",\"message\":\"actions use \\\"type\\\", not \\\"action\\\"\",\"hint\":\"{\\\"type\\\":\\\"close\\\",\\\"ref\\\":\\\"w1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "action": "press",
+              "ref": "r1"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 24,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].action\",\"message\":\"actions use \\\"type\\\", not \\\"action\\\"\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "target": {
+                "ref": "r1"
+              },
+              "type": "click"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 25,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].target\",\"message\":\"\\\"target\\\" is not a field here; use \\\"ref\\\"\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ref": "w1",
+              "type": "close"
+            },
+            {
+              "ref": "r1",
+              "type": "click"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 26,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[1]\",\"message\":\"a closed window cannot take later input; after close, wait for the window to be gone first\",\"hint\":\"{\\\"type\\\":\\\"wait\\\",\\\"window\\\":\\\"window title\\\",\\\"gone\\\":true}\",\"input_emitted\":false,\"completed\":0,\"requested\":2,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ref": "w1",
+              "title": "Report",
+              "type": "activate"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 27,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0]\",\"message\":\"activate needs exactly one of ref (wN) or title\",\"hint\":\"{\\\"type\\\":\\\"activate\\\",\\\"title\\\":\\\"window title\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "keys": [],
+              "type": "keypress"
+            }
+          ],
+          "mode": "act",
+          "window_ref": "w1"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 28,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].keys\",\"message\":\"keys must name 1 to 8 keys\",\"hint\":\"{\\\"type\\\":\\\"keypress\\\",\\\"keys\\\":[\\\"CTRL\\\",\\\"S\\\"]}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ref": "r1",
+              "type": "click"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 29,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"stale_ref\",\"message\":\"actions[0].ref: short AX ref \\\"r1\\\" was never issued in this session\",\"hint\":\"{\\\"mode\\\":\\\"find\\\",\\\"window_ref\\\":\\\"wN\\\",\\\"query\\\":{\\\"name_contains\\\":\\\"...\\\"}}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"failure_code\":\"unknown_ref\",\"preflight_only\":true}",
+              "type": "text"
+            },
+            {
+              "text": "actions[0].ref: short AX ref \"r1\" was never issued in this session\nNo action was sent.\n",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "keys": [
+                "CTRL",
+                "S"
+              ],
+              "type": "keypress"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 30,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"message\":\"the window list could not be read: desktop unavailable in contract test\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "title": "Report",
+              "type": "activate"
+            }
+          ],
+          "mode": "act"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 31,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"path\":\"actions[0].title\",\"message\":\"the window list could not be read: desktop unavailable in contract test\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "find"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 32,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"app\",\"message\":\"find needs app or window_ref, or a cursor from a truncated result\",\"hint\":\"{\\\"mode\\\":\\\"find\\\",\\\"window_ref\\\":\\\"w1\\\",\\\"query\\\":{\\\"name_contains\\\":\\\"Save\\\"}}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "find",
+          "query": {}
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 33,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"query\",\"message\":\"query needs at least one filter: role, name_equals, name_contains, text_equals, text_contains, state\",\"hint\":\"{\\\"name_contains\\\":\\\"Save\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "find",
+          "query": {
+            "name": "Save"
+          }
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 34,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"query.name\",\"message\":\"query does not accept \\\"name\\\"; accepted: role, name_equals, name_contains, text_equals, text_contains, state\",\"hint\":\"{\\\"name_contains\\\":\\\"Save\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "limit": -1,
+          "mode": "find",
+          "query": {
+            "role": "button"
+          }
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 35,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"limit\",\"message\":\"limit must be an integer from 1 to 50\",\"hint\":\"{\\\"mode\\\":\\\"find\\\",\\\"app\\\":\\\"gedit\\\",\\\"query\\\":{\\\"role\\\":\\\"button\\\"}}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "cursor": "f1",
+          "mode": "find"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 36,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"message\":\"AX find cursor: unknown AX find cursor \\\"f1\\\"\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "observe",
+          "until": {
+            "ref": "r1",
+            "type": "value_equals"
+          }
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 37,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"until\",\"message\":\"\\\"until\\\" was removed; wait with a step of type \\\"wait\\\" in act actions, at the point in the order where the batch should wait\",\"hint\":\"{\\\"mode\\\":\\\"act\\\",\\\"actions\\\":[{\\\"type\\\":\\\"click\\\",\\\"ref\\\":\\\"r1\\\"},{\\\"type\\\":\\\"wait\\\",\\\"window\\\":\\\"title\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "observe",
+          "until": {
+            "text": "Saved",
+            "timeout_ms": 1,
+            "type": "title"
+          }
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 38,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"until\",\"message\":\"\\\"until\\\" was removed; wait with a step of type \\\"wait\\\" in act actions, at the point in the order where the batch should wait\",\"hint\":\"{\\\"mode\\\":\\\"act\\\",\\\"actions\\\":[{\\\"type\\\":\\\"wait\\\",\\\"window\\\":\\\"Saved\\\",\\\"timeout_ms\\\":1}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0,\"batch\":{\"rejected_before_first_action\":true},\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "app": "gedit",
+          "mode": "observe"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 39,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"message\":\"desktop unavailable in contract test\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "apps"
+        },
+        "tool": "AX"
+      },
+      "response": {
+        "id": 40,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"message\":\"desktop unavailable in contract test\",\"hint\":\"{\\\"mode\\\":\\\"apps\\\"}\",\"input_emitted\":false,\"preflight_only\":true}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {},
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 41,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions\",\"message\":\"GUI requires actions; use {\\\"actions\\\":[{\\\"type\\\":\\\"screenshot\\\"}]} for an immediate observation\",\"hint\":\"{\\\"actions\\\":[{\\\"type\\\":\\\"screenshot\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": []
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 42,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions\",\"message\":\"GUI actions must not be empty; use one screenshot action for observation\",\"hint\":\"{\\\"actions\\\":[{\\\"type\\\":\\\"screenshot\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":0}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "screenshot"
+            },
+            {
+              "type": "click",
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 43,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions\",\"message\":\"GUI screenshot must be the only action because no intermediate screenshot is returned\",\"hint\":\"{\\\"actions\\\":[{\\\"type\\\":\\\"screenshot\\\"}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":2}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "click"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 44,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0]\",\"message\":\"actions[0] click requires x and y\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"x\\\":640,\\\"y\\\":412}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "button": "middle-ish",
+              "type": "click",
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 45,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].button\",\"message\":\"actions[0].button \\\"middle-ish\\\" is unsupported; it must be left, right, wheel, back, or forward\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"x\\\":1,\\\"y\\\":1}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "ms": 5,
+              "type": "wait"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 46,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].ms\",\"message\":\"actions[0] wait does not accept fields: \\\"ms\\\"; accepted fields: type\",\"hint\":\"{\\\"type\\\":\\\"wait\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "scroll",
+              "x": 1,
+              "y": 1
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 47,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0]\",\"message\":\"actions[0] scroll requires at least one of scroll_x or scroll_y\",\"hint\":\"{\\\"type\\\":\\\"scroll\\\",\\\"x\\\":640,\\\"y\\\":412,\\\"scroll_y\\\":-3}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "keys": [],
+              "type": "keypress"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 48,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].keys\",\"message\":\"actions[0].keys must contain 1 to 8 items\",\"hint\":\"{\\\"type\\\":\\\"keypress\\\",\\\"keys\\\":[\\\"CTRL\\\",\\\"S\\\"]}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "type"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 49,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0]\",\"message\":\"actions[0] type requires text\",\"hint\":\"{\\\"type\\\":\\\"type\\\",\\\"text\\\":\\\"hello\\\"}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "bogus"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 50,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].type\",\"message\":\"actions[0].type \\\"bogus\\\" is unsupported; it must be click, double_click, move, drag, scroll, type, keypress, or wait\",\"hint\":\"{\\\"type\\\":\\\"click\\\",\\\"x\\\":640,\\\"y\\\":412}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "path": [
+                {
+                  "x": 1,
+                  "y": 1
+                }
+              ],
+              "type": "drag"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 51,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"invalid_argument\",\"path\":\"actions[0].path\",\"message\":\"actions[0].path must contain 2 to 256 items\",\"hint\":\"{\\\"type\\\":\\\"drag\\\",\\\"path\\\":[{\\\"x\\\":100,\\\"y\\\":200},{\\\"x\\\":300,\\\"y\\\":200}]}\",\"input_emitted\":false,\"completed\":0,\"requested\":1}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "actions": [
+            {
+              "type": "screenshot"
+            }
+          ]
+        },
+        "tool": "GUI"
+      },
+      "response": {
+        "id": 52,
+        "jsonrpc": "2.0",
+        "result": {
+          "content": [
+            {
+              "text": "{\"ok\":false,\"code\":\"runtime_error\",\"message\":\"desktop unavailable in contract test\",\"hint\":\"{\\\"actions\\\":[{\\\"type\\\":\\\"screenshot\\\"}]}\",\"input_emitted\":false}",
+              "type": "text"
+            }
+          ],
+          "isError": true
+        }
+      }
+    },
+    {
+      "request": {
+        "arguments": {},
+        "tool": "Nope"
+      },
+      "response": {
+        "error": {
+          "code": -32602,
+          "message": "Unknown tool \"Nope\"; use AX or GUI"
+        },
+        "id": 53,
+        "jsonrpc": "2.0"
+      }
+    },
+    {
+      "request": {
+        "arguments": {
+          "mode": "observe",
+          "observation_target": "apps"
+        },
+        "tool": " ax "
+      },
+      "response": {
+        "error": {
+          "code": -32602,
+          "message": "Unknown tool \" ax \"; use AX or GUI"
+        },
+        "id": 54,
+        "jsonrpc": "2.0"
+      }
+    }
+  ],
+  "cli": {
+    "--help": "Computer Use\n\nUsage:\n  computer-use [command] [options]\n\nCommands:\n  mcp                  Start the stdio MCP server.\n  doctor               Print platform runtime requirements.\n  call \u003cAX|GUI\u003e         Call one public tool, or run a JSON array of calls.\n  help [command]       Show general or command-specific help.\n  version              Print the CLI version.\n\nNotes:\n  Run in the signed-in desktop session. Native providers use Linux AT-SPI2,\n  macOS Accessibility, or Windows UI Automation. Run doctor for requirements.\n",
+    "help call": "Usage:\n  computer-use call \u003cAX|GUI\u003e [--args '\u003cjson-object\u003e']\n  computer-use call --calls '\u003cjson-array\u003e'\n\nOnly the public AX and GUI tools are accepted.\n",
+    "help doctor": "Computer Use\n\nUsage:\n  computer-use [command] [options]\n\nCommands:\n  mcp                  Start the stdio MCP server.\n  doctor               Print platform runtime requirements.\n  call \u003cAX|GUI\u003e         Call one public tool, or run a JSON array of calls.\n  help [command]       Show general or command-specific help.\n  version              Print the CLI version.\n\nNotes:\n  Run in the signed-in desktop session. Native providers use Linux AT-SPI2,\n  macOS Accessibility, or Windows UI Automation. Run doctor for requirements.\n",
+    "help mcp": "Usage:\n  computer-use mcp\n\nStart the stdio MCP server.\n",
+    "help version": "Computer Use\n\nUsage:\n  computer-use [command] [options]\n\nCommands:\n  mcp                  Start the stdio MCP server.\n  doctor               Print platform runtime requirements.\n  call \u003cAX|GUI\u003e         Call one public tool, or run a JSON array of calls.\n  help [command]       Show general or command-specific help.\n  version              Print the CLI version.\n\nNotes:\n  Run in the signed-in desktop session. Native providers use Linux AT-SPI2,\n  macOS Accessibility, or Windows UI Automation. Run doctor for requirements.\n"
+  }
+}

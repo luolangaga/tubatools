@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "protocol": "computer-use-provider",
+  "ordered_input_platforms": {"darwin": true, "windows": false, "linux": false},
+  "fixtures": [
+    {"name": "ordered-input", "direction": "request", "file": "ordered-input.request.json"},
+    {"name": "ordered-input-missing-boundary", "direction": "invalid_request", "file": "ordered-input-rejected.request.json", "error_contains": "final canonical snapshot boundary"},
+    {"name": "ordered-input-success", "direction": "response", "file": "ordered-input-success.response.json", "request_file": "ordered-input.request.json"},
+    {"name": "ordered-input-partial", "direction": "response", "file": "ordered-input-partial.response.json", "request_file": "ordered-input.request.json"},
+    {"name": "ordered-input-retry", "direction": "response", "file": "ordered-input-retry.response.json", "request_file": "ordered-input.request.json"},
+    {"name": "request-rejection", "direction": "response", "file": "request-rejection.response.json", "request_file": "ordered-input-rejected.request.json"}
+  ]
+}

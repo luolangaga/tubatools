@@ -28,7 +28,8 @@ public sealed record NetworkTweakState(
     string DnsSecondary);
 
 /// <summary>DNS 预设（对照 nexbox dnsPresets 配置）。</summary>
-public sealed record DnsPreset(string Id, string Name, string Primary, string Secondary, string ColorHex);
+public sealed record DnsPreset(string Id, string Name, string Primary, string Secondary, string ColorHex,
+    string? DohTemplate = null);
 
 /// <summary>网络优化项（对照 nexbox networkOptimizerItems 配置）。</summary>
 public sealed record NetworkOptimizerItem(string Id, string StateKey, string Glyph, string ColorHex, string Title, string Description);
@@ -55,7 +56,7 @@ public static class NetworkOptimizeService
     public const double DnsLatencyGoodMs = 80;
     public const double DnsLatencyFairMs = 200;
 
-    /// <summary>DNS 预设（名称/IP 与 nexbox 完全一致）。</summary>
+    /// <summary>普通 DNS 及加密 DNS 预设；DNSPod 加密节点按官方域名动态解析，不固化已下线的测试 IP。</summary>
     public static readonly DnsPreset[] DnsPresets =
     [
         new("alidns", "阿里 DNS", "223.5.5.5", "223.6.6.6", "#FF6A00"),
@@ -64,6 +65,7 @@ public static class NetworkOptimizeService
         new("baidu", "百度 DNS", "180.76.76.76", "", "#DE2910"),
         new("google", "Google DNS", "8.8.8.8", "8.8.4.4", "#4285F4"),
         new("cloudflare", "Cloudflare", "1.1.1.1", "1.0.0.1", "#F6821F"),
+        new("dnspod-doh", "DNSPod 加密 DNS（DoH）", "doh.pub", "", "#007FFF", "https://doh.pub/dns-query"),
     ];
 
     /// <summary>网络优化项（照搬 nexbox networkOptimizerItems，另扩展 TCP 自动调谐与网络节流两项）。</summary>
@@ -423,6 +425,32 @@ public static class NetworkOptimizeService
 
     // ============ 路由网卡名（对照 route_interface_name：GetBestInterface + GetAdaptersAddresses） ============
 
+    private static readonly HttpClient DohProbeClient = new(new HttpClientHandler
+    {
+        UseProxy = false,
+        AllowAutoRedirect = false
+    }) { Timeout = TimeSpan.FromSeconds(3) };
+
+    /// <summary>通过 HTTPS 发送真实 DNS wire-format 查询，不将 UDP 延迟冒充加密 DNS 延迟。</summary>
+    public static async Task<DnsProbeResult?> TestDohLatencyAsync(string template, CancellationToken cancellationToken)
+    {
+        byte[] query = [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1];
+        using var request = new HttpRequestMessage(HttpMethod.Post, template);
+        request.Content = new ByteArrayContent(query);
+        request.Content.Headers.ContentType = new("application/dns-message");
+        request.Headers.Accept.ParseAdd("application/dns-message");
+        var started = Stopwatch.GetTimestamp();
+        using var response = await DohProbeClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (response.Content.Headers.ContentType?.MediaType != "application/dns-message"
+            || bytes.Length < 12 || bytes[0] != 0 || bytes[1] != 0 || (bytes[2] & 0x80) == 0
+            || (bytes[3] & 0x0F) != 0)
+            throw new InvalidOperationException("加密 DNS 应答无效");
+        return new DnsProbeResult(Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+            new Uri(template).Host, null);
+    }
+
     private const uint ErrorBufferOverflow = 111;
     private const uint AfInet = 2;
 
@@ -537,30 +565,73 @@ public static class NetworkOptimizeService
         }
     }
 
-    public static PerfTweakResult SetDnsServers(string dnsPrimary, string dnsSecondary)
+    public static async Task<(string Primary, string Secondary)> ResolveDnsPresetAsync(DnsPreset preset)
     {
-        // 非插值原始字符串（四引号）+ string.Format：PowerShell 花括号必须写成 {{ }}
-        // （Format 占位符转义），否则 { $_.Status } 会被当成占位符抛 FormatException
-        var script = string.Format("""
-            $ErrorActionPreference = 'SilentlyContinue'
-            $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object {{ $_.Status -eq "Up" }}
-            foreach ($adapter in $adapters) {{
-                Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses ("{0}", "{1}") -ErrorAction SilentlyContinue | Out-Null
-            }}
+        if (preset.DohTemplate is null)
+            return (preset.Primary, preset.Secondary);
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000))
+            throw new NotSupportedException("加密 DNS 预设需要 Windows 11 或更新版本；当前系统可使用普通 DNS 预设。");
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var addresses = (await Dns.GetHostAddressesAsync(new Uri(preset.DohTemplate).DnsSafeHost, timeout.Token))
+            .Where(a => a.AddressFamily == AddressFamily.InterNetwork)
+            .Select(a => a.ToString()).Distinct().Take(2).ToArray();
+        if (addresses.Length == 0)
+            throw new InvalidOperationException("无法解析加密 DNS 服务的 IPv4 节点，请检查当前网络后重试。");
+        return (addresses[0], addresses.Length > 1 ? addresses[1] : "");
+    }
+
+    /// <summary>构造脚本前验证输入；任何配置错误必须传播到页面，不能显示虚假的成功状态。</summary>
+    internal static string BuildSetDnsScript(string primary, string secondary, string? dohTemplate = null)
+    {
+        if (!IsValidIpv4(primary) || (secondary.Length > 0 && !IsValidIpv4(secondary)))
+            throw new ArgumentException("请输入有效的 IPv4 DNS 地址。");
+        if (dohTemplate is not null && (!Uri.TryCreate(dohTemplate, UriKind.Absolute, out var uri)
+            || uri.Scheme != Uri.UriSchemeHttps || uri.UserInfo.Length > 0 || uri.Fragment.Length > 0))
+            throw new ArgumentException("加密 DNS 模板必须是有效的 HTTPS 地址。");
+        var servers = secondary.Length > 0 ? $"@('{primary}', '{secondary}')" : $"@('{primary}')";
+        var encryption = dohTemplate is null ? "" : $$"""
+            if (!(Get-Command Add-DnsClientDohServerAddress -ErrorAction SilentlyContinue)) {
+                throw '当前系统不支持原生加密 DNS，请使用 Windows 11 或更新版本。'
+            }
+            foreach ($server in $servers) {
+                $existing = Get-DnsClientDohServerAddress | Where-Object { $_.ServerAddress -eq $server }
+                if ($existing) {
+                    Set-DnsClientDohServerAddress -ServerAddress $server -DohTemplate '{{dohTemplate.Replace("'", "''")}}' -AutoUpgrade $true -AllowFallbackToUdp $false
+                } else {
+                    Add-DnsClientDohServerAddress -ServerAddress $server -DohTemplate '{{dohTemplate.Replace("'", "''")}}' -AutoUpgrade $true -AllowFallbackToUdp $false
+                }
+            }
+            """;
+        return $$"""
+            $ErrorActionPreference = 'Stop'
+            $servers = {{servers}}
+            $adapters = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq 'Up' })
+            if ($adapters.Count -eq 0) { throw '没有已连接的物理网卡，未修改 DNS。' }
+            {{encryption}}
+            foreach ($adapter in $adapters) {
+                Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses $servers
+            }
             Write-Output 'OK'
-            """, dnsPrimary, dnsSecondary);
-        RunPowerShellScript(script);
-        return new PerfTweakResult(true, $"DNS 已切换到 {dnsPrimary} / {dnsSecondary}");
+            """;
+    }
+
+    public static PerfTweakResult SetDnsServers(string dnsPrimary, string dnsSecondary, string? dohTemplate = null)
+    {
+        RunPowerShellScript(BuildSetDnsScript(dnsPrimary, dnsSecondary, dohTemplate));
+        return new PerfTweakResult(true, dohTemplate is null
+            ? $"DNS 已切换到 {dnsPrimary}{(dnsSecondary.Length > 0 ? " / " + dnsSecondary : "")}"
+            : $"已启用加密 DNS：{dohTemplate}（禁止回退到明文 DNS）");
     }
 
     public static PerfTweakResult RestoreDnsServers()
     {
         // 非插值原始字符串直接原样输出（无 Format），单花括号无需转义
         var script = """
-            $ErrorActionPreference = 'SilentlyContinue'
-            $adapters = Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq "Up" }
+            $ErrorActionPreference = 'Stop'
+            $adapters = @(Get-NetAdapter -Physical | Where-Object { $_.Status -eq "Up" })
+            if ($adapters.Count -eq 0) { throw '没有已连接的物理网卡，未修改 DNS。' }
             foreach ($adapter in $adapters) {
-                Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ResetServerAddresses -ErrorAction SilentlyContinue | Out-Null
+                Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ResetServerAddresses | Out-Null
             }
             Write-Output 'OK'
             """;

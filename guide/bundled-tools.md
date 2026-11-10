@@ -14,6 +14,6 @@
 | 外设工具 | 7 | Keyboard Test / Mouse Rate / MouseTester / KeyTweak / 在线外设测试中心 |
 | 显示器工具 | 2 | UFO 测试 / Windows HDR Calibration |
 | 烤鸡工具 | 1 | FurMark 烤机版 |
-| 其他工具 | 26 | Everything / Dism++ / Rufus / Ventoy / Autoruns / ProcessMonitor / BlueScreenView / DirectX 修复 |
+| 其他工具 | 26 | Everything / Rufus / Ventoy / Autoruns / ProcessMonitor / BlueScreenView / DirectX 修复 |
 
 完整工具列表详见 [官网文档](https://tubawinui3.cn)。

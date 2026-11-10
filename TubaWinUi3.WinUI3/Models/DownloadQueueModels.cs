@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 
@@ -199,29 +199,27 @@ public sealed class UpdateInstallProcessor : IDownloadPostProcessor
         _isPortableMode = isPortableMode;
     }
 
-    public Task ExecuteAsync(string downloadedFilePath, string destinationPath,
+    public async Task ExecuteAsync(string downloadedFilePath, string destinationPath,
         IProgress<string>? statusProgress, CancellationToken ct)
     {
-        TubaWinUi3.Services.UpdateService.PruneDownloadedUpdates(downloadedFilePath);
+        if (!downloadedFilePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            await using var verified = await TubaWinUi3.Services.UpdatePackageTrust.OpenVerifiedAsync(downloadedFilePath, ct,
+                TubaWinUi3.Services.DownloadIntegrityDialog.ConfirmAsync);
+        }
         var isExe = downloadedFilePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
         var isZip = downloadedFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
 
         if (isExe)
         {
             statusProgress?.Report("正在启动安装程序...");
-            try
+            if (!await TubaWinUi3.Services.UpdateService.TryLaunchInstallerAsync(downloadedFilePath, ct))
             {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = downloadedFilePath,
-                    UseShellExecute = true
-                });
+                if (TubaWinUi3.Services.UpdateService.LastLaunchWasCancelled)
+                    throw new TubaWinUi3.Services.DownloadIntegrityCancelledException(ct);
+                throw new InvalidDataException("更新包未通过校验或无法启动。请检查网络并重新下载。");
             }
-            catch (Win32Exception ex)
-            {
-                // 下载的文件可能被杀软移除/隔离或损坏，抛给队列以 Failed 状态呈现，避免崩溃
-                throw new IOException($"无法启动更新安装程序，文件已不可用（可能被安全软件移除或磁盘错误）：{ex.Message}", ex);
-            }
+            TubaWinUi3.Services.UpdateService.PruneDownloadedUpdates(downloadedFilePath);
             // 安装包已经起来了，本进程必须真的退出（否则安装器替换文件时程序还在运行）。
             // 走 App.RequestExit 而不是 Application.Exit：「关闭时最小化到系统托盘」会把
             // 直接关窗口解读成隐藏，而且这里需要完整清理（ETW 会话/遥测/托盘图标）。
@@ -240,7 +238,6 @@ public sealed class UpdateInstallProcessor : IDownloadPostProcessor
             System.Diagnostics.Process.Start("explorer.exe", folder);
         }
 
-        return Task.CompletedTask;
     }
 }
 

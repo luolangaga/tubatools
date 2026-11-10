@@ -35,6 +35,8 @@ public sealed class PerformanceBenchmarkResult
 
     public string GpuName { get; set; } = "";
 
+    public string GpuInfo { get; set; } = "";
+
     public string OsName { get; set; } = "";
 
     public string MotherboardName { get; set; } = "";

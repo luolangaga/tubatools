@@ -11,14 +11,14 @@ public sealed partial class StressTestControl
     private bool _openingInspectionHwInfo;
     private TextBlock? _inspectionMonitorHint;
     private Button? _inspectionMonitorButton;
+    private TextBlock? _inspectionGpuLoad;
     // A compact view over the existing runner: same monitoring, stop, log and report paths.
     // Inspection presets never overwrite the standalone tool's saved settings.
     private void BuildInspectionLayout()
     {
         _settingsReady = false;
         ApplyFurMarkSettings(new FurMarkSettings { Fullscreen = false });
-        ApplyNetSettings(new NetSettings { DataRateMbps = 10, DurationMinutes = 5, TargetModeIndex = 0 });
-        CpuDurationBox.Value = GpuDurationBox.Value = NetDurationBox.Value = 5;
+        CpuDurationBox.Value = GpuDurationBox.Value = 5;
         _settingsReady = true;
 
         var root = new Grid { RowSpacing = 8 };
@@ -26,15 +26,16 @@ public sealed partial class StressTestControl
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var options = new Grid { ColumnSpacing = 8 };
         options.ColumnDefinitions.Add(new ColumnDefinition());
         options.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var choices = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        foreach (var box in new[] { CpuSelBox, GpuSelBox, NetSelBox })
+        foreach (var box in new[] { CpuSelBox, GpuSelBox })
         {
             Detach(box); box.MinWidth = 0;
-            box.Content = box == CpuSelBox ? "CPU" : box == GpuSelBox ? "GPU" : "网卡";
+            box.Content = box == CpuSelBox ? "CPU" : "GPU";
             choices.Children.Add(box);
         }
         options.Children.Add(choices);
@@ -44,11 +45,29 @@ public sealed partial class StressTestControl
         _inspectionDuration.SelectionChanged += (_, _) =>
         {
             if (_inspectionDuration.SelectedItem is ComboBoxItem { Tag: int minutes })
-                CpuDurationBox.Value = GpuDurationBox.Value = NetDurationBox.Value = minutes;
+                CpuDurationBox.Value = GpuDurationBox.Value = minutes;
         };
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(_inspectionDuration, "InspectionStressDuration");
         Grid.SetColumn(_inspectionDuration, 1); options.Children.Add(_inspectionDuration);
         root.Children.Add(options);
+
+        var gpuOptions = new Grid { ColumnSpacing = 8, RowSpacing = 6 };
+        gpuOptions.ColumnDefinitions.Add(new ColumnDefinition());
+        gpuOptions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        gpuOptions.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        gpuOptions.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        Detach(StressGpuBox);
+        Detach(MonitorGpuBox);
+        Detach(MsaaBox);
+        MsaaBox.Header = "抗锯齿 (MSAA)";
+        gpuOptions.Children.Add(StressGpuBox);
+        Grid.SetColumn(MsaaBox, 1);
+        gpuOptions.Children.Add(MsaaBox);
+        Grid.SetRow(MonitorGpuBox, 1);
+        Grid.SetColumnSpan(MonitorGpuBox, 2);
+        gpuOptions.Children.Add(MonitorGpuBox);
+        Grid.SetRow(gpuOptions, 1);
+        root.Children.Add(gpuOptions);
 
         var commands = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         foreach (var button in new[] { StartStressBtn, StopBtn, ExportBtn })
@@ -56,7 +75,7 @@ public sealed partial class StressTestControl
             Detach(button); button.Padding = new Thickness(10, 6, 10, 6);
             commands.Children.Add(button);
         }
-        Grid.SetRow(commands, 1); root.Children.Add(commands);
+        Grid.SetRow(commands, 2); root.Children.Add(commands);
 
         var monitor = new Grid { ColumnSpacing = 8 };
         monitor.ColumnDefinitions.Add(new ColumnDefinition());
@@ -69,18 +88,20 @@ public sealed partial class StressTestControl
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(_inspectionMonitorButton, "InspectionOpenHwInfo");
         _inspectionMonitorButton.Click += async (_, _) => await OpenInspectionHwInfoAsync();
         Grid.SetColumn(_inspectionMonitorButton, 1); monitor.Children.Add(_inspectionMonitorButton);
-        Grid.SetRow(monitor, 2); root.Children.Add(monitor);
+        Grid.SetRow(monitor, 3); root.Children.Add(monitor);
         var hwButton = new Button { Content = "打开 HWMonitor" };
         hwButton.Click += OpenHwMonitor_Click;
         commands.Children.Add(hwButton);
         var metrics = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
         for (var i = 0; i < 4; i++) metrics.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         metrics.ColumnDefinitions.Add(new ColumnDefinition()); metrics.ColumnDefinitions.Add(new ColumnDefinition());
+        var gpuLoad = new TextBlock { Text = "--", Style = GpuTempText.Style };
+        _inspectionGpuLoad = gpuLoad;
         (string Label, TextBlock Value)[] values = [
             ("CPU 温度", CpuTempText), ("GPU 温度", GpuTempText),
-            ("CPU 负载", CpuUsageText), ("已运行", ElapsedText),
+            ("CPU 负载", CpuUsageText), ("GPU 负载", gpuLoad),
             ("CPU 功耗", CpuPowerText), ("GPU 功耗", GpuPowerText),
-            ("网卡发送", NetTxRateText), ("网卡接收", NetRxRateText)];
+            ("已运行", ElapsedText)];
         for (var i = 0; i < values.Length; i++)
         {
             var (label, value) = values[i]; Detach(value); value.FontSize = 18;
@@ -92,11 +113,12 @@ public sealed partial class StressTestControl
             stack.Children.Add(value);
             Grid.SetColumn(stack, i % 2); Grid.SetRow(stack, i / 2); metrics.Children.Add(stack);
         }
-        Grid.SetRow(metrics, 3); root.Children.Add(metrics);
-        // Bounded log is the only scrollable region; settings and readings stay visible.
-        Detach(LogScrollViewer); LogScrollViewer.Height = double.NaN; LogScrollViewer.MinHeight = 24;
-        Grid.SetRow(LogScrollViewer, 4); root.Children.Add(LogScrollViewer);
-        Content = root;
+        Grid.SetRow(metrics, 4); root.Children.Add(metrics);
+        Detach(LogScrollViewer);
+        LogScrollViewer.Height = 96;
+        Grid.SetRow(LogScrollViewer, 5);
+        root.Children.Add(LogScrollViewer);
+        Content = new ScrollViewer { Content = root, HorizontalContentAlignment = HorizontalAlignment.Stretch };
     }
 
     private async Task OpenInspectionHwInfoAsync(bool onlyWhileRunning = false)

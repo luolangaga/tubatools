@@ -10,7 +10,7 @@ public sealed class LanFileShareTool : IBuiltinTool
 {
     public string Id => "lan-file-share";
     public string Name => LocalizationService.L("Builtin_lan-file-share_Name", "局域网文件分享");
-    public string Description => LocalizationService.L("Builtin_lan-file-share_Desc", "在局域网内创建HTTP文件分享服务，其他设备可通过浏览器访问和下载文件，支持拖拽上传。");
+    public string Description => LocalizationService.L("Builtin_lan-file-share_Desc", "在局域网内创建加密文件分享服务，其他设备可通过浏览器访问和下载文件，支持拖拽上传。");
     public string Glyph => "\uE8F1";
     public string Category => "网络工具";
     public BuiltinToolKind Kind => BuiltinToolKind.Dialog;
@@ -64,7 +64,7 @@ public sealed partial class LanFileSharePage : Page
         {
             ToolId = "lan-file-share",
             Title = "局域网文件分享",
-            Subtitle = "在局域网内创建HTTP文件分享服务，其他设备可通过浏览器访问和下载文件",
+            Subtitle = "复制完整链接分享；浏览器首次访问请核对地址提示中的证书指纹",
             Glyph = "\uE8F1"
         };
 
@@ -212,7 +212,15 @@ public sealed partial class LanFileSharePage : Page
         try
         {
             await _webView.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync());
-            var url = $"http://127.0.0.1:{LanFileShareService.Port}/";
+            _webView.CoreWebView2.ServerCertificateErrorDetected += (_, args) =>
+            {
+                args.Action = Uri.TryCreate(args.RequestUri, UriKind.Absolute, out var uri)
+                    && uri.Scheme == "https" && uri.Host == "127.0.0.1" && uri.Port == LanFileShareService.Port
+                    && LanHttpsServer.MatchesCertificate(args.ServerCertificate.ToPemEncoding())
+                    ? Microsoft.Web.WebView2.Core.CoreWebView2ServerCertificateErrorAction.AlwaysAllow
+                    : Microsoft.Web.WebView2.Core.CoreWebView2ServerCertificateErrorAction.Cancel;
+            };
+            var url = LanFileShareService.BuildAccessUrl("127.0.0.1");
             _webView.CoreWebView2.Navigate(url);
         }
         catch (Exception ex)
@@ -227,7 +235,7 @@ public sealed partial class LanFileSharePage : Page
     private void OpenInBrowser()
     {
         if (!LanFileShareService.IsRunning) return;
-        var url = $"http://{LanFileShareService.GetLocalIp()}:{LanFileShareService.Port}/";
+        var url = LanFileShareService.BuildAccessUrl();
         try
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
@@ -238,7 +246,7 @@ public sealed partial class LanFileSharePage : Page
     private void CopyUrl()
     {
         if (!LanFileShareService.IsRunning) return;
-        var url = $"http://{LanFileShareService.GetLocalIp()}:{LanFileShareService.Port}/";
+        var url = LanFileShareService.BuildAccessUrl();
         // 统一走 ClipboardService（占用重试 + 失败留痕），不再直连 WinRT 剪贴板
         ClipboardService.TrySetText(url);
     }
@@ -273,7 +281,8 @@ public sealed partial class LanFileSharePage : Page
         {
             var ip = LanFileShareService.GetLocalIp();
             var port = LanFileShareService.Port;
-            _urlText.Text = $"http://{ip}:{port}/";
+            _urlText.Text = $"https://{ip}:{port}/";
+            ToolTipService.SetToolTip(_urlText, "请复制完整分享链接。浏览器首次访问时核对证书 SHA-256：\n" + LanFileShareService.CertificateFingerprint);
             _fileCountText.Text = $"{LanFileShareService.SharedFiles.Count} 个文件";
         }
         else

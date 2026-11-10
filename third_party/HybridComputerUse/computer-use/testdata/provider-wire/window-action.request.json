@@ -1,0 +1,19 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-window-action",
+  "operation": "window_action",
+  "window_action": {
+    "protocol_version": 2,
+    "action": "close",
+    "app": "Editor",
+    "target": {
+      "selector": "window \"Document\"",
+      "windowHandle": "w2:fixture",
+      "role": "window",
+      "name": "Document",
+      "hasName": true
+    },
+    "observation": {}
+  }
+}

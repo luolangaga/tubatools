@@ -22,7 +22,7 @@ TubaWinUi3.WinUI3/            The app (WinUI 3 / .NET 10 / Windows App SDK)
   Strings/<lang>/             UI language resources (zh-CN / en-US)
   Metadata/tools.json         Single source of truth for tool metadata (description / order / categories / built-in mounts)
 TubaWinUI3.BackEnd/           NativeAOT helper process (active interception)
-TubaWinUi3.Compatible/        .NET Framework 4.8 WinForms edition for older systems
+TubaWinUi3.Tui/               .NET 8 Native AOT terminal compatibility edition
 TubaWinUi3.Tests/             xUnit tests (catalog / time sync / co-op / junk cleaner / localization…)
 Tools/                        Bundled third-party tools, arranged in category folders
 installer*.iss · Launcher/    Inno Setup scripts and the native launcher

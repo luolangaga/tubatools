@@ -44,6 +44,19 @@ public class DiskSmartReaderTests
 
     // ─── 解析层 ───
 
+    [Theory]
+    [InlineData(42, 18, 33, 42)]
+    [InlineData(0, 0, 34, 34)]
+    [InlineData(255, 0, 35, 35)]
+    [InlineData(0, 0, 0, null)]
+    public void AtaTemperature_UsesCurrentByteAndFallsBackToAirflow(byte current, byte extra, byte airflow, int? expected)
+    {
+        var attrs = DiskSmartReader.ParseAttributes(MakeAtaBuffer(
+            (0xC2, 100, 100, [current, extra, 0, 0, 0, 0]),
+            (0xBE, 100, 100, [airflow, 0, 0, 0, 0, 0])));
+        Assert.Equal(expected, DiskSmartReader.ParseAtaTemperature(attrs));
+    }
+
     [Fact]
     public void ParseAttributes_ReadsFieldsAndSkipsZeroIds()
     {

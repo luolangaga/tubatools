@@ -553,8 +553,8 @@ public static class UpdateService
             if (!Directory.Exists(dir)) return null;
             return Directory.GetFiles(dir)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
-                .FirstOrDefault(f => f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-                                  || f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(f => (f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                                  || f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) && IsInstallerCandidate(f));
         }
         catch { return null; }
     }
@@ -568,22 +568,20 @@ public static class UpdateService
             string.Equals(a.Name, fileName, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static void LaunchDownloadedUpdate()
-    {
-        LaunchScannedUpdate();
-    }
+    public static Task LaunchDownloadedUpdate() => LaunchScannedUpdateAsync();
 
     /// <summary>
     /// 扫描更新目录中的安装包并安全启动（exe 启动 / zip 打开所在文件夹）。永不抛出。
     /// </summary>
-    private static bool LaunchScannedUpdate()
+    private static async Task<bool> LaunchScannedUpdateAsync()
     {
+        LastLaunchWasCancelled = false;
         var file = FindDownloadedUpdateFile();
         if (file is null) return false;
 
         if (file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
-            if (TryLaunchInstaller(file))
+            if (await TryLaunchInstallerAsync(file))
             {
                 // 安装器已经起来，本进程必须真的退出（走 App.RequestExit：「关闭时最小化到
                 // 系统托盘」会把直接关窗口解读成隐藏，安装器随后会撞上正在运行的程序）
@@ -594,6 +592,7 @@ public static class UpdateService
         }
         else
         {
+            if (!await VerifyPackageForOpeningAsync(file)) return false;
             var folder = Path.GetDirectoryName(file)!;
             Process.Start("explorer.exe", folder);
             return true;
@@ -684,17 +683,15 @@ public static class UpdateService
         return null;
     }
 
-    public static void LaunchUpdate()
-    {
-        LaunchDownloadedUpdate();
-    }
+    public static Task LaunchUpdate() => LaunchDownloadedUpdate();
 
     /// <summary>
     /// 启动待定更新安装包。返回是否成功启动；失败时不会抛出异常
     /// （文件可能被杀毒软件、清理工具或磁盘错误影响）。
     /// </summary>
-    public static bool LaunchUpdateFromItem()
+    public static async Task<bool> LaunchUpdateFromItem()
     {
+        LastLaunchWasCancelled = false;
         if (_pendingDownloadItem is not null)
         {
             var fileName = _pendingDownloadItem.ResolvedFileName;
@@ -707,7 +704,7 @@ public static class UpdateService
 
             if (filePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
-                if (TryLaunchInstaller(filePath))
+                if (await TryLaunchInstallerAsync(filePath))
                 {
                     // 同上：安装器已启动，本进程必须真的退出
                     App.RequestExit();
@@ -717,13 +714,47 @@ public static class UpdateService
             }
             else
             {
+                if (!await VerifyPackageForOpeningAsync(filePath)) return false;
                 Process.Start("explorer.exe", UpdateTempDir);
                 return true;
             }
         }
 
         // 待定项不可用（如启动时检测到上一会话已下载的更新）时回退到目录扫描
-        return LaunchScannedUpdate();
+        return await LaunchScannedUpdateAsync();
+    }
+
+    public static bool LastLaunchWasCancelled { get; private set; }
+
+    private static async Task<bool> VerifyPackageForOpeningAsync(string file)
+    {
+        LastLaunchWasCancelled = false;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        try
+        {
+            await using var verified = await Task.Run(() => UpdatePackageTrust.OpenVerifiedAsync(file, timeout.Token, DownloadIntegrityDialog.ConfirmAsync));
+            return true;
+        }
+        catch (OperationCanceledException) { LastLaunchWasCancelled = true; return false; }
+        catch { return false; }
+    }
+
+    // UI readiness is a quick file-shape check, never permission to execute. Full verification and
+    // any one-time user override happen asynchronously only when installation is requested.
+    internal static bool IsInstallerCandidate(string path)
+    {
+        try
+        {
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            int first = file.ReadByte(), second = file.ReadByte();
+            return Path.GetExtension(path).ToLowerInvariant() switch
+            {
+                ".exe" => first == 'M' && second == 'Z',
+                ".zip" => first == 'P' && second == 'K',
+                _ => false
+            };
+        }
+        catch { return false; }
     }
 
     /// <summary>待定更新文件（或目录扫描到的更新文件）是否存在且有效。</summary>
@@ -732,11 +763,11 @@ public static class UpdateService
         if (_pendingDownloadItem is not null && !string.IsNullOrEmpty(_pendingDownloadItem.ResolvedFileName))
         {
             var filePath = Path.Combine(UpdateTempDir, _pendingDownloadItem.ResolvedFileName);
-            return IsInstallerFileValid(filePath);
+            return IsInstallerCandidate(filePath);
         }
 
         var file = FindDownloadedUpdateFile();
-        return file is not null && IsInstallerFileValid(file);
+        return file is not null && IsInstallerCandidate(file);
     }
 
     /// <summary>在资源管理器中打开更新下载目录。</summary>
@@ -751,56 +782,52 @@ public static class UpdateService
     }
 
     /// <summary>
-    /// 校验更新文件是否可用：存在、非空；exe 额外校验 PE 魔数（MZ 头）。
-    /// 返回 false 时文件大概率已损坏或被外部改动，应删除后重新下载。
+    /// 校验更新文件是否属于官方当前发布，并验证来自独立可信发布清单的 SHA-256。
+    /// 网络不可用、缺少摘要或文件被替换时一律拒绝，不将 MZ 文件头当作真实性证明。
     /// </summary>
     public static bool IsInstallerFileValid(string filePath)
     {
         try
         {
-            var info = new FileInfo(filePath);
-            if (!info.Exists || info.Length <= 0) return false;
-
-            if (filePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read,
-                    FileShare.ReadWrite | FileShare.Delete);
-                var magic = new byte[2];
-                return fs.Read(magic, 0, 2) == 2 && magic[0] == (byte)'M' && magic[1] == (byte)'Z';
-            }
-
+            if (!File.Exists(filePath) || new FileInfo(filePath).Length == 0) return false;
+            using var verified = Task.Run(() => UpdatePackageTrust.OpenVerifiedAsync(filePath, CancellationToken.None)).GetAwaiter().GetResult();
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     /// <summary>
     /// 校验并安全启动下载好的更新安装包（永不抛出）。
-    /// 刚下载到临时目录的 exe 可能被杀毒软件扫描/隔离、清理工具删除或受磁盘错误影响，
-    /// 直接 Process.Start 会抛 Win32Exception 导致 UI 崩溃；这里先做存在性 + PE 魔数校验，
-    /// 启动失败后短暂等待重试一次，仍失败则删除失效文件。
+    /// 从官方发布源取得摘要并验证，在启动完成前保持只读句柄，阻止校验后替换文件。
+    /// 不符时需用户强确认才允许本次继续；无法获取可信清单时拒绝执行。
+    /// 短暂文件占用导致启动失败时重试一次。
     /// </summary>
-    private static bool TryLaunchInstaller(string filePath)
+    internal static async Task<bool> TryLaunchInstallerAsync(string filePath, CancellationToken ct = default)
     {
-        if (!IsInstallerFileValid(filePath))
+        LastLaunchWasCancelled = false;
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromMinutes(5));
+        FileStream verified;
+        try { verified = await Task.Run(() => UpdateStaging.PrepareAsync(filePath, timeout.Token)); }
+        catch (OperationCanceledException) { LastLaunchWasCancelled = true; return false; }
+        catch (Exception ex)
         {
-            TryDeleteInvalidFile(filePath);
+            System.Diagnostics.Debug.WriteLine("更新校验失败，已阻止安装：" + ex.Message);
             return false;
         }
+        using var verificationLock = verified;
 
         var psi = new ProcessStartInfo
         {
-            FileName = filePath,
+            FileName = verified.Name,
             // 显式指定工作目录，避免依赖应用当前目录（可能指向已失效的卷）
-            WorkingDirectory = Path.GetDirectoryName(filePath) ?? Path.GetTempPath(),
+            WorkingDirectory = Path.GetDirectoryName(verified.Name)!,
             UseShellExecute = true
         };
 
         for (var attempt = 0; attempt < 2; attempt++)
         {
+            if (timeout.IsCancellationRequested) { LastLaunchWasCancelled = true; return false; }
             try
             {
                 Process.Start(psi);
@@ -809,7 +836,7 @@ public static class UpdateService
             catch (Exception) when (attempt == 0)
             {
                 // 文件可能在校验与启动之间被外部改动（杀软扫描等瞬时占用），等待后重试一次
-                Thread.Sleep(800);
+                await Task.Delay(800);
             }
             catch (Exception)
             {
@@ -818,7 +845,6 @@ public static class UpdateService
             }
         }
 
-        TryDeleteInvalidFile(filePath);
         return false;
     }
 

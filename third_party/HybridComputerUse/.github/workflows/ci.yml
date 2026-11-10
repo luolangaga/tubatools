@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: computer-use
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: computer-use/go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+      - name: File layout
+        working-directory: .
+        run: scripts/maint/check_layout.sh
+      - name: go vet
+        run: go vet ./...
+      # The sidecar tags only add test transports, so this one run covers every
+      # test of plain `go test ./...`.
+      - name: go test (race, with sidecar transports)
+        run: go test -race -tags 'darwin_sidecar_test windows_sidecar_test' ./...
+      - name: Cross-platform Go static checks
+        run: |
+          GOOS=darwin go vet ./...
+          GOOS=windows go vet ./...
+
+  macos-native:
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: computer-use/go.mod
+      - name: Check bundled Swift toolchain
+        run: xcrun swift --version
+      - name: Native unit tests
+        run: swift test --package-path computer-use/native/macos
+      - name: Go platform selection (no desktop input)
+        working-directory: computer-use
+        run: go test -run TestDefaultServiceUsesDarwinBackend ./...
+      - name: Build native package
+        run: make build-macos
+      - name: MCP contract smoke (no desktop input)
+        run: python3 scripts/smoke-mcp.py artifacts/macos/computer-use
+
+  windows-native:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: computer-use/go.mod
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Python SDK connection unit tests (no daemon)
+        run: python sdk/python/tests/test_connection.py -v
+      - name: Python SDK against fake Go daemon (no desktop input)
+        working-directory: computer-use
+        shell: pwsh
+        run: |
+          $env:HCU_TEST_PYTHON = (Get-Command python).Source
+          go test -run 'TestPythonSDKConnections|TestWindowsDaemon|TestDaemonSocketPermissionsAndStaleSocket' -count=1 -v ./internal/transport
+      - name: Native protocol and policy tests
+        run: dotnet run --project computer-use/native/windows/ComputerUse.Windows.Provider.Tests -- computer-use/testdata/provider-wire
+      - name: Native visibility policy tests
+        run: dotnet run --project computer-use/native/windows/ComputerUse.Windows.VisibilityRead.Tests
+      - name: Native pointer policy tests
+        run: dotnet run --project computer-use/native/windows/ComputerUse.Windows.PointerEnvelope.Tests
+      - name: Native desktop stillness tests
+        run: dotnet run --project computer-use/native/windows/ComputerUse.Windows.DesktopStillness.Tests
+      - name: Native GUI input and capture tests
+        run: dotnet run --project computer-use/native/windows/ComputerUse.Windows.GuiDesktop.Tests
+      - name: Go platform selection (no desktop input)
+        working-directory: computer-use
+        run: go test -run 'TestDefaultServiceUsesWindowsBackend|TestWindowsBackground' ./...
+      - name: Build native package
+        shell: pwsh
+        run: ./computer-use/native/windows/build.ps1 -OutputDirectory "$PWD/artifacts/windows"
+      - name: MCP contract smoke (no desktop input)
+        run: python scripts/smoke-mcp.py artifacts/windows/computer-use.exe
+      - name: Python SDK native smoke (no desktop input)
+        run: python scripts/smoke-sdk.py artifacts/windows/computer-use.exe
+
+  provider:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PyGObject and typelibs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 gir1.2-gdkpixbuf-2.0 \
+            gir1.2-ibus-1.0 ibus ibus-gtk ibus-gtk3
+      - name: Verify IBus bindings (no desktop input)
+        run: /usr/bin/python3 -c 'import gi; gi.require_version("IBus", "1.0"); from gi.repository import IBus'
+      - name: Provider tests
+        working-directory: computer-use
+        run: /usr/bin/python3 runtime_test.py
+
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e '.[test]'
+      - run: python -m pytest -q tests

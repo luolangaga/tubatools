@@ -292,7 +292,7 @@ const toolColumns = [
     { title: '外设工具', tools: [
       { name: '键盘测试' }, { name: 'MouseTester' }, { name: '鼠标回报率' }, { name: 'KeyTweak' }, { name: '鼠标单击变双击' } ] },
     { title: '内置工具', tools: [
-      { name: 'AI 助手' }, { name: '游戏联机助手' }, { name: '一键三烤' }, { name: '格式转换' }, { name: '垃圾清理' }, { name: '流氓软件的克星' }, { name: '端口占用' }, { name: '时间同步' }, { name: '启动项管理' }, { name: 'Windows 镜像' }, { name: t('home.tools.more'), url: '/features' } ] }
+      { name: 'AI 助手' }, { name: '游戏联机助手' }, { name: 'CPU / GPU 烤机' }, { name: '格式转换' }, { name: '垃圾清理' }, { name: '流氓软件的克星' }, { name: '端口占用' }, { name: '时间同步' }, { name: '启动项管理' }, { name: 'Windows 镜像' }, { name: t('home.tools.more'), url: '/features' } ] }
   ]
 ];
 

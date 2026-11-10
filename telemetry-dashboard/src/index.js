@@ -10,6 +10,7 @@
 import pageHtml from '../public/index.html';
 
 import { PANELS, queryAxiom } from './axiom.js';
+import { toolRankings } from './tools.js';
 
 /**
  * 外部数据面板：不走遥测存储，直接调各平台 API。
@@ -87,7 +88,7 @@ async function handleSummary(request, env, url) {
   await Promise.all(Array.from({ length: 3 }, async () => {
     while (next < names.length) {
       const i = next++;
-      try { results[i] = { status: 'fulfilled', value: await runPanel(env, names[i], force, metric) }; }
+      try { results[i] = { status: 'fulfilled', value: await runPanel(env, names[i], force) }; }
       catch (reason) { results[i] = { status: 'rejected', reason }; }
     }
   }));
@@ -96,6 +97,11 @@ async function handleSummary(request, env, url) {
   const errors = {};
   results.forEach((result, index) => {
     const name = names[index];
+    if (name === 'toolUsage') {
+      if (result.status === 'fulfilled') Object.assign(panels, toolRankings(result.value, metric));
+      else errors.toolsAll = errors.tools = errors.toolsLeast = String(result.reason?.message || result.reason);
+      return;
+    }
     if (result.status === 'fulfilled') panels[name] = result.value;
     // 游客不返回原始错误文本（可能带资源标识等内部信息）
     else errors[name] = authorized
@@ -130,11 +136,9 @@ function timingSafeEqual(a, b) {
   return diff === 0;
 }
 
-async function runPanel(env, name, force, metric = 'uses') {
+async function runPanel(env, name, force) {
   const panel = PANELS[name] || EXTERNAL_PANELS[name];
-  const isTool = name === 'tools' || name === 'toolsLeast';
-  const key = isTool ? `${name}:${metric}` : name;
-  const query = isTool && metric === 'devices' ? panel.query.replace('order by uses ', 'order by devices ') : panel.query;
+  const key = name === 'toolUsage' ? 'toolUsage-v2' : name;
   const now = Date.now();
   const hit = cache.get(key);
   if (!force && hit && now - hit.at < panel.ttl * 1000) return hit.value;
@@ -147,7 +151,7 @@ async function runPanel(env, name, force, metric = 'uses') {
   if (pending.has(key)) return pending.get(key);
   const task = (async () => {
     const value = panel.query
-      ? await queryAxiom(env, query, { startTime: new Date(Date.now() - panel.rangeSeconds * 1000).toISOString() })
+      ? await queryAxiom(env, panel.query, { startTime: new Date(Date.now() - panel.rangeSeconds * 1000).toISOString() })
       : await panel.load(env);
     cache.set(key, { at: Date.now(), value });
     await caches.default.put(cacheKey, new Response(JSON.stringify(value), {

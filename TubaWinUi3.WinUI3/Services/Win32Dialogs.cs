@@ -102,7 +102,7 @@ public static class Win32Dialogs
 
     /// <summary>选择文件夹：优先 WinRT 原生选择器（InitializeWithWindow），失败时回退 Win32 浏览对话框。
     /// 必须异步等待——同步阻塞 UI 线程会让消息泵停转，选择器永远不会返回。</summary>
-    public static async Task<string?> PickFolderAsync()
+    public static async Task<string?> PickFolderAsync(string? title = null)
     {
         try
         {
@@ -117,7 +117,7 @@ public static class Win32Dialogs
         }
         catch
         {
-            return BrowseForFolder();
+            return BrowseForFolder(title);
         }
     }
 
@@ -143,12 +143,12 @@ public static class Win32Dialogs
     private const int BIF_RETURNONLYFSDIRS = 0x0001;
     private const int BIF_NEWDIALOGSTYLE = 0x0040;
 
-    private static string? BrowseForFolder()
+    private static string? BrowseForFolder(string? title = null)
     {
         var bi = new BROWSEINFO
         {
             hwndOwner = Hwnd(),
-            lpszTitle = "选择目标文件夹",
+            lpszTitle = string.IsNullOrWhiteSpace(title) ? "选择目标文件夹" : title,
             ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE,
             pszDisplayName = new string(new char[260])
         };

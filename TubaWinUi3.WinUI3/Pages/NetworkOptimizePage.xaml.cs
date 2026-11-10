@@ -26,9 +26,10 @@ public sealed class DnsPresetVm : INotifyPropertyChanged
     public required string Name { get; init; }
     public required string Primary { get; init; }
     public string Secondary { get; init; } = "";
+    public string? DohTemplate { get; init; }
     public required SolidColorBrush ColorBrush { get; init; }
     public required SolidColorBrush IconBackground { get; init; }
-    public string SecondaryLine => Secondary;
+    public string SecondaryLine => DohTemplate ?? Secondary;
 
     private string _latencyText = "--";
     public string LatencyText { get => _latencyText; set { _latencyText = value; Raise(); } }
@@ -109,6 +110,8 @@ public sealed partial class NetworkOptimizePage : Page
     private const string SavedKeyPrefix = "NetOpt_";
     private const string SavedDnsPrimaryKey = "NetOpt_dns_primary";
     private const string SavedDnsSecondaryKey = "NetOpt_dns_secondary";
+    private const string SavedDnsDohKey = "NetOpt_dns_doh";
+    private string? _currentDoh;
 
     private CancellationTokenSource? _cts;
     private DispatcherTimer? _dnsTimer;
@@ -216,9 +219,10 @@ public sealed partial class NetworkOptimizePage : Page
             }
             // DNS：优先使用保存的手动设置，否则用扫描结果
             _currentDns = savedPrimary.Length > 0 ? (savedPrimary, savedSecondary) : (state.DnsPrimary, state.DnsSecondary);
+            _currentDoh = savedPrimary.Length > 0 ? AppSettings.Get(SavedDnsDohKey) : null;
 
             CurrentDnsText.Text = _currentDns.Primary.Length > 0
-                ? $"{_currentDns.Primary}{(_currentDns.Secondary.Length > 0 ? " / " + _currentDns.Secondary : "")}"
+                ? $"{_currentDns.Primary}{(_currentDns.Secondary.Length > 0 ? " / " + _currentDns.Secondary : "")}{(_currentDoh is not null ? " · DoH" : "")}"
                 : "使用自动获取";
 
             RebuildItemVms();
@@ -303,6 +307,7 @@ public sealed partial class NetworkOptimizePage : Page
                 Name = preset.Name,
                 Primary = preset.Primary,
                 Secondary = preset.Secondary,
+                DohTemplate = preset.DohTemplate,
                 ColorBrush = Brush(color),
                 IconBackground = Tint(color, 0x22),
             };
@@ -312,7 +317,9 @@ public sealed partial class NetworkOptimizePage : Page
         DnsList.ItemsSource = _dnsVms.ToList();
     }
 
-    private bool IsPresetApplied(DnsPreset preset) =>
+    private bool IsPresetApplied(DnsPreset preset) => preset.DohTemplate is not null
+        ? _currentDns.Primary.Length > 0 && _currentDoh == preset.DohTemplate
+        : _currentDoh is null &&
         _currentDns.Primary.Length > 0
         && _currentDns.Primary == preset.Primary
         && _currentDns.Secondary == preset.Secondary;
@@ -332,6 +339,12 @@ public sealed partial class NetworkOptimizePage : Page
     {
         if (probe is null)
             return ("--", Brush(NeutralGray), "尚未探测或请求超时");
+
+        if (preset.DohTemplate is not null)
+            return ($"{Math.Round(probe.LatencyMs)} ms",
+                Brush(probe.LatencyMs < NetworkOptimizeService.DnsLatencyGoodMs ? SuccessGreen
+                    : probe.LatencyMs < NetworkOptimizeService.DnsLatencyFairMs ? CautionAmber : CriticalRed),
+                $"HTTPS 加密查询：{preset.DohTemplate}（包含 HTTPS 请求耗时）");
 
         var hijacked = probe.Responder.Length > 0 && probe.Responder != preset.Primary || probe.LatencyMs < 1.0;
         if (hijacked)
@@ -363,20 +376,19 @@ public sealed partial class NetworkOptimizePage : Page
             if (_dnsInFlight.Contains(preset.Id))
                 continue;
             _dnsInFlight.Add(preset.Id);
-            probes.Add(Task.Run(() =>
+            var cancellationToken = _cts?.Token ?? CancellationToken.None;
+            probes.Add(Task.Run(async () =>
             {
                 DnsProbeResult? result;
                 try
                 {
-                    result = NetworkOptimizeService.TestDnsLatency(preset.Primary);
+                    result = preset.DohTemplate is not null
+                        ? await NetworkOptimizeService.TestDohLatencyAsync(preset.DohTemplate, cancellationToken)
+                        : NetworkOptimizeService.TestDnsLatency(preset.Primary);
                 }
                 catch
                 {
                     result = null;
-                }
-                finally
-                {
-                    _dnsInFlight.Remove(preset.Id);
                 }
                 if (DispatcherQueue is not null)
                 {
@@ -384,6 +396,8 @@ public sealed partial class NetworkOptimizePage : Page
                     {
                         DispatcherQueue.TryEnqueue(() =>
                         {
+                            _dnsInFlight.Remove(preset.Id);
+                            if (cancellationToken.IsCancellationRequested) return;
                             _dnsProbes[preset.Id] = result;
                             var vm = _dnsVms.FirstOrDefault(v => v.Id == preset.Id);
                             if (vm is null)
@@ -641,7 +655,7 @@ public sealed partial class NetworkOptimizePage : Page
     {
         if (sender is not Button { Tag: DnsPresetVm vm })
             return;
-        await ApplyDnsAsync(vm.Primary, vm.Secondary);
+        await ApplyDnsAsync(vm.Primary, vm.Secondary, NetworkOptimizeService.DnsPresets.First(p => p.Id == vm.Id));
     }
 
     private async void ApplyCustomDnsButton_Click(object sender, RoutedEventArgs e)
@@ -657,17 +671,22 @@ public sealed partial class NetworkOptimizePage : Page
         await ApplyDnsAsync(primary, CustomSecondaryBox.Text.Trim());
     }
 
-    private async Task ApplyDnsAsync(string primary, string secondary)
+    private async Task ApplyDnsAsync(string primary, string secondary, DnsPreset? preset = null)
     {
         if (_busy) return;
         _busy = true;
         try
         {
-            var result = await Task.Run(() => NetworkOptimizeService.SetDnsServers(primary, secondary));
+            if (preset is not null)
+                (primary, secondary) = await NetworkOptimizeService.ResolveDnsPresetAsync(preset);
+            var result = await Task.Run(() => NetworkOptimizeService.SetDnsServers(primary, secondary, preset?.DohTemplate));
             _currentDns = (primary, secondary);
+            _currentDoh = preset?.DohTemplate;
             AppSettings.Set(SavedDnsPrimaryKey, primary);
             AppSettings.Set(SavedDnsSecondaryKey, secondary);
-            CurrentDnsText.Text = $"{primary}{(secondary.Length > 0 ? " / " + secondary : "")}";
+            if (_currentDoh is not null) AppSettings.Set(SavedDnsDohKey, _currentDoh);
+            else AppSettings.Remove(SavedDnsDohKey);
+            CurrentDnsText.Text = $"{primary}{(secondary.Length > 0 ? " / " + secondary : "")}{(_currentDoh is not null ? " · DoH" : "")}";
             RefreshDnsAppliedState();
             SuccessBar.Title = "DNS 已应用";
             SuccessBar.Message = result.Message;
@@ -693,8 +712,10 @@ public sealed partial class NetworkOptimizePage : Page
         {
             var result = await Task.Run(NetworkOptimizeService.RestoreDnsServers);
             _currentDns = ("", "");
+            _currentDoh = null;
             AppSettings.Remove(SavedDnsPrimaryKey);
             AppSettings.Remove(SavedDnsSecondaryKey);
+            AppSettings.Remove(SavedDnsDohKey);
             CurrentDnsText.Text = "使用自动获取";
             RefreshDnsAppliedState();
             SuccessBar.Title = "DNS 已恢复为自动获取";

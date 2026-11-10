@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- 测试项目不含界面资源；关闭默认 resw→PRI 收集，避免主项目复制过来的本地化
          resw（Key.Property 与 Key 同名项）在自定义 BaseOutputPath 下触发 PRI175/PRI278。 -->
@@ -41,6 +42,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TubaWinUi3.WinUI3\TubaWinUi3.csproj" />
+    <ProjectReference Include="..\samples\HelloPlugin\HelloPlugin.csproj" />
+    <ProjectReference Include="..\plugins\Tubatools.SteamToolbox\Tubatools.SteamToolbox.csproj" />
+    <ProjectReference Include="..\plugins\Tubatools.Windows11Optimizer\Tubatools.Windows11Optimizer.csproj" />
     <ProjectReference Include="..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" Aliases="backend" />
   </ItemGroup>
 

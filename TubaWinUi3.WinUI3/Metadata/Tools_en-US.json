@@ -587,16 +587,6 @@
                                ]
                   },
                   {
-                      "match":  "Dism++",
-                      "description":  "Windows slimming and optimization tool; a graphical system manager built on DISM.",
-                      "publisher":  "Chuyu Team",
-                      "tags":  [
-                                   "System",
-                                   "Optimize",
-                                   "Slimming"
-                               ]
-                  },
-                  {
                       "match":  "Everything",
                       "description":  "Ultra-fast file search based on the NTFS USN journal for instant filename lookups.",
                       "publisher":  "voidtools",

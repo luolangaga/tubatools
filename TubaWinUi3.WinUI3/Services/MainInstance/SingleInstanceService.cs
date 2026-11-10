@@ -13,7 +13,7 @@ namespace TubaWinUi3.Services;
 /// - 跨进程激活通道 = 数据目录下的 JSON 文件 + FileSystemWatcher（与 Services\PhoneLink\PhoneLinkActivation 同构）；
 /// - 提权重启接管 = Mutex.WaitOne + AbandonedMutexException（与 TubaWinUI3.BackEnd\Program.cs 一致）。
 ///
-/// 注意：闸门只能在 <c>App.OnLaunchedCore</c> 的自动提权块之后启用——真正留下窗口的进程一定是管理员；
+/// 注意：闸门只能在 <c>App.OnLaunchedCore</c> 的非打包版自动提权块之后启用（MSIX 默认普通权限）；
 /// 且 --copy-path / --toast / --phone-toast-handler / --energystar-silent 等无窗口辅助模式
 /// 都在闸门之前 return，本类只服务于「要建主窗口」的启动路径。
 /// </summary>
@@ -36,7 +36,7 @@ public static class SingleInstanceService
 
     private static readonly object _gate = new();
     private static Mutex? _mutex;
-    private static FileSystemWatcher? _watcher;
+    private static ActivationInbox? _watcher;
 
     /// <summary>激活请求目录：新进程写，主实例读。</summary>
     public static string ActivationDir => Path.Combine(ConfigManager.GetDataDir(), "instance");
@@ -47,7 +47,7 @@ public static class SingleInstanceService
     /// <summary>主实例是否在运行（只探测，不获取所有权）。</summary>
     public static bool IsRunning()
     {
-        try { return Mutex.TryOpenExisting(MutexName, out _); }
+        try { bool exists = Mutex.TryOpenExisting(MutexName, out var mutex); mutex?.Dispose(); return exists; }
         catch { return false; }
     }
 
@@ -143,7 +143,10 @@ public static class SingleInstanceService
                 Arg = intent.Arg
             });
             var name = $"{DateTime.Now:yyyyMMdd-HHmmss-fff}-{Guid.NewGuid():N}";
-            File.WriteAllText(Path.Combine(ActivationDir, name[..30] + ".json"), payload);
+            var target = Path.Combine(ActivationDir, name + ".json");
+            var temporary = target + ".tmp";
+            try { File.WriteAllText(temporary, payload); File.Move(temporary, target); }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }
         catch (Exception ex)
         {
@@ -152,7 +155,7 @@ public static class SingleInstanceService
     }
 
     /// <summary>
-    /// 主实例启动后调用：先处理积压的激活文件（覆盖「转发先于监听就绪」的竞态——
+    /// 主实例启动后调用：先启用监听再处理积压的激活文件（覆盖「转发先于监听就绪」的竞态——
     /// 新进程可能在主实例建 watcher 之前就写好意图文件），再监听后续请求。
     /// 回调在后台线程触发，调用方需自行调度到 UI 线程。
     /// </summary>
@@ -162,19 +165,9 @@ public static class SingleInstanceService
         {
             Directory.CreateDirectory(ActivationDir);
 
-            // 先消费积压文件（与 PhoneLinkActivation 同款）：晚启动的主实例不会漏掉早到的转发意图。
-            foreach (var pending in Directory.GetFiles(ActivationDir, "*.json"))
-                HandleFile(pending, onActivate);
-
             try { File.WriteAllText(OwnerPidPath, Environment.ProcessId.ToString()); } catch { }
-
-            _watcher = new FileSystemWatcher(ActivationDir, "*.json")
-            {
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.CreationTime,
-                EnableRaisingEvents = true,
-            };
-            _watcher.Created += (_, e) =>
-                Task.Delay(150).ContinueWith(_ => HandleFile(e.FullPath, onActivate));
+            _watcher?.Dispose();
+            _watcher = new ActivationInbox(ActivationDir, onActivate);
         }
         catch (Exception ex)
         {
@@ -200,28 +193,6 @@ public static class SingleInstanceService
             try { _mutex.ReleaseMutex(); } catch { }
             try { _mutex.Dispose(); } catch { }
             _mutex = null;
-        }
-    }
-
-    private static void HandleFile(string filePath, Action<LaunchIntent> onActivate)
-    {
-        try
-        {
-            if (!File.Exists(filePath)) return;
-            var text = File.ReadAllText(filePath);
-            try { File.Delete(filePath); } catch { }
-
-            var req = JsonSerializer.Deserialize<ActivationRequest>(text);
-            if (req is null) return;
-
-            var kind = Enum.TryParse<LaunchIntentKind>(req.Kind, ignoreCase: true, out var parsed)
-                ? parsed
-                : LaunchIntentKind.Normal;
-            onActivate(new LaunchIntent(kind, req.Arg));
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[SingleInstance] 处理激活文件失败：{ex.Message}");
         }
     }
 

@@ -108,6 +108,8 @@ public sealed class BuiltinToolWindow
         // 窗口关闭时 Frame 不会触发 OnNavigatedFrom，需手动执行与嵌入模式一致的清理
         if (_frame.Content is ToolContentPage page)
             page.Detach();
+        else if (_frame.Content is PluginToolPage plugin)
+            plugin.Detach();
         // 直接导航的页面型工具（如本地AI试炼场）没有 ToolContentPage 包装，单独兜底清理模型/句柄
         else if (_frame.Content is AiPlaygroundPage playground)
             playground.CleanupOnWindowClose();

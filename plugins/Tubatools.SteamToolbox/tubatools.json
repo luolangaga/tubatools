@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.SteamToolbox.dll",
+  "entryType": "Tubatools.SteamToolbox.SteamToolboxPlugin",
+  "name": "Steam 工具箱",
+  "description": "本机 Steam 账号、多存储库游戏管理与内置挂时长",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

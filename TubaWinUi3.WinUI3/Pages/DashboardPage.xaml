@@ -39,13 +39,13 @@
             </Style>
         </ResourceDictionary>
     </Page.Resources>
-    <Grid>
+    <Grid x:Name="DashboardViewport" SizeChanged="DashboardViewport_SizeChanged">
         <TextBlock x:Name="AccentBrushSource" Visibility="Collapsed" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
         <TextBlock x:Name="SecondaryBrushSource" Visibility="Collapsed" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         <!-- A single vertical scrolling surface keeps the full catalog virtualized. -->
         <GridView x:Name="ToolsGrid" AutomationProperties.AutomationId="DashboardTools" SelectionMode="None" IsItemClickEnabled="True"
                   ItemClick="ToolsGrid_ItemClick" ItemContainerStyle="{StaticResource DashboardToolContainerStyle}"
-                  SizeChanged="ToolsGrid_SizeChanged" DragItemsCompleted="ToolsGrid_DragItemsCompleted"
+                  DragItemsCompleted="ToolsGrid_DragItemsCompleted"
                   ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal"/></ItemsPanelTemplate></GridView.ItemsPanel>
             <GridView.Header>

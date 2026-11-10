@@ -30,8 +30,8 @@
 ### 使用前必读
 
 1. **中文/空格路径必须加双引号**：例如 `"Tools\显卡工具\GpuTest_Windows x64\GpuTest.exe"`、`"Core Temp x64.exe"`。
-2. **架构选择**：同一工具常有 x86 / x64 / ARM64 多个版本（如 CPU-Z、HWiNFO、Dism++、Autoruns）。64 位系统请优先用 x64 版，ARM64 设备用 ARM64 版。
-3. **管理员权限**：凡是读写硬件、内核驱动、系统服务、磁盘分区的操作（FPT64、Ventoy、Dism++、CrystalDiskInfo 部分功能、WinDbg 内核调试等）都需要**以管理员身份运行** CMD/PowerShell。
+2. **架构选择**：同一工具常有 x86 / x64 / ARM64 多个版本（如 CPU-Z、HWiNFO、Autoruns）。64 位系统请优先用 x64 版，ARM64 设备用 ARM64 版。
+3. **管理员权限**：凡是读写硬件、内核驱动、系统服务、磁盘分区的操作（FPT64、Ventoy、CrystalDiskInfo 部分功能、WinDbg 内核调试等）都需要**以管理员身份运行** CMD/PowerShell。
 4. **退出码（%ERRORLEVEL%）**：命令行工具通常用退出码表示执行结果（0 = 成功），可在批处理脚本中做流程判断，文档中已标注支持的工具。
 5. **交互式工具**：部分工具（如 Prime95、urwtest）执行后是**阻塞式**的（一直运行直到结束），在脚本中使用时请注意，或配合 `start` 命令后台启动。
 6. 参数整理自各工具官方文档、工具内置帮助（help.txt / readme.txt）及官方说明页；标注 "※" 的工具参数来自社区通用文档，如有出入以工具内帮助为准。
@@ -932,7 +932,7 @@ echo 已导出非微软启动项，见桌面 startup_items.csv
 | 硬盘 | CrystalDiskMark、AS SSD、ATTO、HDTune、HD Tune、BOOTICE、SpaceSniffer、WinDirStat、TxBENCH、SSDZ、H2testw、LLFTOOL、DiskGenius GUI 模式 | GUI 工具（BOOTICE 无命令行；H2testw 仅交互式） |
 | 内存 | MemTest64、memtest、memtestpro、TestMem5（TM5）、ZenTimings、Thaiphoon、魔方内存盘、RAMMap | GUI 工具（TM5 可通过 TM5.ini 配置测试档） |
 | 综合检测 | HWMonitor、Speccy、RWEverything、LatencyMon | GUI 工具 |
-| 其他 | procexp（Process Explorer）、Geek Uninstaller、HiBit Uninstaller、Dism++、GifCam、DesktopOK、SpaceSniffer、DirectX Repair、BatteryInfoView 之外的 NirSoft GUI 工具、**UltraISO** | GUI 工具（Dism++ 命令行支持有限，主要以 GUI 使用；UltraISO 实测命令行挂起，仅 GUI） |
+| 其他 | procexp（Process Explorer）、Geek Uninstaller、HiBit Uninstaller、GifCam、DesktopOK、SpaceSniffer、DirectX Repair、BatteryInfoView 之外的 NirSoft GUI 工具、**UltraISO** | GUI 工具（UltraISO 实测命令行挂起，仅 GUI） |
 
 > 说明：这些工具仍然可以从命令行**启动**（`"路径\xxx.exe"`），只是没有可供脚本化的参数开关。
 

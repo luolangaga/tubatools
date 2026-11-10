@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -119,11 +120,24 @@ public sealed partial class FormatConverterPage : Page
     private DocumentEngineService? _docEngine;
     private DocumentConvertService? _docService;
     private CancellationTokenSource? _cts;
-    private DispatcherTimer? _engineTimer;
+    // 1 秒计时器只在有引擎下载进行时运行，仅刷新百分比文本（不碰注册表/磁盘）。
+    private DispatcherQueueTimer? _engineTimer;
+    private bool _engineQueueSubscribed;
+    private bool _engineRefreshQueued;
+    private int _engineRefreshVersion;
+    private EngineProbeState? _engineProbe;
+    private EngineSizes? _engineSizes;
+    private readonly DispatcherQueue _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
     private bool _dropSubscribed;
     private string? _resultDir;
     private List<string> _lastOutputs = [];
     private string? _zipSummary;
+
+    /// <summary>OCR / Office 探测结果（一次页面生命周期只算一次）。</summary>
+    private readonly record struct EngineProbeState(bool Ocr, bool Word, bool Excel, bool Ppt);
+
+    /// <summary>引擎体积（null = 未安装）。</summary>
+    private readonly record struct EngineSizes(string? Ffmpeg, string? Magick, string? OfficeCli);
 
     internal static class StatusBrushes
     {
@@ -186,7 +200,8 @@ public sealed partial class FormatConverterPage : Page
         };
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-        RefreshEngineCards();
+        // 首次探测放到后台：不阻塞页面构造，结果回来后回填卡片。
+        QueueEngineRefresh(forceProbe: true);
     }
 
     // ══════════════ 生命周期与拖放 ══════════════
@@ -225,9 +240,19 @@ public sealed partial class FormatConverterPage : Page
         _docEngine = new DocumentEngineService(DocWeb);
         _docService = new DocumentConvertService(_docEngine);
 
-        _engineTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
-        _engineTimer.Tick += (_, _) => RefreshEngineCards();
-        _engineTimer.Start();
+        if (!_engineQueueSubscribed)
+        {
+            _engineQueueSubscribed = true;
+            DownloadQueueService.QueueChanged += OnDownloadQueueChanged;
+        }
+        _engineTimer ??= DispatcherQueue.CreateTimer();
+        _engineTimer.Interval = TimeSpan.FromSeconds(1);
+        _engineTimer.Tick -= EngineTimer_Tick;
+        _engineTimer.Tick += EngineTimer_Tick;
+
+        // 首次打开或返回页面时重新探测一次（下载完成/安装变化都以 QueueChanged 为准）。
+        QueueEngineRefresh(forceProbe: true);
+        UpdateEngineCards();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -237,7 +262,15 @@ public sealed partial class FormatConverterPage : Page
             _dropSubscribed = false;
             Win32DropHelper.FilesDropped -= OnFilesDropped;
         }
+        if (_engineQueueSubscribed)
+        {
+            _engineQueueSubscribed = false;
+            DownloadQueueService.QueueChanged -= OnDownloadQueueChanged;
+        }
         _engineTimer?.Stop();
+        _engineTimer = null;
+        // 丢弃仍在后台跑的探测结果，避免回填到已卸载的页面。
+        _engineRefreshVersion++;
         _cts?.Cancel();
         // 页面默认不缓存（NavigationCacheMode=Disabled），卸载即废弃：关闭宿主 WebView2
         _docEngine?.Close();
@@ -1115,7 +1148,7 @@ public sealed partial class FormatConverterPage : Page
         finally
         {
             SetBusy(false);
-            RefreshEngineCards();
+            QueueEngineRefresh(forceProbe: false);
         }
     }
 
@@ -1409,125 +1442,137 @@ public sealed partial class FormatConverterPage : Page
     }
 
     // ══════════════ 引擎卡片 ══════════════
+    // 页面闲置时不做任何探测：就绪状态与体积只在页面加载、下载队列变化、删除/安装后重算；
+    // 下载中的百分比由 1 秒计时器单独刷新（只读 DownloadItem，不碰注册表/磁盘）。
 
-    private void RefreshEngineCards()
+    private void OnDownloadQueueChanged()
     {
-        UpdateFfmpegCard();
-        UpdateMagickCard();
-        UpdateOfficeCliCard();
-        UpdateSystemCard();
+        _dispatcher.TryEnqueue(() =>
+        {
+            UpdateEngineCards();
+            QueueEngineRefresh(forceProbe: false);
+        });
     }
 
-    private void UpdateFfmpegCard()
+    private void EngineTimer_Tick(DispatcherQueueTimer sender, object args) => UpdateEngineCards();
+
+    private void QueueEngineRefresh(bool forceProbe)
     {
-        if (FfmpegService.IsFfmpegReady)
+        if (_engineRefreshQueued) return;
+        _engineRefreshQueued = true;
+        if (!_dispatcher.TryEnqueue(async () =>
         {
-            FfmpegStatusText.Text = $"已就绪（{FfmpegService.GetFfmpegSize()}）";
-            FfmpegActionBtn.Content = "删除";
-            FfmpegActionBtn.IsEnabled = true;
-            FfmpegActionBtn.Tag = "delete";
+            _engineRefreshQueued = false;
+            try { await RefreshEngineCardsAsync(forceProbe); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[FormatConverter] 引擎状态刷新失败: {ex.Message}"); }
+        }))
+        {
+            _engineRefreshQueued = false;
+        }
+    }
+
+    private async Task RefreshEngineCardsAsync(bool forceProbe)
+    {
+        var version = ++_engineRefreshVersion;
+
+        // OCR 引擎创建与 Office ProgID 查询都有实际开销，统一移到后台线程。
+        var probe = forceProbe ? null : _engineProbe;
+        if (probe is null)
+        {
+            probe = await Task.Run(ReadEngineProbe);
+            if (version != _engineRefreshVersion) return;
+            _engineProbe = probe;
+        }
+
+        var sizes = await Task.Run(() => new EngineSizes(
+            FfmpegService.IsFfmpegReady ? FfmpegService.GetFfmpegSize() : null,
+            MagickService.IsMagickReady ? MagickService.GetMagickSize() : null,
+            OfficeCliService.IsReady ? OfficeCliService.GetOfficeCliSize() : null));
+        if (version != _engineRefreshVersion) return;
+        _engineSizes = sizes;
+
+        UpdateEngineCards();
+        UpdateSystemCard(probe.Value);
+    }
+
+    private static EngineProbeState ReadEngineProbe() => new(
+        OcrService.IsEngineAvailable,
+        OfficeInteropService.IsWordAvailable,
+        OfficeInteropService.IsExcelAvailable,
+        OfficeInteropService.IsPptAvailable);
+
+    private void UpdateEngineCards()
+    {
+        var active = false;
+        active |= UpdateEngineCard(FfmpegService.DownloadItem, _engineSizes?.Ffmpeg,
+            "未安装（首次使用自动下载）", FfmpegStatusText, FfmpegActionBtn);
+        active |= UpdateEngineCard(MagickService.DownloadItem, _engineSizes?.Magick,
+            "未安装（首次使用自动下载）", MagickStatusText, MagickActionBtn);
+        active |= UpdateEngineCard(OfficeCliService.DownloadItem, _engineSizes?.OfficeCli,
+            "未安装（转换 Office 文档时自动下载，或回退内置引擎）", OfficeCliStatusText, OfficeCliActionBtn);
+
+        if (active)
+        {
+            if (_engineTimer is { IsRunning: false }) _engineTimer.Start();
+        }
+        else if (_engineTimer is { IsRunning: true })
+        {
+            _engineTimer.Stop();
+        }
+    }
+
+    private static bool IsEngineDownloadActive(DownloadItem? item) =>
+        item is not null && item.State is DownloadItemState.Queued or DownloadItemState.Resolving
+            or DownloadItemState.Downloading or DownloadItemState.Processing;
+
+    /// <summary>更新单张引擎卡；返回该引擎是否有进行中的下载。</summary>
+    private bool UpdateEngineCard(DownloadItem? item, string? readySize, string idleText,
+        TextBlock statusText, Button actionButton)
+    {
+        if (IsEngineDownloadActive(item))
+        {
+            var pct = item!.Progress is { } p ? (int)p.Percentage : 0;
+            statusText.Text = item.State == DownloadItemState.Processing
+                ? $"处理中：{item.ProcessingStatus ?? "处理中…"}"
+                : $"下载中 {pct}%…";
+            actionButton.Content = "下载中…";
+            actionButton.IsEnabled = false;
+            return true;
+        }
+
+        // 首次探测还没回来：保留 XAML 里的「检查中…」，不要误报「未安装」。
+        if (_engineSizes is null) return false;
+
+        if (readySize is not null)
+        {
+            statusText.Text = $"已就绪（{readySize}）";
+            actionButton.Content = "删除";
+            actionButton.IsEnabled = true;
+            actionButton.Tag = "delete";
         }
         else
         {
-            var item = FfmpegService.DownloadItem;
-            if (item is not null && item.State is DownloadItemState.Queued or DownloadItemState.Resolving
-                    or DownloadItemState.Downloading or DownloadItemState.Processing)
-            {
-                var pct = item.Progress is { } p ? (int)p.Percentage : 0;
-                FfmpegStatusText.Text = item.State == DownloadItemState.Processing
-                    ? $"处理中：{item.ProcessingStatus ?? "解压中..."}"
-                    : $"下载中 {pct}%…";
-                FfmpegActionBtn.Content = "下载中…";
-                FfmpegActionBtn.IsEnabled = false;
-            }
-            else
-            {
-                FfmpegStatusText.Text = "未安装（首次使用自动下载）";
-                FfmpegActionBtn.Content = "下载";
-                FfmpegActionBtn.IsEnabled = true;
-                FfmpegActionBtn.Tag = "download";
-            }
+            statusText.Text = idleText;
+            actionButton.Content = "下载";
+            actionButton.IsEnabled = true;
+            actionButton.Tag = "download";
         }
+        return false;
     }
 
-    private void UpdateMagickCard()
-    {
-        if (MagickService.IsMagickReady)
-        {
-            MagickStatusText.Text = $"已就绪（{MagickService.GetMagickSize()}）";
-            MagickActionBtn.Content = "删除";
-            MagickActionBtn.IsEnabled = true;
-            MagickActionBtn.Tag = "delete";
-        }
-        else
-        {
-            var item = MagickService.DownloadItem;
-            if (item is not null && item.State is DownloadItemState.Queued or DownloadItemState.Resolving
-                    or DownloadItemState.Downloading or DownloadItemState.Processing)
-            {
-                var pct = item.Progress is { } p ? (int)p.Percentage : 0;
-                MagickStatusText.Text = item.State == DownloadItemState.Processing
-                    ? $"处理中：{item.ProcessingStatus ?? "解压中..."}"
-                    : $"下载中 {pct}%…";
-                MagickActionBtn.Content = "下载中…";
-                MagickActionBtn.IsEnabled = false;
-            }
-            else
-            {
-                MagickStatusText.Text = "未安装（首次使用自动下载）";
-                MagickActionBtn.Content = "下载";
-                MagickActionBtn.IsEnabled = true;
-                MagickActionBtn.Tag = "download";
-            }
-        }
-    }
-
-    private void UpdateOfficeCliCard()
-    {
-        if (OfficeCliService.IsReady)
-        {
-            OfficeCliStatusText.Text = $"已就绪（{OfficeCliService.GetOfficeCliSize()}）";
-            OfficeCliActionBtn.Content = "删除";
-            OfficeCliActionBtn.IsEnabled = true;
-            OfficeCliActionBtn.Tag = "delete";
-        }
-        else
-        {
-            var item = OfficeCliService.DownloadItem;
-            if (item is not null && item.State is DownloadItemState.Queued or DownloadItemState.Resolving
-                    or DownloadItemState.Downloading or DownloadItemState.Processing)
-            {
-                var pct = item.Progress is { } p ? (int)p.Percentage : 0;
-                OfficeCliStatusText.Text = item.State == DownloadItemState.Processing
-                    ? $"处理中：{item.ProcessingStatus ?? "处理中..."}"
-                    : $"下载中 {pct}%…";
-                OfficeCliActionBtn.Content = "下载中…";
-                OfficeCliActionBtn.IsEnabled = false;
-            }
-            else
-            {
-                OfficeCliStatusText.Text = "未安装（转换 Office 文档时自动下载，或回退内置引擎）";
-                OfficeCliActionBtn.Content = "下载";
-                OfficeCliActionBtn.IsEnabled = true;
-                OfficeCliActionBtn.Tag = "download";
-            }
-        }
-    }
-
-    private void UpdateSystemCard()
+    private void UpdateSystemCard(EngineProbeState probe)
     {
         var parts = new List<string>();
 
-        // 系统 OCR（同步探测）
-        parts.Add(OcrService.IsEngineAvailable
+        parts.Add(probe.Ocr
             ? "系统 OCR 可用（本地识别）"
             : "系统 OCR 未装语言包");
 
         // Office / WPS
         var office = new List<string>();
-        if (OfficeInteropService.IsWordAvailable) office.Add("Word");
-        if (OfficeInteropService.IsExcelAvailable) office.Add("Excel");
-        if (OfficeInteropService.IsPptAvailable) office.Add("PowerPoint");
+        if (probe.Word) office.Add("Word");
+        if (probe.Excel) office.Add("Excel");
+        if (probe.Ppt) office.Add("PowerPoint");
         parts.Add(office.Count > 0
             ? $"Office/WPS：{string.Join(" · ", office)}（旧版 doc/ppt/wps/et 可用）"
             : "Office/WPS：未安装（.doc/.ppt 等旧格式不可转换）");
@@ -1577,7 +1622,7 @@ public sealed partial class FormatConverterPage : Page
                 ShowToast("已加入下载队列", "单文件约 33MB，可在下载中心查看进度", InfoBarSeverity.Informational);
             }
         }
-        RefreshEngineCards();
+        QueueEngineRefresh(forceProbe: false);
     }
 
     // ══════════════ 工具 ══════════════

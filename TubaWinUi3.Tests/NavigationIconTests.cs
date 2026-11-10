@@ -24,7 +24,7 @@ public class NavigationIconTests
     [InlineData("hardware", "HomeTiles/hardware")]
     [InlineData("builtin", "NavIcons/toolbox")]
     [InlineData("benchmark", "BuiltinIcons/performance-benchmark")]
-    [InlineData("community", "NavIcons/community")]
+    [InlineData("community", "BuiltinIcons/plugins")]
     [InlineData("settings", "NavIcons/settings")]
     public void Category_ResolvesToItsOwnBundledAsset(string category, string expected)
     {

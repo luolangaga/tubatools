@@ -15,6 +15,8 @@ public sealed partial class PhoneLinkPage : Page
     private bool _subscribed;
     private bool _tasksQueued;
     private string? _qrPayload;
+    private IReadOnlyList<PhoneCameraInfo> _cameras = [];
+    private bool _cameraBusy;
 
     public PhoneLinkPage()
     {
@@ -30,10 +32,12 @@ public sealed partial class PhoneLinkPage : Page
             _subscribed = true;
             PhoneLinkService.StateChanged += OnServiceStateChanged;
             PhoneLinkService.JobsChanged += OnJobsChanged;
+            PhoneCameraService.StreamStateChanged += OnCameraStateChanged;
         }
         RefreshService();
         RefreshReceive();
         RefreshJobs();
+        RefreshCamera();
         if (!_tasksQueued)
         {
             _tasksQueued = true;
@@ -47,11 +51,14 @@ public sealed partial class PhoneLinkPage : Page
         _subscribed = false;
         PhoneLinkService.StateChanged -= OnServiceStateChanged;
         PhoneLinkService.JobsChanged -= OnJobsChanged;
+        PhoneCameraService.StreamStateChanged -= OnCameraStateChanged;
     }
 
     private void OnServiceStateChanged() => DispatcherQueue.TryEnqueue(RefreshService);
 
     private void OnJobsChanged() => DispatcherQueue.TryEnqueue(RefreshJobs);
+
+    private void OnCameraStateChanged() => DispatcherQueue.TryEnqueue(RefreshCameraStatus);
 
     // ───────────────────────── 服务 / 配对 ─────────────────────────
 
@@ -71,9 +78,10 @@ public sealed partial class PhoneLinkPage : Page
         var ips = PhoneLinkService.GetLocalIps();
         var ip = ips[0];
         PairCodeText.Text = PhoneLinkService.PairCode;
-        AddressText.Text = "可连接地址（无需选择网卡）：\n" +
+        AddressText.Text = "加密连接地址（首次请用新版手机 App 扫码）：\n" +
             string.Join("\n", ips.Select(address => $"{address}:{PhoneLinkService.Port}")) +
-            (ip == "127.0.0.1" ? "\n未检测到局域网 IPv4 地址，请检查网络连接。" : "");
+            (ip == "127.0.0.1" ? "\n未检测到局域网 IPv4 地址，请检查网络连接。" : "") +
+            "\n手动连接时请复制完整信息：\n" + PhoneLinkService.BuildQrPayload(ip);
         RefreshDeviceList();
         _ = UpdateQrAsync(PhoneLinkService.BuildQrPayload(ip));
     }
@@ -189,6 +197,102 @@ public sealed partial class PhoneLinkPage : Page
         if (XamlRoot is null) return;
         _ = ContentDialogGuard.ShowWhenIdleAsync(new PhoneLinkJobsDialog(XamlRoot, jobId), TimeSpan.FromSeconds(10));
     }
+
+    // ───────────────────────── 摄像头直播 ─────────────────────────
+
+    private void RefreshCamera()
+    {
+        var enabled = PhoneCameraService.Enabled;
+        if (CameraToggle.IsOn != enabled) CameraToggle.IsOn = enabled;
+        CameraOptionsPanel.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+        RefreshCameraStatus();
+        if (enabled && _cameras.Count == 0 && !_cameraBusy) _ = LoadCamerasAsync();
+    }
+
+    private void RefreshCameraStatus()
+    {
+        if (!PhoneCameraService.Enabled)
+        {
+            CameraStatusText.Text = "未开启";
+            return;
+        }
+        var active = PhoneCameraService.ActiveCameraName;
+        CameraStatusText.Text = active is null
+            ? "已开启，等待手机观看"
+            : $"手机正在观看：{active}";
+    }
+
+    private async Task LoadCamerasAsync(bool force = false)
+    {
+        if (_cameraBusy) return;
+        _cameraBusy = true;
+        try
+        {
+            var cameras = await PhoneCameraService.ListAsync(force);
+            _cameras = cameras;
+            CameraPicker.Items.Clear();
+            if (cameras.Count == 0)
+            {
+                CameraPicker.Items.Add(new ComboBoxItem { Content = "未检测到摄像头", IsEnabled = false });
+                CameraStatusText.Text = "未检测到摄像头";
+                return;
+            }
+
+            var preferredId = AppSettings.Get("PhoneLinkCameraId");
+            var selected = 0;
+            for (var i = 0; i < cameras.Count; i++)
+            {
+                CameraPicker.Items.Add(new ComboBoxItem { Content = cameras[i].Name, Tag = cameras[i].Index });
+                if (cameras[i].Id == preferredId) selected = i;
+            }
+            CameraPicker.SelectedIndex = selected;
+
+            var width = int.TryParse(AppSettings.Get("PhoneLinkCameraMaxWidth"), out var value) ? value : 960;
+            CameraQualityPicker.SelectedIndex = width switch
+            {
+                <= 854 => 0,
+                <= 1280 => 1,
+                _ => 2
+            };
+            RefreshCameraStatus();
+        }
+        catch (Exception ex)
+        {
+            CameraStatusText.Text = "摄像头枚举失败：" + ex.Message;
+        }
+        finally
+        {
+            _cameraBusy = false;
+        }
+    }
+
+    private void CameraToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (CameraToggle.IsOn == PhoneCameraService.Enabled) return;
+        PhoneCameraService.SetEnabled(CameraToggle.IsOn);
+        RefreshCamera();
+        if (CameraToggle.IsOn) _ = LoadCamerasAsync(force: true);
+    }
+
+    private void CameraPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CameraPicker.SelectedItem is ComboBoxItem { Tag: int index } &&
+            index >= 0 && index < _cameras.Count)
+        {
+            AppSettings.Set("PhoneLinkCameraId", _cameras[index].Id);
+        }
+    }
+
+    private void CameraQualityPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CameraQualityPicker.SelectedItem is ComboBoxItem { Tag: string tag } &&
+            int.TryParse(tag, out var width))
+        {
+            AppSettings.Set("PhoneLinkCameraMaxWidth", width);
+        }
+    }
+
+    private void CameraRefreshBtn_Click(object sender, RoutedEventArgs e) => _ = LoadCamerasAsync(force: true);
 
     // ───────────────────────── 文件接收 ─────────────────────────
 

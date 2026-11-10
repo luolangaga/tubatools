@@ -6,7 +6,7 @@ namespace TubaWinUi3.Services;
 
 /// <summary>
 /// PawnIO 传感器驱动支持：LibreHardwareMonitor 0.9.7 起 ring0 访问（MSR）完全依赖 PawnIO，
-/// 没有它就读不到 CPU 温度/频率/功耗 —— 游戏监控与一键三烤共用同一引擎，都会缺这几项数据。
+/// 没有它就读不到 CPU 温度/频率/功耗 —— 游戏监控与CPU / GPU 烤机共用同一引擎，都会缺这几项数据。
 /// 这里负责：检测驱动 → 已安装未启动时启动服务 → 未安装时引导下载官方安装包。
 /// </summary>
 public static class PawnIoService

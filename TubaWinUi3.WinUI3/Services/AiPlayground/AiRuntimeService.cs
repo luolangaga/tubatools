@@ -1,4 +1,3 @@
-using System.Management;
 using System.Runtime.InteropServices;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.Windows.AI.MachineLearning;
@@ -902,54 +901,6 @@ public static class AiRuntimeService
     private static void TryDelete(string path)
     {
         try { File.Delete(path); } catch { }
-    }
-
-    // ── 设备信息（引擎页 + 状态条）──────────────────────────────────
-
-    public static string? DetectNpuName()
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT Name FROM Win32_PnPEntity WHERE PNPClass = 'ComputeAccelerator'");
-            foreach (var item in searcher.Get())
-            {
-                var name = item["Name"]?.ToString();
-                if (!string.IsNullOrWhiteSpace(name)) return name;
-            }
-        }
-        catch { }
-        return null;
-    }
-
-    public static IReadOnlyList<string> DetectGpuNames()
-    {
-        var list = new List<string>();
-        try
-        {
-            using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
-            foreach (var item in searcher.Get())
-            {
-                var name = item["Name"]?.ToString();
-                if (!string.IsNullOrWhiteSpace(name)) list.Add(name);
-            }
-        }
-        catch { }
-        return list;
-    }
-
-    public static string? DetectCpuName()
-    {
-        try
-        {
-            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-                @"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
-            return key?.GetValue("ProcessorNameString")?.ToString()?.Trim();
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

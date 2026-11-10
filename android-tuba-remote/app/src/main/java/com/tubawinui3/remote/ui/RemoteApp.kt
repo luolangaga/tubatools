@@ -1,6 +1,12 @@
 package com.tubawinui3.remote.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,18 +22,23 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.tubawinui3.remote.RemoteViewModel
 
 private enum class Tool(val title: String, val subtitle: String) {
@@ -35,6 +46,9 @@ private enum class Tool(val title: String, val subtitle: String) {
     SHELL("PowerShell 终端", "在电脑上执行命令并查看输出"),
     WINGET("应用安装", "搜索并通过 winget 在电脑上安装软件"),
     CHAT("传输助手", "与电脑互发文字、图片和文件"),
+    DOWNLOADS("传输队列", "查看下载进度、取消重试与历史文件"),
+    CAMERA("摄像头直播", "实时查看电脑摄像头，可截图保存"),
+    DASHBOARD("副屏模式", "网格自定义仪表盘，全屏展示监控数据"),
 }
 
 @Composable
@@ -48,6 +62,15 @@ fun RemoteApp(vm: RemoteViewModel) {
         return
     }
 
+    // 通知点击（chat / downloads）在连接成功后跳转
+    LaunchedEffect(vm.pendingTool) {
+        val pending = vm.pendingTool ?: return@LaunchedEffect
+        if (Tool.entries.any { it.name == pending }) {
+            tool = pending
+            vm.consumePendingTool()
+        }
+    }
+
     val current = tool?.let { runCatching { Tool.valueOf(it) }.getOrNull() }
     if (current != null) {
         BackHandler { tool = null }
@@ -55,7 +78,19 @@ fun RemoteApp(vm: RemoteViewModel) {
             Tool.MONITOR -> MonitorScreen(client, onBack = { tool = null })
             Tool.SHELL -> ShellScreen(client, onBack = { tool = null })
             Tool.WINGET -> WingetScreen(client, onBack = { tool = null })
-            Tool.CHAT -> ChatScreen(vm, client, onBack = { tool = null })
+            Tool.CHAT -> ChatScreen(
+                vm, client,
+                onBack = { tool = null },
+                onOpenDownloads = { tool = Tool.DOWNLOADS.name },
+            )
+            Tool.DOWNLOADS -> DownloadsScreen(onBack = { tool = null })
+            Tool.CAMERA -> CameraScreen(client, onBack = { tool = null })
+            Tool.DASHBOARD -> DashboardScreen(
+                client,
+                vm.currentPcId ?: "",
+                vm.currentPcName,
+                onBack = { tool = null },
+            )
         }
         return
     }
@@ -91,9 +126,70 @@ private fun Dashboard(vm: RemoteViewModel, onOpen: (Tool) -> Unit) {
                     }
                 }
             }
+            item { SettingsCard(vm) }
         }
     }
 }
+
+@Composable
+private fun SettingsCard(vm: RemoteViewModel) {
+    val ctx = LocalContext.current
+    var granted by remember { mutableStateOf(hasNotificationPermission(ctx)) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("后台与通知", style = MaterialTheme.typography.titleMedium)
+            SettingSwitch(
+                title = "后台接收电脑消息",
+                subtitle = "保持连接；电脑发来的文件和消息会出现在通知栏",
+                checked = vm.bgEnabled,
+                onChange = { vm.updateBgEnabled(it) },
+            )
+            SettingSwitch(
+                title = "自动下载电脑推送的文件",
+                subtitle = "关闭时先通知，点「下载」再开始",
+                checked = vm.autoDownload,
+                onChange = { vm.updateAutoDownload(it) },
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !granted) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "通知权限未授予，后台消息将不可见",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) }) { Text("授予") }
+                }
+            }
+            Text(
+                "部分手机需要允许「自启动 / 后台运行」，否则系统可能杀掉连接服务。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingSwitch(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+private fun hasNotificationPermission(context: Context): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+        PackageManager.PERMISSION_GRANTED
 
 @Composable
 private fun HardwareCard(vm: RemoteViewModel) {

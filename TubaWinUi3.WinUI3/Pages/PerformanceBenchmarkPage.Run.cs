@@ -125,7 +125,6 @@ public sealed partial class PerformanceBenchmarkPage
                             var gpu = await Task.Run(() => PerformanceBenchmarkService.RunGpuBenchmarkFurMark(60, progress, ct, gpuIndex, gpuName), ct);
                             BenchmarkResultValidation.Gpu(gpu);
                             ct.ThrowIfCancellationRequested(); result.Gpu = gpu;
-                            if (!string.IsNullOrWhiteSpace(gpu.GpuName)) result.GpuName = gpu.GpuName;
                             UpdateGpuUI(result);
                             break;
                         case 5: await RunBrowserTestsAsync(result, 60, ct); break;

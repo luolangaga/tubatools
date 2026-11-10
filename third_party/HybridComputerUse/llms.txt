@@ -1,0 +1,57 @@
+# Hybrid Computer Use (HCU)
+
+> Hybrid Computer Use is an open-source MCP server, `computer-use`, that lets coding agents such as Codex, Claude Code, Gemini CLI and Grok Build operate Linux, macOS and Windows desktops. It adds two tools, `AX` (accessibility tree) and `GUI` (screenshots plus pointer and keyboard input), next to the agent's own shell and file tools, so the agent can mix code, accessibility and pixels in one task.
+
+Key facts:
+
+- Paper: arXiv:2610.41432 [cs.HC], 30 October 2026, DOI 10.48550/arXiv.2610.41432. Authors: Haoqing Wang, Xiaoyi Zhang, Sicheng Fan, Zhexin Zhang, Xinjie Zhang, Jiahao Li, Bin Li, Yan Lu (Microsoft Research, Fudan University, Tsinghua University).
+- Public MCP tools: exactly two, `AX` and `GUI`. Transport: stdio, newline-delimited JSON-RPC.
+- `AX` modes: `apps`, `observe`, `find`, `act`. The server names applications, windows and controls with short refs (`a1` -> `w1` -> `r12`). A ref stays bound to one window and fails as stale instead of rebinding.
+- `AX act` runs up to 64 ordered steps in one call, including `wait` steps (window, query, ref value or state, text, settle), and returns a compact diff of the accessibility tree.
+- `GUI` takes an ordered `actions` array: `screenshot`, `zoom`, `click`, `double_click`, `move`, `drag`, `scroll`, `type`, `keypress`, `wait`. Screenshots fit within 1366x768; coordinates are pixels of the returned image.
+- Guards: before input, `AX` checks that each ref still names the same live control, and `GUI` checks that the window under each coordinate still matches the last screenshot. A stale `GUI` batch fails with `gui_frame_stale`, sends nothing and returns a fresh screenshot.
+- One Go core with native providers: Linux (AT-SPI2, X11, XTest), macOS 14+ (AXUIElement, CoreGraphics, ScreenCaptureKit), Windows 10/11 (UI Automation via FlaUI UIA3, Win32).
+- Other entry points share one daemon per desktop: the `computer-use` CLI and the `hcu_sdk` Python package.
+- License: MIT; files adapted from OSWorld-V2 remain Apache-2.0.
+
+Results reported in the paper (same model, harness, tasks and step budget; only the computer-use interface changes; baseline CUA Driver):
+
+- OSWorld 2.0, 108 tasks, GPT-6 Astra: 72.37% Partial vs 68.82%.
+- OSWorld 1.0, 360 tasks, GPT-5.4: 70.13% vs 62.47%, 59.1% lower cost.
+- Windows Agent Arena, 111 tasks, GPT-5.4: 80.86% vs 71.89%, 50.6% lower cost.
+- MacAgentBench UI subset, 28 tasks, GPT-5.4: 25/28 vs 24/28, 51.4% lower cost.
+- WeaveBench, 114 tasks, GPT-5.4: 53.25% vs 46.37%, 46.3% lower cost.
+- OSWorld 1.0 across GPT-5.4, Claude Opus 5.5, Gemini 3.8 Flash and Grok 4.7: +6.48 points mean score, 17% fewer Steps, 30% lower cost.
+
+## Quick start
+
+- Build: `make build-local` (Linux, Go 1.22+), `make build-macos` (Swift 6.2+), `make build-windows` (.NET 8, PowerShell 7). Run `artifacts/computer-use doctor` as the signed-in desktop user.
+- Codex: add `[mcp_servers.computer_use]` with `command = "/abs/path/to/artifacts/computer-use"` and `args = ["mcp"]` to `~/.codex/config.toml`.
+- Claude Code, Gemini CLI, Grok Build: `python3 -m hcu.render_agent_config` writes complete configurations.
+- Shell and Python: the `computer-use` CLI and the `hcu_sdk` Python package share one daemon per desktop.
+- HCU sends real input to the signed-in desktop. Use a dedicated desktop or a disposable VM for untrusted tasks.
+
+## Docs
+
+- [Project page](https://microsoft.github.io/Hybrid-Computer-Use/)
+- [Project page as Markdown with all result tables](https://microsoft.github.io/Hybrid-Computer-Use/llms-full.txt)
+- [Project page in Chinese](https://microsoft.github.io/Hybrid-Computer-Use/zh.html)
+- [Paper (arXiv:2610.41432)](https://arxiv.org/abs/2610.41432): "Hybrid Computer Use: A Unified Programmatic, Semantic, and Visual Interface for General Agents", 2026. A copy of the PDF is in the repository: [paper/Hybrid-Computer-Use.pdf](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/paper/Hybrid-Computer-Use.pdf)
+- [README](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/README.md): overview, results, quick start, FAQ, citation
+- [Documentation guide](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/README.md): reading paths and terms
+- [Computer Use MCP](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/MCP.md): build, desktop runtime, agent configuration, `AX` and `GUI` contract, errors, troubleshooting
+- [Code entry points](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/CODE.md): daemon, CLI, Python SDK, programmatic tool calling, Codex code mode
+- [Native platforms](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/PLATFORMS.md): Linux, macOS and Windows providers and permissions
+- [Running OSWorld](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/OSWORLD.md): reproduce the OSWorld 1.0 and 2.0 evaluations
+- [Architecture](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/ARCHITECTURE.md): Go packages, request path, AX and GUI state models
+
+## Contract source
+
+- [tool_contract.go](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/computer-use/internal/contract/tool_contract.go): the published `AX` and `GUI` schemas and descriptions; `computer-use schema` prints them with the error table
+- [Agent instructions](https://github.com/microsoft/Hybrid-Computer-Use/tree/main/instructions): the base policy and the hybrid interaction guide given to agents
+
+## Optional
+
+- [CHANGELOG](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/CHANGELOG.md)
+- [CONTRIBUTING](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/CONTRIBUTING.md)
+- [CITATION.cff](https://github.com/microsoft/Hybrid-Computer-Use/blob/main/CITATION.cff)

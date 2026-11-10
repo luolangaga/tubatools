@@ -1,0 +1,17 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-observe",
+  "operation": "observe",
+  "observe": {
+    "protocol_version": 2,
+    "app": "Editor",
+    "observation": {
+      "text_limit": 500,
+      "max_tree_nodes": 1200,
+      "max_tree_depth": 64,
+      "prune": true,
+      "include_screenshot": false
+    }
+  }
+}

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <Description>图吧工具箱插件契约</Description>
+    <PackageTags>TubaWinUi3;SDK</PackageTags>
+  </PropertyGroup>
+</Project>

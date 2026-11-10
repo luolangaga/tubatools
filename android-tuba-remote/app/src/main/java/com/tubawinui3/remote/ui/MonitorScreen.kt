@@ -36,34 +36,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.tubawinui3.remote.data.ApiClient
 import com.tubawinui3.remote.data.ApiException
+import com.tubawinui3.remote.data.MetricDef
+import com.tubawinui3.remote.data.MetricDefs
 import com.tubawinui3.remote.data.MonitorData
+import com.tubawinui3.remote.data.MonitorHistorySize
 import kotlinx.coroutines.delay
 import java.util.Locale
 
-/** 可选监控项：[max] 为 null 时纵轴按历史最大值自适应。 */
-class MetricDef(val key: String, val label: String, val unit: String, val max: Double?, val get: (MonitorData) -> Double)
-
-val MetricDefs = listOf(
-    MetricDef("cpuLoad", "CPU 占用", "%", 100.0) { it.cpuLoad },
-    MetricDef("cpuTemp", "CPU 温度", "℃", 110.0) { it.cpuTemp },
-    MetricDef("cpuClock", "CPU 频率", "MHz", null) { it.cpuClock },
-    MetricDef("cpuPower", "CPU 功耗", "W", null) { it.cpuPower },
-    MetricDef("gpuLoad", "GPU 占用", "%", 100.0) { it.gpuLoad },
-    MetricDef("gpuTemp", "GPU 温度", "℃", 110.0) { it.gpuTemp },
-    MetricDef("gpuClock", "GPU 频率", "MHz", null) { it.gpuClock },
-    MetricDef("gpuPower", "GPU 功耗", "W", null) { it.gpuPower },
-    MetricDef("gpuVram", "显存占用", "GB", null) { it.gpuVramUsedGB },
-    MetricDef("memLoad", "内存占用", "%", 100.0) { it.memLoad },
-    MetricDef("diskRead", "磁盘读", "MB/s", null) { it.diskReadMBs },
-    MetricDef("diskWrite", "磁盘写", "MB/s", null) { it.diskWriteMBs },
-    MetricDef("netDown", "网络下载", "MB/s", null) { it.netDownMBs },
-    MetricDef("netUp", "网络上传", "MB/s", null) { it.netUpMBs },
-    MetricDef("fps", "FPS", "", null) { it.fps },
-    MetricDef("fpsLow1", "FPS 1% Low", "", null) { it.fpsLow1 },
-    MetricDef("frameTime", "帧时间", "ms", null) { it.frameTimeMs },
-)
-
-private const val MAX_POINTS = 120
 private val FpsKeys = setOf("fps", "fpsLow1", "frameTime")
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -80,7 +59,7 @@ fun MonitorScreen(client: ApiClient, onBack: () -> Unit) {
         while (true) {
             try {
                 history.add(client.monitor(needFps))
-                if (history.size > MAX_POINTS) history.removeAt(0)
+                if (history.size > MonitorHistorySize) history.removeAt(0)
                 error = null
             } catch (e: ApiException) {
                 error = e.message
@@ -151,7 +130,7 @@ private fun MetricCard(m: MetricDef, history: List<MonitorData>, chart: Boolean)
                     var started = false
                     values.forEachIndexed { i, v ->
                         if (v < 0) { started = false; return@forEachIndexed }
-                        val x = size.width * (MAX_POINTS - values.size + i) / (MAX_POINTS - 1f)
+                        val x = size.width * (MonitorHistorySize - values.size + i) / (MonitorHistorySize - 1f)
                         val y = size.height * (1f - (v / top).toFloat().coerceIn(0f, 1f))
                         if (!started) { path.moveTo(x, y); started = true } else path.lineTo(x, y)
                     }

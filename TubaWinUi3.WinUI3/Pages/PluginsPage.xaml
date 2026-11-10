@@ -1,0 +1,65 @@
+<Page x:Class="TubaWinUi3.Pages.PluginsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:l="using:WinUI3Localizer" Loaded="Page_Loaded" Unloaded="Page_Unloaded">
+    <Page.Resources>
+        <Style x:Key="PluginListItem" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+        </Style>
+        <Style x:Key="PluginRowCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+        <Style x:Key="PluginIconTile" TargetType="Border">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+        </Style>
+        <Style x:Key="PluginIconGlyph" TargetType="FontIcon">
+            <Setter Property="Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="PluginVersionChip" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="6,1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="PluginInstallButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}"/>
+    </Page.Resources>
+    <Grid Padding="28" RowSpacing="16">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Spacing="4">
+                <TextBlock Text="插件" l:Uids.Uid="Plugins_Title" Style="{ThemeResource TitleTextBlockStyle}"/>
+                <TextBlock Text="来自 nuget.org · Tubatools" l:Uids.Uid="Plugins_Source" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+            <Button Grid.Column="1" AutomationProperties.AutomationId="PluginsDocs" Content="开发文档" l:Uids.Uid="Plugins_Docs" Click="Docs_Click" VerticalAlignment="Center"/>
+            <Button Grid.Column="2" AutomationProperties.AutomationId="PluginsUpload" Content="上传到 NuGet" l:Uids.Uid="Plugins_Upload" Click="Upload_Click" VerticalAlignment="Center"/>
+            <Button Grid.Column="3" AutomationProperties.AutomationId="PluginsDevelop" Content="AI 开发" l:Uids.Uid="Plugins_Develop" Click="Develop_Click" VerticalAlignment="Center"/>
+        </Grid>
+        <AutoSuggestBox Grid.Row="1" x:Name="SearchBox" AutomationProperties.AutomationId="PluginsSearchBox" PlaceholderText="搜索插件" l:Uids.Uid="Plugins_Search" QueryIcon="Find" QuerySubmitted="Search_Submitted"/>
+        <InfoBar Grid.Row="2" x:Name="Status" IsOpen="False" IsClosable="True"/>
+        <TabView Grid.Row="3" x:Name="Tabs" AutomationProperties.AutomationId="PluginsTabs" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False" SelectionChanged="Tabs_Changed">
+            <TabViewItem IsClosable="False" Header="发现" l:Uids.Uid="Plugins_Discover"><ListView x:Name="AvailableList" AutomationProperties.AutomationId="PluginsAvailableList" SelectionMode="None" HorizontalContentAlignment="Stretch" Padding="0" ItemContainerStyle="{StaticResource PluginListItem}"/></TabViewItem>
+            <TabViewItem IsClosable="False" Header="已安装" l:Uids.Uid="Plugins_Installed"><ListView x:Name="InstalledList" AutomationProperties.AutomationId="PluginsInstalledList" SelectionMode="None" HorizontalContentAlignment="Stretch" Padding="0" ItemContainerStyle="{StaticResource PluginListItem}"/></TabViewItem>
+        </TabView>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="12">
+            <Button x:Name="PreviousButton" AutomationProperties.AutomationId="PluginsPreviousButton" Content="上一页" l:Uids.Uid="Plugins_Previous" Click="Previous_Click"/>
+            <Button x:Name="NextButton" AutomationProperties.AutomationId="PluginsNextButton" Content="下一页" l:Uids.Uid="Plugins_Next" Click="Next_Click"/>
+            <ProgressRing x:Name="Busy" Width="24" Height="24" IsActive="False"/>
+        </StackPanel>
+    </Grid>
+</Page>

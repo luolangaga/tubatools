@@ -1,0 +1,9 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-observe-apps",
+  "operation": "observe_apps",
+  "observe_apps": {
+    "protocol_version": 2
+  }
+}

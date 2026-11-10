@@ -378,13 +378,13 @@ public static class DiskSmartReader
 
     // ─── 温度 / 通电时间解析 ───
 
-    private static int? ParseAtaTemperature(IReadOnlyList<SmartAttribute> attrs)
+    internal static int? ParseAtaTemperature(IReadOnlyList<SmartAttribute> attrs)
     {
-        if (FindAttribute(attrs, 0xC2) is not { } attr)
-            return null;
-        // 多数盘的 0xC2 温度在 RawValue[0]，部分在 RawValue[0]+RawValue[1]（低字节在前）
-        var temp = attr.RawValue[1] == 0 ? attr.RawValue[0] : attr.Raw16;
-        return temp == 0 || temp > 200 ? null : temp;
+        // 高字节可能记录最低或最高温度，当前温度取原始值的首字节。
+        var current = FindAttribute(attrs, 0xC2)?.RawValue[0];
+        if (current is > 0 and < 150) return current.Value;
+        var airflow = FindAttribute(attrs, 0xBE)?.RawValue[0];
+        return airflow is > 0 and < 150 ? airflow.Value : null;
     }
 
     private static int? ParseNvmeTemperature(byte[] raw)

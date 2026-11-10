@@ -13,11 +13,16 @@ public sealed partial class MainWindow
         _navigationHighContrast = ThemeColors.IsSystemHighContrast();
         foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
         {
-            if (item.Tag is string tag)
+            if (item.Tag is string pluginTag && pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal) &&
+                BuiltinToolRegistry.GetById(pluginTag[12..]) is Services.Plugins.PluginXamlTool plugin)
+                item.Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } icon
+                    ? new ImageIcon { Source = icon } : new FontIcon { Glyph = plugin.Glyph };
+            else if (item.Tag is string tag)
                 item.Icon = NavigationIconService.Create(tag, NavigationFallbackGlyph(tag), _navigationHighContrast);
         }
         if (NavView.SettingsItem is NavigationViewItem settings)
             settings.Icon = NavigationIconService.Create("settings", "\uE713", _navigationHighContrast);
+        ApplyPluginNavigationCustomization();
     }
 
     private static string NavigationFallbackGlyph(string tag) => tag switch

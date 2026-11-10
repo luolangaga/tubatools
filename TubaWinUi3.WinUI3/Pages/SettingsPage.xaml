@@ -34,7 +34,6 @@
                             <ComboBoxItem Content="外观和布局" Tag="AppearanceExpander" l:Uids.Uid="Settings_GroupOptionAppearance"/>
                             <ComboBoxItem Content="硬件信息" Tag="HardwareAiExpander" l:Uids.Uid="Settings_GroupOptionHardware"/>
                             <ComboBoxItem Content="工具和系统集成" Tag="IntegrationSection" l:Uids.Uid="Settings_GroupOptionIntegration"/>
-                            <ComboBoxItem Content="Agent Skills" Tag="AgentSkillsSection"/>
                             <ComboBoxItem Content="网络和下载" Tag="NetworkSection" l:Uids.Uid="Settings_GroupOptionNetwork"/>
                             <ComboBoxItem Content="数据和存储" Tag="ToolsCommunityExpander" l:Uids.Uid="Settings_GroupOptionStorage"/>
                             <ComboBoxItem Content="隐私和诊断" Tag="PrivacySection" l:Uids.Uid="Settings_GroupOptionPrivacy"/>
@@ -938,37 +937,6 @@
                             </toolkit:SettingsExpander>
                         </Border>
                     </StackPanel>
-                    <Border Margin="0,0,0,28" x:Name="AgentSkillsSection" Style="{StaticResource SettingsRowSurface}">
-                        <toolkit:SettingsExpander Header="Agent Skills" Description="让其他 AI 助手调用图吧工具箱，自动排查电脑问题。" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.AutomationId="AgentSkillsExpander">
-                            <toolkit:SettingsExpander.HeaderIcon>
-                                <FontIcon Glyph="&#xE943;" FontSize="18" Foreground="{ThemeResource FluentIconForegroundBrush}"/>
-                            </toolkit:SettingsExpander.HeaderIcon>
-                            <toolkit:SettingsExpander.Items>
-                                <toolkit:SettingsCard Header="安装工具箱技能" Description="先安装 Node.js 22.20 或更新版本，再选择你使用的 Agent。技能安装到当前 Windows 用户，完成后重新打开 Agent 会话。" HorizontalContentAlignment="Left" ContentAlignment="Vertical">
-                                    <StackPanel Spacing="12">
-                                        <ComboBox x:Name="AgentSkillsTarget" SelectedIndex="0" Header="使用哪个 Agent？" AutomationProperties.AutomationId="AgentSkillsTarget">
-                                            <ComboBoxItem Content="Codex" Tag="codex"/>
-                                            <ComboBoxItem Content="Claude Code" Tag="claude-code"/>
-                                            <ComboBoxItem Content="Cursor" Tag="cursor"/>
-                                            <ComboBoxItem Content="OpenCode" Tag="opencode"/>
-                                        </ComboBox>
-                                        <Button x:Name="AgentSkillsInstall" Content="安装到所选 Agent" Click="InstallAgentSkills_Click" AutomationProperties.AutomationId="AgentSkillsInstall"/>
-                                        <Button Content="复制 PowerShell 安装命令" Click="CopyAgentSkillsCommand_Click" AutomationProperties.AutomationId="AgentSkillsCopy"/>
-                                        <Button Content="打开技能文件夹 / 手动安装" Click="ExportAgentSkills_Click" AutomationProperties.AutomationId="AgentSkillsExport"/>
-                                    </StackPanel>
-                                </toolkit:SettingsCard>
-                                <toolkit:SettingsCard ContentAlignment="Vertical" HorizontalContentAlignment="Stretch">
-                                    <StackPanel Spacing="12">
-                                        <InfoBar x:Name="AgentSkillsStatus" IsOpen="False" IsClosable="True"/>
-                                        <TextBlock Text="可以调用：硬件信息、CPU / GPU 温度和功耗、内存占用、硬盘 SMART 健康、CPU-Z 报告，以及 FurMark、DiskSpd 等已安装工具的命令行功能。Agent 使用普通权限即可；硬件查询自动复用工具箱权限，未运行工具箱时会弹出 Windows 授权窗口。" Style="{StaticResource SettingsRowDescription}"/>
-                                        <TextBlock Text="试着对 Agent 说：使用图吧工具箱检查电脑卡顿原因，先读取温度、功耗和硬盘健康。" TextWrapping="Wrap"/>
-                                        <TextBlock Text="压测、写盘和系统修改需要明确授权，并设置最长 300 秒的执行时限。移动或更新工具箱安装目录后，请在这里重新安装技能以更新路径。" Style="{StaticResource SettingsRowDescription}"/>
-                                        <HyperlinkButton Content="安装 Node.js" NavigateUri="https://nodejs.org/zh-cn/download" AutomationProperties.AutomationId="AgentSkillsNodeDownload"/>
-                                    </StackPanel>
-                                </toolkit:SettingsCard>
-                            </toolkit:SettingsExpander.Items>
-                        </toolkit:SettingsExpander>
-                    </Border>
                     <StackPanel Spacing="4" Margin="0,0,0,28" x:Name="ToolsCommunityExpander">
                         <TextBlock Text="数据和存储" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2" l:Uids.Uid="Settings_GroupStorage" TextWrapping="Wrap"/>
                         <Border x:Name="SettingsConfigManagerCard" Style="{StaticResource SettingsRowSurface}">
@@ -1169,8 +1137,8 @@
                             <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
                                 <toolkit:SettingsCard.Header>
                                     <StackPanel VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="提交社区工具" l:Uids.Uid="Settings_CommunitySubmit_Title" TextWrapping="Wrap"/>
-                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="将工具提交到社区仓库，审核通过后所有人可见" l:Uids.Uid="Settings_CommunitySubmit_Desc"/>
+                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="发布插件" l:Uids.Uid="Settings_CommunitySubmit_Title" TextWrapping="Wrap"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="打开 NuGet 上传页面并查看插件开发文档" l:Uids.Uid="Settings_CommunitySubmit_Desc"/>
                                     </StackPanel>
                                 </toolkit:SettingsCard.Header>
                                 <toolkit:SettingsCard.HeaderIcon>
@@ -1179,7 +1147,7 @@
                                 <Button x:Name="CommunitySubmitButton" VerticalAlignment="Center" Padding="12,8" Click="CommunitySubmitButton_Click">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph=""/>
-                                        <TextBlock Text="提交工具" l:Uids.Uid="Settings_CommunitySubmit_Button" TextWrapping="Wrap"/>
+                                        <TextBlock Text="上传插件" l:Uids.Uid="Settings_CommunitySubmit_Button" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </Button>
                             </toolkit:SettingsCard>

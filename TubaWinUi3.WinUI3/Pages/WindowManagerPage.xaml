@@ -54,6 +54,8 @@
                             <Button x:Name="CopyButton" AutomationProperties.AutomationId="CopyWindowInfo" Content="复制信息" HorizontalAlignment="Right" Click="Copy_Click" IsEnabled="False"/>
                         </Grid>
                         <TextBlock x:Name="Details" Text="尚未选择窗口" IsTextSelectionEnabled="True" TextWrapping="Wrap"/>
+                        <Button x:Name="InspectButton" AutomationProperties.AutomationId="InspectWindowControls"
+                                Content="检查控件树" Click="Inspect_Click" IsEnabled="False"/>
                         <GridView x:Name="Actions" IsEnabled="False" SelectionMode="None" IsItemClickEnabled="False">
                             <GridView.ItemsPanel><ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal"/></ItemsPanelTemplate></GridView.ItemsPanel>
                             <Button Content="无边框窗口化" AutomationProperties.AutomationId="WindowAction_borderless" Tag="borderless" Click="Action_Click" Margin="0,0,8,8"/>

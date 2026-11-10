@@ -1,0 +1,25 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-action",
+  "operation": "resolve_and_act",
+  "action": {
+    "protocol_version": 2,
+    "intent": "set_value",
+    "app": "Editor",
+    "target": {
+      "selector": "entry \"Name\"",
+      "windowHandle": "w2:fixture",
+      "automationId": "name-entry",
+      "role": "textbox",
+      "name": "Name",
+      "hasName": true
+    },
+    "input": {
+      "value": "Ada"
+    },
+    "observation": {
+      "include_screenshot": false
+    }
+  }
+}

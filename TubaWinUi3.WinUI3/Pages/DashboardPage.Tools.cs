@@ -11,11 +11,22 @@ namespace TubaWinUi3.Pages;
 public sealed partial class DashboardPage
 {
     private bool _updatingToolItems;
+    private readonly DispatcherTimer _filterDebounce = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private IReadOnlyList<ToolItem>? _baseCatalog;
+    private IReadOnlyList<ToolItem>? _baseFavoriteCatalog;
+    private string[] _baseFavoritePaths = [];
+    private IReadOnlyList<ToolItem> _sortedTools = [];
+    private IReadOnlyList<ToolItem> _favoriteTools = [];
+    private string? _baseLanguage;
+    private bool _historyDirty = true;
 
     private void OnLaunchHistoryChanged()
     {
-        if (!_favorites)
-            DispatcherQueue.TryEnqueue(ApplyToolFilter);
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _historyDirty = true;
+            if (!_favorites) ApplyToolFilter();
+        });
     }
 
     private void ToolSearchBox_LosingFocus(UIElement sender, LosingFocusEventArgs e)
@@ -24,7 +35,33 @@ public sealed partial class DashboardPage
         if (_updatingToolItems) e.TryCancel();
     }
 
-    private void ToolSearchBox_TextChanged(object sender, TextChangedEventArgs e) { if (_ready) ApplyToolFilter(); }
+    private void ToolSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_ready) return;
+        _filterDebounce.Stop();
+        if (ToolSearchBox.Text.Length == 0) ApplyToolFilter();
+        else _filterDebounce.Start();
+    }
+
+    private void EnsureBaseToolLists()
+    {
+        var paths = FavoritesService.GetFavorites();
+        if (ReferenceEquals(_baseCatalog, _catalog) && ReferenceEquals(_baseFavoriteCatalog, _favoriteCatalog) && !_historyDirty &&
+            _baseLanguage == LocalizationService.CurrentLanguage && paths.SequenceEqual(_baseFavoritePaths, StringComparer.OrdinalIgnoreCase)) return;
+        _baseCatalog = _catalog;
+        _baseFavoriteCatalog = _favoriteCatalog;
+        _baseFavoritePaths = paths.ToArray();
+        _baseLanguage = LocalizationService.CurrentLanguage;
+        _historyDirty = false;
+        var catalog = _catalog ?? [];
+        var favorites = paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var byPath = new Dictionary<string, ToolItem>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tool in catalog.Concat(_favoriteCatalog).Distinct()) tool.IsFavorite = favorites.Contains(tool.Path);
+        // Prefer the original category placement, so saved favorite paths keep their identity.
+        foreach (var tool in _favoriteCatalog.Concat(catalog)) byPath.TryAdd(tool.Path, tool);
+        _favoriteTools = paths.Select(path => byPath.GetValueOrDefault(path)).OfType<ToolItem>().ToList();
+        _sortedTools = AllToolsSortService.Sort(catalog, LaunchHistoryService.GetRecords());
+    }
 
     private void ApplyToolFilter()
     {
@@ -32,14 +69,9 @@ public sealed partial class DashboardPage
         bool searchWasFocused = ToolSearchBox.FocusState != FocusState.Unfocused;
         int selectionStart = ToolSearchBox.SelectionStart;
         int selectionLength = ToolSearchBox.SelectionLength;
-        var catalog = _catalog ?? [];
-        var favoritePaths = FavoritesService.GetFavorites();
-        foreach (var tool in catalog.Concat(_favoriteCatalog).Distinct()) tool.IsFavorite = FavoritesService.IsFavorite(tool.Path);
-        // The canonical saved paths and their saved order are shared with FavoritesPage.
-        IEnumerable<ToolItem> result = _favorites
-            ? favoritePaths.Select(path => _favoriteCatalog.FirstOrDefault(t => t.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
-                ?? catalog.FirstOrDefault(t => t.Path.Equals(path, StringComparison.OrdinalIgnoreCase))).OfType<ToolItem>()
-            : AllToolsSortService.Sort(catalog, LaunchHistoryService.GetRecords());
+        _filterDebounce.Stop();
+        EnsureBaseToolLists();
+        IEnumerable<ToolItem> result = _favorites ? _favoriteTools : _sortedTools;
         result = result.Where(t => !t.IsBuiltinLink ||
             (ToolVisibilityService.IsBuiltinEnabled(t.BuiltinToolId!) && HomeDashboardContent.IsVisible(new() { Target = "builtin:" + t.BuiltinToolId }, RuntimeHelper.IsPackagedContext)));
         string query = ToolSearchBox.Text.Trim();
@@ -53,11 +85,17 @@ public sealed partial class DashboardPage
         _updatingToolItems = true;
         try
         {
+            // Remove filtered-out items first: narrowing a search now takes a linear pass,
+            // rather than moving every surviving row across all removed rows.
+            var wanted = visibleTools.ToHashSet();
+            for (int i = _tools.Count - 1; i >= 0; i--)
+                if (!wanted.Contains(_tools[i])) _tools.RemoveAt(i);
+            var existing = _tools.ToHashSet();
             for (int index = 0; index < visibleTools.Count; index++)
             {
                 var tool = visibleTools[index];
                 if (index < _tools.Count && ReferenceEquals(_tools[index], tool)) continue;
-                int oldIndex = _tools.IndexOf(tool);
+                int oldIndex = existing.Contains(tool) ? _tools.IndexOf(tool) : -1;
                 if (oldIndex >= 0) _tools.Move(oldIndex, index);
                 else _tools.Insert(index, tool);
             }

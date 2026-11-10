@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.ClassicTheme</PackageId>
+    <Version>1.0.2</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>经典样式主题包：蓝色渐变主界面、深蓝侧栏、半透明白色卡片与白色文字</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <!-- 仅编译引用 WinUI；运行时由宿主提供，禁止把框架 DLL 打进插件包。 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="assets\**\*" />
+    <Content Remove="assets\**\*" />
+    <PRIResource Remove="assets\**\*" />
+    <None Remove="assets\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Pack="true" PackagePath="assets/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+</Project>

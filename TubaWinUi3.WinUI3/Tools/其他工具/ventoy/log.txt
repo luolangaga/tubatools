@@ -1,0 +1,49 @@
+[2026/11/05 20:50:07.813] 
+##################################################################################
+############################## Ventoy2DiskX86  #############################
+##################################################################################
+[2026/11/05 20:50:07.813] Current Directory <C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\其他工具\ventoy>
+[2026/11/05 20:50:07.813] Exe file path <C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\其他工具\ventoy\Ventoy2Disk.exe>
+[2026/11/05 20:50:07.813] Current directory check OK.
+[2026/11/05 20:50:07.815] Current directory:<C:\Users\luolan\Desktop\tubawinui3\TubaWinUi3.WinUI3\Tools\其他工具\ventoy>
+[2026/11/05 20:50:07.816] ######### Current Ventoy Version: Ventoy2DiskX86 1.1.18 ########
+[2026/11/05 20:50:07.825] id=10440/41528
+[2026/11/05 20:50:07.825]
+[2026/11/05 20:50:07.825] PSize:<4994048 4877KB>
+[2026/11/05 20:50:07.825] Lunch main process 0
+[2026/11/05 20:50:07.826] Control Flag: 0 1 1
+[2026/11/05 20:50:07.828] Windows Version: <<Windows 11 Home China, 64-bit (Build 26300.9711)>>
+[2026/11/05 20:50:07.828] 
+===================== Enum All PhyDrives =====================
+[2026/11/05 20:50:07.829] RegOpenKeyExA <SYSTEM\CurrentControlSet\Services\disk\Enum> Ret:0
+[2026/11/05 20:50:07.829] RegQueryValueExA <Count> ret:0  Size:4 Value:2
+[2026/11/05 20:50:07.829] GetPhysicalDriveCount: 2
+[2026/11/05 20:50:07.829] Logical Drives: 0x1c
+[2026/11/05 20:50:07.830] LogicalDrive:\\.\C: PhyDrive:1 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/11/05 20:50:07.830] C --> 1
+[2026/11/05 20:50:07.830] LogicalDrive:\\.\D: PhyDrive:0 Num:1 Offset:16777216 ExtentLength:1024191365120
+[2026/11/05 20:50:07.830] D --> 0
+[2026/11/05 20:50:07.832] DeviceIoControl IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS failed \\.\E:, error:21
+[2026/11/05 20:50:07.832] E --> -1
+[2026/11/05 20:50:07.834] Create file Handle:00000160 \\.\PhysicalDrive0 status:0
+[2026/11/05 20:50:07.855] PHYSICALDRIVE0 size 1024209543168 bytes
+[2026/11/05 20:50:07.858] Create file Handle:00000160 \\.\PhysicalDrive1 status:0
+[2026/11/05 20:50:07.858] PHYSICALDRIVE1 size 1024209543168 bytes
+[2026/11/05 20:50:07.858] PhyDrv:0 BusType:Nvme Removable:0 Size:1024GB(1024209543168) Sector:512/4096 Name: KBG50ZNV1T02 KIOXIA
+[2026/11/05 20:50:07.858] PhyDrv:1 BusType:Nvme Removable:0 Size:1024GB(1024209543168) Sector:512/4096 Name: YMTC PC41Q-1TB-B
+[2026/11/05 20:50:07.859] LogicalDrive:\\.\C: PhyDrive:1 Num:1 Offset:332398592 ExtentLength:991663489024
+[2026/11/05 20:50:07.859] Logical Drive:C  ===> PhyDrive:1
+[2026/11/05 20:50:07.860] LogicalDrive:\\.\D: PhyDrive:0 Num:1 Offset:16777216 ExtentLength:1024191365120
+[2026/11/05 20:50:07.860] Logical Drive:D  ===> PhyDrive:0
+[2026/11/05 20:50:07.861] DeviceIoControl IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS failed \\.\E:, error:21
+[2026/11/05 20:50:07.862] Logical Drive:E  ===> PhyDrive:-1
+[2026/11/05 20:50:07.862] < KBG50ZNV1T02 KIOXIA> is filtered for not USB type.
+[2026/11/05 20:50:07.862] < YMTC PC41Q-1TB-B> is filtered for not USB type.
+[2026/11/05 20:50:07.978] Load languages from json file ...
+[2026/11/05 20:50:07.980] language json file len:293356 json parse:0
+[2026/11/05 20:50:07.981] Total 53 languages ...
+[2026/11/05 20:50:08.091] Courier New font <C:\WINDOWS\Fonts\couri.ttf> exist OK.
+[2026/11/05 20:50:08.092] system_dir=<C:\WINDOWS\system32>
+[2026/11/05 20:50:08.092] sysnative_dir=<C:\WINDOWS\Sysnative>
+[2026/11/05 20:50:08.094] LoadLibrary shell32.dll.mui SUCCESS
+[2026/11/05 20:50:08.095] SetAlertPromptHook SUCCESS

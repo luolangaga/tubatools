@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PackageId>Tubatools.Hello</PackageId>
+    <Version>2.1.0</Version>
+    <Authors>YourName</Authors>
+    <Description>图吧工具箱插件开发示例</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../TubaWinUi3.PluginSdk/TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <None Include="assets/icon.svg" Pack="true" PackagePath="assets/" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="$(OutputPath)HelloPlugin.dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)HelloPlugin.deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+</Project>

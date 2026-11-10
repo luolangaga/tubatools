@@ -5,15 +5,17 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUi3", "TubaWinUi3.WinUI3\TubaWinUi3.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567891}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TubaWinUi3.Compatible", "TubaWinUi3.Compatible\TubaWinUi3.Compatible.csproj", "{B1A2C3D4-E5F6-7890-ABCD-EF1234567890}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUi3.Tui", "TubaWinUi3.Tui\TubaWinUi3.Tui.csproj", "{B1A2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TubaWinUi3.Tests", "TubaWinUi3.Tests\TubaWinUi3.Tests.csproj", "{AE984034-E8D7-4EFD-94B5-B6ED5308542B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUI3.BackEnd", "TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj", "{C3A9E1D2-4B5C-4D6E-8F70-A1B2C3D4E5F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUi3.BackEnd", "TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj", "{C3A9E1D2-4B5C-4D6E-8F70-A1B2C3D4E5F6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUI3.ShellExtension", "TubaWinUI3.ShellExtension\TubaWinUi3.ShellExtension.csproj", "{D4B0F2E3-5C6D-4E7F-9081-B2C3D4E5F607}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TubaWinUi3.ShellExtension", "TubaWinUI3.ShellExtension\TubaWinUi3.ShellExtension.csproj", "{D4B0F2E3-5C6D-4E7F-9081-B2C3D4E5F607}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TubaWinUi3.WinUI3", "TubaWinUi3.WinUI3", "{5475FC44-64B3-86DC-5AB9-86C47D025DF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TubaWinUi3.PluginSdk", "TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj", "{A81293D0-715B-40D0-AE52-58728DA528A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,18 @@ Global
 		{D4B0F2E3-5C6D-4E7F-9081-B2C3D4E5F607}.Release|x64.Build.0 = Release|Any CPU
 		{D4B0F2E3-5C6D-4E7F-9081-B2C3D4E5F607}.Release|x86.ActiveCfg = Release|Any CPU
 		{D4B0F2E3-5C6D-4E7F-9081-B2C3D4E5F607}.Release|x86.Build.0 = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|x64.Build.0 = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Debug|x86.Build.0 = Debug|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|x64.ActiveCfg = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|x64.Build.0 = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|x86.ActiveCfg = Release|Any CPU
+		{A81293D0-715B-40D0-AE52-58728DA528A8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

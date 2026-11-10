@@ -32,8 +32,10 @@ public sealed class NamedPipeBackendServer
 
     public void Start(CancellationToken cancellationToken)
     {
+        // Fail closed if an unprivileged process has already claimed the well-known name.
+        var first = CreateServerStream(PipeOptions.FirstPipeInstance);
         _acceptLoopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _acceptLoopTask = Task.Run(() => AcceptLoopAsync(_acceptLoopCts.Token), _acceptLoopCts.Token);
+        _acceptLoopTask = Task.Run(() => AcceptLoopAsync(first, _acceptLoopCts.Token));
     }
 
     public void Stop()
@@ -86,14 +88,16 @@ public sealed class NamedPipeBackendServer
 
     // ---------- 连接生命周期 ----------
 
-    private async Task AcceptLoopAsync(CancellationToken cancellationToken)
+    private async Task AcceptLoopAsync(NamedPipeServerStream first, CancellationToken cancellationToken)
     {
+        NamedPipeServerStream? pending = first;
         while (!cancellationToken.IsCancellationRequested)
         {
             NamedPipeServerStream? server = null;
             try
             {
-                server = CreateServerStream();
+                server = pending ?? CreateServerStream();
+                pending = null;
                 await server.WaitForConnectionAsync(cancellationToken);
                 server.ReadMode = PipeTransmissionMode.Byte;
                 _ = ObserveClientTaskAsync(server, cancellationToken);
@@ -111,6 +115,7 @@ public sealed class NamedPipeBackendServer
                 catch { break; }
             }
         }
+        pending?.Dispose();
     }
 
     private async Task ObserveClientTaskAsync(NamedPipeServerStream stream, CancellationToken cancellationToken)
@@ -125,7 +130,7 @@ public sealed class NamedPipeBackendServer
         catch { }
     }
 
-    private static NamedPipeServerStream CreateServerStream()
+    internal static PipeSecurity CreatePipeSecurity()
     {
         var pipeSecurity = new PipeSecurity();
         pipeSecurity.SetAccessRule(new PipeAccessRule(
@@ -136,21 +141,36 @@ public sealed class NamedPipeBackendServer
             new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null),
             PipeAccessRights.FullControl,
             AccessControlType.Allow));
-        // 认证用户可读写并可再建实例（多前端/托盘等价物同时连接）
-        pipeSecurity.SetAccessRule(new PipeAccessRule(
-            new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
-            PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
-            AccessControlType.Allow));
+        // Management commands are restricted to elevated administrators and SYSTEM.
+        // The account SID alone is insufficient: its medium-integrity processes must not inherit control.
+        pipeSecurity.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+
+        return pipeSecurity;
+    }
+
+    private static NamedPipeServerStream CreateServerStream(PipeOptions options = PipeOptions.None)
+    {
 
         return NamedPipeServerStreamAcl.Create(
             InterceptPipeConstants.PipeName,
             PipeDirection.InOut,
             NamedPipeServerStream.MaxAllowedServerInstances,
             PipeTransmissionMode.Byte,
-            PipeOptions.Asynchronous,
+            PipeOptions.Asynchronous | options,
             0,
             0,
-            pipeSecurity);
+            CreatePipeSecurity());
+    }
+
+    internal static bool IsAuthorizedIdentity(WindowsIdentity identity) =>
+        identity.IsSystem || new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+
+    private static bool IsAuthorizedClient(NamedPipeServerStream stream)
+    {
+        bool authorized = false;
+        try { stream.RunAsClient(() => { using var identity = WindowsIdentity.GetCurrent(); authorized = IsAuthorizedIdentity(identity); }); }
+        catch { return false; }
+        return authorized;
     }
 
     private async Task HandleClientAsync(NamedPipeServerStream stream, CancellationToken cancellationToken)
@@ -190,6 +210,9 @@ public sealed class NamedPipeBackendServer
                 {
                     connection.IsNotificationSubscriber = true;
                 }
+
+                if (!IsAuthorizedClient(stream))
+                    break;
 
                 InterceptPipeResponse response;
                 try

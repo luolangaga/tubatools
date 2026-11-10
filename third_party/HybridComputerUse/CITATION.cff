@@ -1,0 +1,93 @@
+cff-version: 1.2.0
+message: "If you use Hybrid Computer Use in your research, please cite it as below."
+type: software
+title: "Hybrid Computer Use: A Unified Programmatic, Semantic, and Visual Interface for General Agents"
+abstract: >-
+  Hybrid Computer Use (HCU) is an open-source MCP server, computer-use, that
+  lets coding agents such as Codex, Claude Code, Gemini CLI and Grok Build
+  operate Linux, macOS and Windows desktops. It adds two tools next to the
+  agent's own shell and file tools: AX reads and acts on the accessibility
+  tree through short refs, batches of up to 64 actions with in-call waits and
+  post-action diffs, and GUI works with full-desktop screenshots, zoom and
+  batched pointer and keyboard input. Before any input, HCU checks the live
+  target of every AX action and the live window layout of every GUI
+  coordinate. One Go core drives native providers built on AT-SPI2 and X11,
+  AXUIElement and ScreenCaptureKit, and UI Automation and Win32.
+authors:
+  - given-names: Haoqing
+    family-names: Wang
+    affiliation: Microsoft Research
+  - given-names: Xiaoyi
+    family-names: Zhang
+    affiliation: Microsoft Research
+  - given-names: Sicheng
+    family-names: Fan
+    affiliation: Fudan University
+  - given-names: Zhexin
+    family-names: Zhang
+    affiliation: Tsinghua University
+  - given-names: Xinjie
+    family-names: Zhang
+    affiliation: Microsoft Research
+  - given-names: Jiahao
+    family-names: Li
+    affiliation: Microsoft Research
+  - given-names: Bin
+    family-names: Li
+    affiliation: Microsoft Research
+  - given-names: Yan
+    family-names: Lu
+    affiliation: Microsoft Research
+version: 1.0.0
+date-released: 2026-10-30
+license:
+  - MIT
+  - Apache-2.0
+repository-code: "https://github.com/microsoft/Hybrid-Computer-Use"
+url: "https://microsoft.github.io/Hybrid-Computer-Use/"
+keywords:
+  - Hybrid Computer Use
+  - HCU
+  - computer use
+  - computer-use agent
+  - GUI agent
+  - desktop automation
+  - accessibility
+  - accessibility tree
+  - AT-SPI
+  - AXUIElement
+  - UI Automation
+  - MCP
+  - Model Context Protocol
+  - Codex
+  - Claude Code
+  - Gemini CLI
+  - Grok Build
+  - OSWorld
+  - Windows Agent Arena
+  - MacAgentBench
+  - WeaveBench
+preferred-citation:
+  type: article
+  title: "Hybrid Computer Use: A Unified Programmatic, Semantic, and Visual Interface for General Agents"
+  year: 2026
+  journal: "arXiv preprint arXiv:2610.41432"
+  doi: "10.48550/arXiv.2610.41432"
+  url: "https://arxiv.org/abs/2610.41432"
+  authors:
+    - given-names: Haoqing
+      family-names: Wang
+    - given-names: Xiaoyi
+      family-names: Zhang
+    - given-names: Sicheng
+      family-names: Fan
+    - given-names: Zhexin
+      family-names: Zhang
+    - given-names: Xinjie
+      family-names: Zhang
+    - given-names: Jiahao
+      family-names: Li
+    - given-names: Bin
+      family-names: Li
+    - given-names: Yan
+      family-names: Lu

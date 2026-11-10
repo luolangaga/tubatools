@@ -12,6 +12,7 @@ using TubaWinUi3.Controls;
 using TubaWinUi3.Models;
 using TubaWinUi3.Pages;
 using TubaWinUi3.Services;
+using TubaWinUi3.Services.Plugins;
 using Windows.UI;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
@@ -133,11 +134,14 @@ public sealed partial class MainWindow : Window
 
     public MainWindow()
     {
-        try { SteamAccelerationService.RecoverOnStartup(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速恢复失败：" + ex.Message); }
         InitializeComponent();
+        Services.AiAgent.ComputerControlService.PendingInteractionRequested += OpenAssistantInteraction;
+        FavoritesService.SaveFailed += OnPersistenceFailed;
+        AppSettings.SaveFailed += OnPersistenceFailed;
 
         ApplyNavigationIcons();
         NavView.ActualThemeChanged += NavigationThemeChanged;
+        NavView.Loaded += PluginNavigationLoaded;
         Activated += NavigationWindowActivated;
 
         SearchListView.ItemsSource = _searchResults;
@@ -183,6 +187,8 @@ public sealed partial class MainWindow : Window
 
         if (RuntimeHelper.IsPackagedContext)
         {
+            // MSIX 只关闭插件的侧边栏入口；插件页仍可从「内置工具」索引打开，
+            // AI 制作插件与插件工具照常可用。
             NavView.MenuItems.Remove(CommunityNavItem);
         }
 
@@ -362,7 +368,8 @@ public sealed partial class MainWindow : Window
         if (pageType == typeof(FavoritesPage)) return "home";
         if (pageType == typeof(HardwarePage)) return "hardware";
         if (pageType == typeof(BuiltinToolsPage)) return "builtin";
-        if (pageType == typeof(CommunityToolsPage)) return "community";
+        if (pageType == typeof(AiAssistantPage)) return "ai-assistant";
+        if (pageType == typeof(PluginsPage)) return "community";
 
         if (pageType == typeof(HomePage))
         {
@@ -516,12 +523,16 @@ public sealed partial class MainWindow : Window
         // enabled the scheduled-task auto-start, the next logon will re-enable it.
         // 必须放在「隐藏到托盘」分支之后：隐藏后程序还在后台跑（后台节流本身就是常驻功能），
         // 这时候解除节流等于把用户开着的省电功能关掉。
-        try { SteamIdleService.Disconnect(); } catch { }
+        try { Services.AiAgent.ComputerControlService.Shutdown(); } catch { }
+        Services.AiAgent.ComputerControlService.PendingInteractionRequested -= OpenAssistantInteraction;
         try { SteamAccelerationService.Shutdown(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速还原失败：" + ex.Message); }
         try { EnergyStarService.Shutdown(); } catch { }
 
+        FavoritesService.SaveFailed -= OnPersistenceFailed;
+        AppSettings.SaveFailed -= OnPersistenceFailed;
         BackdropService.BackdropChanged -= OnBackdropChanged;
         NavView.ActualThemeChanged -= NavigationThemeChanged;
+        NavView.Loaded -= PluginNavigationLoaded;
         Activated -= NavigationWindowActivated;
         AppWindow.Changed -= AppWindow_Changed;
         AppWindow.Closing -= MainWindow_Closing;
@@ -701,6 +712,9 @@ public sealed partial class MainWindow : Window
         {
             switch (item.Tag)
             {
+                case string pluginTag when pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal):
+                    if (BuiltinToolRegistry.GetById(pluginTag[12..]) is PluginXamlTool plugin) _ = LaunchPluginPageAsync(plugin);
+                    break;
                 case "home":
                     NavFrame.Navigate(typeof(DashboardPage));
                     break;
@@ -716,9 +730,12 @@ public sealed partial class MainWindow : Window
                 case "builtin":
                     NavFrame.Navigate(typeof(BuiltinToolsPage));
                     break;
+                case "ai-assistant":
+                    NavFrame.Navigate(typeof(AiAssistantPage));
+                    break;
                 case "community":
                     if (RuntimeHelper.IsPackagedContext) break;
-                    NavFrame.Navigate(typeof(CommunityToolsPage));
+                    NavFrame.Navigate(typeof(PluginsPage));
                     break;
 
                 case "benchmark":
@@ -765,40 +782,54 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private int _dynamicMenuItemCount;
+    private readonly List<NavigationViewItem> _dynamicMenuItems = [];
 
     private void PopulateCategories(IReadOnlyList<string> categories)
     {
-        while (_dynamicMenuItemCount > 0)
-        {
-            NavView.MenuItems.RemoveAt(NavView.MenuItems.Count - 1);
-            _dynamicMenuItemCount--;
-        }
+        foreach (var old in _dynamicMenuItems) NavView.MenuItems.Remove(old);
+        _dynamicMenuItems.Clear();
+        void AddDynamic(NavigationViewItem item) { NavView.MenuItems.Add(item); _dynamicMenuItems.Add(item); }
 
         var otherCategory = categories.FirstOrDefault(c => c.Contains("其他"));
         var restCategories = categories.Where(c => !c.Contains("其他"));
 
         foreach (var category in restCategories)
         {
-            NavView.MenuItems.Add(new NavigationViewItem
+            AddDynamic(new NavigationViewItem
             {
                 Content = LocalizationService.GetCategoryDisplayName(category),
                 Tag = category,
                 Icon = NavigationIconService.Create(category, GetCategoryGlyphStatic(category), _navigationHighContrast)
             });
-            _dynamicMenuItemCount++;
         }
 
         if (otherCategory != null)
         {
-            NavView.MenuItems.Add(new NavigationViewItem
+            AddDynamic(new NavigationViewItem
             {
                 Content = LocalizationService.GetCategoryDisplayName(otherCategory),
                 Tag = otherCategory,
                 Icon = NavigationIconService.Create(otherCategory, GetCategoryGlyphStatic(otherCategory), _navigationHighContrast)
             });
-            _dynamicMenuItemCount++;
         }
+        // MSIX 下插件工具不占用侧边栏入口（只隐藏展示，工具本身仍在内置工具索引里）。
+        if (!RuntimeHelper.IsPackagedContext)
+            foreach (var plugin in BuiltinToolRegistry.Tools.OfType<PluginXamlTool>().Where(p => p.Definition.ShowInSidebar))
+            {
+                AddDynamic(new NavigationViewItem
+                {
+                    Content = plugin.Name, Tag = "plugin-page:" + plugin.Id,
+                    Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } icon
+                        ? new ImageIcon { Source = icon } : new FontIcon { Glyph = plugin.Glyph }
+                });
+            }
+        ApplyPluginNavigationCustomization();
+    }
+
+    private async Task LaunchPluginPageAsync(PluginXamlTool plugin)
+    {
+        try { await plugin.ExecuteTrackedAsync(new BuiltinToolContext { XamlRoot = NavFrame.XamlRoot }); }
+        catch (Exception ex) { ShowCatalogToolStatus(plugin.Name, ex.Message, InfoBarSeverity.Error); }
     }
 
     public static string GetCategoryGlyphStatic(string category)
@@ -920,6 +951,9 @@ public sealed partial class MainWindow : Window
         _ = CatalogToolLauncher.LaunchAsync(tool, DispatcherQueue, () => NavFrame.XamlRoot, ShowCatalogToolStatus);
     }
 
+    private void OnPersistenceFailed(string message) => DispatcherQueue.TryEnqueue(() =>
+        ShowCatalogToolStatus(LocalizationService.L("Persistence_ErrorTitle", "保存失败"), message, InfoBarSeverity.Error));
+
     private void ShowCatalogToolStatus(string title, string message, InfoBarSeverity severity)
     {
         ToolUpdateToast.Title = title;
@@ -936,6 +970,7 @@ public sealed partial class MainWindow : Window
         {
             var title = parameter is ToolContentPageParam p
                 ? p.Title
+                : pageType == typeof(PluginToolPage) && parameter is string pluginId && BuiltinToolRegistry.GetById(pluginId) is { } plugin ? plugin.Name
                 : (ActiveToolName ?? LocalizationService.L("MainWindow_BuiltinToolFallback", "内置工具"));
             BuiltinToolWindow.Show(pageType, parameter, title);
             return;
@@ -969,12 +1004,35 @@ public sealed partial class MainWindow : Window
         return NavFrame.CanGoBack;
     }
 
+    private int _suggestionVersion;
+
     private void PopulateSearchSuggestions()
     {
-        var items = UnifiedSearchService.GetQuickPanelItems();
+        // Fixed actions are immediately available even while the catalog is cold.
+        ApplySearchSuggestions(UnifiedSearchService.GetQuickPanelItems(includeRecent: false));
+        _ = PopulateRecentSuggestionsAsync(++_suggestionVersion);
+    }
+
+    private async Task PopulateRecentSuggestionsAsync(int version)
+    {
+        try
+        {
+            var items = await Task.Run(() => UnifiedSearchService.GetQuickPanelItems());
+            if (version != _suggestionVersion || _searchDismissed || SearchBox.Text.Trim().Length != 0 ||
+                SearchBox.FocusState == FocusState.Unfocused) return;
+            ApplySearchSuggestions(items);
+            ShowSearchPopup();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Search suggestions] {ex}");
+        }
+    }
+
+    private void ApplySearchSuggestions(IReadOnlyList<SearchResult> items)
+    {
         _searchResults.Clear();
-        foreach (var item in items)
-            _searchResults.Add(item);
+        foreach (var item in items) _searchResults.Add(item);
         _searchResultsQuery = string.Empty;
         SearchListView.SelectedIndex = -1;
     }

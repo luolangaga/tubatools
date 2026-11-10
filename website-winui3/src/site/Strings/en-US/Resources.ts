@@ -68,7 +68,7 @@ export default {
 
   "home.section4.title": "58 built-in utilities",
   "home.section4.text1": "58 built-in tools that work out of the box, covering everyday system maintenance, network diagnostics and gaming helpers.",
-  "home.section4.items": "Junk cleaner - deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner - context menus, startup, scheduled tasks|Game networking helper - play together without touching the router|Format converter - images, media, documents and ZIP packaging|Triple stress test - CPU / GPU / NIC load testing|Time sync - NTP server latency test and one-click resync|More: port viewer, startup manager, Windows images, AI assistant…",
+  "home.section4.items": "Junk cleaner - deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner - context menus, startup, scheduled tasks|Game networking helper - play together without touching the router|Format converter - images, media, documents and ZIP packaging|CPU / GPU stress test - CPU and GPU load testing|Time sync - NTP server latency test and one-click resync|More: port viewer, startup manager, Windows images, AI assistant…",
 
   "home.gallery.title": "There is more to discover",
   "home.gallery.subtitle": "Screenshots taken from a real session: AI assistant, game monitoring overlay, game networking, format converter, ladder charts - all built in",
@@ -135,9 +135,9 @@ export default {
   "features.game-tunnel.desc": "Puts two PCs on the same virtual LAN so Minecraft, Terraria, Stardew Valley and Don't Starve just connect - no public IP, no router changes.",
   "features.game-tunnel.tags": "Virtual LAN|Invite code|Game presets|TCP / UDP",
 
-  "features.stress-test.title": "Triple stress test",
-  "features.stress-test.desc": "CPU, GPU and NIC stress testing with live temperature, clock, power and throughput monitoring. FurMark render API, resolution, MSAA and OSD are configurable, and reports can be exported.",
-  "features.stress-test.tags": "CPU stress|GPU stress|NIC stress|Export report",
+  "features.stress-test.title": "CPU / GPU stress test",
+  "features.stress-test.desc": "CPU and GPU stress testing with live temperature, clock speed, and power monitoring. FurMark render API, resolution, MSAA and OSD are configurable, and reports can be exported.",
+  "features.stress-test.tags": "CPU stress|GPU stress|Export report",
 
   "features.gpu-stress-test.title": "Mushroom test",
   "features.gpu-stress-test.desc": "Voxel fractal rendering as a GPU stress test with easy, medium and extreme levels, overlaying frame rate, frame time and GPU model in real time.",
@@ -320,7 +320,7 @@ export default {
 
   "why.tools.title": "FluentUI Built-in Tools",
   "why.tools.subtitle": "58 built-in tools vs limited basic utilities",
-  "why.tools.winItems": "Junk cleaner — deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner — context menus, startup, scheduled tasks|Game networking helper — play together without a public IP|Format converter — images, media, documents and ZIP packaging|Triple stress test — CPU / GPU / NIC load testing with reports|Port viewer, startup manager, time sync, Windows image download|AI assistant, CPU / GPU ladder charts, cloud benchmark ranking",
+  "why.tools.winItems": "Junk cleaner — deep cleaning driven by the Winapp2 ruleset|Rogue software cleaner — context menus, startup, scheduled tasks|Game networking helper — play together without a public IP|Format converter — images, media, documents and ZIP packaging|CPU / GPU stress test — CPU and GPU load testing with reports|Port viewer, startup manager, time sync, Windows image download|AI assistant, CPU / GPU ladder charts, cloud benchmark ranking",
   "why.tools.legacyItems": "Limited number of built-in tools|Inconsistent tool interface styles|Some tools have only basic functionality",
 
   "why.ai.title": "AI-Powered",

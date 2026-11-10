@@ -83,4 +83,99 @@ public sealed class FurMarkLaunchPathTests
             Directory.Delete(root, true);
         }
     }
+
+    [Fact]
+    public void NestedJunction_UsesPhysicalTargetAndKeepsSiblingDllsVisible()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tuba-physical-path-" + Guid.NewGuid().ToString("N"));
+        var physical = Path.Combine(root, "真实目录");
+        var aliases = Path.Combine(root, "aliases");
+        Directory.CreateDirectory(physical);
+        Directory.CreateDirectory(aliases);
+        File.WriteAllText(Path.Combine(physical, "FurMark_GUI.exe"), "not executed");
+        File.WriteAllText(Path.Combine(physical, "gxc_x64.dll"), "sibling dependency");
+        string? first = null;
+        string? second = null;
+        try
+        {
+            first = FurMarkLaunchPath.AliasDirectory(physical, root);
+            second = FurMarkLaunchPath.AliasDirectory(first, aliases);
+            // A merged/indirect view must not be persisted as the new junction's target.
+            Assert.Equal(physical, new DirectoryInfo(second).ResolveLinkTarget(false)!.FullName);
+            Assert.Equal("sibling dependency", File.ReadAllText(Path.Combine(second, "gxc_x64.dll")));
+            Assert.Equal(physical, FurMarkLaunchPath.ResolvePhysicalDirectory(first));
+            // Different views of the same directory reuse one alias in a given root.
+            Assert.Equal(first, FurMarkLaunchPath.AliasDirectory(first, root));
+        }
+        finally
+        {
+            if (second is not null) Directory.Delete(second);
+            if (first is not null) Directory.Delete(first);
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void AliasRoot_ReturnsPhysicalPathThroughParentJunction()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tuba-physical-root-" + Guid.NewGuid().ToString("N"));
+        var physical = Path.Combine(root, "physical");
+        Directory.CreateDirectory(physical);
+        string? view = null;
+        try
+        {
+            view = FurMarkLaunchPath.AliasDirectory(physical, root);
+            var aliasRoot = FurMarkLaunchPath.GetAliasRoot(view, root);
+            Assert.Equal(Path.Combine(physical, "TubaWinUi3.FurMark"), aliasRoot);
+            Assert.Equal(aliasRoot, FurMarkLaunchPath.ResolvePhysicalDirectory(aliasRoot));
+        }
+        finally
+        {
+            if (view is not null) Directory.Delete(view);
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void LongPhysicalDirectory_IsResolvedWithoutTruncation()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tuba-long-path-" + Guid.NewGuid().ToString("N"));
+        var physical = Path.Combine(root, new string('a', 180), new string('b', 180), new string('c', 180));
+        Directory.CreateDirectory(physical);
+        string? alias = null;
+        try
+        {
+            Assert.True(physical.Length > 512);
+            Assert.Equal(physical, FurMarkLaunchPath.ResolvePhysicalDirectory(physical));
+            alias = FurMarkLaunchPath.AliasDirectory(physical, root);
+            Assert.Equal(physical, FurMarkLaunchPath.ResolvePhysicalDirectory(alias));
+        }
+        finally
+        {
+            if (alias is not null) Directory.Delete(alias);
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
+    public void AsciiViewOfChineseDirectory_FallsBackToPhysicalAsciiRoot()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tuba-ascii-view-" + Guid.NewGuid().ToString("N"));
+        var physical = Path.Combine(root, "实际目录");
+        Directory.CreateDirectory(physical);
+        string? view = null;
+        try
+        {
+            view = FurMarkLaunchPath.AliasDirectory(physical, root);
+            var aliasRoot = FurMarkLaunchPath.GetAliasRoot(view, root);
+            Assert.StartsWith(Path.Combine(root, "TubaWinUi3.FurMark-S-"), aliasRoot);
+            Assert.All(aliasRoot, c => Assert.True(c <= 127));
+            Assert.Equal(aliasRoot, FurMarkLaunchPath.ResolvePhysicalDirectory(aliasRoot));
+        }
+        finally
+        {
+            if (view is not null) Directory.Delete(view);
+            Directory.Delete(root, true);
+        }
+    }
 }

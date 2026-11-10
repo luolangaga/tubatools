@@ -152,6 +152,7 @@
                             </StackPanel>
                         </Grid>
 
+                        <TextBlock Text="加密 DNS 使用 Windows 11 原生 DoH，应用到已连接的物理网卡，不回退到明文；服务不可用时可恢复自动获取。加密预设显示 HTTPS 查询耗时。" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                         <!-- DNS 预设（含延迟测速） -->
                         <ItemsControl x:Name="DnsList">
                             <ItemsControl.ItemsPanel>
@@ -174,7 +175,7 @@
                                                     <TextBlock Text="已应用" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{x:Bind AppliedVisibility, Mode=OneWay}" VerticalAlignment="Center" />
                                                 </StackPanel>
                                                 <TextBlock Text="{x:Bind Primary}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                <TextBlock Text="{x:Bind SecondaryLine}" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                <TextBlock Text="{x:Bind SecondaryLine}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" Text="{x:Bind LatencyText, Mode=OneWay}" Foreground="{x:Bind LatencyBrush, Mode=OneWay}" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind LatencyHint, Mode=OneWay}" />
                                             <Button Grid.Column="3" Content="应用" Tag="{x:Bind Self}" Click="ApplyDnsPreset_Click" VerticalAlignment="Center" AutomationProperties.Name="{x:Bind Name}" />

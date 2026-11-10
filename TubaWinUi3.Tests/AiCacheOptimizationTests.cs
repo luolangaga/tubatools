@@ -6,7 +6,7 @@ namespace TubaWinUi3.Tests;
 /// <summary>
 /// AI 缓存优化单元测试：
 /// 1) usage 缓存命中 token 解析（DeepSeek/GLM / Moonshot-Kimi / OpenAI 标准三种风格）；
-/// 2) 系统提示词去易变化（BuildSystemInfoContext 不再含分钟级变化的当前时间，跨调用字节稳定）。
+/// 旧助手的系统提示词测试已随旧引擎移除；此处保留试炼场共用 AiService 的用量解析测试。
 /// </summary>
 public class AiCacheOptimizationTests
 {
@@ -72,34 +72,4 @@ public class AiCacheOptimizationTests
         Assert.Equal(200, miss);
     }
 
-    [Fact]
-    public void BuildSystemInfoContext_NoCurrentTime()
-    {
-        var context = AiAssistantService.BuildSystemInfoContext();
-
-        // 当前时间已被移出系统提示词（它是前缀缓存失效的根因）
-        Assert.DoesNotContain("当前时间", context);
-        Assert.DoesNotContain("yyyy", context);
-    }
-
-    [Fact]
-    public void BuildSystemInfoContext_StableAcrossCalls()
-    {
-        // 系统提示词字节级稳定是前缀缓存命中的前提
-        var first = AiAssistantService.BuildSystemInfoContext();
-        var second = AiAssistantService.BuildSystemInfoContext();
-
-        Assert.Equal(first, second);
-    }
-
-    [Fact]
-    public void WithCurrentTime_AppendsTimeAtEnd()
-    {
-        var text = AiAssistantService.WithCurrentTime("帮我查一下内存价格");
-
-        Assert.StartsWith("帮我查一下内存价格", text);
-        // 时间以追加段落附在消息末尾（不参与前缀缓存匹配），与正文分隔
-        Assert.Contains("\n\n（当前时间：", text);
-        Assert.EndsWith("）", text);
-    }
 }

@@ -179,16 +179,15 @@ public sealed class UserToolUpdateTests : IDisposable
     }
 
     [Fact]
-    public void CommunityRecord_RecoversRegistration_WhenOldMetadataWasAlreadyOverwritten()
+    public void RetiredCommunityRecord_DoesNotRestoreTools_AndPreservesFiles()
     {
         var directory = Path.Combine(_tools, "甲", "community-tool");
         var primary = Exe(directory, "selected.exe");
         CommunityToolRegistry.Upsert(new CommunityInstallRecord("community-tool", "甲", "sha", "1", "作者",
             null, null, "selected.exe", DateTimeOffset.UtcNow));
         ToolMetadataService.InvalidateCache();
-        var item = Assert.Single(ToolCatalog.GetTools("甲"));
-        Assert.Equal(primary, item.Path);
-        Assert.Equal("community:community-tool", item.LibraryId);
+        Assert.Empty(ToolCatalog.GetTools("甲"));
+        Assert.True(File.Exists(primary));
     }
 
     [Fact]
@@ -292,7 +291,7 @@ public sealed class UserToolUpdateTests : IDisposable
     }
 
     [Fact]
-    public void UpdatingMigratedCommunityTool_PreservesItsDirectoryAndStableId()
+    public void RetiredCommunityEntry_IsHiddenWithoutDeletingOriginalData()
     {
         var directory = Path.Combine(_tools, "甲", "community-tool");
         Exe(directory);
@@ -302,9 +301,9 @@ public sealed class UserToolUpdateTests : IDisposable
         var id = Assert.Single(ToolMetadataService.GetUserTools()).Id;
         ToolMetadataService.UpsertToolMetadataEntry("community-tool", name: "更新后",
             toolDirectory: directory, category: "甲", communityId: "community-tool");
-        var community = new CommunityTool { Id = "community-tool", Name = "社区工具", Category = "甲" };
-        Assert.Equal(directory, CommunityToolInstallService.GetToolDirectory(community));
-        Assert.Equal(id, Assert.Single(ToolMetadataService.GetUserTools()).Id);
+        Assert.Empty(ToolMetadataService.GetUserTools());
+        Assert.True(Directory.Exists(directory));
+        Assert.Equal(id, Assert.Single(UserToolLibrary.GetEntries())["id"]!.GetValue<string>());
     }
 
     [Fact]

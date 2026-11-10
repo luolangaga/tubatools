@@ -14,6 +14,6 @@
 | Peripherals | 7 | Keyboard Test / Mouse Rate / MouseTester / KeyTweak |
 | Display | 3 | Color gamut check / UFO test / Windows HDR Calibration |
 | Burn-in | 1 | FurMark burn-in edition |
-| Others | 26 | Everything / Dism++ / Rufus / Ventoy / Autoruns / ProcessMonitor / BlueScreenView / DirectX repair |
+| Others | 26 | Everything / Rufus / Ventoy / Autoruns / ProcessMonitor / BlueScreenView / DirectX repair |
 
 See the [official docs](https://tubawinui3.cn) for the complete tool list.

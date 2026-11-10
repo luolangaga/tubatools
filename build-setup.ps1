@@ -16,7 +16,6 @@ function Remove-UnnecessaryFiles {
     if (-not (Test-Path -LiteralPath $tools)) { return }
 
     $removeNames = @(
-        'Dism++x86.exe', 'Dism++ARM64.exe',
         'Speccy.exe', 'HWMonitor_x32.exe', 'hwmonitor_arm64.exe', 'cpuz_x32.exe',
         'HWiNFO32.exe', 'Core Temp x86.exe', 'DiskInfo32S.exe',
         'procexp.exe', 'Ventoy2Disk_ARM.exe', 'Ventoy2Disk_ARM64.exe',
@@ -32,12 +31,6 @@ function Remove-UnnecessaryFiles {
         Where-Object { $_.Name -in $themeRemove } |
         Remove-Item -Force -ErrorAction SilentlyContinue
 
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter 'x86' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'Config' -and $_.Parent.Parent.Name -like '*Dism*' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter 'arm64' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'Config' -and $_.Parent.Parent.Name -like '*Dism*' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter '32-bit' -ErrorAction SilentlyContinue |
         Where-Object { $_.Parent.Name -eq 'LinX' } |
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
@@ -45,14 +38,33 @@ function Remove-UnnecessaryFiles {
     Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*DDU*' -and $_.Name -notlike '*Chinese*' -and $_.Name -ne 'English.xml' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
-    # Dism++ Config ZIPs are runtime resources, including UI and language packs.
-    # Keep them intact; they are not leftover download archives.
     Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.x86.dll' -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.arm64.dll' -ErrorAction SilentlyContinue |
         Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
+}
+
+function Publish-Tui {
+    param([string]$Arch)
+
+    $tuiProject = Join-Path $RepoRoot 'TubaWinUi3.Tui\TubaWinUi3.Tui.csproj'
+    $tuiOut = Join-Path $RepoRoot "publish_tui_$Arch"
+
+    if (Test-Path -LiteralPath $tuiOut) { Remove-Item -LiteralPath $tuiOut -Recurse -Force }
+
+    dotnet publish $tuiProject -c Release -r "win-$Arch" -o $tuiOut 2>&1 | Select-Object -Last 3
+
+    $tuiExe = Join-Path $tuiOut '图吧工具箱TUI兼容版.exe'
+    if (-not (Test-Path -LiteralPath $tuiExe)) {
+        Write-Host "  WARNING: TUI publish failed for $Arch, installer will not bundle it" -ForegroundColor Yellow
+        return $false
+    }
+
+    Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $ProjectDir "publish_$Arch") -Force
+    Write-Host '  Bundled TUI compatibility edition' -ForegroundColor Green
+    return $true
 }
 
 function Publish-Arch {
@@ -102,10 +114,13 @@ if (-not $ok) {
     Write-Host 'FAILED to publish x64' -ForegroundColor Red
     exit 1
 }
+Publish-Tui 'x64' | Out-Null
 
 $arm64Ok = Publish-Arch 'arm64'
 if (-not $arm64Ok) {
     Write-Host 'ARM64 publish failed, building x64-only installer' -ForegroundColor Yellow
+} else {
+    Publish-Tui 'arm64' | Out-Null
 }
 
 Write-Host ''
@@ -151,4 +166,4 @@ if (Test-Path -LiteralPath $setupDir) {
 
 Write-Host ''
 Write-Host 'Double-click the setup exe to install.' -ForegroundColor Cyan
-Write-Host 'It will create desktop shortcut and Start Menu entry.' -ForegroundColor Cyan
+Write-Host 'Start Menu gets both GUI and TUI entries; desktop shortcut is opt-in.' -ForegroundColor Cyan

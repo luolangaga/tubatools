@@ -1,0 +1,12 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-window-list",
+  "operation": "window_list",
+  "window": {
+    "ok": true,
+    "app_name": "Editor",
+    "app_pid": 42,
+    "window_titles": ["Document", "Preferences"]
+  }
+}

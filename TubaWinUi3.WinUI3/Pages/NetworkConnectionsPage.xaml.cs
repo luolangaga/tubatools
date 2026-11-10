@@ -1,153 +1,115 @@
+﻿using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using TubaWinUi3.Services;
+using Microsoft.UI.Xaml.Navigation;
 using Windows.UI;
+using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Pages;
 
 public sealed partial class NetworkConnectionsPage : Page
 {
-    // 语义状态色（跟随系统主题，经 ThemeColors 取官方语义色）
-    private static Color AccentBlue => ThemeColors.AccentBlue;
-    private static Color AccentGreen => ThemeColors.AccentGreen;
-
-    private DispatcherTimer? _refreshTimer;
-    private List<ConnectionEntry>? _lastConnections;
+    private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromSeconds(3) };
+    private readonly ObservableCollection<ConnectionEntry> _connections = [];
     private bool _loading;
+    private bool _active;
+    private int _generation;
 
     public NetworkConnectionsPage()
     {
         InitializeComponent();
-        // 代码构建的画刷不会随主题自动刷新，切换主题后按缓存数据重渲染
-        ActualThemeChanged += (_, _) =>
-        {
-            if (_lastConnections is not null)
-                RenderConnections(_lastConnections);
-        };
-
-        _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-        _refreshTimer.Tick += async (_, _) =>
-        {
-            if (AutoRefreshToggle.IsOn && !_loading)
-                await RefreshAsync();
-        };
-        _refreshTimer.Start();
-
+        ConnectionPanel.ItemsSource = _connections;
+        Loaded += (_, _) => StartRefreshing();
+        Unloaded += (_, _) => StopRefreshing();
+        _refreshTimer.Tick += async (_, _) => await RefreshAsync();
         AutoRefreshToggle.Toggled += (_, _) =>
         {
-            if (AutoRefreshToggle.IsOn)
-                _refreshTimer?.Start();
-            else
-                _refreshTimer?.Stop();
+            if (_active && AutoRefreshToggle.IsOn) _refreshTimer.Start();
+            else _refreshTimer.Stop();
         };
+    }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        if (IsLoaded) StartRefreshing();
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        StopRefreshing();
+        base.OnNavigatedFrom(e);
+    }
+
+    private void StartRefreshing()
+    {
+        if (_active) return;
+        _active = true;
+        _generation++;
+        if (AutoRefreshToggle.IsOn) _refreshTimer.Start();
         _ = RefreshAsync();
+    }
+
+    private void StopRefreshing()
+    {
+        _active = false;
+        _generation++;
+        _refreshTimer.Stop();
+        LoadingBar.Visibility = Visibility.Collapsed;
     }
 
     private async Task RefreshAsync()
     {
+        if (!_active || _loading) return;
         _loading = true;
+        int generation = _generation;
         LoadingBar.Visibility = Visibility.Visible;
-        var conns = await Task.Run(() => NetworkAdapterProxyService.GetActiveConnections());
-        DispatcherQueue.TryEnqueue(() =>
+        try
         {
-            _lastConnections = conns;
-            RenderConnections(conns);
-            LoadingBar.Visibility = Visibility.Collapsed;
+            // The native query cannot be cancelled mid-call. Discard late results instead.
+            var connections = await Task.Run(NetworkAdapterProxyService.GetActiveConnections);
+            if (!_active || generation != _generation) return;
+            ConnectionListUpdater.Apply(_connections, connections);
+            EmptyPanel.Visibility = _connections.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            PageHeader.Subtitle = $"TCP 连接实时监控 · {_connections.Count} 条连接";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"连接刷新失败：{ex}");
+        }
+        finally
+        {
             _loading = false;
-        });
-    }
-
-    private void RenderConnections(List<ConnectionEntry> connections)
-    {
-        ConnectionPanel.Items.Clear();
-
-        if (connections.Count == 0)
-        {
-            EmptyPanel.Visibility = Visibility.Visible;
-            PageHeader.Subtitle = "TCP 连接实时监控 · 0 条连接";
-            return;
-        }
-
-        EmptyPanel.Visibility = Visibility.Collapsed;
-        PageHeader.Subtitle = $"TCP 连接实时监控 · {connections.Count} 条连接";
-
-        foreach (var c in connections)
-        {
-            var typeColor = c.AdapterType == "Wi-Fi" ? AccentBlue : AccentGreen;
-
-            var row = new Grid
-            {
-                Padding = new Thickness(12, 8, 12, 8),
-                ColumnSpacing = 8,
-                CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent)
-            };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
-
-            var proc = new TextBlock
-            {
-                Text = c.ProcessName, FontSize = 12, FontFamily = new FontFamily("Consolas"),
-                Foreground = new SolidColorBrush(ThemeColors.PrimaryText),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var typeTag = new Border
-            {
-                Style = (Style)Application.Current.Resources["StatusPillStyle"],
-                Background = new SolidColorBrush(Color.FromArgb(25, typeColor.R, typeColor.G, typeColor.B)),
-                Child = new TextBlock
-                {
-                    Text = c.AdapterType, FontSize = 12,
-                    Foreground = new SolidColorBrush(typeColor),
-                    VerticalAlignment = VerticalAlignment.Center
-                }
-            };
-
-            var addr = new TextBlock
-            {
-                Text = c.RemoteAddress, FontSize = 12, FontFamily = new FontFamily("Consolas"),
-                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var port = new TextBlock
-            {
-                Text = c.RemotePort.ToString(), FontSize = 12, FontFamily = new FontFamily("Consolas"),
-                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            var adapter = new TextBlock
-            {
-                Text = c.AdapterName, FontSize = 12,
-                Foreground = new SolidColorBrush(ThemeColors.DimText),
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            row.Children.Add(proc); Grid.SetColumn(proc, 0);
-            row.Children.Add(typeTag); Grid.SetColumn(typeTag, 1);
-            row.Children.Add(addr); Grid.SetColumn(addr, 2);
-            row.Children.Add(port); Grid.SetColumn(port, 3);
-            row.Children.Add(adapter); Grid.SetColumn(adapter, 4);
-
-            ConnectionPanel.Items.Add(row);
+            if (_active && generation == _generation) LoadingBar.Visibility = Visibility.Collapsed;
+            // A cached page may have re-entered while its previous query was finishing.
+            if (_active && generation != _generation) _ = RefreshAsync();
         }
     }
 
-    private async void RefreshBtn_Click(object sender, RoutedEventArgs e)
+    public static Brush AdapterBackground(string type)
     {
-        await RefreshAsync();
+        var color = type == "Wi-Fi" ? ThemeColors.AccentBlue : ThemeColors.AccentGreen;
+        return new SolidColorBrush(Color.FromArgb(25, color.R, color.G, color.B));
     }
+
+    public static Brush AdapterForeground(string type) =>
+        new SolidColorBrush(type == "Wi-Fi" ? ThemeColors.AccentBlue : ThemeColors.AccentGreen);
+
+    private void AdapterTag_ActualThemeChanged(FrameworkElement sender, object args)
+    {
+        if (sender is Border { DataContext: ConnectionEntry entry, Child: TextBlock text } tag)
+        {
+            tag.Background = AdapterBackground(entry.AdapterType);
+            text.Foreground = AdapterForeground(entry.AdapterType);
+        }
+    }
+
+    private async void RefreshBtn_Click(object sender, RoutedEventArgs e) => await RefreshAsync();
 
     private void OnBackRequested(object? sender, EventArgs e)
     {
-        _refreshTimer?.Stop();
+        StopRefreshing();
         App.MainWindow?.NavigateBack();
     }
 }

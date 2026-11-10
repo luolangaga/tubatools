@@ -746,16 +746,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		return Task.CompletedTask;
 	}
 
-	private static int GpuPriority(string name)
-	{
-		if (name.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase)) return 0;
-		if (name.Contains("Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase)) return 2;
-		if (name.Contains("AMD", StringComparison.OrdinalIgnoreCase)) return 0;
-		if (name.Contains("Arc", StringComparison.OrdinalIgnoreCase)) return 1;
-		if (name.Contains("Intel", StringComparison.OrdinalIgnoreCase)) return 3;
-		return 4;
-	}
-
 	private async Task<(int Index, string Name)?> ShowGpuSelectDialogAsync()
 	{
 		if (_availableGpus.Count == 0)
@@ -766,16 +756,6 @@ public sealed partial class PerformanceBenchmarkPage : Page
 			}
 			catch { _availableGpus = []; }
 			if (_availableGpus.Count == 0)
-			{
-				try
-				{
-					_availableGpus = LiteMonitorService.GetAvailableGpus()
-						.Select(g => new FurMarkGpuInfo { Index = g.Index, Name = g.Name })
-						.ToList();
-				}
-				catch { _availableGpus = []; }
-			}
-			if (_availableGpus.Count == 0)
 				_availableGpus = [new FurMarkGpuInfo { Index = 0, Name = "GPU 0 (自动检测)" }];
 		}
 
@@ -783,7 +763,7 @@ public sealed partial class PerformanceBenchmarkPage : Page
 		int bestPri = int.MaxValue;
 		for (int i = 0; i < _availableGpus.Count; i++)
 		{
-			int pri = GpuPriority(_availableGpus[i].Name);
+			int pri = HardwareInfoService.GpuNamePriority(_availableGpus[i].Name);
 			if (pri < bestPri) { bestPri = pri; bestIdx = i; }
 		}
 

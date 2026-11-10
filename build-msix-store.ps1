@@ -205,6 +205,8 @@ function Write-CleanManifest {
         '  </Applications>'
         '  <Capabilities>'
         '    <rescap:Capability Name="runFullTrust" />'
+        '    <DeviceCapability Name="microphone" />'
+        '    <DeviceCapability Name="webcam" />'
         '  </Capabilities>'
         '</Package>'
     )
@@ -390,7 +392,7 @@ if ($builtMsix.Count -ge 2) {
     $mappingPath = Join-Path $TempDir 'bundle_mapping.txt'
     [System.IO.File]::WriteAllText($mappingPath, $mapping, [System.Text.UTF8Encoding]::new($false))
 
-    & $MakeAppxPath bundle /f $mappingPath /p $bundleFile /o 2>&1 |
+    & $MakeAppxPath bundle /f $mappingPath /p $bundleFile /bv $Version /o 2>&1 |
         Select-Object -Last 2 |
         ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
 

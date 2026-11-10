@@ -65,6 +65,8 @@ public sealed partial class PerformanceBenchmarkPage
         });
         var win = await WinBenchmarkWorkerService.RunAsync(ActualTheme == ElementTheme.Dark, progress, ct);
         ct.ThrowIfCancellationRequested();
+        win.CpuName = result.CpuName;
+        win.OsName = result.OsName;
         result.Win = win;
         WinPerformanceService.SaveHistory(win);
         _winListLoadText.Text = $"{win.AvgListLoadMs:F0} ms";

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="body" x1="28" y1="24" x2="101" y2="109" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#91EBE4"/>
+      <stop offset=".52" stop-color="#3CC5C9"/>
+      <stop offset="1" stop-color="#228BB4"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="25" y1="32" x2="95" y2="105" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E4FFFB" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#D3FFFF" stop-opacity=".08"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="66" cy="117" rx="41" ry="4" fill="#233B58" opacity=".1"/>
+  <path d="M31 39H49V31C49 23.8 54.8 18 62 18S75 23.8 75 31V39H87C93.1 39 98 43.9 98 50V57H105C112.2 57 118 62.8 118 70S112.2 83 105 83H98V98C98 104.1 93.1 109 87 109H74V101C74 93.8 68.2 88 61 88S48 93.8 48 101V109H31C24.9 109 20 104.1 20 98V83H27C34.2 83 40 77.2 40 70S34.2 57 27 57H20V50C20 43.9 24.9 39 31 39Z" fill="url(#body)" stroke="#288CA7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31 43H53V31C53 26 57 22 62 22S71 26 71 31V43H87C90.9 43 94 46.1 94 50V61H105C110 61 114 65 114 70" stroke="url(#rim)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="53" y="57" width="10" height="10" rx="2.5" fill="#F0FFFC"/>
+  <rect x="68" y="57" width="10" height="10" rx="2.5" fill="#F0FFFC" opacity=".72"/>
+  <rect x="53" y="72" width="10" height="10" rx="2.5" fill="#F0FFFC" opacity=".72"/>
+  <rect x="68" y="72" width="10" height="10" rx="2.5" fill="#F0FFFC" opacity=".45"/>
+</svg>

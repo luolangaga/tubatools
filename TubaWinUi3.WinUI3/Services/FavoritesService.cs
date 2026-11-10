@@ -1,108 +1,47 @@
-using System.Text.Json;
+using TubaWinUi3.Storage;
 
 namespace TubaWinUi3.Services;
 
 public static class FavoritesService
 {
-    private const string Key = "FavoriteTools";
     private static string FavoritesPath => ConfigManager.GetFavoritesPath();
-    private static List<string>? _cache;
+    public static string? LastSaveError { get; private set; }
+    public static event Action<string>? SaveFailed;
 
     public static IReadOnlyList<string> GetFavorites()
     {
-        if (_cache is not null)
-            return _cache;
+        try { return FavoriteFile.Read(FavoritesPath).Select(PathResolver.MakeAbsolute).ToArray(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        { System.Diagnostics.Debug.WriteLine($"[Favorites] {ex.Message}"); return []; }
+    }
+    public static bool IsFavorite(string path) => GetFavorites().Contains(path, StringComparer.OrdinalIgnoreCase);
+    private static bool Matches(string stored, string path) => string.Equals(PathResolver.MakeAbsolute(stored), path, StringComparison.OrdinalIgnoreCase);
 
-        try
+    private static void Update(Func<List<string>, List<string>> change)
+    {
+        try { FavoriteFile.Update(FavoritesPath, change); LastSaveError = null; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
-            if (File.Exists(FavoritesPath))
-            {
-                var json = File.ReadAllText(FavoritesPath);
-                var stored = JsonSerializer.Deserialize<List<string>>(json) ?? [];
-                _cache = stored.Select(p => PathResolver.MakeAbsolute(p)).ToList();
-            }
-            else
-            {
-                _cache = [];
-            }
+            LastSaveError = LocalizationService.L("Persistence_FavoritesError", "收藏保存失败，请检查数据目录权限和剩余空间后重试。");
+            System.Diagnostics.Debug.WriteLine($"[Favorites] {ex}");
+            SaveFailed?.Invoke(LastSaveError);
         }
-        catch
-        {
-            _cache = [];
-        }
-
-        return _cache;
     }
-
-    public static bool IsFavorite(string toolPath)
+    public static void AddFavorite(string path) => Update(list =>
+    { if (!list.Any(p => Matches(p, path))) list.Add(PathResolver.MakeRelative(path)); return list; });
+    public static void RemoveFavorite(string path) => Update(list => list.Where(p => !Matches(p, path)).ToList());
+    public static void RemoveAll() => Update(_ => []);
+    public static void ToggleFavorite(string path) => Update(list =>
     {
-        return GetFavorites().Contains(toolPath, StringComparer.OrdinalIgnoreCase);
-    }
-
-    public static void AddFavorite(string toolPath)
+        if (list.Any(p => Matches(p, path))) return list.Where(p => !Matches(p, path)).ToList();
+        list.Add(PathResolver.MakeRelative(path)); return list;
+    });
+    public static void SaveOrder(IEnumerable<string> paths)
     {
-        var list = GetFavorites()
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .ToList();
-
-        if (list.Contains(toolPath, StringComparer.OrdinalIgnoreCase))
-            return;
-
-        list.Add(toolPath);
-        _cache = list;
-        Save(list);
+        var ordered = paths.Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        // Reordering must retain entries another frontend added since this UI snapshot.
+        Update(list => ordered.Select(PathResolver.MakeRelative).Concat(list.Where(p =>
+            !ordered.Any(path => Matches(p, path)))).ToList());
     }
-
-    public static void RemoveFavorite(string toolPath)
-    {
-        var list = GetFavorites()
-            .Where(p => !p.Equals(toolPath, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        _cache = list;
-        Save(list);
-    }
-
-    public static void RemoveAll()
-    {
-        _cache = [];
-        Save([]);
-    }
-
-    public static void ToggleFavorite(string toolPath)
-    {
-        if (IsFavorite(toolPath))
-            RemoveFavorite(toolPath);
-        else
-            AddFavorite(toolPath);
-    }
-
-    /// <summary>按给定顺序保存收藏(拖拽排序后调用)。</summary>
-    public static void SaveOrder(IEnumerable<string> orderedPaths)
-    {
-        var list = orderedPaths
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .ToList();
-
-        _cache = list;
-        Save(list);
-    }
-
-    public static void InvalidateCache()
-    {
-        _cache = null;
-    }
-
-    private static void Save(List<string> favorites)
-    {
-        try
-        {
-            var dir = Path.GetDirectoryName(FavoritesPath)!;
-            Directory.CreateDirectory(dir);
-            var stored = favorites.Select(p => PathResolver.MakeRelative(p)).ToList();
-            var json = JsonSerializer.Serialize(stored);
-            File.WriteAllText(FavoritesPath, json);
-        }
-        catch { }
-    }
+    public static void InvalidateCache() { } // Reads always use the current shared file.
 }

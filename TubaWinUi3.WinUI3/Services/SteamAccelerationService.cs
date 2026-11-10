@@ -69,11 +69,10 @@ public static class SteamAccelerationService
             if (_domains.Count == 0) throw new ArgumentException("请至少选择一项可用的加速服务。");
             _fallbacks = _domains.ToDictionary(d => d, d => new SteamAccelerationRule { Domains = [d] }, StringComparer.OrdinalIgnoreCase);
             LastFailure = "";
-            // Record recovery information before making either system change.
-            _root = CreateRoot();
-            File.WriteAllText(Journal, JsonSerializer.Serialize(new { Thumbprint = _root.Thumbprint }));
-            if (!IsTest) using (var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser))
-            { store.Open(OpenFlags.ReadWrite); store.Add(_root); }
+            // 根证书只信任一次并由 DPAPI 保护的文件长期复用，暂停/退出不再卸载。
+            _root = SteamAccelerationCertificateStore.EnsureRoot(DataDir, !IsTest);
+            // Record recovery information before changing the Hosts file.
+            File.WriteAllText(Journal, "{\"Version\":2}");
             var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = [], ContentRootPath = AppContext.BaseDirectory });
             builder.Logging.ClearProviders(); // Never log URLs, request headers or cookies.
             if (IsTest) builder.Logging.AddConsole();
@@ -171,22 +170,26 @@ public static class SteamAccelerationService
             _trafficTimer?.Dispose(); _trafficTimer = null;
             if (app != null) { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3)); try { await app.StopAsync(timeout.Token); } finally { await app.DisposeAsync(); } }
             DisposeClients(); DisposeCertificates(); DnsCache.Clear();
-            Status = "加速已停止，Hosts 与信任证书已还原";
+            Status = "加速已暂停，Hosts 已还原 · 信任证书保持有效";
         }
         finally { Gate.Release(); }
     }
+    private static readonly object RecoveryGate = new();
     public static void RecoverOnStartup()
     {
-        if (!File.Exists(Journal)) return;
-        // Preserve all user / other program entries byte-for-byte outside our marked block.
-        var bytes = File.ReadAllBytes(HostsPath);
-        var clean = RemoveOwnedBlock(bytes);
-        if (!bytes.AsSpan().SequenceEqual(clean)) File.WriteAllBytes(HostsPath, clean);
-        using var json = JsonDocument.Parse(File.ReadAllText(Journal));
-        string? thumbprint = json.RootElement.GetProperty("Thumbprint").GetString();
-        if (!IsTest) SteamAccelerationCertificateStore.RemoveOwnedRoot(thumbprint);
-        File.Delete(Journal);
-        FlushDns();
+        // 启动恢复在后台线程执行，可能和用户立刻点击「开始加速」（StartAsync 内也会调用）
+        // 同时到达；串行化，避免两次删 Hosts 块互相踩踏。
+        lock (RecoveryGate)
+        {
+            if (!File.Exists(Journal)) return;
+            // 只还原 Hosts：根证书保持信任，避免每次暂停/退出都卸载后要求重新确认。
+            // Preserve all user / other program entries byte-for-byte outside our marked block.
+            var bytes = File.ReadAllBytes(HostsPath);
+            var clean = RemoveOwnedBlock(bytes);
+            if (!bytes.AsSpan().SequenceEqual(clean)) File.WriteAllBytes(HostsPath, clean);
+            File.Delete(Journal);
+            FlushDns();
+        }
     }
     internal static byte[] RemoveOwnedBlock(byte[] input)
     {
@@ -209,14 +212,6 @@ public static class SteamAccelerationService
     [System.Runtime.InteropServices.DllImport("dnsapi.dll")]
     private static extern bool DnsFlushResolverCache();
     private static void FlushDns() { if (!IsTest) DnsFlushResolverCache(); }
-    private static X509Certificate2 CreateRoot()
-    {
-        using var rsa = RSA.Create(3072);
-        var req = new CertificateRequest(SteamAccelerationCertificateStore.Subject, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        req.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
-        req.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign | X509KeyUsageFlags.CrlSign, true));
-        return req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
-    }
     private static X509Certificate2 GetLeaf(string host) => Leaves.GetOrAdd(host, domain =>
     {
         using var rsa = RSA.Create(2048);

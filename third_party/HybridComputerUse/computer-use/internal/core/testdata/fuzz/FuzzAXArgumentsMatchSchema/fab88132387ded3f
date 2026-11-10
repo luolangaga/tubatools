@@ -1,0 +1,2 @@
+go test fuzz v1
+string("{\"app\":\"0\",\"assertion\":{\"target\":{\"selector\":{\"role\":\"[\"}},\"type\":\"exists\",\"value\":true},\"mode\":\"assert_ax\"}")

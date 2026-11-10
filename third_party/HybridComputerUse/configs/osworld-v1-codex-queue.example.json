@@ -1,0 +1,97 @@
+{
+  "run_id": "example-osworld-v1-codex",
+  "benchmark_version": "v1",
+  "agent": "codex",
+  "model": "gpt-5.4",
+  "effort": "xhigh",
+  "guest_image": "/absolute/path/to/osworld-v1-workstation-deps-64g.qcow2",
+  "client_password": "password",
+  "volume_size": 64,
+  "ram_size": "4G",
+  "max_model_calls": 100,
+  "timeout_seconds": 1800,
+  "max_active_tasks": 20,
+  "launch_stagger_seconds": 5,
+  "tasks": [
+    {
+      "id": "030eeff7-b492-4218-b312-701ec99ee0cc",
+      "task_domain": "chrome"
+    },
+    {
+      "id": "7767eef2-56a3-4cea-8c9f-48c070c7d65b",
+      "task_domain": "gimp"
+    },
+    {
+      "id": "7b7617bd-57cc-468e-9c91-40c4ec2bcb3d",
+      "task_domain": "gimp"
+    },
+    {
+      "id": "1d17d234-e39d-4ed7-b46f-4417922a4e7c",
+      "task_domain": "libreoffice_calc"
+    },
+    {
+      "id": "04d9aeaf-7bed-4024-bedb-e10e6f00eb7f",
+      "task_domain": "libreoffice_calc"
+    },
+    {
+      "id": "7ae48c60-f143-4119-b659-15b8f485eb9a",
+      "task_domain": "libreoffice_impress"
+    },
+    {
+      "id": "a434992a-89df-4577-925c-0c58b747f0f4",
+      "task_domain": "libreoffice_impress"
+    },
+    {
+      "id": "0b17a146-2934-46c7-8727-73ff6b6483e8",
+      "task_domain": "libreoffice_writer"
+    },
+    {
+      "id": "0810415c-bde4-4443-9047-d5f70165a697",
+      "task_domain": "libreoffice_writer"
+    },
+    {
+      "id": "bc2b57f3-686d-4ec9-87ce-edf850b7e442",
+      "task_domain": "multi_apps"
+    },
+    {
+      "id": "00fa164e-2612-4439-992e-157d019a8436",
+      "task_domain": "multi_apps"
+    },
+    {
+      "id": "23393935-50c7-4a86-aeea-2b78fd089c5c",
+      "task_domain": "os"
+    },
+    {
+      "id": "5ea617a3-0e86-4ba6-aab2-dac9aa2e8d57",
+      "task_domain": "os"
+    },
+    {
+      "id": "a10b69e1-6034-4a2b-93e1-571d45194f75",
+      "task_domain": "thunderbird"
+    },
+    {
+      "id": "8ba5ae7a-5ae5-4eab-9fcc-5dd4fe3abf89",
+      "task_domain": "vlc"
+    },
+    {
+      "id": "9195653c-f4aa-453d-aa95-787f6ccfaae9",
+      "task_domain": "vlc"
+    },
+    {
+      "id": "57242fad-77ca-454f-b71b-f187181a9f23",
+      "task_domain": "vs_code"
+    },
+    {
+      "id": "70745df8-f2f5-42bd-8074-fbc10334fcc5",
+      "task_domain": "vs_code"
+    },
+    {
+      "id": "3f28fe4f-5d9d-4994-a456-efd78cfae1a3",
+      "task_domain": "thunderbird"
+    },
+    {
+      "id": "af630914-714e-4a24-a7bb-f9af687d3b91",
+      "task_domain": "chrome"
+    }
+  ]
+}

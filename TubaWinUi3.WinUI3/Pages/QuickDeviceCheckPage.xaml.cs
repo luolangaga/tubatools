@@ -41,9 +41,9 @@ public sealed partial class QuickDeviceCheckPage : Page
     private string? _focusLabel;
     private string? _wallpaper;
     private readonly Dictionary<int, bool> _exteriorChecks = [];
-    private static readonly string[] StepTitles = ["欢迎收到新电脑", "核对硬件配置", "检查硬盘状态", "检查屏幕", "检查键盘", "检查摄像头", "检查扬声器", "散热与稳定性", "检查电池与供电"];
+    private static readonly string[] StepTitles = ["欢迎收到新电脑", "核对硬件配置", "检查硬盘状态", "检查屏幕", "检查键盘", "检查摄像头", "检查扬声器与麦克风", "散热与稳定性", "检查电池与供电"];
     private static readonly string[] StepLabels = ["外观", "配置", "硬盘", "屏幕", "键盘", "摄像头", "音频", "烤机", "电池"];
-    private static readonly string[] StepDescriptions = ["先看整机全景，再检查机身外观。", "点击硬件条目定位整机上的对应区域，并核对订单配置。", "查看 SMART 信息，结合购买渠道与商家说明判断。", "在全屏纯色画面中检查坏点、色斑和漏光。", "逐个按下按键，已测试的键位会留下标记。", "开启预览，检查画面、对焦和颜色是否正常。", "播放测试语音，留意无声、杂音或破音。", "验机特别版：统一时长，实时观察温度与负载。", "查看电池容量、循环次数和实时供电，拔插电源检查充放电切换。"];
+    private static readonly string[] StepDescriptions = ["先看整机全景，再检查机身外观。", "点击硬件条目定位整机上的对应区域，并核对订单配置。", "查看 SMART 信息，结合购买渠道与商家说明判断。", "在全屏纯色画面中检查坏点、色斑和漏光。", "逐个按下按键，已测试的键位会留下标记。", "开启预览，检查画面、对焦和颜色是否正常。", "播放测试语音，并录一段话回听，检查无声、杂音或破音。", "验机特别版：统一时长，实时观察温度与负载。", "查看电池容量、循环次数和实时供电，拔插电源检查充放电切换。"];
 
     public QuickDeviceCheckPage()
     {
@@ -92,7 +92,7 @@ public sealed partial class QuickDeviceCheckPage : Page
     {
         try
         {
-            var hardware = await HardwareInfoService.LoadAsync(false);
+            var hardware = await HardwareInfoService.LoadForDisplayAsync(false);
             if (_closed || _scene != scene) return;
             _hardware = hardware.ToList();
             _hardwareError = null;
@@ -243,6 +243,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         _keyboardTestControl = null;
         StopCamera();
         _cameraPlayer = null;
+        ReleaseMicrophoneTest();
         _speechSynth?.SpeakAsyncCancelAll();
     }
     private void ToolBackButton_Click(object sender, RoutedEventArgs e) { Cleanup(); App.MainWindow?.NavigateBack(); }
@@ -592,6 +593,7 @@ public sealed partial class QuickDeviceCheckPage : Page
         var button = new Button { Content = "播放测试语音", Style = Application.Current.Resources["AccentButtonStyle"] as Style };
         button.Click += (_, _) => PlayTestAudio(); panel.Children.Add(button);
         panel.Children.Add(Copy("听不到声音时，请检查系统音量、静音状态与音频输出设备。", true));
+        AddMicrophoneTest(panel, button);
     }
     private void BuildStressTestStep()
     {

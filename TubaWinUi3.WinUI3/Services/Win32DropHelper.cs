@@ -15,6 +15,28 @@ public static class Win32DropHelper
     /// <summary>文件被拖入任意已安装钩子的窗口时触发（WndProc 线程，订阅者自行调度到 UI 线程）。</summary>
     public static event Action<IReadOnlyList<string>>? FilesDropped;
 
+    /// <summary>Window-scoped handlers can consume a drop before legacy, application-wide subscribers.</summary>
+    public sealed class WindowDrop(IntPtr window, IReadOnlyList<string> files)
+    {
+        public IntPtr Window { get; } = window;
+        public IReadOnlyList<string> Files { get; } = files;
+        public bool Handled { get; set; }
+    }
+    public static event Action<WindowDrop>? WindowFilesDropped;
+    public sealed class WindowPaste(IntPtr window)
+    {
+        public IntPtr Window { get; } = window;
+        public bool Handled { get; set; }
+    }
+    public static event Action<WindowPaste>? WindowPasteRequested;
+
+    /// <summary>Opt in to native paste messages (including clipboard-history integrations).</summary>
+    public static void EnablePasteMessages(IntPtr hwnd)
+    {
+        EnsureInstalled(hwnd);
+        if (hwnd != IntPtr.Zero) ChangeWindowMessageFilterEx(hwnd, WM_PASTE, MSGFLT_ALLOW, IntPtr.Zero);
+    }
+
     private sealed class WindowHook
     {
         public IntPtr OldWndProc;
@@ -52,6 +74,7 @@ public static class Win32DropHelper
     private const int GWLP_WNDPROC = -4;
     private const uint WM_DROPFILES = 0x0233;
     private const uint WM_COPYGLOBALDATA = 0x0049;
+    private const uint WM_PASTE = 0x0302;
     private const uint MSGFLT_ALLOW = 1;
 
     /// <summary>对窗口安装拖放钩子（幂等；同一窗口只安装一次）。</summary>
@@ -79,9 +102,18 @@ public static class Win32DropHelper
 
     private static IntPtr WndProcSubclass(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
+        if (msg == WM_PASTE)
+        {
+            try
+            {
+                var paste = new WindowPaste(hWnd); WindowPasteRequested?.Invoke(paste);
+                if (paste.Handled) return IntPtr.Zero;
+            }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine("Paste failed: " + ex.Message); }
+        }
         if (msg == WM_DROPFILES)
         {
-            HandleWmDropFiles(wParam);
+            HandleWmDropFiles(hWnd, wParam);
             return IntPtr.Zero;
         }
         // 其余消息转发给原始 WndProc（WinUI 3 框架），不能调 DefWindowProc
@@ -90,7 +122,7 @@ public static class Win32DropHelper
             : DefWindowProcW(hWnd, msg, wParam, lParam);
     }
 
-    private static void HandleWmDropFiles(IntPtr hDrop)
+    private static void HandleWmDropFiles(IntPtr window, IntPtr hDrop)
     {
         try
         {
@@ -110,8 +142,13 @@ public static class Win32DropHelper
             }
 
             if (files.Count > 0)
-                FilesDropped?.Invoke(files);
+            {
+                var drop = new WindowDrop(window, files);
+                WindowFilesDropped?.Invoke(drop);
+                if (!drop.Handled) FilesDropped?.Invoke(files);
+            }
         }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine("File drop failed: " + ex.Message); }
         finally
         {
             DragFinish(hDrop);

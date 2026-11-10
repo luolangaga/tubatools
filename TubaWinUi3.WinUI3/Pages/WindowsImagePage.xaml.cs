@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using TubaWinUi3.Models;
@@ -406,10 +406,6 @@ public sealed partial class WindowsImagePage : Page, ILocalizablePage
     private async void RefreshBtn_Click(object sender, RoutedEventArgs e)
     {
         await LoadDataAsync();
-    }
-
-    private void CancelConvertBtn_Click(object sender, RoutedEventArgs e)
-    {
     }
 
     private void SourcePivot_SelectionChanged(object sender, SelectionChangedEventArgs e)

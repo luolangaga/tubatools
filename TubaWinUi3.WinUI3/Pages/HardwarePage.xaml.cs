@@ -356,26 +356,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
         try
         {
-            var sections = await HardwareInfoService.LoadAsync(forceRefresh);
-
+            var sections = await HardwareInfoService.LoadForDisplayAsync(forceRefresh);
             var useCpuz = AppSettings.GetBool("UseCpuzDataSource", false);
-            if (useCpuz)
-            {
-                var cpuzInfo = CpuzInfoService.CachedInfo;
-                if (cpuzInfo == null)
-                {
-                    try
-                    {
-                        cpuzInfo = await CpuzInfoService.FetchAsync(timeoutMs: 30000);
-                    }
-                    catch { }
-                }
-
-                if (cpuzInfo != null)
-                {
-                    sections = HardwareInfoService.ApplyCpuzOverride(sections, cpuzInfo);
-                }
-            }
 
             ApplySections(sections);
             HardwareSourceText.Text = $"数据来源：{(useCpuz && CpuzInfoService.CachedInfo is not null ? "WMI / DXGI，CPU-Z 补充" : "WMI / DXGI")} / LibreHardwareMonitor · 系统查询时间：{HardwareInfoService.LastCapturedAt:f}。温度为本次刷新读数；共享显存为上限，内存设备数不代表可更换插槽。";
@@ -407,6 +389,9 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         var summary = sections[0].Items;
         var system = sections[1].Items;
         var details = sections[2].Items;
+        foreach (var item in details.Where(item => item.PortCapabilities is not null))
+            item.Value = HardwarePortService.BuildSummary(item.PortCapabilities!);
+        SettingsStylePorts.Text = details.FirstOrDefault(item => item.Label == "接口支持")?.Value ?? "";
 
         ModelText.Text = summary.FirstOrDefault(item => item.Label == "设备型号")?.Value ?? LocalizationService.L("Hw_Unknown", "未知");
         SystemText.Text = system.FirstOrDefault(item => item.Label == "系统")?.Value ?? LocalizationService.L("Hw_Unknown", "未知");

@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -65,14 +65,14 @@ public sealed partial class UpdateBanner : UserControl
         _isDownloaded = true;
         _isDownloading = false;
 
-        // 下载完成的文件可能已被安全软件/清理工具移除或损坏，先校验再提示"已就绪"
+        // 此处只检查下载文件仍存在；完整校验和不匹配确认在点击安装后异步进行。
         if (!UpdateService.IsPendingUpdateReady())
         {
             ShowDownloadFailed(LocalizationService.L("UpdateBanner_InvalidFile", "更新文件无效或已被清理，请重新下载"));
             return;
         }
 
-        BannerText.Text = LocalizationService.L("UpdateBanner_Ready", "更新已就绪，点击开始安装");
+        BannerText.Text = LocalizationService.L("UpdateBanner_DownloadedVerifyOnInstall", "更新已下载，安装前会校验文件");
         BannerText.Visibility = Visibility.Visible;
         DownloadProgressBar.Visibility = Visibility.Collapsed;
         ActionButton.Content = LocalizationService.L("UpdateBanner_InstallButton", "立即安装");
@@ -99,7 +99,10 @@ public sealed partial class UpdateBanner : UserControl
     {
         if (_isDownloaded)
         {
-            if (UpdateService.LaunchUpdateFromItem()) return;
+            ActionButton.IsEnabled = false;
+            try { if (await UpdateService.LaunchUpdateFromItem()) return; }
+            finally { ActionButton.IsEnabled = true; }
+            if (UpdateService.LastLaunchWasCancelled) return;
 
             // 启动失败：文件已被移除/损坏，给出恢复选项而不是崩溃
             await ShowLaunchFailedDialogAsync();

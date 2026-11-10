@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using TubaWinUi3.Models;
@@ -148,8 +148,12 @@ public static class ToolCatalog
 
     public static IReadOnlyList<string> GetCategories()
     {
-        var dirs = (Directory.Exists(ToolsRoot) ? Directory.GetDirectories(ToolsRoot).Select(Path.GetFileName) : [])
-            .Concat(ToolMetadataService.GetUserTools().Select(t => t.Category))
+        // 插件工具不向主侧栏注入分类（否则插件声明一个新分类就会凭空多出一行导航）。
+        // 插件工具仍完整保留在内置工具索引、内置工具分类页与插件页里；
+        // 需要在侧栏直达入口时由插件显式声明 ShowInSidebar。
+        IEnumerable<string> names = (Directory.Exists(ToolsRoot) ? Directory.GetDirectories(ToolsRoot).Select(Path.GetFileName) : [])
+            .Concat(ToolMetadataService.GetUserTools().Select(t => t.Category));
+        var dirs = names
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Cast<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
@@ -258,6 +262,9 @@ public static class ToolCatalog
                     items.Add(copyItem);
             }
         }
+
+        foreach (var plugin in BuiltinToolRegistry.GetByCategory(category).Where(t => t.Id.StartsWith("plugin:", StringComparison.Ordinal)))
+            items.Add(CreateBuiltinItemCore(plugin, category, PluginDirectoryName(plugin.Id), null));
 
         // 排序：tools.json 的 order 字段为主序（收录工具按编辑顺序）；
         // 未收录的自定义工具退回 AppSettings ToolOrder_（旧数据兼容）→ 名称字典序
@@ -755,8 +762,6 @@ public static class ToolCatalog
         ["hwinfo"] = ["HWiNFO64.exe", "HWiNFO32.exe", "HWiNFO_ARM64.exe", "HWiNFO.exe"],
         // HWMonitor: HWMonitor_x64.exe, HWMonitor_x32.exe, hwmonitor_arm64.exe
         ["hwmonitor"] = ["HWMonitor_x64.exe", "HWMonitor_x32.exe", "hwmonitor_arm64.exe", "HWMonitor.exe"],
-        // Dism++: Dism++x64.exe, Dism++x86.exe, Dism++ARM64.exe
-        ["dism++"] = ["Dism++x64.exe", "Dism++x86.exe", "Dism++ARM64.exe", "Dism++.exe"],
         // CoreTemp: Core Temp x64.exe, Core Temp x86.exe
         ["coretemp"] = ["Core Temp x64.exe", "Core Temp x86.exe", "Core Temp.exe"],
         // CrystalDiskInfo: DiskInfo64S.exe, DiskInfo32S.exe
@@ -1173,6 +1178,8 @@ public static class ToolCatalog
     /// </summary>
     public static string GetBuiltinFavoriteKey(IBuiltinTool builtinTool)
     {
+        if (builtinTool.Id.StartsWith("plugin:", StringComparison.Ordinal))
+            return Path.Combine(ToolsRoot, builtinTool.Category, PluginDirectoryName(builtinTool.Id));
         try
         {
             var placed = GetAllToolsCached().FirstOrDefault(t =>
@@ -1183,6 +1190,8 @@ public static class ToolCatalog
         catch { }
         return string.Empty;
     }
+
+    private static string PluginDirectoryName(string id) => "plugin-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(id))).ToLowerInvariant();
 
     private static ToolItem CreateBuiltinItemCore(IBuiltinTool builtinTool, string category, string dirName, int? order)
     {
@@ -1210,7 +1219,7 @@ public static class ToolCatalog
             IsBuiltinLink = true,
             BuiltinToolId = builtinTool.Id,
             BuiltinKindText = kindText,
-            Tags = [],
+            Tags = builtinTool is Plugins.PluginXamlTool plugin ? plugin.Definition.Tags.ToArray() : [],
             SortOrder = order
         };
     }

@@ -1,0 +1,277 @@
+[
+  {
+    "name": "target rejects non-string automation id",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-target-automation-id",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "click",
+        "app": "Editor",
+        "target": {"selector": "button", "hasName": false, "automationId": 123},
+        "input": {}
+      }
+    }
+  },
+  {
+    "name": "target rejects misspelled identity field",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-target-identity-field",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "click",
+        "app": "Editor",
+        "target": {"selector": "button", "hasName": false, "automation_id": "open-button"},
+        "input": {}
+      }
+    }
+  },
+  {
+    "name": "observe rejects zero text limit",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-observe-text-limit",
+      "operation": "observe",
+      "observe": {
+        "protocol_version": 2,
+        "app": "Editor",
+        "observation": {
+          "text_limit": 0
+        }
+      }
+    }
+  },
+  {
+    "name": "observe rejects string node budget",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-observe-node-budget",
+      "operation": "observe",
+      "observe": {
+        "protocol_version": 2,
+        "app": "Editor",
+        "observation": {
+          "max_tree_nodes": "1200"
+        }
+      }
+    }
+  },
+  {
+    "name": "desktop rejects scroll without delta",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-desktop-scroll",
+      "operation": "desktop_execute_batch",
+      "desktop": {
+        "protocol_version": 2,
+        "actions": [
+          {
+            "type": "scroll",
+            "x": 100,
+            "y": 80
+          }
+        ],
+        "settle_ms": 800
+      }
+    }
+  },
+  {
+    "name": "desktop rejects action field mixing",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-desktop-click",
+      "operation": "desktop_execute_batch",
+      "desktop": {
+        "protocol_version": 2,
+        "actions": [
+          {
+            "type": "click",
+            "x": 100,
+            "y": 80,
+            "text": "not valid for click"
+          }
+        ],
+        "settle_ms": 800
+      }
+    }
+  },
+  {
+    "name": "desktop rejects empty keypress",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-desktop-keypress",
+      "operation": "desktop_execute_batch",
+      "desktop": {
+        "protocol_version": 2,
+        "actions": [
+          {
+            "type": "keypress",
+            "keys": []
+          }
+        ],
+        "settle_ms": 800
+      }
+    }
+  },
+  {
+    "name": "action rejects intent field mixing",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-action-type",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "type",
+        "app": "Editor",
+        "window_handle": "w1",
+        "input": {
+          "text": "hello",
+          "key": "ENTER"
+        }
+      }
+    }
+  },
+  {
+    "name": "action rejects set value without target",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-action-set-value",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "set_value",
+        "app": "Editor",
+        "input": {
+          "value": "Ada"
+        }
+      }
+    }
+  },
+  {
+    "name": "action rejects select without target",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-action-select",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "select",
+        "app": "Editor",
+        "input": {
+          "text": "Ada"
+        }
+      }
+    }
+  },
+  {
+    "name": "action rejects select with text and range end",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-action-select-both",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "select",
+        "app": "Editor",
+        "target": {
+          "selector": "paragraph",
+          "role": "paragraph",
+          "hasName": false
+        },
+        "input": {
+          "text": "Ada",
+          "to_target": {
+            "selector": "paragraph",
+            "role": "paragraph",
+            "hasName": false
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "app identity rejects numeric provider bus",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-app-identity",
+      "operation": "observe",
+      "observe": {
+        "protocol_version": 2,
+        "app": "Editor",
+        "app_identity": {
+          "providerBusName": 123,
+          "processGeneration": "generation-1"
+        }
+      }
+    }
+  },
+  {
+    "name": "target rejects string has name",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-target-has-name",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "click",
+        "app": "Editor",
+        "target": {
+          "selector": "button \"Save\"",
+          "hasName": "yes"
+        },
+        "input": {
+          "click_count": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "action rejects boolean scroll pages",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-action-scroll-pages",
+      "operation": "resolve_and_act",
+      "action": {
+        "protocol_version": 2,
+        "intent": "scroll",
+        "app": "Editor",
+        "window_handle": "w1",
+        "input": {
+          "direction": "down",
+          "pages": true
+        }
+      }
+    }
+  },
+  {
+    "name": "window action rejects missing target",
+    "request": {
+      "protocol": "computer-use-provider",
+      "schema_version": 2,
+      "request_id": "invalid-window-action",
+      "operation": "window_action",
+      "window_action": {
+        "protocol_version": 2,
+        "action": "close",
+        "app": "Editor"
+      }
+    }
+  }
+]

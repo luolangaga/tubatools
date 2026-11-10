@@ -1,0 +1,8432 @@
+[
+ {
+  "origin": "action0/:alias_action",
+  "action": {
+   "action": "click",
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:alias_action",
+  "action": {
+   "action": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:alias_action",
+  "action": {
+   "action": "double_click",
+   "keys": [
+    "CTRL"
+   ],
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:alias_action",
+  "action": {
+   "action": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:alias_action",
+  "action": {
+   "action": "drag",
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:alias_action",
+  "action": {
+   "action": "drag",
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:alias_action",
+  "action": {
+   "action": "keypress",
+   "keys": [
+    "libreoffice"
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:alias_action",
+  "action": {
+   "action": "move",
+   "keys": [
+    "CTRL"
+   ],
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:alias_action",
+  "action": {
+   "action": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:alias_action",
+  "action": {
+   "action": "scroll",
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:alias_action",
+  "action": {
+   "action": "scroll",
+   "scroll_x": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:alias_action",
+  "action": {
+   "action": "scroll",
+   "scroll_y": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:alias_action",
+  "action": {
+   "action": "type",
+   "text": "libreoffice"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:alias_action",
+  "action": {
+   "action": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_actions",
+  "action": {
+   "actions": [],
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_actions",
+  "action": {
+   "actions": [],
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_actions",
+  "action": {
+   "actions": [],
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_actions",
+  "action": {
+   "actions": [],
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_actions",
+  "action": {
+   "actions": [],
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:legacy_actions",
+  "action": {
+   "actions": [],
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_actions",
+  "action": {
+   "actions": [],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_actions",
+  "action": {
+   "actions": [],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_actions",
+  "action": {
+   "actions": [],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_actions",
+  "action": {
+   "actions": [],
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_actions",
+  "action": {
+   "actions": [],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_actions",
+  "action": {
+   "actions": [],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_actions",
+  "action": {
+   "actions": [],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_actions",
+  "action": {
+   "actions": [],
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_app",
+  "action": {
+   "app": "libreoffice",
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:unknown_field",
+  "action": {
+   "bogus": 1,
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:blank",
+  "action": {
+   "button": "  ",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:lead_space",
+  "action": {
+   "button": " left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:empty",
+  "action": {
+   "button": "",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:numeric_string",
+  "action": {
+   "button": "3",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:upper",
+  "action": {
+   "button": "LEFT",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:title",
+  "action": {
+   "button": "Left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:enum_back",
+  "action": {
+   "button": "back",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//button:add3",
+  "action": {
+   "button": "back",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/button:enum_forward",
+  "action": {
+   "button": "forward",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//button:add4",
+  "action": {
+   "button": "forward",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/button:trail_space",
+  "action": {
+   "button": "left ",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_expect",
+  "action": {
+   "button": "left",
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:alias_key",
+  "action": {
+   "button": "left",
+   "key": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys:bare_item",
+  "action": {
+   "button": "left",
+   "keys": "CTRL",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys:string",
+  "action": {
+   "button": "left",
+   "keys": "x",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:blank",
+  "action": {
+   "button": "left",
+   "keys": [
+    "  "
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:lead_space",
+  "action": {
+   "button": "left",
+   "keys": [
+    " CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:empty",
+  "action": {
+   "button": "left",
+   "keys": [
+    ""
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:numeric_string",
+  "action": {
+   "button": "left",
+   "keys": [
+    "3"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:enum_ALT",
+  "action": {
+   "button": "left",
+   "keys": [
+    "ALT"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/keys/0:enum_CONTROL",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CONTROL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/keys/0:trail_space",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL "
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys:repeat_item",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL",
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/:legacy_limit",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "limit": 5,
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_settle_ms",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "settle_ms": 800,
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:blank",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:lead_space",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": " click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:empty",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:numeric_string",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:upper",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "CLICK",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:title",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "Click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:trail_space",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_view",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:string",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:negative",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/x:zero",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:string",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/y:negative",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:zero",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:float_integral",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:fraction",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:bool",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:float_integral",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/x:fraction",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:missing",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:bool",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:missing",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:alias_press",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "press",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:number",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:bool",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:object",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "type": {
+    "value": "click"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:missing",
+  "action": {
+   "button": "left",
+   "keys": [
+    "CTRL"
+   ],
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:enum_SHIFT",
+  "action": {
+   "button": "left",
+   "keys": [
+    "SHIFT"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/keys/0:enum_SUPER",
+  "action": {
+   "button": "left",
+   "keys": [
+    "SUPER"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/keys/0:number",
+  "action": {
+   "button": "left",
+   "keys": [
+    7
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys:empty_array",
+  "action": {
+   "button": "left",
+   "keys": [],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/keys/0:bool",
+  "action": {
+   "button": "left",
+   "keys": [
+    true
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/keys/0:object",
+  "action": {
+   "button": "left",
+   "keys": [
+    {
+     "value": "CTRL"
+    }
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0//button:add0",
+  "action": {
+   "button": "left",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/button:enum_right",
+  "action": {
+   "button": "right",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//button:add1",
+  "action": {
+   "button": "right",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/button:enum_wheel",
+  "action": {
+   "button": "wheel",
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//button:add2",
+  "action": {
+   "button": "wheel",
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/button:number",
+  "action": {
+   "button": 7,
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:bool",
+  "action": {
+   "button": true,
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/button:object",
+  "action": {
+   "button": {
+    "value": "left"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_expect",
+  "action": {
+   "expect": {
+    "appears": "Save"
+   },
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:alias_key",
+  "action": {
+   "key": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:alias_key",
+  "action": {
+   "key": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:alias_key",
+  "action": {
+   "key": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:alias_key",
+  "action": {
+   "key": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:alias_key",
+  "action": {
+   "key": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys:bare_item",
+  "action": {
+   "keys": "CTRL",
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys:bare_item",
+  "action": {
+   "keys": "CTRL",
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys:bare_item",
+  "action": {
+   "keys": "CTRL",
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys:bare_item",
+  "action": {
+   "keys": "CTRL",
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys:bare_item",
+  "action": {
+   "keys": "libreoffice",
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys:string",
+  "action": {
+   "keys": "x",
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys:string",
+  "action": {
+   "keys": "x",
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys:string",
+  "action": {
+   "keys": "x",
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys:string",
+  "action": {
+   "keys": "x",
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys:string",
+  "action": {
+   "keys": "x",
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys/0:blank",
+  "action": {
+   "keys": [
+    "  "
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:blank",
+  "action": {
+   "keys": [
+    "  "
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:blank",
+  "action": {
+   "keys": [
+    "  "
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:blank",
+  "action": {
+   "keys": [
+    "  "
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:blank",
+  "action": {
+   "keys": [
+    "  "
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys/0:lead_space",
+  "action": {
+   "keys": [
+    " CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:lead_space",
+  "action": {
+   "keys": [
+    " CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:lead_space",
+  "action": {
+   "keys": [
+    " CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:lead_space",
+  "action": {
+   "keys": [
+    " CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:lead_space",
+  "action": {
+   "keys": [
+    " libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/keys/0:empty",
+  "action": {
+   "keys": [
+    ""
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:empty",
+  "action": {
+   "keys": [
+    ""
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:empty",
+  "action": {
+   "keys": [
+    ""
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:empty",
+  "action": {
+   "keys": [
+    ""
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:empty",
+  "action": {
+   "keys": [
+    ""
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys/0:numeric_string",
+  "action": {
+   "keys": [
+    "3"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:numeric_string",
+  "action": {
+   "keys": [
+    "3"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:numeric_string",
+  "action": {
+   "keys": [
+    "3"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:numeric_string",
+  "action": {
+   "keys": [
+    "3"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/keys/0:numeric_string",
+  "action": {
+   "keys": [
+    "3"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys/0:enum_ALT",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2//keys:add3",
+  "action": {
+   "keys": [
+    "ALT"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys/0:enum_CONTROL",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2//keys:add1",
+  "action": {
+   "keys": [
+    "CONTROL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/keys/0:trail_space",
+  "action": {
+   "keys": [
+    "CTRL "
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:trail_space",
+  "action": {
+   "keys": [
+    "CTRL "
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:trail_space",
+  "action": {
+   "keys": [
+    "CTRL "
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:trail_space",
+  "action": {
+   "keys": [
+    "CTRL "
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys:repeat_item",
+  "action": {
+   "keys": [
+    "CTRL",
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys:repeat_item",
+  "action": {
+   "keys": [
+    "CTRL",
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/keys:repeat_item",
+  "action": {
+   "keys": [
+    "CTRL",
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/keys:repeat_item",
+  "action": {
+   "keys": [
+    "CTRL",
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/:legacy_limit",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "limit": 5,
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_limit",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "limit": 5,
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_limit",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "limit": 5,
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_limit",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "limit": 5,
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": "x",
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    "r1",
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:array",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    [
+     {
+      "x": 1,
+      "y": 1
+     }
+    ],
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:empty_array",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:unknown_field",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "bogus": 1,
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": "1",
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": -1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 0,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": "1"
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": -1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 0
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1.0
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1.5
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    "r1"
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:array",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    [
+     {
+      "x": 1,
+      "y": 1
+     }
+    ]
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:unknown_field",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "bogus": 1,
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": "1",
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": -1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 0,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": "1"
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": -1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 0
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1.0
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1.5
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path:repeat_item",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/:legacy_settle_ms",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "settle_ms": 800,
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:blank",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "  "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:lead_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": " drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:empty",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": ""
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:numeric_string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "3"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:upper",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "DRAG"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:title",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "Drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:trail_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_view",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag",
+   "view": "full"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3//keys:add0",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/type:number",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": 7
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": {
+    "value": "drag"
+   }
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": true
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1.0,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1.5,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": true,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:empty_object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {}
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": true
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1.0,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1.5,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "x": true,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:empty_object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": [
+    {},
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:bare_item",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "path": {
+    "x": 1,
+    "y": 1
+   },
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": "1",
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": -1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+1(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": -1999,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+0(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": -2000,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound-1(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": -2001,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 0,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": "1",
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": -1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound+1(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": -1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound+0(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": -2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound-1(-2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": -2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/:legacy_settle_ms",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "settle_ms": 800,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:blank",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:lead_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": " scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:empty",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:numeric_string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:upper",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "SCROLL",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:title",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "Scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:trail_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_view",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:number",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": {
+    "value": "scroll"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1.0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1.5,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound-1(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound+0(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_y:bound+1(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "scroll_y": true,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4//keys:add0",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1.0,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1.5,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound-1(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 1999,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+0(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 2000,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+1(2000)",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": 2001,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_x": true,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/:legacy_settle_ms",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "settle_ms": 800,
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_settle_ms",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "settle_ms": 800,
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:blank",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:lead_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": " double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:lead_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": " move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:empty",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:numeric_string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:upper",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "DOUBLE_CLICK",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:title",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "Double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:upper",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "MOVE",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:title",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "Move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0//keys:add0",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/type:trail_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_view",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1//keys:add0",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "double_click",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:trail_space",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_view",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/x:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:string",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/y:negative",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:zero",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2//keys:add0",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:float_integral",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/x:fraction",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": "move",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:number",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:bool",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": {
+    "value": "double_click"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:object",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "type": {
+    "value": "move"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:missing",
+  "action": {
+   "keys": [
+    "CTRL"
+   ],
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:upper",
+  "action": {
+   "keys": [
+    "LIBREOFFICE"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/keys/0:title",
+  "action": {
+   "keys": [
+    "Libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys/0:enum_SHIFT",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2//keys:add2",
+  "action": {
+   "keys": [
+    "SHIFT"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys/0:enum_SUPER",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2//keys:add4",
+  "action": {
+   "keys": [
+    "SUPER"
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/keys/0:trail_space",
+  "action": {
+   "keys": [
+    "libreoffice "
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/keys:repeat_item",
+  "action": {
+   "keys": [
+    "libreoffice",
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/:legacy_limit",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "limit": 5,
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:legacy_settle_ms",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "settle_ms": 800,
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:blank",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "  "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:lead_space",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": " keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:empty",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": ""
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:numeric_string",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "3"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:upper",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "KEYPRESS"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:title",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "Keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:trail_space",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/:legacy_view",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress",
+   "view": "full"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": "keypress"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/type:number",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": 7
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:bool",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:object",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ],
+   "type": {
+    "value": "keypress"
+   }
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/type:missing",
+  "action": {
+   "keys": [
+    "libreoffice"
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys/0:number",
+  "action": {
+   "keys": [
+    7
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:number",
+  "action": {
+   "keys": [
+    7
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:number",
+  "action": {
+   "keys": [
+    7
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:number",
+  "action": {
+   "keys": [
+    7
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:number",
+  "action": {
+   "keys": [
+    7
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys:empty_array",
+  "action": {
+   "keys": [],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/keys:empty_array",
+  "action": {
+   "keys": [],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/keys:empty_array",
+  "action": {
+   "keys": [],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action7/keys:empty_array",
+  "action": {
+   "keys": [],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys:empty_array",
+  "action": {
+   "keys": [],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/keys/0:bool",
+  "action": {
+   "keys": [
+    true
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:bool",
+  "action": {
+   "keys": [
+    true
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:bool",
+  "action": {
+   "keys": [
+    true
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:bool",
+  "action": {
+   "keys": [
+    true
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:bool",
+  "action": {
+   "keys": [
+    true
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/keys/0:object",
+  "action": {
+   "keys": [
+    {
+     "value": "CTRL"
+    }
+   ],
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/keys/0:object",
+  "action": {
+   "keys": [
+    {
+     "value": "CTRL"
+    }
+   ],
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/keys/0:object",
+  "action": {
+   "keys": [
+    {
+     "value": "CTRL"
+    }
+   ],
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/keys/0:object",
+  "action": {
+   "keys": [
+    {
+     "value": "CTRL"
+    }
+   ],
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys/0:object",
+  "action": {
+   "keys": [
+    {
+     "value": "libreoffice"
+    }
+   ],
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_limit",
+  "action": {
+   "limit": 5,
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:string",
+  "action": {
+   "path": "x",
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:string",
+  "action": {
+   "path": [
+    "r1",
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:array",
+  "action": {
+   "path": [
+    [
+     {
+      "x": 1,
+      "y": 1
+     }
+    ],
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:empty_array",
+  "action": {
+   "path": [],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:unknown_field",
+  "action": {
+   "path": [
+    {
+     "bogus": 1,
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:string",
+  "action": {
+   "path": [
+    {
+     "x": "1",
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:negative",
+  "action": {
+   "path": [
+    {
+     "x": -1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/x:zero",
+  "action": {
+   "path": [
+    {
+     "x": 0,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:string",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": "1"
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/y:negative",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": -1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:zero",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 0
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:float_integral",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1.0
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:fraction",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1.5
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1:string",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    "r1"
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:array",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    [
+     {
+      "x": 1,
+      "y": 1
+     }
+    ]
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:unknown_field",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "bogus": 1,
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:string",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": "1",
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:negative",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": -1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/x:zero",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 0,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:string",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": "1"
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/y:negative",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": -1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:zero",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 0
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:float_integral",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1.0
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:fraction",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1.5
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path:repeat_item",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/:legacy_settle_ms",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "settle_ms": 800,
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:blank",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "  "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:lead_space",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": " drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:empty",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": ""
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:numeric_string",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "3"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:upper",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "DRAG"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:title",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "Drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:trail_space",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/:legacy_view",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag",
+   "view": "full"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/type:number",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": 7
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:bool",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:object",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": {
+    "value": "drag"
+   }
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/type:missing",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ]
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/y:bool",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": true
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:float_integral",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1.0,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/x:fraction",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1.5,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/1/y:missing",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:bool",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "x": true,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1/x:missing",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/1:empty_object",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": 1
+    },
+    {}
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/y:bool",
+  "action": {
+   "path": [
+    {
+     "x": 1,
+     "y": true
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:float_integral",
+  "action": {
+   "path": [
+    {
+     "x": 1.0,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/x:fraction",
+  "action": {
+   "path": [
+    {
+     "x": 1.5,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action3/path/0/y:missing",
+  "action": {
+   "path": [
+    {
+     "x": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:bool",
+  "action": {
+   "path": [
+    {
+     "x": true,
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0/x:missing",
+  "action": {
+   "path": [
+    {
+     "y": 1
+    },
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path/0:empty_object",
+  "action": {
+   "path": [
+    {},
+    {
+     "x": 1,
+     "y": 1
+    }
+   ],
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:bare_item",
+  "action": {
+   "path": {
+    "x": 1,
+    "y": 1
+   },
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:string",
+  "action": {
+   "scroll_x": "1",
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:negative",
+  "action": {
+   "scroll_x": -1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+1(-2000)",
+  "action": {
+   "scroll_x": -1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+0(-2000)",
+  "action": {
+   "scroll_x": -2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound-1(-2000)",
+  "action": {
+   "scroll_x": -2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:zero",
+  "action": {
+   "scroll_x": 0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4//scroll_y:add0",
+  "action": {
+   "scroll_x": 1,
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/:legacy_settle_ms",
+  "action": {
+   "scroll_x": 1,
+   "settle_ms": 800,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:blank",
+  "action": {
+   "scroll_x": 1,
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:lead_space",
+  "action": {
+   "scroll_x": 1,
+   "type": " scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:empty",
+  "action": {
+   "scroll_x": 1,
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:numeric_string",
+  "action": {
+   "scroll_x": 1,
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:upper",
+  "action": {
+   "scroll_x": 1,
+   "type": "SCROLL",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:title",
+  "action": {
+   "scroll_x": 1,
+   "type": "Scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:trail_space",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/:legacy_view",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:string",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:negative",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/x:zero",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:string",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/y:negative",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:zero",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:float_integral",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:fraction",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:bool",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:float_integral",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/x:fraction",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/y:missing",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:bool",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/x:missing",
+  "action": {
+   "scroll_x": 1,
+   "type": "scroll",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:number",
+  "action": {
+   "scroll_x": 1,
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:bool",
+  "action": {
+   "scroll_x": 1,
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:object",
+  "action": {
+   "scroll_x": 1,
+   "type": {
+    "value": "scroll"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/type:missing",
+  "action": {
+   "scroll_x": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:float_integral",
+  "action": {
+   "scroll_x": 1.0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:fraction",
+  "action": {
+   "scroll_x": 1.5,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound-1(2000)",
+  "action": {
+   "scroll_x": 1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+0(2000)",
+  "action": {
+   "scroll_x": 2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action4/scroll_x:bound+1(2000)",
+  "action": {
+   "scroll_x": 2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:bool",
+  "action": {
+   "scroll_x": true,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/scroll_y:string",
+  "action": {
+   "scroll_y": "1",
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/scroll_y:negative",
+  "action": {
+   "scroll_y": -1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound+1(-2000)",
+  "action": {
+   "scroll_y": -1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound+0(-2000)",
+  "action": {
+   "scroll_y": -2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound-1(-2000)",
+  "action": {
+   "scroll_y": -2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/scroll_y:zero",
+  "action": {
+   "scroll_y": 0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_settle_ms",
+  "action": {
+   "scroll_y": 1,
+   "settle_ms": 800,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:blank",
+  "action": {
+   "scroll_y": 1,
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:lead_space",
+  "action": {
+   "scroll_y": 1,
+   "type": " scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:empty",
+  "action": {
+   "scroll_y": 1,
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:numeric_string",
+  "action": {
+   "scroll_y": 1,
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:upper",
+  "action": {
+   "scroll_y": 1,
+   "type": "SCROLL",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:title",
+  "action": {
+   "scroll_y": 1,
+   "type": "Scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:trail_space",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/:legacy_view",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/x:string",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/x:negative",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/x:zero",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:string",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/y:negative",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:zero",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:float_integral",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:fraction",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:bool",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/x:float_integral",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/x:fraction",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/y:missing",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/x:bool",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/x:missing",
+  "action": {
+   "scroll_y": 1,
+   "type": "scroll",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:number",
+  "action": {
+   "scroll_y": 1,
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:bool",
+  "action": {
+   "scroll_y": 1,
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:object",
+  "action": {
+   "scroll_y": 1,
+   "type": {
+    "value": "scroll"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/type:missing",
+  "action": {
+   "scroll_y": 1,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/scroll_y:float_integral",
+  "action": {
+   "scroll_y": 1.0,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:fraction",
+  "action": {
+   "scroll_y": 1.5,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound-1(2000)",
+  "action": {
+   "scroll_y": 1999,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound+0(2000)",
+  "action": {
+   "scroll_y": 2000,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action5/scroll_y:bound+1(2000)",
+  "action": {
+   "scroll_y": 2001,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action5/scroll_y:bool",
+  "action": {
+   "scroll_y": true,
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_settle_ms",
+  "action": {
+   "settle_ms": 800,
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_settle_ms",
+  "action": {
+   "settle_ms": 800,
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_settle_ms",
+  "action": {
+   "settle_ms": 800,
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_settle_ms",
+  "action": {
+   "settle_ms": 800,
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_settle_ms",
+  "action": {
+   "settle_ms": 800,
+   "type": "wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/text:blank",
+  "action": {
+   "text": "  ",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:lead_space",
+  "action": {
+   "text": " libreoffice",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:empty",
+  "action": {
+   "text": "",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:numeric_string",
+  "action": {
+   "text": "3",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:upper",
+  "action": {
+   "text": "LIBREOFFICE",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:title",
+  "action": {
+   "text": "Libreoffice",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/text:trail_space",
+  "action": {
+   "text": "libreoffice ",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/type:blank",
+  "action": {
+   "text": "libreoffice",
+   "type": "  "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:lead_space",
+  "action": {
+   "text": "libreoffice",
+   "type": " type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:empty",
+  "action": {
+   "text": "libreoffice",
+   "type": ""
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:numeric_string",
+  "action": {
+   "text": "libreoffice",
+   "type": "3"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:upper",
+  "action": {
+   "text": "libreoffice",
+   "type": "TYPE"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:title",
+  "action": {
+   "text": "libreoffice",
+   "type": "Type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:trail_space",
+  "action": {
+   "text": "libreoffice",
+   "type": "type "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/:legacy_view",
+  "action": {
+   "text": "libreoffice",
+   "type": "type",
+   "view": "full"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6",
+  "action": {
+   "text": "libreoffice",
+   "type": "type"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action6/type:number",
+  "action": {
+   "text": "libreoffice",
+   "type": 7
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:bool",
+  "action": {
+   "text": "libreoffice",
+   "type": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:object",
+  "action": {
+   "text": "libreoffice",
+   "type": {
+    "value": "type"
+   }
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/type:missing",
+  "action": {
+   "text": "libreoffice"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/text:number",
+  "action": {
+   "text": 7,
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/text:bool",
+  "action": {
+   "text": true,
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/text:object",
+  "action": {
+   "text": {
+    "value": "libreoffice"
+   },
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:blank",
+  "action": {
+   "type": "  ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:blank",
+  "action": {
+   "type": "  "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:lead_space",
+  "action": {
+   "type": " click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:lead_space",
+  "action": {
+   "type": " double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:lead_space",
+  "action": {
+   "type": " move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:lead_space",
+  "action": {
+   "type": " wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:empty",
+  "action": {
+   "type": "",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:empty",
+  "action": {
+   "type": ""
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:numeric_string",
+  "action": {
+   "type": "3",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:numeric_string",
+  "action": {
+   "type": "3"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:upper",
+  "action": {
+   "type": "CLICK",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:title",
+  "action": {
+   "type": "Click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:upper",
+  "action": {
+   "type": "DOUBLE_CLICK",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:title",
+  "action": {
+   "type": "Double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:upper",
+  "action": {
+   "type": "MOVE",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:title",
+  "action": {
+   "type": "Move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:upper",
+  "action": {
+   "type": "WAIT"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:title",
+  "action": {
+   "type": "Wait"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:trail_space",
+  "action": {
+   "type": "click ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:legacy_view",
+  "action": {
+   "type": "click",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:string",
+  "action": {
+   "type": "click",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:negative",
+  "action": {
+   "type": "click",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/x:zero",
+  "action": {
+   "type": "click",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:string",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/y:negative",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:zero",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:float_integral",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:fraction",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:bool",
+  "action": {
+   "type": "click",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:float_integral",
+  "action": {
+   "type": "click",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/x:fraction",
+  "action": {
+   "type": "click",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/y:missing",
+  "action": {
+   "type": "click",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:bool",
+  "action": {
+   "type": "click",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/x:missing",
+  "action": {
+   "type": "click",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:trail_space",
+  "action": {
+   "type": "double_click ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/:legacy_view",
+  "action": {
+   "type": "double_click",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:string",
+  "action": {
+   "type": "double_click",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:negative",
+  "action": {
+   "type": "double_click",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/x:zero",
+  "action": {
+   "type": "double_click",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:string",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/y:negative",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:zero",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:float_integral",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:fraction",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:bool",
+  "action": {
+   "type": "double_click",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:float_integral",
+  "action": {
+   "type": "double_click",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/x:fraction",
+  "action": {
+   "type": "double_click",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action1/y:missing",
+  "action": {
+   "type": "double_click",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:bool",
+  "action": {
+   "type": "double_click",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/x:missing",
+  "action": {
+   "type": "double_click",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action3/path:missing",
+  "action": {
+   "type": "drag"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action7/keys:missing",
+  "action": {
+   "type": "keypress"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:trail_space",
+  "action": {
+   "type": "move ",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/:legacy_view",
+  "action": {
+   "type": "move",
+   "view": "full",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:string",
+  "action": {
+   "type": "move",
+   "x": "1",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:negative",
+  "action": {
+   "type": "move",
+   "x": -1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/x:zero",
+  "action": {
+   "type": "move",
+   "x": 0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:string",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": "1"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/y:negative",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": -1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:zero",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": 0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:float_integral",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": 1.0
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:fraction",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": 1.5
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:bool",
+  "action": {
+   "type": "move",
+   "x": 1,
+   "y": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:float_integral",
+  "action": {
+   "type": "move",
+   "x": 1.0,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/x:fraction",
+  "action": {
+   "type": "move",
+   "x": 1.5,
+   "y": 1
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action2/y:missing",
+  "action": {
+   "type": "move",
+   "x": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:bool",
+  "action": {
+   "type": "move",
+   "x": true,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/x:missing",
+  "action": {
+   "type": "move",
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:alias_press",
+  "action": {
+   "type": "press",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action4/scroll_x:missing",
+  "action": {
+   "type": "scroll",
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action6/text:missing",
+  "action": {
+   "type": "type"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:trail_space",
+  "action": {
+   "type": "wait "
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/:legacy_view",
+  "action": {
+   "type": "wait",
+   "view": "full"
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8",
+  "action": {
+   "type": "wait"
+  },
+  "accepted": true
+ },
+ {
+  "origin": "action0/type:number",
+  "action": {
+   "type": 7,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:number",
+  "action": {
+   "type": 7
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:bool",
+  "action": {
+   "type": true,
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:bool",
+  "action": {
+   "type": true
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:object",
+  "action": {
+   "type": {
+    "value": "click"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action1/type:object",
+  "action": {
+   "type": {
+    "value": "double_click"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action2/type:object",
+  "action": {
+   "type": {
+    "value": "move"
+   },
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action8/type:object",
+  "action": {
+   "type": {
+    "value": "wait"
+   }
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/type:missing",
+  "action": {
+   "x": 1,
+   "y": 1
+  },
+  "accepted": false
+ },
+ {
+  "origin": "action0/:empty_object",
+  "action": {},
+  "accepted": false
+ }
+]

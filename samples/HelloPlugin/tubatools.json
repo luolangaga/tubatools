@@ -1,0 +1,9 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/HelloPlugin.dll",
+  "entryType": "HelloPlugin",
+  "name": "多功能插件示例",
+  "description": "自定义 XAML、配置、剪贴板、外观和导航示例",
+  "author": "YourName",
+  "icon": "assets/icon.svg"
+}

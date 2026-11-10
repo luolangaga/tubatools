@@ -1,0 +1,491 @@
+{
+  "focus": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "accessibility": {
+      "ok": false,
+      "error": "focus uncertain",
+      "failure": {
+        "code": "focus_verification_failed",
+        "phase": "emission",
+        "facts_complete": false
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "mutation_unknown": true,
+        "focus_preparation": "request_attempted_outcome_unknown"
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": false
+      }
+    }
+  },
+  "pointer": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "accessibility": {
+      "ok": false,
+      "error": "activation uncertain",
+      "failure": {
+        "code": "pointer_preparation_failed",
+        "phase": "emission",
+        "facts_complete": false
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "mutation_unknown": true,
+        "pointer_preparation": "activation_attempted_outcome_unknown"
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": false
+      }
+    }
+  },
+  "emission_overrides_preparation": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "accessibility": {
+      "ok": false,
+      "error": "post_action_observation_failed; input was emitted; the final effect is unknown.",
+      "failure": {
+        "code": "effect_unknown",
+        "phase": "post_action_observation",
+        "facts_complete": false,
+        "underlying_code": "pointer_preparation_failed"
+      },
+      "mutation": {
+        "input_events_emitted": true,
+        "partial_input_possible": true,
+        "desktop_state_mutated": true,
+        "mutation_unknown": true
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": true
+      }
+    }
+  },
+  "dispatch_unknown": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "accessibility": {
+      "ok": false,
+      "error": "action_dispatch_outcome_unknown; the provider cannot determine whether the action was emitted; verify current state and do not repeat the same request.",
+      "failure": {
+        "code": "effect_unknown",
+        "phase": "emission",
+        "facts_complete": false,
+        "underlying_code": "action_dispatch_outcome_unknown"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": true,
+        "mutation_unknown": true
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": false
+      }
+    }
+  },
+  "precondition": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "accessibility": {
+      "ok": false,
+      "error": "disabled",
+      "failure": {
+        "code": "target_not_enabled",
+        "phase": "precondition",
+        "facts_complete": true,
+        "subject": "element"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": false
+      }
+    }
+  },
+  "reset": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "resolve_and_act",
+    "provider_reset_required": true,
+    "accessibility": {
+      "ok": false,
+      "error": "unexpected failure",
+      "failure": {
+        "code": "provider_internal_error",
+        "phase": "execution",
+        "facts_complete": true
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      }
+    }
+  },
+  "window": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "window_action",
+    "window": {
+      "ok": false,
+      "error": "activation failed",
+      "failure": {
+        "code": "window_activation_failed",
+        "phase": "emission",
+        "facts_complete": true
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "action_evidence": {
+        "route": "input.send_input.keyboard",
+        "geometry_sampled": false,
+        "geometry_stable": true,
+        "window_focus_verified": false,
+        "target_focus_verified": false,
+        "point_owner_verified": false,
+        "enabled": true,
+        "editable": true,
+        "focus_verified": false,
+        "editable_verified": true,
+        "readback_sampled": false,
+        "readback_verified": false,
+        "input_emitted": false
+      }
+    }
+  },
+  "recovery": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "window_action",
+    "window": {
+      "ok": false,
+      "error": "post_action_observation_failed; input was emitted; the final effect is unknown.",
+      "failure": {
+        "code": "effect_unknown",
+        "phase": "post_action_observation",
+        "facts_complete": false,
+        "underlying_code": "post_action_observation_failed"
+      },
+      "mutation": {
+        "input_events_emitted": true,
+        "partial_input_possible": true,
+        "desktop_state_mutated": true,
+        "mutation_unknown": true
+      },
+      "recovery_context": {
+        "sourceAppStatus": "alive",
+        "sourceWindowStatus": "gone",
+        "inventoryComplete": true
+      }
+    }
+  },
+  "desktop": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "desktop_execute_batch",
+    "desktop": {
+      "ok": false,
+      "error": "post_action_observation_failed; input was emitted; the final effect is unknown.",
+      "failure": {
+        "code": "effect_unknown",
+        "phase": "post_action_observation",
+        "facts_complete": false,
+        "underlying_code": "native_input_failed"
+      },
+      "mutation": {
+        "input_events_emitted": true,
+        "partial_input_possible": true,
+        "desktop_state_mutated": true,
+        "mutation_unknown": true
+      },
+      "gui_result": {
+        "dispatched": 2,
+        "input_events_emitted": true,
+        "input_actions_dispatched": 1,
+        "window_commands_dispatched": 0,
+        "desktop_state_mutated": true,
+        "mutation_unknown": true,
+        "partial_input_possible": true,
+        "effect_unknown": true,
+        "quiescent": false
+      }
+    }
+  },
+  "desktop_stale": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "desktop_execute_batch",
+    "desktop": {
+      "ok": false,
+      "error": "layout changed",
+      "failure": {
+        "code": "stale_layout",
+        "phase": "precondition",
+        "facts_complete": true
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "gui_result": {
+        "dispatched": 0,
+        "input_events_emitted": false,
+        "input_actions_dispatched": 0,
+        "window_commands_dispatched": 0,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false,
+        "partial_input_possible": false,
+        "effect_unknown": false,
+        "quiescent": true
+      },
+      "snapshot": {
+        "app": {
+          "name": "",
+          "pid": 0
+        },
+        "sampledAt": "2000-01-01T00:00:00.0000000\u002B00:00",
+        "screenshotPngBase64": "fixture-png",
+        "screenshotMimeType": "image/png",
+        "screenshotEncoding": "png",
+        "coordinateSpace": "screen_image_px",
+        "frameId": "fresh-fixture",
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  },
+  "observe_stale": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "observe",
+    "accessibility": {
+      "ok": false,
+      "error": "gone",
+      "failure": {
+        "code": "stale_window_ref",
+        "phase": "precondition",
+        "facts_complete": true,
+        "subject": "window"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "recovery_context": {
+        "sourceAppStatus": "alive",
+        "sourceWindowStatus": "gone",
+        "inventoryComplete": true
+      }
+    }
+  },
+  "observe_lifecycle_alive": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "observe",
+    "accessibility": {
+      "ok": false,
+      "error": "The exact window is unavailable for observation.",
+      "failure": {
+        "code": "stale_window_ref",
+        "phase": "precondition",
+        "facts_complete": true,
+        "subject": "window"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "recovery_context": {
+        "sourceAppStatus": "alive",
+        "sourceWindowStatus": "present",
+        "inventoryComplete": true
+      }
+    }
+  },
+  "observe_lifecycle_gone": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "observe",
+    "accessibility": {
+      "ok": false,
+      "error": "The exact window is unavailable for observation.",
+      "failure": {
+        "code": "stale_window_ref",
+        "phase": "precondition",
+        "facts_complete": true,
+        "subject": "window"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "recovery_context": {
+        "sourceAppStatus": "alive",
+        "sourceWindowStatus": "gone",
+        "inventoryComplete": true
+      }
+    }
+  },
+  "observe_lifecycle_unknown": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "observe",
+    "accessibility": {
+      "ok": false,
+      "error": "The exact window is unavailable for observation.",
+      "failure": {
+        "code": "stale_window_ref",
+        "phase": "precondition",
+        "facts_complete": false,
+        "subject": "window"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "recovery_context": {
+        "sourceAppStatus": "alive",
+        "sourceWindowStatus": "unknown",
+        "inventoryComplete": true
+      }
+    }
+  },
+  "ambiguous_app": {
+    "protocol": "computer-use-provider",
+    "schema_version": 2,
+    "request_id": "test-1",
+    "operation": "observe",
+    "accessibility": {
+      "ok": false,
+      "error": "two processes",
+      "failure": {
+        "code": "ax_app_ambiguous",
+        "phase": "precondition",
+        "facts_complete": true,
+        "subject": "app"
+      },
+      "mutation": {
+        "input_events_emitted": false,
+        "partial_input_possible": false,
+        "desktop_state_mutated": false,
+        "mutation_unknown": false
+      },
+      "candidates": [
+        {
+          "name": "explorer",
+          "providerBusName": "uia3:pid:6800",
+          "processGeneration": "1"
+        },
+        {
+          "name": "explorer",
+          "providerBusName": "uia3:pid:7300",
+          "processGeneration": "2"
+        }
+      ],
+      "candidate_count": 2
+    }
+  }
+}

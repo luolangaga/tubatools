@@ -9,20 +9,21 @@ public sealed partial class DashboardPage
     private bool? _lastNarrowLayout;
     private ItemsWrapGrid? _lastItemsPanel;
 
-    private void ToolsGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    private void DashboardViewport_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Keep the viewport and header in the same layout pass. Deferring these
-        // dimensions to a timer leaves stale bounds during native live resizing.
-        if (Math.Abs(e.NewSize.Width - e.PreviousSize.Width) >= 0.5)
+        if (e.NewSize.Width != e.PreviousSize.Width)
             UpdateCardLayout();
     }
 
     private void UpdateCardLayout()
     {
-        if (!_ready || ToolsGrid.ActualWidth <= 0) return;
-        double width = ToolsGrid.ActualWidth;
+        if (!_ready) return;
+        // Use the page's viewport so the grid's header and item sizes cannot feed
+        // back into the width used to calculate them.
+        double width = DashboardViewport.ActualWidth;
+        if (width <= 0) return;
         var itemsPanel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
-        if (Math.Abs(width - _lastLayoutWidth) < 0.5 && ReferenceEquals(itemsPanel, _lastItemsPanel)) return;
+        if (width == _lastLayoutWidth && ReferenceEquals(itemsPanel, _lastItemsPanel)) return;
         _lastLayoutWidth = width;
         _lastItemsPanel = itemsPanel;
         bool narrow = width < 720;

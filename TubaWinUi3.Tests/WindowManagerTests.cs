@@ -16,12 +16,14 @@ public class WindowManagerTests
     }
 
     [Fact]
-    public void ExternalWindowCanBeChangedHiddenAndRestored()
+    [Trait("Category", "DesktopIntegration")]
+    public async Task ExternalWindowCanBeChangedHiddenAndRestored()
     {
         string title = "TubaWindowManagerTest-" + Guid.NewGuid().ToString("N");
         string script = "Add-Type -AssemblyName System.Windows.Forms; " +
             "$f = New-Object System.Windows.Forms.Form; $f.Text = '" + title + "'; " +
             "$f.StartPosition = 'Manual'; $f.SetBounds(120,140,480,320); " +
+            "$f.Icon = [System.Drawing.SystemIcons]::Information; $f.Add_Shown({ $f.Text = '" + title + "-ready' }); " +
             "[System.Windows.Forms.Application]::Run($f)";
         using var process = Process.Start(new ProcessStartInfo("powershell.exe")
         {
@@ -31,13 +33,13 @@ public class WindowManagerTests
         try
         {
             nint hwnd = 0;
-            Assert.True(SpinWait.SpinUntil(() => (hwnd = FindWindow(null, title)) != 0, TimeSpan.FromSeconds(20)), "Test window did not start");
+            Assert.True(SpinWait.SpinUntil(() => (hwnd = FindWindow(null, title + "-ready")) != 0, TimeSpan.FromSeconds(20)), "Test window did not start");
             var original = WindowManagerService.Read(hwnd);
-            var icon = WindowIconService.LoadPngAsync(hwnd, original.Path).GetAwaiter().GetResult();
+            var icon = await WindowIconService.LoadPngAsync(hwnd, original.Path);
             Assert.NotNull(icon);
             Assert.Equal(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }, icon.Take(8).ToArray());
             // Reading an icon must not destroy the HICON owned by the other application.
-            Assert.Equal(icon, WindowIconService.LoadPngAsync(hwnd, original.Path).GetAwaiter().GetResult());
+            Assert.Equal(icon, await WindowIconService.LoadPngAsync(hwnd, original.Path));
             int style = GetWindowLong(hwnd, -16);
             Assert.Equal((uint)process.Id, original.ProcessId);
             Assert.Throws<InvalidOperationException>(() => WindowManagerService.Apply(original with { ProcessId = original.ProcessId + 1 }, "hide"));

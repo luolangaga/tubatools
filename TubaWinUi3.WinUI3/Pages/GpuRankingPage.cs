@@ -628,7 +628,11 @@ public sealed partial class GpuRankingPage : Page
 
     private async Task LoadLocalRankingAsync()
     {
-        try { _localHardwareNames = await Task.Run(HardwareInfoService.BuildGpuDeviceValues); }
+        try
+        {
+            await HardwareInfoService.LoadConfiguredCpuzAsync();
+            _localHardwareNames = await Task.Run(HardwareInfoService.GetDisplayGpuNames);
+        }
         catch { _localHardwareNames = []; }
         UpdateLocalRanking();
     }

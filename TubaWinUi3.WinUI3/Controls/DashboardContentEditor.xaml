@@ -58,7 +58,7 @@
                 </Grid>
             </Border>
         </Grid>
-        <ScrollViewer x:Name="SelectedScroll" AutomationProperties.AutomationId="DashboardSelectedPaneScroll" Grid.Column="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid x:Name="SelectedScroll" Grid.Column="1">
         <Grid x:Name="SelectedPane" RowSpacing="12">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Grid>
@@ -99,7 +99,8 @@
                     <TextBlock x:Name="EmptySelectionText" Text="尚未添加工具" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
                 </Grid>
             </Border>
-            <StackPanel Grid.Row="3" Spacing="10">
+            <ScrollViewer AutomationProperties.AutomationId="DashboardCardDetailsScroll" x:Name="DetailsScroll" Grid.Row="3" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="10">
                 <Grid ColumnSpacing="8">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <TextBlock x:Name="DetailsHeading" Text="编辑选中的卡片" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
@@ -110,8 +111,9 @@
                 <TextBox x:Name="CardDescriptionBox" Header="介绍" MaxLength="240" AcceptsReturn="True" TextWrapping="Wrap" Height="76"
                          TextChanged="CardText_TextChanged" AutomationProperties.AutomationId="DashboardCardDescription"/>
             </StackPanel>
+            </ScrollViewer>
         </Grid>
-        </ScrollViewer>
+        </Grid>
       </Grid>
     </Grid>
 </UserControl>

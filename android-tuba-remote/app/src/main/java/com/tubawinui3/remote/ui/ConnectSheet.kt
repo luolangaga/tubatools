@@ -85,7 +85,7 @@ fun AddPcSheet(vm: RemoteViewModel, initial: ConnectTarget?, onDismiss: () -> Un
             Text("或手动输入", style = MaterialTheme.typography.labelLarge)
             OutlinedTextField(
                 value = address, onValueChange = { address = it.trim() },
-                label = { Text("电脑 IP 地址（可带端口，默认 $DEFAULT_PORT）") },
+                label = { Text("电脑完整连接信息（含证书指纹），或扫码连接") },
                 singleLine = true, modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             )
@@ -100,7 +100,7 @@ fun AddPcSheet(vm: RemoteViewModel, initial: ConnectTarget?, onDismiss: () -> Un
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(
                     onClick = {
-                        val t: ConnectTarget? = ConnectLink.parse(address)
+                        val t: ConnectTarget? = ConnectLink.parse(address)?.let { it.copy(fingerprint = it.fingerprint ?: initial?.fingerprint) }
                         if (t == null) vm.scanError("请输入正确的 IP 地址") else vm.connect(t, code)
                     },
                     enabled = !vm.connecting,

@@ -24,11 +24,13 @@ public sealed class CameraFrameSource : IFrameSource
     public string DisplayName => "Camera";
     public (int Width, int Height) Size => (_w, _h);
 
-    /// <summary>初始化摄像头并开始取帧。失败抛异常（调用方提示用户检查设备/隐私权限）。</summary>
-    public async Task InitializeAsync()
+    /// <summary>
+    /// 初始化摄像头并开始取帧。失败抛异常（调用方提示用户检查设备/隐私权限）。
+    /// 不传 <paramref name="group"/> 时保持旧行为：取第一个可用摄像头。
+    /// </summary>
+    public async Task InitializeAsync(MediaFrameSourceGroup? group = null)
     {
-        var groups = await MediaFrameSourceGroup.FindAllAsync();
-        var group = groups.FirstOrDefault()
+        group ??= (await MediaFrameSourceGroup.FindAllAsync()).FirstOrDefault()
             ?? throw new InvalidOperationException("未找到摄像头设备。");
 
         _capture = new MediaCapture();

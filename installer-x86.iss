@@ -2,6 +2,8 @@
 #define MyAppVersion "1.0.2"
 #define MyAppPublisher "罗澜嘎嘎"
 #define MyAppExeName "TubaWinUi3.exe"
+#define MyTuiExeName "图吧工具箱TUI兼容版.exe"
+#define MyTuiIconName "AppIconTui.ico"
 #define MyAppCopyright "Copyright (C) 2025 罗澜嘎嘎"
 
 [Setup]
@@ -34,7 +36,7 @@ UpdateUninstallLogAppName=yes
 UsePreviousAppDir=yes
 UsePreviousGroup=yes
 UsePreviousSetupType=yes
-UsePreviousTasks=yes
+UsePreviousTasks=no
 DisableDirPage=no
 DirExistsWarning=no
 AppendDefaultDirName=yes
@@ -66,13 +68,15 @@ SelectLanguageTitle=选择安装语言
 SelectLanguageLabel=选择安装过程中使用的语言：
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "publish_x86_installer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "TubaWinUi3.Tui\Assets\{#MyTuiIconName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName} TUI 兼容版"; Filename: "{app}\{#MyTuiExeName}"; IconFilename: "{app}\{#MyTuiIconName}"; Check: TuiShortcutAvailable
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
@@ -84,6 +88,11 @@ Type: dirifempty; Name: "{app}"
 
 [Code]
 #include "installer-user-tools.iss"
+function TuiShortcutAvailable: Boolean;
+begin
+  Result := FileExists(ExpandConstant('{app}\{#MyTuiExeName}'));
+end;
+
 var
   CustomPrevPath: String;
 

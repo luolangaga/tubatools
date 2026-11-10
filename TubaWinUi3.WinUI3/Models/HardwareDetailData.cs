@@ -1,6 +1,6 @@
 namespace TubaWinUi3.Models;
 
-public sealed class HardwareDetailData
+public sealed record HardwareDetailData
 {
     /// <summary>Windows 系统信息（版本、授权、DirectX、.NET、缩放、运行时间等）。</summary>
     public WindowsDetail? Windows { get; init; }
@@ -80,7 +80,7 @@ public sealed class ComputerDetail
     public string? FirmwareMode { get; set; }
 }
 
-public sealed class CpuDetail
+public sealed record CpuDetail
 {
     public string? Name { get; set; }
     public string? CodeName { get; set; }
@@ -106,7 +106,7 @@ public sealed class CpuDetail
     public bool IsVerified { get; set; }
 }
 
-public sealed class MotherboardDetail
+public sealed record MotherboardDetail
 {
     public string? Manufacturer { get; set; }
     public string? Model { get; set; }
@@ -122,7 +122,7 @@ public sealed class MotherboardDetail
     public bool IsVerified { get; set; }
 }
 
-public sealed class MemoryDetail
+public sealed record MemoryDetail
 {
     public string? TotalCapacity { get; set; }
     public string? MemoryType { get; set; }
@@ -139,7 +139,7 @@ public sealed class MemoryDetail
     public List<MemoryModuleDetail> Modules { get; init; } = [];
 }
 
-public sealed class MemoryModuleDetail
+public sealed record MemoryModuleDetail
 {
     public string? Designation { get; set; }
     public string? Capacity { get; set; }
@@ -155,7 +155,7 @@ public sealed class MemoryModuleDetail
     public string? FormFactor { get; set; }
 }
 
-public sealed class GpuDetail
+public sealed record GpuDetail
 {
     public string? Name { get; set; }
     public string? GpuCode { get; set; }

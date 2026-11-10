@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using TubaWinUi3.Storage;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -25,6 +26,18 @@ public static class ConfigManager
     private static readonly string AppRootDir = Path.Combine(
         ToolCatalog.AppDirectory, "Data");
 
+    internal static string? LocationMarkerOverride;
+    private static string LocationMarkerPath => LocationMarkerOverride ?? ConfigLocationMarker.GetPath(
+        RuntimeHelper.GetLocalAppDataRoot(), RuntimeHelper.IsPackagedContext ? Path.Combine(
+            RuntimeHelper.GetLocalAppDataRoot(), "TubaWinUi3.Msix") : ToolCatalog.AppDirectory);
+    private static string ReadLocationMarker()
+    {
+        if (File.Exists(LocationMarkerPath)) return File.ReadAllText(LocationMarkerPath).Trim();
+        // Legacy portable marker is read-only fallback; new selections always override it.
+        var legacy = Path.Combine(AppRootDir, CustomLocationFile);
+        return File.Exists(legacy) ? File.ReadAllText(legacy).Trim() : "AppData";
+    }
+
     private const string CustomLocationFile = ".config_location";
     private const string CustomPathPrefix = "Custom:";
 
@@ -46,6 +59,11 @@ public static class ConfigManager
         }
     }
 
+    internal static void ResetLocationCache()
+    {
+        lock (_lock) { _cachedDataDir = null; _cachedLocation = null; }
+    }
+
     public static ConfigLocation GetConfigLocation()
     {
         lock (_lock)
@@ -54,10 +72,9 @@ public static class ConfigManager
 
             try
             {
-                var markerPath = Path.Combine(AppRootDir, CustomLocationFile);
-                if (File.Exists(markerPath))
+                var content = ReadLocationMarker();
+                if (content.Length > 0)
                 {
-                    var content = File.ReadAllText(markerPath).Trim();
                     if (content.StartsWith(CustomPathPrefix, StringComparison.OrdinalIgnoreCase))
                     {
                         _cachedLocation = ConfigLocation.Custom;
@@ -81,10 +98,9 @@ public static class ConfigManager
     {
         try
         {
-            var markerPath = Path.Combine(AppRootDir, CustomLocationFile);
-            if (File.Exists(markerPath))
+            var content = ReadLocationMarker();
+            if (content.Length > 0)
             {
-                var content = File.ReadAllText(markerPath).Trim();
                 if (content.StartsWith(CustomPathPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     return content[CustomPathPrefix.Length..];
@@ -108,28 +124,18 @@ public static class ConfigManager
     {
         try
         {
-            Directory.CreateDirectory(AppRootDir);
-            var markerPath = Path.Combine(AppRootDir, CustomLocationFile);
-
-            if (location == ConfigLocation.Custom)
-            {
-                if (string.IsNullOrWhiteSpace(customPath)) return false;
-                File.WriteAllText(markerPath, CustomPathPrefix + customPath.Trim());
-            }
-            else if (location == ConfigLocation.AppRoot)
-            {
-                File.WriteAllText(markerPath, "AppRoot");
-            }
-            else
-            {
-                if (File.Exists(markerPath)) File.Delete(markerPath);
-            }
+            AppSettings.Flush();
+            var markerPath = LocationMarkerPath;
+            if (location == ConfigLocation.Custom && string.IsNullOrWhiteSpace(customPath)) return false;
+            var value = location == ConfigLocation.Custom ? CustomPathPrefix + customPath!.Trim() : location.ToString();
+            AtomicFile.WriteText(markerPath, value);
 
             lock (_lock)
             {
                 _cachedDataDir = null;
                 _cachedLocation = null;
             }
+            AppSettings.InvalidateCache();
             return true;
         }
         catch
@@ -171,6 +177,7 @@ public static class ConfigManager
 
     public static bool MigrateData(ConfigLocation targetLocation, bool migrate, string? customPath = null)
     {
+        AppSettings.Flush();
         _ = ToolMetadataService.GetUserTools(); // 迁移旧混合元数据后再搬数据目录。
         var sourceDir = GetDataDir();
         var oldDataDir = sourceDir;
@@ -222,7 +229,7 @@ public static class ConfigManager
             if (migrate)
             {
                 RewritePathsInDataDir(targetDir, oldDataDir);
-                try { Directory.Delete(sourceDir, true); } catch { }
+                // Keep the source as a recovery copy; custom directories can contain unrelated files.
             }
             InvalidateAllCaches();
 
@@ -321,6 +328,7 @@ public static class ConfigManager
     {
         try
         {
+            AppSettings.Flush();
             _ = ToolMetadataService.GetUserTools();
             var dataDir = GetDataDir();
             if (!Directory.Exists(dataDir)) return false;
@@ -338,23 +346,29 @@ public static class ConfigManager
                 foreach (var file in Directory.EnumerateFiles(dataDir))
                 {
                     var name = Path.GetFileName(file);
-                    if (name.Equals("user-tools.json", StringComparison.OrdinalIgnoreCase) || excludeFiles.Contains(name) || Path.GetFullPath(file).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase)) continue;
-                    if (name is "favorites.json" or "launch_history.json" or "settings.json")
+                    if (ConfigBackupPolicy.Exclude(name) || name.Equals("user-tools.json", StringComparison.OrdinalIgnoreCase) || excludeFiles.Contains(name) || Path.GetFullPath(file).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase)) continue;
+                    if (Path.GetExtension(name).Equals(".json", StringComparison.OrdinalIgnoreCase))
                     {
                         using var writer = new StreamWriter(zip.CreateEntry(name).Open());
-                        writer.Write(UserToolLibrary.RewriteExportReferences(File.ReadAllText(file), userSnapshot.Directories));
+                        writer.Write(UserToolLibrary.RewriteExportReferences(ConfigBackupPolicy.Sanitize(File.ReadAllText(file)), userSnapshot.Directories));
                     }
                     else zip.CreateEntryFromFile(file, name, CompressionLevel.Optimal);
                 }
                 foreach (var dir in Directory.EnumerateDirectories(dataDir))
                 {
                     var dirName = Path.GetFileName(dir);
-                    if (excludeDirs.Contains(dirName)) continue;
+                    if (excludeDirs.Contains(dirName) || ConfigBackupPolicy.Exclude(dirName)) continue;
                     foreach (var file in Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories))
                     {
                         if (Path.GetFullPath(file).Equals(Path.GetFullPath(outputPath), StringComparison.OrdinalIgnoreCase)) continue;
                         var relative = file.Substring(dataDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                        zip.CreateEntryFromFile(file, relative, CompressionLevel.Optimal);
+                        if (ConfigBackupPolicy.Exclude(relative)) continue;
+                        if (Path.GetExtension(file).Equals(".json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            using var writer = new StreamWriter(zip.CreateEntry(relative).Open());
+                            writer.Write(ConfigBackupPolicy.Sanitize(File.ReadAllText(file)));
+                        }
+                        else zip.CreateEntryFromFile(file, relative, CompressionLevel.Optimal);
                     }
                 }
                 foreach (var (entry, source) in userSnapshot.Files)
@@ -376,26 +390,9 @@ public static class ConfigManager
     {
         try
         {
+            AppSettings.Flush();
             var dataDir = GetDataDir();
-            Directory.CreateDirectory(dataDir);
-
-            await Task.Run(() =>
-            {
-                using var archive = ZipFile.OpenRead(zipPath);
-                foreach (var entry in archive.Entries)
-                {
-                    var destPath = Path.GetFullPath(Path.Combine(dataDir, entry.FullName));
-                    if (!UserToolLibrary.IsWithin(destPath, dataDir)) throw new IOException("配置备份中包含无效路径。");
-                    if (string.IsNullOrEmpty(entry.Name))
-                    {
-                        Directory.CreateDirectory(destPath);
-                        continue;
-                    }
-                    Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
-                    try { if (File.Exists(destPath)) File.Delete(destPath); } catch { }
-                    entry.ExtractToFile(destPath);
-                }
-            });
+            await Task.Run(() => ConfigImportTransaction.Import(zipPath, dataDir));
 
             InvalidateAllCaches();
             return true;

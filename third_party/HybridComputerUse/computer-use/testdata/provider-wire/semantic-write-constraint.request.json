@@ -1,0 +1,20 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-semantic-write-constraint",
+  "operation": "resolve_and_act",
+  "action": {
+    "protocol_version": 2,
+    "intent": "set_value",
+    "app": "Editor",
+    "target": {
+      "selector": "textbox \"Document\"",
+      "windowHandle": "w2:fixture",
+      "role": "textbox",
+      "name": "Document",
+      "hasName": true
+    },
+    "input": {"value": "replacement"},
+    "observation": {"include_screenshot": false}
+  }
+}

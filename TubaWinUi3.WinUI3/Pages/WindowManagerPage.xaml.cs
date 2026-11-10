@@ -11,6 +11,7 @@ namespace TubaWinUi3.Pages;
 public sealed partial class WindowManagerPage : Page
 {
     private WindowManagerService.WindowInfo? _selected;
+    private WindowControlInspector? _controlInspector;
     private readonly DispatcherTimer _pickerTimer = new() { Interval = TimeSpan.FromMilliseconds(60) };
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private nint _candidate;
@@ -51,10 +52,14 @@ public sealed partial class WindowManagerPage : Page
     {
         try
         {
-            _selected = WindowManagerService.Read(h);
+            var next = WindowManagerService.Read(h);
+            if (_selected is null || _selected.Handle != next.Handle || _selected.ProcessId != next.ProcessId ||
+                _selected.ThreadId != next.ThreadId || _selected.ClassName != next.ClassName)
+                _controlInspector?.Close();
+            _selected = next;
             Details.Text = _selected.Details;
             _ = UpdateSelectedIconAsync(_selected);
-            Actions.IsEnabled = CopyButton.IsEnabled = true;
+            Actions.IsEnabled = CopyButton.IsEnabled = InspectButton.IsEnabled = true;
             TopmostButton.Content = _selected.Topmost ? "取消置顶" : "置顶";
             StatusBar.IsOpen = false;
             RefreshList();
@@ -76,9 +81,10 @@ public sealed partial class WindowManagerPage : Page
         catch (Exception ex)
         {
             _selected = null;
+            _controlInspector?.Close();
             SelectedIcon.Source = null;
             SelectedIconHost.Visibility = Visibility.Collapsed;
-            Actions.IsEnabled = CopyButton.IsEnabled = false;
+            Actions.IsEnabled = CopyButton.IsEnabled = InspectButton.IsEnabled = false;
             Details.Text = "窗口已不可用，请重新选择。";
             Report(ex.Message, InfoBarSeverity.Warning);
         }
@@ -191,9 +197,29 @@ public sealed partial class WindowManagerPage : Page
     {
         RefreshSelected();
         if (_selected is null) return;
-        try { var data = new DataPackage(); data.SetText(_selected.Details); Clipboard.SetContent(data); Report("窗口信息已复制。", InfoBarSeverity.Success); }
+        try { var copied = ClipboardService.TrySetText(_selected.Details); Report(copied.Success ? "窗口信息已复制。" : "复制失败，请稍后重试。", copied.Success ? InfoBarSeverity.Success : InfoBarSeverity.Error); }
         catch (Exception ex) { Report(ex.Message, InfoBarSeverity.Error); }
     }
     private void Report(string message, InfoBarSeverity severity) { StatusBar.Message = message; StatusBar.Severity = severity; StatusBar.IsOpen = true; }
-    private void Page_Unloaded(object sender, RoutedEventArgs e) { StopPicking(); _refreshTimer.Stop(); }
+    private void Inspect_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshSelected();
+        if (_selected is not { } target) return;
+        if (_controlInspector is { } inspector)
+        {
+            inspector.Activate();
+            return;
+        }
+
+        _controlInspector = new WindowControlInspector(target);
+        _controlInspector.Closed += (_, _) => _controlInspector = null;
+        _controlInspector.Open();
+    }
+
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        StopPicking();
+        _refreshTimer.Stop();
+        _controlInspector?.Close();
+    }
 }

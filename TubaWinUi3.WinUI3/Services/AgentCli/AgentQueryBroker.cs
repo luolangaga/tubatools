@@ -29,7 +29,7 @@ internal static class AgentQueryBroker
         using var identity = WindowsIdentity.GetCurrent();
         return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
     }
-    internal static bool IsReadOnlyCommand(string command) => command is "hardware" or "sensors" or "disks" or "cpuz";
+    internal static bool IsReadOnlyCommand(string command) => command == "hardware";
     private static string PipeName
     {
         get
@@ -88,7 +88,7 @@ internal static class AgentQueryBroker
                 using var writer = new StreamWriter(pipe, new UTF8Encoding(false), 4096, leaveOpen: true) { AutoFlush = true };
                 try
                 {
-                    // Fixed four commands, read into a bounded buffer. No caller-supplied output file is opened as admin.
+                    // The single hardware query, read into a bounded buffer. No caller-supplied output file is opened as admin.
                     var chars = new char[16];
                     int length = 0;
                     while (length < chars.Length)
@@ -98,7 +98,7 @@ internal static class AgentQueryBroker
                         length++;
                     }
                     var command = new string(chars, 0, length).TrimEnd('\r');
-                    if (!IsReadOnlyCommand(command)) throw new ArgumentException("管理员查询通道只支持 hardware、sensors、disks、cpuz。");
+                    if (!IsReadOnlyCommand(command)) throw new ArgumentException("管理员查询通道只支持 hardware。");
                     var data = await AgentCliService.QueryLocalAsync(command, disposeSensors: false).WaitAsync(deadline.Token);
                     await writer.WriteLineAsync(JsonSerializer.Serialize(new { ok = true, data }, AgentCliService.Json).AsMemory(), deadline.Token);
                 }
@@ -110,7 +110,6 @@ internal static class AgentQueryBroker
             }
         }
         catch (IOException) { /* Another elevated instance already owns this user's query endpoint. */ }
-        finally { if (standalone) LiteMonitorService.Instance.Dispose(); }
     }
 
     internal static async Task<JsonElement> QueryAsync(string command)

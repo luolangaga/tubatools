@@ -1,0 +1,48 @@
+<Window x:Class="TubaWinUi3.Pages.WindowControlInspector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid x:Name="Layout" Padding="16" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="控件树" Style="{ThemeResource TitleTextBlockStyle}"/>
+            <TextBlock x:Name="TargetLabel" TextTrimming="CharacterEllipsis"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+        <Grid Grid.Row="1" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="RefreshButton" Content="刷新控件树" Click="Refresh_Click"
+                    AutomationProperties.AutomationId="RefreshControlTree"/>
+            <CheckBox x:Name="ShowAll" Grid.Column="1" Content="显示全部边框" IsChecked="True"
+                      Checked="ShowAll_Changed" Unchecked="ShowAll_Changed"
+                      AutomationProperties.AutomationId="ShowAllControlOutlines"/>
+        </Grid>
+        <TextBlock x:Name="Status" Grid.Row="2" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"
+                   AutomationProperties.AutomationId="ControlTreeStatus"
+                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+
+        <Border Grid.Row="3" CornerRadius="8" Padding="4"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            <TreeView x:Name="ControlsTree" SelectionMode="Single" SelectionChanged="ControlsTree_SelectionChanged"
+                      CanDragItems="False" CanReorderItems="False"
+                      AutomationProperties.Name="目标窗口的控件层级"
+                      AutomationProperties.AutomationId="InspectedControlTree"/>
+        </Border>
+
+        <ScrollViewer Grid.Row="4" MaxHeight="132" HorizontalScrollBarVisibility="Disabled">
+            <TextBlock x:Name="ControlDetails" IsTextSelectionEnabled="True" TextWrapping="Wrap"
+                       AutomationProperties.AutomationId="InspectedControlDetails"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </ScrollViewer>
+    </Grid>
+</Window>

@@ -1,0 +1,28 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-text",
+  "operation": "desktop_execute_batch",
+  "desktop": {
+    "ok": false,
+    "gui_result": {},
+    "error": "Text message completion is unknown; observe before replaying.",
+    "failure": {"code": "desktop_input_failed", "phase": "emission"},
+    "mutation": {"partial_input_possible": true, "mutation_unknown": true},
+    "action_evidence": {
+      "route": "input.window_messages",
+      "geometry_sampled": false,
+      "readback_sampled": false,
+      "input_emitted": false,
+      "source_utf16_index": 0,
+      "source_utf16_count": 1,
+      "source_utf16_length": 3,
+      "attempted_messages": 1,
+      "returned_messages": 0,
+      "unknown_message_index": 0,
+      "message": 258,
+      "sequence_phase": "character",
+      "effect_verified": false
+    }
+  }
+}

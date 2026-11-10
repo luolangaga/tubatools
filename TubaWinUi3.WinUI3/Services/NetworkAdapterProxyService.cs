@@ -495,6 +495,7 @@ public static class NetworkAdapterProxyService
                     ProcessName = GetName(pid),
                     ProcessId = pid,
                     LocalAddress = localAddr.ToString(),
+                    LocalPort = localPort,
                     RemoteAddress = remoteAddr.ToString(),
                     RemotePort = remotePort,
                     AdapterName = adapter?.Name ?? "未知",
@@ -544,17 +545,6 @@ public static class NetworkAdapterProxyService
     }
 
     #endregion
-}
-
-public sealed class ConnectionEntry
-{
-    public string ProcessName { get; init; } = "";
-    public int ProcessId { get; init; }
-    public string LocalAddress { get; init; } = "";
-    public string RemoteAddress { get; init; } = "";
-    public int RemotePort { get; init; }
-    public string AdapterName { get; init; } = "";
-    public string AdapterType { get; init; } = "";
 }
 
 [StructLayout(LayoutKind.Sequential)]

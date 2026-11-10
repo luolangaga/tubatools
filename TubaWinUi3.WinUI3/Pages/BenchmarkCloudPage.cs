@@ -1430,6 +1430,15 @@ public sealed partial class BenchmarkCloudPage : Page
 			Text = "GPU: " + report.GpuName,
 			Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
 		});
+		if (!string.IsNullOrWhiteSpace(report.GpuInfo))
+		{
+			stackPanel.Children.Add(new TextBlock
+			{
+				Text = "显卡清单: " + report.GpuInfo,
+				TextWrapping = TextWrapping.Wrap,
+				Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
+			});
+		}
 		stackPanel.Children.Add(new TextBlock
 		{
 			Text = "主板: " + report.MotherboardName,

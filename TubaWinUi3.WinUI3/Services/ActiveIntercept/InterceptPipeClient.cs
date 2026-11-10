@@ -159,7 +159,7 @@ public sealed class InterceptPipeClient : IDisposable
         try
         {
             using var stream = new NamedPipeClientStream(".", InterceptPipeConstants.PipeName,
-                PipeDirection.InOut, PipeOptions.Asynchronous);
+                PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification);
             await stream.ConnectAsync(2000, cancellationToken);
             stream.ReadMode = PipeTransmissionMode.Byte;
 
@@ -244,7 +244,7 @@ public sealed class InterceptPipeClient : IDisposable
             try
             {
                 using var stream = new NamedPipeClientStream(".", InterceptPipeConstants.PipeName,
-                    PipeDirection.InOut, PipeOptions.Asynchronous);
+                    PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification);
                 await stream.ConnectAsync(InterceptPipeConstants.ConnectTimeoutMs, cancellationToken);
                 stream.ReadMode = PipeTransmissionMode.Byte;
 

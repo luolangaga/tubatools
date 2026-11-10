@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using Microsoft.UI.Dispatching;
@@ -26,7 +26,8 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 {
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcher =
         Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _refreshTimer;
+    // 1 秒计时器只在有模型下载进行时运行：仅刷新百分比，不做文件探测。
+    private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _downloadTimer;
     private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _chatFlushTimer;
 
     private readonly List<AiModelEntry> _entries = [];
@@ -34,6 +35,14 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
     private readonly List<AiEpDeviceInfo> _deviceOptions = [];
     private readonly List<LibraryCardRefs> _cardRefs = [];
     private readonly Dictionary<string, bool> _cardReadyCache = new();
+    // 模型状态缓存：文件存在性/目录体积只在后台线程计算一次，UI 线程只读缓存。
+    private readonly Dictionary<string, AiModelStatus> _statusCache = new(StringComparer.OrdinalIgnoreCase);
+    private bool _statusRefreshRunning;
+    private bool _statusRefreshPending;
+    private int _statusVersion;
+    private int _entriesVersion;
+    private int _footerVersion;
+    private bool _languageSubscribed;
 
     private AiModelEntry? _current;
     private AiEpDeviceInfo? _selectedDevice;
@@ -93,9 +102,9 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
     {
         InitializeComponent();
 
-        _refreshTimer = _dispatcher.CreateTimer();
-        _refreshTimer.Interval = TimeSpan.FromMilliseconds(700);
-        _refreshTimer.Tick += (_, _) => SafeUiTick(UpdateDynamicStates);
+        _downloadTimer = _dispatcher.CreateTimer();
+        _downloadTimer.Interval = TimeSpan.FromSeconds(1);
+        _downloadTimer.Tick += (_, _) => SafeUiTick(UpdateDownloadProgress);
 
         _chatFlushTimer = _dispatcher.CreateTimer();
         _chatFlushTimer.Interval = TimeSpan.FromMilliseconds(60);
@@ -104,7 +113,6 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         ApplyStaticTexts();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-        LocalizationService.LanguageChanged += OnLanguageChanged;
         ActualThemeChanged += (_, _) =>
         {
             // 代码构建的画刷不会随主题切换自动刷新（与 FormatConverterPage 的做法一致）
@@ -149,12 +157,13 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
             DownloadQueueService.QueueChanged += OnQueueChanged;
             ImageStageInner.SizeChanged += (_, _) => RedrawOverlay();
         }
+        SubscribeLanguageChange();
         RefreshEntries();
         PopulateModeCombo();
         PopulateDeviceCombo();
         _ = RefreshEnginePaneAsync();
         _ = UpdateDeviceChipsAsync();
-        _refreshTimer.Start();
+        UpdateDownloadProgress();
 
         // 恢复用户自定义的上下文上限（0 = 自动）
         if (int.TryParse(AppSettings.Get("AiPlayground_ContextTokens"), out var ctx) && ctx > 0)
@@ -167,20 +176,45 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        DetachSubscriptions();
+        StopLive();
+        _downloadTimer.Stop();
+        _chatFlushTimer.Stop();
+        // 丢弃仍在后台跑的状态统计，避免回填到已卸载的页面。
+        _statusVersion++;
+        _entriesVersion++;
+        _footerVersion++;
+        CancelChat();
+        DisposeRunners();
+    }
+
+    /// <summary>退订所有静态/全局事件（Unloaded 与窗口销毁两条路径共用，幂等）。</summary>
+    private void DetachSubscriptions()
+    {
         if (_subscribed)
         {
             _subscribed = false;
             Win32DropHelper.FilesDropped -= OnFilesDropped;
             DownloadQueueService.QueueChanged -= OnQueueChanged;
         }
-        StopLive();
-        _refreshTimer.Stop();
-        _chatFlushTimer.Stop();
-        CancelChat();
-        DisposeRunners();
+        UnsubscribeLanguageChange();
     }
 
     private void OnLanguageChanged() => SafeUiTick(ApplyStaticTexts);
+
+    private void SubscribeLanguageChange()
+    {
+        if (_languageSubscribed) return;
+        _languageSubscribed = true;
+        LocalizationService.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void UnsubscribeLanguageChange()
+    {
+        if (!_languageSubscribed) return;
+        _languageSubscribed = false;
+        LocalizationService.LanguageChanged -= OnLanguageChanged;
+    }
 
     /// <summary>
     /// 独立窗口关闭时的显式清理（窗口销毁时 Frame 不保证触发 Unloaded/OnNavigatedFrom）：
@@ -188,9 +222,13 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
     /// </summary>
     public void CleanupOnWindowClose()
     {
+        DetachSubscriptions();
         StopLive();
-        _refreshTimer.Stop();
+        _downloadTimer.Stop();
         _chatFlushTimer.Stop();
+        _statusVersion++;
+        _entriesVersion++;
+        _footerVersion++;
         CancelChat();
         DisposeRunners();
     }
@@ -367,11 +405,12 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         string? npuTops = null;
         string cpuName = "";
         var gpuNames = new List<string>();
+        await HardwareInfoService.LoadConfiguredCpuzAsync();
         await Task.Run(() =>
         {
-            npuName = AiRuntimeService.DetectNpuName() ?? "";
-            cpuName = AiRuntimeService.DetectCpuName() ?? "";
-            gpuNames = AiRuntimeService.DetectGpuNames().ToList();
+            npuName = HardwareInfoService.DetectNpuName() ?? "";
+            cpuName = HardwareInfoService.GetCpuName() ?? "";
+            gpuNames = HardwareInfoService.GetDisplayGpuNames().ToList();
             npuTops = Services.NpuCatalog.LookupTops(npuName, cpuName);
         });
 
@@ -400,21 +439,118 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     // ── 模型库 ──────────────────────────────────────────────────────
 
-    private void RefreshEntries()
+    /// <summary>重新读取模型条目；文件状态在后台线程算好后一次性回填。</summary>
+    private void RefreshEntries() => _ = RefreshEntriesAsync();
+
+    private async Task RefreshEntriesAsync()
     {
+        var version = ++_entriesVersion;
+        IReadOnlyList<AiModelEntry> entries;
+        Dictionary<string, AiModelStatus> statuses;
+        try
+        {
+            (entries, statuses) = await Task.Run(() =>
+            {
+                var loaded = AiModelLibrary.GetAllEntries();
+                var map = new Dictionary<string, AiModelStatus>(StringComparer.OrdinalIgnoreCase);
+                foreach (var entry in loaded) map[entry.Id] = AiModelLibrary.GetStatus(entry);
+                return (loaded, map);
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AiPlayground] 模型库刷新失败: {ex.Message}");
+            return;
+        }
+        if (version != _entriesVersion) return;
+
         _entries.Clear();
-        _entries.AddRange(AiModelLibrary.GetAllEntries());
+        _entries.AddRange(entries);
+        _statusVersion++; // 让按旧条目计算的状态统计失效
+        _statusCache.Clear();
+        _cardReadyCache.Clear();
+        foreach (var pair in statuses)
+        {
+            _statusCache[pair.Key] = pair.Value;
+            _cardReadyCache[pair.Key] = pair.Value.AllReady;
+        }
+
         RenderLibrary();
         RefreshModelCombo();
+        UpdateDynamicStates();
         UpdateLibraryFooter();
     }
 
-    private void UpdateLibraryFooter()
+    /// <summary>
+    /// 队列变化后重算模型状态（后台线程）；同时刷新进度文案、必要时启动 1 秒进度计时器。
+    /// </summary>
+    private void OnQueueChanged() => _dispatcher.TryEnqueue(() =>
     {
-        var total = AiModelLibrary.GetTotalSize();
-        LibraryFooter.Text = string.Format(
+        SafeUiTick(UpdateDownloadProgress);
+        QueueStatusRefresh();
+    });
+
+    private void QueueStatusRefresh()
+    {
+        _dispatcher.TryEnqueue(() =>
+        {
+            if (_statusRefreshRunning)
+            {
+                _statusRefreshPending = true;
+                return;
+            }
+            _statusRefreshRunning = true;
+            _ = RefreshStatusesAsync();
+        });
+    }
+
+    private async Task RefreshStatusesAsync()
+    {
+        try
+        {
+            // 初始条目还没加载时不做无意义的空统计（否则会清空状态缓存）。
+            if (_entries.Count == 0) return;
+            var version = ++_statusVersion;
+            var entries = _entries.ToArray();
+            var statuses = await Task.Run(() =>
+            {
+                var map = new Dictionary<string, AiModelStatus>(StringComparer.OrdinalIgnoreCase);
+                foreach (var entry in entries) map[entry.Id] = AiModelLibrary.GetStatus(entry);
+                return map;
+            });
+            if (version != _statusVersion) return;
+
+            _statusCache.Clear();
+            foreach (var pair in statuses) _statusCache[pair.Key] = pair.Value;
+            SafeUiTick(UpdateDynamicStates);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AiPlayground] 模型状态刷新失败: {ex.Message}");
+        }
+        finally
+        {
+            _statusRefreshRunning = false;
+            if (_statusRefreshPending)
+            {
+                _statusRefreshPending = false;
+                QueueStatusRefresh();
+            }
+        }
+    }
+
+    private void UpdateLibraryFooter() => _ = UpdateLibraryFooterAsync();
+
+    private async Task UpdateLibraryFooterAsync()
+    {
+        var version = ++_footerVersion;
+        long total;
+        try { total = await Task.Run(AiModelLibrary.GetTotalSize); }
+        catch { return; }
+        if (version != _footerVersion) return;
+        SafeUiTick(() => LibraryFooter.Text = string.Format(
             L("AiPlayground_LibraryFooter", "模型库占用 {0} · 模型存放于 {1}"),
-            DownloadQueueService.FormatSize(total), AiModelLibrary.ModelsRoot);
+            DownloadQueueService.FormatSize(total), AiModelLibrary.ModelsRoot));
     }
 
     private bool MatchesFilter(AiModelEntry entry)
@@ -429,7 +565,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
             "classification" => entry.Task == AiTaskKind.ImageClassification,
             "detection" => entry.Task == AiTaskKind.ObjectDetection,
             "embedding" => entry.Task == AiTaskKind.ImageEmbedding,
-            "ready" => AiModelLibrary.GetStatus(entry).AllReady,
+            "ready" => _statusCache.TryGetValue(entry.Id, out var status) && status.AllReady,
             _ => true,
         };
     }
@@ -444,7 +580,8 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
     private FrameworkElement BuildLibraryCard(AiModelEntry entry)
     {
-        var status = AiModelLibrary.GetStatus(entry);
+        var known = _statusCache.TryGetValue(entry.Id, out var status);
+        status ??= new AiModelStatus();
 
         var card = new Border
         {
@@ -484,7 +621,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
 
         var statusText = new TextBlock
         {
-            Text = status.Describe(),
+            Text = known ? status.Describe() : "检查中…",
             Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
             Foreground = Res("TextFillColorSecondaryBrush", Microsoft.UI.Colors.Gray),
         };
@@ -500,7 +637,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var downloadButton = new Button { Content = status.AnyPresent ? L("AiPlayground_ContinueDownload", "继续下载") : L("AiPlayground_Download", "下载") };
+        var downloadButton = new Button { Content = status.AnyPresent ? L("AiPlayground_ContinueDownload", "继续下载") : L("AiPlayground_Download", "下载"), IsEnabled = known };
         downloadButton.Visibility = entry.Preset is null ? Visibility.Collapsed : Visibility.Visible;
         downloadButton.Click += async (_, _) => await DownloadEntryAsync(entry);
         right.Children.Add(downloadButton);
@@ -513,8 +650,8 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         };
         right.Children.Add(openButton);
 
-        var deleteButton = new Button { Content = entry.IsCustom ? L("AiPlayground_Remove", "移除") : L("AiPlayground_Delete", "删除") };
-        deleteButton.Visibility = status.AnyPresent ? Visibility.Visible : Visibility.Collapsed;
+        var deleteButton = new Button { Content = entry.IsCustom ? L("AiPlayground_Remove", "移除") : L("AiPlayground_Delete", "删除"), IsEnabled = known };
+        deleteButton.Visibility = known && status.AnyPresent ? Visibility.Visible : Visibility.Collapsed;
         deleteButton.Click += async (_, _) => await DeleteEntryAsync(entry);
         right.Children.Add(deleteButton);
 
@@ -545,43 +682,94 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         Child = new TextBlock { Text = text, FontSize = 11 },
     };
 
+    private static readonly AiModelStatus UnknownStatus = new();
+
+    private static bool IsDownloadActive(DownloadItem? item) =>
+        item is not null && item.State is DownloadItemState.Downloading or DownloadItemState.Queued
+            or DownloadItemState.Resolving or DownloadItemState.Paused;
+
+    private static bool IsDownloadBusy(DownloadItem? item) =>
+        IsDownloadActive(item) || item?.State == DownloadItemState.Processing;
+
     private void UpdateDynamicStates()
     {
         var readyChanged = false;
+        var busy = false;
         foreach (var card in _cardRefs)
         {
-            var status = AiModelLibrary.GetStatus(card.Entry);
+            var known = _statusCache.TryGetValue(card.Entry.Id, out var status);
+            status ??= UnknownStatus;
             var item = card.Entry.Preset is null ? null : HfModelDownloader.FindQueueItem(card.Entry);
 
             // 注意：DownloadItem.Progress 在首个进度事件前为 null（队列自己的 UI 也用 ?. 处理）
-            var itemActive = item is not null &&
-                item.State is DownloadItemState.Downloading or DownloadItemState.Queued
-                    or DownloadItemState.Resolving or DownloadItemState.Paused;
+            var itemActive = IsDownloadActive(item);
+            busy |= IsDownloadBusy(item);
             var percentage = item?.Progress?.Percentage ?? 0;
 
             card.StatusText.Text = itemActive
                 ? item!.Progress is null
                     ? DescribeState(item.State)
                     : $"{DescribeState(item.State)} · {percentage:F0}%"
-                : status.Describe();
+                : known ? status.Describe() : "检查中…";
             card.ProgressBar.Visibility = item is not null && item.State is DownloadItemState.Downloading or DownloadItemState.Queued or DownloadItemState.Resolving
                 ? Visibility.Visible
                 : Visibility.Collapsed;
             card.ProgressBar.Value = percentage;
-            card.DeleteButton.Visibility = status.AnyPresent ? Visibility.Visible : Visibility.Collapsed;
-            card.DownloadButton.Visibility = card.Entry.Preset is null || status.AllReady ? Visibility.Collapsed : Visibility.Visible;
-            card.DownloadButton.Content = status.AnyPresent ? L("AiPlayground_ContinueDownload", "继续下载") : L("AiPlayground_Download", "下载");
+            card.DeleteButton.Visibility = known && status.AnyPresent ? Visibility.Visible : Visibility.Collapsed;
+            card.DeleteButton.IsEnabled = known;
+            card.DownloadButton.Visibility = card.Entry.Preset is null || (known && status.AllReady) ? Visibility.Collapsed : Visibility.Visible;
+            card.DownloadButton.IsEnabled = known;
+            card.DownloadButton.Content = known && status.AnyPresent ? L("AiPlayground_ContinueDownload", "继续下载") : L("AiPlayground_Download", "下载");
 
-            if (_cardReadyCache.TryGetValue(card.Entry.Id, out var wasReady) && wasReady != status.AllReady)
+            if (known && _cardReadyCache.TryGetValue(card.Entry.Id, out var wasReady) && wasReady != status.AllReady)
             {
                 _cardReadyCache[card.Entry.Id] = status.AllReady;
                 readyChanged = true;
             }
         }
+
+        UpdateDownloadTimerState(busy);
+
         if (readyChanged)
         {
             RefreshModelCombo();
             UpdateLibraryFooter();
+        }
+    }
+
+    /// <summary>1 秒计时器：只刷新正在下载的卡片百分比，不做文件系统探测。</summary>
+    private void UpdateDownloadProgress()
+    {
+        var busy = false;
+        foreach (var card in _cardRefs)
+        {
+            var item = card.Entry.Preset is null ? null : HfModelDownloader.FindQueueItem(card.Entry);
+            if (!IsDownloadBusy(item)) continue;
+            busy = true;
+            if (!IsDownloadActive(item)) continue; // Processing：等 QueueChanged 更新状态文案
+
+            var percentage = item!.Progress?.Percentage ?? 0;
+            card.StatusText.Text = item.Progress is null
+                ? DescribeState(item.State)
+                : $"{DescribeState(item.State)} · {percentage:F0}%";
+            card.ProgressBar.Visibility = item.State is DownloadItemState.Downloading or DownloadItemState.Queued or DownloadItemState.Resolving
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            card.ProgressBar.Value = percentage;
+        }
+
+        UpdateDownloadTimerState(busy);
+    }
+
+    private void UpdateDownloadTimerState(bool busy)
+    {
+        if (busy)
+        {
+            if (!_downloadTimer.IsRunning) _downloadTimer.Start();
+        }
+        else if (_downloadTimer.IsRunning)
+        {
+            _downloadTimer.Stop();
         }
     }
 
@@ -596,8 +784,6 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         DownloadItemState.Failed => "失败",
         _ => "已取消",
     };
-
-    private void OnQueueChanged() => _dispatcher.TryEnqueue(() => SafeUiTick(UpdateDynamicStates));
 
     private async Task DownloadEntryAsync(AiModelEntry entry)
     {
@@ -639,10 +825,18 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
     {
         try
         {
-            var text = entry.IsCustom && entry.Custom?.Kind == "genai-folder"
-                ? string.Format(L("AiPlayground_RemoveConfirm", "将从列表中移除「{0}」（不会删除你磁盘上的原始目录）。"), entry.DisplayName)
-                : string.Format(L("AiPlayground_DeleteConfirm", "将删除「{0}」的本地模型文件（{1}），删除后需要重新下载。"),
-                    entry.DisplayName, DownloadQueueService.FormatSize(AiModelLibrary.GetStatus(entry).Bytes));
+            string text;
+            if (entry.IsCustom && entry.Custom?.Kind == "genai-folder")
+            {
+                text = string.Format(L("AiPlayground_RemoveConfirm", "将从列表中移除「{0}」（不会删除你磁盘上的原始目录）。"), entry.DisplayName);
+            }
+            else
+            {
+                // 目录体积在后台统计，删除确认框不卡 UI。
+                var bytes = await Task.Run(() => AiModelLibrary.GetStatus(entry).Bytes);
+                text = string.Format(L("AiPlayground_DeleteConfirm", "将删除「{0}」的本地模型文件（{1}），删除后需要重新下载。"),
+                    entry.DisplayName, DownloadQueueService.FormatSize(bytes));
+            }
             if (!await ConfirmAsync(entry.IsCustom ? L("AiPlayground_Remove", "移除") : L("AiPlayground_Delete", "删除"), text))
                 return;
 
@@ -818,7 +1012,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         {
             _comboEntries.Clear();
             ModelCombo.Items.Clear();
-            foreach (var entry in _entries.Where(e => AiModelLibrary.GetStatus(e).AllReady))
+            foreach (var entry in _entries.Where(e => _statusCache.TryGetValue(e.Id, out var s) && s.AllReady))
             {
                 _comboEntries.Add(entry);
                 ModelCombo.Items.Add($"{entry.DisplayName}（{TaskDisplay(entry.Task)}）");
@@ -1594,7 +1788,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         var panel = new StackPanel { Spacing = 6 };
         panel.Children.Add(finalText.Length == 0
             ? new TextBlock { Text = L("AiPlayground_NoOutput", "（模型没有输出任何内容）"), TextWrapping = TextWrapping.Wrap }
-            : AiMarkdownRenderer.Render(finalText));
+            : new TubaWinUi3.Controls.MarkdownView { Markdown = finalText });
         if (!string.IsNullOrEmpty(deviceNote))
         {
             panel.Children.Add(new TextBlock
@@ -2167,12 +2361,13 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
         string npuName = "", cpuName = "";
         string? npuTops = null;
         List<string> gpus = [];
+        await HardwareInfoService.LoadConfiguredCpuzAsync();
         await Task.Run(() =>
         {
-            npuName = AiRuntimeService.DetectNpuName() ?? "";
-            cpuName = AiRuntimeService.DetectCpuName() ?? "";
+            npuName = HardwareInfoService.DetectNpuName() ?? "";
+            cpuName = HardwareInfoService.GetCpuName() ?? "";
             npuTops = Services.NpuCatalog.LookupTops(npuName, cpuName);
-            gpus = AiRuntimeService.DetectGpuNames().ToList();
+            gpus = HardwareInfoService.GetDisplayGpuNames().ToList();
         });
         var (totalMb, availableMb) = AiRuntimeService.GetMemoryMb();
         AddDeviceRow(L("AiPlayground_Cpu", "处理器"), cpuName);
@@ -2187,7 +2382,7 @@ public sealed partial class AiPlaygroundPage : Page, ILocalizablePage
                   + (npuEpRegistered ? "" : " · " + L("AiPlayground_NpuNeedEp", "未启用（安装加速包后可用于推理）")));
         AddDeviceRow(L("AiPlayground_Ram", "内存"),
             totalMb > 0 ? $"{totalMb / 1024.0:F1} GB（可用 {availableMb / 1024.0:F1} GB）" : "—");
-        AddDeviceRow(L("AiPlayground_Os", "系统"), $"Windows build {AiRuntimeService.GetOsBuild()}");
+        AddDeviceRow(L("AiPlayground_Os", "系统"), await Task.Run(() => HardwareInfoService.GetSystemInfoText()));
         AddDeviceRow(L("AiPlayground_Runtime", "推理运行时"),
             $"Windows ML · ONNX Runtime（{(Environment.Is64BitProcess ? Environment.OSVersion.VersionString : "?")}）");
 

@@ -67,7 +67,7 @@ Five suites — CPU / GPU / memory / disk / browser — are scored into "gaming 
   <sub>Stress test ｜ Fractal GPU stress test ｜ Community leaderboard ｜ New-PC check wizard</sub>
 </p>
 
-* **Stress test** — pick any combination of CPU / GPU / NIC burn-in and watch temperature, frequency, power and NIC throughput live
+* **Stress test** — run CPU and GPU stress tests separately or together while watching temperature, clock speed, and power
 * **Fractal GPU test** — a GPU fractal stress test with easy / medium / extreme pressure levels, super-resolution rendering and live FPS
 * **Benchmark leaderboards** — upload reports to the community, browse global rankings and compare against users with the same hardware
 * **New-PC check wizard** — one pass over appearance, hardware info, disk power-on hours, dead pixels, peripherals, camera and audio
@@ -162,6 +162,15 @@ Drop files in, pick a target format, and let the batch queue work through them o
 * **OCR** — Windows' native OCR turns images into text in one step
 * **PDF tools** — merge, split, and extract tables from the text layer into XLSX
 * **Legacy formats** — old .doc / .ppt / .wps files are handed to a locally installed Office or WPS, and you get a clear message if neither is present
+
+## Phone Link (TubaLink)
+
+* **QR pairing** — scan the QR code shown on the PC to connect; TLS with certificate pinning, and the first connection needs approval on the PC
+* **Share sheet to PC** — share text, images or files from the gallery, browser or file manager straight into the PC's Downloads folder
+* **Background receive & download queue** — file pushes from the PC still arrive while the phone app is in the background, with progress, cancel and retry
+* **Camera live view** — enable "Allow phone to view camera" on the PC, then watch the camera live and save snapshots from the phone
+* **Second-screen mode** — build a grid dashboard on the phone with text, clock, images, metrics, charts, ring gauges, status and dividers, then show it fullscreen
+* **Real-time monitoring / remote shell / winget / chat transfer** — inspect hardware and live data, run PowerShell, install software, and exchange messages/files
 
 ## Utilities
 

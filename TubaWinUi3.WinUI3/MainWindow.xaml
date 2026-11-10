@@ -301,10 +301,13 @@
                             <FontIcon Glyph="&#xE9D9;" FontWeight="Bold" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="CommunityNavItem" Content="社区" Tag="community" l:Uids.Uid="MainWindow_NavCommunity">
+                    <NavigationViewItem x:Name="CommunityNavItem" Content="插件" Tag="community" l:Uids.Uid="MainWindow_NavCommunity">
                         <NavigationViewItem.Icon>
                             <FontIcon Glyph="&#xE779;" FontWeight="Bold" />
                         </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem Content="AI 助手" Tag="ai-assistant" l:Uids.Uid="MainWindow_NavAiAssistant">
+                        <NavigationViewItem.Icon><FontIcon Glyph="&#xE99A;" /></NavigationViewItem.Icon>
                     </NavigationViewItem>
                 </NavigationView.MenuItems>
                 <Frame x:Name="NavFrame" CacheSize="10" />

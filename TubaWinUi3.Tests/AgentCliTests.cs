@@ -40,9 +40,9 @@ public sealed class AgentCliTests
         Assert.Equal(identity.User, System.IO.Pipes.PipesAclExtensions.GetAccessControl(client).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)));
     }
     [Theory]
-    [InlineData("cpuz", true)]
-    [InlineData("sensors", true)]
-    [InlineData("disks", true)]
+    [InlineData("cpuz", false)]
+    [InlineData("sensors", false)]
+    [InlineData("disks", false)]
     [InlineData("hardware", true)]
     [InlineData("run", false)]
     [InlineData("powershell", false)]
@@ -55,39 +55,17 @@ public sealed class AgentCliTests
         => Assert.True(AgentCliService.IsInvocation(["toolbox.exe", AgentQueryBroker.WorkerSwitch]));
 
     [Fact]
-    public void ParsesChineseOutputAndPreservesArgumentBoundaries()
+    public void HardwareQuery_PreservesChineseOutputPath_AndRejectsExtraArguments()
     {
-        var request = AgentCliRequest.Parse(["--agent-cli", "RUN", "--output", @"C:\测试 结果\输出.json", "furmark", "--allow-execution", "--timeout", "45", "--", "--name", "含 空格", "$(whoami)"]);
-        var run = AgentCliRequest.ValidateRun(request.Arguments);
-        Assert.Equal("run", request.Command);
-        Assert.Equal("含 空格", run.Args[1]);
-        Assert.Equal("$(whoami)", run.Args[2]);
+        var request = AgentCliRequest.Parse(["--agent-cli", "HARDWARE", "--output", @"C:\测试 结果\输出.json"]);
+        Assert.Equal("hardware", request.Command); Assert.Empty(request.Arguments);
+        Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", "hardware", "--output", @"C:\out.json", "unexpected"]));
+        Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", "hardware", "--output", @"\\server\share\out.json"]));
     }
-
     [Theory]
-    [InlineData("0")]
-    [InlineData("301")]
-    [InlineData("-1")]
-    [InlineData("oops")]
-    public void RejectsUnboundedRuns(string seconds)
-        => Assert.Throws<ArgumentException>(() => AgentCliRequest.ValidateRun(["furmark", "--allow-execution", "--timeout", seconds, "--"]));
-
-    [Fact]
-    public void RejectsImplicitExecutionAndNetworkOutput()
-    {
-        Assert.Throws<ArgumentException>(() => AgentCliRequest.ValidateRun(["furmark", "--timeout", "30", "--"]));
-        Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", "sensors", "--output", @"\\server\share\out.json"]));
-        Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", "sensors", "--output", "out.json"]));
-        Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", "sensors", "--output", @"C:\out.json", "unexpected"]));
-    }
-
-    [Fact]
-    public void RejectsUnknownExecutableAndAgent()
-    {
-        Assert.Throws<ArgumentException>(() => AgentCliService.ResolveTool("powershell"));
-        Assert.Throws<ArgumentException>(() => AgentSkillInstaller.InstallCommand(@"C:\skill", "codex;whoami"));
-        Assert.Contains(@"'C:\O''Brien\skill'", AgentSkillInstaller.InstallCommand(@"C:\O'Brien\skill", "codex"));
-    }
+    [InlineData("sensors")][InlineData("disks")][InlineData("cpuz")][InlineData("tools")][InlineData("run")]
+    public void RemovedDiagnosticApis_AreRejected(string command)
+        => Assert.Throws<ArgumentException>(() => AgentCliRequest.Parse(["--agent-cli", command, "--output", @"C:\out.json"]));
 
     [Fact]
     public async Task InvalidCommandReturnsJsonFailure()

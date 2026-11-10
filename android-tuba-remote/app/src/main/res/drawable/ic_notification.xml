@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 通知栏小图标：必须是单色透明背景（系统会着色） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,4h13a2,2 0,0 1,2 2v7a2,2 0,0 1,-2 2H3a2,2 0,0 1,-2 -2V6a2,2 0,0 1,2 -2zM3,6v7h13V6H3zM6,17h7v2H6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M19,5h2a2,2 0,0 1,2 2v11a2,2 0,0 1,-2 2h-8v-2h8V7h-2z" />
+</vector>

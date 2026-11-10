@@ -1,0 +1,14 @@
+{
+  "run_id": "example-osworld-v2-codex",
+  "benchmark_version": "v2",
+  "agent": "codex",
+  "model": "gpt-5.5",
+  "effort": "xhigh",
+  "guest_image": "/absolute/path/to/osworld-v2-workstation-deps-100g.qcow2",
+  "client_password": "osworld-public-evaluation",
+  "volume_size": 100,
+  "max_model_calls": 200,
+  "tasks": [
+    "001"
+  ]
+}

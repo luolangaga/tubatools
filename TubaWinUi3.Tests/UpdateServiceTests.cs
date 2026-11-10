@@ -192,13 +192,13 @@ public class UpdateServiceTests
     }
 
     [Fact]
-    public void IsInstallerFileValid_ExeWithMzHeader_ReturnsTrue()
+    public void IsInstallerFileValid_ExeWithMzHeaderWithoutPublisherProof_ReturnsFalse()
     {
         var path = Path.Combine(Path.GetTempPath(), "mz_" + Guid.NewGuid().ToString("N") + ".exe");
         File.WriteAllBytes(path, [0x4D, 0x5A, 0x90, 0x00]);
         try
         {
-            Assert.True(UpdateService.IsInstallerFileValid(path));
+            Assert.False(UpdateService.IsInstallerFileValid(path));
         }
         finally
         {
@@ -207,13 +207,13 @@ public class UpdateServiceTests
     }
 
     [Fact]
-    public void IsInstallerFileValid_NonExeFile_SkipsPeCheck()
+    public void IsInstallerFileValid_NonExeFileWithoutPublisherProof_ReturnsFalse()
     {
         var path = Path.Combine(Path.GetTempPath(), "zip_" + Guid.NewGuid().ToString("N") + ".zip");
         File.WriteAllBytes(path, [0x50, 0x4B, 0x03, 0x04]);
         try
         {
-            Assert.True(UpdateService.IsInstallerFileValid(path));
+            Assert.False(UpdateService.IsInstallerFileValid(path));
         }
         finally
         {

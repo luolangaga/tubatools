@@ -19,6 +19,7 @@ public sealed class FpsService : IDisposable
     // FpsPresentEvents（FpsTracker.cs）—— 主程序与 NativeAOT 后端共享同一份。
 
     private readonly ConcurrentDictionary<int, FpsTracker> _trackers = new();
+    private readonly PresentMonCapture _presentMon = new();
     private readonly ConcurrentDictionary<int, (string Name, DateTime Expires)> _nameCache = new();
     private readonly object _startLock = new();
     private int _manualFocusPid;
@@ -53,8 +54,8 @@ public sealed class FpsService : IDisposable
         FpsPresentEvents.TryRecordPresent(tracker, id, ticks);
 
     /// <summary>
-    /// 读出帧生成时间与「提交→合成」渲染延迟；-1 = 无有效读数（覆盖层显示 "--"）。
-    /// 帧时间随 FPS 的过期口径（2s 无新帧）；延迟样本只认 3s 内的刚配对数据。
+    /// 读出帧时间与渲染完成延迟（ETW 回退不提供延迟）；-1 = 无有效读数（覆盖层显示 "--"）。
+    /// 帧时间与 FPS 使用相同的 1 秒失效口径。
     /// </summary>
     internal static void ReadFrameMetrics(FpsTracker tracker, DateTime nowUtc,
         out float frameTimeMs, out float renderLatencyMs)
@@ -62,12 +63,9 @@ public sealed class FpsService : IDisposable
         frameTimeMs = renderLatencyMs = -1;
         if (tracker.LastFrameTimeMs > 0 &&
             tracker.LastPresentUtc != DateTime.MinValue &&
-            nowUtc - tracker.LastPresentUtc <= TimeSpan.FromSeconds(2))
+            nowUtc - tracker.LastPresentUtc <= TimeSpan.FromMilliseconds(FrameScopeFrameStatistics.WindowMs))
             frameTimeMs = (float)Math.Round(tracker.LastFrameTimeMs, 1);
-        if (tracker.LastRenderLatencyMs >= 0 &&
-            tracker.LastLatencyUtc != DateTime.MinValue &&
-            nowUtc - tracker.LastLatencyUtc <= TimeSpan.FromSeconds(3))
-            renderLatencyMs = (float)Math.Round(tracker.LastRenderLatencyMs, 1);
+
     }
 
 
@@ -106,33 +104,29 @@ public sealed class FpsService : IDisposable
     public (float fps, string process, float low1, float low01, float frameTimeMs, float renderLatencyMs) GetFpsStats()
     {
         if (_paused) return (0, "", 0, 0, -1, -1);
+
+        int manualPid = _manualFocusPid;
+        int targetPid = manualPid != 0 ? manualPid : GetForegroundWindowPid();
+        var preferred = _presentMon.GetMetrics(targetPid);
+        if (preferred is { } metrics)
+            return (metrics.Fps, GetProcessName(targetPid), metrics.Low1, metrics.Low01,
+                metrics.FrameTimeMs, metrics.LatencyMs);
+
         EnsureRunning();
-
-        if (_trackers.IsEmpty) return (0, "", -1, -1, -1, -1);
-
-        int targetPid;
-
-        if (_manualFocusPid != 0 && _trackers.ContainsKey(_manualFocusPid))
+        // Preserve the manual/foreground selection and session reports on the legacy path.
+        if (manualPid != 0 && !_trackers.ContainsKey(manualPid))
         {
-            targetPid = _manualFocusPid;
-        }
-        else
-        {
-            // Only report the foreground process. There is deliberately NO fallback
-            // to "any process with FPS > 0" anymore: desktop processes that present
-            // once a second (caret blink, widgets, …) used to win that race and the
-            // overlay got stuck showing "1 FPS" while the actual game was untracked.
             targetPid = GetForegroundWindowPid();
-            if (targetPid == 0 || !_trackers.ContainsKey(targetPid) || _trackers[targetPid].Fps <= 0)
-                return (0, "", -1, -1, -1, -1);
+            if (targetPid != manualPid && _presentMon.GetMetrics(targetPid) is { } foreground)
+                return (foreground.Fps, GetProcessName(targetPid), foreground.Low1, foreground.Low01,
+                    foreground.FrameTimeMs, foreground.LatencyMs);
         }
 
-        if (targetPid != 0 && _trackers.TryGetValue(targetPid, out var tracker))
+        if (targetPid != 0 && _trackers.TryGetValue(targetPid, out var tracker) &&
+            (targetPid == manualPid || tracker.Fps > 0))
         {
             float low1 = -1, low01 = -1;
-            // 样本充足性由 tracker 内部按「窗口内帧数」判定（1% low ≥100 帧 / 0.1% low ≥900 帧），
-            // 不足或算不出来时返回 -1 → 覆盖层显示 "--"。这里不再按会话累计帧数二次拦，
-            // 否则门槛（累计）和口径（窗口）会对不上。
+            // Same one-second window and floor tail counts as FrameScope.
             var v1 = tracker.OnePercentLow;
             if (v1 > 0) { low1 = (float)Math.Round(v1); if (low1 < 1) low1 = -1; }
             var v01 = tracker.PointOnePercentLow;
@@ -167,8 +161,16 @@ public sealed class FpsService : IDisposable
     public List<(int pid, string name, float fps)> GetProcessList()
     {
         var list = new List<(int pid, string name, float fps)>();
+        var presentMonPids = new HashSet<int>();
+        foreach (var (pid, fps) in _presentMon.GetProcesses())
+        {
+            presentMonPids.Add(pid);
+            var name = GetProcessName(pid);
+            if (!Excluded.Contains(name)) list.Add((pid, name, fps));
+        }
         foreach (var kv in _trackers)
         {
+            if (presentMonPids.Contains(kv.Key)) continue;
             if (kv.Value.Fps <= 0) continue;
             if (ExcludedPids.Contains(kv.Key)) continue;
             try
@@ -185,9 +187,18 @@ public sealed class FpsService : IDisposable
     public List<FpsSnapshot> GetAllSnapshots()
     {
         var list = new List<FpsSnapshot>();
+        var presentMonPids = new HashSet<int>();
+        foreach (var (pid, snapshot) in _presentMon.GetSnapshots())
+        {
+            presentMonPids.Add(pid);
+            var name = GetProcessName(pid);
+            if (Excluded.Contains(name)) continue;
+            snapshot.ProcessName = name;
+            list.Add(snapshot);
+        }
         foreach (var kv in _trackers)
         {
-            if (kv.Value.TotalFrames < 2) continue;
+            if (presentMonPids.Contains(kv.Key) || kv.Value.TotalFrames < 2) continue;
             if (ExcludedPids.Contains(kv.Key)) continue;
             try
             {
@@ -232,9 +243,9 @@ public sealed class FpsService : IDisposable
         {
             sb.AppendLine($"  ▸ {snap.ProcessName}");
             sb.AppendLine($"    当前 FPS:   {snap.CurrentFps:0}");
-            sb.AppendLine($"    平均 FPS:   {snap.AvgFps:0}");
-            sb.AppendLine($"    最低 FPS:   {snap.MinFps:0}");
-            sb.AppendLine($"    最高 FPS:   {snap.MaxFps:0}");
+            sb.AppendLine($"    平均 FPS:   {FormatReportFps(snap.AvgFps)}");
+            sb.AppendLine($"    最低 FPS:   {FormatReportFps(snap.MinFps)}");
+            sb.AppendLine($"    最高 FPS:   {FormatReportFps(snap.MaxFps)}");
             sb.AppendLine($"    1% Low:     {FormatReportFps(snap.OnePercentLow)}");
             sb.AppendLine($"    0.1% Low:   {FormatReportFps(snap.PointOnePercentLow)}");
             sb.AppendLine($"    总帧数:     {snap.TotalFrames}");
@@ -338,7 +349,7 @@ public sealed class FpsService : IDisposable
                     }
                     foreach (var pid in stalePids)
                         _trackers.TryRemove(pid, out var _);
-                }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+                }, null, TimeSpan.FromSeconds(3), TimeSpan.FromMilliseconds(FrameScopeFrameStatistics.WindowMs));
             }
             catch { _running = false; }
         }
@@ -359,12 +370,7 @@ public sealed class FpsService : IDisposable
             if (Excluded.Contains(name)) return;
 
             var tracker = _trackers.GetOrAdd(data.ProcessID, _ => new FpsTracker());
-            // 提交信号入队（Win32k 合成信号除外 —— 它同时是合成时刻，配对会得到
-            // 帧间隔而非延迟）；0xC9 无条件尝试与最旧的提交配对。
-            if (FpsPresentEvents.TryRecordPresent(tracker, id, data.TimeStamp.Ticks) && id != FpsPresentEvents.Win32kPresentEventId)
-                tracker.EnqueueSubmit(data.TimeStamp.Ticks);
-            if (id == FpsPresentEvents.Win32kPresentEventId)
-                tracker.TryRecordComposed(data.TimeStamp.Ticks);
+            FpsPresentEvents.TryRecordPresent(tracker, id, data.TimeStamp.Ticks);
         }
         catch { }
     }
@@ -396,6 +402,7 @@ public sealed class FpsService : IDisposable
 
     public void Dispose()
     {
+        _presentMon.Dispose();
         _running = false;
         _paused = false;
         _decayTimer?.Dispose();

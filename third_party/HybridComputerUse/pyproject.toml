@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hybrid-computer-use"
+dynamic = ["version"]
+description = "Hybrid Computer Use: agent configuration, model gateway, and OSWorld runner for the computer-use MCP server (AX and GUI tools for Linux, macOS, and Windows desktops)"
+requires-python = ">=3.10"
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE", "licenses/*", "THIRD_PARTY_NOTICES.md"]
+readme = "README.md"
+authors = [{ name = "Haoqing Wang" }]
+keywords = [
+  "computer-use",
+  "computer-use-agent",
+  "mcp",
+  "model-context-protocol",
+  "accessibility",
+  "at-spi",
+  "ui-automation",
+  "gui-automation",
+  "desktop-automation",
+  "ai-agents",
+  "codex",
+  "claude-code",
+  "gemini-cli",
+  "gui-agent",
+  "osworld",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Desktop Environment",
+]
+dependencies = [
+  "docker>=7",
+  "requests>=2.31",
+  "tomli>=2; python_version < '3.11'",
+  "urllib3>=2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.urls]
+Homepage = "https://microsoft.github.io/Hybrid-Computer-Use/"
+Documentation = "https://github.com/microsoft/Hybrid-Computer-Use/blob/main/docs/README.md"
+Source = "https://github.com/microsoft/Hybrid-Computer-Use"
+Paper = "https://arxiv.org/abs/2610.41432"
+Issues = "https://github.com/microsoft/Hybrid-Computer-Use/issues"
+Changelog = "https://github.com/microsoft/Hybrid-Computer-Use/blob/main/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
+
+[tool.setuptools.packages.find]
+include = ["hcu*"]
+
+[tool.setuptools.package-data]
+"hcu.osworld" = ["guest_files/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

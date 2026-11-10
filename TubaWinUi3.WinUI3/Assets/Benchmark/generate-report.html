@@ -42,6 +42,7 @@ if(!d)return;
 function sc(s){return s>=130?'green':s>=100?'blue':s>=75?'yellow':s>=55?'orange':s>=20?'red':'red';}
 function gc(g){return g==='S'||g==='A+'?'green':g==='A'?'blue':g==='B+'?'yellow':g==='B'?'orange':'red';}
 function bar(s){var pct=Math.min(s/130*100,100);return '<div class="bar-bg"><div class="bar-fill b-'+sc(s)+'" style="width:'+pct+'%"></div></div>';}
+function escapeText(s){return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
 function scoreSpan(s){return '<span class="s-'+sc(s)+'">'+s+'</span>';}
 function gradeSpan(g){return '<span class="s-'+gc(g)+'">'+g+'</span>';}
 
@@ -56,21 +57,21 @@ h+='<span>测试模式: '+d.durationMode+'</span>';
 h+='<span>耗时: '+d.totalDuration+'</span>';
 h+='</div>';
 h+='<div class="meta" style="margin-top:2px">';
-h+='<span>CPU: '+d.cpuName+'</span>';
-h+='<span>GPU: '+d.gpuName+'</span>';
-h+='<span>OS: '+d.osName+'</span>';
+h+='<span>CPU: '+escapeText(d.cpuName)+'</span>';
+h+='<span>GPU: '+escapeText(d.gpuName)+'</span>';
+h+='<span>OS: '+escapeText(d.osName)+'</span>';
 h+='</div></div></div>';
 
 h+='<div class="section">';
 h+='<div class="section-title">硬件信息</div>';
 h+='<table>';
-h+='<tr><th>处理器</th><td>'+(d.cpuName||'-')+'</td></tr>';
-h+='<tr><th>显卡</th><td>'+(d.gpuName||'-')+'</td></tr>';
-h+='<tr><th>主板</th><td>'+(d.motherboardName||'-')+'</td></tr>';
-h+='<tr><th>内存</th><td>'+(d.memoryInfo||'-')+'</td></tr>';
-h+='<tr><th>硬盘</th><td>'+(d.diskInfo||'-')+'</td></tr>';
-h+='<tr><th>显示器</th><td>'+(d.displayInfo||'-')+'</td></tr>';
-h+='<tr><th>操作系统</th><td>'+(d.osName||'-')+'</td></tr>';
+h+='<tr><th>处理器</th><td>'+escapeText(d.cpuName||'-')+'</td></tr>';
+h+='<tr><th>显卡</th><td>'+escapeText(d.gpuInfo||d.gpuName||'-')+'</td></tr>';
+h+='<tr><th>主板</th><td>'+escapeText(d.motherboardName||'-')+'</td></tr>';
+h+='<tr><th>内存</th><td>'+escapeText(d.memoryInfo||'-')+'</td></tr>';
+h+='<tr><th>硬盘</th><td>'+escapeText(d.diskInfo||'-')+'</td></tr>';
+h+='<tr><th>显示器</th><td>'+escapeText(d.displayInfo||'-')+'</td></tr>';
+h+='<tr><th>操作系统</th><td>'+escapeText(d.osName||'-')+'</td></tr>';
 h+='</table></div>';
 
 h+='<div class="section">';
@@ -124,6 +125,7 @@ h+='<div class="page-break"></div>';
 
 h+='<div class="section">';
 h+='<div class="section-title">GPU 性能</div>';
+if(d.gpu.gpuName) h+='<div class="meta">受测显卡：'+escapeText(d.gpu.gpuName)+'</div>';
 h+='<table>';
 h+='<tr><th>渲染性能</th><td class="score-col">'+scoreSpan(d.gpu.renderScore)+'</td><td class="detail-col">FurMark '+d.gpu.furMarkScore+' 分</td></tr>';
 h+='<tr><th>平均帧率</th><td class="score-col">-</td><td class="detail-col">'+d.gpu.avgFps.toFixed(1)+' FPS</td></tr>';

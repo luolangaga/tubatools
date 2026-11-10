@@ -32,7 +32,7 @@
 
 - **Benchmark** — Full CPU / GPU / memory / disk / browser testing, scored into gaming and office performance ratings, exported as a professional PDF report
 - **Benchmark Ranking** — Upload reports to the community, browse global leaderboards and compare with same-hardware users
-- **Stress Test** — CPU / GPU / NIC burn-in with freely combinable items; NIC testing supports custom data volume and rate reference, all with live temperature, frequency, power and throughput
+- **Stress Test** — Run CPU and GPU stress tests separately or together, with live temperature, clock speed, and power monitoring
 - **Fractal GPU Test** — GPU fractal stress testing in easy / medium / extreme levels, with super-resolution rendering beyond the screen and live FPS monitoring
 - **New-PC Check Wizard** — One-stop inspection: appearance, hardware info, disk power-on hours, dead pixels, peripherals, camera, audio and burn-in tests
 - **Disk Health** — SMART health monitoring (the CrystalDiskInfo approach): temperature / power-on / lifespan / read-write totals, plus SSD TRIM and HDD defrag

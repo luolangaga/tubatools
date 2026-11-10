@@ -1,0 +1,3 @@
+date,demo,platform,vendor,renderer,api_version,width,height,fullscreen,antialiasing,duration,max_gpu_temp,score,avg_fps,min_fps,max_fps
+2026.10.30@21:48:12,furmark-vk,Windows 64-bit,Intel,Intel(R) Arc(TM) B390 GPU,Vulkan 1.4.356,1920,1080,NO,Off,5013,-1,326,64,58,67
+2026.11.05@21:08:21,furmark-vk,Windows 64-bit,Intel,Intel(R) Arc(TM) B390 GPU,Vulkan 1.4.356,640,480,NO,Off,1001,-1,60,58,55,61

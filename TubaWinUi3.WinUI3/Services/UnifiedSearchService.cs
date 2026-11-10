@@ -1,4 +1,4 @@
-﻿using TubaWinUi3.Models;
+using TubaWinUi3.Models;
 
 namespace TubaWinUi3.Services;
 
@@ -11,7 +11,6 @@ public static class UnifiedSearchService
 
     private static readonly SettingEntry[] SettingsEntries =
     [
-        new("Search_SettingAgentSkills", "Agent Skills 自动化诊断", "Search_SettingAgentSkillsDesc", "为 Codex、Claude Code、Cursor、OpenCode 安装图吧工具箱 CLI 技能", "\uE943", "AgentSkills"),
         new("Search_SettingHardwareStyle", "硬件信息界面样式", "Search_SettingHardwareStyleDesc", "切换经典列表与硬件全景部件标注", "\uE7F8", "HardwareDiagramStyle"),
         new("Search_SettingTheme", "应用主题", "Search_SettingThemeDesc", "选择浅色、深色或跟随系统", "\uE790", "Theme"),
         new("Search_SettingCompact", "简洁列表模式", "Search_SettingCompactDesc", "原版图吧工具箱的样式", "\uE8FD", "CompactMode"),
@@ -45,8 +44,6 @@ public static class UnifiedSearchService
 
         SearchExternalTools(normalized, results);
         SearchBuiltinTools(normalized, results);
-        if (!RuntimeHelper.IsPackagedContext)
-            SearchCommunityTools(normalized, results);
         SearchSettings(normalized, results);
 
         DeduplicateResults(results);
@@ -58,11 +55,11 @@ public static class UnifiedSearchService
             .ToList();
     }
 
-    public static IReadOnlyList<SearchResult> GetQuickPanelItems()
+    public static IReadOnlyList<SearchResult> GetQuickPanelItems(bool includeRecent = true)
     {
         var items = new List<SearchResult>();
 
-        var recentPaths = LaunchHistoryService.GetHistory();
+        var recentPaths = includeRecent ? LaunchHistoryService.GetHistory() : [];
         foreach (var toolPath in recentPaths.Take(3))
         {
             var tool = FindToolByPath(toolPath);
@@ -177,10 +174,6 @@ public static class UnifiedSearchService
                 });
             }
         }
-    }
-
-    private static void SearchCommunityTools(string query, List<SearchResult> results)
-    {
     }
 
     private static void DeduplicateResults(List<SearchResult> results)

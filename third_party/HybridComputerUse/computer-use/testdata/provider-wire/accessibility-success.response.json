@@ -1,0 +1,21 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-observe",
+  "operation": "observe",
+  "accessibility": {
+    "ok": true,
+    "snapshot": {
+        "app": {"name": "Editor", "bundleIdentifier": "editor", "pid": 42, "inputCapable": false},
+      "windowTitle": "Document",
+      "windowHandle": "w2:fixture",
+      "snapshotId": "snapshot-v2-fixture",
+      "sampledAt": "2000-01-01T00:00:00Z",
+      "treeLines": ["0 window Document", "  1 entry Name"],
+      "elements": [
+        {"index": 0, "runtimeId": [0], "name": "Document", "controlType": "window"},
+        {"index": 1, "runtimeId": [0, 0], "name": "Name", "controlType": "entry", "value": "Ada"}
+      ]
+    }
+  }
+}

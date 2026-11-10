@@ -119,6 +119,7 @@
                                     <StackPanel Spacing="2" VerticalAlignment="Center">
                                         <TextBlock
                                             x:Name="AddressText"
+                                            IsTextSelectionEnabled="True"
                                             Style="{StaticResource CaptionTextStyle}"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                             TextWrapping="Wrap" />
@@ -223,6 +224,72 @@
                                 </StackPanel>
                             </Grid>
                         </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- 摄像头直播 -->
+                <Border Style="{StaticResource FluentCardStyle}">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource IconTileStyle}" Width="36" Height="36" VerticalAlignment="Center">
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="16" Glyph="&#xE722;" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="摄像头直播" />
+                                <TextBlock
+                                    x:Name="CameraStatusText"
+                                    Style="{StaticResource CaptionTextStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap"
+                                    Text="未开启" />
+                            </StackPanel>
+                            <ToggleSwitch
+                                x:Name="CameraToggle"
+                                Grid.Column="2"
+                                MinWidth="0"
+                                VerticalAlignment="Center"
+                                OnContent="已开启"
+                                OffContent="未开启"
+                                Toggled="CameraToggle_Toggled" />
+                        </Grid>
+                        <Grid x:Name="CameraOptionsPanel" ColumnSpacing="12" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox
+                                x:Name="CameraPicker"
+                                Header="摄像头"
+                                HorizontalAlignment="Stretch"
+                                SelectionChanged="CameraPicker_SelectionChanged" />
+                            <ComboBox
+                                x:Name="CameraQualityPicker"
+                                Grid.Column="1"
+                                Header="默认画质"
+                                MinWidth="120"
+                                SelectionChanged="CameraQualityPicker_SelectionChanged">
+                                <ComboBoxItem Content="480p" Tag="854" />
+                                <ComboBoxItem Content="720p" Tag="1280" />
+                                <ComboBoxItem Content="1080p" Tag="1920" />
+                            </ComboBox>
+                            <Button
+                                x:Name="CameraRefreshBtn"
+                                Grid.Column="2"
+                                Content="刷新"
+                                VerticalAlignment="Bottom"
+                                Click="CameraRefreshBtn_Click" />
+                        </Grid>
+                        <TextBlock
+                            Style="{StaticResource CaptionTextStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap"
+                            Text="开启后，手机可在「摄像头直播」里查看电脑摄像头画面。推流期间 Windows 摄像头指示灯会亮起，电脑端也会弹出一次提醒。" />
                     </StackPanel>
                 </Border>
 

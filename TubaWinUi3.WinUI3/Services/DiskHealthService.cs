@@ -122,8 +122,7 @@ public static class DiskHealthService
         List<ManagementBaseObject> rows;
         try
         {
-            rows = QueryRows(
-                "SELECT Index, Model, Size, InterfaceType, SerialNumber, MediaType, Status, PNPDeviceID FROM Win32_DiskDrive");
+            rows = HardwareInfoService.ReadPhysicalDisks().ToList();
         }
         catch (Exception ex)
         {
@@ -138,6 +137,9 @@ public static class DiskHealthService
         var volumeMap = ReadVolumeMap();
 
         // 4. 每块盘：SMART 直读健康判定；单块盘失败只标记该盘，不拖垮整页
+        var temperatures = LiteMonitorService.ReadDiskTemperatures();
+        var modelCounts = rows.GroupBy(row => GetStr(row, "Model"), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
         var disks = new List<DiskHealthInfo>();
         var healthy = 0;
         var warning = 0;
@@ -148,7 +150,7 @@ public static class DiskHealthService
             var row = rows[i];
             try
             {
-                var disk = BuildDiskHealth(row, (uint)i, partMeta, volumeMap);
+                var disk = BuildDiskHealth(row, (uint)i, partMeta, volumeMap, temperatures, modelCounts[GetStr(row, "Model")] == 1);
                 switch (disk.HealthStatus)
                 {
                     case "healthy": healthy++; break;
@@ -216,9 +218,11 @@ public static class DiskHealthService
     private static DiskHealthInfo BuildDiskHealth(
         ManagementBaseObject row, uint fallbackIndex,
         Dictionary<uint, (bool IsGpt, bool IsBoot)> partMeta,
-        Dictionary<uint, List<PartitionInfo>> volumeMap)
+        Dictionary<uint, List<PartitionInfo>> volumeMap,
+        IReadOnlyList<LiteMonitorService.DiskTemperatureSample> temperatures, bool uniqueModel)
     {
-        var diskIndex = GetUInt(row, "Index") ?? fallbackIndex;
+        var reportedIndex = GetUInt(row, "Index");
+        var diskIndex = reportedIndex ?? fallbackIndex;
         var model = GetStr(row, "Model", "未知");
         var mediaType = GetStr(row, "MediaType");
         var wmiSizeGb = (GetULong(row, "Size") ?? 0) / 1_073_741_824.0;
@@ -238,6 +242,9 @@ public static class DiskHealthService
         // 直读 SMART（CrystalDiskInfo 方案：ATA IOCTL 失败时回退 WMI）
         var smart = DiskSmartReader.ReadDiskSmart(diskIndex, isNvme, isSsd, model, pnp);
 
+        var temperature = HardwareInfoService.ResolveDiskTemperature(
+            HardwareInfoService.FindDiskTemperature(reportedIndex is <= int.MaxValue ? (int)reportedIndex.Value : -1,
+                model, temperatures, uniqueModel), smart.TemperatureC);
         var healthStatus = smart.Status switch
         {
             DiskStatus.Good => "healthy",
@@ -273,7 +280,7 @@ public static class DiskHealthService
             InterfaceType = interfaceType,
             HealthStatus = healthStatus,
             OperationalStatus = operationalStatus,
-            TemperatureC = smart.TemperatureC,
+            TemperatureC = temperature is { } value ? (int)Math.Round(value) : null,
             WearPercentage = smart.LifePercent,
             PowerOnHours = smart.PowerOnHours,
             PowerOnCount = smart.PowerOnCount,

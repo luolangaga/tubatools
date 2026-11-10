@@ -1,16 +1,16 @@
-﻿# TubaWinUi3 — Agent Notes
+# TubaWinUi3 — Agent Notes
 
 ## What this is
 
-A WinUI 3 (Windows App SDK / .NET 10) Chinese-language PC hardware toolbox ("图吧工具箱"). Catalogs and launches third-party diagnostic executables from a local `Tools/` folder, shows WMI/LibreHardwareMonitor hardware info, ships ~30 built-in utility tools, and does real-time hardware monitoring with an FPS overlay. UI strings are hardcoded Chinese — there is no resource/localization system.
+A WinUI 3 (Windows App SDK / .NET 10) Chinese-language PC hardware toolbox ("图吧工具箱"). Catalogs and launches third-party diagnostic executables from a local `Tools/` folder, shows WMI/LibreHardwareMonitor hardware info, ships ~30 built-in utility tools, and does real-time hardware monitoring with an FPS overlay. UI uses WinUI3Localizer with zh-CN/en-US Resources.resw and LocalizationService; some legacy strings still use Chinese fallbacks.
 
-## Solution layout (5 projects in `TubaWinUi3.sln`, plus the standalone PE edition below)
+## Solution layout (6 projects in `TubaWinUi3.sln`)
 
 - `TubaWinUi3.WinUI3/` — **the app**. The only project you normally build/run; `dotnet` commands target `TubaWinUi3.WinUI3/TubaWinUi3.csproj`.
 - `TubaWinUI3.BackEnd/` — a small **NativeAOT helper process** (`TubaWinUI3.BackEnd.exe`) used by the 主动拦截 (active intercept) feature; managed by `ActiveInterceptService`. The main csproj's `CopyBackendForBuild` target copies its framework-dependent output after every `dotnet build`, and `PublishBackend` builds/publishes the AOT version during `dotnet publish`.
 - `TubaWinUI3.ShellExtension/` — a **NativeAOT COM DLL** (`TubaWinUi3.ShellExtension.dll`) implementing `IExplorerCommand`: the Windows 11 modern context-menu handler for 文件占用查看, loaded by dllhost via the package manifest (`com:SurrogateServer`). Built by `build-shell-ext-aot.ps1`; included in MSIX builds only (`-p:IncludeShellExtension=true`); shares `Services/FileLock/FileLockShellMenuContract.cs` via linked `Compile`. See the feature section below.
-- `TubaWinUi3.Compatible/` — a separate **.NET Framework 4.8 WinForms** edition (`图吧工具箱Winui3兼容版.exe`, ReaLTaiizor Crown theme + Costura.Fody single-file). NOT WinUI 3 and NOT .NET 10 — different toolchain, different conventions. **No longer bundled into portable zips** — that slot is taken by the PE edition (next bullet). Do not mix its patterns into the main app. Supports tools.json cross-category (`category` + `categories`) copies and splits each arch variant (x64/ARM64/x86) into its own tool card; `builtin` placement entries are skipped (WinForms can't run WinUI built-ins).
-- `TubaWinUi3.PECompatible/` — **PE 兼容版** (`图吧工具箱PE兼容版.exe`; MewUI Win32 host + GDI backend/text engine, .NET 10 self-contained single-file). Not in the `.sln` — target its csproj directly. Shares the Compatible project's models/services via linked `Compile` items; CI publishes it per-RID and bundles the exe into the portable/lite zips. Its Debug build auto-copies the output into the main app's Debug dir (`CopyToWinUiDebugDir` target → `TubaWinUi3.WinUI3/bin/**/Debug/<tfm>/win-<arch>/图吧工具箱PE兼容版/`), where the shared services walk up parent dirs to find `Tools/` + `Metadata/` — that's the intended local debugging flow.
+- `TubaWinUi3.Tui/` — **.NET 8 Native AOT 控制台兼容版**（`图吧工具箱TUI兼容版.exe`，Spectre.Console）。直接发布该 csproj，支持 win-x64 / win-arm64。CI 将单文件 exe 放入 portable/lite 压缩包根目录。复用 Tools/Metadata 与本地收藏数据，按架构拆分工具条目，支持多分类副本和硬件信息。
+- `TubaWinUi3.PluginSdk/` — independently packaged plugin contract (`net10.0`), shared with dynamic plugins.
 - `TubaWinUi3.Tests/` — **xUnit** tests (xUnit 2.9 + coverlet), referencing the main project via `InternalsVisibleTo`.
 
 ## Build, run, test
@@ -47,7 +47,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - `ToolMetadataService` merges `Metadata/tools.json` + `FileVersionInfo` + `readme.txt`. The `"match"` field is a **case-insensitive substring** against tool filenames/paths. tools.json is the single source of truth for: metadata, card order (`"order"`), cross-category copies (`"category"` = physical primary category + `"categories"` = extra categories), and builtin tool placements (`"builtin"` = BuiltinToolRegistry id; virtual dir key `ToolsRoot/分类/目录名` keeps favorites/order-save compatible with the removed link.json dirs). Copy dir resolution scores candidates: exact dir name > flexible match equality > relative-path substring.
 - Sorting: tools.json `"order"` primary → `AppSettings ToolOrder_{category}` fallback for uncatalogued custom tools → name. Drag-reorder (HomePage pure-category view + CustomToolManagerWindow) double-writes via `ToolMetadataService.SaveToolOrder(dirs)`; note `order` is entry-global, so copies share one order across categories.
 - `ToolItem.InitArchOptions()` auto-selects the best arch for the OS (ARM64 > x64 > x86 preference).
-- Built-in tools: see `BuiltinToolRegistry.RegisterDefaults()` (~45 tools). `CommunityToolBuiltinTool` registers only when `!RuntimeHelper.IsMsixPackaged`.
+- Built-in tools: see `BuiltinToolRegistry.RegisterDefaults()` (~45 tools). `PluginsBuiltinTool` 始终注册（MSIX 下也出现在内置工具索引）；NuGet/local plugins supply dynamic built-in placements.
 - **每个已注册内置工具都必须在 `Metadata/tools.json` 里有 `builtin` 挂载条目**（`categories` 指定挂载分类）：收藏/排序/桌面快捷方式统一以该挂载的虚拟目录路径为键，收藏页与分类页星标互通。新增内置工具时 `RegisterDefaults()` 与 tools.json 两处都要加。
 - **快捷方式统一写入点 = `WindowsSearchIndexService`**：开始菜单搜索注册与「发送到桌面」共用同一 `CreateShortcut`（进程内 WScript.Shell COM，非 STA 线程自动起 STA 线程）。内置工具桌面快捷方式 = 自身 exe + `--open-builtin <id>`，图标为该工具字体字形（Segoe Fluent Icons）离线渲染的多尺寸 .ico，缓存于 `<DataDir>/DesktopIcons/`（字形→Bitmap→ICO 编码在 `BuiltinShortcutIconTests` 有回归测试）。「发送到桌面」两种工具都走 `CreateDesktopShortcut(ToolItem|IBuiltinTool)`（COM，写后回读校验），**禁止**改用 `powershell.exe -Command` 生成快捷方式：中文路径经子进程命令行会在非中文系统 / UTF-8 beta 代码页（ACP=65001）下写成乱码（回归测试 `DesktopShortcutTests`）。
 
@@ -73,40 +73,33 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - 激活转发：`Forward` 先 `AllowSetForegroundWindow(owner.pid)` 尽力交出前台权限，再写 JSON 意图文件；主实例 `StartWatcher` **先消费积压文件**（覆盖「转发先于监听就绪」的竞态）再监听。收到后 `MainWindow.ActivateFromExternal()`（托盘恢复 + `BringWindowToTop`/`SetForegroundWindow`）并按意图导航。
 - 测试：`SingleInstanceTests`（意图解析优先级/大小写/缺值/引号剥离、`--takeover` 识别、互斥体名兼容性）。
 
-### AI 助手（AiAgentPage）— AgentSession/AgentRuntime 引擎 + 多提供商
+### AI 相关代码（当前工作区）
+- AI 助手为 Pages/AiAssistantPage.xaml，Services/AiAgent/AgentClient.cs 封装独立组件的 V2 HTTP API，WinUI 负责聊天、模型、历史和权限 UI。旧 AiAssistantService 与可执行标记 AiMarkdownRenderer 已彻底删除，不要恢复。页面背景保持透明，Mica 由主窗口 / 内置工具窗口的 BackdropService 提供；侧栏叠 `LayerFillColorDefaultBrush`，**禁止**再给根 Grid 铺不透明底色（旧的 `AgentCanvas #141414` 会完全挡住 Mica）。
+- 组件按需安装：产品文案统一为「AI 组件」。独立回环服务、随机密码、独立 XDG 数据目录；不连接或修改用户共享服务。开发文档保留依赖名称和许可证。
+- Assets/AiAgent/tuba-plugin/SKILL.md 自动导入专用开发工作区；SDK DLL 与插件文档由宿主准备。AgentContent/AgentOperation 保留文本与工具的顺序，UI 使用具体操作时间线；禁止恢复泛化「执行过程」折叠框与「加载插件」按钮。AgentPluginAutoLoader 在本轮 dotnet pack 成功后自动验证并加载新产物，历史包不重放；MSIX 下同样自动加载（仅侧边栏入口隐藏）。
+- 助手是单一智能体，输入区不再选择模式；技能由任务自动触发：插件开发加载 `tuba-plugin`，电脑诊断/监控/桌面操作加载 `tuba-toolbox` 与 `tuba-computer-use`。`tuba-maintenance` 仅保留为旧会话的兼容别名，指向同一提示词。自动导入 `Assets/AgentSkills/tuba-toolbox` 与 `Assets/AgentSkills/tuba-computer-use`。AI/无窗口 CLI 直接查询只允许 help 与硬件信息；工具启动用 shell（`launch-tool.ps1` 或直接执行 `Tools/` 下的程序），打开后的监控、跑分和平台界面必须经 computer-use MCP 操作真实 GUI，并遵循 tuba-toolbox 技能清单；禁止用 GUI 双击工具箱卡片启动工具。窗口枚举、界面读取和电脑操作每次都先等待宿主显示置顶控制覆盖条；AI 截图时目标窗口会闪一次红色边框，提示与边框均排除在截图之外。操作期间屏幕边缘显示明显的流光，切出工具箱后在右上角显示实时进度和停止按钮，等待 question/权限审批时提供返回会话的操作按钮。「立即停止」撤销控制并取消对应会话，不得绕过握手或停止信号。激活、前台校验、键鼠投递和遮挡检查由官方 HCU Windows 提供程序完成：AX 动作前复核实时控件树，GUI 坐标前复核截图布局，过期分别返回 `stale_ref` / `gui_frame_stale` 且不发送输入；宿主不重复实现输入注入。统一提示词必须在适合封装插件时先用 question 卡片询问用户，得到同意才开发，不能默认将诊断任务变成插件开发。
+- `AgentQuestionCard` 承接 V2 会话表单，单选不预选、显式提交、可补充/跳过/停止。权限统一由 `AgentPermissionPolicy` 管理：默认 wildcard allow，用户可选逐次确认；每轮替换旧会话策略，不保留隐藏 deny。业务提问与工具权限独立，不要把 AI 提问退回普通文字或一律禁用提问工具。
+- `AiAssistantPage` 的 `.Run.cs` / `.Sessions.cs` 按会话保留任务、草稿、表单与消息，导航离页不取消执行。会话操作使用右键菜单，必须捕获被右键项的 ID；历史读取所有游标分页，流式尾部通过 `AgentHistory.Merge` 合并，不能覆盖早期消息。
+- 长任务状态来自 `AgentClient.Events.cs` 原生事件流与 HTTP 快照。快照可能在推理/压缩完成前不变，禁止恢复「三分钟无消息变化就 interrupt」；`AgentRunMonitor` 只给出等待状态。只在用户取消时发送单会话 interrupt，失败不能杀掉整个组件。
+- 自定义提供商由 `.Providers.cs` 与 `AgentProviderStore` 管理，四种协议，支持多个模型与模型发现。密钥用 `ProtectedApiKeyConverter` / DPAPI 落盘，只通过子进程环境注入工作区配置；保存时有运行任务必须延后重连，不丢草稿或消息。不要把提供商密钥打印到日志或写进工作区 JSON。
+- 插件 SDK 2.1 保持 API v2/AssemblyVersion 2.0，增加 BindValueChanged 与 GetService<T>。ToggleSwitch 的 BindClick 转接 Toggled，SetValue/初始化不得触发动作；ReportProgress 空白必须关闭提示条。插件宿主服务包括工具箱背景、稳定 ID 导航自定义、宿主信息与只读诊断；此 SDK 与 AI/CLI 电脑维护路径相互独立，不要让维护 Agent 用诊断接口代替真实 GUI。背景不修改 Windows 壁纸，导航覆盖独立保存在 PluginCustomization/，不能改变原 Tag 跳转目标。导航动态项按对象跟踪，不能在排序后按末尾数量删除。
+- AgentOperationView 编辑完成两秒后自动收起详情，保留标题/状态/增删行数；手动展开取消自动收起，轮询不能重置用户选择。
+- 支持多插件并存。AgentWorkspace 更新 projects.md，按真实 csproj + tubatools.json 识别项目；每插件独立目录/PackageId，修改保留身份并递增版本，不覆盖其他项目。
+- 本地 AI 试炼场 AiPlaygroundPage 独立保留；提供商配置仍在 Services/Ai/AiProviderStore.cs，密钥用 ProtectedApiKeyConverter。
+- MarkdownView 为纯展示的原生 Markdown 控件，不能从 Markdown 解析执行命令或旧助手动作标记。
 
-- 「AI 助手」内置工具 = `AiAgentPage`，**当前是旧引擎**：页面 → `AgentSession.SendAsync` → `AgentRuntime.RunLoopAsync`，底层是 `IChatClient`（`AgentClientFactory.CreateClient()` 包官方 OpenAI SDK + M.E.AI 适配），消息气泡/步骤链/确认卡片全部手写 XAML。
-  - **历史的 FieldCure ChatPanel 路径已整体删除**（ChatPanel 回退后再清死代码）：`Services/Ai/TubaChatProvider`、`AgentToolAdapter`、`AiDiagnosticsLog`（组件桥）、`SkillTriggerHelper` 及其测试都不在了，FieldCure 全家桶 NuGet 依赖也已移除。若再改 AI 助手，按 `AiAgentPage` 现有的 AgentSession/AgentRuntime 引擎来改，**不要**恢复 ChatPanel 架构。
-  - `AgentRuntime.RunLoopAsync` / `ResumeLoopAsync` 支持 `IChatClient? clientOverride`；但 `AgentSession.SendAsync`（`Services/Agent/AgentSession.cs`）内部直接调 `AgentClientFactory.CreateClient()` —— **提供商/引擎的唯一切换点是 `AgentClientFactory`**。
-- **多提供商（增/删/改名）**：`Services/Ai/AiProviderStore.cs`（`ai_providers.json`）+ `Services/Ai/AiProvider.cs`。预设 `custom`（小图吧自带）/ `deepseek` / `mimo` / `opencode` / `local`（本地模型），由 `CreatePreset(id)` 定义；`AiProvider.Kind`（枚举 `ProviderKind.OpenAi|Local`）。
-  - 自定义提供商可改名（`RenameProvider`）与删除（`DeleteProvider`，预设不可删、删除当前选中项回退 `custom`、至少保留一个）。
-  - UI 两处管理入口：设置页 AI 卡片（`AiProviderNameBox` / `AiDeleteProviderButton`）与 AI 助手顶栏「管理 AI 提供商」按钮（`ManageProvidersButton`，`ContentDialog` 列全部提供商）。
-- **本地模型作为提供商**（`local`）：模型列表**不落库**，由「本地 AI 试炼场」的模型库派生 —— `AiProviderStore.SyncLocalProviderModels()` 取 `AiModelLibrary` 中 `Task==Chat && AllReady` 的条目。调用点：`SettingsPage.RefreshAiProviderList`、`AiAgentPage.RefreshProviderCombos`、`AiPlaygroundPage` 导入/删除模型后。
-  - 选中 `local` 时 `AgentClientFactory.CreateClient()` 返回进程内 `IChatClient` = `Services/Ai/Onnx/LocalOnnxChatClient`，包 `Services/Ai/Onnx/LocalModelRuntime`（进程级单例，持 `LlmChatRunner`，换模型自动重载）。
-  - 提示词改编 `Services/Ai/Onnx/LocalChatPrompt`：system 合并 + `LlmPromptBuilder` 多轮；工具定义注入 system、工具结果渲染为 `[工具结果] …`、assistant 的工具调用回放为 `<tool_call>{...}</tool_call>`。**本地模型无原生 function calling**，`Services/Ai/Onnx/ToolCallStreamParser` 增量解析 `<tool_call>` 块还原成 `FunctionCallContent`（回退保留标记前缀防泄漏），属**尽力而为**（小模型不稳定，靠 `AgentToolLoopGuard` 兜底）。
-  - 本地推理只服务 AI 助手（Agent 路径）；其余 HTTP 功能（`AiAssistantService` 快捷提问、设置页「测试连接」）在选中 `local` 时由 `AiService.GetConfig()` **回落内置默认网关**（避免空端点报错）——`AiService.IsLocalProviderSelected` 判定。平台门槛 `AiRuntimeService.UnsupportedReason`（x86 / <Win10 19H1）不满足时抛友好异常。
-  - **卸载时机（内存不常驻）**：`LocalModelRuntime` 现在是「无 AI 类型门面 + 嵌套 Core」（JIT 安全，见「AI 运行库」节）：关 AI 助手页面（`AiAgentPage.Unload`）/ 切走 local 提供商（助手与设置页两处）/ 退出应用（`MainWindow_Closed` 有界 `TryUnload(3s)`，不阻塞托盘与单实例清理）都会释放模型。`UnloadWhenIdle` 先尝试直接卸、锁被长加载占用则转后台等待并按「代际」判断（用户重开并加载了新模型就跳过，不误卸）。卸载后 `AiModelMemoryTrimmer`（GC + `EmptyWorkingSet`）把内存还回系统——此前卸载后工作集不降正是用户报告的问题。数据目录切换走 `RestartApp` → 同一退出路径，一并覆盖。
-- 历史/记忆/技能沿用 `AiAssistantService` 的 messages.json / display.json / skills.json / memory.md；skills 默认全开、按会话存档。
-- 技能触发经 `AgentToolContext.SkillTriggerActive` 静态桥接（web_search 拦截）。
-- **销毁竞态过滤器（历史遗留，保留兜底）**：`Services/Ai/ChatPanelCrashFilter.IsTeardownRace` 同时校验「CoreWebView2 is not present」类报错文本 + `FieldCure.AssistStudio` 调用栈来源（认错会吞掉真 bug），`App.OnWinUIUnhandledException` 命中后只记日志（`agent-debug.log` + `%TEMP%\app_crash.log`）不弹错误窗口（回归测试 `ChatPanelCrashFilterTests`）。FieldCure 组件已整体移除，此过滤正常不再可能命中，保留作为同类 WebView2 销毁竞态的兜底来源标记。
-- **顶栏 bot 吉祥物（唯一实例）**：`Assets/BotAvatar/`（bloub 引擎，github.com/jeremy-prt/bloub，MIT；esbuild IIFE 打包 + `botavatar.html`），顶栏右侧操作组最前（模型选择器旁）**44×44 单实例**（`BotAvatar`），原生 XAML 区域 → 透明必然生效。
-  - **只放顶栏的原因**：曾尝试聊天区大号（72×72）悬浮在输入框上方（`UpdateBotAnchor`/`FindInputAnchor` 动态锚定），但该区域叠在 WebView2 消息区之上，透明 WebView2 无法穿透另一 WebView2（平台硬限制）→ 背景灰块无解，用户要求透明 → 改为顶栏唯一实例。
-  - 初始化：`InitBotAvatarAsync` → `InitBotWebViewAsync(BotAvatar)` 单实例；导航成功才置 `_botAvatarReady` + 启动视线轮询 + `SendColorsTo` 补发主题色；`Unload` 时 Navigate about:blank。
-  - **顶栏操作动画**：AI 设置 → `swirl`（进入设置视图）、提供商/模型切换 → `notify`（蓝点）、技能菜单 → `notify`、完全访问开关 → `wide`/`exclaim`、新对话 → `play`、历史 → `comet`。
-  - **15 态全接入**（`BotPost` postMessage 联动）：
-  - `thinking` 发消息 → `orbit` 工具执行（HTML 桥 3s 循环重放，环 3.6s 会淡出）→ 定稿庆祝三选一（`_roundTokens` 分级：0→`wink` 眨眼 / >0→`notify` 蓝点 / >4000→`burst` 爆炸）
-  - `alert` 请求失败、`play` 新对话、`sleep` 5 分钟无活动、`wide`/`exclaim` 完全访问开关开/关、`swirl` 打开 AI 设置、`comet` 历史会话加载完成、`egg`/`hexagon` AI 写入记忆时随机变形
-  - 空闲时视线跟随鼠标（WebView2 吞 XAML 指针事件，用 `GetCursorPos` 66ms 轮询，仅 baseFace 态生效）；body 墨色取系统强调色（`BotSendColors`，导航成功后再补发一次）
-- 初始化失败不静默：Debug.WriteLine 留日志 + 首次导航失败自动重试一次。（FieldCure 时代的 `TubaChatProvider.RequestFailed` / `AgentToolAdapter.ToolExecutionStarted/Finished` 静态事件已随组件移除。）
-- **防死循环护栏（会话级）**：`Services/Ai/AgentToolLoopGuard`（静态、线程安全；新对话 `AiAgentPage.ResetToNewChat` 调 `Reset()` 清空）。
-  - **重复调用拦截**：同会话「工具+参数」相同（`NormalizeArgs` 递归按键排序签名）第二次直接拦截不执行，空参数（查询类）豁免；`MaxToolResultChars=6000` 结果截断 + 空结果标记「未返回内容」。
-  - **无进展检测**：连续 6 轮纯工具调用（无用户文本）→ `AgentRuntime` 直接终止循环。
-  - **web_search 技能拦截计数**：技能触发（配电脑查价）拦截第二次起返回硬终止「已连续两次被拦截」。
-  - **思维链护栏**：流式按轮限流 + 截断（保留开头+标记，防切断 surrogate pair）。**上限与截断标记只有一份**：`AgentRuntimeLimits.MaxReasoningChars(6000)` / `ReasoningTruncatedMarker`（`[思维链过长，已截断]`），流式累积、`TruncateReasoning` 与回传截断都读它 —— 曾经两处文案不同，`ReasoningEchoChatClientTests` 因此长期失败（2026-09-30 统一）。
-  - **历史预算压缩**：`AgentRuntimeLimits.HistoryBudgetChars=40000`，超限从最旧丢（保留首条 system——DeepSeek 网关拒绝多条 system）。
-  - **错误终态分类**：`AgentErrorPolicy.FormatToolError` 参数类异常（Argument/Json/Format）→「可调整重试」，其余系统性失败 →「请勿重试」；`IsLocalInferenceError` 另把「已释放 / disposed object」归类为本地推理问题（卸载竞态不误导去查端点/Key）。
-  - 兜底：轮次上限 `AgentRuntime.DefaultMaxRounds=30`。
-- **AI 工具的「零启动占用」**：不在 `App()` 里做任何 AI 注册 —— `AgentToolRegistry.RegisterDefaults()` 改为首次访问 `Tools`/`Find` 时惰性注册（加载 M.E.AI + 生成 Schema）；加速包注册 `AiRuntimeService.EnsureProvidersRegisteredAsync()`（进程内一次）由 `AiRuntimeGate` 在首次打开 AI 工具时按需调用；FieldCure 桥（`AiDiagnosticsLog.Initialize`）与启动 +8s 注册都已删除。
+### AI 教学模式与画布（tuba-canvas）
+- 输入区底栏（`Composer` Grid.Row=3）在「模型 / 权限」右侧有「对话 / 教学模式」选择器（`ModeBox`）与「跳到最新画布」按钮（`CanvasButton`）。`AgentCanvasMode` 每会话独立，全局默认存 `AppSettings["AgentMode"]`。
+- **画布是 AI 发来的一条消息，不是常驻面板**：只有当模型真的更新了 `canvas/<id>/index.html`，宿主才在对话里新增一条画布消息（`Controls/CanvasBubble.cs`）；没有页面时**什么都不显示**（`CanvasBanner` 只在教学模式且尚无画布时提示一句）。别再恢复「固定空画布气泡」或侧栏。
+- 消息落盘在 `<Workspace>/canvas/<sessionId>/documents.json`（`CanvasDocument`：id / 锚定消息 / 相对路径 / 标题 / 内容哈希 / 时间）。每次新增画面前，把上一条 live 记录冻结成 `history/<ts>/index.html` 快照（写入时注入 `<base href="../../">` 让 `assets/` 相对路径继续生效），旧画布消息因此永不被后续修改覆盖。
+- **高度跟随内容（关键）**：`CanvasShim` 在页面内测 `scrollHeight` 并上报 `{type:'height'}`（ResizeObserver + MutationObserver + 延时兜底，缺 API 时静默跳过），`CanvasBubble` 把气泡高度钳在 180…(视口−190)。这是「画布一大片留白」的根治点；技能里也禁止页面写 `100vh` / 垂直居中。别改回固定高度。
+- **全屏**：气泡头部按钮把整张卡片移进 `XamlRoot` 覆盖层（只重挂、不重建 WebView2），Esc 或按钮退出并放回原位。
+- 教学规则只写一处：详细要求放 `Assets/AiAgent/tuba-canvas/SKILL.md`（随 `AgentWorkspace.Prepare()` 导入 `.opencode/skills/tuba-canvas`）与工作区 `AGENTS.md`；每轮用户消息只加一行 `〔教学模式 · 画布 canvas/<id>/index.html〕` 标记（`AgentCanvasPrompt.Prefix`）。普通问答不要碰画布文件。
+- 页面 ↔ 宿主桥 = `window.tuba`（`CanvasShim.Script` 在 document 创建时注入）：`send/insert/title/open/ready/reportHeight` + `onMessage/onState/onImages/onNotice`，另有 `data-tuba-prompt` / `data-tuba-insert` / `data-tuba-open` 声明式委托。宿主侧解析在 `CanvasBridge`（白名单类型、64KB/8000 字符上限、`IsAllowedUrl` 只放行公网 http(s)）。
+- 安全边界：单虚拟主机 `canvas.local` + `DenyCors`；`NavigationStarting` / `NewWindowRequested` 一律取消外部导航并转系统浏览器；`WebMessageReceived` 校验 `args.Source` 前缀。页面不能执行宿主命令，`tuba.send` 产生的消息在对话里以用户消息呈现。
+- 刷新链路：模型改 `index.html` → `FileSystemWatcher` 400ms 去抖 → `RefreshIfChanged()`（对比 mtime 且要求 `</html>` 已落地）→ 导航重载。快照永不刷新。`ProcessFailed` **不自动重试**（会死循环），显示错误 + 手刷按钮。
+- 对话模式下任意消息含 ```html 围栏时，右键菜单「在画布中打开」（`AgentCanvasStore.ExtractHtmlBlock`）会把那段 HTML 作为一条画布消息插入当前会话。
+- 测试：`AiCanvasTests`（路径安全/HTML 归一化/快照冻结/base 注入/文档往返/哈希/图片去重/标记长度/桥解析与 URL 白名单/高度上报/shim API/技能与 AGENTS.md 导入）。改动桥接协议时同步更新 `CanvasShim.Script` 与这些用例。
 
 ### 格式转换（FormatConverterPage）— 多引擎批量转换架构
 - 「格式转换」内置工具 = `FormatConverterPage`（替换了旧的 VideoProcessorPage）。UI 为「拖入 → 选目标格式 → 文件队列逐个处理」，队列项有 等待/转换中/完成/失败/跳过 状态，**单个文件失败不中断批次**。
@@ -275,15 +268,18 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 
 ### 连接手机（PhoneLinkService / PhoneLinkPage）— 局域网控制 + 文件互传
 
-- 服务 = `Services/PhoneLinkService.cs`（`HttpListener`，默认 `http://+:18765/`，端口冲突自动 +1）+ `PhoneLinkDiscovery`（UDP 18764 局域网发现）+ Android 伴侣 App（`android-tuba-remote/`，Kotlin/Compose）。协议接口：`/api/ping`、`/api/pair`、`/api/info|hardware|monitor|screenshot`、`/api/exec`、`/api/jobs/{id}`、`/api/winget/*`、`/api/chat*`。
+- 服务 = `Services/PhoneLinkService.cs`（Kestrel + 自签 TLS，默认 `https://+:18765/`，端口冲突自动 +1；证书 SHA-256 指纹随二维码下发）+ `PhoneLinkDiscovery`（UDP 18764 局域网发现）+ Android 伴侣 App（`android-tuba-remote/`，Kotlin/Compose）。协议接口：`/api/ping`、`/api/pair`、`/api/info|hardware|monitor|screenshot`、`/api/camera/list|snapshot|stream`、`/api/exec`、`/api/jobs/{id}`、`/api/winget/*`、`/api/chat*`。
 - **审计日志类别 = `LogService.PhoneLink`（`phone-link.log`）**：配对成功/失败、电脑端拒绝、exec 命令与退出码、winget 安装、文件上传、撤销授权。exec/winget 是 RCE 级能力，新增任何高危接口都必须同样落这个类别——以前只有 `Debug.WriteLine`，Release 下等于没有痕迹。
 - **令牌持久化 = `Services/PhoneLink/PairedDeviceStore`**：24 字节随机令牌，落盘只存 SHA-256 摘要（设置键 `PhoneLinkPairedDevices`），有效期 90 天，过期自动清理并 401。**明文令牌永远不写盘**。进程重启后手机不必重新配对；页面手动关服务仍会清空全部令牌（沿用手动关闭 = 全部断开的语义）。
 - 电脑端设备列表支持**逐台断开**（`PhoneLinkService.PairedDevices` / `RevokeDevice(id)`），不再只有「撤销全部」。
 - **聊天 = `Services/PhoneLink/PhoneLinkChatStore`**：内存上限 500 条，落盘 `<DataDir>/phone_link/chat.json`（原子写），启动恢复；超限从最旧丢（同时清掉它的文件路径映射）。`/api/chat` 支持 `after` / `before` / `limit` 分页。
 - **长任务统一 Job 模型**：`/api/exec` 带 `background: true` 立即返回 `jobId`，客户端轮询 `/api/jobs/{id}`（`/api/jobs` 给列表）；同步响应模式保留给旧客户端。手机切后台 / 断网不会丢结果。
 - **文件下载支持 Range**（`PhoneLinkService.ParseRange`：`bytes=start-`、`start-end`、`-suffix`），可断点续传；上传按**实际收到字节数**强制 20 GB 上限（chunked 没有 Content-Length 也拦得住），超限删临时文件并 413。
-- 截图 `CaptureScreenJpeg` 带 150 ms 缓存（同宽度多设备/连点共用一帧）；`/api/ping` 与 `/api/info` 带 `apiVersion`（当前 = 2），手机端据此协商能力。
+- 截图 `CaptureScreenJpeg` 带 150 ms 缓存（同宽度多设备/连点共用一帧）；`/api/ping` 与 `/api/info` 带 `apiVersion`（当前 = 4），手机端据此协商能力。
 - `Services/PhoneLink/PhoneLinkFirewall` 在服务启动时后台自动创建入站规则（TCP = 实际 HTTP 端口、UDP 18764），失败只记日志，不阻断服务。
+- **摄像头直播（`PhoneCameraService` + `/api/camera/*`）**：手机请求 `multipart/x-mixed-replace`，PC 侧按摄像头共享一个 `CameraFrameSource` 采集会话（首个订阅启动、最后一个离开 5 秒后释放），`CameraJpegEncoder` 在后台线程缩放 + JPEG 编码，每帧带 `Content-Length`。默认关闭（`PhoneLinkCameraEnabled`），PC 页面开启后才允许；同一摄像头只允许一路推流（第二路 409）。`LanHttpsServer` 有 15 分钟请求硬上限，Android `CameraScreen` 在流结束后 3 秒自动重连。**MSIX 的 `webcam` DeviceCapability 在 `run-msix.ps1` / `build-msix-store.ps1` / `build-store.ps1` 三处生成清单里都必须存在**（`PackageCapabilityTests` 拦截漂移），否则打包版摄像头静默失败。
+- **Android 分享 / 后台接收 / 下载（`ShareActivity` + `LinkService` + `DownloadQueue`）**：`ShareActivity` 接收 `ACTION_SEND`/`SEND_MULTIPLE`，先把 URI 复制到 `cacheDir/share`（≤2GB）再交给 `LinkService`，避免 Activity 结束后分享授权失效。`LinkService` 是 `connectedDevice` 前台服务（权限 `FOREGROUND_SERVICE_CONNECTED_DEVICE` + `CHANGE_NETWORK_STATE`），后台每 3 秒轮询 `/api/chat`，只对 `from=pc` 的新消息弹通知；进程重启 `START_STICKY` 用 `bgCursor` 恢复。`DownloadQueue` 串行下载到 `cacheDir/transfers`（Range 续传）再写 MediaStore `Download/图吧工具箱`；Android 9 及以下要 `WRITE_EXTERNAL_STORAGE`。所有通知渠道由 `TubaRemoteApp` 创建；App 在前台时只推进游标不弹通知。
+- **副屏模式（Android `DashboardScreen` + `DashboardStore`）**：12 列网格、每组件绝对定位，支持文字/时钟/图片/监控数值/曲线/环形表/状态/分隔线；长按拖动、右下角缩放、属性底部面板、自动整理、层级调整。布局按 PC 存 `"remote"` prefs 的 `dashboard:<pcId>`，图片压到 2048px 存 `filesDir/dashboard/<pcId>/images`（配置只存文件名，GC 按引用清理）。全屏展示时隐藏系统栏、常亮、每秒轮询 `/api/monitor`，返回键先退全屏。
 
 ### 硬件详细信息（HardwareDetailPage）— 瀑布流参数卡片
 
@@ -334,7 +330,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 
 - `Tools/` has Chinese category directory names (处理器工具, 显卡工具, …) — path handling must be Unicode-safe.
 - `HardwareInfoService` runs WMI on `Task.Run`; results are consumed on the UI thread. `ApplyCpuzOverride()` deep-copies WMI sections and overwrites them with CPU-Z data (`IsVerified=true`).
-- `LiteMonitorService` uses LibreHardwareMonitorLib **0.9.7-pre737** (稳定的 0.9.6 不认识 Panther Lake 等新 CPU → uarch=Unknown，温度/频率/功耗传感器根本不会创建) with nvapi64 / ATI ADL / D3DKMT / WMI fallbacks. **CPU 温度/频率/功耗走 MSR，依赖 PawnIO 驱动**：`PawnIoService` 在 LHM 初始化前补启动「已安装但未加载」的驱动（这类驱动重启后不会自动加载），仍不可用时「一键三烤」会弹窗引导安装官方 PawnIO_setup；游戏监控覆盖层本身不再强制要求 PawnIO（只影响 CPU 这几项数据）。The FPS overlay reads the ETW `DxgKrnl` Present event via `FpsService` (needs admin, no driver).
+- `LiteMonitorService` uses LibreHardwareMonitorLib **0.9.7-pre737** (稳定的 0.9.6 不认识 Panther Lake 等新 CPU → uarch=Unknown，温度/频率/功耗传感器根本不会创建) with nvapi64 / ATI ADL / D3DKMT / WMI fallbacks. **CPU 温度/频率/功耗走 MSR，依赖 PawnIO 驱动**：`PawnIoService` 在 LHM 初始化前补启动「已安装但未加载」的驱动（这类驱动重启后不会自动加载），仍不可用时「CPU / GPU 烤机」会弹窗引导安装官方 PawnIO_setup；游戏监控覆盖层本身不再强制要求 PawnIO（只影响 CPU 这几项数据）。The FPS overlay reads the ETW `DxgKrnl` Present event via `FpsService` (needs admin, no driver).
 - `FpsService` uses an ETW `DxgKrnl` trace session (`Microsoft.Diagnostics.Tracing.TraceEvent`) — needs admin for kernel tracing.
 - `ConfigManager` supports two data locations — AppData (`%LocalAppData%/TubaWinUi3/`) or AppRoot (`<appdir>/Data/`) — selected by a `.config_location` marker file.
 - `Package.appxmanifest` declares `runFullTrust` and `systemAIModels`.
@@ -363,7 +359,8 @@ The "文件传输" feature spans three pieces with their own toolchains — none
 
 > **2026-09-30 修复**：`TubaWinUi3.Tests/NavIconTests.cs` 引用的 `NavIconCatalog` 从未提交（`Assets/NavIcons/` 在仓库、git 全历史、已发布安装包里都不存在），测试项目因此一直编译失败（13 个 CS0103）→ **已删除该孤儿测试**。被删掉的规格（如果以后要做侧边栏导航图标）：每个固定导航项（首页/常用/硬件信息/内置工具/社区工具…）与每个已知工具分类各需一个 `Assets/NavIcons/<slug>.svg`，slug 一一对应不重复，图标写法要过 `IconAssetValidation.ValidateAll`（Fluent 规范：viewBox 24、收在 2..22 网格、1.5 描边、圆头圆角、≥2 色）与 `ValidateRasterizes`（光栅化非空白）；`IconAssetValidation` 仍在被 `BuiltinIconTests` 使用，不要一起删。
 
-- `build-release.yml` — bumps `<Version>` in **both** `.csproj`s and `#define MyAppVersion` in all `installer*.iss`, publishes x64/x86/ARM64 portable + Inno installer + x64-lite (`ExcludeToolsFromPublish=true` + `.lite_build` marker), publishes the PE edition (self-contained single-file) for the zips, restores `.pri`, generates the changelog via **DeepSeek** (`DEEPSEEK_API_KEY`), creates the GitHub release, and optionally mirrors to **GitCode/AtomGit** (`GITCODE_ACCESS_TOKEN`). Portable zips are staged as a `src/` folder plus the native `Launcher\bin\图吧工具箱WinUI3_<arch>.exe` (renamed `图吧工具箱WinUI3.exe`) and `图吧工具箱PE兼容版.exe` at the zip root.
+- `build-release.yml` — bumps `<Version>` in **both** `.csproj`s and `#define MyAppVersion` in all `installer*.iss`, publishes x64/x86/ARM64 portable + Inno installer + x64-lite (`ExcludeToolsFromPublish=true` + `.lite_build` marker), publishes the .NET 8 TUI (Native AOT) for the zips, restores `.pri`, generates the changelog via **DeepSeek** (`DEEPSEEK_API_KEY`), creates the GitHub release, and optionally mirrors to **GitCode/AtomGit** (`GITCODE_ACCESS_TOKEN`). Portable zips are staged as a `src/` folder plus the native `Launcher\bin\图吧工具箱WinUI3_<arch>.exe` (renamed `图吧工具箱WinUI3.exe`) and `图吧工具箱TUI兼容版.exe` at the zip root.
+- **TUI 同时进安装包**：TUI 发布步骤必须在 Inno 编译之前，并把 `图吧工具箱TUI兼容版.exe` 复制进 `publish_<arch>_installer`（`build-setup.ps1` 对应复制进 `publish_<arch>`；缺失时只告警，安装器的 `TuiShortcutAvailable` 检查会隐藏 TUI 快捷方式）。安装器只询问桌面快捷方式（`desktopicon` 任务 `Flags: unchecked` + `UsePreviousTasks=no`，默认不勾选），开始菜单固定创建 GUI 与 TUI 两个入口。TUI 入口图标用 `TubaWinUi3.Tui/Assets/AppIconTui.ico`（应用原图标 + 右下角 Windows Terminal 小图标的合成图，单帧 256 ICO；`[Files]` 直接复制到 `{app}\AppIconTui.ico`；TUI exe 本身不设 `ApplicationIcon`，快捷方式覆盖即可）。
 - `android-build.yml` — Gradle debug APK for `android-tuba-installer/`; the only workflow that runs tests.
 - `sync-to-gitcode.yml` — re-uploads assets from an existing GitHub Release to GitCode via AtomGit API.
 
@@ -382,3 +379,21 @@ Root `package.json` + `src/docs/` are a **VitePress** site only (`npm run dev` /
 - Namespaces: `TubaWinUi3` / `.Pages` / `.Services` / `.Models`. PascalCase; XAML + code-behind pairs.
 - Commit messages are short Chinese summaries in practice (`优化OSD编辑器`, `修复打包`); `feat:`/`fix:` prefixes are welcome but not enforced.
 - Never commit: `bin/`, `obj/`, `.pfx`, `.cer`.
+
+### 插件 API v2
+- 只保留 RegisterTool(PluginToolDefinition)；API v1 已移除，清单 apiVersion 必须为 2，SDK 程序集身份 2.0.0.0。
+- 内置工具入口资源珍贵，默认一个工具用自定义 XAML 包含多个相关功能，不应为每个简单按钮注册单独的内置工具。规则同步在 tuba-plugin 技能与工作区说明。
+- 插件支持 Xaml/XamlPath/CreateContent/ExecuteAsync 四选一；PluginXamlView 承载页面、事件绑定、字段操作、取消和清理。
+- 图标取工具 IconPath → 清单 icon → Glyph；包内 SVG/PNG/JPEG/BMP 经路径验证。BuiltinIconService 接入列表/页头，热更新清缓存。
+- 可选 ShowInSidebar/ShowInSettings 是同一工具的导航位置。MSIX 只关闭侧边栏展示：`NavView` 移除「插件」主入口，插件工具的 `ShowInSidebar` 项不加入侧边栏；`ShowInSettings`、内置工具索引、插件页、NuGet 安装与 AI 自动加载照常可用。服务提供插件隔离配置/资源/数据目录、工具查询调用、导航、外观、剪贴板、文件与文件夹选择；普通插件不暴露任意内部设置键写入。
+- `fullTrust`（tubatools.json，默认 false）解锁 `IPluginHostAccess`：主窗口/根视觉树/NavigationView/Frame/当前页面、UI 线程、任意页面导航、任意宿主设置读写、主题与语言事件。插件也可引用 `TubaWinUi3.dll`（`Private=false`，不打包）使用 `TubaWinUi3.Plugins.PluginHostBridge` 与宿主 public 服务。它是能力入口而非沙箱；插件本来同进程同权限。宿主升级后需按目标版本重新编译。
+- 可选 `IPluginStartup`：宿主在主窗口创建后调用 `StartupAsync`，停用/卸载时调用 `ShutdownAsync`；`IPluginStartupContext` 提供插件设置/数据目录与 fullTrust 的 `HostAccess`。主题包 `plugins/Tubatools.ClassicTheme` 用它在开机时直接改主界面。
+
+### Steam 工具箱（已迁移为插件）
+- 内置工具 `steam-toolbox` 已从主程序移除；实现位于 `plugins/Tubatools.SteamToolbox`，作为 NuGet 插件包 `Tubatools.SteamToolbox`（API v2，工具 ID 仍为 `steam-toolbox`，分类 `游戏工具`）分发。
+- 主程序不再引用 `SteamKit2`；插件自带 `SteamKit2` / `QRCoder` 及传递依赖（`protobuf-net`、`System.IO.Hashing`、`ZstdSharp`、`System.Drawing.Common`），由 `PluginManager.PluginLoadContext` 按 deps.json + 同目录回退加载（不存在的 deps 路径会被忽略并回退到入口同目录）。
+- 插件页面使用纯 C# `CreateContent`：运行时 XAML 对新式 WinUI 控件依赖宿主编译期类型表，插件包无法保证这些类型始终可用。界面必须与迁移前 `SteamToolboxPage.xaml` 一比一（SelectorBar、收藏统计/账号卡/搜索排序/多库分组卡片、挂卡页三块卡片与登录双列布局）。
+- 挂卡会话在页面关闭后继续运行；进程退出时由插件 `ProcessExit` 断开 Steam 连接。宿主侧 `MainWindow_Closed` 不再调用 `SteamIdleService.Disconnect()`。
+- 宿主/SDK 为此新增：`IPluginServices.PickFolderAsync`（与内置工具共用 `Win32Dialogs.PickFolderAsync`）与 `IPluginHost.Language`（注册期本地化工具名/说明）。
+- 测试：`SteamToolboxPluginTests` 覆盖 VDF/扫描/任务计时/在线监测/插件注册；网站加速与流量统计仍在主程序，测试保留在 `SteamToolboxTests` / `SteamTrafficTests`。
+- 打包：`dotnet pack plugins/Tubatools.SteamToolbox/Tubatools.SteamToolbox.csproj -c Release -o artifacts/plugins`；发布与安装说明见 `plugins/Tubatools.SteamToolbox/README.md`。

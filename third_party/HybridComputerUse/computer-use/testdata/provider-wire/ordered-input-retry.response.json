@@ -1,0 +1,21 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-ordered-input",
+  "operation": "ordered_input",
+  "provider_reset_required": true,
+  "ordered_input": {
+    "contract_version": 1,
+    "ok": false,
+    "steps": [
+      {"action_index": 2, "status": "failed", "dispatch_attempted": false, "emission": "none", "window_continuity": "same"},
+      {"action_index": 3, "status": "not_attempted", "dispatch_attempted": false, "emission": "none"},
+      {"action_index": 4, "status": "not_attempted", "dispatch_attempted": false, "emission": "none"}
+    ],
+    "stopped_action_index": 2,
+    "first_unattempted_action_index": 2,
+    "failure": {"code": "provider_busy", "phase": "precondition", "facts_complete": true},
+    "mutation": {},
+    "retry_same_request": true
+  }
+}

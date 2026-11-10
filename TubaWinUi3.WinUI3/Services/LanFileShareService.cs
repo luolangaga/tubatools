@@ -1,110 +1,94 @@
 using System.Collections.Concurrent;
-using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Net.Http.Headers;
 
 namespace TubaWinUi3.Services;
 
 public static class LanFileShareService
 {
-    private static HttpListener? _listener;
-    private static CancellationTokenSource? _cts;
+    private static LanHttpsServer? _server;
+    private static readonly SemaphoreSlim Lifecycle = new(1, 1);
+    private static readonly SemaphoreSlim Mutations = new(1, 1);
     private static readonly ConcurrentDictionary<string, SharedFileInfo> _sharedFiles = new();
     private static string _shareDir = "";
     private static int _port = 18080;
-    private static bool _isRunning;
-
-    public static bool IsRunning => _isRunning;
+    private static string _accessToken = "";
+    private const string CookieName = "__Host-tuba-share";
+    internal const long MaxUploadBytes = 2L * 1024 * 1024 * 1024;
+    internal const long MaxShareBytes = 20L * 1024 * 1024 * 1024;
+    internal static Func<long>? AvailableSpaceForTests;
+    public static bool IsRunning => _server is not null;
     public static int Port => _port;
     public static string ShareDir => _shareDir;
     public static IReadOnlyDictionary<string, SharedFileInfo> SharedFiles => _sharedFiles;
     public static event Action? StateChanged;
-
-    public static string GetLocalIp()
-    {
-        try
-        {
-            var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
-            var ip = host.AddressList.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !IPAddress.IsLoopback(a));
-            return ip?.ToString() ?? "127.0.0.1";
-        }
-        catch { return "127.0.0.1"; }
-    }
+    public static string CertificateFingerprint => LanHttpsServer.Fingerprint;
+    public static string GetLocalIp() => PhoneLinkService.GetLocalIps().First();
+    public static string BuildAccessUrl(string? ip = null) => $"https://{ip ?? GetLocalIp()}:{_port}/#access={_accessToken}";
 
     public static void Initialize()
     {
         _shareDir = Path.Combine(ConfigManager.GetDataDir(), "LanShare");
+        SafeSharePath.RejectReparsePoints(_shareDir);
         Directory.CreateDirectory(_shareDir);
     }
-
     public static void SetPort(int port)
     {
-        _port = port;
-        StateChanged?.Invoke();
+        if (IsRunning || port is < 1024 or > 65535) return;
+        _port = port; StateChanged?.Invoke();
     }
-
     public static async Task StartAsync()
     {
-        if (_isRunning) return;
-        Initialize();
-
-        _cts = new CancellationTokenSource();
-        _listener = new HttpListener();
-
-        for (var attempt = 0; attempt < 10; attempt++)
+        await Lifecycle.WaitAsync().ConfigureAwait(false);
+        try
         {
-            try
+            if (IsRunning) return;
+            Initialize();
+            _accessToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            for (int attempt = 0; ; attempt++)
             {
-                _listener.Prefixes.Clear();
-                _listener.Prefixes.Add($"http://+:{_port}/");
-                _listener.Start();
-                break;
+                try { _server = await LanHttpsServer.StartAsync(_port, MaxUploadBytes, HandleRequest).ConfigureAwait(false); break; }
+                catch (IOException) when (attempt < 9 && _port < 65535) { _port++; }
             }
-            catch
-            {
-                _listener.Close();
-                _listener = new HttpListener();
-                _port++;
-                if (attempt == 9) throw;
-            }
+            RefreshSharedFiles(); StateChanged?.Invoke();
         }
-
-        _isRunning = true;
-        RefreshSharedFiles();
-        StateChanged?.Invoke();
-
-        _ = Task.Run(() => ListenLoop(_cts.Token));
-        await Task.CompletedTask;
+        finally { Lifecycle.Release(); }
     }
-
     public static void Stop()
     {
-        if (!_isRunning) return;
-        _cts?.Cancel();
-        try { _listener?.Stop(); } catch { }
-        try { _listener?.Close(); } catch { }
-        _listener = null;
-        _isRunning = false;
-        StateChanged?.Invoke();
+        Lifecycle.Wait();
+        try
+        {
+            var server = Interlocked.Exchange(ref _server, null);
+            _accessToken = ""; server?.Dispose(); StateChanged?.Invoke();
+        }
+        finally { Lifecycle.Release(); }
     }
 
+    private static IEnumerable<string> EnumerateSafe(string directory)
+    {
+        SafeSharePath.RejectReparsePoints(directory);
+        foreach (var path in Directory.EnumerateFileSystemEntries(directory))
+        {
+            SafeSharePath.RejectReparsePoints(path);
+            yield return path;
+            if (Directory.Exists(path)) foreach (var child in EnumerateSafe(path)) yield return child;
+        }
+    }
     public static void RefreshSharedFiles()
     {
         _sharedFiles.Clear();
         if (!Directory.Exists(_shareDir)) return;
-
-        foreach (var file in Directory.GetFiles(_shareDir, "*", SearchOption.AllDirectories))
+        foreach (var file in EnumerateSafe(_shareDir).Where(File.Exists))
         {
             var fi = new FileInfo(file);
-            var relPath = Path.GetRelativePath(_shareDir, file);
-            _sharedFiles[relPath.Replace('\\', '/')] = new SharedFileInfo
-            {
-                RelativePath = relPath.Replace('\\', '/'),
-                FileName = fi.Name,
-                Size = fi.Length,
-                LastModified = fi.LastWriteTimeUtc,
-                ContentType = GetContentType(fi.Extension)
-            };
+            var rel = Path.GetRelativePath(_shareDir, file).Replace('\\', '/');
+            _sharedFiles[rel] = new SharedFileInfo { RelativePath = rel, FileName = fi.Name, Size = fi.Length,
+                LastModified = fi.LastWriteTimeUtc, ContentType = GetContentType(fi.Extension) };
         }
     }
 
@@ -112,7 +96,7 @@ public static class LanFileShareService
     {
         if (!File.Exists(sourcePath)) return;
         var fileName = Path.GetFileName(sourcePath);
-        var destPath = Path.Combine(_shareDir, fileName);
+        var destPath = SafeSharePath.Resolve(_shareDir, fileName);
 
         var counter = 1;
         while (File.Exists(destPath))
@@ -136,7 +120,7 @@ public static class LanFileShareService
     {
         if (!Directory.Exists(sourceDir)) return;
         var folderName = Path.GetFileName(sourceDir);
-        var destDir = Path.Combine(_shareDir, folderName);
+        var destDir = SafeSharePath.Resolve(_shareDir, folderName);
 
         var counter = 1;
         while (Directory.Exists(destDir))
@@ -145,17 +129,20 @@ public static class LanFileShareService
             counter++;
         }
 
-        foreach (var dir in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+        foreach (var dir in EnumerateSafe(sourceDir).Where(Directory.Exists))
         {
             var rel = Path.GetRelativePath(sourceDir, dir);
-            Directory.CreateDirectory(Path.Combine(destDir, rel));
+            SafeSharePath.RejectReparsePoints(dir);
+            Directory.CreateDirectory(SafeSharePath.Resolve(_shareDir, Path.GetRelativePath(_shareDir, Path.Combine(destDir, rel))));
         }
 
-        foreach (var file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+        foreach (var file in EnumerateSafe(sourceDir).Where(File.Exists))
         {
             var rel = Path.GetRelativePath(sourceDir, file);
             var destFile = Path.Combine(destDir, rel);
             Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+            SafeSharePath.RejectReparsePoints(file);
+            SafeSharePath.Resolve(_shareDir, Path.GetRelativePath(_shareDir, destFile));
             File.Copy(file, destFile);
         }
 
@@ -165,7 +152,7 @@ public static class LanFileShareService
 
     public static void RemoveFile(string relativePath)
     {
-        var fullPath = Path.Combine(_shareDir, relativePath.Replace('/', '\\'));
+        var fullPath = SafeSharePath.Resolve(_shareDir, relativePath);
         if (File.Exists(fullPath))
         {
             File.Delete(fullPath);
@@ -176,10 +163,10 @@ public static class LanFileShareService
 
     public static void RemoveFolder(string relativePath)
     {
-        var fullPath = Path.Combine(_shareDir, relativePath.Replace('/', '\\'));
+        var fullPath = SafeSharePath.Resolve(_shareDir, relativePath);
         if (Directory.Exists(fullPath))
         {
-            Directory.Delete(fullPath, true);
+            SafeSharePath.DeleteTree(fullPath);
             RefreshSharedFiles();
             StateChanged?.Invoke();
         }
@@ -189,338 +176,151 @@ public static class LanFileShareService
     {
         if (Directory.Exists(_shareDir))
         {
-            Directory.Delete(_shareDir, true);
+            SafeSharePath.DeleteTree(_shareDir);
             Directory.CreateDirectory(_shareDir);
         }
         RefreshSharedFiles();
         StateChanged?.Invoke();
     }
 
-    private static async Task ListenLoop(CancellationToken ct)
-    {
-        while (!ct.IsCancellationRequested && _listener is not null)
-        {
-            try
-            {
-                var ctx = await _listener.GetContextAsync();
-                _ = Task.Run(() => HandleRequest(ctx, ct), ct);
-            }
-            catch (HttpListenerException) when (ct.IsCancellationRequested) { break; }
-            catch (ObjectDisposedException) when (ct.IsCancellationRequested) { break; }
-            catch { }
-        }
-    }
 
-    private static async Task HandleRequest(HttpListenerContext ctx, CancellationToken ct)
-    {
-        var path = ctx.Request.Url?.AbsolutePath ?? "/";
-        var method = ctx.Request.HttpMethod;
+    internal static bool IsAuthorizedToken(string? token) => !string.IsNullOrEmpty(_accessToken)
+        && token is { Length: 64 } && CryptographicOperations.FixedTimeEquals(
+            Encoding.ASCII.GetBytes(token), Encoding.ASCII.GetBytes(_accessToken));
 
+    internal static async Task HandleRequest(HttpContext ctx)
+    {
+        var path = ctx.Request.Path.Value ?? "/";
+        var method = ctx.Request.Method;
+        var ct = ctx.RequestAborted;
         try
         {
-            if (path == "/" || path == "/index.html")
+            // Uploaded HTML/SVG must never execute with the sharing session's origin.
+            ctx.Response.Headers["Content-Security-Policy"] = "sandbox allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-modals; default-src 'self' blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; frame-ancestors 'none'; object-src 'none'";
+            if (path is "/" or "/index.html" && method == "GET")
+            { ctx.Response.ContentType = "text/html; charset=utf-8"; await ctx.Response.WriteAsync(FluentPageHtml.GetHtml(), ct); return; }
+            // CSRF protection for cookie-authenticated operations; no CORS is enabled.
+            var origin = ctx.Request.Headers.Origin.ToString();
+            if (origin.Length != 0 && origin != $"https://{ctx.Request.Host}")
+            { ctx.Response.StatusCode = 403; return; }
+            if (path == "/api/session" && method == "POST")
             {
-                await ServeHtml(ctx);
+                var json = await RequestLimits.ReadJsonAsync(ctx.Request);
+                if (json.ValueKind != JsonValueKind.Object || !json.TryGetProperty("token", out var t)
+                    || t.ValueKind != JsonValueKind.String || !IsAuthorizedToken(t.GetString()))
+                { ctx.Response.StatusCode = 401; return; }
+                ctx.Response.Cookies.Append(CookieName, t.GetString()!, new CookieOptions
+                { HttpOnly = true, Secure = true, SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict, Path = "/" });
+                await ctx.Response.WriteAsJsonAsync(new { ok = true }, ct); return;
             }
-            else if (path == "/api/info")
+            if (!IsAuthorizedToken(ctx.Request.Cookies[CookieName]))
+            { ctx.Response.StatusCode = 401; return; }
+            if (path == "/api/info" && method == "GET")
+            { await ctx.Response.WriteAsJsonAsync(new { ip = GetLocalIp(), port = Port, url = BuildAccessUrl() }, ct); return; }
+            if (path == "/qr" && method == "GET")
+            { ctx.Response.ContentType = "image/png"; await ctx.Response.Body.WriteAsync(QrCodeGenerator.GeneratePng(BuildAccessUrl(), 200), ct); return; }
+            if (path == "/api/files" && method == "GET")
             {
-                await ApiInfo(ctx);
+                RefreshSharedFiles();
+                var list = _sharedFiles.Values.Select(f => new { f.RelativePath, f.FileName, f.Size,
+                    LastModified = f.LastModified.ToString("o"), f.ContentType, IsFolder = false }).ToList();
+                foreach (var dir in EnumerateSafe(_shareDir).Where(Directory.Exists))
+                {
+                    var rel = Path.GetRelativePath(_shareDir, dir).Replace('\\', '/');
+                    if (!list.Any(f => f.RelativePath.StartsWith(rel + "/", StringComparison.Ordinal)))
+                        list.Add(new { RelativePath = rel, FileName = Path.GetFileName(dir), Size = 0L,
+                            LastModified = Directory.GetLastWriteTimeUtc(dir).ToString("o"), ContentType = "", IsFolder = true });
+                }
+                // Keep the existing PascalCase browser protocol.
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync(JsonSerializer.Serialize(list), ct); return;
             }
-            else if (path == "/api/files")
+            if (path.StartsWith("/download/", StringComparison.Ordinal) && method == "GET")
             {
-                if (method == "GET")
-                    await ApiListFiles(ctx);
-                else if (method == "DELETE")
-                    await ApiDeleteFile(ctx);
+                var file = SafeSharePath.Resolve(_shareDir, Uri.UnescapeDataString(path[10..]));
+                if (!File.Exists(file)) { ctx.Response.StatusCode = 404; return; }
+                ctx.Response.Headers["Content-Security-Policy"] = "sandbox; default-src 'none'";
+                ctx.Response.Headers.ContentDisposition = "attachment; filename*=UTF-8''" + Uri.EscapeDataString(Path.GetFileName(file));
+                ctx.Response.ContentType = GetContentType(Path.GetExtension(file));
+                await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read, 65536, true);
+                ctx.Response.ContentLength = stream.Length; await stream.CopyToAsync(ctx.Response.Body, ct); return;
             }
-            else if (path == "/api/upload" && method == "POST")
-            {
-                await ApiUpload(ctx, ct);
-            }
-            else if (path == "/api/folder" && method == "POST")
-            {
-                await ApiCreateFolder(ctx);
-            }
-            else if (path == "/api/clear" && method == "DELETE")
-            {
-                await ApiClearAll(ctx);
-            }
-            else if (path == "/qr")
-            {
-                await ServeQrCode(ctx);
-            }
-            else if (path.StartsWith("/download/"))
-            {
-                await ServeFile(ctx, path["/download/".Length..]);
-            }
-            else
-            {
-                ctx.Response.StatusCode = 404;
-                ctx.Response.Close();
-            }
-        }
-        catch (Exception ex)
-        {
+            if (method is not ("POST" or "DELETE")) { ctx.Response.StatusCode = 405; return; }
+            if (!await Mutations.WaitAsync(0, ct)) { ctx.Response.StatusCode = 429; return; }
             try
             {
-                var errBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { error = ex.Message }));
-                ctx.Response.StatusCode = 500;
-                ctx.Response.ContentType = "application/json";
-                await ctx.Response.OutputStream.WriteAsync(errBytes, ct);
-                ctx.Response.Close();
-            }
-            catch { }
-        }
-    }
-
-    private static async Task ServeHtml(HttpListenerContext ctx)
-    {
-        ctx.Response.ContentType = "text/html; charset=utf-8";
-        var html = FluentPageHtml.GetHtml();
-        var bytes = Encoding.UTF8.GetBytes(html);
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
-    }
-
-    private static async Task ApiInfo(HttpListenerContext ctx)
-    {
-        string ip;
-        try { ip = GetLocalIp(); }
-        catch { ip = "127.0.0.1"; }
-
-        var url = $"http://{ip}:{_port}/";
-        var json = JsonSerializer.Serialize(new { ip, port = _port, url });
-        ctx.Response.ContentType = "application/json";
-        ctx.Response.StatusCode = 200;
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
-    }
-
-    private static async Task ApiListFiles(HttpListenerContext ctx)
-    {
-        RefreshSharedFiles();
-        var list = _sharedFiles.Values.Select(f => new
-        {
-            f.RelativePath,
-            f.FileName,
-            f.Size,
-            LastModified = f.LastModified.ToString("o"),
-            f.ContentType,
-            IsFolder = false
-        }).ToList();
-
-        if (Directory.Exists(_shareDir))
-        {
-            foreach (var dir in Directory.GetDirectories(_shareDir, "*", SearchOption.TopDirectoryOnly))
-            {
-                var relPath = Path.GetRelativePath(_shareDir, dir).Replace('\\', '/');
-                if (list.Any(x => x.RelativePath.StartsWith(relPath + "/"))) continue;
-                list.Add(new
+                if (path == "/api/upload" && method == "POST") await Upload(ctx);
+                else if (path == "/api/files" && method == "DELETE")
                 {
-                    RelativePath = relPath,
-                    FileName = Path.GetFileName(dir),
-                    Size = (long)0,
-                    LastModified = Directory.GetLastWriteTimeUtc(dir).ToString("o"),
-                    ContentType = "",
-                    IsFolder = true
-                });
+                    var body = await RequestLimits.ReadJsonAsync(ctx.Request);
+                    var full = SafeSharePath.Resolve(_shareDir, body.GetProperty("path").GetString() ?? "");
+                    if (File.Exists(full)) File.Delete(full); else if (Directory.Exists(full)) SafeSharePath.DeleteTree(full);
+                }
+                else if (path == "/api/folder" && method == "POST")
+                {
+                    var body = await RequestLimits.ReadJsonAsync(ctx.Request);
+                    Directory.CreateDirectory(SafeSharePath.Resolve(_shareDir, body.GetProperty("name").GetString() ?? ""));
+                }
+                else if (path == "/api/clear" && method == "DELETE") ClearAll();
+                else { ctx.Response.StatusCode = 404; return; }
+                RefreshSharedFiles(); StateChanged?.Invoke();
+                await ctx.Response.WriteAsJsonAsync(new { ok = true }, ct);
             }
+            finally { Mutations.Release(); }
         }
-
-        var json = JsonSerializer.Serialize(list);
-        ctx.Response.ContentType = "application/json";
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
+        catch (UnauthorizedAccessException) { ctx.Response.StatusCode = 403; }
+        catch (BadHttpRequestException) { throw; }
+        catch (Exception ex) when (ex is ArgumentException or JsonException or KeyNotFoundException or InvalidDataException)
+        { ctx.Response.StatusCode = 400; }
+        catch (IOException) when (!ctx.Response.HasStarted) { ctx.Response.StatusCode = 409; }
     }
 
-    private static async Task ApiDeleteFile(HttpListenerContext ctx)
+    private static async Task Upload(HttpContext ctx)
     {
-        using var reader = new StreamReader(ctx.Request.InputStream);
-        var body = await reader.ReadToEndAsync();
-        var data = JsonSerializer.Deserialize<JsonElement>(body);
-        var relPath = data.GetProperty("path").GetString() ?? "";
-
-        var fullPath = Path.Combine(_shareDir, relPath.Replace('/', '\\'));
-        if (File.Exists(fullPath))
-            File.Delete(fullPath);
-        else if (Directory.Exists(fullPath))
-            Directory.Delete(fullPath, true);
-
-        RefreshSharedFiles();
-        ctx.Response.ContentType = "application/json";
-        var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
-    }
-
-    private static async Task ApiUpload(HttpListenerContext ctx, CancellationToken ct)
-    {
-        var contentType = ctx.Request.ContentType ?? "";
-        if (contentType.Contains("multipart/form-data"))
+        if (ctx.Request.ContentLength > MaxUploadBytes) throw new BadHttpRequestException("文件过大", 413);
+        var used = EnumerateSafe(_shareDir).Where(File.Exists).Sum(f => new FileInfo(f).Length);
+        var free = AvailableSpaceForTests?.Invoke() ?? new DriveInfo(Path.GetPathRoot(_shareDir)!).AvailableFreeSpace;
+        // Keep at least 1 GiB free for Windows instead of filling a small system volume up to the quota.
+        var remaining = Math.Min(MaxUploadBytes, Math.Max(0, Math.Min(MaxShareBytes - used, free - (1L << 30))));
+        var media = MediaTypeHeaderValue.Parse(ctx.Request.ContentType ?? "application/octet-stream");
+        if (media.MediaType.Equals("multipart/form-data", StringComparison.OrdinalIgnoreCase))
         {
-            var boundary = ExtractBoundary(contentType);
-            await ParseMultipartUpload(ctx, boundary, ct);
+            var boundary = HeaderUtilities.RemoveQuotes(media.Boundary).Value;
+            if (string.IsNullOrEmpty(boundary) || boundary.Length > 128) throw new BadHttpRequestException("上传格式错误", 400);
+            var reader = new MultipartReader(boundary, ctx.Request.Body)
+            { HeadersCountLimit = 16, HeadersLengthLimit = 8192, BodyLengthLimit = MaxUploadBytes };
+            MultipartSection? section; int count = 0;
+            while ((section = await reader.ReadNextSectionAsync(ctx.RequestAborted)) is not null)
+            {
+                if (++count > 1000) throw new BadHttpRequestException("单次上传文件过多", 413);
+                var disposition = ContentDispositionHeaderValue.Parse(section.ContentDisposition);
+                var name = HeaderUtilities.RemoveQuotes(disposition.FileNameStar.HasValue ? disposition.FileNameStar : disposition.FileName).Value;
+                if (string.IsNullOrWhiteSpace(name)) throw new BadHttpRequestException("缺少文件名", 400);
+                remaining -= await SaveUpload(section.Body, name, remaining, ctx.RequestAborted);
+            }
         }
         else
         {
-            var fileName = ctx.Request.Headers["X-File-Name"] ?? "upload";
-            fileName = Uri.UnescapeDataString(fileName);
-            var destPath = Path.Combine(_shareDir, fileName);
-            Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
-            using var fs = File.Create(destPath);
-            await ctx.Request.InputStream.CopyToAsync(fs, ct);
+            var name = Uri.UnescapeDataString(ctx.Request.Headers["X-File-Name"].FirstOrDefault() ?? "upload");
+            await SaveUpload(ctx.Request.Body, name, remaining, ctx.RequestAborted);
         }
-
-        RefreshSharedFiles();
-        ctx.Response.ContentType = "application/json";
-        var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
     }
 
-    private static async Task ApiCreateFolder(HttpListenerContext ctx)
+    private static async Task<long> SaveUpload(Stream body, string name, long limit, CancellationToken ct)
     {
-        using var reader = new StreamReader(ctx.Request.InputStream);
-        var body = await reader.ReadToEndAsync();
-        var data = JsonSerializer.Deserialize<JsonElement>(body);
-        var folderName = data.GetProperty("name").GetString() ?? "New Folder";
-        var fullPath = Path.Combine(_shareDir, folderName.Replace('/', '\\'));
-        Directory.CreateDirectory(fullPath);
-        RefreshSharedFiles();
-        ctx.Response.ContentType = "application/json";
-        var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
-    }
-
-    private static async Task ApiClearAll(HttpListenerContext ctx)
-    {
-        ClearAll();
-        ctx.Response.ContentType = "application/json";
-        var bytes = Encoding.UTF8.GetBytes("{\"ok\":true}");
-        await ctx.Response.OutputStream.WriteAsync(bytes);
-        ctx.Response.Close();
-    }
-
-    private static async Task ServeQrCode(HttpListenerContext ctx)
-    {
-        var ip = GetLocalIp();
-        var url = $"http://{ip}:{_port}/";
-        var png = QrCodeGenerator.GeneratePng(url, 200);
-        ctx.Response.ContentType = "image/png";
-        ctx.Response.ContentLength64 = png.Length;
-        await ctx.Response.OutputStream.WriteAsync(png);
-        ctx.Response.Close();
-    }
-
-    private static async Task ServeFile(HttpListenerContext ctx, string relPath)
-    {
-        relPath = Uri.UnescapeDataString(relPath);
-        var fullPath = Path.Combine(_shareDir, relPath.Replace('/', '\\'));
-
-        if (!File.Exists(fullPath))
+        var destination = SafeSharePath.Resolve(_shareDir, name);
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+        var temporary = SafeSharePath.Resolve(_shareDir, ".upload-" + Guid.NewGuid().ToString("N"));
+        try
         {
-            ctx.Response.StatusCode = 404;
-            ctx.Response.Close();
-            return;
+            long size;
+            await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 65536, true))
+                size = await RequestLimits.CopyBoundedAsync(body, output, limit, ct);
+            SafeSharePath.Resolve(_shareDir, name);
+            File.Move(temporary, destination, true);
+            return size;
         }
-
-        var fi = new FileInfo(fullPath);
-        ctx.Response.ContentType = GetContentType(fi.Extension);
-        ctx.Response.ContentLength64 = fi.Length;
-        ctx.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{Uri.EscapeDataString(fi.Name)}\"");
-
-        using var fs = fi.OpenRead();
-        await fs.CopyToAsync(ctx.Response.OutputStream);
-        ctx.Response.Close();
-    }
-
-    private static string ExtractBoundary(string contentType)
-    {
-        var parts = contentType.Split(';');
-        foreach (var part in parts)
-        {
-            var trimmed = part.Trim();
-            if (trimmed.StartsWith("boundary=", StringComparison.OrdinalIgnoreCase))
-                return trimmed["boundary=".Length..].Trim('"');
-        }
-        return "----boundary";
-    }
-
-    private static async Task ParseMultipartUpload(HttpListenerContext ctx, string boundary, CancellationToken ct)
-    {
-        using var ms = new MemoryStream();
-        await ctx.Request.InputStream.CopyToAsync(ms, ct);
-        ms.Position = 0;
-        var data = ms.ToArray();
-        var boundaryBytes = Encoding.UTF8.GetBytes($"--{boundary}");
-        var endBoundaryBytes = Encoding.UTF8.GetBytes($"--{boundary}--");
-
-        var pos = 0;
-        while (pos < data.Length)
-        {
-            var boundaryStart = IndexOf(data, boundaryBytes, pos);
-            if (boundaryStart < 0) break;
-
-            var headerStart = boundaryStart + boundaryBytes.Length + 2;
-            var headerEnd = IndexOf(data, Encoding.UTF8.GetBytes("\r\n\r\n"), headerStart);
-            if (headerEnd < 0) break;
-
-            var headerText = Encoding.UTF8.GetString(data, headerStart, headerEnd - headerStart);
-            var contentStart = headerEnd + 4;
-
-            var nextBoundary = IndexOf(data, boundaryBytes, contentStart);
-            if (nextBoundary < 0) break;
-
-            var contentEnd = nextBoundary - 2;
-            if (contentEnd < contentStart) { pos = nextBoundary; continue; }
-
-            var fileName = ExtractFileNameFromHeader(headerText);
-            if (fileName is not null)
-            {
-                var destPath = Path.Combine(_shareDir, fileName.Replace('/', '\\'));
-                Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
-                using var fs = File.Create(destPath);
-                fs.Write(data, contentStart, contentEnd - contentStart);
-            }
-
-            pos = nextBoundary;
-        }
-    }
-
-    private static string? ExtractFileNameFromHeader(string header)
-    {
-        foreach (var line in header.Split("\r\n"))
-        {
-            if (!line.StartsWith("Content-Disposition:", StringComparison.OrdinalIgnoreCase)) continue;
-            var parts = line.Split(';');
-            foreach (var part in parts)
-            {
-                var trimmed = part.Trim();
-                if (trimmed.StartsWith("filename=", StringComparison.OrdinalIgnoreCase))
-                {
-                    var name = trimmed["filename=".Length..].Trim('"');
-                    return Uri.UnescapeDataString(name);
-                }
-            }
-        }
-        return null;
-    }
-
-    private static int IndexOf(byte[] source, byte[] pattern, int startIndex)
-    {
-        for (var i = startIndex; i <= source.Length - pattern.Length; i++)
-        {
-            var found = true;
-            for (var j = 0; j < pattern.Length; j++)
-            {
-                if (source[i + j] != pattern[j]) { found = false; break; }
-            }
-            if (found) return i;
-        }
-        return -1;
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
     private static string GetContentType(string extension)

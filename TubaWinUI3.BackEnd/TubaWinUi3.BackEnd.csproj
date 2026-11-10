@@ -40,6 +40,7 @@
       - MonitorSample.cs：FpsSnapshot 等纯数据模型。
     -->
     <Compile Include="..\TubaWinUi3.WinUI3\Services\FpsTracker.cs" Link="GameMonitor\FpsTracker.cs" />
+    <Compile Include="..\TubaWinUi3.WinUI3\Services\FrameScopeFrameStatistics.cs" Link="GameMonitor\FrameScopeFrameStatistics.cs" />
     <Compile Include="..\TubaWinUi3.WinUI3\Models\MonitorSample.cs" Link="GameMonitor\MonitorSample.cs" />
   </ItemGroup>
 </Project>

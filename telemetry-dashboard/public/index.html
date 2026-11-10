@@ -259,6 +259,9 @@
   .cards > :nth-child(3n) { animation-delay: .12s; }
   .card header { flex-wrap: wrap; }
   #error-table { overflow-x: auto; }
+  #tool-results { max-height: 440px; overflow: auto; }
+  #tool-results th { position: sticky; top: 0; background: var(--card); }
+  #tool-results td:first-child { overflow-wrap: anywhere; }
   #error-table table { min-width: 740px; }
   .chart svg { animation: chart-in .45s ease both; overflow: visible; }
   .chart svg path[fill="none"] { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: draw-line 1.2s ease forwards; }
@@ -395,9 +398,8 @@
   </section>
 
   <div class="section-heading" id="tools"><h2>工具热度</h2><p>近 7 天的热门与低热度工具，帮助了解工具的实际使用情况</p></div>
-  <div class="toolbar" id="tools-controls">
+  <div class="toolbar hidden" id="tools-controls">
     <label>统计指标 <select id="tools-metric"><option value="uses">启动次数</option><option value="devices">使用设备数</option></select></label>
-    <label>筛选当前榜单 <input type="search" id="tools-search" placeholder="输入工具名称" aria-label="筛选当前工具榜单"></label>
   </div>
   <section class="cards">
     <article class="card" id="card-tools">
@@ -412,9 +414,18 @@
       <header><h2>热度最低的工具</h2><span class="tag">后 10 名 · 从低到高</span></header>
       <div class="chart" id="c-tools-least"></div>
       <div class="locked hidden" id="tools-least-locked">🔒 工具使用明细仅管理员可见 <button id="btn-unlock-least">输入口令解锁</button></div>
-      <p class="note">仅统计近 7 天有启动记录的工具；未上报或零启动的工具不参与排名，次数相同按名称排序。</p>
+      <p class="note">0 表示近 7 天没有收到该工具的启动记录。同分按名称排序。</p>
     </article>
   </section>
+
+  <article class="card hidden" id="tool-directory">
+    <header><h2>全部工具</h2><span class="tag">近 7 天 · 含无上报记录的目录工具</span></header>
+    <div class="toolbar">
+      <label>搜索全部工具 <input type="search" id="tools-search" placeholder="工具名称或 ID"></label>
+      <span class="muted" id="tool-result-count" aria-live="polite"></span>
+    </div>
+    <div id="tool-results" tabindex="0" role="region" aria-label="全部工具搜索结果"></div>
+  </article>
 
   <div class="section-heading" id="errors"><h2>异常详情</h2><p>按异常类型定位问题，点击记录展开堆栈</p></div>
   <section class="card">
@@ -637,6 +648,7 @@
     renderDownloads(panels.downloads, isFull);
     renderTools(panels.tools, isFull, errors.tools);
     renderTools(panels.toolsLeast, isFull, errors.toolsLeast, true);
+    renderToolDirectory(panels.toolsAll, isFull, errors.toolsAll);
     document.getElementById('tools-controls').classList.toggle('hidden', !isFull);
     document.getElementById('btn-force').classList.toggle('hidden', !isFull);
     document.querySelectorAll('[data-trend-range]').forEach(function (el) { el.textContent = '近 ' + trendDays + ' 天'; });
@@ -833,10 +845,34 @@
       el.innerHTML = '<div class="empty">工具热度暂时查询失败，请稍后刷新</div>';
       return;
     }
-    var rows = ((panel && panel.rows) || []).filter(function (r) { return String(r[0]).toLowerCase().includes(document.getElementById('tools-search').value.toLowerCase().trim()); }).slice(0, 10).map(function (r) {
+    var rows = panel.rows.map(function (r) {
       return { name: String(r[0] || '未知'), value: Number(r[toolMetric === 'devices' ? 2 : 1]) || 0, unit: toolMetric === 'devices' ? ' 台' : ' 次', sub: toolMetric === 'devices' ? (Number(r[1]) || 0) + ' 次启动' : (Number(r[2]) || 0) + ' 台设备' };
     });
-    hbar(el, rows, least ? PALETTE[5] : PALETTE[0], document.getElementById('tools-search').value.trim() ? '当前榜单没有匹配的工具' : '暂无工具使用数据。更新到支持工具统计的版本后，使用工具即可逐步生成热度排行。');
+    hbar(el, rows, least ? PALETTE[5] : PALETTE[0], '暂无工具统计');
+  }
+
+  function renderToolDirectory(panel, isFull, error) {
+    var host = document.getElementById('tool-results');
+    var count = document.getElementById('tool-result-count');
+    document.getElementById('tool-directory').classList.toggle('hidden', !isFull);
+    count.textContent = '';
+    if (!isFull) { host.innerHTML = ''; return; }
+    if (error || !panel) {
+      host.innerHTML = '<div class="empty">工具统计暂时查询失败，请稍后刷新</div>';
+      return;
+    }
+    var search = document.getElementById('tools-search').value.trim().toLowerCase();
+    var rows = panel.rows.filter(function (row) {
+      return (row[0] + ' ' + (row[3] || '')).toLowerCase().includes(search);
+    });
+    count.textContent = '显示 ' + rows.length + ' / ' + panel.rows.length + ' 项';
+    if (!rows.length) { host.innerHTML = '<div class="empty">没有匹配的工具</div>'; return; }
+    host.innerHTML = '<table><thead><tr><th scope="col">工具</th><th scope="col" class="num">启动次数</th><th scope="col" class="num">使用设备数</th></tr></thead><tbody>'
+      + rows.map(function (row) {
+        var id = row[4] && row[4] !== row[0] ? '<div class="muted">' + esc(row[4]) + '</div>' : '';
+        return '<tr><td>' + esc(row[0]) + id + '</td><td class="num">' + Number(row[1]).toLocaleString()
+          + '</td><td class="num">' + Number(row[2]).toLocaleString() + '</td></tr>';
+      }).join('') + '</tbody></table>';
   }
 
   function renderErrors(panel, isFull, error) {
@@ -1153,7 +1189,7 @@
         '<span>' + esc(item.name) + '</span>' +
         '<span style="color:var(--fg-3)">' + item.value + (item.unit || ' 次') + (item.sub ? ' · ' + item.sub : '') + '</span></div>' +
         '<div style="height:6px;border-radius:3px;background:var(--grid)">' +
-        '<div class="tool-bar" style="height:6px;border-radius:3px;background:' + color + ';width:' + Math.max(2, pct) + '%"></div></div></div>';
+        '<div class="tool-bar" style="height:6px;border-radius:3px;background:' + color + ';width:' + (item.value > 0 ? Math.max(2, pct) : 0) + '%"></div></div></div>';
     }).join('');
   }
 
@@ -1214,9 +1250,7 @@
   document.getElementById('trend-type').addEventListener('change', function (e) { trendType = e.target.value; redraw(); });
   document.getElementById('tools-search').addEventListener('input', function () {
     if (!lastData) return;
-    var panels = lastData.panels || {}, errors = lastData.errors || {};
-    renderTools(panels.tools, lastData.mode === 'full', errors.tools);
-    renderTools(panels.toolsLeast, lastData.mode === 'full', errors.toolsLeast, true);
+    renderToolDirectory(lastData.panels?.toolsAll, lastData.mode === 'full', lastData.errors?.toolsAll);
   });
   document.getElementById('tools-metric').addEventListener('change', function (e) { toolMetric = e.target.value; load(); });
   document.getElementById('btn-auto').addEventListener('click', function () {

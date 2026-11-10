@@ -70,7 +70,8 @@ public sealed partial class DashboardContentEditor : UserControl
         Grid.SetRow(LibraryResultsBorder, _narrow ? 2 : 3);
         SelectedHeading.Visibility = OrderHint.Visibility = _narrow ? Visibility.Collapsed : Visibility.Visible;
         LibraryPane.Height = bodyHeight;
-        SelectedPane.Height = Math.Max(440, bodyHeight);
+        SelectedPane.Height = bodyHeight;
+        DetailsScroll.MaxHeight = Math.Max(60, bodyHeight * 0.45);
         ShowPane();
     }
 

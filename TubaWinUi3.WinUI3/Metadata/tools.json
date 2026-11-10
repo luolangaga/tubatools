@@ -279,18 +279,6 @@
       "version": 1
     },
     {
-      "match": "AMD显卡驱动",
-      "order": 16,
-      "description": "AMD 显卡驱动程序官方下载入口。",
-      "publisher": "AMD",
-      "tags": [
-        "显卡",
-        "驱动下载"
-      ],
-      "downloadUrl": "gc:Tools/显卡工具/AMD显卡驱动下载",
-      "version": 1
-    },
-    {
       "match": "FurMark_win64",
       "order": 18,
       "description": "FurMark 2（64 位）GPU 压力测试和烤机工具，支持 Vulkan 和 OpenGL，用于检测显卡稳定性。",
@@ -492,18 +480,6 @@
       "version": 1
     },
     {
-      "match": "SSD utils",
-      "order": 31,
-      "description": "SSD 固态硬盘在线工具入口，提供 SSD 相关在线检测和优化。",
-      "publisher": "",
-      "tags": [
-        "硬盘",
-        "SSD"
-      ],
-      "downloadUrl": "gc:Tools/硬盘工具/SSD utils",
-      "version": 1
-    },
-    {
       "match": "SSDZ",
       "order": 32,
       "description": "SSD 固态硬盘信息查看和健康检测工具。",
@@ -564,19 +540,6 @@
         "空间分析"
       ],
       "downloadUrl": "gc:Tools/硬盘工具/WizTree",
-      "version": 1
-    },
-    {
-      "match": "FlashMaster",
-      "order": 37,
-      "description": "U盘量产工具，用于 U盘芯片检测和量产修复。",
-      "publisher": "",
-      "tags": [
-        "硬盘",
-        "U盘",
-        "量产"
-      ],
-      "downloadUrl": "gc:Tools/硬盘工具/FlashMaster",
       "version": 1
     },
     {
@@ -797,18 +760,6 @@
       "version": 1
     },
     {
-      "match": "在线外设测试",
-      "order": 55,
-      "description": "在线外设综合测试中心，通过浏览器测试鼠标、键盘和显示器。",
-      "publisher": "",
-      "tags": [
-        "外设",
-        "在线测试"
-      ],
-      "downloadUrl": "gc:Tools/外设工具/在线外设测试中心",
-      "version": 1
-    },
-    {
       "match": "AIDA64",
       "order": 56,
       "description": "系统硬件信息、传感器监控和稳定性测试工具。",
@@ -997,34 +948,6 @@
       ]
     },
     {
-      "match": "Dism++",
-      "order": 66,
-      "description": "Windows 系统精简和优化工具，基于 DISM 的图形化系统管理工具。",
-      "tutorialUrl": "https://tubawinui3.cn/tutorials/dism-plus-plus",
-      "publisher": "Chuyu Team",
-      "tags": [
-        "系统",
-        "系统优化",
-        "精简"
-      ],
-      "downloadUrl": "gc:Tools/其他工具/Dism++",
-      "archVariants": [
-        {
-          "file": "Dism++x86.exe",
-          "arch": "x86"
-        },
-        {
-          "file": "Dism++x64.exe",
-          "arch": "x64"
-        },
-        {
-          "file": "Dism++ARM64.exe",
-          "arch": "ARM64"
-        }
-      ],
-      "version": 3
-    },
-    {
       "match": "Everything",
       "order": 67,
       "description": "超快文件搜索工具，基于 NTFS USN 日志实现瞬间文件名搜索。",
@@ -1078,18 +1001,6 @@
       "categories": [
         "显卡工具"
       ]
-    },
-    {
-      "match": "next_itellyou",
-      "order": 71,
-      "description": "MSDN I Tell You 在线系统镜像下载入口，提供微软原版系统镜像。",
-      "publisher": "",
-      "tags": [
-        "系统",
-        "系统镜像"
-      ],
-      "downloadUrl": "gc:Tools/其他工具/next_itellyou",
-      "version": 1
     },
     {
       "match": "Process Explorer",
@@ -1337,18 +1248,6 @@
       "version": 1
     },
     {
-      "match": "卡巴斯基",
-      "order": 87,
-      "description": "目前最厉害的杀毒软件",
-      "publisher": "Kaspersky",
-      "tags": [
-        "杀毒",
-        "安全"
-      ],
-      "downloadUrl": "gc:Tools/其他工具/卡巴斯基",
-      "version": 1
-    },
-    {
       "match": "RoboCopyEx",
       "order": 88,
       "description": "取代 Windows 自带复制和粘贴的高性能文件复制工具",
@@ -1499,8 +1398,8 @@
       ]
     },
     {
-      "match": "社区工具",
-      "builtin": "community-tools",
+      "match": "插件",
+      "builtin": "plugins",
       "categories": [
         "其他工具"
       ]
@@ -1628,14 +1527,6 @@
     },
     {
       "match": "procexp",
-      "category": "其他工具"
-    },
-    {
-      "match": "游戏加加",
-      "category": "其他工具"
-    },
-    {
-      "match": "皮肤编辑器",
       "category": "其他工具"
     },
     {
@@ -1779,13 +1670,17 @@
       ]
     },
     {
+      "match": "AI助手",
+      "builtin": "ai-assistant",
+      "categories": ["其他工具"]
+    },
+    {
       "match": "本地AI试炼场",
       "builtin": "ai-playground",
       "categories": [
         "其他工具"
       ]
     },
-    { "match": "Steam 工具箱", "builtin": "steam-toolbox", "categories": ["游戏工具"] },
     { "match": "网站加速", "builtin": "website-acceleration", "categories": ["网络工具"] }
   ]
 }

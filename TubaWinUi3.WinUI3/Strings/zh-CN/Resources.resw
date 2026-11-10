@@ -161,9 +161,7 @@
   <data name="MainWindow_NavBenchmark.Content" xml:space="preserve">
     <value>性能测试</value>
   </data>
-  <data name="MainWindow_NavCommunity.Content" xml:space="preserve">
-    <value>社区</value>
-  </data>
+  <data name="MainWindow_NavCommunity.Content" xml:space="preserve"><value>插件</value></data>
   <data name="MainWindow_NewbieTutorialButton" xml:space="preserve">
     <value>新手教程</value>
   </data>
@@ -759,15 +757,9 @@
   <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
     <value>关闭主窗口时最小化到系统托盘</value>
   </data>
-  <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve">
-    <value>提交工具</value>
-  </data>
-  <data name="Settings_CommunitySubmit_Desc.Text" xml:space="preserve">
-    <value>将工具提交到社区仓库，审核通过后所有人可见</value>
-  </data>
-  <data name="Settings_CommunitySubmit_Title.Text" xml:space="preserve">
-    <value>提交社区工具</value>
-  </data>
+  <data name="Settings_CommunitySubmit_Button.Text" xml:space="preserve"><value>上传插件</value></data>
+  <data name="Settings_CommunitySubmit_Desc.Text" xml:space="preserve"><value>打开 NuGet 上传页面并查看插件开发文档</value></data>
+  <data name="Settings_CommunitySubmit_Title.Text" xml:space="preserve"><value>发布插件</value></data>
   <data name="Settings_Compact_Desc.Text" xml:space="preserve">
     <value>原版图吧工具箱的样式</value>
   </data>
@@ -2004,12 +1996,8 @@
   </data>
 
   <!-- 内置工具名称与简介（第三轮） -->
-  <data name="Builtin_ai-assistant_Desc" xml:space="preserve">
-    <value>智能系统代理，可诊断问题、优化配置、读写文件、执行命令、联网搜索并执行操作。</value>
-  </data>
-  <data name="Builtin_ai-assistant_Name" xml:space="preserve">
-    <value>AI 助手</value>
-  </data>
+  <data name="Builtin_ai-assistant_Desc" xml:space="preserve"><value>对话解决问题，使用 AI 开发、编译并加载工具箱插件。</value></data>
+  <data name="Builtin_ai-assistant_Name" xml:space="preserve"><value>AI 助手</value></data>
   <data name="Builtin_anti-motion-sickness_Desc" xml:space="preserve">
     <value>屏幕中央准星+四边标记辅助，缓解3D眩晕。一键帮你节约13块钱！</value>
   </data>
@@ -2197,7 +2185,7 @@
     <value>端口占用</value>
   </data>
   <data name="Builtin_quick-device-check_Desc" xml:space="preserve">
-    <value>新电脑验机向导：外观检查、硬件信息、硬盘通电、屏幕坏点、外设测试、摄像头、音频、三烤测试，一站式完成</value>
+    <value>新电脑验机向导：外观检查、硬件信息、硬盘通电、屏幕坏点、外设测试、摄像头、音频录放、CPU 和 GPU 烤机，一站式完成</value>
   </data>
   <data name="Builtin_quick-device-check_Name" xml:space="preserve">
     <value>快速验机</value>
@@ -2245,10 +2233,10 @@
     <value>启动项管理</value>
   </data>
   <data name="Builtin_stress-test_Desc" xml:space="preserve">
-    <value>CPU / GPU / 网卡压力测试工具，自由勾选烤机项目（CPU、GPU、网卡），网卡烤机支持自定义数据量与速率参考，实时监控温度、频率、功耗与网卡吞吐。</value>
+    <value>CPU 和 GPU 压力测试，支持单烤与双烤，实时监控温度、频率和功耗。</value>
   </data>
   <data name="Builtin_stress-test_Name" xml:space="preserve">
-    <value>一键三烤</value>
+    <value>CPU / GPU 烤机</value>
   </data>
   <data name="Builtin_phone-link_Desc" xml:space="preserve">
     <value>手机端通过局域网（二维码 / 配对码 / IP）连接电脑，实时查看硬件监控与屏幕截图，远程执行 PowerShell、winget 安装软件，并与电脑互传文字、图片和文件。</value>
@@ -5164,9 +5152,9 @@ else then stroke=#888888 visible=true
   <data name="Dashboard_CleanupDesc" xml:space="preserve"><value>通过多种方式，快速清理电脑空间</value></data>
   <data name="Dashboard_CleanupTitle" xml:space="preserve"><value>垃圾清理</value></data>
   <data name="Dashboard_Copied" xml:space="preserve"><value>群号已复制</value></data>
-  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>在 QQ 中搜索群号 485079194，即可申请加入。</value></data>
+  <data name="Dashboard_CopiedDesc" xml:space="preserve"><value>在 QQ 中搜索群号 1124067964，即可申请加入。</value></data>
   <data name="Dashboard_CopyFailed" xml:space="preserve"><value>复制失败</value></data>
-  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 485079194。</value></data>
+  <data name="Dashboard_CopyFailedDesc" xml:space="preserve"><value>剪贴板正被其它程序占用，请稍后再试，或手动搜索群号 1124067964。</value></data>
   <data name="Dashboard_Description" xml:space="preserve"><value>自定义介绍（留空使用默认）</value></data>
   <data name="Dashboard_EditFailed" xml:space="preserve"><value>无法编辑首页</value></data>
   <data name="Dashboard_GameDesc" xml:space="preserve"><value>检测游戏帧率等数据，随时掌握游戏表现</value></data>
@@ -5178,7 +5166,7 @@ else then stroke=#888888 visible=true
   <data name="Dashboard_HardwareDesc" xml:space="preserve"><value>检查你的电脑的配置</value></data>
   <data name="Dashboard_HardwareTitle" xml:space="preserve"><value>硬件信息</value></data>
   <data name="Dashboard_OpenFailed" xml:space="preserve"><value>打开失败</value></data>
-  <data name="Dashboard_QqDesc" xml:space="preserve"><value>485079194 · 和我们一起交流折腾心得</value></data>
+  <data name="Dashboard_QqDesc" xml:space="preserve"><value>1124067964 · 和我们一起交流折腾心得</value></data>
   <data name="Dashboard_QqTitle" xml:space="preserve"><value>QQ 交流群</value></data>
   <data name="Dashboard_Remove" xml:space="preserve"><value>移除此卡片</value></data>
   <data name="Dashboard_Save" xml:space="preserve"><value>保存</value></data>
@@ -5236,8 +5224,8 @@ else then stroke=#888888 visible=true
   <data name="Dashboard_StartupDesc" xml:space="preserve"><value>管理开机启动项目，让电脑启动更清爽</value></data>
   <data name="Dashboard_BatteryTitle" xml:space="preserve"><value>电池消耗分析</value></data>
   <data name="Dashboard_BatteryDesc" xml:space="preserve"><value>分析电池消耗趋势，查看应用耗电排行</value></data>
-  <data name="Dashboard_StressTitle" xml:space="preserve"><value>一键三烤</value></data>
-  <data name="Dashboard_StressDesc" xml:space="preserve"><value>同时测试 CPU、GPU 和网卡，监控温度与功耗</value></data>
+  <data name="Dashboard_StressTitle" xml:space="preserve"><value>CPU / GPU 烤机</value></data>
+  <data name="Dashboard_StressDesc" xml:space="preserve"><value>同时测试 CPU 和 GPU，监控温度与功耗</value></data>
   <data name="Settings_GroupUpdates.Text" xml:space="preserve"><value>版本和更新</value></data>
   <data name="Settings_GroupOptionUpdates.Content" xml:space="preserve"><value>版本和更新</value></data>
   <data name="Settings_GroupBehavior.Text" xml:space="preserve"><value>启动和行为</value></data>
@@ -5330,8 +5318,6 @@ else then stroke=#888888 visible=true
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>流氓软件清理</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>连接手机</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>查看日志</value></data>
-  <data name="Builtin_steam-toolbox_Name" xml:space="preserve"><value>Steam 工具箱</value></data>
-  <data name="Builtin_steam-toolbox_Desc" xml:space="preserve"><value>Steam 本机账号、多存储库游戏管理与内置挂时长</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>赞助</value></data>
   <data name="Settings_StarRequest.Text" xml:space="preserve"><value>如果你喜欢我们的项目可以在Github/GitCode给我们一个Star！</value></data>
   <data name="Settings_SponsorList.Content" xml:space="preserve"><value>赞助名单</value></data>
@@ -5342,4 +5328,333 @@ else then stroke=#888888 visible=true
   <data name="Settings_SponsorAlipay.Text" xml:space="preserve"><value>支付宝</value></data>
   <data name="Builtin_website-acceleration_Name" xml:space="preserve"><value>网站加速</value></data>
   <data name="Builtin_website-acceleration_Desc" xml:space="preserve"><value>内置网站加速，支持服务全选、实时流量图表与连接详情</value></data>
+  <data name="UpdateBanner_DownloadedVerifyOnInstall" xml:space="preserve"><value>更新已下载，安装前会校验文件</value></data>
+  <data name="Persistence_ErrorTitle" xml:space="preserve"><value>保存失败</value></data>
+  <data name="Persistence_SettingsError" xml:space="preserve"><value>设置保存失败，请检查数据目录权限和剩余空间后重试。</value></data>
+  <data name="Persistence_FavoritesError" xml:space="preserve"><value>收藏保存失败，请检查数据目录权限和剩余空间后重试。</value></data>
+  <data name="Hw_PortsButton.Content" xml:space="preserve"><value>接口支持</value></data>
+  <data name="HwPorts_Hint" xml:space="preserve"><value>已排除内置 USB 设备和外接集线器，并合并 USB 2/3 配对端口。系统报告可能包含未接线端口，因此只展示接口能力，不将逻辑端口数当作机身插孔数。速率为标准信号速率，非文件传输速度。</value></data>
+  <data name="HwPorts_Empty" xml:space="preserve"><value>系统未报告可用的接口信息；这不代表设备没有接口。</value></data>
+  <data name="HwPorts_Usb3" xml:space="preserve"><value>USB 3.x（支持 SuperSpeed 5 Gb/s；更高速率上限未报告）</value></data>
+  <data name="HwPorts_Unknown" xml:space="preserve"><value>无法读取</value></data>
+  <data name="HwPorts_SuperPlus" xml:space="preserve"><value>SuperSpeedPlus（10 Gb/s 或更高，具体速率未报告）</value></data>
+  <data name="HwPorts_UsbShapeUnknown" xml:space="preserve"><value>USB（插头形态未报告）</value></data>
+  <data name="HwPorts_External" xml:space="preserve"><value>可供用户连接</value></data>
+  <data name="HwPorts_Internal" xml:space="preserve"><value>内部 / 非用户接口</value></data>
+  <data name="HwPorts_LocationUnknown" xml:space="preserve"><value>位置未报告</value></data>
+  <data name="HwPorts_Disconnected" xml:space="preserve"><value>未连接</value></data>
+  <data name="HwPorts_Connected" xml:space="preserve"><value>已连接</value></data>
+  <data name="HwPorts_ConnectionError" xml:space="preserve"><value>连接异常</value></data>
+  <data name="HwPorts_Protocols" xml:space="preserve"><value>端口协议 / 标准速率</value></data>
+  <data name="HwPorts_CurrentSpeed" xml:space="preserve"><value>当前链路速率</value></data>
+  <data name="HwPorts_LinkDown" xml:space="preserve"><value>未连接或无法读取</value></data>
+  <data name="HwPorts_DisplayConnection" xml:space="preserve"><value>当前显示连接类型；接口版本无法读取（转接器可能影响报告结果）</value></data>
+  <data name="HwPorts_ControllerOnly" xml:space="preserve"><value>已检测到控制器；端口数量、版本与速率上限未报告</value></data>
+  <data name="HwPorts_Firmware" xml:space="preserve"><value>固件报告的接口；协议版本及速率未报告</value></data>
+  <data name="HwPorts_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="HwPorts_Refresh" xml:space="preserve"><value>重新检测</value></data>
+  <data name="HwPorts_Group_USBHub" xml:space="preserve"><value>USB 端口与连接速率</value></data>
+  <data name="HwPorts_Group_SMBIOS" xml:space="preserve"><value>固件报告的接口</value></data>
+  <data name="HwPorts_Group_Display" xml:space="preserve"><value>当前显示连接</value></data>
+  <data name="HwPorts_Group_PnP" xml:space="preserve"><value>USB4 / 雷电控制器</value></data>
+  <data name="HwPorts_Group_Network" xml:space="preserve"><value>有线网络连接</value></data>
+  <data name="Hw_PortsLabel.Text" xml:space="preserve"><value>接口支持</value></data>
+  <data name="HwPorts_UsbOther" xml:space="preserve"><value>USB（其他形态）</value></data>
+  <data name="HwPorts_Usb3Summary" xml:space="preserve"><value>USB 3.x · 5 Gb/s 或更高</value></data>
+  <data name="Builtin_plugins_Name" xml:space="preserve"><value>插件</value></data>
+  <data name="Builtin_plugins_Desc" xml:space="preserve"><value>从 NuGet 发现、安装和管理图吧工具箱插件。</value></data>
+  <data name="Plugins_Title.Text" xml:space="preserve"><value>插件</value></data>
+  <data name="Plugins_Source.Text" xml:space="preserve"><value>来自 nuget.org · Tubatools</value></data>
+  <data name="Plugins_Docs.Content" xml:space="preserve"><value>开发文档</value></data>
+  <data name="Plugins_Upload.Content" xml:space="preserve"><value>上传到 NuGet</value></data>
+  <data name="Plugins_Search.PlaceholderText" xml:space="preserve"><value>搜索插件</value></data>
+  <data name="Plugins_Discover.Header" xml:space="preserve"><value>发现</value></data>
+  <data name="Plugins_Installed.Header" xml:space="preserve"><value>已安装</value></data>
+  <data name="Plugins_Previous.Content" xml:space="preserve"><value>上一页</value></data>
+  <data name="Plugins_Next.Content" xml:space="preserve"><value>下一页</value></data>
+  <data name="Plugins_AlreadyInstalled" xml:space="preserve"><value>已安装</value></data>
+  <data name="Plugins_Install" xml:space="preserve"><value>安装 / 更新</value></data>
+  <data name="Plugins_Empty" xml:space="preserve"><value>未找到插件。插件需要在 NuGet 上标记 Tubatools，且已完成索引。</value></data>
+  <data name="Plugins_Disable" xml:space="preserve"><value>停用</value></data>
+  <data name="Plugins_Enable" xml:space="preserve"><value>启用</value></data>
+  <data name="Plugins_Uninstall" xml:space="preserve"><value>卸载</value></data>
+  <data name="Plugins_Enabled" xml:space="preserve"><value>已启用</value></data>
+  <data name="Plugins_Disabled" xml:space="preserve"><value>已停用</value></data>
+  <data name="Plugins_Loaded" xml:space="preserve"><value>本次会话已加载</value></data>
+  <data name="Plugins_Trust" xml:space="preserve"><value>插件会以工具箱的权限执行代码。请仅安装你信任的作者发布的插件。</value></data>
+  <data name="Plugins_Continue" xml:space="preserve"><value>安装</value></data>
+  <data name="Plugins_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Plugins_InstalledNotice" xml:space="preserve"><value>安装完成。首次安装立即加载；更新请重启应用后使用新版本。</value></data>
+  <data name="Plugins_Restart" xml:space="preserve"><value>设置已保存，重启应用后生效。</value></data>
+  <data name="Plugins_DocsTitle" xml:space="preserve"><value>插件开发文档</value></data>
+  <data name="Plugins_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Agent_Untitled" xml:space="preserve"><value>新对话</value></data>
+  <data name="Agent_Free" xml:space="preserve"><value>免费</value></data>
+  <data name="Agent_Cancelled" xml:space="preserve"><value>任务已停止。</value></data>
+  <data name="Agent_Failed" xml:space="preserve"><value>AI 任务未完成，请检查网络、模型可用性和 AI 组件状态后重试。</value></data>
+  <data name="Agent_ModelError" xml:space="preserve"><value>模型返回错误，请重试或选择其他可用模型。</value></data>
+  <data name="Agent_ToolShell" xml:space="preserve"><value>执行命令</value></data>
+  <data name="Agent_ToolRead" xml:space="preserve"><value>读取文件</value></data>
+  <data name="Agent_ToolEdit" xml:space="preserve"><value>编辑文件</value></data>
+  <data name="Agent_ToolSkill" xml:space="preserve"><value>查看技能</value></data>
+  <data name="Agent_ToolSearch" xml:space="preserve"><value>搜索文件</value></data>
+  <data name="Agent_ToolWeb" xml:space="preserve"><value>查询资料</value></data>
+  <data name="Agent_ToolTask" xml:space="preserve"><value>执行任务</value></data>
+  <data name="Agent_Complete" xml:space="preserve"><value>完成</value></data>
+  <data name="Agent_ToolFailed" xml:space="preserve"><value>失败</value></data>
+  <data name="Agent_Running" xml:space="preserve"><value>进行中</value></data>
+  <data name="Agent_Architecture" xml:space="preserve"><value>AI 组件需要 x64 或 ARM64 系统。</value></data>
+  <data name="Agent_Installing" xml:space="preserve"><value>正在安装AI组件</value></data>
+  <data name="Agent_ReadyToStart" xml:space="preserve"><value>AI 组件已安装，点击准备以连接。</value></data>
+  <data name="Agent_Welcome" xml:space="preserve"><value>首次使用需要安装 AI 组件。模型列表会从组件获取，默认优先使用免费模型。</value></data>
+  <data name="Agent_Starting" xml:space="preserve"><value>正在连接 AI 组件……</value></data>
+  <data name="Agent_NoFreeModel" xml:space="preserve"><value>暂无可用的免费模型，请从列表选择一个模型，或稍后重试。</value></data>
+  <data name="Agent_Ready" xml:space="preserve"><value>已就绪。可直接提问，或描述你想开发的插件。</value></data>
+  <data name="Agent_You" xml:space="preserve"><value>你</value></data>
+  <data name="Agent_Title" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="Agent_Activity" xml:space="preserve"><value>执行过程</value></data>
+  <data name="Agent_Working" xml:space="preserve"><value>正在处理，可随时停止。</value></data>
+  <data name="Agent_Done" xml:space="preserve"><value>任务已完成。</value></data>
+  <data name="Agent_ApproveTitle" xml:space="preserve"><value>允许这次操作？</value></data>
+  <data name="Agent_AllowOnce" xml:space="preserve"><value>允许一次</value></data>
+  <data name="Agent_Reject" xml:space="preserve"><value>拒绝</value></data>
+  <data name="Agent_NoPackages" xml:space="preserve"><value>工作区尚无编译好的插件包。请先让助手完成插件开发和打包。</value></data>
+  <data name="Agent_LoadTrust" xml:space="preserve"><value>加载将以工具箱权限运行生成的代码。请先查看源码和执行结果。</value></data>
+  <data name="Agent_LoadPlugin" xml:space="preserve"><value>加载插件</value></data>
+  <data name="Agent_Load" xml:space="preserve"><value>加载</value></data>
+  <data name="Agent_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Agent_Loaded" xml:space="preserve"><value>插件已动态加载，可在内置工具和分类中打开。</value></data>
+  <data name="Agent_LoadFailed" xml:space="preserve"><value>插件加载失败。请让助手检查包清单、入口、版本号和依赖后重试。</value></data>
+  <data name="Agent_Title.Text" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="Agent_Subtitle.Text" xml:space="preserve"><value>开发插件，或结合本机诊断信息解决电脑问题。</value></data>
+  <data name="Agent_Prepare.Content" xml:space="preserve"><value>准备 AI 组件</value></data>
+  <data name="Agent_New.Content" xml:space="preserve"><value>新对话</value></data>
+  <data name="Agent_Delete.Content" xml:space="preserve"><value>删除对话</value></data>
+  <data name="Agent_Model.PlaceholderText" xml:space="preserve"><value>选择模型</value></data>
+  <data name="Agent_Workspace.Content" xml:space="preserve"><value>工作区</value></data>
+  <data name="Agent_LoadPlugin.Content" xml:space="preserve"><value>加载插件</value></data>
+  <data name="Agent_Prompt.PlaceholderText" xml:space="preserve"><value>描述你的问题，或说：帮我开发一个插件……</value></data>
+  <data name="Agent_Send.Content" xml:space="preserve"><value>发送</value></data>
+  <data name="Agent_Stop.Content" xml:space="preserve"><value>停止</value></data>
+  <data name="MainWindow_NavAiAssistant.Content" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="Markdown_Copy" xml:space="preserve"><value>复制代码</value></data>
+  <data name="Agent_DevelopPrompt" xml:space="preserve"><value>帮我开发一个图吧工具箱插件：</value></data>
+  <data name="Plugins_Develop.Content" xml:space="preserve"><value>AI 开发</value></data>
+  <data name="Agent_Repair.Text" xml:space="preserve"><value>重新安装 AI 组件</value></data>
+  <data name="Agent_ModelBusy" xml:space="preserve"><value>当前模型繁忙或额度已用尽，请稍后重试，或从列表选择其他模型。</value></data>
+  <data name="Agent_ModelNetwork" xml:space="preserve"><value>连接模型服务失败，请检查网络和代理设置后重试。</value></data>
+  <data name="Agent_ToolLoad" xml:space="preserve"><value>自动加载插件</value></data>
+  <data name="Agent_PreparingArguments" xml:space="preserve"><value>正在准备参数…</value></data>
+  <data name="Agent_CommandOutput" xml:space="preserve"><value>命令输出</value></data>
+  <data name="Agent_FileContent" xml:space="preserve"><value>文件内容</value></data>
+  <data name="Agent_SkillContent" xml:space="preserve"><value>技能内容</value></data>
+  <data name="Agent_OperationResult" xml:space="preserve"><value>操作结果</value></data>
+  <data name="Agent_DiffTruncated" xml:space="preserve"><value>其余修改已省略，可在工作区查看完整文件。</value></data>
+  <data name="Agent_AutoLoaded" xml:space="preserve"><value>插件已自动加载</value></data>
+  <data name="Agent_AutoLoadFailed" xml:space="preserve"><value>插件自动加载失败，原版本保持可用</value></data>
+  <data name="Agent_RepairingPlugin" xml:space="preserve"><value>插件加载失败，助手正在检查并修复…</value></data>
+  <data name="Agent_QuestionTitle" xml:space="preserve"><value>需要你的回答</value></data>
+  <data name="Agent_SubmitAnswer" xml:space="preserve"><value>提交回答</value></data>
+  <data name="Agent_SkipQuestion" xml:space="preserve"><value>跳过</value></data>
+  <data name="Agent_QuestionSkipped" xml:space="preserve"><value>已跳过此次询问</value></data>
+  <data name="Agent_QuestionCancelled" xml:space="preserve"><value>此次询问已结束</value></data>
+  <data name="Agent_AnswerSubmitted" xml:space="preserve"><value>已提交回答</value></data>
+  <data name="Agent_OtherAnswer" xml:space="preserve"><value>补充你的回答…</value></data>
+  <data name="Agent_CustomAnswer" xml:space="preserve"><value>其他回答</value></data>
+  <data name="Agent_AnswerYes" xml:space="preserve"><value>是</value></data>
+  <data name="Agent_AnswerNo" xml:space="preserve"><value>否</value></data>
+  <data name="Agent_WaitingAnswer" xml:space="preserve"><value>请在对话中的询问卡片作答，助手会在提交后继续。</value></data>
+  <data name="Agent_AnswerRequired" xml:space="preserve"><value>请回答所有必填问题。</value></data>
+  <data name="Agent_AnswerChoice" xml:space="preserve"><value>请选择有效选项。</value></data>
+  <data name="Agent_AnswerLength" xml:space="preserve"><value>回答长度不符合要求。</value></data>
+  <data name="Agent_AnswerFormat" xml:space="preserve"><value>请按要求填写回答。</value></data>
+  <data name="Agent_AnswerNumber" xml:space="preserve"><value>请输入范围内的有效数字。</value></data>
+  <data name="Agent_AnswerSelection" xml:space="preserve"><value>选择数量不符合要求。</value></data>
+  <data name="Agent_ToolQuestion" xml:space="preserve"><value>询问</value></data>
+  <data name="Agent_Thinking" xml:space="preserve"><value>正在分析与规划</value></data>
+  <data name="Agent_Responding" xml:space="preserve"><value>正在生成回复</value></data>
+  <data name="Agent_WaitingPermission" xml:space="preserve"><value>等待操作确认</value></data>
+  <data name="Agent_WaitingQuestion" xml:space="preserve"><value>等待你的回答</value></data>
+  <data name="Agent_WaitingModel" xml:space="preserve"><value>等待模型返回下一步</value></data>
+  <data name="Agent_ProgressElapsed" xml:space="preserve"><value>{0} · {1} 秒</value></data>
+  <data name="Agent_ModeNextTurn" xml:space="preserve"><value>已选择{0}，从下一条消息开始使用。当前对话、文件和草稿均保留。</value></data>
+  <data name="Agent_Inactive" xml:space="preserve"><value>模型已连续 3 分钟没有返回新进展，任务已暂停。对话和文件已保留，可发送“继续”或切换模型后重试。</value></data>
+  <data name="PluginUi_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="PluginUi_Cancelled" xml:space="preserve"><value>操作已停止。</value></data>
+  <data name="PluginUi_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="PluginUi_Confirm" xml:space="preserve"><value>确认</value></data>
+  <data name="PluginUi_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="PluginUi_Settings" xml:space="preserve"><value>插件设置</value></data>
+  <data name="Plugins_NuGetPage" xml:space="preserve"><value>NuGet 页面</value></data>
+  <data name="Plugins_InstallAction" xml:space="preserve"><value>安装</value></data>
+  <data name="Plugins_UpdateAction" xml:space="preserve"><value>更新</value></data>
+  <data name="Plugins_UpdateTo" xml:space="preserve"><value>更新到 {0}</value></data>
+  <data name="Plugins_UpToDate" xml:space="preserve"><value>已安装 · 最新</value></data>
+  <data name="Plugins_InstalledVersion" xml:space="preserve"><value>已安装 {0}</value></data>
+  <data name="Plugins_AuthorFormat" xml:space="preserve"><value>作者：{0}</value></data>
+  <data name="Plugins_DownloadsFormat" xml:space="preserve"><value>下载 {0:N0} 次</value></data>
+  <data name="Plugins_CommunityTitle" xml:space="preserve"><value>由社区提供</value></data>
+  <data name="Plugins_InstallTitle" xml:space="preserve"><value>安装插件</value></data>
+  <data name="Plugins_UpdateTitle" xml:space="preserve"><value>更新插件</value></data>
+  <data name="Plugins_UpdateFrom" xml:space="preserve"><value>当前版本</value></data>
+  <data name="Plugins_VersionLabel" xml:space="preserve"><value>版本</value></data>
+  <data name="Plugins_AuthorLabel" xml:space="preserve"><value>作者</value></data>
+  <data name="Plugins_DownloadsLabel" xml:space="preserve"><value>下载量</value></data>
+  <data name="Plugins_UnknownAuthor" xml:space="preserve"><value>未知</value></data>
+  <data name="Plugins_NoInstalled" xml:space="preserve"><value>尚未安装插件。</value></data>
+  <data name="Plugins_DisabledNotice" xml:space="preserve"><value>已停用，插件工具已从列表移除；后台代码将在重启后完全停止。</value></data>
+  <data name="Plugins_EnabledNotice" xml:space="preserve"><value>已启用，插件工具已恢复。</value></data>
+  <data name="Plugins_UninstalledNotice" xml:space="preserve"><value>已卸载，插件工具已从列表移除；重启应用后清理文件。</value></data>
+  <data name="Agent_WorkspaceTitle.Text" xml:space="preserve"><value>图吧工作区</value></data>
+  <data name="Agent_OpenWorkspace.Text" xml:space="preserve"><value>打开工作区</value></data>
+  <data name="Agent_PrepareMenu.Text" xml:space="preserve"><value>准备 AI 组件</value></data>
+  <data name="Agent_NewLabel.Text" xml:space="preserve"><value>新建会话</value></data>
+  <data name="Agent_Retry.Content" xml:space="preserve"><value>继续</value></data>
+  <data name="Agent_Older.Content" xml:space="preserve"><value>显示更早的消息</value></data>
+  <data name="Agent_EmptyTitle.Text" xml:space="preserve"><value>从一个任务开始</value></data>
+  <data name="Agent_EmptyDescription.Text" xml:space="preserve"><value>直接描述要开发的功能或遇到的电脑问题，助手会按任务自动加载对应技能。</value></data>
+  <data name="Agent_AttachFiles.Text" xml:space="preserve"><value>引用本地文件…</value></data>
+  <data name="Agent_ComposerPrompt.PlaceholderText" xml:space="preserve"><value>随便问点什么…</value></data>
+  <data name="Agent_FullAccess" xml:space="preserve"><value>全部权限</value></data>
+  <data name="Agent_AskAccess" xml:space="preserve"><value>逐次确认</value></data>
+  <data name="Agent_WorkspaceMenu" xml:space="preserve"><value>工作区菜单</value></data>
+  <data name="Agent_SessionMenu" xml:space="preserve"><value>会话菜单</value></data>
+  <data name="Agent_ModelName" xml:space="preserve"><value>模型</value></data>
+  <data name="Agent_PermissionName" xml:space="preserve"><value>权限模式</value></data>
+  <data name="Agent_Jump" xml:space="preserve"><value>跳到最新消息</value></data>
+  <data name="Agent_ClearAttachments" xml:space="preserve"><value>清除引用文件</value></data>
+  <data name="Agent_AddContext" xml:space="preserve"><value>添加上下文</value></data>
+  <data name="Agent_WaitingShort" xml:space="preserve"><value>等待回答</value></data>
+  <data name="Agent_RunningShort" xml:space="preserve"><value>运行中</value></data>
+  <data name="Agent_Rename" xml:space="preserve"><value>重命名</value></data>
+  <data name="Agent_Export" xml:space="preserve"><value>导出 Markdown…</value></data>
+  <data name="Agent_RenameSession" xml:space="preserve"><value>重命名会话</value></data>
+  <data name="Agent_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="Agent_SwitchSession" xml:space="preserve"><value>切换会话</value></data>
+  <data name="Agent_CopyMessage" xml:space="preserve"><value>复制消息</value></data>
+  <data name="Agent_HostActions" xml:space="preserve"><value>宿主执行记录</value></data>
+  <data name="Agent_ContinuePrompt" xml:space="preserve"><value>继续处理上一条请求。</value></data>
+  <data name="Agent_AllFiles" xml:space="preserve"><value>所有文件</value></data>
+  <data name="Agent_ReadAttached" xml:space="preserve"><value>请查看引用的文件。</value></data>
+  <data name="Agent_ReferencedFiles" xml:space="preserve"><value>参考文件（本机路径）：</value></data>
+  <data name="Agent_Send" xml:space="preserve"><value>发送</value></data>
+  <data name="Agent_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="Agent_Delete" xml:space="preserve"><value>删除会话</value></data>
+  <data name="Agent_NewLabel" xml:space="preserve"><value>新建会话</value></data>
+  <data name="Agent_AttachFiles" xml:space="preserve"><value>引用本地文件</value></data>
+  <data name="Agent_Draft" xml:space="preserve"><value>草稿</value></data>
+  <data name="Agent_ToolCancelled" xml:space="preserve"><value>已取消</value></data>
+  <data name="Agent_ToolPending" xml:space="preserve"><value>等待执行</value></data>
+  <data name="Agent_ChangedFiles" xml:space="preserve"><value>{0} 个文件</value></data>
+  <data name="Agent_RetryAttempt" xml:space="preserve"><value>服务正在重试 · 第 {0} 次</value></data>
+  <data name="Agent_ExecutingTool" xml:space="preserve"><value>正在执行工具</value></data>
+  <data name="Agent_PreparingTool" xml:space="preserve"><value>正在准备工具调用</value></data>
+  <data name="Agent_Compacting" xml:space="preserve"><value>正在整理上下文</value></data>
+  <data name="Agent_RetryingModel" xml:space="preserve"><value>模型服务正在重试</value></data>
+  <data name="Agent_Reconnecting" xml:space="preserve"><value>正在重新连接 AI 组件</value></data>
+  <data name="Agent_WaitingLong" xml:space="preserve"><value>模型尚未返回新进展，仍在等待；可随时停止或稍后切换模型</value></data>
+  <data name="Agent_Providers" xml:space="preserve"><value>AI 提供商</value></data>
+  <data name="Agent_ProviderMenu.Text" xml:space="preserve"><value>AI 提供商…</value></data>
+  <data name="Agent_ProviderChoose" xml:space="preserve"><value>编辑或添加提供商</value></data>
+  <data name="Agent_ProviderName" xml:space="preserve"><value>名称</value></data>
+  <data name="Agent_ProviderProtocol" xml:space="preserve"><value>接口类型</value></data>
+  <data name="Agent_ProviderEndpoint" xml:space="preserve"><value>API 根地址</value></data>
+  <data name="Agent_ProviderKey" xml:space="preserve"><value>API 密钥（本地服务可留空）</value></data>
+  <data name="Agent_ProviderModels" xml:space="preserve"><value>模型 ID（每行一个）</value></data>
+  <data name="Agent_ProviderDiscover" xml:space="preserve"><value>从服务读取模型</value></data>
+  <data name="Agent_ProviderRemove" xml:space="preserve"><value>删除此提供商</value></data>
+  <data name="Agent_ProviderHint" xml:space="preserve"><value>支持自定义 API 地址与多个模型。密钥使用 Windows 用户加密保存；保存后模型会加入助手列表。</value></data>
+  <data name="Agent_ProviderSave" xml:space="preserve"><value>保存并应用</value></data>
+  <data name="Agent_ProviderNew" xml:space="preserve"><value>新增提供商</value></data>
+  <data name="Agent_ProviderDiscovering" xml:space="preserve"><value>正在读取模型列表…</value></data>
+  <data name="Agent_ProviderFound" xml:space="preserve"><value>读取到 {0} 个模型。请保留需要使用的模型，也可手动补充。</value></data>
+  <data name="Agent_ProviderDiscoverFailed" xml:space="preserve"><value>读取模型失败，请检查 API 地址、密钥和网络，或手动填写模型 ID。</value></data>
+  <data name="Agent_ProviderSaveFailed" xml:space="preserve"><value>提供商配置保存失败，请检查数据目录。修改尚未应用。</value></data>
+  <data name="Agent_ProviderOpenFailed" xml:space="preserve"><value>无法读取提供商配置，请检查数据目录和 Windows 用户。</value></data>
+  <data name="Agent_ProviderDeferred" xml:space="preserve"><value>提供商配置已保存，所有当前任务结束后自动应用。</value></data>
+  <data name="Agent_ProviderDuplicate" xml:space="preserve"><value>提供商 ID 重复。</value></data>
+  <data name="Agent_ProviderInvalidId" xml:space="preserve"><value>提供商 ID 无效。</value></data>
+  <data name="Agent_ProviderInvalidName" xml:space="preserve"><value>请填写提供商名称并选择接口类型。</value></data>
+  <data name="Agent_ProviderInvalidModels" xml:space="preserve"><value>请至少填写一个有效模型 ID，每行一个。</value></data>
+  <data name="Agent_ProviderInvalidUrl" xml:space="preserve"><value>请填写 HTTP/HTTPS API 根地址，不包含密钥、查询参数或片段。</value></data>
+  <data name="Agent_ProviderDiscoverHttp" xml:space="preserve"><value>无法读取模型列表（HTTP {0}）。可检查地址与密钥，或手动填写模型 ID。</value></data>
+  <data name="Agent_ProviderListTooLarge" xml:space="preserve"><value>模型列表过大。</value></data>
+  <data name="Agent_ProviderInvalidList" xml:space="preserve"><value>服务未返回模型列表，请手动填写模型 ID。</value></data>
+  <data name="PluginUi_NotButton" xml:space="preserve"><value>{0} 是 {1}，请对值变化使用 BindValueChanged；BindClick 用于按钮或开关。</value></data>
+  <data name="PluginUi_AlreadyBound" xml:space="preserve"><value>{0} 已绑定操作，请勿重复绑定同一控件。</value></data>
+  <data name="PluginUi_NotValueControl" xml:space="preserve"><value>{0} 是 {1}，不支持值变化绑定。</value></data>
+  <data name="PluginUi_Failed" xml:space="preserve"><value>插件操作失败。</value></data>
+  <data name="Agent_DropAttachments" xml:space="preserve"><value>添加图片或文件</value></data>
+  <data name="Agent_ImageTooLarge" xml:space="preserve"><value>单张图片不能超过 20 MB。</value></data>
+  <data name="Agent_ImagePixels" xml:space="preserve"><value>图片不能超过 4000 万像素。</value></data>
+  <data name="Agent_AttachmentLimit" xml:space="preserve"><value>每条消息最多添加 10 个附件。</value></data>
+  <data name="Agent_AttachmentMissing" xml:space="preserve"><value>文件不存在或无法读取（暂不支持文件夹）。</value></data>
+  <data name="Agent_PasteFailed" xml:space="preserve"><value>无法读取剪贴板或附件，请重新复制后重试。</value></data>
+  <data name="Agent_RemoveAttachment" xml:space="preserve"><value>移除附件</value></data>
+  <data name="Agent_VisionModelRequired" xml:space="preserve"><value>当前模型不支持图片，请选择支持图片输入的模型。自定义提供商可在配置中启用图片输入。</value></data>
+  <data name="Agent_ProviderImages" xml:space="preserve"><value>这些模型支持图片输入（需提供商实际支持）</value></data>
+  <data name="Agent_ClipboardImage" xml:space="preserve"><value>剪贴板图片</value></data>
+  <data name="Agent_ImageInput" xml:space="preserve"><value>图片</value></data>
+  <data name="Agent_ModeChat" xml:space="preserve"><value>对话</value></data>
+  <data name="Agent_ModeTeach" xml:space="preserve"><value>教学模式</value></data>
+  <data name="Agent_CanvasTitle" xml:space="preserve"><value>教学画布</value></data>
+  <data name="Agent_CanvasShow" xml:space="preserve"><value>打开画布</value></data>
+  <data name="Agent_CanvasHide" xml:space="preserve"><value>收起画布</value></data>
+  <data name="Agent_CanvasEmpty" xml:space="preserve"><value>AI 会在这里构建你的教学页面。</value></data>
+  <data name="Agent_CanvasEmptyHint" xml:space="preserve"><value>提出想学的主题，页面会自动出现。</value></data>
+  <data name="Agent_CanvasHint" xml:space="preserve"><value>页面里的按钮可以直接和助手对话</value></data>
+  <data name="Agent_CanvasMenu" xml:space="preserve"><value>画布选项</value></data>
+  <data name="Agent_CanvasSize" xml:space="preserve"><value>画布高度</value></data>
+  <data name="Agent_CanvasSizeCompact" xml:space="preserve"><value>紧凑</value></data>
+  <data name="Agent_CanvasSizeNormal" xml:space="preserve"><value>标准</value></data>
+  <data name="Agent_CanvasSizeTall" xml:space="preserve"><value>加高</value></data>
+  <data name="Agent_CanvasRefresh" xml:space="preserve"><value>刷新画布</value></data>
+  <data name="Agent_CanvasRetry" xml:space="preserve"><value>刷新画布</value></data>
+  <data name="Agent_CanvasClose" xml:space="preserve"><value>收起画布</value></data>
+  <data name="Agent_CanvasImage" xml:space="preserve"><value>插入图片</value></data>
+  <data name="Agent_CanvasImageAdded" xml:space="preserve"><value>已加入 {0} 张图片（assets/）。可以让助手把它们用到这一页。</value></data>
+  <data name="Agent_CanvasImageFailed" xml:space="preserve"><value>无法插入该图片，请选择 PNG、JPG、GIF、WEBP、BMP 或 SVG。</value></data>
+  <data name="Agent_CanvasOpenFolder" xml:space="preserve"><value>打开画布文件夹</value></data>
+  <data name="Agent_CanvasOpenBrowser" xml:space="preserve"><value>在浏览器中打开</value></data>
+  <data name="Agent_CanvasOpenHtml" xml:space="preserve"><value>在画布中打开</value></data>
+  <data name="Agent_CanvasNoHtml" xml:space="preserve"><value>这条消息里没有可用的 HTML 页面。</value></data>
+  <data name="Agent_CanvasUpdated" xml:space="preserve"><value>画布已更新</value></data>
+  <data name="Agent_CanvasUpdating" xml:space="preserve"><value>画布正在更新</value></data>
+  <data name="Agent_CanvasFailed" xml:space="preserve"><value>画布未能启动，请检查 WebView2 运行时。</value></data>
+  <data name="Agent_CanvasCrashed" xml:space="preserve"><value>画布已停止，正在恢复…</value></data>
+  <data name="Agent_CanvasBusy" xml:space="preserve"><value>助手暂时不可用，请稍后再试。</value></data>
+  <data name="Agent_CanvasNeedsSession" xml:space="preserve"><value>先发送一条消息，画布就会出现在对话里。</value></data>
+  <data name="Agent_CanvasModeHint" xml:space="preserve"><value>教学模式：回答会同时写成可交互页面</value></data>
+  <data name="Agent_CanvasBanner.Message" xml:space="preserve"><value>教学模式已开启：助手的讲解会作为可交互的「画布消息」出现在对话里。</value></data>
+  <data name="Agent_CanvasFullScreen" xml:space="preserve"><value>全屏</value></data>
+  <data name="Agent_CanvasExitFullScreen" xml:space="preserve"><value>退出全屏</value></data>
+  <data name="Agent_CanvasMissing" xml:space="preserve"><value>这条画布消息的内容已被清理。</value></data>
+  <data name="Agent_Undo" xml:space="preserve"><value>撤销</value></data>
+  <data name="Agent_Redo" xml:space="preserve"><value>重做</value></data>
+  <data name="Agent_Cut" xml:space="preserve"><value>剪切</value></data>
+  <data name="Agent_Copy" xml:space="preserve"><value>复制</value></data>
+  <data name="Agent_Paste" xml:space="preserve"><value>粘贴</value></data>
+  <data name="Agent_SelectAll" xml:space="preserve"><value>全选</value></data>
+  <data name="Agent_ImageTotalLimit" xml:space="preserve"><value>每条消息的图片总大小不能超过 20 MB。</value></data>
+  <data name="Agent_ComputerControlWindow" xml:space="preserve"><value>AI 电脑控制提示</value></data>
+  <data name="Agent_ComputerControlling" xml:space="preserve"><value>AI 正在操作电脑</value></data>
+  <data name="Agent_ComputerControlHint" xml:space="preserve"><value>请暂时避免键鼠操作，可随时停止</value></data>
+  <data name="Agent_ComputerControlStop" xml:space="preserve"><value>立即停止</value></data>
+  <data name="Agent_ComputerProgressWindow" xml:space="preserve"><value>AI 任务进度</value></data>
+  <data name="Agent_ComputerProgressTitle" xml:space="preserve"><value>AI 正在操作电脑</value></data>
+  <data name="Agent_ComputerProgressStop" xml:space="preserve"><value>停止</value></data>
+  <data name="Agent_ComputerProgressRespond" xml:space="preserve"><value>回答 / 审批</value></data>
+  <data name="Agent_ComputerProgressThinking" xml:space="preserve"><value>正在分析下一步操作</value></data>
+  <data name="Agent_ComputerProgressAnalyzing" xml:space="preserve"><value>正在分析下一步</value></data>
+  <data name="Agent_ComputerProgressResponding" xml:space="preserve"><value>正在整理结果</value></data>
+  <data name="Agent_ComputerProgressTool" xml:space="preserve"><value>正在操作界面</value></data>
+  <data name="Agent_ComputerProgressStalled" xml:space="preserve"><value>仍在等待模型返回</value></data>
+  <data name="Agent_ComputerProgressPreparing" xml:space="preserve"><value>正在准备电脑操作</value></data>
+  <data name="Agent_ComputerProgressWaiting" xml:space="preserve"><value>等待你的回答</value></data>
+  <data name="Agent_ComputerProgressReconnecting" xml:space="preserve"><value>正在重新连接</value></data>
+  <data name="Agent_ComputerProgressFallback" xml:space="preserve"><value>正在处理电脑问题</value></data>
+  <data name="Agent_ComputerProgressCurrentWindow" xml:space="preserve"><value>当前窗口：{0}</value></data>
+  <data name="Agent_ComputerProgressOtherWindow" xml:space="preserve"><value>其他窗口</value></data>
+  <data name="Agent_ToolAx" xml:space="preserve"><value>界面操作</value></data>
+  <data name="Agent_ToolGui" xml:space="preserve"><value>屏幕操作</value></data>
 </root>

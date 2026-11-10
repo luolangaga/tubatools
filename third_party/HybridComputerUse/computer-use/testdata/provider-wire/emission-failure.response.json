@@ -1,0 +1,28 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-desktop",
+  "operation": "desktop_execute_batch",
+  "desktop": {
+    "ok": false,
+    "error": "input emission failed",
+    "failure": {
+      "code": "input_emission_failed",
+      "phase": "emission",
+      "facts_complete": true
+    },
+    "mutation": {
+      "input_events_emitted": true,
+      "partial_input_possible": true,
+      "mutation_unknown": true
+    },
+    "gui_result": {
+      "dispatched": 1,
+      "input_events_emitted": true,
+      "input_actions_dispatched": 1,
+      "partial_input_possible": true,
+      "mutation_unknown": true,
+      "effect_unknown": true
+    }
+  }
+}

@@ -44,10 +44,21 @@ public class HardwareSummaryTests
     [Fact]
     public void DiskTemperature_DoesNotChooseAnAmbiguousModel()
     {
-        var temperatures = new Dictionary<string, float> { ["SSD 1TB"] = 31, ["SSD 2TB"] = 42 };
-        Assert.Equal(31f, HardwareInfoService.FindDiskTemperature("SSD 1TB", temperatures));
-        Assert.Null(HardwareInfoService.FindDiskTemperature("SSD", temperatures));
-        Assert.Null(HardwareInfoService.FindDiskTemperature("Other SSD", temperatures));
+        LiteMonitorService.DiskTemperatureSample[] temperatures =
+            [new(null, "SSD 1TB", 31), new(null, "SSD 2TB", 42)];
+        Assert.Equal(31f, HardwareInfoService.FindDiskTemperature(-1, "SSD 1TB", temperatures));
+        Assert.Null(HardwareInfoService.FindDiskTemperature(-1, "SSD", temperatures));
+        Assert.Null(HardwareInfoService.FindDiskTemperature(-1, "Other SSD", temperatures));
+    }
+
+    [Fact]
+    public void DiskTemperature_PrefersPhysicalIndexAndKeepsIdenticalModelsSeparate()
+    {
+        LiteMonitorService.DiskTemperatureSample[] temperatures =
+            [new(0, "SSD", 31), new(1, "SSD", 42)];
+        Assert.Equal(42f, HardwareInfoService.FindDiskTemperature(1, "SSD SCSI Disk Device", temperatures));
+        Assert.Null(HardwareInfoService.FindDiskTemperature(2, "SSD", temperatures));
+        Assert.Null(HardwareInfoService.FindDiskTemperature(-1, "SSD", temperatures));
     }
 
     [Fact]
@@ -107,6 +118,26 @@ public class HardwareSummaryTests
         Assert.Equal(new[] { "GPU A (8 GB)", "GPU B (16 GB)" }, updated[2].Items[0].DeviceValues);
         Assert.Equal(new[] { "Disk A", "Disk B" }, updated[2].Items[1].DeviceValues);
         Assert.Equal("WMI GPU", Assert.Single(original[2].Items[0].DeviceValues));
+    }
+
+    [Fact]
+    public void CpuzGpuDetails_MatchWmiFieldsByNameWithoutChangingTheSource()
+    {
+        var original = new List<GpuDetail>
+        {
+            new() { Name = "GPU A", PnpDeviceId = "PCI-A" },
+            new() { Name = "GPU B", PnpDeviceId = "PCI-B" },
+        };
+        var cpuz = new CpuzInfo
+        {
+            Gpus = [new() { Name = "GPU B", MemorySize = "16 GB" }, new() { Name = "GPU A", MemorySize = "8 GB" }],
+        };
+
+        var result = HardwareInfoService.BuildCpuzGpuDetails(original, cpuz);
+
+        Assert.Equal(new[] { "PCI-B", "PCI-A" }, result.Select(gpu => gpu.PnpDeviceId));
+        Assert.Equal(new[] { "16 GB", "8 GB" }, result.Select(gpu => gpu.MemorySize));
+        Assert.All(original, gpu => Assert.Null(gpu.MemorySize));
     }
 
     [Fact]

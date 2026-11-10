@@ -97,9 +97,6 @@ src/docs/
 node_modules/
 optimizerDuck-temp/
 *.zip
-# Dism++ reads these archives as runtime data, UI and language resources.
-!TubaWinUi3.WinUI3/Tools/其他工具/Dism++/Config/**/*.zip
-!TubaWinUi3.WinUI3/Tools/其他工具/Dism++/Config/*.zip
 /test_sc/
 /test_sc2/
 uupzip_inspect/
@@ -113,3 +110,14 @@ TubaWinUi3.WinUI3/Properties/Telemetry.local.props
 telemetry-dashboard/.dev.vars
 telemetry-dashboard/.wrangler/
 !TubaWinUi3.WinUI3/CertBlock/Certificates/*.cer
+
+# Local agent/tool state, screenshot scratch and one-off audit scripts
+.mimosa/
+.lanagent/
+.freebuff/
+.screenshot-refresh-pending/
+_quality_scan*.py
+icon-proposals/
+__pycache__/
+*.pyc
+cpu_latency_report_*.html

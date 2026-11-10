@@ -22,10 +22,10 @@ Verified toolchain facts (re-check them whenever the SDK or csproj changes):
 | `TubaWinUi3.WinUI3/` | WinUI 3 `WinExe` | The app: all XAML pages, `Services/`, `Models/`, `Metadata/`, `Tools/` |
 | `TubaWinUI3.BackEnd/` | NativeAOT `Exe` | "主动拦截" backend: state store + context-menu/COM monitor + named-pipe server (`NamedPipeBackendServer.cs`, `PipeContracts.cs`); single instance via global mutex; CLI `--config <path>` / `--once` / `--stop`; built by `build-backend-aot.ps1` |
 | `TubaWinUI3.ShellExtension/` | NativeAOT `Library` | Win11 `IExplorerCommand` ("文件占用查看"), loaded by `dllhost` through the app manifest's `com:SurrogateServer`; shares `FileLockShellMenuContract.cs` by linked compile; built by `build-shell-ext-aot.ps1` (MSIX-only) |
-| `TubaWinUi3.Compatible/` | `net48` WinForms | Legacy compatibility build (ReaLTaiizor + Costura.Fody single file) |
+| `TubaWinUi3.Tui/` | `net8.0-windows` console | Spectre.Console compatibility edition published with Native AOT |
 | `TubaWinUi3.Tests/` | xUnit | ~1280 tests; references the app and BackEnd (`Aliases="backend"`) |
 
-Also present but **not** in the solution: `TubaWinUi3.PECompatible/` (`WinExe`, `net10.0-windows10.0.19041.0`, assembly name 图吧工具箱PE兼容版) — CI publishes it directly. Other top-level folders (`website-winui3/`, `cloudflare-worker/`, `rating-worker/`, `benchmark-worker/`, `telemetry-dashboard/`, `file-transfer-web/`, `android-tuba-installer/`, `android-tuba-remote/`, `Launcher/`, `DxTraceDiag/`, `remotedefender/`) are side projects and are not part of the desktop app build.
+Other top-level folders (`website-winui3/`, `cloudflare-worker/`, `rating-worker/`, `benchmark-worker/`, `telemetry-dashboard/`, `file-transfer-web/`, `android-tuba-installer/`, `android-tuba-remote/`, `Launcher/`, `DxTraceDiag/`, `remotedefender/`) are side projects and are not part of the desktop app build.
 
 Order of magnitude, for orientation: `Services/` ≈ 334 files / ≈ 96k lines, `Pages/` ≈ 76 files / ≈ 58k lines. Known oversized files: `RogueCleanerPage.xaml.cs` (~3.9k lines), `HardwareInfoService.cs` (~3.3k), `SettingsPage.xaml.cs` (~3.0k), `GameOverlayPage.xaml.cs` (~2.7k). Prefer adding new code to focused files instead of growing these.
 
@@ -37,7 +37,7 @@ dotnet run   --project TubaWinUi3.WinUI3/TubaWinUi3.csproj   # Unpackaged, no MS
 dotnet publish -c Release -r win-x64 TubaWinUi3.WinUI3/TubaWinUi3.csproj
 ```
 
-- All app commands go through `TubaWinUi3.WinUI3/TubaWinUi3.csproj`; building the whole `.sln` also builds the net48 WinForms project and the tests.
+- All app commands go through `TubaWinUi3.WinUI3/TubaWinUi3.csproj`; building the whole `.sln` also builds the .NET 8 TUI project and the tests.
 - `PublishTrimmed=false`, `PublishReadyToRun=true`, `WindowsAppSDKSelfContained=true`.
 - Full rebuilds are slow (minutes) — prefer incremental `dotnet build` and `--no-build` for follow-up test runs.
 - Known `.pri` quirk: after `dotnet publish`, resources sometimes have to be copied from `TubaWinUi3.WinUI3/bin/<config>/<tfm>/` into the publish output (the csproj already patches the `AssistStudio.Controls.pri` packaging bug), otherwise the UI can lose localized resources.

@@ -158,7 +158,7 @@ public static class ToolDownloaderService
                 client.DefaultRequestHeaders.Add("User-Agent", "TubaWinUi3-ToolDownloader");
 
             var json = await client.GetStringAsync(url, ct);
-            var doc = JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             var files = new List<(string, string, string)>();
 
             foreach (var entry in doc.RootElement.EnumerateArray())
@@ -173,16 +173,16 @@ public static class ToolDownloaderService
                 {
                     var subPath = $"{repoPath}/{name}";
                     var subFiles = await ListGitCodeDirAsync(subPath, ct);
-                    if (subFiles is not null)
-                    {
-                        foreach (var sf in subFiles)
-                            files.Add(($"{name}/{sf.RelPath}", sf.Sha, sf.FileName));
-                    }
+                    // 任一子目录失败就丢弃整个清单，交给调用方回退/重试，不能静默漏文件。
+                    if (subFiles is null) return null;
+                    foreach (var sf in subFiles)
+                        files.Add(($"{name}/{sf.RelPath}", sf.Sha, sf.FileName));
                 }
             }
 
             return files;
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch { return null; }
     }
 
@@ -276,7 +276,7 @@ public static class ToolDownloaderService
                 client.DefaultRequestHeaders.Add("User-Agent", "TubaWinUi3-ToolDownloader");
 
             var json = await client.GetStringAsync(url, ct);
-            var doc = JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             var files = new List<(string, string, string)>();
 
             foreach (var entry in doc.RootElement.EnumerateArray())
@@ -291,16 +291,15 @@ public static class ToolDownloaderService
                 {
                     var subPath = $"{repoPath}/{name}";
                     var subFiles = await ListGitHubDirAsync(subPath, ct);
-                    if (subFiles is not null)
-                    {
-                        foreach (var sf in subFiles)
-                            files.Add(($"{name}/{sf.RelPath}", sf.Sha, sf.FileName));
-                    }
+                    if (subFiles is null) return null;
+                    foreach (var sf in subFiles)
+                        files.Add(($"{name}/{sf.RelPath}", sf.Sha, sf.FileName));
                 }
             }
 
             return files;
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch { return null; }
     }
 

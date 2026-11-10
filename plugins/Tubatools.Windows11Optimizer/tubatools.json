@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.Windows11Optimizer.dll",
+  "entryType": "Tubatools.Windows11Optimizer.Windows11OptimizerPlugin",
+  "name": "Windows 11 优化",
+  "description": "去快捷方式箭头/盾牌，隐私遥测、性能游戏、Windows 更新、电源声音、通知建议与预装应用清理",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

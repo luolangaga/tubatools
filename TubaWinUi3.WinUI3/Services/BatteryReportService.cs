@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Management;
 using System.Text.RegularExpressions;
 
 namespace TubaWinUi3.Services;
@@ -10,74 +9,32 @@ public static class BatteryReportService
     {
         var info = new BatteryInfo();
 
-        try
+        var battery = await Task.Run(HardwareInfoService.ReadBattery);
+        if (battery is not null)
         {
-            using var searcher = new ManagementObjectSearcher("SELECT * FROM Win32_Battery");
-            foreach (var obj in searcher.Get())
+            info.BatteryPresent = battery.Present;
+            info.EstimatedChargeRemaining = battery.RemainingCharge ?? 0;
+            info.BatteryStatus = battery.BatteryStatus switch
             {
-                info.BatteryPresent = true;
-                info.EstimatedChargeRemaining = Convert.ToInt32(obj["EstimatedChargeRemaining"]);
-                info.BatteryStatus = Convert.ToInt32(obj["BatteryStatus"]) switch
-                {
-                    1 => "放电中",
-                    2 => "交流电源",
-                    3 => "充电中",
-                    4 => "电量低",
-                    5 => "电量严重不足",
-                    _ => "未知"
-                };
-                break;
+                1 => "放电中",
+                2 => "交流电源",
+                3 => "充电中",
+                4 => "电量低",
+                5 => "电量严重不足",
+                _ => "未知"
+            };
+            info.DesignedCapacity = battery.Designed;
+            info.FullChargedCapacity = battery.Full;
+            info.ManufactureName = battery.Manufacturer ?? "";
+            info.UniqueId = battery.UniqueId ?? "";
+            if (battery.ManufactureDate is { } date)
+                info.ManufactureDate = ParseManufactureDate(date);
+            if (battery.Cycles is { } count)
+            {
+                info.CycleCount = count;
+                info.CycleCountAvailable = true;
             }
         }
-        catch { }
-
-        try
-        {
-            using var designSearcher = new ManagementObjectSearcher(
-                "root\\WMI",
-                "SELECT * FROM BatteryStaticData");
-            foreach (var obj in designSearcher.Get())
-            {
-                info.DesignedCapacity = Convert.ToDouble(obj["DesignedCapacity"]);
-                info.ManufactureName = obj["ManufactureName"]?.ToString() ?? "";
-                info.ManufactureDate = obj.GetPropertyValue("ManufactureDate") is uint date
-                    ? ParseManufactureDate(date)
-                    : "";
-                info.UniqueId = obj["UniqueID"]?.ToString() ?? "";
-                break;
-            }
-        }
-        catch { }
-
-        try
-        {
-            using var capSearcher = new ManagementObjectSearcher(
-                "root\\WMI",
-                "SELECT * FROM BatteryFullChargedCapacity");
-            foreach (var obj in capSearcher.Get())
-            {
-                info.FullChargedCapacity = Convert.ToDouble(obj["FullChargedCapacity"]);
-                break;
-            }
-        }
-        catch { }
-
-        try
-        {
-            using var cycleSearcher = new ManagementObjectSearcher(
-                "root\\WMI",
-                "SELECT * FROM BatteryCycleCount");
-            foreach (var obj in cycleSearcher.Get())
-            {
-                if (obj["CycleCount"] is { } cycle && int.TryParse(cycle.ToString(), out var count) && count >= 0)
-                {
-                    info.CycleCount = count;
-                    info.CycleCountAvailable = true;
-                }
-                break;
-            }
-        }
-        catch { }
 
         if (info.DesignedCapacity > 0 && info.FullChargedCapacity > 0)
         {

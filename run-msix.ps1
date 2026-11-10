@@ -193,6 +193,8 @@ $lines = @(
     '  </Applications>'
     '  <Capabilities>'
     '    <rescap:Capability Name="runFullTrust" />'
+    '    <DeviceCapability Name="microphone" />'
+    '    <DeviceCapability Name="webcam" />'
     '  </Capabilities>'
     '</Package>'
 )

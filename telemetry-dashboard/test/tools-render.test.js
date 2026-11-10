@@ -8,9 +8,10 @@ const source = html.slice(html.indexOf('  function renderTools('), html.indexOf(
 function renderer(metric = 'uses', search = '') {
   const elements = { 'c-tools': { innerHTML: '' }, 'c-tools-least': { innerHTML: '' }, 'tools-search': { value: search }, 'tools-locked': { classList: { toggle() {} } }, 'tools-least-locked': { classList: { toggle() {} } } };
   const bars = [];
-  const context = { toolMetric: metric, document: { getElementById: id => elements[id] }, PALETTE: ['blue'], hbar: (...args) => bars.push(args) };
+  Object.assign(elements, { 'tool-results': {}, 'tool-result-count': {}, 'tool-directory': { classList: { toggle() {} } } });
+  const context = { toolMetric: metric, document: { getElementById: id => elements[id] }, PALETTE: ['blue'], hbar: (...args) => bars.push(args), esc: String };
   vm.runInNewContext(source, context);
-  return { render: context.renderTools, elements, bars };
+  return { render: context.renderTools, renderDirectory: context.renderToolDirectory, elements, bars };
 }
 test('query failure is not misreported as missing launch data', () => {
   const view = renderer();
@@ -18,11 +19,11 @@ test('query failure is not misreported as missing launch data', () => {
   assert.match(view.elements['c-tools'].innerHTML, /查询失败/);
   assert.equal(view.bars.length, 0);
 });
-test('empty launch data explains that a client update is required', () => {
+test('an empty ranking displays an empty state', () => {
   const view = renderer();
   view.render({ rows: [] }, true);
   assert.equal(view.bars[0][1].length, 0);
-  assert.match(view.bars[0][3], /更新到支持工具统计的版本/);
+  assert.match(view.bars[0][3], /暂无工具统计/);
 });
 test('populated tool statistics render name, launches, and device counts', () => {
   const view = renderer();
@@ -53,13 +54,15 @@ test('device metric displays devices as the primary value and launches as contex
   assert.equal(view.bars[0][1][0].sub, '17 次启动');
 });
 
-test('search filters only current ranking and explains an unmatched query', () => {
+test('full directory search finds a zero-use tool by its telemetry ID and clears on logout', () => {
   const view = renderer('uses', ' gpu ');
-  view.render({ rows: [['CPUZ', 17, 3], ['GPUZ', 9, 2]] }, true);
-  assert.deepEqual(Array.from(view.bars[0][1], x => x.name), ['GPUZ']);
-  view.render({ rows: [['CPUZ', 17, 3]] }, true);
-  assert.equal(view.bars[1][1].length, 0);
-  assert.match(view.bars[1][3], /没有匹配/);
+  const panel = { rows: [['CPU-Z', 17, 3, 'CPUZ'], ['显卡天梯图', 0, 0, 'gpu-ranking']] };
+  view.renderDirectory(panel, true);
+  assert.match(view.elements['tool-results'].innerHTML, /显卡天梯图/);
+  assert.doesNotMatch(view.elements['tool-results'].innerHTML, /CPU-Z/);
+  assert.match(view.elements['tool-result-count'].textContent, /1 \/ 2/);
+  view.renderDirectory(panel, false);
+  assert.equal(view.elements['tool-results'].innerHTML, '');
 });
 
 test('guest cannot render least-used tool details and clears stale data', () => {

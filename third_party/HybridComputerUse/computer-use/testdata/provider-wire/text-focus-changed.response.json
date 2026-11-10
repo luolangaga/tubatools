@@ -1,0 +1,28 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-text",
+  "operation": "resolve_and_act",
+  "accessibility": {
+    "ok": false,
+    "error": "Input focus changed; remaining text was not sent.",
+    "failure": {"code": "desktop_input_failed", "phase": "emission"},
+    "mutation": {"input_events_emitted": true, "partial_input_possible": true, "mutation_unknown": true},
+    "action_evidence": {
+      "route": "document_replace",
+      "emission_route": "input.window_messages",
+      "geometry_sampled": false,
+      "readback_sampled": false,
+      "input_emitted": true,
+      "source_utf16_index": 1,
+      "source_utf16_count": 1,
+      "source_utf16_length": 3,
+      "attempted_messages": 1,
+      "returned_messages": 1,
+      "unknown_message_index": null,
+      "message": 258,
+      "sequence_phase": "character",
+      "effect_verified": false
+    }
+  }
+}

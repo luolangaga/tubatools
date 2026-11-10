@@ -68,7 +68,7 @@ export default {
 
   "home.section4.title": "58 款内置实用工具",
   "home.section4.text1": "图吧工具箱CE自带 58 款内置工具，无需额外下载即可使用，覆盖系统维护、网络诊断与游戏辅助的常见场景。",
-  "home.section4.items": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不开路由器也能和朋友联机|格式转换 — 图片、音视频、文档、打包 ZIP|一键三烤 — CPU / GPU / 网卡压力测试|时间同步 — NTP 服务器测速与一键校时|更多：端口占用、启动项管理、Windows 镜像、AI 助手…",
+  "home.section4.items": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不开路由器也能和朋友联机|格式转换 — 图片、音视频、文档、打包 ZIP|CPU / GPU 烤机 — CPU 和 GPU 压力测试|时间同步 — NTP 服务器测速与一键校时|更多：端口占用、启动项管理、Windows 镜像、AI 助手…",
 
   "home.gallery.title": "更多功能，等你发现",
   "home.gallery.subtitle": "截图来自当前版本实机运行：本地 AI 试炼场、游戏监控覆盖层、游戏联机、格式转换、天梯图…全部内置，装完就能用",
@@ -135,9 +135,9 @@ export default {
   "features.game-tunnel.desc": "把两台电脑接进同一个虚拟局域网，我的世界、泰拉瑞亚、星露谷、饥荒等游戏直接联机，不用公网 IP、不改路由器。",
   "features.game-tunnel.tags": "虚拟局域网|邀请码入网|内置游戏预设|TCP / UDP",
 
-  "features.stress-test.title": "一键三烤",
-  "features.stress-test.desc": "CPU / GPU / 网卡压力测试，实时监控温度、频率、功耗与网卡吞吐；FurMark 渲染 API、分辨率、MSAA、OSD 参数可调，支持导出报告。",
-  "features.stress-test.tags": "CPU 烤机|GPU 烤机|网卡烤机|导出报告",
+  "features.stress-test.title": "CPU / GPU 烤机",
+  "features.stress-test.desc": "CPU 和 GPU 压力测试，实时监控温度、频率和功耗；FurMark 渲染 API、分辨率、MSAA、OSD 参数可调，支持导出报告。",
+  "features.stress-test.tags": "CPU 烤机|GPU 烤机|导出报告",
 
   "features.gpu-stress-test.title": "毒蘑菇测试",
   "features.gpu-stress-test.desc": "体素分形渲染压力测试，轻松 / 中等 / 变态三档压力，实时叠加帧率、帧耗时与显卡型号。",
@@ -320,7 +320,7 @@ export default {
 
   "why.tools.title": "FluentUI 内置工具",
   "why.tools.subtitle": "58 款内置工具 vs 少量基础内置功能",
-  "why.tools.winItems": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不用公网 IP 也能和朋友联机|格式转换 — 图片 / 音视频 / 文档 / 打包 ZIP|一键三烤 — CPU / GPU / 网卡压力测试，可导出报告|端口查看、启动项管理、时间同步、Windows 镜像下载|AI 助手、CPU / GPU 天梯图、云端跑分排行",
+  "why.tools.winItems": "垃圾清理 — Winapp2 规则库驱动的深度清理|流氓软件的克星 — 右键菜单 / 自启动 / 计划任务|游戏联机助手 — 不用公网 IP 也能和朋友联机|格式转换 — 图片 / 音视频 / 文档 / 打包 ZIP|CPU / GPU 烤机 — CPU 和 GPU 压力测试，可导出报告|端口查看、启动项管理、时间同步、Windows 镜像下载|AI 助手、CPU / GPU 天梯图、云端跑分排行",
   "why.tools.legacyItems": "内置工具数量有限|工具界面风格不统一|部分工具功能较为基础",
 
   "why.ai.title": "AI 智能体驱动",

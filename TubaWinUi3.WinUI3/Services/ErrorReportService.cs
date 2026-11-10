@@ -5,7 +5,6 @@ using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Management;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -387,100 +386,21 @@ public static class ErrorReportService
         sb.AppendLine($"运行模式：{(RuntimeHelper.IsMsixPackaged ? "MSIX 打包版" : "便携版")}");
         sb.AppendLine($"程序路径：{Environment.ProcessPath}");
         sb.AppendLine($"数据目录：{ConfigManager.GetDataDir()}");
-        sb.AppendLine($"操作系统：{GetWindowsVersion()}");
+        var hardware = HardwareInfoService.GetCachedDisplaySections();
+        var os = hardware?[1].Items.FirstOrDefault(item => item.Label == "系统")?.Value;
+        sb.AppendLine($"操作系统：{os ?? Environment.OSVersion.VersionString}");
         sb.AppendLine($"系统架构：{Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") ?? "Unknown"}");
         sb.AppendLine($".NET 版本：{Environment.Version}");
         sb.AppendLine($"管理员权限：{(IsRunningAsAdmin() ? "是" : "否")}");
 
-        try
+        if (hardware is not null)
         {
-            sb.AppendLine($"处理器：{WmiQuery("Win32_Processor", "Name")}");
-            sb.AppendLine($"内存：{GetTotalMemory()}");
-            sb.AppendLine($"显卡：{WmiQuery("Win32_VideoController", "Name")}");
-            sb.AppendLine($"主板：{WmiQuery("Win32_BaseBoard", "Product")}");
-        }
-        catch { }
-
-        if (HardwareInfoService.HasCache)
+            foreach (var item in hardware[2].Items.Where(item => item.Label is "处理器" or "内存" or "显卡" or "主板"))
+                sb.AppendLine($"{item.Label}：{item.Value}");
             sb.AppendLine("硬件缓存：已加载");
+        }
 
         return sb.ToString().TrimEnd();
-    }
-
-    private static string GetWindowsVersion()
-    {
-        try
-        {
-            var version = Environment.OSVersion.Version;
-            var build = version.Build;
-            var releaseId = "";
-
-            try
-            {
-                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
-                if (key?.GetValue("DisplayVersion") is string dv)
-                    releaseId = dv;
-                else if (key?.GetValue("ReleaseId") is string ri)
-                    releaseId = ri;
-            }
-            catch { }
-
-            var name = build >= 26100 ? "Windows 11 24H2"
-                     : build >= 22631 ? "Windows 11 23H2"
-                     : build >= 22621 ? "Windows 11 22H2"
-                     : build >= 22000 ? "Windows 11 21H2"
-                     : build >= 19045 ? "Windows 10 22H2"
-                     : build >= 19044 ? "Windows 10 21H2"
-                     : build >= 19043 ? "Windows 10 21H1"
-                     : "Windows";
-
-            if (!string.IsNullOrEmpty(releaseId))
-                return $"{name} (Build {build}, {releaseId})";
-            return $"{name} (Build {build})";
-        }
-        catch
-        {
-            return "Windows (版本未知)";
-        }
-    }
-
-    private static string GetTotalMemory()
-    {
-        try
-        {
-            var gcMem = GC.GetGCMemoryInfo();
-            var totalMem = gcMem.TotalAvailableMemoryBytes;
-            return $"{totalMem / (1024.0 * 1024.0 * 1024.0):F1} GB";
-        }
-        catch
-        {
-            try
-            {
-                using var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
-                foreach (var obj in searcher.Get())
-                {
-                    var val = Convert.ToUInt64(obj["TotalPhysicalMemory"]);
-                    return $"{val / (1024.0 * 1024.0 * 1024.0):F1} GB";
-                }
-            }
-            catch { }
-        }
-        return "未知";
-    }
-
-    private static string WmiQuery(string className, string propertyName)
-    {
-        try
-        {
-            using var searcher = new ManagementObjectSearcher($"SELECT {propertyName} FROM {className}");
-            foreach (var obj in searcher.Get())
-            {
-                var val = obj[propertyName]?.ToString();
-                if (!string.IsNullOrEmpty(val)) return val;
-            }
-        }
-        catch { }
-        return "未知";
     }
 
     private static bool IsRunningAsAdmin()

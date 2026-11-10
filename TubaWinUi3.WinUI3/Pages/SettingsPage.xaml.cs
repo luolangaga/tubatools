@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -137,7 +137,6 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "IntegrationSection",
         ["ActiveInterceptNotifyMode"] = "IntegrationSection",
         ["WindowsSearchIndex"] = "IntegrationSection",
-        ["AgentSkills"] = "AgentSkillsSection",
     };
 
     private static readonly Dictionary<string, string> SettingKeyToCardName = new(StringComparer.OrdinalIgnoreCase)
@@ -170,13 +169,13 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "SettingsActiveInterceptCard",
         ["ActiveInterceptNotifyMode"] = "SettingsActiveInterceptNotifyCard",
         ["WindowsSearchIndex"] = "SettingsSearchIndexCard",
-        ["AgentSkills"] = "AgentSkillsSection",
     };
 
     public SettingsPage()
     {
         InitializeComponent();
         InitializeSettingsLayout();
+        InitializePluginSettings();
 
 
         var version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -1938,21 +1937,12 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitGitHubLoginStatus();
     }
 
-	private async void CommunitySubmitButton_Click(object sender, RoutedEventArgs e)
-	{
-		var tool = BuiltinToolRegistry.GetById("community-tools");
-		if (tool is not null)
-		{
-			var context = new BuiltinToolContext
-			{
-				XamlRoot = XamlRoot,
-				CancellationToken = CancellationToken.None
-			};
-			MainWindow.ActiveToolName = tool.Name;
-			try { await tool.ExecuteTrackedAsync(context); } catch { }
-			finally { MainWindow.ActiveToolName = null; }
-		}
-	}
+    private async void CommunitySubmitButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (RuntimeHelper.IsPackagedContext) return;
+        await Windows.System.Launcher.LaunchUriAsync(new Uri(Services.Plugins.NuGetPluginSource.UploadUrl));
+        App.MainWindow?.NavigateToToolPage(typeof(PluginsPage), "docs");
+    }
 
     private async void FeedbackButton_Click(object sender, RoutedEventArgs e)
     {

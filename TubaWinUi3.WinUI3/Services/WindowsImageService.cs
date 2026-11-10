@@ -353,72 +353,28 @@ public static class WindowsImageService
 
     private static async Task CreateIsoWithUltraIsoAsync(string ultraIsoExe, string isoRoot, string isoPath, CancellationToken ct)
     {
-        await Task.Run(() =>
-        {
-            var args = $@"-udfdvd -directory ""{isoRoot}"" -output ""{isoPath}"" -silent";
-            var psi = new System.Diagnostics.ProcessStartInfo(ultraIsoExe, args)
-            {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            using var p = System.Diagnostics.Process.Start(psi)
-                ?? throw new InvalidOperationException("无法启动 UltraISO");
-            p.WaitForExit();
-            if (p.ExitCode != 0)
-                throw new InvalidOperationException($"UltraISO 错误 (ExitCode={p.ExitCode}): {p.StandardError.ReadToEnd()}");
-        }, ct);
+        var start = new System.Diagnostics.ProcessStartInfo(ultraIsoExe);
+        foreach (var arg in new[] { "-udfdvd", "-directory", isoRoot, "-output", isoPath, "-silent" }) start.ArgumentList.Add(arg);
+        var result = await CapturedProcess.RunAsync(start, ct);
+        if (result.ExitCode != 0) throw new InvalidOperationException($"UltraISO 错误 ({result.ExitCode}): {result.Error}");
     }
 
     private static async Task<int> GetDismImageCountAsync(string imagePath, CancellationToken ct)
     {
-        var output = await RunDismCaptureAsync($@"/Get-WimInfo /WimFile:""{imagePath}""", ct);
+        var output = await RunDismCaptureAsync($@"/English /Get-WimInfo /WimFile:""{imagePath}""", ct);
         var count = 0;
-        foreach (Match m in Regex.Matches(output, @"Index\s*:\s*(\d+)"))
-            count = Math.Max(count, int.Parse(m.Groups[1].Value));
+        foreach (Match m in Regex.Matches(output, @"Index\s*:\s*(\d+)")) count = Math.Max(count, int.Parse(m.Groups[1].Value));
+        if (count == 0) throw new InvalidDataException("DISM 未返回有效的映像索引。");
         return count;
     }
 
-    private static Task RunDismAsync(string args, CancellationToken ct)
-    {
-        return Task.Run(() =>
-        {
-            var psi = new System.Diagnostics.ProcessStartInfo("dism.exe", args)
-            {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            using var p = System.Diagnostics.Process.Start(psi)
-                ?? throw new InvalidOperationException("无法启动 DISM");
-            p.WaitForExit();
-            if (p.ExitCode != 0)
-            {
-                var err = p.StandardError.ReadToEnd();
-                throw new InvalidOperationException($"DISM 错误 (ExitCode={p.ExitCode}): {err}");
-            }
-        }, ct);
-    }
+    private static async Task RunDismAsync(string args, CancellationToken ct) => _ = await RunDismCaptureAsync(args, ct);
 
     private static async Task<string> RunDismCaptureAsync(string args, CancellationToken ct)
     {
-        return await Task.Run(() =>
-        {
-            var psi = new System.Diagnostics.ProcessStartInfo("dism.exe", args)
-            {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            using var p = System.Diagnostics.Process.Start(psi)
-                ?? throw new InvalidOperationException("无法启动 DISM");
-            var output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
-            return output;
-        }, ct);
+        var result = await CapturedProcess.RunAsync(new System.Diagnostics.ProcessStartInfo("dism.exe", args), ct);
+        if (result.ExitCode != 0) throw new InvalidOperationException($"DISM 错误 ({result.ExitCode}): {result.Error} {result.Output}");
+        return result.Output;
     }
 
     /// <summary>

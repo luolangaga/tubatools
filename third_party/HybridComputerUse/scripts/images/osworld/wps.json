@@ -1,0 +1,12 @@
+{
+  "vendor_channel": "international",
+  "file": "wps-office.deb",
+  "source": "https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/wps-office.deb",
+  "release_url": "https://www.wps.com/whatsnew/linux/20261010/",
+  "channel_api": "https://global.wps.com/activity/seo-api/v1/seo-engine-api/channel_config?domain=www.wps.com",
+  "package": {
+    "Package": "wps-office",
+    "Version": "12.1.2.29182.AK.preread.sw",
+    "Architecture": "amd64"
+  }
+}

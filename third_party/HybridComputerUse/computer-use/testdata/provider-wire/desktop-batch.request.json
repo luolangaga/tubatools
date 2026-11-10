@@ -1,0 +1,16 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-desktop",
+  "operation": "desktop_execute_batch",
+  "desktop": {
+    "protocol_version": 2,
+    "actions": [
+      {"type": "move", "x": 100, "y": 80},
+      {"type": "click", "x": 100, "y": 80, "button": "left"},
+      {"type": "keypress", "keys": ["CTRL", "S"]}
+    ],
+    "settle_ms": 800,
+    "frame_id": "layout-v1-fixture"
+  }
+}

@@ -35,7 +35,10 @@ env:
   AxiomIngestToken: ${{ secrets.AXIOM_INGEST_TOKEN }}
 
 jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
   build-tools:
+    needs: quality
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,7 +76,8 @@ jobs:
             '硬盘工具\CrystalDiskMark',
             '烤鸡工具\FurMark_win64',
             '综合检测\hwinfo',
-            '综合检测\HWMonitor'
+            '综合检测\HWMonitor',
+            '其他工具\PresentMon'
           )
           $srcRoot = 'TubaWinUi3.WinUI3\Tools'
           $staging = Join-Path $env:RUNNER_TEMP 'tools-lite-staging'
@@ -99,6 +103,7 @@ jobs:
           path: Tools_Lite.zip
 
   build:
+    needs: quality
     strategy:
       matrix:
         include:
@@ -124,9 +129,9 @@ jobs:
           $csproj = $csproj -replace '<Version>[^<]*</Version>', "<Version>$ver</Version>"
           Set-Content -LiteralPath 'TubaWinUi3.WinUI3/TubaWinUi3.csproj' -Value $csproj -NoNewline
 
-          $peCsproj = Get-Content -LiteralPath 'TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj' -Raw
-          $peCsproj = $peCsproj -replace '<Version>[^<]*</Version>', "<Version>$ver</Version>"
-          Set-Content -LiteralPath 'TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj' -Value $peCsproj -NoNewline
+          $tuiCsproj = Get-Content -LiteralPath 'TubaWinUi3.Tui/TubaWinUi3.Tui.csproj' -Raw
+          $tuiCsproj = $tuiCsproj -replace '<Version>[^<]*</Version>', "<Version>$ver</Version>"
+          Set-Content -LiteralPath 'TubaWinUi3.Tui/TubaWinUi3.Tui.csproj' -Value $tuiCsproj -NoNewline
 
           foreach ($iss in @('installer.iss', 'installer-x64.iss', 'installer-x86.iss', 'installer-arm64.iss')) {
             if (Test-Path -LiteralPath $iss) {
@@ -138,10 +143,12 @@ jobs:
 
           Write-Host "Version updated to $ver"
 
-      - name: Setup .NET 10
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: |
+            10.0.400
+            8.0.x
 
       - name: Setup fonttools (build-time font subsetting)
         run: pip install fonttools
@@ -214,26 +221,23 @@ jobs:
               Remove-Item -Force -ErrorAction SilentlyContinue
           }
 
+      - name: Publish TUI compatibility edition (Native AOT)
+        shell: pwsh
+        run: |
+          dotnet publish TubaWinUi3.Tui/TubaWinUi3.Tui.csproj `
+            -c Release `
+            -r ${{ matrix.rid }} `
+            -o publish_tui_${{ matrix.arch }}
+          $tuiExe = "publish_tui_${{ matrix.arch }}/图吧工具箱TUI兼容版.exe"
+          if ($LASTEXITCODE -ne 0) { throw "Native AOT publish failed ($LASTEXITCODE)" }
+          if (-not (Test-Path -LiteralPath $tuiExe -PathType Leaf)) { throw "Missing TUI executable: $tuiExe" }
+          Copy-Item -LiteralPath $tuiExe -Destination "publish_${{ matrix.arch }}_installer/图吧工具箱TUI兼容版.exe" -Force
+          Write-Host "Bundled TUI into installer payload: publish_${{ matrix.arch }}_installer"
+
       - name: Build Inno Setup installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
         with:
           path: installer-${{ matrix.arch }}.iss
-
-      - name: Publish PE compatible edition (self-contained single-file)
-        shell: pwsh
-        run: |
-          dotnet publish TubaWinUi3.PECompatible/TubaWinUi3.PECompatible.csproj `
-            -c Release `
-            -r ${{ matrix.rid }} `
-            -o publish_pecompat_${{ matrix.arch }}
-          $peExe = "publish_pecompat_${{ matrix.arch }}/图吧工具箱PE兼容版.exe"
-          if (Test-Path -LiteralPath $peExe) {
-            Write-Host "PE compatible edition published successfully"
-            $size = [math]::Round((Get-Item -LiteralPath $peExe).Length / 1MB, 1)
-            Write-Host "  Size: $size MB"
-          } else {
-            Write-Host "::warning::PE compatible edition exe not found at $peExe"
-          }
 
       - name: Create portable zip (src/ layout with launcher)
         shell: pwsh
@@ -249,11 +253,8 @@ jobs:
 
           Copy-Item -LiteralPath "Launcher\bin\图吧工具箱WinUI3_${{ matrix.arch }}.exe" -Destination (Join-Path $stagingDir '图吧工具箱WinUI3.exe') -Force
 
-          $peExe = "publish_pecompat_${{ matrix.arch }}/图吧工具箱PE兼容版.exe"
-          if (Test-Path -LiteralPath $peExe) {
-            Copy-Item -LiteralPath $peExe -Destination (Join-Path $stagingDir '图吧工具箱PE兼容版.exe') -Force
-            Write-Host "Added PE compatible edition to portable zip"
-          }
+          $tuiExe = "publish_tui_${{ matrix.arch }}/图吧工具箱TUI兼容版.exe"
+          Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $stagingDir '图吧工具箱TUI兼容版.exe') -Force
 
           Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Portable_${{ inputs.version }}_${{ matrix.arch }}.zip"
@@ -313,11 +314,8 @@ jobs:
 
           Copy-Item -LiteralPath "Launcher\bin\图吧工具箱WinUI3_x64.exe" -Destination (Join-Path $stagingDir '图吧工具箱WinUI3.exe') -Force
 
-          $peExe = "publish_pecompat_x64/图吧工具箱PE兼容版.exe"
-          if (Test-Path -LiteralPath $peExe) {
-            Copy-Item -LiteralPath $peExe -Destination (Join-Path $stagingDir '图吧工具箱PE兼容版.exe') -Force
-            Write-Host "Added PE compatible edition to lite portable zip"
-          }
+          $tuiExe = "publish_tui_x64/图吧工具箱TUI兼容版.exe"
+          Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $stagingDir '图吧工具箱TUI兼容版.exe') -Force
 
           Compress-Archive -Path "$stagingDir\*" `
             -DestinationPath "TubaWinUi3_Lite_${{ inputs.version }}_x64.zip"
@@ -424,6 +422,9 @@ jobs:
           find artifacts -type f \( -name '*.exe' -o -name '*.zip' \) -exec cp {} release_files/ \;
           if [ -f artifacts/tools-zip/Tools.zip ]; then
             cp artifacts/tools-zip/Tools.zip release_files/Tools.zip
+          fi
+          if [ -f artifacts/tools-lite-zip/Tools_Lite.zip ]; then
+            cp artifacts/tools-lite-zip/Tools_Lite.zip release_files/Tools_Lite.zip
           fi
 
       - name: Calculate file hashes

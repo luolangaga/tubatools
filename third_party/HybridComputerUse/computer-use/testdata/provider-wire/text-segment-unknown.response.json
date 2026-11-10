@@ -1,0 +1,28 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-text-segment",
+  "operation": "desktop_execute_batch",
+  "desktop": {
+    "ok": false,
+    "gui_result": {},
+    "error": "Text segment completion is unknown; observe before replaying.",
+    "failure": {"code": "desktop_input_failed", "phase": "emission"},
+    "mutation": {"input_events_emitted": true, "partial_input_possible": true, "mutation_unknown": true},
+    "action_evidence": {
+      "route": "input.window_messages",
+      "geometry_sampled": false,
+      "readback_sampled": false,
+      "input_emitted": true,
+      "source_utf16_index": 2,
+      "source_utf16_count": 7,
+      "source_utf16_length": 9,
+      "attempted_messages": 2,
+      "returned_messages": 1,
+      "unknown_message_index": 1,
+      "message": 194,
+      "sequence_phase": "selection_text",
+      "effect_verified": false
+    }
+  }
+}

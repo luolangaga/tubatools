@@ -1,0 +1,23 @@
+{
+  "protocol": "computer-use-provider",
+  "schema_version": 2,
+  "request_id": "req-ordered-rejected",
+  "operation": "ordered_input",
+  "ordered_input": {
+    "protocol_version": 2,
+    "contract_version": 1,
+    "app": "Editor",
+    "app_identity": {"providerBusName": "pid:42", "processGeneration": "pid:42:start:100"},
+    "window_handle": "w2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "expected_window": {
+      "windowHandle": "w2:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "providerBusName": "pid:42",
+      "providerObjectPath": "window:7",
+      "processGeneration": "pid:42:start:100",
+      "role": "window",
+      "name": "Document"
+    },
+    "steps": [{"action_index": 2, "key": "ENTER"}],
+    "final_observation": {"capture_snapshot": false}
+  }
+}
