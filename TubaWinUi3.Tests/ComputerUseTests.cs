@@ -22,6 +22,37 @@ public sealed class ComputerUseTests : IDisposable
     }
 
     [Fact]
+    public async Task AppHost_RunsEmbeddedComputerUseProvider()
+    {
+        var app = LocateAppHost();
+        Assert.True(File.Exists(app), app);
+        var start = new ProcessStartInfo(app)
+        {
+            UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
+            StandardInputEncoding = new UTF8Encoding(false), StandardOutputEncoding = new UTF8Encoding(false), StandardErrorEncoding = new UTF8Encoding(false)
+        };
+        start.Environment[ComputerUseProviderHost.InvocationVariable] = "1";
+        using var process = Process.Start(start)!;
+        try
+        {
+            await process.StandardInput.WriteLineAsync("""{"request_id":"t1","operation":"bogus"}""");
+            await process.StandardInput.FlushAsync();
+            var line = await process.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.NotNull(line);
+            Assert.Contains("\"protocol\":\"computer-use-provider\"", line);
+            Assert.Contains("invalid_request", line);
+            Assert.False(process.HasExited, "embedded provider exited after one request");
+        }
+        finally
+        {
+            process.StandardInput.Close();
+            try { await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5)); }
+            catch (TimeoutException) { process.Kill(entireProcessTree: true); await process.WaitForExitAsync(); }
+        }
+    }
+
+    [Fact]
     public void Workspace_RegistersOfficialHybridComputerUseBridge()
     {
         AgentWorkspace.Prepare();

@@ -167,3 +167,8 @@ The GPL-3.0 license text is included in the repository LICENSE.
 ## AI 助手按需组件
 
 AI 助手调用 OpenCode CLI V2（本次验证版本 2.2.5），上游 https://github.com/anomalyco/opencode ，MIT License，Copyright (c) 2025 opencode。该组件不随主程序打包，按需从上游官方地址下载；许可原文随应用资源保留于 `Assets/AiAgent/COMPONENT-LICENSE.txt`，安装时复制到组件目录。产品交互文案使用「AI 组件」，不改变第三方权利归属。
+
+## Hybrid Computer Use Windows provider
+
+`third_party/HybridComputerUse/computer-use/native/windows/ComputerUse.Windows.Runtime/` 的 C# 源码被编译进主程序，以隐藏模式（`TUBA_COMPUTER_PROVIDER_HOST=1`）运行在同一进程内，为 AI 助手提供 UI Automation 与桌面输入能力。上游 Microsoft **Hybrid-Computer-Use**，MIT License，Copyright (c) 2026 Hybrid Computer Use authors。上游项目：https://github.com/microsoft/Hybrid-Computer-Use
+该 provider 依赖 **FlaUI**（NuGet `FlaUI.Core` / `FlaUI.UIA3` 5.0.0，MIT License）与 `Interop.UIAutomationClient`（MIT License）。

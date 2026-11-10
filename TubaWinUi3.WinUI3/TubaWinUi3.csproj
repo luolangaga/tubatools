@@ -65,6 +65,17 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
+    <!-- The Windows provider runs as a hidden mode of this executable and shares the app
+         runtime; only the small Go MCP server is shipped as a separate binary. -->
+    <Content Remove="Assets\HybridComputerUse\*\computer-use-windows-provider.exe" />
+  </ItemGroup>
+
+  <!-- Windows provider sources are compiled into the app so the provider can run as a
+       hidden mode of TubaWinUi3.exe (same runtime) instead of a separate 155 MB bundle. -->
+  <ItemGroup>
+    <Compile Include="..\third_party\HybridComputerUse\computer-use\native\windows\ComputerUse.Windows.Runtime\**\*.cs"
+             Exclude="..\third_party\HybridComputerUse\computer-use\native\windows\ComputerUse.Windows.Runtime\Program.cs;..\third_party\HybridComputerUse\computer-use\native\windows\ComputerUse.Windows.Runtime\obj\**\*.cs;..\third_party\HybridComputerUse\computer-use\native\windows\ComputerUse.Windows.Runtime\bin\**\*.cs"
+             Link="Services\AiAgent\ComputerUseProvider\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- 界面本地化资源（WinUI3Localizer 直接读取 exe 旁 Strings/<lang>/*.resw，不使用 PRI）。
@@ -190,6 +201,8 @@
     <PackageReference Include="Downloader" Version="5.9.6" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
+    <PackageReference Include="FlaUI.Core" Version="5.0.0" />
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     <ProjectReference Include="..\third_party\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj" AdditionalProperties="GeneratePackageOnBuild=false" />

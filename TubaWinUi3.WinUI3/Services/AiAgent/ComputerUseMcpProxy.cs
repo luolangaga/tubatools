@@ -88,6 +88,11 @@ internal static class ComputerUseMcpProxy
             StandardErrorEncoding = new UTF8Encoding(false)
         };
         start.ArgumentList.Add("mcp");
+        // The provider is a hidden mode of this executable, so it shares the app runtime
+        // instead of shipping a separate self-contained .NET process.
+        if (Environment.ProcessPath is { Length: > 0 } host)
+            start.Environment[ComputerUseProviderHost.ProviderPathVariable] = host;
+        start.Environment[ComputerUseProviderHost.InvocationVariable] = "1";
         using var child = Process.Start(start);
         Trace("child=" + (child?.Id.ToString() ?? "(null)"));
         if (child is null) return 1;

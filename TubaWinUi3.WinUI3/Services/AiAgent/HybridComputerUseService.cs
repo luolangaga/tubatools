@@ -2,7 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace TubaWinUi3.Services.AiAgent;
 
-/// <summary>Stages the official Microsoft Hybrid Computer Use Windows bundle next to the private AI runtime.</summary>
+/// <summary>
+/// Stages the official Microsoft Hybrid Computer Use Go MCP server next to the private AI
+/// runtime. The heavy Windows provider is not shipped: it runs as a hidden mode of
+/// <c>TubaWinUi3.exe</c> (see <see cref="ComputerUseProviderHost"/>), sharing the app runtime.
+/// </summary>
 internal static class HybridComputerUseService
 {
     // This value matches third_party/HybridComputerUse/VERSION and the bundled official binaries.
@@ -19,39 +23,42 @@ internal static class HybridComputerUseService
     private static string SourceDirectory => Path.Combine(AppContext.BaseDirectory, "Assets", "HybridComputerUse", ArchitectureDirectory);
     internal static string Root => Path.Combine(AiComponentService.Root, "ComputerUse", Version);
     internal static string Executable => Path.Combine(Root, "computer-use.exe");
-    private static string Provider => Path.Combine(Root, "computer-use-windows-provider.exe");
+
+    /// <summary>Older builds staged a ~155 MB self-contained provider; reclaim it.</summary>
+    private static string LegacyProvider => Path.Combine(Root, "computer-use-windows-provider.exe");
 
     internal static async Task EnsureInstalledAsync(CancellationToken ct)
     {
-        var source = SourceDirectory;
-        if (!File.Exists(Path.Combine(source, "computer-use.exe")) ||
-            !File.Exists(Path.Combine(source, "computer-use-windows-provider.exe")))
+        var source = Path.Combine(SourceDirectory, "computer-use.exe");
+        if (!File.Exists(source))
             throw new FileNotFoundException(AgentText.L("ComputerUseMissing", "电脑控制组件缺失。请重新安装图吧工具箱。"));
-        if (IsReady()) return;
+        if (IsReady()) { RemoveLegacyProvider(); return; }
 
         await Gate.WaitAsync(ct);
         try
         {
-            if (IsReady()) return;
-            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
-            {
-                ct.ThrowIfCancellationRequested();
-                var destination = Path.Combine(Root, Path.GetRelativePath(source, file));
-                Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
-                await CopyFileAsync(file, destination, ct);
-            }
+            if (IsReady()) { RemoveLegacyProvider(); return; }
+            Directory.CreateDirectory(Root);
+            await CopyFileAsync(source, Executable, ct);
             await File.WriteAllTextAsync(Path.Combine(Root, "VERSION"), Version, ct);
+            RemoveLegacyProvider();
         }
         finally { Gate.Release(); }
     }
 
-    private static bool IsReady() => File.Exists(Executable) && File.Exists(Provider) &&
+    private static bool IsReady() => File.Exists(Executable) &&
         string.Equals(ReadVersion(), Version, StringComparison.Ordinal);
 
     private static string ReadVersion()
     {
         try { return File.ReadAllText(Path.Combine(Root, "VERSION")).Trim(); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ""; }
+    }
+
+    private static void RemoveLegacyProvider()
+    {
+        try { File.Delete(LegacyProvider); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     private static async Task CopyFileAsync(string source, string destination, CancellationToken ct)
