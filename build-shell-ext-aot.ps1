@@ -1,4 +1,4 @@
-# 「文件占用查看」右键菜单处理程序（ShellExtension）NativeAOT 发布辅助脚本。
+﻿# 「文件占用查看」右键菜单处理程序（ShellExtension）NativeAOT 发布辅助脚本。
 # 用途：定位 MSVC vcvarsall/vcvars64（VS2022 各版本/目录），在其环境下以
 #   IlcUseEnvironmentalTools=true 发布 NativeAOT 原生 DLL（导出 DllGetClassObject），
 #   兼容 vswhere 元数据缺失（仅装 BuildTools）的机器与 CI。

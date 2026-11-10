@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Build TubaWinUi3 MSIX packages for x64 and ARM64, then create .msixbundle for Store submission.
 

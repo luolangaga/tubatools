@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     One-command "package & run" in packaged (MSIX) mode — CLI equivalent of VS F5 on a
     single-project MSIX. Builds → registers the build output as a dev package (Developer
@@ -87,7 +87,7 @@ if (-not $Arch) {
 }
 $rid = "win-$Arch"
 
-$csprojXml = [xml](Get-Content -LiteralPath $CsprojPath -Raw)
+$csprojXml = [xml](Get-Content -LiteralPath $CsprojPath -Raw -Encoding UTF8)
 $tfm  = ($csprojXml.Project.PropertyGroup | Where-Object { $_.TargetFramework } | Select-Object -First 1).TargetFramework
 $ver  = ($csprojXml.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
 if ($ver.Split('.').Count -eq 3) { $ver = "$ver.0" }   # MSIX needs 4 parts

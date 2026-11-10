@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 $RepoRoot     = 'C:\Users\luolan\Desktop\tubawinui3'
 $ProjectDir   = Join-Path $RepoRoot 'TubaWinUi3.WinUI3'

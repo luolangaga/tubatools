@@ -123,7 +123,8 @@ $SignToolPath  = Find-SdkTool 'signtool.exe'
 
 # ── Auto-read version from .csproj ────────────────────────────
 if (-not $Version) {
-    $csproj = [xml](Get-Content -LiteralPath $CsprojPath -Raw)
+    # csproj 含中文注释且无 BOM；Windows PowerShell 默认按 ANSI 读取会破坏 XML。
+    $csproj = [xml](Get-Content -LiteralPath $CsprojPath -Raw -Encoding UTF8)
     $rawVer = ($csproj.Project.PropertyGroup | Where-Object { $_.Version -ne $null } | Select-Object -First 1).Version
     if (-not $rawVer) { throw 'Cannot read Version element from csproj' }
 
