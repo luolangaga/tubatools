@@ -28,7 +28,8 @@ payload = json.dumps({
         {"role": "user", "content": prompt}
     ],
     "temperature": 0.3,
-    "max_tokens": 4000
+    # 推理型模型会先消耗 token 再产出正文，4000 在长 diff 下可能只剩空 content。
+    "max_tokens": 8000
 }).encode("utf-8")
 
 req = urllib.request.Request(
@@ -43,7 +44,9 @@ req = urllib.request.Request(
 try:
     with urllib.request.urlopen(req, timeout=300) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    content = data["choices"][0]["message"]["content"]
+    content = (data["choices"][0]["message"]["content"] or "").strip()
+    if not content:
+        raise ValueError("模型返回了空内容（可能 token 全被推理占用）")
 except Exception as e:
     commit_log = read_file("commit_log.txt").strip()
     if commit_log and commit_log != "- 首次发布":
