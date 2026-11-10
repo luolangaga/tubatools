@@ -1,9 +1,9 @@
 # 贡献指南（Contributing）
 
-感谢你愿意为 **图吧工具箱CE TubaWinUi3** 贡献！无论是提交 Issue、改进代码、补充文档还是新增工具，我们都欢迎。
+感谢你愿意为 **图吧工具箱CE TubaWinUi3** 贡献！无论是提交 Issue、改进代码还是补充文档，我们都欢迎。
 
+- **新增工具请以插件形式提供**：本项目不接受直接向主程序提交的新工具或第三方工具安装包；需要新工具时，请开发插件（安装后出现在「内置工具」中，可发布到 NuGet 供他人安装），开发与打包方法见[插件开发文档](插件开发文档.md)（[在线版](https://tubawinui3.cn/dev/plugin)）
 - 遇到问题请先阅读 [Issue 模板](.github/ISSUE_TEMPLATE/bug_report.yml) 与 [SECURITY.md](SECURITY.md)
-- 想提交工具（无需写代码）？请阅读 [社区贡献指南](https://tubawinui3.cn/guide/contribute-tools)（软件内"社区 → 提交工具"）
 - 想直接贡献代码？继续阅读本文档
 
 ---
@@ -43,7 +43,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"   # 只跑某个测�
 
 - 命名空间：`TubaWinUi3` / `.Pages` / `.Services` / `.Models`；类型、成员使用 PascalCase；XAML 与 code-behind 成对命名
 - 所有服务为静态类、无 DI，从页面直接调用（唯一例外：`LiteMonitorService` 为单例 `Instance`）
-- 新增内置工具：在 `TubaWinUi3.WinUI3/Services/BuiltinTools/` 下新建类实现 `IBuiltinTool`，在 `BuiltinToolRegistry.RegisterDefaults()` 注册（**重复 ID 会抛异常**），详情见[内置工具开发文档](https://tubawinui3.cn/dev/builtin-tools.html)
+- 内置工具开发（仅限维护者规划的改动）：在 `TubaWinUi3.WinUI3/Services/BuiltinTools/` 下新建类实现 `IBuiltinTool`，在 `BuiltinToolRegistry.RegisterDefaults()` 注册（**重复 ID 会抛异常**），详情见[内置工具开发文档](https://tubawinui3.cn/dev/builtin-tools.html)
 - 对话框请通过 `context.CreateDialog(...)` 创建，使其跟随应用主题
 - UI 字符串为硬编码中文（当前无本地化系统），改动文案请保持中文，并同步更新英文文档/说明
 

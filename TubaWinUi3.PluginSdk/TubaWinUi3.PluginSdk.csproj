@@ -5,7 +5,19 @@
     <Nullable>enable</Nullable>
     <Version>2.1.0</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <Description>图吧工具箱插件契约</Description>
-    <PackageTags>TubaWinUi3;SDK</PackageTags>
+    <Description>图吧工具箱插件契约（API v2）</Description>
+    <PackageTags>TubaWinUi3;SDK;plugin</PackageTags>
+    <PackageId>TubaWinUi3.PluginSdk</PackageId>
+    <Authors>图吧工具箱</Authors>
+    <PackageProjectUrl>https://tubawinui3.cn</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/luolangaga/tubatool</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>

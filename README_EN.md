@@ -71,7 +71,7 @@ Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup an
 
 [View all current feature screenshots](https://tubawinui3.cn/features)
 
-### Documentation
+## Documentation
 
 | Document | Contents |
 |:---------|:---------|
@@ -81,7 +81,22 @@ Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup an
 | [Getting Started](guide/en/getting-started.md) | System requirements, installation (Releases / Winget / Scoop / Store), building from source |
 | [Architecture](guide/en/architecture.md) | Directory layout, module notes and implementation details |
 | [FAQ](guide/en/faq.md) | UAC, antivirus flags, portable use, log locations and more |
+| [Plugin Development](插件开发文档.md) | Add tools through plugins (API v2); the SDK ships as a NuGet package ([online](https://tubawinui3.cn/dev/plugin)) |
 | [Community & Links](guide/en/community.md) | QQ group, contributors, links and project analytics |
+
+---
+
+## Contributors
+
+Thanks to everyone who has contributed code, filed issues or improved the docs — this toolbox is better because of you. Want to join them? Start with the [contributing guide](CONTRIBUTING.md).
+
+<div align="center">
+
+<a href="https://github.com/luolangaga/tubatools/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=luolangaga/tubatools&max=30&columns=10" alt="Contributors" />
+</a>
+
+</div>
 
 ---
 

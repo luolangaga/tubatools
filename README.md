@@ -71,7 +71,7 @@
 
 [查看当前版本的全部功能截图](https://tubawinui3.cn/features)
 
-### 文档导航
+## 文档导航
 
 | 文档 | 内容 |
 |:-----|:-----|
@@ -81,7 +81,22 @@
 | [快速开始](guide/getting-started.md) | 系统要求、安装方式（Releases / Winget / Scoop / Store）、从源码构建 |
 | [架构](guide/architecture.md) | 目录结构、模块说明与实现细节 |
 | [常见问题](guide/faq.md) | UAC、杀毒误报、便携使用、日志位置等 |
+| [插件开发](插件开发文档.md) | 通过插件新增工具（API v2），SDK 以 NuGet 包分发（[在线版](https://tubawinui3.cn/dev/plugin)） |
 | [交流与链接](guide/community.md) | QQ 群、贡献者、相关链接、项目数据 |
+
+---
+
+## 贡献者
+
+感谢每一位提交代码、反馈问题、完善文档的朋友，这个工具箱因你们而更好。想加入他们？先看看[贡献指南](CONTRIBUTING.md)。
+
+<div align="center">
+
+<a href="https://github.com/luolangaga/tubatools/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=luolangaga/tubatools&max=30&columns=10" alt="Contributors" />
+</a>
+
+</div>
 
 ---
 
