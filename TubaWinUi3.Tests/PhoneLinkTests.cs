@@ -176,36 +176,34 @@ public class PhoneLinkTests : IDisposable
         Assert.Null(PhoneLinkDiscovery.TryStart(19876));
     }
 
-    [AdminFact]
+    [Fact]
     public async Task Service_HttpRemainsAvailableWhenDiscoveryPortIsBusy_AndRestartKeepsCode()
     {
         using var socket = new System.Net.Sockets.UdpClient(System.Net.Sockets.AddressFamily.InterNetwork);
         socket.ExclusiveAddressUse = true;
         socket.Client.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 18764));
-        var code = PhoneLinkService.PairCode;
         PhoneLinkService.Start();
-        using var http = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) };
-        var ping = await http.GetStringAsync($"http://127.0.0.1:{PhoneLinkService.Port}/api/ping");
+        // 首次启动会做安全传输版本迁移并轮换一次配对码，取迁移后的值再验证重启保持不变。
+        var code = PhoneLinkService.PairCode;
+        using var http = NewClient();
+        var ping = await http.GetStringAsync($"https://127.0.0.1:{PhoneLinkService.Port}/api/ping");
         Assert.Contains("TubaLink", ping);
         Assert.Equal(code, PhoneLinkService.PairCode);
         PhoneLinkService.Stop();
         PhoneLinkService.Start();
         // 服务重启后旧连接池里的连接已失效，必须换新客户端，否则会复用到已关闭的 socket。
-        using var httpAfterRestart = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) };
+        using var httpAfterRestart = NewClient();
         Assert.Equal(code, PhoneLinkService.PairCode);
-        Assert.Contains("TubaLink", await httpAfterRestart.GetStringAsync($"http://127.0.0.1:{PhoneLinkService.Port}/api/ping"));
+        Assert.Contains("TubaLink", await httpAfterRestart.GetStringAsync($"https://127.0.0.1:{PhoneLinkService.Port}/api/ping"));
     }
 
-    // HTTP.sys wildcard registration requires elevation, just like the real unpackaged app.
-    private sealed class AdminFactAttribute : FactAttribute
+    // 服务端是 Kestrel 自签 TLS（不是 HTTP.sys），普通用户也能监听端口；测试只需放行自签证书。
+    private static HttpClient NewClient() => new(new HttpClientHandler
     {
-        public AdminFactAttribute()
-        {
-            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-            if (!new System.Security.Principal.WindowsPrincipal(identity).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
-                Skip = "Requires administrator: HTTP.sys http://+:port/ registration (access denied in non-elevated test host).";
-        }
-    }
+        UseProxy = false,
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+    })
+    { Timeout = TimeSpan.FromSeconds(15) };
 
     [Theory]
     [InlineData("Microsoft.PowerToys", true)]
