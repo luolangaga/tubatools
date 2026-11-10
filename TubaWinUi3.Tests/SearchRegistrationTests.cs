@@ -6,6 +6,7 @@ using TubaWinUi3.Services;
 namespace TubaWinUi3.Tests;
 
 [Collection("GlobalConfigTests")]
+[Trait("Category", "DesktopIntegration")]
 public sealed class SearchRegistrationTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "tuba-search-test-" + Guid.NewGuid().ToString("N"));

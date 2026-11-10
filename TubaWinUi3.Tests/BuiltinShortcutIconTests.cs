@@ -36,6 +36,7 @@ public class BuiltinShortcutIconTests
     }
 
     [Fact]
+    [Trait("Category", "DesktopIntegration")]
     public void CreateShortcut_WritesLnkReadBackWithArguments()
     {
         var type = typeof(WindowsSearchIndexService);

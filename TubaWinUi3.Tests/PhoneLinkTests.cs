@@ -190,8 +190,10 @@ public class PhoneLinkTests : IDisposable
         Assert.Equal(code, PhoneLinkService.PairCode);
         PhoneLinkService.Stop();
         PhoneLinkService.Start();
+        // 服务重启后旧连接池里的连接已失效，必须换新客户端，否则会复用到已关闭的 socket。
+        using var httpAfterRestart = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(5) };
         Assert.Equal(code, PhoneLinkService.PairCode);
-        Assert.Contains("TubaLink", await http.GetStringAsync($"http://127.0.0.1:{PhoneLinkService.Port}/api/ping"));
+        Assert.Contains("TubaLink", await httpAfterRestart.GetStringAsync($"http://127.0.0.1:{PhoneLinkService.Port}/api/ping"));
     }
 
     // HTTP.sys wildcard registration requires elevation, just like the real unpackaged app.

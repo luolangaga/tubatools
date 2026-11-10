@@ -11,6 +11,7 @@ namespace TubaWinUi3.Tests;
 /// 中文分类目录等非 ASCII 路径必须原样落进 .lnk。
 /// （旧实现第三方工具另起 powershell.exe -Command，在非中文系统 / UTF-8 代码页下会把中文路径写成乱码。）
 /// </summary>
+[Trait("Category", "DesktopIntegration")]
 public class DesktopShortcutTests
 {
     [Fact]
