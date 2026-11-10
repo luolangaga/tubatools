@@ -2144,12 +2144,6 @@ Permissions
   <data name="Builtin_official-websites_Name" xml:space="preserve">
     <value>Official Websites</value>
   </data>
-  <data name="Builtin_optimizer-duck_Desc" xml:space="preserve">
-    <value>An open-source Windows optimizer with system cleaning, performance tuning, and privacy protection.</value>
-  </data>
-  <data name="Builtin_optimizer-duck_Name" xml:space="preserve">
-    <value>OptimizerDuck</value>
-  </data>
   <data name="Builtin_pc-tutorial_Desc" xml:space="preserve">
     <value>New-PC setup guides, basic operations, stress testing, and myth-busting — learn to get the most out of your computer</value>
   </data>
@@ -5579,7 +5573,7 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_ProviderImages" xml:space="preserve"><value>These models support image input (provider support required)</value></data>
   <data name="Agent_ClipboardImage" xml:space="preserve"><value>Clipboard image</value></data>
   <data name="Agent_ImageInput" xml:space="preserve"><value>Images</value></data>
-  <data name="Agent_ModeChat" xml:space="preserve"><value>Chat</value></data>
+  <data name="Agent_ModeChat" xml:space="preserve"><value>Solve problems</value></data>
   <data name="Agent_ModeTeach" xml:space="preserve"><value>Teaching</value></data>
   <data name="Agent_CanvasTitle" xml:space="preserve"><value>Teaching canvas</value></data>
   <data name="Agent_CanvasShow" xml:space="preserve"><value>Show canvas</value></data>

@@ -5,7 +5,7 @@ description: 为图吧工具箱开发 API v2 插件：从需求、XAML 页面、
 
 # 图吧工具箱插件开发（API v2，陪跑版）
 
-先读同目录 `plugin-api.md`（当前 API v2 契约）。当前工作区的 `sdk/TubaWinUi3.PluginSdk.dll` 是真实 SDK；不要修改 `sdk/`，不要从网上找猜测的旧 SDK 包。API v1 已移除，`RegisterTool` 的旧多参数回调不存在。
+先读同目录 `plugin-api.md`（当前 API v2 契约）。SDK 优先从 nuget.org 的 `TubaWinUi3.PluginSdk` 包获取（当前 2.1.0）；仅当 NuGet 无法访问或宿主 SDK 尚未发布时，才回退引用工作区 `sdk/` 副本（由宿主维护，不要修改）。不要从网上找猜测的旧 SDK 包。API v1 已移除，`RegisterTool` 的旧多参数回调不存在。
 
 工作方式：用户可能完全不懂编程。每一步都先用一句人话说明“要做什么、为什么”，再执行；做完告诉用户“会看到什么”，等反馈，不要一口气丢十条命令。**没有实际构建/安装/验证前，不要声称插件已经可用。**
 
@@ -26,6 +26,25 @@ description: 为图吧工具箱开发 API v2 插件：从需求、XAML 页面、
 - 先读 `projects.md`，确认是不是要新建项目。支持多个插件并存，但每个插件用独立目录、独立 `PackageId` 和独立工具 ID；修改已有插件时保持身份，递增版本，不要覆盖别的项目。
 
 **发布到 NuGet 是公开行为**：包里的 DLL、XAML、图片、README 都能被任何人下载；插件会以工具箱的权限运行。测试通过后要主动鼓励用户发布，让更多人能用；真正点上传前确认用户同意公开，并检查包里没有密钥、密码和私人路径。先看第 4 节“发布到 NuGet”。
+
+## 0.5 先确认 .NET 10 SDK
+
+`dotnet` 不是工具箱自带的。动手写代码前先检查：
+
+```powershell
+dotnet --list-sdks
+```
+
+输出里有 `10.x` 就继续。如果提示找不到 `dotnet`，或只有 8/9 等旧版本，用 winget 安装微软官方 SDK：
+
+```powershell
+winget install --id Microsoft.DotNet.SDK.10 -e --source winget --accept-package-agreements --accept-source-agreements
+```
+
+- 安装前先用一句人话告诉用户“要安装微软官方的 .NET 10 SDK 才能编译插件”；这是系统组件安装，过程可能要 UAC 授权。
+- 装完再跑一次 `dotnet --list-sdks` 确认。当前终端可能还没刷新 PATH，必要时直接用 `"C:\Program Files\dotnet\dotnet.exe"`，或新开终端。
+- winget 也不可用时，让用户从 <https://dotnet.microsoft.com/download/dotnet/10.0> 手动安装；不要从第三方站点下载安装包。
+- SDK 没装好之前不要声称已经构建成功，也不要用空包或占位代码交付。
 
 ## 1. 最小插件骨架
 
@@ -114,10 +133,7 @@ public sealed class Entry : ITubaPlugin
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="TubaWinUi3.PluginSdk">
-      <HintPath>../sdk/TubaWinUi3.PluginSdk.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <PackageReference Include="TubaWinUi3.PluginSdk" Version="2.1.0" PrivateAssets="all" ExcludeAssets="runtime" />
     <None Include="tubatools.json" Pack="true" PackagePath="/" />
     <None Include="assets/**/*" Pack="true" PackagePath="%(Identity)" />
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
@@ -125,6 +141,17 @@ public sealed class Entry : ITubaPlugin
   </ItemGroup>
 </Project>
 ```
+
+SDK 正常路径只走 NuGet：`PackageReference` 会在构建前自动 restore，首次构建需要能访问 nuget.org；`PrivateAssets="all"` + `ExcludeAssets="runtime"` 保证 SDK 只参与编译、不会复制进 `plugin/`。只有在 NuGet 不可用、或宿主是 SDK 尚未发布的开发版时，才临时把上面的 `PackageReference` 换成宿主同版本副本：
+
+```xml
+<Reference Include="TubaWinUi3.PluginSdk">
+  <HintPath>../sdk/TubaWinUi3.PluginSdk.dll</HintPath>
+  <Private>false</Private>
+</Reference>
+```
+
+回退时仍要确认打包结果没有 SDK DLL；其他还原错误按实际报错处理，不要随手引用来历不明的 DLL。
 
 如果用了 WinUI 类型（`CreateContent` 或 `.xaml` 编译），通常改用 `net10.0-windows10.0.26100.0` 并引用正确版本的 Windows App SDK，但**只编译引用**，运行时由宿主提供；不要把 `Microsoft.*`、`WinRT.Runtime.dll`、宿主 DLL 或 SDK DLL 打进包。第三方依赖放进 `plugin/`，宿主不会帮你还原 NuGet 依赖。
 

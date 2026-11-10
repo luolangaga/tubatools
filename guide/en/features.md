@@ -125,7 +125,7 @@ Design your monitoring overlay by dragging components: several layout presets sh
 * **Malware sandbox** — a Sandboxie-Plus environment to run and analyze suspicious programs safely; delete the sandbox and the system is back as it was
 * **Context menu manager** — enable / disable / edit / add / delete context menu entries, covering New, Send to, Open with and the WinX menus
 * **Time sync** — switch the system NTP server in one click (Aliyun / Tencent Cloud / NICT…), with server speed tests, offset detection, instant resync and one-click repair
-* **And more** — hardware spoofer / Windows hidden features / .NET environment repair / background throttle saver / OptimizerDuck / Windows image download
+* **And more** — hardware spoofer / Windows hidden features / .NET environment repair / background throttle saver / Windows image download
 
 ## Network Tools
 

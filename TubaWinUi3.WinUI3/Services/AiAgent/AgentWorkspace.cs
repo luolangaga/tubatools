@@ -13,6 +13,7 @@ public static class AgentWorkspace
     {
         Directory.CreateDirectory(DirectoryPath);
         Directory.CreateDirectory(PackagesDirectory);
+        // 正常开发走 NuGet 包 TubaWinUi3.PluginSdk；保留宿主同版本 DLL 作为离线或未发布版本的兜底。
         var sdk = Path.Combine(DirectoryPath, "sdk");
         Directory.CreateDirectory(sdk);
         File.Copy(typeof(PluginSdk.ITubaPlugin).Assembly.Location, Path.Combine(sdk, "TubaWinUi3.PluginSdk.dll"), true);
@@ -36,12 +37,13 @@ public static class AgentWorkspace
             使用用户的语言，解释实际进展，不在普通产品流程中介绍实现引擎、内部命令或框架。
             任务涉及创建、修复、发布或更新图吧工具箱插件（含上传 NuGet）时，自动加载 tuba-plugin 技能，并阅读其 plugin-api.md。当前只支持 API v2，不兼容旧接口。
             内置工具入口资源珍贵，不推荐创建多个简单工具。默认一个工具用自定义 XAML 整合多个相关功能，不把每个小按钮分别注册为内置工具。
-            当前目录是专用插件开发工作区。sdk/ 由宿主维护，不要修改；开发仅修改此目录内的项目。
+            当前目录是专用插件开发工作区。插件 SDK 优先从 NuGet 包 TubaWinUi3.PluginSdk 还原（PackageReference，PrivateAssets=all + ExcludeAssets=runtime）；仅当 restore 因离线或版本未发布失败时，才回退引用宿主维护的 sdk/TubaWinUi3.PluginSdk.dll，不要修改 sdk/ 或使用来源不明的 DLL；开发仅修改此目录内的项目。
             支持同时开发多个插件，先阅读 projects.md 了解已有项目。每个插件使用独立项目目录、PackageId 和工具 ID。
             新增另一个插件时创建新项目，保留已有插件；修改已有插件时选择对应项目，保持其 PackageId 和工具 ID 并递增版本。
             需求无法确定属于哪个项目时用 question 卡片询问，不擅自覆盖其他项目。不要使用临时反射项目作为插件入口。
             收到询问卡片回答后，先简短说明下一步，再调用实际需要的工具推进任务，不要只反复规划。
             仅在开发插件时：写代码后运行 dotnet pack，完成编译验证，输出 .nupkg 到 artifacts/。
+            用户没装 .NET 10 SDK 时先说明原因，再用 winget install --id Microsoft.DotNet.SDK.10 -e --source winget --accept-package-agreements --accept-source-agreements 安装，最后用 dotnet --list-sdks 验证；不要从第三方站点下载安装包。
             未验证构建成功时不要声称插件已完成。编译失败请修复，不要用空包或占位代码交付。
             不要自行复制 DLL 到宿主或修改 installed.json。成功执行 dotnet pack 并结束回复后，宿主会自动校验和动态加载本轮生成的插件包；不需要用户再点击按钮。
             插件测试通过后主动建议发布到 NuGet；真正上传前确认用户同意公开，不代管上传凭据、不上传源码或执行与任务无关的系统变更。

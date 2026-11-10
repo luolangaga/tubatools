@@ -19,7 +19,8 @@ public class CleanerEntry
     public List<RegKeyEntry> RegKeys { get; set; } = new();         // Registry keys or values to delete.
     public List<ExcludeKeyEntry> ExcludeKeys { get; set; } = new(); // Paths/files to skip even if they match a FileKey.
     public string? Warning { get; set; }                            // Winapp2 warning shown as tooltip (e.g. "Removes saved passwords").
-    public bool Default { get; set; } = true;                       // Whether this entry is checked by default in the UI.
+    public bool Default { get; set; }                               // 仅显式 Default=True 才默认勾选；规则库绝大多数条目不写这个键，
+                                                                    // 若按 true 处理会把下载/桌面等个人文件夹一起默认勾上（#257）。
 
     // Not from Winapp2.ini; used internally:
     public bool IsCustom { get; set; }                              // True for entries loaded from the user's Custom/ folder.

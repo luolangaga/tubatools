@@ -10,8 +10,13 @@ public sealed class CleanupRow
     public required string Category { get; init; }
     public required string Detail { get; init; }
     public string Warning { get; init; } = "";
+    public bool HasWarning => Warning.Length > 0;
     public long Bytes { get; init; }
     public string SizeText => ScanResult.FormatBytes(Bytes);
+    public JunkRiskLevel Risk { get; init; }
+    public bool IsDangerous => Risk == JunkRiskLevel.Dangerous;
+    public bool IsCaution => Risk == JunkRiskLevel.Caution;
+    public bool IsRisky => Risk != JunkRiskLevel.Normal;
     public bool DefaultSelected { get; init; }
     public ScanResult? Junk { get; init; }
     public WindowsCleanupItem? Windows { get; init; }
@@ -39,11 +44,11 @@ public static class JunkCleanupFacade
                 if (!(entry.IsCustom && !hasDetection) && !detection.IsInstalled(entry)) continue;
                 var result = await cleaner.AnalyzeAsync(entry, null, token);
                 if (result.FilesToDelete.Count == 0 && result.RegistryToDelete.Count == 0) continue;
-                string warning = string.Join(" · ", new[] { entry.Warning, result.RegistryToDelete.Count > 0 ? "包含注册表项目" : null }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                var risk = JunkRiskClassifier.Evaluate(entry, result);
                 results.Add(new CleanupRow { Name = entry.Name, Category = CategoryResolver.TryMapLangSecRef(entry).Name,
                     Detail = $"{result.FilesToDelete.Count:N0} 个文件 · {result.RegistryToDelete.Count:N0} 个注册表项目",
-                    Bytes = result.TotalBytes, Junk = result, Warning = warning,
-                    DefaultSelected = entry.Default && string.IsNullOrWhiteSpace(warning) });
+                    Bytes = result.TotalBytes, Junk = result, Warning = risk.Reason, Risk = risk.Level,
+                    DefaultSelected = JunkRiskClassifier.IsDefaultSelected(entry.Default, risk) });
             }
             return results.OrderBy(r => r.Category).ThenByDescending(r => r.Bytes).ToList();
         }, token);

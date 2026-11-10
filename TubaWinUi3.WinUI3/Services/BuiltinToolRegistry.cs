@@ -64,7 +64,6 @@ public static class BuiltinToolRegistry
         Register(new HardwareSpooferTool());
         Register(new NetworkAdapterProxyTool());
         Register(new UniGetUITool());
-        Register(new OptimizerDuckTool());
         Register(new PerformanceBenchmarkTool());
         Register(new BenchmarkCloudTool());
         Register(new LatencyImageQueryTool());

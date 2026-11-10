@@ -60,7 +60,7 @@ public sealed partial class AiAssistantPage : Page
             (SendButton,"Send","发送"),(StopButton,"Stop","停止") })
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(pair.Element, L(pair.Key,pair.Fallback));
         PermissionBox.Items.Add(L("FullAccess", "全部权限")); PermissionBox.Items.Add(L("AskAccess", "逐次确认"));
-        ModeBox.Items.Add(L("ModeChat", "对话")); ModeBox.Items.Add(L("ModeTeach", "教学模式"));
+        ModeBox.Items.Add(L("ModeChat", "解决问题")); ModeBox.Items.Add(L("ModeTeach", "教学模式"));
         WorkspacePathText.Text = AgentWorkspace.DirectoryPath;
         ToolTipService.SetToolTip(WorkspacePathText, AgentWorkspace.DirectoryPath);
         _active = NewState(); _syncingUi = false; SyncActive();

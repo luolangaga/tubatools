@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <AssemblyName>图吧工具箱TUI兼容版</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.9.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>annotations</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

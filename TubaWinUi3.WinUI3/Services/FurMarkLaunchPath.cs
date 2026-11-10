@@ -31,15 +31,19 @@ internal static class FurMarkLaunchPath
             var root = GetAliasRoot();
             var launchPath = Path.Combine(AliasDirectory(Path.GetDirectoryName(exePath)!, root), Path.GetFileName(exePath));
             var launchDirectory = AliasDirectory(workingDirectory, root);
+#if TUBA_WINUI
             LogService.Debug(LogService.App, $"FurMark: MSIX={RuntimeHelper.IsMsixPackaged}; " +
                 $"source={exePath}; launch={launchPath}; cwd={launchDirectory}; " +
                 $"gxc(source/launch)={File.Exists(Path.Combine(Path.GetDirectoryName(exePath)!, "gxc_x64.dll"))}/" +
                 $"{File.Exists(Path.Combine(Path.GetDirectoryName(launchPath)!, "gxc_x64.dll"))}");
+#endif
             return (launchPath, launchDirectory);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
         {
+#if TUBA_WINUI
             LogService.Error(LogService.App, $"FurMark 路径准备失败：{exePath}", ex);
+#endif
             throw new IOException("无法为 FurMark 建立英文路径兼容入口。请检查目录权限及磁盘是否支持目录联接，或将 FurMark 整个文件夹移至纯英文路径后运行。", ex);
         }
     }
@@ -55,7 +59,11 @@ internal static class FurMarkLaunchPath
             ?? throw new IOException("无法识别当前用户。");
         // 通常使用用户私有目录；中文用户名时转到 ProgramData 下按 SID 隔离的目录。
         // MSIX 用明确的 LocalState，不在可能被虚拟化的通用 AppData 视图下创建启动入口。
+#if TUBA_WINUI
         var root = Path.Combine(localData ?? RuntimeHelper.GetLocalAppDataRoot(), "TubaWinUi3.FurMark");
+#else
+        var root = Path.Combine(localData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TubaWinUi3.FurMark");
+#endif
         if (useCommonData || !IsAscii(root) || !FitsLegacyLaunchPath(root))
             root = Path.Combine(commonData ?? Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "TubaWinUi3.FurMark-" + user.Value);
         if (!Path.IsPathFullyQualified(root) || !IsAscii(root))

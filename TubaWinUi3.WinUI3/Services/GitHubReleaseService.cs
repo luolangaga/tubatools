@@ -142,7 +142,6 @@ public static class GitHubReleaseService
         return strategy switch
         {
             AssetMatchStrategy.UniGetUI => FindUniGetUIAsset(assets, arch),
-            AssetMatchStrategy.OptimizerDuck => FindOptimizerDuckAsset(assets, arch),
             AssetMatchStrategy.ContextMenuMgr => FindContextMenuMgrAsset(assets, arch),
             _ => FindGenericAsset(assets, arch)
         };
@@ -170,26 +169,6 @@ public static class GitHubReleaseService
         {
             if (a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
                 a.Name.Contains("Installer", StringComparison.OrdinalIgnoreCase))
-                return a;
-        }
-
-        return null;
-    }
-
-    private static GitHubAssetInfo? FindOptimizerDuckAsset(
-        IReadOnlyList<GitHubAssetInfo> assets, string arch)
-    {
-        foreach (var a in assets)
-        {
-            if (a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.Contains($"-{arch}-", StringComparison.OrdinalIgnoreCase))
-                return a;
-        }
-
-        foreach (var a in assets)
-        {
-            if (a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.Contains("Windows", StringComparison.OrdinalIgnoreCase))
                 return a;
         }
 
@@ -324,6 +303,5 @@ public enum AssetMatchStrategy
 {
     Generic,
     UniGetUI,
-    OptimizerDuck,
     ContextMenuMgr
 }

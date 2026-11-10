@@ -26,7 +26,6 @@
 - **Windows Hidden Features** — Query, enable, disable and reset Windows experimental feature switches (a ViVe engine port with millisecond response)
 - **Windows Image** — Download original Windows images (ISO / ESD), with ESD-to-ISO conversion
 - **Time Sync** — One-click switching of the system NTP server, with server speed tests, offset detection, instant resync, service repair and restore-to-default
-- **OptimizerDuck** — An open-source Windows optimizer for system cleanup, performance tuning and privacy protection
 
 ## Hardware Tools
 

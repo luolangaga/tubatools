@@ -58,6 +58,7 @@ public sealed partial class PluginsPage : Page
             _packages = result.Packages;
             _count = result.HasMore ? 30 : 0;
             RenderAvailable();
+            if (_packages.Count == 0) Notice(L("Empty", "未找到插件。插件需要在 NuGet 上标记 Tubatools，且已完成索引。"));
         }
         catch (OperationCanceledException) { }
         catch (Exception ex) { Notice(ex.Message, true); }
@@ -76,7 +77,6 @@ public sealed partial class PluginsPage : Page
             button.Click += async (_, _) => await InstallAsync(package, installed);
             AvailableList.Items.Add(Row(package.Id, "v" + package.Version, AvailableMeta(package, installed), package.Description, PackageIcon(package.IconUrl), [button]));
         }
-        if (_packages.Count == 0) Notice(L("Empty", "未找到插件。插件需要在 NuGet 上标记 Tubatools，且已完成索引。"));
     }
     private static (string Label, bool Enabled, bool Accent) Describe(PluginPackage package, InstalledPlugin? installed)
     {

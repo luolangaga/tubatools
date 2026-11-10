@@ -148,4 +148,38 @@ public class ToolCatalogTests
 
         Assert.Equal(["Beta", "Alpha"], result.Select(t => t.Name));
     }
+
+    [Fact]
+    public void LaunchTargetForCataloguedDirectory_OverridesAlphabeticalScripts()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "tuba_fpt_" + Guid.NewGuid().ToString("N"));
+        var tools = Path.Combine(root, "Tools");
+        var toolDir = Path.Combine(tools, "显卡工具", "FPT64");
+        var metadata = Path.Combine(root, "Metadata");
+        Directory.CreateDirectory(toolDir);
+        Directory.CreateDirectory(metadata);
+
+        // backup.cmd 按字母序排在 fptw64.exe 前面，没有 launchTarget 时会被误选成主启动文件（卡片显示 backup）。
+        File.WriteAllText(Path.Combine(toolDir, "backup.cmd"), string.Empty);
+        File.WriteAllText(Path.Combine(toolDir, "flash.cmd"), string.Empty);
+        File.WriteAllBytes(Path.Combine(toolDir, "fptw64.exe"), [0x4D, 0x5A]);
+        File.WriteAllText(Path.Combine(metadata, "tools.json"),
+            """{ "tools": [ { "match": "FPT64", "name": "FPT64", "launchTarget": "fptw64.exe" } ] }""");
+
+        ToolCatalog.SetToolsRootForBuild(tools);
+        ToolMetadataService.SetMetadataRootForTests(metadata);
+        try
+        {
+            var primary = ToolCatalog.FindPrimaryLaunchable(toolDir);
+            Assert.NotNull(primary);
+            Assert.Equal("fptw64.exe", Path.GetFileName(primary), ignoreCase: true);
+            Assert.Equal("FPT64", ToolMetadataService.GetMetadata("显卡工具", primary!).Name);
+        }
+        finally
+        {
+            ToolMetadataService.SetMetadataRootForTests(null);
+            ToolCatalog.SetToolsRootForBuild(null);
+            try { Directory.Delete(root, true); } catch { }
+        }
+    }
 }

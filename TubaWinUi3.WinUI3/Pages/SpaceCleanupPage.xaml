@@ -5,8 +5,10 @@
     xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:models="using:TubaWinUi3.Services.SpaceCleanup"
+    xmlns:local="using:TubaWinUi3.Pages"
     Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
     <Page.Resources>
+        <local:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <DataTemplate x:Key="SpaceFileRowTemplate" x:DataType="models:SpaceFileRow">
             <TreeViewItem ItemsSource="{x:Bind ChildItems}" IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
                 GlyphOpacity="{x:Bind ChevronOpacity, Mode=OneWay}"
@@ -173,7 +175,8 @@
                 <Button x:Name="CleanupScanButton" Grid.Column="1" Content="扫描垃圾" Click="ScanCleanup" VerticalAlignment="Bottom" AutomationProperties.AutomationId="SpaceCleanupScan"/>
                 <DropDownButton x:Name="CleanupMore" Grid.Column="2" Content="更多" VerticalAlignment="Bottom" AutomationProperties.AutomationId="SpaceCleanupMore">
                     <DropDownButton.Flyout><MenuFlyout>
-                        <MenuFlyoutItem Text="全选当前列表" Click="SelectAllCleanup"/>
+                        <MenuFlyoutItem Text="全选当前列表（含风险项）" Click="SelectAllCleanup"/>
+                        <MenuFlyoutItem x:Name="SelectSafeItem" Text="勾选低风险项目" Click="SelectSafeCleanup"/>
                         <MenuFlyoutItem Text="取消全选" Click="ClearCleanupSelection"/>
                         <MenuFlyoutSeparator/>
                         <MenuFlyoutItem x:Name="UpdateRulesItem" Text="更新规则库" Click="UpdateRules"/>
@@ -190,9 +193,20 @@
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis"/>
                                 <TextBlock Text="{x:Bind Detail}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
-                                <TextBlock Text="{x:Bind Warning}" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="Wrap"/>
+                                <TextBlock Text="{x:Bind Warning}" Foreground="{ThemeResource SystemFillColorCautionBrush}" TextWrapping="Wrap"
+                                    Visibility="{x:Bind HasWarning, Mode=OneTime, Converter={StaticResource BoolToVis}}"/>
                             </StackPanel>
-                            <TextBlock Grid.Column="1" Text="{x:Bind SizeText}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                <Border Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}" CornerRadius="4" Padding="6,1"
+                                    Visibility="{x:Bind IsDangerous, Mode=OneTime, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="高风险" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                                </Border>
+                                <Border Background="{ThemeResource SystemFillColorCautionBackgroundBrush}" CornerRadius="4" Padding="6,1"
+                                    Visibility="{x:Bind IsCaution, Mode=OneTime, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="注意" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SystemFillColorCautionBrush}"/>
+                                </Border>
+                                <TextBlock Text="{x:Bind SizeText}" HorizontalAlignment="Right"/>
+                            </StackPanel>
                         </Grid>
                     </DataTemplate></ListView.ItemTemplate>
                 </ListView>

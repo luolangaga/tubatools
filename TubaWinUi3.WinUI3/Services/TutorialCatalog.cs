@@ -385,15 +385,6 @@ public static class TutorialCatalog
             },
             "修改网络设置后个别程序需要重启才能生效；公司内网环境请先咨询管理员。"),
 
-        ["optimizer-duck"] = new ToolTutorial(
-            "OptimizerDuck 优化鸭提供系统优化调整项合集（隐私设置、性能调整等），一键应用推荐配置。",
-            new (string, string)[]
-            {
-                ("打开优化鸭", "在主界面点击「OptimizerDuck 优化鸭」卡片，启动独立程序。"),
-                ("应用优化项", "浏览各分类的优化项，勾选需要的调整并应用；每项都有说明。")
-            },
-            "优化前建议先了解每项作用；不确定的项保持默认即可。"),
-
         ["cert-block"] = new ToolTutorial(
             "恶意软件拦截器通过证书与策略手段拦截常见捆绑安装器与广告程序的静默安装行为。",
             new (string, string)[]

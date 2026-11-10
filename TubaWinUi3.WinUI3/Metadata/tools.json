@@ -1085,10 +1085,12 @@
       "version": 1
     },
     {
-      "match": "fptw64",
+      "match": "FPT64",
+      "name": "FPT64",
       "order": 77,
       "description": "Intel Flash Programming Tool 64 位版，用于刷写和备份 Intel 主板 BIOS/ME 固件。",
       "publisher": "Intel",
+      "launchTarget": "fptw64.exe",
       "tags": [
         "主板",
         "BIOS刷写",
@@ -1315,13 +1317,6 @@
     {
       "match": "Windows镜像",
       "builtin": "windows-image",
-      "categories": [
-        "其他工具"
-      ]
-    },
-    {
-      "match": "优化鸭",
-      "builtin": "optimizer-duck",
       "categories": [
         "其他工具"
       ]

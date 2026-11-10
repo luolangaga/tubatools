@@ -677,7 +677,7 @@
                                ]
                   },
                   {
-                      "match":  "fptw64",
+                      "match":  "FPT64",
                       "description":  "Intel Flash Programming Tool (64-bit) for flashing and backing up Intel motherboard BIOS/ME firmware.",
                       "publisher":  "Intel",
                       "tags":  [

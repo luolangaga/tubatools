@@ -11,7 +11,6 @@ const displayNames = {
   'gpu-ranking': 'GPU 天梯图',
   'hardware-spoofer': '配置修改器',
   'hosts-editor': 'Hosts 编辑',
-  'optimizer-duck': 'OptimizerDuck 优化鸭',
   'performance-benchmark': '性能测试',
   'port-viewer': '端口占用',
   'space-cleanup': '空间清理',

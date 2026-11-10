@@ -2160,12 +2160,6 @@
   <data name="Builtin_official-websites_Name" xml:space="preserve">
     <value>常用官网</value>
   </data>
-  <data name="Builtin_optimizer-duck_Desc" xml:space="preserve">
-    <value>开源的 Windows 系统优化工具，支持系统清理、性能优化、隐私保护等功能。</value>
-  </data>
-  <data name="Builtin_optimizer-duck_Name" xml:space="preserve">
-    <value>OptimizerDuck 优化鸭</value>
-  </data>
   <data name="Builtin_pc-tutorial_Desc" xml:space="preserve">
     <value>新电脑开箱指南、基础操作、烤机检测、常识与辟谣，手把手教你用好电脑</value>
   </data>
@@ -5595,7 +5589,7 @@ else then stroke=#888888 visible=true
   <data name="Agent_ProviderImages" xml:space="preserve"><value>这些模型支持图片输入（需提供商实际支持）</value></data>
   <data name="Agent_ClipboardImage" xml:space="preserve"><value>剪贴板图片</value></data>
   <data name="Agent_ImageInput" xml:space="preserve"><value>图片</value></data>
-  <data name="Agent_ModeChat" xml:space="preserve"><value>对话</value></data>
+  <data name="Agent_ModeChat" xml:space="preserve"><value>解决问题</value></data>
   <data name="Agent_ModeTeach" xml:space="preserve"><value>教学模式</value></data>
   <data name="Agent_CanvasTitle" xml:space="preserve"><value>教学画布</value></data>
   <data name="Agent_CanvasShow" xml:space="preserve"><value>打开画布</value></data>

@@ -15,7 +15,7 @@
     <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
     <!-- Optional XAML performance changes must be enabled before Application.Start. -->
-    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN;TUBA_WINUI</DefineConstants>
     <!-- 主程序使用 JIT + 不裁剪，AI 运行库按需加载。CsWinRT 的 AOT 全局类型表
          会在普通 XAML 控件封送时提前解析 Windows ML 类型，导致未下载运行库时启动失败。
          AOT 发布仍保留其必需的优化器；NativeAOT helper 项目不受此配置影响。 -->
@@ -27,7 +27,7 @@
     <CETCompat>false</CETCompat>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.8.2</Version>
+    <Version>1.9.0</Version>
     <SatelliteResourceLanguages>zh-Hans;zh-Hant;en</SatelliteResourceLanguages>
     <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**;artifacts\**;publish*\**;bin-verify\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
