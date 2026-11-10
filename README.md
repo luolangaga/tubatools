@@ -70,7 +70,6 @@
 </details>
 
 [查看当前版本的全部功能截图](https://tubawinui3.cn/features)
->>>>>>> origin/master
 
 ### 文档导航
 
