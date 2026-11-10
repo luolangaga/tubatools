@@ -249,7 +249,7 @@ public sealed partial class MainWindow : Window
         // 避免 --open-builtin 等启动先创建并扫描一个马上被替换的首页。
         try
         {
-            var categories = await Task.Run(() => ToolCatalog.GetCategories().ToList());
+            var categories = await Task.Run(() => ToolCatalog.GetVisibleCategories().ToList());
             if (App.IsExiting) return;
             PopulateCategories(categories);
             ApplyNavLayoutMode();
@@ -881,7 +881,7 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var categories = await Task.Run(() => ToolCatalog.GetCategories().ToList());
+            var categories = await Task.Run(() => ToolCatalog.GetVisibleCategories().ToList());
 
             if (!DispatcherQueue.TryEnqueue(() =>
             {

@@ -607,19 +607,142 @@ public sealed partial class SpaceCleanupPage : Page
     {
         var rows = _checked.ToList();
         if (rows.Count == 0) { Report("先勾选要查看的项目，再预览明细。", false); return; }
-        var text = new StringBuilder();
-        foreach (var row in rows)
+
+        var content = new StackPanel { Spacing = 14, MinWidth = 720, MaxWidth = 920 };
+        foreach (var row in rows) content.Children.Add(BuildPreviewSection(row));
+
+        var dialog = new ContentDialog
         {
-            text.AppendLine($"{row.Name} · {row.SizeText}\n{row.Detail}\n{row.Warning}");
-            if (row.Junk is { } result)
+            Title = "清理明细",
+            Content = new ScrollViewer
             {
-                foreach (var path in result.FilesToDelete.Take(1000)) text.AppendLine(path);
-                if (result.FilesToDelete.Count > 1000) text.AppendLine($"… 共 {result.FilesToDelete.Count:N0} 个文件，预览显示前 1000 个。");
-                foreach (var registry in result.RegistryToDelete.Take(1000)) text.AppendLine("注册表：" + registry);
+                Content = content,
+                Height = 480,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            },
+            PrimaryButtonText = "复制全部",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+            RequestedTheme = ActualTheme,
+        };
+        dialog.PrimaryButtonClick += (_, e) => { ClipboardService.TrySetText(CleanupPreview.BuildText(rows)); e.Cancel = true; };
+        await dialog.ShowAsync();
+    }
+
+    private UIElement BuildPreviewSection(CleanupRow row)
+    {
+        var section = new StackPanel { Spacing = 6 };
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        header.Children.Add(new TextBlock
+        {
+            Text = row.Name,
+            FontSize = 16,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+        });
+        header.Children.Add(new TextBlock { Text = row.SizeText, VerticalAlignment = VerticalAlignment.Center, Opacity = 0.7 });
+        if (row.IsRisky)
+            header.Children.Add(new TextBlock
+            {
+                Text = row.IsDangerous ? "高风险" : "注意",
+                Foreground = new SolidColorBrush(row.IsDangerous ? Microsoft.UI.Colors.OrangeRed : Microsoft.UI.Colors.Goldenrod),
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        section.Children.Add(header);
+        section.Children.Add(new TextBlock { Text = $"{row.Category} · {row.Detail}", Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+        if (!string.IsNullOrWhiteSpace(row.Warning))
+            section.Children.Add(new TextBlock
+            {
+                Text = row.Warning,
+                Foreground = new SolidColorBrush(Microsoft.UI.Colors.Goldenrod),
+                TextWrapping = TextWrapping.Wrap,
+            });
+
+        if (row.Junk is { } result)
+        {
+            var targets = CleanupPreview.GetTargets(result);
+            if (targets.Count > 0)
+            {
+                section.Children.Add(new TextBlock { Text = "将删除以下位置：", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+                foreach (var target in targets)
+                    section.Children.Add(new TextBlock
+                    {
+                        Text = $"• {target.Path}  （{target.FileCount:N0} 个文件，{target.Scope}；匹配 {target.Pattern}）",
+                        FontFamily = new FontFamily("Consolas"),
+                        TextWrapping = TextWrapping.Wrap,
+                        IsTextSelectionEnabled = true,
+                    });
             }
-            text.AppendLine();
+
+            section.Children.Add(new TextBlock
+            {
+                Text = $"文件明细（共 {result.FilesToDelete.Count:N0} 个文件）：",
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            });
+            var groups = CleanupPreview.GetDirectoryGroups(result);
+            if (groups.Count == 0)
+                section.Children.Add(new TextBlock { Text = "没有具体文件（该规则只删除注册表项或目录本身）。", Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+            foreach (var group in groups)
+            {
+                var expander = new Expander
+                {
+                    Header = $"{group.Directory}（{group.TotalFiles:N0} 个文件）",
+                    IsExpanded = groups.Count <= 2,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                };
+                expander.Content = new ListView
+                {
+                    ItemsSource = group.Files,
+                    SelectionMode = ListViewSelectionMode.None,
+                    MaxHeight = 180,
+                };
+                section.Children.Add(expander);
+            }
+            var grouped = groups.Sum(g => g.TotalFiles);
+            if (grouped < result.FilesToDelete.Count)
+                section.Children.Add(new TextBlock
+                {
+                    Text = $"… 其余 {result.FilesToDelete.Count - grouped:N0} 个文件分布在更多目录中，可用「复制全部」查看。",
+                    Opacity = 0.7,
+                    TextWrapping = TextWrapping.Wrap,
+                });
+
+            if (result.RegistryToDelete.Count > 0)
+            {
+                section.Children.Add(new TextBlock
+                {
+                    Text = $"注册表（{result.RegistryToDelete.Count:N0} 项）：",
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                });
+                section.Children.Add(new ListView
+                {
+                    ItemsSource = result.RegistryToDelete.Take(CleanupPreview.MaxRegistry).Select(r => r.ToString()).ToList(),
+                    SelectionMode = ListViewSelectionMode.None,
+                    MaxHeight = 160,
+                });
+            }
         }
-        await ShowTextAsync("清理明细", text.ToString());
+        else if (row.Windows is { } windows)
+        {
+            section.Children.Add(new TextBlock { Text = windows.Description, TextWrapping = TextWrapping.Wrap });
+        }
+        else
+        {
+            section.Children.Add(new TextBlock { Text = "该条目没有可预览的文件明细。", Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+        }
+
+        section.Children.Add(new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Gray),
+            Opacity = 0.25,
+            Margin = new Thickness(0, 8, 0, 0),
+        });
+        return section;
     }
     private async void CleanSelected(object sender, RoutedEventArgs e)
     {
@@ -755,7 +878,8 @@ public sealed partial class SpaceCleanupPage : Page
         XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
     private async Task ShowTextAsync(string title, string text)
     {
-        var box = new TextBox { Text = text, IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap, MaxHeight = 420, MinWidth = 400 };
+        // TextBox 默认只有一行高；不显式给高度时，多行内容会被压进单行滚动框里。
+        var box = new TextBox { Text = text, IsReadOnly = true, AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap, Height = 360, MinWidth = 480 };
         var dialog = Dialog(title, "", "复制全部"); dialog.Content = box;
         dialog.PrimaryButtonClick += (_, e) => { ClipboardService.TrySetText(text); e.Cancel = true; };
         await dialog.ShowAsync();

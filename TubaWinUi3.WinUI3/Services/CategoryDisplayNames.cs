@@ -22,6 +22,12 @@ internal static class CategoryDisplayNames
         ["综合检测"] = "Category_GeneralCheck",
         ["综合工具"] = "Category_General",
         ["其他工具"] = "Category_Other",
+        // 内置工具分类名也可能以物理目录出现（旧版/社区工具目录）；没有映射时会被
+        // 回退逻辑去掉「工具」后缀，显示成莫名其妙的「系统」「硬件」等分类。
+        ["系统工具"] = "Category_Builtin_System",
+        ["硬件工具"] = "Category_Builtin_Hardware",
+        ["网络工具"] = "Category_Builtin_Network",
+        ["实用工具"] = "Category_Builtin_Utility",
     };
 
     /// <summary>内置工具分类（IBuiltinTool.Category）。</summary>

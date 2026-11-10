@@ -174,6 +174,29 @@ public static class ToolCatalog
         return dirs.OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
 
+    /// <summary>
+    /// 侧栏显示用分类：跳过没有任何工具的空目录/空用户分类。
+    /// 空的物理目录（例如历史遗留的「系统」）不再出现在导航里；ToolCatalog.GetCategories()
+    /// 仍保留原始列表供「清理空分类」等功能使用。
+    /// </summary>
+    public static IReadOnlyList<string> GetVisibleCategories()
+    {
+        var visible = new List<string>();
+        foreach (var category in GetCategories())
+        {
+            try
+            {
+                if (GetTools(category).Count > 0) visible.Add(category);
+            }
+            catch
+            {
+                // 查询失败时保留分类，避免因单个目录异常把整类工具藏起来。
+                visible.Add(category);
+            }
+        }
+        return visible;
+    }
+
     public static IReadOnlyList<ToolItem> GetTools(string? category)
     {
         if (string.IsNullOrWhiteSpace(category))
