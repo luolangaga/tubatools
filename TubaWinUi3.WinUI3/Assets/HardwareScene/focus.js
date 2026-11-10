@@ -75,12 +75,14 @@ export class HardwareFocusController {
   const model=request.model,x=message.side==='left' ? .75 : .25;
   const position=model.position.clone(),rotation=model.quaternion.clone(),scale=model.scale.clone();
   const part=new THREE.Group();part.add(asset.geometry);part.scale.setScalar(.0001);this.scene.add(part);
+  const fans=[];
+  asset.geometry.traverse(object=>{if(object.userData.focusSpin)fans.push(object);});
   const center=this.point(.5,.5);
   const f=this.current={label:message.label,requestId:message.requestId??0,model,part,
    position,rotation,scale,targetRotation:rotation.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),message.side==='left'?-.3:.3)),
    horizontal:this.point(x,.5).sub(center),downward:this.point(.5,.78).sub(center),destination:this.point(x,.29),
    up:new THREE.Vector3(0,1,0).applyQuaternion(this.camera.quaternion),origin:new THREE.Vector3(),
-   controls:request.controls,autoBefore:request.autoBefore,auto:!this.reduced(),
+   controls:request.controls,autoBefore:request.autoBefore,auto:!this.reduced(),fans,
    yaw:['显示器','系统'].includes(message.label)?-.18:.28,tilt:0,pitch:['显示器','系统'].includes(message.label)?0:1.02,
    euler:new THREE.Euler(),orientation:new THREE.Quaternion(),progress:0,closing:false,
    duration:this.reduced()?0:1040,
@@ -120,7 +122,9 @@ export class HardwareFocusController {
   f.part.scale.setScalar(Math.max(.0001,emergence*f.fit));
   if(f.auto)f.yaw+=delta*.22*smooth((emergence-.35)/.65);
   f.part.quaternion.copy(this.camera.quaternion).multiply(f.orientation.setFromEuler(f.euler.set(f.pitch+f.tilt,f.yaw,0)));
-  return time<1||f.auto;
+  const spinning=f.fans.length>0&&!this.reduced();
+  if(spinning)for(const fan of f.fans)fan.rotateZ(fan.userData.focusSpin*delta);
+  return time<1||f.auto||spinning;
  }
  drag(dx,dy) {
   const f=this.current;if(!f||f.closing)return;
@@ -155,6 +159,6 @@ export class HardwareFocusController {
   f.part.traverse(n=>{if(n.isMesh)for(const m of Array.isArray(n.material)?n.material:[n.material]){
    if(!materials.some(v=>v.name===m.name))materials.push({name:m.name,type:m.type,color:m.color?.getHexString(),metalness:m.metalness,roughness:m.roughness,map:m.map?.image?{width:m.map.image.width,height:m.map.image.height}:null});
   }});
-  return {label:f.label,requestId:f.requestId,progress:f.progress,autoRotate:f.auto,closing:f.closing,partVisible:true,asset:f.part.children[0]?.userData,rotation:f.part.rotation.toArray(),modelPosition:f.model.position.toArray(),materials};
+  return {label:f.label,requestId:f.requestId,progress:f.progress,autoRotate:f.auto,closing:f.closing,partVisible:true,asset:f.part.children[0]?.userData,rotation:f.part.rotation.toArray(),modelPosition:f.model.position.toArray(),fanPose:f.fans.map(fan=>fan.quaternion.toArray()),materials};
  }
 }
