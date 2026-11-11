@@ -1,29 +1,38 @@
 FurMark 2
 GPU Stress Test and OpenGL / Vulkan Benchmark
-Copyright (C) 2007-2025 Geeks3D, All rights reserved.
+Copyright (C) 2007-2026 Geeks3D, All rights reserved.
 Homepage: https://www.geeks3d.com/furmark/
 Support forum: https://www.geeks3d.com/forums/index.php/board,4.0.html
 Discord server: https://www.geeks3d.com/discord/
 
-****************************************************************
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE 
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-****************************************************************
-
-
-Dynamic background in the FurMark Knot demo
--------------------------------------------
-The FurMark Knot demo uses a modified version 
-of a shader made by yonatan / zozuar:
-https://twitter.com/zozuar
+*****************************************************************
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+OF SUCH DAMAGE.
+*****************************************************************
 
 
 GPU-Z
 -------------------------------------------
 https://www.techpowerup.com/gpuz/
+
+
+Dynamic background in the FurMark demo
+--------------------------------------
+The FurMark demo uses a modified version 
+of a shader (cloudy tunnel) made by 
+yonatan / zozuar: https://twitter.com/zozuar
+
+The fire background is a modified version
+of the nox fire by diatribes:
+https://www.shadertoy.com/view/wfG3Dz
+

@@ -33,6 +33,7 @@
                             <ComboBoxItem Content="启动和行为" Tag="GeneralExpander" l:Uids.Uid="Settings_GroupOptionBehavior"/>
                             <ComboBoxItem Content="外观和布局" Tag="AppearanceExpander" l:Uids.Uid="Settings_GroupOptionAppearance"/>
                             <ComboBoxItem Content="硬件信息" Tag="HardwareAiExpander" l:Uids.Uid="Settings_GroupOptionHardware"/>
+                            <ComboBoxItem Content="AI 浏览器" Tag="AiBrowserSection" l:Uids.Uid="Settings_GroupOptionAiBrowser"/>
                             <ComboBoxItem Content="工具和系统集成" Tag="IntegrationSection" l:Uids.Uid="Settings_GroupOptionIntegration"/>
                             <ComboBoxItem Content="网络和下载" Tag="NetworkSection" l:Uids.Uid="Settings_GroupOptionNetwork"/>
                             <ComboBoxItem Content="数据和存储" Tag="ToolsCommunityExpander" l:Uids.Uid="Settings_GroupOptionStorage"/>
@@ -687,6 +688,40 @@
                                 </Button>
                             </toolkit:SettingsCard>
                         </Border>
+                    </StackPanel>
+                    <StackPanel Spacing="4" Margin="0,0,0,28" x:Name="AiBrowserSection">
+                        <TextBlock Text="AI 浏览器" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2" l:Uids.Uid="Settings_GroupAiBrowser" TextWrapping="Wrap"/>
+                        <toolkit:SettingsCard x:Name="SettingsAiBrowserCard" Header="内置 WebView2" Description="AI 浏览器使用工具箱专属用户数据目录，不是日常 Chrome/Edge 的配置，也不包含其中的登录状态；需要登录时在弹出的浏览器窗口登录一次即可。" l:Uids.Uid="Settings_AiBrowserEngine">
+                            <toolkit:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE774;"/>
+                            </toolkit:SettingsCard.HeaderIcon>
+                            <TextBlock Text="专属用户数据" l:Uids.Uid="Settings_AiBrowserDedicated" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        </toolkit:SettingsCard>
+                        <Border x:Name="SettingsAiBrowserStatusCard" Style="{StaticResource SettingsRowSurface}">
+                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
+                                <toolkit:SettingsCard.Header>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="连接状态" l:Uids.Uid="Settings_AiBrowserStatus_Title" TextWrapping="Wrap"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="打开后会在独立窗口显示内置 WebView2；AI 的网页操作会在这里显示状态。" l:Uids.Uid="Settings_AiBrowserStatus_Desc"/>
+                                    </StackPanel>
+                                </toolkit:SettingsCard.Header>
+                                <toolkit:SettingsCard.HeaderIcon>
+                                    <FontIcon FontSize="18" Glyph="&#xE9D9;"/>
+                                </toolkit:SettingsCard.HeaderIcon>
+                                <StackPanel Spacing="8" HorizontalAlignment="Right">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                        <ProgressRing x:Name="AiBrowserProgress" Width="16" Height="16" IsActive="False" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="AiBrowserStatusText" TextWrapping="Wrap" MaxWidth="420" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                        <Button x:Name="AiBrowserOpenButton" Content="打开 AI 浏览器" l:Uids.Uid="Settings_AiBrowserOpen" Click="AiBrowserOpen_Click"/>
+                                        <Button x:Name="AiBrowserRepairButton" Content="一键修复" l:Uids.Uid="Settings_AiBrowserRepair" Click="AiBrowserRepair_Click"/>
+                                        <Button x:Name="AiBrowserCloseButton" Content="关闭 AI 浏览器" l:Uids.Uid="Settings_AiBrowserClose" Click="AiBrowserClose_Click"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </toolkit:SettingsCard>
+                        </Border>
+                        <InfoBar x:Name="AiBrowserInfoBar" IsOpen="False" IsClosable="True" Severity="Error"/>
                     </StackPanel>
                     <StackPanel Spacing="4" Margin="0,0,0,28" x:Name="IntegrationSection">
                         <TextBlock Text="工具和系统集成" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10" AutomationProperties.HeadingLevel="Level2" l:Uids.Uid="Settings_GroupIntegration" TextWrapping="Wrap"/>

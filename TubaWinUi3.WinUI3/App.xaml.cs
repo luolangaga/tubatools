@@ -513,6 +513,7 @@ public partial class App : Application
         }
         else Services.Plugins.PluginManager.StartPlugins();
         Services.AiAgent.ComputerControlService.Attach(_window);
+        Services.AiAgent.AiBrowserHostService.Start(_window);
         ToolItem.SetUIDispatcher(_window.DispatcherQueue);
 
         // 「关闭时最小化到系统托盘」已开启的用户，启动即注册托盘图标（不等第一次关闭窗口）

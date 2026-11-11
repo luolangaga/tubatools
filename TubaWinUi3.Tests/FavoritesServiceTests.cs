@@ -11,6 +11,12 @@ namespace TubaWinUi3.Tests;
 [Collection("GlobalConfigTests")]
 public class FavoritesServiceTests : IDisposable
 {
+    // 不要用 C:\tools：某些机器上真实存在 C:\Tools，会被 PathResolver 识别成
+    // ToolsRoot 并改写成 {ToolsRoot}，导致收藏路径大小写被规范化。
+    private static readonly string PathRoot = Path.Combine(
+        Path.GetTempPath(), "TubaFavoritePaths-" + Guid.NewGuid().ToString("N"));
+    private static string P(string name) => Path.Combine(PathRoot, name);
+
     private readonly string _tempDir;
     private readonly ConfigLocation _originalLocation;
     private readonly string? _originalCustomPath;
@@ -36,20 +42,20 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public void AddFavorite_AppendsToEnd()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
-        FavoritesService.AddFavorite(@"C:\tools\c.exe");
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
+        FavoritesService.AddFavorite(P("c.exe"));
 
         Assert.Equal(
-            [@"C:\tools\a.exe", @"C:\tools\b.exe", @"C:\tools\c.exe"],
+            [P("a.exe"), P("b.exe"), P("c.exe")],
             FavoritesService.GetFavorites());
     }
 
     [Fact]
     public void AddFavorite_DuplicatesIgnored()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("a.exe"));
 
         Assert.Single(FavoritesService.GetFavorites());
     }
@@ -57,68 +63,68 @@ public class FavoritesServiceTests : IDisposable
     [Fact]
     public void RemoveFavorite_KeepsRemainingOrder()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
-        FavoritesService.AddFavorite(@"C:\tools\c.exe");
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
+        FavoritesService.AddFavorite(P("c.exe"));
 
-        FavoritesService.RemoveFavorite(@"C:\tools\b.exe");
+        FavoritesService.RemoveFavorite(P("b.exe"));
 
         Assert.Equal(
-            [@"C:\tools\a.exe", @"C:\tools\c.exe"],
+            [P("a.exe"), P("c.exe")],
             FavoritesService.GetFavorites());
     }
 
     [Fact]
     public void SaveOrder_PersistsNewOrder()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
-        FavoritesService.AddFavorite(@"C:\tools\c.exe");
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
+        FavoritesService.AddFavorite(P("c.exe"));
 
-        FavoritesService.SaveOrder([@"C:\tools\c.exe", @"C:\tools\a.exe", @"C:\tools\b.exe"]);
+        FavoritesService.SaveOrder([P("c.exe"), P("a.exe"), P("b.exe")]);
 
         Assert.Equal(
-            [@"C:\tools\c.exe", @"C:\tools\a.exe", @"C:\tools\b.exe"],
+            [P("c.exe"), P("a.exe"), P("b.exe")],
             FavoritesService.GetFavorites());
     }
 
     [Fact]
     public void SaveOrder_FiltersBlankPaths()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
 
-        FavoritesService.SaveOrder([@"C:\tools\b.exe", "", @"   ", @"C:\tools\a.exe"]);
+        FavoritesService.SaveOrder([P("b.exe"), "", @"   ", P("a.exe")]);
 
         Assert.Equal(
-            [@"C:\tools\b.exe", @"C:\tools\a.exe"],
+            [P("b.exe"), P("a.exe")],
             FavoritesService.GetFavorites());
     }
 
     [Fact]
     public void SaveOrder_FileContentMatchesOrder()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
-        FavoritesService.SaveOrder([@"C:\tools\b.exe", @"C:\tools\a.exe"]);
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
+        FavoritesService.SaveOrder([P("b.exe"), P("a.exe")]);
 
         var json = File.ReadAllText(ConfigManager.GetFavoritesPath());
         var stored = JsonSerializer.Deserialize<List<string>>(json);
         // Portable favorites deliberately store root tokens rather than absolute paths.
-        Assert.Equal(new[] { @"C:\tools\b.exe", @"C:\tools\a.exe" }.Select(PathResolver.MakeRelative), stored);
+        Assert.Equal(new[] { P("b.exe"), P("a.exe") }.Select(PathResolver.MakeRelative), stored);
     }
 
     [Fact]
     public void SaveOrder_AfterCacheInvalidation_KeepsOrder()
     {
-        FavoritesService.AddFavorite(@"C:\tools\a.exe");
-        FavoritesService.AddFavorite(@"C:\tools\b.exe");
-        FavoritesService.SaveOrder([@"C:\tools\b.exe", @"C:\tools\a.exe"]);
+        FavoritesService.AddFavorite(P("a.exe"));
+        FavoritesService.AddFavorite(P("b.exe"));
+        FavoritesService.SaveOrder([P("b.exe"), P("a.exe")]);
 
         FavoritesService.InvalidateCache();
 
         Assert.Equal(
-            [@"C:\tools\b.exe", @"C:\tools\a.exe"],
+            [P("b.exe"), P("a.exe")],
             FavoritesService.GetFavorites(), StringComparer.OrdinalIgnoreCase);
     }
 }

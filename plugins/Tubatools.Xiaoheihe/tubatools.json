@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.Xiaoheihe.dll",
+  "entryType": "Tubatools.Xiaoheihe.XiaoheihePlugin",
+  "name": "小黑盒",
+  "description": "小黑盒社区客户端：扫码登录、推荐流、社区、搜索、帖子评论、签到、收藏、历史、游戏库",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

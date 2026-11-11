@@ -28,12 +28,14 @@ internal static class AgentOperations
         var kind = name switch
         {
             _ when ComputerUseMcpProxy.IsComputerTool(name) => "computer",
+            _ when BrowserToolNames.IsBrowserTool(name) => "browser",
             "bash" or "shell" => "command", "write" or "edit" or "apply_patch" or "patch" => "edit",
             "skill" => "skill", "question" => "question", "read" => "read", "glob" or "grep" => "search", _ => "tool"
         };
         var command = AgentProtocol.Text(input, "command");
         var target = kind == "skill" ? AgentProtocol.Text(input, "id", AgentProtocol.Text(input, "name")) :
             kind == "computer" ? AgentProtocol.ComputerTarget(name, input) :
+            kind == "browser" ? AgentProtocol.BrowserTarget(name, input) :
             kind == "command" ? AgentProtocol.Text(input, "description", command) :
             kind == "question" ? AgentProtocol.Text(input, "title", AgentText.L("QuestionTitle", "需要你的回答")) :
             AgentProtocol.Text(input, "filePath", AgentProtocol.Text(input, "path", AgentProtocol.Text(input, "pattern")));

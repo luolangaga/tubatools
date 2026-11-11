@@ -1,6 +1,6 @@
 GPU Shark 2
 Simple GPU Monitoring Utility
-Copyright (C) 2007-2025 Geeks3D, All rights reserved.
+Copyright (C) 2007-2026 Geeks3D, All rights reserved.
 https://www.geeks3d.com/gpushark/
 
 **************************************************************************

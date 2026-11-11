@@ -30,11 +30,17 @@ public sealed partial class AiAssistantPage : Page
         public List<AgentOperation> Operations { get; } = [];
         public List<(string Id, string AfterMessageId, AgentQuestionCard View)> Questions { get; } = [];
         public List<AgentAttachment> Attachments { get; } = [];
+        public List<QueuedTurn> Queue { get; } = [];
+        public bool Draining;
+        public bool Discarded;
+        public bool SuppressDraftRestore;
     }
     private AgentClient? _client;
     private CancellationTokenSource? _lifetime;
     private Window? _owner;
     private bool _preparing, _syncingUi = true, _visible, _closed;
+    private bool _cutIn;
+    private string _queueSignature = "";
     private int _historyVersion, _focusVersion;
     private readonly AgentSessionList _historyRows = new();
     private readonly DispatcherTimer _draftHistoryTimer = new() { Interval = TimeSpan.FromMilliseconds(450) };
@@ -48,6 +54,9 @@ public sealed partial class AiAssistantPage : Page
     public AiAssistantPage()
     {
         InitializeComponent();
+        AiBrowserControl.StopRequested += OnBrowserStopRequested;
+        _cutIn = AppSettings.Get("AgentQueueMode") == "cutin";
+        ToolTipService.SetToolTip(QueueModeButton, L("QueueModeTip", "排队：当前任务结束后发送；插队：中断当前任务并优先发送。点击切换。"));
         ConfigureComposerMenu();
         HistoryList.ItemsSource = _historyRows;
         _draftHistoryTimer.Tick += (_, _) => { _draftHistoryTimer.Stop(); if (!_closed) RefreshHistoryView(); };
@@ -57,7 +66,7 @@ public sealed partial class AiAssistantPage : Page
             (ModelBox,"ModelName","模型"),(PermissionBox,"PermissionName","权限模式"),
             (NewButton,"NewLabel","新建会话"),(CompactNewButton,"NewLabel","新建会话"),(JumpButton,"Jump","跳到最新消息"),
             (ClearAttachmentsButton,"ClearAttachments","清除引用文件"),(AddContextButton,"AddContext","添加上下文"),
-            (SendButton,"Send","发送"),(StopButton,"Stop","停止") })
+            (SendButton,"Send","发送"),(StopButton,"Stop","停止"),(QueueModeButton,"QueueModeName","发送方式") })
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(pair.Element, L(pair.Key,pair.Fallback));
         PermissionBox.Items.Add(L("FullAccess", "全部权限")); PermissionBox.Items.Add(L("AskAccess", "逐次确认"));
         ModeBox.Items.Add(L("ModeChat", "解决问题")); ModeBox.Items.Add(L("ModeTeach", "教学模式"));
@@ -106,23 +115,51 @@ public sealed partial class AiAssistantPage : Page
     private void Owner_Closed(object sender, WindowEventArgs e)
     {
         if (e.Handled) return;
-        _closed = true; DetachDropHandler(); _progressTimer.Stop(); _draftHistoryTimer.Stop();
-        foreach (var state in _sessions.Values.Append(_active).Distinct()) { state.Run?.Cancel(); foreach (var question in state.Questions) question.View.Cancel(); }
+        _closed = true; AiBrowserControl.StopRequested -= OnBrowserStopRequested;
+        DetachDropHandler(); _progressTimer.Stop(); _draftHistoryTimer.Stop();
+        foreach (var state in _sessions.Values.Append(_active).Distinct()) { state.Queue.Clear(); state.Run?.Cancel(); foreach (var question in state.Questions) question.View.Cancel(); }
         _lifetime?.Cancel(); _client?.Dispose();
         foreach (var bubble in _canvasBubbles.Values)
             try { bubble.Dispose(); } catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
         _canvasBubbles.Clear();
         if (_owner is not null) _owner.Closed -= Owner_Closed;
     }
+    private async void OpenAiBrowser_Click(object sender, RoutedEventArgs e)
+    {
+        var result = await AiBrowserSetupService.EnsureAsync(_lifetime?.Token ?? CancellationToken.None);
+        if (!_closed)
+            SetNotice(_active, result.Ok
+                ? string.Format(L("BrowserReady", "AI 浏览器已就绪：{0}"), AiBrowserInfo.Name)
+                : result.Error, attention: !result.Ok);
+    }
+
+    private void OpenAiBrowserSettings_Click(object sender, RoutedEventArgs e) =>
+        App.MainWindow?.NavigateToSettings("AiBrowser");
+
+    private void OnBrowserStopRequested()
+    {
+        if (_closed) return;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_closed) return;
+            foreach (var state in _sessions.Values.Append(_active).Distinct()) { state.Queue.Clear(); state.Run?.Cancel(); }
+            UpdateQueueView(_active);
+            SetNotice(_active, L("BrowserStopped", "已停止 AI 浏览器控制。发送新消息后可再次使用浏览器。"), attention: true);
+        });
+    }
+
     private bool Ready => !_closed && _client?.IsReady == true && _lifetime?.IsCancellationRequested != true;
     private void UpdateButtons()
     {
         if (_closed) return;
-        var running = _active.Run is not null;
+        var running = _active.Run is not null || _active.Draining;
         PrepareButton.IsEnabled = !_preparing;
         PrepareButton.Visibility = Ready ? Visibility.Collapsed : Visibility.Visible;
-        SendButton.Visibility = running ? Visibility.Collapsed : Visibility.Visible;
+        SendButton.Visibility = Visibility.Visible;
         StopButton.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+        QueueModeButton.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+        var modeText = _cutIn ? L("QueueModeCutIn", "插队") : L("QueueModeQueue", "排队");
+        if (!Equals(QueueModeButton.Content, modeText)) QueueModeButton.Content = modeText;
         SendButton.IsEnabled = Ready && !_preparing && _pendingImports == 0 && (_active.Id is null || !_deleting.Contains(_active.Id)) && ModelBox.SelectedItem is AgentModel && (!string.IsNullOrWhiteSpace(PromptBox.Text) || _active.Attachments.Count > 0);
         NewButton.IsEnabled = CompactNewButton.IsEnabled = !_preparing;
         HistoryList.IsEnabled = !_preparing;
@@ -184,7 +221,7 @@ public sealed partial class AiAssistantPage : Page
     private void CacheDraft(SessionState state)
     {
         if (state.Id is not null) return;
-        if (state.Draft.Length > 0 || state.Attachments.Count > 0 || state.Run is not null || state.CustomTitle) _sessions[DraftId(state)] = state;
+        if (state.Draft.Length > 0 || state.Attachments.Count > 0 || state.Run is not null || state.Draining || state.Queue.Count > 0 || state.CustomTitle) _sessions[DraftId(state)] = state;
         else _sessions.Remove(DraftId(state));
     }
     private IEnumerable<AgentConversation> HistoryRows() => _sessions.Where(p => p.Key.StartsWith("draft:", StringComparison.Ordinal) && p.Value.Id is null)
@@ -194,7 +231,7 @@ public sealed partial class AiAssistantPage : Page
         var old = _syncingUi; _syncingUi = true;
         try
         {
-            var rows = HistoryRows().Select(item => _sessions.TryGetValue(item.Id, out var s) && s.Run is not null
+            var rows = HistoryRows().Select(item => _sessions.TryGetValue(item.Id, out var s) && (s.Run is not null || s.Draining)
                 ? item with { Title = item.Title + " · " + (s.Progress?.Phase is "question" or "permission" ? L("WaitingShort", "等待回答") : L("RunningShort", "运行中")) } : item).ToArray();
             var activeId = _active.Id ?? DraftId(_active);
             _historyRows.Merge(rows);
@@ -212,7 +249,7 @@ public sealed partial class AiAssistantPage : Page
         PromptBox.Text = _active.Draft; SessionTitleText.Text = _active.Title;
         _syncingUi = old;
         DetachAllCanvas();
-        ClearVisualTimeline(); RenderTimeline(); UpdateCanvas(); UpdateButtons(); RefreshHistoryView();
+        ClearVisualTimeline(); RenderTimeline(); UpdateCanvas(); UpdateButtons(); UpdateQueueView(); RefreshHistoryView();
     }
     private async void History_Changed(object sender, SelectionChangedEventArgs e)
     {
@@ -225,7 +262,7 @@ public sealed partial class AiAssistantPage : Page
             state.Operations.AddRange(AgentActivityStore.Read(item.Id)); _sessions.Add(item.Id, state);
         }
         _active = state; SyncActive();
-        if (state.Loaded || state.Run is not null) return;
+        if (state.Loaded || state.Run is not null || state.Draining) return;
         try
         {
             state.Messages = await _client.GetAllMessagesAsync(item.Id, _lifetime.Token); state.Loaded = true;

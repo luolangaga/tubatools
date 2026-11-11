@@ -30,6 +30,9 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         _filterDebounce.Tick += (_, _) => ApplyToolFilter();
         _ = new CustomToolDropHandler(this, LoadCatalogAsync, ShowStatus);
         ToolsGrid.Loaded += (_, _) => UpdateCardLayout();
+        // 视口宽度变化之外，ItemsPanel 也可能稍后生成或被重建：布局更新时补算一次，
+        // 让卡片始终按当前宽度分列（否则会停留在旧列宽、右侧空出一整列）。
+        ToolsGrid.LayoutUpdated += (_, _) => UpdateCardLayout();
         _ready = true;
         ActualThemeChanged += (_, _) => DispatcherQueue.TryEnqueue(RenderCards);
         StatusBar.Closed += (_, _) => StatusBar.Visibility = Visibility.Collapsed;

@@ -294,4 +294,33 @@ public class ToolCardLayoutTests
         Assert.Equal(4, columns);
         Assert.Equal(117.5, itemWidth, precision: 1);
     }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    [InlineData(1.5)]
+    [InlineData(1.75)]
+    [InlineData(2.0)]
+    public void FitItemWidth_NeverOverflowsTheRow(double scale)
+    {
+        // 除不尽时（按列均分）行宽会比可用宽度大出几个 ULP，ItemsWrapGrid 一旦发现
+        // 放不下就把最后一整列换到下一行，右侧空出一整列。这里覆盖不同 DPI 下的常见
+        // 窗口宽度，确保铺满一行的槽宽始终留有余量。
+        for (int physical = 900; physical <= 3840; physical++)
+        {
+            double rowWidth = physical / scale - 60;
+            int columns = Math.Max(1, (int)(rowWidth / ToolCardLayout.NormalMinItemWidth));
+            double itemWidth = ToolCardLayout.FitItemWidth(rowWidth, columns);
+
+            Assert.True(columns * itemWidth < rowWidth, $"row overflow at {scale}x, width {physical}");
+            Assert.True(columns * itemWidth >= rowWidth - 2.001, $"row not filled at {scale}x, width {physical}");
+        }
+    }
+
+    [Fact]
+    public void FitItemWidth_SurvivesDegenerateInput()
+    {
+        Assert.Equal(98, ToolCardLayout.FitItemWidth(100, 0));
+        Assert.Equal(1, ToolCardLayout.FitItemWidth(1, 5));
+    }
 }

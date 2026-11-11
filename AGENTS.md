@@ -77,7 +77,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - AI 助手为 Pages/AiAssistantPage.xaml，Services/AiAgent/AgentClient.cs 封装独立组件的 V2 HTTP API，WinUI 负责聊天、模型、历史和权限 UI。旧 AiAssistantService 与可执行标记 AiMarkdownRenderer 已彻底删除，不要恢复。页面背景保持透明，Mica 由主窗口 / 内置工具窗口的 BackdropService 提供；侧栏叠 `LayerFillColorDefaultBrush`，**禁止**再给根 Grid 铺不透明底色（旧的 `AgentCanvas #141414` 会完全挡住 Mica）。
 - 组件按需安装：产品文案统一为「AI 组件」。独立回环服务、随机密码、独立 XDG 数据目录；不连接或修改用户共享服务。开发文档保留依赖名称和许可证。
 - Assets/AiAgent/tuba-plugin/SKILL.md 自动导入专用开发工作区；SDK DLL 与插件文档由宿主准备。AgentContent/AgentOperation 保留文本与工具的顺序，UI 使用具体操作时间线；禁止恢复泛化「执行过程」折叠框与「加载插件」按钮。AgentPluginAutoLoader 在本轮 dotnet pack 成功后自动验证并加载新产物，历史包不重放；MSIX 下同样自动加载（仅侧边栏入口隐藏）。
-- 助手是单一智能体，输入区不再选择模式；技能由任务自动触发：插件开发加载 `tuba-plugin`，电脑诊断/监控/桌面操作加载 `tuba-toolbox` 与 `tuba-computer-use`。`tuba-maintenance` 仅保留为旧会话的兼容别名，指向同一提示词。自动导入 `Assets/AgentSkills/tuba-toolbox` 与 `Assets/AgentSkills/tuba-computer-use`。AI/无窗口 CLI 直接查询只允许 help 与硬件信息；工具启动用 shell（`launch-tool.ps1` 或直接执行 `Tools/` 下的程序），打开后的监控、跑分和平台界面必须经 computer-use MCP 操作真实 GUI，并遵循 tuba-toolbox 技能清单；禁止用 GUI 双击工具箱卡片启动工具。窗口枚举、界面读取和电脑操作每次都先等待宿主显示置顶控制覆盖条；AI 截图时目标窗口会闪一次红色边框，提示与边框均排除在截图之外。操作期间屏幕边缘显示明显的流光，切出工具箱后在右上角显示实时进度和停止按钮，等待 question/权限审批时提供返回会话的操作按钮。「立即停止」撤销控制并取消对应会话，不得绕过握手或停止信号。激活、前台校验、键鼠投递和遮挡检查由官方 HCU Windows 提供程序完成：AX 动作前复核实时控件树，GUI 坐标前复核截图布局，过期分别返回 `stale_ref` / `gui_frame_stale` 且不发送输入；宿主不重复实现输入注入。官方 Windows provider 的 C# 源码（`third_party/HybridComputerUse/computer-use/native/windows/ComputerUse.Windows.Runtime/`，MIT）直接编译进主程序，由 `--computer-use-mcp` 进程用 `COMPUTER_USE_WINDOWS_PROVIDER=<TubaWinUi3.exe>` + `TUBA_COMPUTER_PROVIDER_HOST=1` 以隐藏模式拉起（`Program.Main` 在 XAML 初始化前分流），与原 155 MB 自包含 exe 共享同一份运行时；不要再打包 `computer-use-windows-provider.exe`，`HybridComputerUseService` 只暂存 6.9 MB 的 `computer-use.exe`。统一提示词必须在适合封装插件时先用 question 卡片询问用户，得到同意才开发，不能默认将诊断任务变成插件开发。
+- 助手是单一智能体，输入区不再选择模式；技能由任务自动触发：插件开发加载 `tuba-plugin`，电脑诊断/监控/桌面操作加载 `tuba-toolbox` 与 `tuba-computer-use`。`tuba-maintenance` 仅保留为旧会话的兼容别名，指向同一提示词。自动导入 `Assets/AgentSkills/tuba-toolbox` 与 `Assets/AgentSkills/tuba-computer-use`。AI/无窗口 CLI 直接查询只允许 help 与硬件信息；工具启动用 shell（`launch-tool.ps1` 或直接执行 `Tools/` 下的程序），打开后的监控、跑分和平台界面必须经 computer-use MCP 操作真实 GUI，并遵循 tuba-toolbox 技能清单；禁止用 GUI 双击工具箱卡片启动工具。窗口枚举、界面读取和电脑操作每次都先等待宿主显示置顶控制覆盖条；AI 截图时目标窗口会闪一次红色边框，提示与边框均排除在截图之外。操作期间在被操纵的窗口边缘滚动黄色虚线（`WindowEdgeFlowLight`，不再铺屏幕边缘流光），切出工具箱后在右上角显示实时进度和停止按钮，等待 question/权限审批时提供返回会话的操作按钮。「立即停止」撤销控制并取消对应会话，不得绕过握手或停止信号。激活、前台校验、键鼠投递和遮挡检查由官方 HCU Windows 提供程序完成：AX 动作前复核实时控件树，GUI 坐标前复核截图布局，过期分别返回 `stale_ref` / `gui_frame_stale` 且不发送输入；宿主不重复实现输入注入。官方 Windows provider 的 C# 源码（`third_party/HybridComputerUse/computer-use/native/windows/ComputerUse.Windows.Runtime/`，MIT）直接编译进主程序，由 `--computer-use-mcp` 进程用 `COMPUTER_USE_WINDOWS_PROVIDER=<TubaWinUi3.exe>` + `TUBA_COMPUTER_PROVIDER_HOST=1` 以隐藏模式拉起（`Program.Main` 在 XAML 初始化前分流），与原 155 MB 自包含 exe 共享同一份运行时；不要再打包 `computer-use-windows-provider.exe`，`HybridComputerUseService` 只暂存 6.9 MB 的 `computer-use.exe`。统一提示词必须在适合封装插件时先用 question 卡片询问用户，得到同意才开发，不能默认将诊断任务变成插件开发。
 - `AgentQuestionCard` 承接 V2 会话表单，单选不预选、显式提交、可补充/跳过/停止。权限统一由 `AgentPermissionPolicy` 管理：默认 wildcard allow，用户可选逐次确认；每轮替换旧会话策略，不保留隐藏 deny。业务提问与工具权限独立，不要把 AI 提问退回普通文字或一律禁用提问工具。
 - `AiAssistantPage` 的 `.Run.cs` / `.Sessions.cs` 按会话保留任务、草稿、表单与消息，导航离页不取消执行。会话操作使用右键菜单，必须捕获被右键项的 ID；历史读取所有游标分页，流式尾部通过 `AgentHistory.Merge` 合并，不能覆盖早期消息。
 - 长任务状态来自 `AgentClient.Events.cs` 原生事件流与 HTTP 快照。快照可能在推理/压缩完成前不变，禁止恢复「三分钟无消息变化就 interrupt」；`AgentRunMonitor` 只给出等待状态。只在用户取消时发送单会话 interrupt，失败不能杀掉整个组件。
@@ -87,6 +87,21 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - 支持多插件并存。AgentWorkspace 更新 projects.md，按真实 csproj + tubatools.json 识别项目；每插件独立目录/PackageId，修改保留身份并递增版本，不覆盖其他项目。
 - 本地 AI 试炼场 AiPlaygroundPage 独立保留；提供商配置仍在 Services/Ai/AiProviderStore.cs，密钥用 ProtectedApiKeyConverter。
 - MarkdownView 为纯展示的原生 Markdown 控件，不能从 Markdown 解析执行命令或旧助手动作标记。
+
+### AI 输入队列（排队 / 插队）
+
+- 运行中仍可发送消息：输入区右侧保留发送按钮，旁边出现「排队 / 插队」切换（`AgentQueueMode`，默认 `queue`）。排队 = 当前回合结束后按顺序自动发送；插队 = 插入队首并 `Cancel()` 当前回合，优先发送。所有入口（输入区、教学画布、重试）统一走 `DrainQueueAsync`，不要直接调用 `StartRunAsync`。
+- 待发送消息显示在输入区上方的队列条（`QueueBar`），可逐条移除；`Stop`、会话菜单「停止」、关闭页面和删除会话都会清空队列。队列项保存发送时的模型与附件快照；运行队列消息时**不要**清空输入框或覆盖用户正在输入的新草稿。`SessionState.Draining` 表示整个队列循环，`Run` 只表示当前回合；界面「运行中」判断和会话列表标记两处都要包含 `Draining`。
+
+### AI 浏览器控制（browser_use）
+
+- AI 助手通过 `browser_use` MCP 控制网页，**唯一引擎 = 内置 WebView2**（不再支持外部 Chromium；不要把外部浏览器启动/检测代码加回来）。AI 浏览器窗口用 `BuiltinToolWindow` 独立打开，不导航主 Frame。
+- **用户数据刻意隔离**：内置 WebView2 用 `<DataDir>/AiBrowser/WebView2`，不是用户日常 Chrome/Edge 的配置，不含其登录状态、书签和历史；需要登录时让用户在弹出的浏览器窗口里自己完成。这个口径必须出现在每次工具结果首行、`browser.md`、技能和系统提示词里。
+- 架构：`Program.Main` 的 `--browser-use-mcp` 隐藏模式（不初始化 XAML）→ `BrowserUseMcpProxy`（stdio JSON-RPC）→ `BrowserAutomation`（纯 CDP：Runtime/Page/Input）→ `BuiltInBrowserRuntime` → `AiBrowserHostService` 的同用户命名管道 → `CoreWebView2.CallDevToolsProtocolMethodAsync`。截图优先 `Page.captureScreenshot`，失败回退 `CapturePreviewAsync`。
+- 数据根由 `TUBA_AI_BROWSER_ROOT` 环境变量注入（`AgentWorkspace.ComputerServers()`），app 与 MCP 共用 `stop.flag`、`host.json` 和 WebView2 profile。`AgentWorkspace.Prepare()` 写 `browser.md` 供 agent 首次调用前读取；以工具结果首行为准。
+- **AI 浏览器 UI 必须把网页放首位**：AI 页隐藏 `ToolPageHeader`，顶部用 48px 的 `AiTitleBar` 避开扩展标题栏的 caption 按钮，下面是一条紧凑工具栏（后退/前进/刷新/地址栏/在默认浏览器打开）和只在 AI 操作时出现的状态小胶囊（停止/继续）。不要再把大号 InfoBar 或整页说明放回顶部；用户数据说明放在工具栏 Tooltip 和设置页。
+- **停止语义**：`AiBrowserControl` 的 `stop.flag` 是跨进程门禁；用户点浏览器窗口「停止 AI 控制」或关闭 AI 浏览器窗口后会阻止后续工具调用（`USER_STOPPED_BROWSER_CONTROL`），并取消当前 AI 运行；新一轮用户消息 `BeginTurn()` 才清除。不要绕过。
+- 回归：`AiBrowserTests`（内置引擎口径、专属 profile、URL 规范化、按键映射、工具名归一化、MCP 工具清单、快照格式化）。不要用 UI 测试启动真实浏览器。
 
 ### AI 教学模式与画布（tuba-canvas）
 - 输入区底栏（`Composer` Grid.Row=3）在「模型 / 权限」右侧有「对话 / 教学模式」选择器（`ModeBox`）与「跳到最新画布」按钮（`CanvasButton`）。`AgentCanvasMode` 每会话独立，全局默认存 `AppSettings["AgentMode"]`。
@@ -335,7 +350,8 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - `ConfigManager` supports two data locations — AppData (`%LocalAppData%/TubaWinUi3/`) or AppRoot (`<appdir>/Data/`) — selected by a `.config_location` marker file.
 - `Package.appxmanifest` declares `runFullTrust` and `systemAIModels`.
 - **Bundled icon cache**: `ToolIconService` prefers `<appdir>/IconCache/` (ships inside the package, read-only) over the writable `DataDir/IconCache`; missing/stale icons are copied from the bundled cache or extracted at runtime. `build-icon-cache.ps1` generates it (same SHA256 `{ToolsRoot}\<relative>` key scheme); a `GenerateBundledIconCache` MSBuild target runs it automatically before every `dotnet publish` (skipped when `ExcludeToolsFromPublish=true`). The `IconCache/` folder is gitignored — never commit it.
-- **正在运行 Debug 版应用时构建**：exe/dll 被进程锁住，`dotnet build/test` 会挂在最后的文件拷贝（MSB3026/3027）。仓库先例是换输出路径 `-p:BaseOutputPath=bin/xxx/`；但注意 2026-10-25 实测：该路径下测试项目的 `makepri.exe` 会递归扫描 `bin\xxx\` 里的整份应用输出而**无限卡死**——构建命令要加 `-p:AppxGeneratePriEnabled=false`，或者干脆先关掉正在运行的应用再构建（最省事）。
+- **正在运行 Debug 版应用时构建**：exe/dll 被进程锁住，`dotnet build/test` 会挂在最后的文件拷贝（MSB3026/3027）。仓库先例是换输出路径 `-p:BaseOutputPath=bin/xxx/`；但注意 2026-10-25 实测：该路径下测试项目的 `makepri.exe` 会递归扫描 `bin\xxx\` 里的整份应用输出而**无限卡死**——构建命令要加 `-p:AppxGeneratePriEnabled=False`，或者干脆先关掉正在运行的应用再构建（最省事）。
+- **主窗口自定义标题栏（`Microsoft.UI.Xaml.Controls.TitleBar`）的内容必须可收缩**（Issue #262）：TitleBar 会把 `Content` 里每个交互控件的布局矩形**不做裁剪**地登记成 NonClient 直通区域，内容一旦宽于 Content 列宽就会盖住右侧 48 DIP 最小拖拽区和系统最小化/最大化/关闭按钮 —— 窗口越窄、系统缩放越大越严重（高 DPI 下 800 物理像素的最小窗口只有 400 逻辑像素）。搜索框宽度由 `TitleBarLayout.ForContentWidth` 按 `TitleBarContent` 实际列宽收放，空间不足时依次收起右侧动作按钮和搜索框；不要再把搜索框包进固定宽度的列，也不要删掉 `TitleBar.IsDragRegion` / `AutoRefreshDragRegions`（`TitleBarLayoutTests` 会拦住）。
 
 ## File-transfer subsystem (separate from the .NET app)
 

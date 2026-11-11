@@ -23,6 +23,18 @@ public static class ToolCardLayout
         return (columns, Math.Max(minItemWidth, itemWidth));
     }
 
+    /// <summary>
+    /// 按列均分铺满整行的槽宽（槽宽含卡片右侧外边距）。
+    /// 行宽里预留 <paramref name="slack"/> 像素：除不尽时 columns×槽宽 会比行宽大出几个 ULP，
+    /// ItemsWrapGrid 只要发现放不下就会把最后一整列换到下一行（右侧空出一列），
+    /// 所以不能贴着行宽取整。2px 摊到每列不足 1px，肉眼不可见。
+    /// </summary>
+    public static double FitItemWidth(double rowWidth, int columns, double slack = 2)
+    {
+        if (columns < 1) columns = 1;
+        return Math.Max(1, (rowWidth - Math.Max(0, slack)) / columns);
+    }
+
     /// <summary>用网格实际宽度（扣掉内边距）更新 ItemsWrapGrid.ItemWidth。</summary>
     public static void Apply(GridView grid, bool compact = false)
     {

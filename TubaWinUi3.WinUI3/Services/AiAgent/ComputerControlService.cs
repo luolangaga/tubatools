@@ -22,7 +22,7 @@ internal static class ComputerControlService
     private static ControlBannerOverlay? _banner;
     private static ControlProgressOverlay? _progressPopup;
     private static DispatcherQueue? _dispatcher;
-    private static ScreenEdgeFlowLight? _edgeLight;
+    private static WindowEdgeFlowLight? _edgeLine;
     private static WindowCaptureFlash? _captureFlash;
     private static string? _latestProgressSession;
     private static readonly Dictionary<string, DateTime> SessionStarted = new(StringComparer.Ordinal);
@@ -121,7 +121,7 @@ internal static class ComputerControlService
         foreach (var lease in Leases.Values) ComputerSessions.Add(ResolveProgressSession(lease) ?? lease.SessionId);
         if (Leases.Count == 0)
         {
-            if (_banner is null && _progressPopup is null && _edgeLight is null) return;
+            if (_banner is null && _progressPopup is null && _edgeLine is null) return;
             if (!_overlayIdle) { _overlayIdle = true; _overlayIdleSince = DateTime.UtcNow; }
             // Between tool calls the turn still owns the desktop; keep the indicator briefly
             // instead of flickering it off and on for every AX/GUI call.
@@ -136,19 +136,19 @@ internal static class ComputerControlService
         ShowBanner(anchor);
         _captureFlash ??= new WindowCaptureFlash();
         _captureFlash.Prepare();
-        // The overlay timer also drives the capture frame, even if the edge glow failed.
+        // The overlay timer also drives the capture frame, even if the window border failed.
         if (!EdgeTimer.IsEnabled) EdgeTimer.Start();
 
         try
         {
-            _edgeLight ??= new ScreenEdgeFlowLight();
-            _edgeLight.SetTarget(anchor);
+            _edgeLine ??= new WindowEdgeFlowLight();
+            _edgeLine.SetTarget(anchor);
             if (!EdgeTimer.IsEnabled) EdgeTimer.Start();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine("[AgentComputerEdgeLight] " + ex);
-            _edgeLight?.Dispose(); _edgeLight = null;
+            _edgeLine?.Dispose(); _edgeLine = null;
         }
 
         if (!IsAssistantPageForeground(foreground))
@@ -173,14 +173,14 @@ internal static class ComputerControlService
         _progressPopup?.UpdateHitThrough();
         try
         {
-            _edgeLight?.Advance();
+            _edgeLine?.Advance();
             _captureFlash?.Advance();
         }
         catch (Exception ex)
         {
             // Keep the timer alive: it also drives the capture frame.
             System.Diagnostics.Debug.WriteLine("[AgentComputerEdgeLight] " + ex);
-            _edgeLight?.Dispose(); _edgeLight = null;
+            _edgeLine?.Dispose(); _edgeLine = null;
             _captureFlash?.Dispose(); _captureFlash = null;
         }
     }
@@ -260,7 +260,7 @@ internal static class ComputerControlService
         {
             var text = title.ToString();
             if (text == ControlBannerOverlay.WindowTitle || text == ControlProgressOverlay.WindowTitle ||
-                text == ScreenEdgeFlowLight.WindowTitle || text == WindowCaptureFlash.WindowTitle) return true;
+                text == WindowEdgeFlowLight.WindowTitle || text == WindowCaptureFlash.WindowTitle) return true;
         }
         return false;
     }
@@ -377,13 +377,13 @@ internal static class ComputerControlService
     {
         _progressPopup?.Dispose(); _progressPopup = null; _progressTargetTitle = null;
     }
-    private static void StopEdgeLight()
+    private static void StopEdgeLine()
     {
-        EdgeTimer.Stop(); _edgeLight?.Dispose(); _edgeLight = null;
+        EdgeTimer.Stop(); _edgeLine?.Dispose(); _edgeLine = null;
     }
     private static void CloseAllOverlays()
     {
-        CloseBanner(); CloseProgressPopup(); StopEdgeLight();
+        CloseBanner(); CloseProgressPopup(); StopEdgeLine();
         _captureFlash?.Dispose(); _captureFlash = null;
         ComputerSessions.Clear();
     }

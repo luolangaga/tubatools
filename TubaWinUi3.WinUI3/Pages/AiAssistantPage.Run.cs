@@ -11,6 +11,8 @@ public sealed partial class AiAssistantPage
     private readonly Dictionary<string, TimelineNode> _nodes = [];
     private readonly List<string> _messageOrder = [];
     private string _lastTranscript = "";
+    private sealed record QueuedTurn(AgentModel Model, string Title, string Prompt,
+        IReadOnlyList<AgentAttachment> Attachments, bool FromCanvas, bool RestoreDraftOnFailure);
     private sealed class TimelineNode
     {
         public MarkdownView? Markdown { get; init; }
@@ -134,7 +136,7 @@ public sealed partial class AiAssistantPage
     }
     private async void Send_Click(object sender, RoutedEventArgs e)
     {
-        if (!Ready || _preparing || _active.Run is not null || _client is null || _lifetime is null || ModelBox.SelectedItem is not AgentModel model) return;
+        if (!Ready || _preparing || _client is null || _lifetime is null || ModelBox.SelectedItem is not AgentModel model) return;
         var state = _active;
         if (_pendingImports > 0) return;
         var text = PromptBox.Text.Trim();
@@ -143,8 +145,120 @@ public sealed partial class AiAssistantPage
         var attachments = state.Attachments.ToArray();
         if (attachments.Any(a => a.IsImage) && !model.SupportsImages)
         { SetNotice(state, L("VisionModelRequired", "当前模型不支持图片，请选择支持图片输入的模型。自定义提供商可在配置中启用图片输入。"), true); return; }
+        var title = text.Replace('\r', ' ').Replace('\n', ' ').Trim();
+        if (title.Length > 45) title = title[..45];
+        var request = new QueuedTurn(model, title, BuildPrompt(text, attachments), attachments, false, true);
         state.Draft = ""; state.Attachments.Clear(); PromptBox.Text = ""; SetNotice(state, "");
-        await BeginRunAsync(state, model, text, BuildPrompt(text, attachments), attachments, fromCanvas: false);
+
+        if (state.Run is not null || state.Draining)
+        {
+            if (_cutIn)
+            {
+                if (state.Run is not null) state.SuppressDraftRestore = true;
+                state.Queue.Insert(0, request);
+                state.Run?.Cancel();
+                SetNotice(state, L("CutInNotice", "已插队，正在停止当前任务并优先发送。"), attention: true);
+            }
+            else
+            {
+                state.Queue.Add(request);
+                SetNotice(state, L("QueuedNotice", "已排队，当前任务结束后自动发送。"), attention: true);
+            }
+            UpdateQueueView(state);
+            UpdateButtons();
+            return;
+        }
+
+        if (state.Queue.Count > 0)
+        {
+            state.Queue.Add(request);
+            UpdateQueueView(state);
+            await DrainQueueAsync(state);
+            return;
+        }
+        await DrainQueueAsync(state, request);
+    }
+
+    /// <summary>Runs one turn, then continues with queued turns in order.</summary>
+    private async Task DrainQueueAsync(SessionState state, QueuedTurn? first = null)
+    {
+        if (state.Draining)
+        {
+            if (first is not null) { state.Queue.Add(first); UpdateQueueView(state); }
+            return;
+        }
+        state.Draining = true;
+        try
+        {
+            var current = first;
+            while (!_closed && !state.Discarded)
+            {
+                if (current is null)
+                {
+                    if (state.Queue.Count == 0) break;
+                    current = state.Queue[0];
+                    state.Queue.RemoveAt(0);
+                    UpdateQueueView(state);
+                }
+                var item = current;
+                current = null;
+                await StartRunAsync(state, item);
+            }
+        }
+        finally
+        {
+            state.Draining = false;
+            UpdateQueueView(state);
+            if (ReferenceEquals(state, _active)) UpdateButtons();
+        }
+    }
+
+    private void QueueMode_Click(object sender, RoutedEventArgs e)
+    {
+        _cutIn = !_cutIn;
+        AppSettings.Set("AgentQueueMode", _cutIn ? "cutin" : "queue");
+        UpdateButtons();
+    }
+
+    private void UpdateQueueView(SessionState? state = null)
+    {
+        state ??= _active;
+        if (!ReferenceEquals(state, _active) || QueueBar is null) return;
+        var signature = state.Key + "|" + state.Queue.Count + "|" + string.Join('\u001f', state.Queue.Select(q => q.Title));
+        if (signature == _queueSignature) return;
+        _queueSignature = signature;
+        QueueBar.Visibility = state.Queue.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        QueueItems.Children.Clear();
+        if (state.Queue.Count == 0) return;
+        QueueTitle.Text = string.Format(L("QueueCount", "排队中（{0}）"), state.Queue.Count);
+        foreach (var item in state.Queue.ToArray())
+        {
+            var row = new Grid { ColumnSpacing = 8 };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var label = item.Title + (item.Attachments.Count > 0
+                ? string.Format(L("QueueAttachments", "（{0} 个附件）"), item.Attachments.Count) : "");
+            row.Children.Add(new TextBlock
+            {
+                Text = label, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            var remove = new Button
+            {
+                Style = (Style)Resources["AgentIconButton"],
+                Content = new FontIcon { Glyph = "\uE711", FontSize = 10 }
+            };
+            ToolTipService.SetToolTip(remove, L("QueueRemove", "移除排队消息"));
+            Grid.SetColumn(remove, 1);
+            remove.Click += (_, _) =>
+            {
+                state.Queue.Remove(item);
+                UpdateQueueView(state);
+                UpdateButtons();
+            };
+            row.Children.Add(remove);
+            QueueItems.Children.Add(row);
+        }
     }
 
     /// <summary>Non-image attachments become explicit local paths the agent can read.</summary>
@@ -155,20 +269,21 @@ public sealed partial class AiAssistantPage
             string.Join("\n", references.Select(a => "- " + System.Text.Json.JsonSerializer.Serialize(a.Path, new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))));
     }
 
-    private async Task BeginRunAsync(SessionState state, AgentModel model, string title, string prompt,
-        IReadOnlyList<AgentAttachment> attachments, bool fromCanvas)
+    private async Task StartRunAsync(SessionState state, QueuedTurn turn)
     {
         var run = CancellationTokenSource.CreateLinkedTokenSource(_lifetime!.Token);
-        state.Run = run; CacheDraft(state); state.LastPrompt = prompt; state.Progress = new("waiting");
-        state.PhaseStarted = DateTimeOffset.UtcNow; _progressTimer.Start();
-        if (!fromCanvas) { state.Draft = ""; state.Attachments.Clear(); PromptBox.Text = ""; SetNotice(state, ""); }
-        UpdateButtons();
-        state.Work = RunTurnAsync(state, model, title, prompt, run, attachments, fromCanvas);
+        state.Run = run; CacheDraft(state); state.LastPrompt = turn.Prompt; state.Progress = new("waiting");
+        state.PhaseStarted = DateTimeOffset.UtcNow;
+        if (ReferenceEquals(state, _active)) _progressTimer.Start();
+        SetNotice(state, "");
+        if (ReferenceEquals(state, _active)) UpdateButtons();
+        state.Work = RunTurnAsync(state, turn.Model, turn.Title, turn.Prompt, run, turn.Attachments,
+            turn.FromCanvas, turn.RestoreDraftOnFailure);
         await state.Work;
     }
 
     private async Task RunTurnAsync(SessionState state, AgentModel model, string title, string prompt, CancellationTokenSource run,
-        IReadOnlyList<AgentAttachment> attachments, bool fromCanvas = false)
+        IReadOnlyList<AgentAttachment> attachments, bool fromCanvas, bool restoreDraft)
     {
         var client = _client!;
         var token = run.Token;
@@ -185,6 +300,7 @@ public sealed partial class AiAssistantPage
                 await RefreshHistoryAsync(token);
             }
             ComputerControlService.BeginSession(state.Id, () => state.Run?.Cancel());
+            AiBrowserControl.BeginTurn();
             AgentWorkspace.RefreshProjectIndex();
             // The canvas only exists once the session id is known; teaching turns get both a
             // starter page and a short marker so AGENTS.md/skill rules stay the source of truth.
@@ -237,7 +353,7 @@ public sealed partial class AiAssistantPage
                     try { using var refresh = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token); refresh.CancelAfter(TimeSpan.FromSeconds(5)); state.Messages = AgentHistory.Merge(state.Messages, await client.GetMessagesAsync(state.Id, refresh.Token)); } catch { }
                 }
                 var accepted = state.Messages.Any(m => m.Role == "user" && !priorUserIds.Contains(m.Id));
-                if (!accepted && !fromCanvas)
+                if (!accepted && !fromCanvas && restoreDraft && !state.SuppressDraftRestore)
                 {
                     // Canvas-initiated turns never borrow the user's composer: restore nothing,
                     // just report the failure on the page that asked for it.
@@ -253,7 +369,7 @@ public sealed partial class AiAssistantPage
         }
         finally
         {
-            run.Dispose(); state.Run = null; state.Progress = null;
+            run.Dispose(); state.Run = null; state.Progress = null; state.SuppressDraftRestore = false;
             if (state.Id is not null) ComputerControlService.EndSession(state.Id);
             if (!_closed)
             {
@@ -316,10 +432,16 @@ public sealed partial class AiAssistantPage
         };
         RunStatusText.Text = string.Format(L("ProgressElapsed", "{0} · {1} 秒"), text, Math.Max(0, (int)(DateTimeOffset.UtcNow - _active.PhaseStarted).TotalSeconds));
     }
-    private void Stop_Click(object sender, RoutedEventArgs e) => _active.Run?.Cancel();
+    private void Stop_Click(object sender, RoutedEventArgs e)
+    {
+        var state = _active;
+        state.Queue.Clear();
+        UpdateQueueView(state);
+        state.Run?.Cancel();
+    }
     private async void Retry_Click(object sender, RoutedEventArgs e)
     {
-        if (_active.Run is not null) return;
+        if (_active.Run is not null || _active.Draining) return;
         if (_active.RetryKind == "prepare") { await PrepareAsync(); return; }
         if (!Ready) return;
         if (_active.RetryKind == "history" && _client is not null && _lifetime is not null && _active.Id is { } id)

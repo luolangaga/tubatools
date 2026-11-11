@@ -1,7 +1,7 @@
 FurMark 2
 GPU Stress Test and OpenGL / Vulkan Benchmark
-Copyright (C) 2007-2025 Geeks3D, All rights reserved.
-https://geeks3d.com/furmark/
+Copyright (C) 2007-2026 Geeks3D, All rights reserved.
+https://www.geeks3d.com/furmark/
 
 *****************************************************************
 THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
@@ -42,16 +42,10 @@ the following restrictions:
    installer for it.
 
 
------------------ Geeks3D PRO Pack ---------------------
-If you wish to support the development of Geeks3D software, you have
-two options:
+---------------------- Ext.Ver. --------------------------
+If you wish to support the development of FurMark, you can
+make a donation by visiting this page:
 
-1/ make a donation: 
-https://www.geeks3d.com/donate/
-
-OR
-
-2/ buy a license (one-time purchase) for the extended/pro version:
-https://www.geeks3d.com/g3dpp/
+https://www.geeks3d.com/donate/furmark-madgpu/
 
 For any questions, send an email at jegx@geeks3d.com

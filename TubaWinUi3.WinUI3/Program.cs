@@ -16,6 +16,14 @@ internal static class Program
             return;
         }
 
+        // Browser automation MCP is also a hidden mode: it must not initialize XAML or any UI
+        // service, because the AI component starts it as a console stdio server.
+        if (Services.AiAgent.BrowserUseMcpProxy.IsInvocation(args))
+        {
+            Environment.ExitCode = Services.AiAgent.BrowserUseMcpProxy.Run();
+            return;
+        }
+
         StartXaml();
     }
 

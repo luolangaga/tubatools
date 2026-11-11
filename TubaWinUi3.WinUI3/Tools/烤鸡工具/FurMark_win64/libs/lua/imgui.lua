@@ -72,6 +72,7 @@ IMGUI_TABLE_BORDER_STRONG_COLOR = 56
 IMGUI_TABLE_BORDER_LIGHT_COLOR = 57
 IMGUI_TABLE_ROW_BG_COLOR = 58
 IMGUI_TABLE_ROW_BG_ALT_COLOR = 59
+IMGUI_CHECK_BOX_SELECTED_BG_COLOR = 60
 
 
 
@@ -129,27 +130,31 @@ ImGuiColorEditFlags_NoLabel = 128 -- ColorEdit, ColorPicker: disable display of 
 ImGuiColorEditFlags_NoSidePreview = 256 -- ColorPicker: disable bigger color preview on right side of the picker, use small colored square preview instead.
 ImGuiColorEditFlags_NoDragDrop = 512 -- ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source.
 ImGuiColorEditFlags_NoBorder = 1024 -- NEW in ImGui 1.90.9 -  ColorButton: disable border (which is enforced by default)
+ImGuiColorEditFlags_NoColorMarkers  = 2048 --ColorEdit: disable rendering R/G/B/A color marker. May also be disabled globally by setting style.ColorMarkerSize = 0.
 
 --// Alpha preview
 --// - Prior to 1.91.8 (2025/01/21): alpha was made opaque in the preview by default using old name ImGuiColorEditFlags_AlphaPreview.
 --// - We now display the preview as transparent by default. You can use ImGuiColorEditFlags_AlphaOpaque to use old behavior.
 --// - The new flags may be combined better and allow finer controls.
-ImGuiColorEditFlags_AlphaOpaque     = 2048  -- // ColorEdit, ColorPicker, ColorButton: disable alpha in the preview,. Contrary to _NoAlpha it may still be edited when calling ColorEdit4()/ColorPicker4(). For ColorButton() this does the same as _NoAlpha.
-ImGuiColorEditFlags_AlphaNoBg       = 4096  -- // ColorEdit, ColorPicker, ColorButton: disable rendering a checkerboard background behind transparent color.
-ImGuiColorEditFlags_AlphaPreviewHalf= 8192  -- // ColorEdit, ColorPicker, ColorButton: display half opaque / half transparent preview.
+ImGuiColorEditFlags_AlphaOpaque     = 4096  -- // ColorEdit, ColorPicker, ColorButton: disable alpha in the preview,. Contrary to _NoAlpha it may still be edited when calling ColorEdit4()/ColorPicker4(). For ColorButton() this does the same as _NoAlpha.
+ImGuiColorEditFlags_AlphaNoBg       = 8192  -- // ColorEdit, ColorPicker, ColorButton: disable rendering a checkerboard background behind transparent color.
+ImGuiColorEditFlags_AlphaPreviewHalf= 16384  -- // ColorEdit, ColorPicker, ColorButton: display half opaque / half transparent preview.
 
 -- User Options (right-click on widget to change some of them). You can set application defaults using SetColorEditOptions(). The idea is that you probably don't want to override them in most of your calls, let the user choose and/or call SetColorEditOptions() during startup.
-ImGuiColorEditFlags_AlphaBar = 65536 -- ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.
+ImGuiColorEditFlags_AlphaBar = 262144 -- ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.
 ImGuiColorEditFlags_HDR = 524288 --  (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use ImGuiColorEditFlags_Float flag as well).
 ImGuiColorEditFlags_RGB = 1048576 -- [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.
+ImGuiColorEditFlags_DisplayRGB = 1048576 -- [Inputs] ColorEdit: choose one among RGB/HSV/HEX. ColorPicker: choose any combination using RGB/HSV/HEX.
 ImGuiColorEditFlags_HSV = 2097152 -- [Inputs]     
-ImGuiColorEditFlags_HEX = 4194304 -- [Inputs] 
+ImGuiColorEditFlags_HSV = 2097152 -- [Inputs]     
+ImGuiColorEditFlags_DisplayHex = 4194304 -- [Inputs] 
 ImGuiColorEditFlags_Uint8 = 8388608 -- [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255. 
 ImGuiColorEditFlags_Float = 16777216 --  [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip of value via integers.
-ImGuiColorEditFlags_PickerHueBar = 33554432 -- [PickerMode] // ColorPicker: bar for Hue, rectangle for Sat/Value.
-ImGuiColorEditFlags_PickerHueWheel = 67108864 -- [PickerMode] // ColorPicker: wheel for Hue, triangle for Sat/Value.
-ImGuiColorEditFlags_InputRGB = 134217728 -- [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.
-ImGuiColorEditFlags_InputHSV = 268435456 -- [Input]      // ColorEdit, ColorPicker: input and output data in HSV format.
+ImGuiColorEditFlags_PickerHueBar = 33554432 -- [Picker] // ColorPicker: bar for Hue, rectangle for Sat/Value.
+ImGuiColorEditFlags_PickerHueWheel = 67108864 -- [Picker] // ColorPicker: wheel for Hue, triangle for Sat/Value.
+ImGuiColorEditFlags_PickerNoRotate  = 134217728 -- [Picker] // ColorPicker: disable rotating Sat/Value triangle. Best set in io.ConfigColorEditFlags once.
+ImGuiColorEditFlags_InputRGB = 268435456 -- [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.
+ImGuiColorEditFlags_InputHSV = 536870912 -- [Input]      // ColorEdit, ColorPicker: input and output data in HSV format.
 
 
 -- Tree node flags
@@ -165,14 +170,17 @@ ImGuiTreeNodeFlags_OpenOnArrow = 128 -- Only open when clicking on the arrow par
 ImGuiTreeNodeFlags_Leaf = 256 -- No collapsing, no arrow (use as a convenience for leaf nodes).
 ImGuiTreeNodeFlags_Bullet = 512 -- Display a bullet instead of arrow
 ImGuiTreeNodeFlags_FramePadding = 1024 -- Use FramePadding (even for an unframed text node) to vertically align text baseline to regular widget height. Equivalent to calling AlignTextToFramePadding().
-ImGuiTreeNodeFlags_SpanAvailWidth       = 2048 --  // Extend hit box to the right-most edge, even if not framed. This is not the default in order to allow adding other items on the same line. In the future we may refactor the hit system to be front-to-back, allowing natural overlaps and then this can become the default.
-ImGuiTreeNodeFlags_SpanFullWidth        = 4096 -- // Extend hit box to the left-most and right-most edges (bypass the indented area).
+ImGuiTreeNodeFlags_SpanAvailWidth       = 2048 -- Extend hit box to the right-most edge, even if not framed. This is not the default in order to allow adding other items on the same line. In the future we may refactor the hit system to be front-to-back, allowing natural overlaps and then this can become the default.
+ImGuiTreeNodeFlags_SpanFullWidth        = 4096 -- Extend hit box to the left-most and right-most edges (bypass the indented area).
 ImGuiTreeNodeFlags_SpanLabelWidth       = 8192 -- NEW in ImGui 1.90.9 - Narrow hit box + narrow hovering highlight, will only cover the label text.
 ImGuiTreeNodeFlags_SpanAllColumns       = 16384 -- NEW in ImGui 1.90.9 - Frame will span all columns of its container table (text will still fit in current column)
-ImGuiTreeNodeFlags_LabelSpanAllColumns  = 32768 -- // Label will span all columns of its container table
-ImGuiTreeNodeFlags_NavLeftJumpsToParent = 131072 -- // Nav: left arrow moves back to parent. This is processed in TreePop() when there's an unfullfilled Left nav request remaining.
+ImGuiTreeNodeFlags_LabelSpanAllColumns  = 32768 -- Label will span all columns of its container table
+ImGuiTreeNodeFlags_NavLeftJumpsToParent = 131072 -- Nav: left arrow moves back to parent. This is processed in TreePop() when there's an unfullfilled Left nav request remaining.
 ImGuiTreeNodeFlags_CollapsingHeader     = ImGuiTreeNodeFlags_Framed + ImGuiTreeNodeFlags_NoTreePushOnOpen + ImGuiTreeNodeFlags_NoAutoOpenOnLog    
-    
+ImGuiTreeNodeFlags_DrawLinesNone        = 262144 -- No lines drawn
+ImGuiTreeNodeFlags_DrawLinesFull        = 524288 -- Horizontal lines to child nodes. Vertical line drawn down to TreePop() position: cover full contents. Faster (for large trees).
+ImGuiTreeNodeFlags_DrawLinesToNodes     = 1048576 --Horizontal lines to child nodes. Vertical line drawn down to bottom-most child node. Slower (for large trees).
+   
 --ImGuiTreeNodeFlags_NavLeftJumpsBackHere = 32768 -- (WIP) Nav: left direction may move to this TreeNode() from any of its child (items submitted between TreeNode and TreePop)
 ImGuiTreeNodeFlags_NavLeftJumpsBackHere = ImGuiTreeNodeFlags_NavLeftJumpsToParent -- Renamed in 1.92
 ImGuiTreeNodeFlags_SpanTextWidth        = ImGuiTreeNodeFlags_SpanLabelWidth      -- Renamed in 1.90.7
@@ -215,6 +223,8 @@ ImGuiInputTextFlags_CallbackAlways      = 1048576 -- // Callback on each iterati
 ImGuiInputTextFlags_CallbackCharFilter  = 2097152 -- // Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
 ImGuiInputTextFlags_CallbackResize      = 4194304 --  // Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow. Notify when the string wants to be resized (for string types which hold a cache of their Size). You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stdlib.h for an example of using this)
 ImGuiInputTextFlags_CallbackEdit        = 8388608 -- // Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)
+-- Beta in v1.92.3
+ImGuiInputTextFlags_WordWrap            = 16777216 -- // InputTextMultine(): word-wrap lines that are too long.
 
 
 
@@ -228,6 +238,7 @@ ImGuiSelectableFlags_AllowDoubleClick = 4 -- // Generate press events on double 
 ImGuiSelectableFlags_Disabled = 8 -- // Cannot be selected, display greyed out text
 ImGuiSelectableFlags_AllowOverlap   = 16 --  // (WIP) Hit testing to allow subsequent widgets to overlap this one
 ImGuiSelectableFlags_Highlight          = 32 -- // Make the item be displayed as if it is hovered
+ImGuiSelectableFlags_SelectOnNav        = 64 -- // Auto-select when moved into, unless Ctrl is held. Automatic when in a BeginMultiSelect() block.
 
 ImGuiSelectableFlags_DontClosePopups    = ImGuiSelectableFlags_NoAutoClosePopups   -- Renamed in 1.91.0
 ImGuiSelectableFlags_AllowItemOverlap   = ImGuiSelectableFlags_AllowOverlap        -- Renamed in 1.89.7
@@ -244,8 +255,10 @@ ImGuiTabBarFlags_NoCloseWithMiddleMouseButton   = 8  -- Disable behavior of clos
 ImGuiTabBarFlags_NoTabListScrollingButtons      = 16 -- Disable scrolling buttons (apply when fitting policy is ImGuiTabBarFlags_FittingPolicyScroll)
 ImGuiTabBarFlags_NoTooltip                      = 32 -- Disable tooltips when hovering a tab
 ImGuiTabBarFlags_DrawSelectedOverline           = 64 -- NEW ImGui 1.90.9 - Draw selected overline markers over selected tab
-ImGuiTabBarFlags_FittingPolicyResizeDown        = 128 -- Resize tabs when they don't fit
-ImGuiTabBarFlags_FittingPolicyScroll            = 256 -- Add scroll buttons when tabs don't fit
+ImGuiTabBarFlags_FittingPolicyMixed             = 128 --   // Shrink down tabs when they don't fit, until width is style.TabMinWidthShrink, then enable scrolling buttons.
+ImGuiTabBarFlags_FittingPolicyShrink            = 256 --   // Shrink down tabs when they don't fit
+ImGuiTabBarFlags_FittingPolicyScroll            = 512 --   // Enable scrolling buttons when tabs don't fit
+ImGuiTabBarFlags_FittingPolicyResizeDown        = ImGuiTabBarFlags_FittingPolicyShrink -- // Renamed in 1.92.2
 
 
 -- tab item
@@ -301,14 +314,17 @@ ImGuiSliderFlags_WrapAround             = 256 -- Enable wrapping around from max
 ImGuiSliderFlags_ClampOnInput           = 512 -- Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds.
 ImGuiSliderFlags_ClampZeroRange         = 1024 -- Clamp even if min==max==0.0f. Otherwise due to legacy reason DragXXX functions don't clamp with those values. When your clamping limits are dynamic you almost always want to use it.
 ImGuiSliderFlags_NoSpeedTweaks          = 2048 -- Disable keyboard modifiers altering tweak speed. Useful if you want to alter tweak speed yourself based on your own logic.
+ImGuiSliderFlags_ColorMarkers           = 4096 -- DragScalarN(), SliderScalarN(): Draw R/G/B/A color markers on each component.
 ImGuiSliderFlags_AlwaysClamp            = ImGuiSliderFlags_ClampOnInput + ImGuiSliderFlags_ClampZeroRange
 
 -- Flags for gh_imgui.invisible_button() function.
 ImGuiButtonFlags_None                   = 0
 ImGuiButtonFlags_MouseButtonLeft        = 1 --// React on left mouse button (default)
-ImGuiButtonFlags_MouseButtonRight       = 2 -- // React on right mouse button
-ImGuiButtonFlags_MouseButtonMiddle      = 4 -- // React on center mouse button
-ImGuiButtonFlags_EnableNav              = 8 --  // InvisibleButton(): do not disable navigation/tabbing. Otherwise disabled by default.
+ImGuiButtonFlags_MouseButtonRight       = 2 --// React on right mouse button
+ImGuiButtonFlags_MouseButtonMiddle      = 4 --// React on center mouse button
+ImGuiButtonFlags_EnableNav              = 8 --// InvisibleButton(): do not disable navigation/tabbing. Otherwise disabled by default.
+ImGuiButtonFlags_AllowOverlap           = 4096 --// Hit testing will allow subsequent widgets to overlap this one. Require previous frame HoveredId to match before being usable. Shortcut to calling SetNextItemAllowOverlap().
+
 
 
 -- Flags for gh_imgui.file_browser_init() function.
@@ -464,26 +480,30 @@ ImGuiStyleVar_IndentSpacing = 16 --            // float     IndentSpacing
 ImGuiStyleVar_CellPadding = 17 --              // ImVec2    CellPadding
 ImGuiStyleVar_ScrollbarSize = 18 --            // float     ScrollbarSize
 ImGuiStyleVar_ScrollbarRounding = 19 --        // float     ScrollbarRounding
-ImGuiStyleVar_GrabMinSize = 20 --              // float     GrabMinSize
-ImGuiStyleVar_GrabRounding = 21 --             // float     GrabRounding
-ImGuiStyleVar_ImageBorderSize = 22 -- imgui 1.92  - float     ImageBorderSize
-ImGuiStyleVar_TabRounding = 23 --              // float     TabRounding
-ImGuiStyleVar_TabBorderSize = 24 --            // float     TabBorderSize
-ImGuiStyleVar_TabBarBorderSize = 25 --         // float     TabBarBorderSize
-ImGuiStyleVar_TabBarOverlineSize = 26 --       // float     TabBarOverlineSize
-ImGuiStyleVar_TableAngledHeadersAngle = 27 --  // float  TableAngledHeadersAngle
-ImGuiStyleVar_TableAngledHeadersTextAlign  = 28 --// ImVec2 TableAngledHeadersTextAlign
-ImGuiStyleVar_TreeLinesSize = 29 --           // float     TreeLinesSize
-ImGuiStyleVar_TreeLinesRounding = 30 --       // float     TreeLinesRounding
-ImGuiStyleVar_ButtonTextAlign = 31 --          // ImVec2    ButtonTextAlign
-ImGuiStyleVar_SelectableTextAlign = 32 --      // ImVec2    SelectableTextAlign
-ImGuiStyleVar_SeparatorTextBorderSize = 33 --  // float  SeparatorTextBorderSize
-ImGuiStyleVar_SeparatorTextAlign = 34 --       // ImVec2    SeparatorTextAlign
-ImGuiStyleVar_SeparatorTextPadding = 35 --     // ImVec2    SeparatorTextPadding
-
-
-
-
+ImGuiStyleVar_ScrollbarPadding = 20 --        // float     ScrollbarPadding
+ImGuiStyleVar_GrabMinSize = 21 --              // float     GrabMinSize
+ImGuiStyleVar_GrabRounding = 22 --             // float     GrabRounding
+ImGuiStyleVar_ImageRounding = 23 --            // float     ImageRounding
+ImGuiStyleVar_ImageBorderSize = 24 --          // float     ImageBorderSize
+ImGuiStyleVar_TabRounding = 25 --              // float     TabRounding
+ImGuiStyleVar_TabBorderSize = 26 --            // float     TabBorderSize
+ImGuiStyleVar_TabMinWidthBase = 27 --          // float     TabMinWidthBase
+ImGuiStyleVar_TabMinWidthShrink = 28 --        // float     TabMinWidthShrink
+ImGuiStyleVar_TabBarBorderSize = 29 --         // float     TabBarBorderSize
+ImGuiStyleVar_TabBarOverlineSize = 30 --       // float     TabBarOverlineSize
+ImGuiStyleVar_TableAngledHeadersAngle = 31 --  // float     TableAngledHeadersAngle
+ImGuiStyleVar_TableAngledHeadersTextAlign = 32 --// ImVec2  TableAngledHeadersTextAlign
+ImGuiStyleVar_TreeLinesSize = 33 --            // float     TreeLinesSize
+ImGuiStyleVar_TreeLinesRounding = 34 --        // float     TreeLinesRounding
+ImGuiStyleVar_MenuItemRounding = 35 --         // float     MenuItemRounding
+ImGuiStyleVar_SelectableRounding = 36 --       // float     SelectableRounding
+ImGuiStyleVar_DragDropTargetRounding = 37 --   // float     DragDropTargetRounding
+ImGuiStyleVar_ButtonTextAlign = 38 --          // ImVec2    ButtonTextAlign
+ImGuiStyleVar_SelectableTextAlign = 39 --      // ImVec2    SelectableTextAlign
+ImGuiStyleVar_SeparatorSize = 40 --            // float     SeparatorSize
+ImGuiStyleVar_SeparatorTextBorderSize = 41 --  // float     SeparatorTextBorderSize
+ImGuiStyleVar_SeparatorTextAlign = 42 --       // ImVec2    SeparatorTextAlign
+ImGuiStyleVar_SeparatorTextPadding = 43 --     // ImVec2    SeparatorTextPadding
 
 
 -----------------------------------------------------------------------------
@@ -587,6 +607,23 @@ ImGuiToggleFlags_BorderedKnob           = 16  -- // The toggle should have a bor
 ImGuiToggleFlags_ShadowedFrame          = 32  -- // The toggle should have a shadow drawn under the frame.
 ImGuiToggleFlags_ShadowedKnob           = 64  -- // The toggle should have a shadow drawn under the knob.
 ImGuiToggleFlags_A11y                   = 256 -- // The toggle should draw on and off glyphs to help indicate its state.
+
+
+
+-----------------------------------------------------------------------------
+-- Constants for ImPlot
+--
+ImPlotFlags_None = 0   --    // default
+ImPlotFlags_NoTitle = 1 -- // the plot title will not be displayed (titles are also hidden if preceded by double hashes, e.g. "##MyPlot")
+ImPlotFlags_NoLegend = 2 -- // the legend will not be displayed
+ImPlotFlags_NoMouseText = 4 --  // the mouse position, in plot coordinates, will not be displayed inside of the plot
+ImPlotFlags_NoInputs = 8 -- // the user will not be able to interact with the plot
+ImPlotFlags_NoMenus = 16 --  // the user will not be able to open context menus
+ImPlotFlags_NoBoxSelect = 32 --  // the user will not be able to box-select
+ImPlotFlags_NoFrame = 64 --  // the ImGui frame will not be rendered
+ImPlotFlags_Equal = 128 --  // x and y axes pairs will be constrained to have the same units/pixel
+ImPlotFlags_Crosshairs = 256 -- // the default mouse cursor will be replaced with a crosshair when hovered
+ImPlotFlags_CanvasOnly = ImPlotFlags_NoTitle + ImPlotFlags_NoLegend + ImPlotFlags_NoMenus + ImPlotFlags_NoBoxSelect + ImPlotFlags_NoMouseText
 
 
 

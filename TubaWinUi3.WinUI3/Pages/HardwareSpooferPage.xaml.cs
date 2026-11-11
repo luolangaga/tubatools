@@ -14,6 +14,12 @@ public sealed partial class HardwareSpooferPage : Page
     private static Color AccentRed => ThemeColors.AccentRed;
 
     private List<HardwareSpooferEntry>? _entries;
+    private List<HardwareSpooferGpu> _gpus = [];
+    private readonly List<(HardwareSpooferGpu Gpu, AutoSuggestBox NameBox, AutoSuggestBox ProviderBox)> _gpuEditors = [];
+
+    private static Brush SecondaryBrush => (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+
+    private static readonly string[] GpuProviderPresets = ["NVIDIA", "AMD", "Intel"];
 
     private static readonly string[] CpuPresets =
     [
@@ -97,8 +103,6 @@ public sealed partial class HardwareSpooferPage : Page
     {
         foreach (var cpu in CpuPresets)
             CpuNameBox.Items.Add(cpu);
-        foreach (var gpu in GpuPresets)
-            GpuDescBox.Items.Add(gpu);
         foreach (var sp in SystemProductPresets)
             SystemProductBox.Items.Add(sp);
     }
@@ -106,6 +110,8 @@ public sealed partial class HardwareSpooferPage : Page
     private void LoadCurrentValues()
     {
         _entries = HardwareSpooferService.ReadAllCurrent();
+        _gpus = HardwareSpooferService.ReadGpuDevices();
+        BuildGpuEditors();
 
         // CPU
         var cpuName = GetEntry("ProcessorNameString");
@@ -121,13 +127,6 @@ public sealed partial class HardwareSpooferPage : Page
             CpuMhzBox.Text = mhzVal.ToString();
         }
         CpuOriginalText.Text = BuildOriginalHint("CPU", cpuName, cpuVendor, cpuMhz);
-
-        // GPU
-        var gpuDesc = GetEntry("DriverDesc");
-        var gpuProvider = GetEntry("ProviderName");
-        GpuDescBox.Text = gpuDesc?.CurrentValue ?? "";
-        GpuProviderBox.Text = gpuProvider?.CurrentValue ?? "";
-        GpuOriginalText.Text = BuildOriginalHint("GPU", gpuDesc, gpuProvider);
 
         // System
         var sysProduct = GetEntry("SystemProductName");
@@ -152,6 +151,93 @@ public sealed partial class HardwareSpooferPage : Page
         UpdateStatusCards();
     }
 
+    /// <summary>
+    /// 每张显卡一张编辑卡片：名称与驱动提供商各自独立，修改只影响这张卡本身的注册表键。
+    /// </summary>
+    private void BuildGpuEditors()
+    {
+        GpuListPanel.Children.Clear();
+        _gpuEditors.Clear();
+
+        if (_gpus.Count == 0)
+        {
+            GpuListPanel.Children.Add(new TextBlock
+            {
+                Text = "未检测到可修改的显卡。",
+                FontSize = 12,
+                Foreground = SecondaryBrush
+            });
+            return;
+        }
+
+        for (var i = 0; i < _gpus.Count; i++)
+        {
+            var gpu = _gpus[i];
+
+            var nameBox = new AutoSuggestBox
+            {
+                Header = "GPU 名称",
+                Text = gpu.NewName,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                ItemsSource = new List<string>(GpuPresets)
+            };
+            nameBox.TextChanged += (_, _) =>
+            {
+                gpu.NewName = nameBox.Text;
+                UpdateStatusCards();
+            };
+
+            var providerBox = new AutoSuggestBox
+            {
+                Header = "驱动提供商",
+                Text = gpu.NewProvider,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                ItemsSource = new List<string>(GpuProviderPresets)
+            };
+            providerBox.TextChanged += (_, _) =>
+            {
+                gpu.NewProvider = providerBox.Text;
+                UpdateStatusCards();
+            };
+
+            var panel = new StackPanel { Spacing = 12, Padding = new Thickness(12) };
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"显卡 {i + 1} · {ShortHardwareId(gpu.HardwareId)}",
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
+            });
+            panel.Children.Add(nameBox);
+            panel.Children.Add(providerBox);
+
+            var hint = new List<string> { gpu.DisplayName };
+            if (!string.IsNullOrEmpty(gpu.ProviderName)) hint.Add(gpu.ProviderName);
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"当前值 — {string.Join(" · ", hint)}",
+                FontSize = 12,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = SecondaryBrush
+            });
+
+            GpuListPanel.Children.Add(new Border
+            {
+                Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
+                BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Child = panel
+            });
+
+            _gpuEditors.Add((gpu, nameBox, providerBox));
+        }
+    }
+
+    private static string ShortHardwareId(string hardwareId)
+    {
+        var parts = hardwareId.Split('&');
+        return parts.Length >= 2 ? $"{parts[0]}&{parts[1]}" : hardwareId;
+    }
+
     private HardwareSpooferEntry? GetEntry(string valueName)
     {
         return _entries?.FirstOrDefault(e => e.ValueName == valueName);
@@ -170,7 +256,7 @@ public sealed partial class HardwareSpooferPage : Page
 
     private void UpdateStatusCards()
     {
-        var modified = _entries?.Count(e => e.IsModified) ?? 0;
+        var modified = (_entries?.Count(e => e.IsModified) ?? 0) + _gpus.Count(g => g.IsModified);
         ModifiedCountText.Text = modified.ToString();
 
         BackupStatusText.Text = HardwareSpooferService.HasBackup ? "已有备份" : "无备份";
@@ -182,6 +268,12 @@ public sealed partial class HardwareSpooferPage : Page
 
     private void CollectChanges()
     {
+        foreach (var (gpu, nameBox, providerBox) in _gpuEditors)
+        {
+            gpu.NewName = (nameBox.Text ?? "").Trim();
+            gpu.NewProvider = (providerBox.Text ?? "").Trim();
+        }
+
         if (_entries is null) return;
 
         var cpuName = GetEntry("ProcessorNameString");
@@ -192,21 +284,6 @@ public sealed partial class HardwareSpooferPage : Page
 
         var cpuMhz = GetEntry("~MHz");
         if (cpuMhz is not null) cpuMhz.CurrentValue = CpuMhzBox.Text;
-
-        var gpuDesc = GetEntry("DriverDesc");
-        if (gpuDesc is not null) gpuDesc.CurrentValue = GpuDescBox.Text;
-
-        var gpuProvider = GetEntry("ProviderName");
-        if (gpuProvider is not null) gpuProvider.CurrentValue = GpuProviderBox.Text;
-
-        // Sync ALL DriverDesc/ProviderName entries (both Video and Class keys)
-        if (_entries is not null && GpuDescBox.Text is not null)
-        {
-            foreach (var e in _entries.Where(e => e.ValueName == "DriverDesc"))
-                e.CurrentValue = GpuDescBox.Text;
-            foreach (var e in _entries.Where(e => e.ValueName == "ProviderName"))
-                e.CurrentValue = GpuProviderBox.Text;
-        }
 
         var sysProduct = GetEntry("SystemProductName");
         if (sysProduct is not null) sysProduct.CurrentValue = SystemProductBox.Text;
@@ -240,7 +317,14 @@ public sealed partial class HardwareSpooferPage : Page
 
         CollectChanges();
 
-        var modified = _entries?.Count(e => e.IsModified) ?? 0;
+        var changedGpus = _gpus.Count(g => g.IsModified);
+        if (_gpus.Any(g => g.IsModified && string.IsNullOrWhiteSpace(g.NewName)))
+        {
+            ShowStatus("名称不能为空", "请为每张显卡填写名称，或点击刷新恢复当前值。", InfoBarSeverity.Warning);
+            return;
+        }
+
+        var modified = (_entries?.Count(e => e.IsModified) ?? 0) + changedGpus;
         if (modified == 0)
         {
             ShowStatus("无需修改", "未检测到任何更改。", InfoBarSeverity.Informational);
@@ -250,7 +334,7 @@ public sealed partial class HardwareSpooferPage : Page
         var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认修改",
-            Content = $"即将修改 {modified} 个注册表项。修改前会自动备份原始值。\n\n确定要继续吗？",
+            Content = $"即将修改 {modified} 个注册表项（其中 {changedGpus} 张显卡）。修改前会自动备份原始值。\n\n确定要继续吗？",
             PrimaryButtonText = "确认修改",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,
@@ -262,7 +346,7 @@ public sealed partial class HardwareSpooferPage : Page
 
         try
         {
-            var count = await Task.Run(() => HardwareSpooferService.ApplyChanges(_entries!));
+            var count = await Task.Run(() => HardwareSpooferService.ApplyChanges(_entries!, _gpus));
             ShowStatus("修改成功", $"已成功修改 {count} 个注册表项。", InfoBarSeverity.Success);
             LoadCurrentValues();
         }
@@ -289,7 +373,7 @@ public sealed partial class HardwareSpooferPage : Page
         var dialog = new TubaWinUi3.Controls.FluentContentDialog
         {
             Title = "确认恢复",
-            Content = "即将恢复所有注册表项到修改前的原始值。\n\n确定要继续吗？",
+            Content = "即将恢复所有注册表项到修改前的原始值，多显卡会按每张卡各自的原值还原。\n\n确定要继续吗？",
             PrimaryButtonText = "确认恢复",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,
@@ -316,7 +400,7 @@ public sealed partial class HardwareSpooferPage : Page
         CollectChanges();
         try
         {
-            await Task.Run(() => HardwareSpooferService.SaveBackup(_entries!));
+            await Task.Run(() => HardwareSpooferService.SaveBackup(_entries!, _gpus));
             ShowStatus("备份成功", "当前配置已备份。", InfoBarSeverity.Success);
             UpdateStatusCards();
         }

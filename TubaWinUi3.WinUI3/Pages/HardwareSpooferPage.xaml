@@ -80,14 +80,9 @@
                     </toolkit:SettingsExpander.Header>
                     <toolkit:SettingsExpander.Items>
                         <toolkit:SettingsCard ContentAlignment="Vertical" HorizontalContentAlignment="Stretch">
-                            <StackPanel Spacing="16" Padding="0,8">
-                                <ComboBox x:Name="GpuDescBox" IsEditable="True" HorizontalAlignment="Stretch" PlaceholderText="输入或选择 GPU 名称" Header="GPU 描述"/>
-                                <ComboBox x:Name="GpuProviderBox" IsEditable="True" HorizontalAlignment="Stretch" Header="驱动提供商">
-                                    <x:String>NVIDIA</x:String>
-                                    <x:String>AMD</x:String>
-                                    <x:String>Intel</x:String>
-                                </ComboBox>
-                                <TextBlock x:Name="GpuOriginalText" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                            <StackPanel Spacing="12" Padding="0,8">
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Text="每张显卡可单独修改；一键恢复会按每张显卡还原各自的原值。"/>
+                                <StackPanel x:Name="GpuListPanel" Spacing="12"/>
                             </StackPanel>
                         </toolkit:SettingsCard>
                     </toolkit:SettingsExpander.Items>

@@ -201,7 +201,7 @@ public sealed class UserToolUpdateTests : IDisposable
             """);
         ToolMetadataService.InvalidateCache();
         ToolMetadataService.SaveToolOrder([directory]);
-        ToolMetadataService.UpdateToolVersion("official", 4);
+        ToolMetadataService.UpdateToolVersion(directory, 4);
         Assert.Contains("old-url", File.ReadAllText(official));
         File.WriteAllText(official, """
             {"tools":[{"match":"official","order":99,"version":2,"downloadUrl":"new-url","description":"新版"}]}
@@ -212,6 +212,28 @@ public sealed class UserToolUpdateTests : IDisposable
         Assert.Equal(4, meta.ToolVersion);
         Assert.Equal("new-url", meta.DownloadUrl);
         Assert.Equal("新版", meta.Description);
+    }
+
+    [Fact]
+    public void VersionUpdate_SticksForLegacyMigratedUserEntry()
+    {
+        // 旧元数据迁移进用户库的条目有自己的 id，版本必须写到该 id 上；
+        // 之前写 official:<match> 会让它永远读回旧版本，每次启动重复提示更新。
+        var directory = Path.Combine(_tools, "甲", "legacy-tool");
+        Exe(directory);
+        Directory.CreateDirectory(UserToolLibrary.DataDirectory);
+        File.WriteAllText(UserToolLibrary.CatalogPath, """
+            {"tools":[{"match":"legacy-tool","version":2,"id":"legacy:abc","source":"legacy",
+              "directory":"{ToolsRoot}\\甲\\legacy-tool","category":"甲"}]}
+            """);
+        ToolMetadataService.InvalidateCache();
+        Assert.Equal(2, ToolMetadataService.GetToolVersionByDir(directory));
+
+        ToolMetadataService.UpdateToolVersion(directory, 3);
+
+        ToolMetadataService.InvalidateCache();
+        Assert.Equal(3, ToolMetadataService.GetToolVersionByDir(directory));
+        Assert.Equal("legacy-tool", Assert.Single(UserToolLibrary.GetEntries())["match"]!.GetValue<string>());
     }
 
     [Fact]

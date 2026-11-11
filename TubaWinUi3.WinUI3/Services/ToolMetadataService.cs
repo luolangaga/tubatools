@@ -155,9 +155,20 @@ public static class ToolMetadataService
         return jsonMetadata?.DownloadUrl;
     }
 
-    public static void UpdateToolVersion(string match, int newVersion)
+    /// <summary>
+    /// 记录工具已更新到的版本。写入的状态 id 必须与 <see cref="GetToolVersionByDir"/> 读到的
+    /// 同一条目一致：官方条目没有 id，按 official:&lt;match&gt; 存；用户库条目（旧元数据迁移 /
+    /// 自定义 / 社区）按其自身 id 存（见 UserToolLibrary.Load）。只按 remote match 写 official:
+    /// 时，迁移到用户库的工具永远读回旧版本，更新成功后每次启动都会再次提示并重复下载。
+    /// </summary>
+    public static void UpdateToolVersion(string toolDir, int newVersion)
     {
-        UserToolLibrary.SetStates([("official:" + match, "version", JsonValue.Create(newVersion))]);
+        var entry = FindJsonMetadataByDir(toolDir);
+        var id = !string.IsNullOrWhiteSpace(entry?.Id) ? entry.Id
+            : !string.IsNullOrWhiteSpace(entry?.Match) ? "official:" + entry.Match
+            : null;
+        if (id is null) return;
+        UserToolLibrary.SetStates([(id, "version", JsonValue.Create(newVersion))]);
         InvalidateCache();
     }
 

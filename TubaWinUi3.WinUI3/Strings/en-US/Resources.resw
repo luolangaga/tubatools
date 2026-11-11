@@ -5635,4 +5635,53 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_ComputerProgressOtherWindow" xml:space="preserve"><value>Other window</value></data>
   <data name="Agent_ToolAx" xml:space="preserve"><value>Interface actions</value></data>
   <data name="Agent_ToolGui" xml:space="preserve"><value>Screen actions</value></data>
+  <data name="Settings_GroupOptionAiBrowser.Content" xml:space="preserve"><value>AI browser</value></data>
+  <data name="Settings_GroupAiBrowser.Text" xml:space="preserve"><value>AI browser</value></data>
+  <data name="Settings_AiBrowserEngine.Header" xml:space="preserve"><value>Built-in WebView2</value></data>
+  <data name="Settings_AiBrowserEngine.Description" xml:space="preserve"><value>The AI browser uses its own dedicated profile, not your daily Chrome/Edge profile and not its sign-ins. If a site needs a login, sign in once in the browser window.</value></data>
+  <data name="Settings_AiBrowserStatus_Title.Text" xml:space="preserve"><value>Connection status</value></data>
+  <data name="Settings_AiBrowserStatus_Desc.Text" xml:space="preserve"><value>Opening it shows the built-in WebView2 in a separate window; AI page actions are reported here.</value></data>
+  <data name="Settings_AiBrowserOpen.Content" xml:space="preserve"><value>Open AI browser</value></data>
+  <data name="Settings_AiBrowserRepair.Content" xml:space="preserve"><value>Repair</value></data>
+  <data name="Settings_AiBrowserClose.Content" xml:space="preserve"><value>Close AI browser</value></data>
+  <data name="Settings_AiBrowserDedicated.Text" xml:space="preserve"><value>Dedicated profile</value></data>
+  <data name="Settings_AiBrowserStatusChecking" xml:space="preserve"><value>Opening the AI browser…</value></data>
+  <data name="Settings_AiBrowserStatusFailed" xml:space="preserve"><value>Connection failed: {0}</value></data>
+  <data name="Settings_AiBrowserStatusBuiltInReady" xml:space="preserve"><value>Built-in WebView2 is ready</value></data>
+  <data name="Settings_AiBrowserStatusBuiltInIdle" xml:space="preserve"><value>Built-in WebView2 · created when the AI browser opens</value></data>
+  <data name="Settings_AiBrowserProfileHint" xml:space="preserve"><value>Dedicated profile: </value></data>
+  <data name="Settings_AiBrowserInfoTitle" xml:space="preserve"><value>AI browser not ready</value></data>
+  <data name="Settings_AiBrowserRepairing" xml:space="preserve"><value>Repairing and reconnecting…</value></data>
+  <data name="Browser_ResumeAi.Content" xml:space="preserve"><value>Resume AI control</value></data>
+  <data name="Browser_StopAi.Content" xml:space="preserve"><value>Stop AI control</value></data>
+  <data name="Browser_AddressPlaceholder.PlaceholderText" xml:space="preserve"><value>Enter a URL or search…</value></data>
+  <data name="Browser_AiChipTooltip" xml:space="preserve"><value>Built-in WebView2 · dedicated profile, no daily browser sign-ins</value></data>
+  <data name="Browser_AiActiveShort" xml:space="preserve"><value>AI controlling</value></data>
+  <data name="Browser_AiStoppedShort" xml:space="preserve"><value>AI stopped</value></data>
+  <data name="Browser_ResumeShort" xml:space="preserve"><value>Resume</value></data>
+  <data name="Browser_StopShort" xml:space="preserve"><value>Stop</value></data>
+  <data name="Browser_AiBrowserTitle" xml:space="preserve"><value>AI browser</value></data>
+  <data name="Browser_WebViewFailedTitle" xml:space="preserve"><value>WebView2 initialization failed</value></data>
+  <data name="Browser_WebViewFailedMessage" xml:space="preserve"><value>Make sure the WebView2 Runtime is installed.</value></data>
+  <data name="Browser_Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="Browser_AiControlTitle" xml:space="preserve"><value>The AI is controlling this browser</value></data>
+  <data name="Browser_AiControlMessage" xml:space="preserve"><value>You can stop at any time. After stopping, the AI will not continue operating this window.</value></data>
+  <data name="Browser_AiStoppedTitle" xml:space="preserve"><value>AI control stopped</value></data>
+  <data name="Browser_AiStoppedMessage" xml:space="preserve"><value>The AI stopped operating. Send a new message or click Resume to continue.</value></data>
+  <data name="Agent_BrowserMenu.Text" xml:space="preserve"><value>AI browser</value></data>
+  <data name="Agent_BrowserSettingsMenu.Text" xml:space="preserve"><value>AI browser settings…</value></data>
+  <data name="Agent_ToolBrowser" xml:space="preserve"><value>Browser actions</value></data>
+  <data name="Agent_BrowserStopped" xml:space="preserve"><value>AI browser control stopped. Send a new message to use the browser again.</value></data>
+  <data name="Agent_BrowserReady" xml:space="preserve"><value>AI browser ready: {0}</value></data>
+  <data name="Agent_QueueModeName" xml:space="preserve"><value>Send mode</value></data>
+  <data name="Agent_QueueModeTip" xml:space="preserve"><value>Queue: send after the current task finishes. Cut in: stop the current task and send this first. Click to switch.</value></data>
+  <data name="Agent_QueueModeQueue" xml:space="preserve"><value>Queue</value></data>
+  <data name="Agent_QueueModeCutIn" xml:space="preserve"><value>Cut in</value></data>
+  <data name="Agent_QueuedNotice" xml:space="preserve"><value>Queued. It will be sent automatically after the current task finishes.</value></data>
+  <data name="Agent_CutInNotice" xml:space="preserve"><value>Cut in. Stopping the current task and sending this message first.</value></data>
+  <data name="Agent_QueueCount" xml:space="preserve"><value>Queued ({0})</value></data>
+  <data name="Agent_QueueAttachments" xml:space="preserve"><value> ({0} attachments)</value></data>
+  <data name="Agent_QueueRemove" xml:space="preserve"><value>Remove queued message</value></data>
+  <data name="Browser_ResumeAi" xml:space="preserve"><value>Resume AI control</value></data>
+  <data name="Browser_StopAi" xml:space="preserve"><value>Stop AI control</value></data>
 </root>

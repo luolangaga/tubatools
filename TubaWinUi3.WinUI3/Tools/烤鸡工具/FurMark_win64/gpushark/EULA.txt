@@ -1,0 +1,44 @@
+GPU Shark 2
+Simple GPU Monitoring Utility
+Copyright (C) 2007-2026 Geeks3D, All rights reserved.
+https://www.geeks3d.com/gpushark/
+
+*****************************************************************
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+OF SUCH DAMAGE.
+*****************************************************************
+
+Permission is granted to anyone to use this software for 
+any purpose (private or commercial use), and to redistribute
+it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must 
+   not claim that you wrote the original software.
+
+2. This software is a freeware, it cannot be sold or rented.
+
+3. - Websites: you can copy it and distribute it freely as long as
+     you put a backlink to GPU Shark homepage:
+     https://www.geeks3d.com/gpushark/
+   - For other kind of uses, please contact the author 
+     at jegx@geeks3d.com
+
+4. This notice may not be removed or altered from any distribution.
+
+5. You may not alter or modify this software in any way or create a new 
+   installer for it.
+
+
+If you wish to support the development of Geeks3D software, 
+you can make a donation:
+https://www.geeks3d.com/donate/

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="16" y1="8" x2="112" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B2D36"/>
+      <stop offset="1" stop-color="#121317"/>
+    </linearGradient>
+    <linearGradient id="boxTop" x1="34" y1="42" x2="96" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8BFFD0"/>
+      <stop offset="1" stop-color="#35D9A2"/>
+    </linearGradient>
+    <linearGradient id="boxLeft" x1="30" y1="58" x2="62" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3FD8A4"/>
+      <stop offset="1" stop-color="#149C78"/>
+    </linearGradient>
+    <linearGradient id="boxRight" x1="66" y1="58" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22B98B"/>
+      <stop offset="1" stop-color="#0B6E5A"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="78" y1="30" x2="100" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="1" stop-color="#FF8A5C"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)"/>
+  <rect x="4.75" y="4.75" width="118.5" height="118.5" rx="27.25" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="1.5"/>
+  <path d="M28 52 64 32l36 20-36 20-36-20Z" fill="url(#boxTop)"/>
+  <path d="M28 52v28l36 20V72L28 52Z" fill="url(#boxLeft)"/>
+  <path d="M100 52v28L64 100V72l36-20Z" fill="url(#boxRight)"/>
+  <path d="M64 72v28" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1.5"/>
+  <path d="M44 64.5 60 55l16 9-16 9-16-9Z" fill="#0E1714" fill-opacity="0.35"/>
+  <circle cx="88" cy="40" r="11" fill="url(#spark)"/>
+  <path d="M88 33.5v13M81.5 40h13" stroke="#2B1A08" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="40" cy="82" r="3" fill="#8BFFD0" fill-opacity="0.85"/>
+  <circle cx="48" cy="88" r="2" fill="#8BFFD0" fill-opacity="0.55"/>
+</svg>

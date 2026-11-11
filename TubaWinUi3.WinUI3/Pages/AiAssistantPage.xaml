@@ -82,6 +82,8 @@
                         <FontIcon Glyph="&#xE712;" FontSize="14"/>
                         <Button.Flyout><MenuFlyout>
                             <MenuFlyoutItem Text="打开工作区" l:Uids.Uid="Agent_OpenWorkspace" Click="Workspace_Click"/>
+                            <MenuFlyoutItem Text="AI 浏览器" l:Uids.Uid="Agent_BrowserMenu" Click="OpenAiBrowser_Click" AutomationProperties.AutomationId="AgentOpenBrowser"/>
+                            <MenuFlyoutItem Text="AI 浏览器设置…" l:Uids.Uid="Agent_BrowserSettingsMenu" Click="OpenAiBrowserSettings_Click" AutomationProperties.AutomationId="AgentBrowserSettings"/>
                             <MenuFlyoutItem Text="AI 提供商…" l:Uids.Uid="Agent_ProviderMenu" Click="Providers_Click" AutomationProperties.AutomationId="AgentProviders"/>
                             <MenuFlyoutItem Text="准备 AI 组件" l:Uids.Uid="Agent_PrepareMenu" Click="Prepare_Click"/>
                             <MenuFlyoutItem Text="重新安装 AI 组件" l:Uids.Uid="Agent_Repair" Click="Repair_Click"/>
@@ -98,7 +100,7 @@
         </Border>
         <Border Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="{ThemeResource AgentStroke}" CornerRadius="12,0,0,0">
             <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="52"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="52"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <Grid Padding="54,0,24,0" ColumnSpacing="10">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <Button x:Name="CompactNewButton" Visibility="Collapsed" Style="{StaticResource AgentIconButton}" Click="New_Click" AutomationProperties.Name="新建会话" AutomationProperties.AutomationId="AgentCompactNew"><FontIcon Glyph="&#xE70F;" FontSize="14"/></Button>
@@ -133,7 +135,17 @@
                 <Grid Grid.Row="3" x:Name="RunStatus" Visibility="Collapsed" Margin="40,0,40,8" MaxWidth="920">
                     <TextBlock x:Name="RunStatusText" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource AgentHint}" AutomationProperties.AutomationId="AgentRunStatus"/>
                 </Grid>
-                <Border Grid.Row="4" x:Name="Composer" Margin="48,0,32,0" MaxWidth="920" Background="{ThemeResource AgentComposer}" BorderBrush="{ThemeResource AgentStroke}" BorderThickness="1" CornerRadius="14">
+                <Border Grid.Row="4" x:Name="QueueBar" Visibility="Collapsed" Margin="48,0,32,6" MaxWidth="920"
+                        Background="{ThemeResource AgentComposer}" BorderBrush="{ThemeResource AgentStroke}"
+                        BorderThickness="1" CornerRadius="10" Padding="10,6">
+                    <StackPanel Spacing="3">
+                        <TextBlock x:Name="QueueTitle" FontSize="12" Foreground="{ThemeResource AgentHint}"/>
+                        <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="QueueItems" Spacing="2"/>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Row="5" x:Name="Composer" Margin="48,0,32,0" MaxWidth="920" Background="{ThemeResource AgentComposer}" BorderBrush="{ThemeResource AgentStroke}" BorderThickness="1" CornerRadius="14">
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Grid x:Name="AttachmentSummary" Margin="12,8,8,0" Visibility="Collapsed">
@@ -150,8 +162,11 @@
                                 <FontIcon Glyph="&#xE710;" FontSize="14"/>
                                 <Button.Flyout><MenuFlyout><MenuFlyoutItem Text="引用本地文件…" l:Uids.Uid="Agent_AttachFiles" Click="AttachFiles_Click"/><MenuFlyoutItem Text="打开工作区" l:Uids.Uid="Agent_OpenWorkspace" Click="Workspace_Click"/></MenuFlyout></Button.Flyout>
                             </Button>
-                            <Button Grid.Column="1" x:Name="SendButton" Click="Send_Click" Width="32" Height="32" Padding="7" Background="{ThemeResource AgentSend}" Foreground="{ThemeResource AgentSendText}" BorderThickness="0" AutomationProperties.Name="发送" AutomationProperties.AutomationId="AgentSend"><FontIcon Glyph="&#xE74A;" FontSize="14"/></Button>
-                            <Button Grid.Column="1" x:Name="StopButton" Visibility="Collapsed" Click="Stop_Click" Width="32" Height="32" Padding="7" Background="{ThemeResource AgentSend}" Foreground="{ThemeResource AgentSendText}" BorderThickness="0" AutomationProperties.Name="停止" AutomationProperties.AutomationId="AgentStop"><FontIcon Glyph="&#xE71A;" FontSize="12"/></Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button x:Name="QueueModeButton" Visibility="Collapsed" Click="QueueMode_Click" Style="{StaticResource AgentIconButton}" FontSize="12" Foreground="{ThemeResource AgentHint}" Content="排队" AutomationProperties.AutomationId="AgentQueueMode"/>
+                                <Button x:Name="SendButton" Click="Send_Click" Width="32" Height="32" Padding="7" Background="{ThemeResource AgentSend}" Foreground="{ThemeResource AgentSendText}" BorderThickness="0" AutomationProperties.Name="发送" AutomationProperties.AutomationId="AgentSend"><FontIcon Glyph="&#xE74A;" FontSize="14"/></Button>
+                                <Button x:Name="StopButton" Visibility="Collapsed" Click="Stop_Click" Width="32" Height="32" Padding="7" Background="{ThemeResource AgentSend}" Foreground="{ThemeResource AgentSendText}" BorderThickness="0" AutomationProperties.Name="停止" AutomationProperties.AutomationId="AgentStop"><FontIcon Glyph="&#xE71A;" FontSize="12"/></Button>
+                            </StackPanel>
                         </Grid>
                         <Border Grid.Row="3" BorderThickness="0,1,0,0" BorderBrush="{ThemeResource AgentStroke}" Padding="4,2,4,3">
                             <Grid ColumnSpacing="4">

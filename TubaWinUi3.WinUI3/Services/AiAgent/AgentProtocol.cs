@@ -127,6 +127,7 @@ internal static class AgentProtocol
     {
         _ when ComputerUseMcpProxy.IsComputerTool(name) && ComputerTool(name) == "AX" => AgentText.L("ToolAx", "界面操作"),
         _ when ComputerUseMcpProxy.IsComputerTool(name) => AgentText.L("ToolGui", "屏幕操作"),
+        _ when BrowserToolNames.IsBrowserTool(name) => AgentText.L("ToolBrowser", "浏览器操作"),
         "bash" or "shell" => AgentText.L("ToolShell", "执行命令"),
         "read" => AgentText.L("ToolRead", "读取文件"),
         "edit" or "write" or "apply_patch" or "patch" => AgentText.L("ToolEdit", "编辑文件"),
@@ -143,6 +144,23 @@ internal static class AgentProtocol
         var tool = name.Trim();
         var index = tool.LastIndexOfAny(['.', '_']);
         return index >= 0 && index + 1 < tool.Length ? tool[(index + 1)..] : tool;
+    }
+
+    /// <summary>A short timeline line for a browser_use call.</summary>
+    internal static string BrowserTarget(string name, JsonElement input)
+    {
+        var tool = BrowserToolNames.Normalize(name);
+        return tool switch
+        {
+            BrowserToolNames.Navigate => Text(input, "url"),
+            BrowserToolNames.Click => Text(input, "ref", Text(input, "selector", Text(input, "text"))),
+            BrowserToolNames.Type => Text(input, "ref", Text(input, "selector")),
+            BrowserToolNames.Select => Text(input, "ref", Text(input, "selector", Text(input, "label", Text(input, "value")))),
+            BrowserToolNames.Wait => Text(input, "selector", Text(input, "text")),
+            BrowserToolNames.History => Text(input, "action"),
+            BrowserToolNames.Eval => "JavaScript",
+            _ => ""
+        };
     }
 
     /// <summary>A short timeline line for an AX/GUI call built from its arguments.</summary>

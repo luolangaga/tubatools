@@ -1,4 +1,4 @@
--- GPU Shark FM2 Edition 2.10.0.0 settings file.
+-- GPU Shark FM2 Edition 2.11.0.0 settings file.
 --
 -- Check for new version (true or false).
 check_version = false

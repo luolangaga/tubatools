@@ -1,13 +1,12 @@
-Geeks3D FurMark v2.8.0.0
+Geeks3D FurMark v2.11.0.4
 ============================================
-(c)2007-2025 Geeks3D
+(c)2007-2026 Geeks3D
 https://www.geeks3d.com/furmark/
 Usage: furmark [--option [value]] ...
 
 Options:
 --help				print all options
 --version			show version
---check-new-version		check for new version
 --hpgfx value			set the high performance graphics state
 				(0 or 1). For laptops with hybrid
 				graphics (iGPU + dGPU)
@@ -16,18 +15,22 @@ Options:
 				3D window
 --fullscreen			run the demo or graphics test in
 				fullscreen
---title-bar			enable (1) or disable (0) the title bar of the window
-				Default: 1 (enabled).
+--title-bar			enable (1) or disable (0) the title bar of the
+				window. Default: 1 (enabled).
 --msaa value			set the number of samples for
 				MSAA: 1, 2, 4 or 8
+--x11-display-name		set the display name on Linux / X11
+				using the following format:
+				hostname:display_number.screen_number
 --opengl-ver-major value	set the major version of the OpenGL context.
 --opengl-ver-minor value	set the minor version of the OpenGL context.
---opengl-core-profile value	enable (1) or disable (0) the OpenGL core profile.
+--opengl-core-profile value	enable (1) or disable (0) the OpenGL core
+				profile.
 --demolist			print the list of available demos
 --demo name			run a demo from its name.
 				Use --demolist for all available names
 --demofile filename		load and run a GeeXLab demo from a
-				filename
+				filename (absolute path)
 --glinfo			print a quick OpenGL report
 --glinfo-all			print a detailed OpenGL report
 --glvendor			print the GL_VENDOR value
@@ -48,15 +51,22 @@ Options:
 --no-resize			disable the resizing of the 3D window
 --vsync number			set the VSYNC (vertical synchronization) state
 --disable-demo-options		disable the display of the demo options
---p1080				benchmark preset:1080 (1920x1080)
---p1440				benchmark preset:1440 (2560x1440)
---p2160				benchmark preset:2160 (3840x2160)
+--allow-screen-saver		system parameter: allow the screen-saver (Windows platform). Default: disabled
+--allow-power-monitor		system parameter: enable the power monitor (Windows platform). Default: disabled
+--allow-sleep-mode		system parameter: enable the sleep mode (Windows platform). Default: disabled
+--p1080				benchmark preset 1920x1080 (FHD)
+--p1440				benchmark preset 2560x1440 (QHD)
+--p3440x1440				benchmark preset 3440x1440 (UWQHD)
+--p2160				benchmark preset 3840x2160 (4K UHD)
 --benchmark			benchmark the demo and displays the
 				score box at the end unless
 				no-score-box option is used
---duration-ms ms		set the benchmark duration in milliseconds (only with custom settings, not in presets). Default: 60000
---max-time sec			set the max duration of the demo / stress test in seconds. Default: 0 (no limit)
---max-frames			set the max duration of the demo / stress test in frames. Default: 0 (no limit)
+--duration-ms ms		set the benchmark duration in milliseconds
+				(only with custom settings, not in presets). Default: 60000
+--max-time sec			set the max duration of the demo / stress test
+				in seconds. Default: 0 (no limit)
+--max-frames			set the max duration of the demo / stress test
+				in frames. Default: 0 (no limit)
 --no-score-box			disable the score box at the end
 				of the benchmark
 --no-gpumon			disable the GPU monitoring
@@ -70,6 +80,8 @@ Options:
 --gpu-monitor-print		print GPU monitoring info
 --hw-polling-interval ms	set the GPU monitoring polling interval
 				in milliseconds (default: 1000)
+--hw-refresh-interval-gui ms	set the GPU monitoring refresh interval
+				 in the GUI in milliseconds (default: 1000)
 --disable-traces		disable the generation of log and score files.
 --disable-logfile		disable the generation of the log file
 --logfile-suffix suffix		add a suffix to the log file name
@@ -88,7 +100,7 @@ Options:
 --furmark-dxt5			enable compressed textures (DXT5) in FurMark stress test.
 				OpenGL only. Not available in Presets
 --furmark-vram-test-gb		set the size in GB used by FurMark data.
-				Values: 0, 2, 4, 6, 8, 12, 16, 20 or 24.
+				Values: 0, 2, 4, 6, 8, 10, 12, 16, 20 or 24.
 				Not available in Presets
 --thread-affinity-mask mask	set the thread affinity mask.
 				Default is 0 (= affinity mask not used)
@@ -99,4 +111,5 @@ Options:
 --no-dpi-scaling		disable DPI scaling on Windows platform
 --gpuz-print			print GPU-Z sensors in the terminal
 --gpuz-log-data			log GPU-Z data into a CSV file
---dpi-scaling			set / force the DPI scaling - default is 1.0
+--dpi-scaling			set / force the DPI scaling - default is 1.0 (or 100%%)
+--vgl-load-mode			set the variable graphics load mode: steady, pstep (periodic step)

@@ -76,14 +76,19 @@ public sealed partial class AiAssistantPage
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(delete, "AgentDelete");
         rename.Click += async (_, _) => await RenameSessionAsync(id);
         export.Click += async (_, _) => await ExportSessionAsync(id);
-        stop.Click += (_, _) => { if (_sessions.TryGetValue(id, out var state)) state.Run?.Cancel(); };
+        stop.Click += (_, _) =>
+        {
+            if (!_sessions.TryGetValue(id, out var state)) return;
+            state.Queue.Clear(); state.Run?.Cancel();
+            if (ReferenceEquals(state, _active)) UpdateQueueView(state);
+        };
         delete.Click += async (_, _) => await DeleteSessionAsync(id);
         menu.Items.Add(rename); menu.Items.Add(export); menu.Items.Add(stop); menu.Items.Add(new MenuFlyoutSeparator()); menu.Items.Add(delete);
         menu.Opening += (_, _) =>
         {
             rename.IsEnabled = delete.IsEnabled = Ready && !_deleting.Contains(id);
             export.IsEnabled = Ready || _sessions.TryGetValue(id, out var cached) && (cached.Loaded || cached.Id is null);
-            stop.Visibility = _sessions.TryGetValue(id, out var state) && state.Run is not null ? Visibility.Visible : Visibility.Collapsed;
+            stop.Visibility = _sessions.TryGetValue(id, out var state) && (state.Run is not null || state.Draining) ? Visibility.Visible : Visibility.Collapsed;
         };
         return menu;
     }
@@ -139,6 +144,7 @@ public sealed partial class AiAssistantPage
         {
             if (_sessions.TryGetValue(id, out var state))
             {
+                state.Discarded = true; state.Queue.Clear();
                 state.Run?.Cancel(); if (state.Work is not null) await state.Work;
                 foreach (var question in state.Questions) question.View.Cancel();
             }

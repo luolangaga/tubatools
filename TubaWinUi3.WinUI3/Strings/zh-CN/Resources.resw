@@ -5651,4 +5651,53 @@ else then stroke=#888888 visible=true
   <data name="Agent_ComputerProgressOtherWindow" xml:space="preserve"><value>其他窗口</value></data>
   <data name="Agent_ToolAx" xml:space="preserve"><value>界面操作</value></data>
   <data name="Agent_ToolGui" xml:space="preserve"><value>屏幕操作</value></data>
+  <data name="Settings_GroupOptionAiBrowser.Content" xml:space="preserve"><value>AI 浏览器</value></data>
+  <data name="Settings_GroupAiBrowser.Text" xml:space="preserve"><value>AI 浏览器</value></data>
+  <data name="Settings_AiBrowserEngine.Header" xml:space="preserve"><value>内置 WebView2</value></data>
+  <data name="Settings_AiBrowserEngine.Description" xml:space="preserve"><value>AI 浏览器使用工具箱专属用户数据目录，不是日常 Chrome/Edge 的配置，也不包含其中的登录状态；需要登录时在弹出的浏览器窗口登录一次即可。</value></data>
+  <data name="Settings_AiBrowserStatus_Title.Text" xml:space="preserve"><value>连接状态</value></data>
+  <data name="Settings_AiBrowserStatus_Desc.Text" xml:space="preserve"><value>打开后会在独立窗口显示内置 WebView2；AI 的网页操作会在这里显示状态。</value></data>
+  <data name="Settings_AiBrowserOpen.Content" xml:space="preserve"><value>打开 AI 浏览器</value></data>
+  <data name="Settings_AiBrowserRepair.Content" xml:space="preserve"><value>一键修复</value></data>
+  <data name="Settings_AiBrowserClose.Content" xml:space="preserve"><value>关闭 AI 浏览器</value></data>
+  <data name="Settings_AiBrowserDedicated.Text" xml:space="preserve"><value>专属用户数据</value></data>
+  <data name="Settings_AiBrowserStatusChecking" xml:space="preserve"><value>正在打开 AI 浏览器…</value></data>
+  <data name="Settings_AiBrowserStatusFailed" xml:space="preserve"><value>连接失败：{0}</value></data>
+  <data name="Settings_AiBrowserStatusBuiltInReady" xml:space="preserve"><value>内置 WebView2 已就绪</value></data>
+  <data name="Settings_AiBrowserStatusBuiltInIdle" xml:space="preserve"><value>内置 WebView2 · 打开 AI 浏览器时创建</value></data>
+  <data name="Settings_AiBrowserProfileHint" xml:space="preserve"><value>专用用户数据：</value></data>
+  <data name="Settings_AiBrowserInfoTitle" xml:space="preserve"><value>AI 浏览器未就绪</value></data>
+  <data name="Settings_AiBrowserRepairing" xml:space="preserve"><value>正在修复并重新连接…</value></data>
+  <data name="Browser_ResumeAi.Content" xml:space="preserve"><value>恢复 AI 控制</value></data>
+  <data name="Browser_StopAi.Content" xml:space="preserve"><value>停止 AI 控制</value></data>
+  <data name="Browser_AddressPlaceholder.PlaceholderText" xml:space="preserve"><value>输入网址或搜索…</value></data>
+  <data name="Browser_AiChipTooltip" xml:space="preserve"><value>内置 WebView2 · 专属用户数据，不包含日常浏览器登录状态</value></data>
+  <data name="Browser_AiActiveShort" xml:space="preserve"><value>AI 控制中</value></data>
+  <data name="Browser_AiStoppedShort" xml:space="preserve"><value>AI 已停止</value></data>
+  <data name="Browser_ResumeShort" xml:space="preserve"><value>继续</value></data>
+  <data name="Browser_StopShort" xml:space="preserve"><value>停止</value></data>
+  <data name="Browser_AiBrowserTitle" xml:space="preserve"><value>AI 浏览器</value></data>
+  <data name="Browser_WebViewFailedTitle" xml:space="preserve"><value>WebView2 初始化失败</value></data>
+  <data name="Browser_WebViewFailedMessage" xml:space="preserve"><value>请确保已安装 WebView2 Runtime。</value></data>
+  <data name="Browser_Ok" xml:space="preserve"><value>确定</value></data>
+  <data name="Browser_AiControlTitle" xml:space="preserve"><value>AI 正在控制此浏览器</value></data>
+  <data name="Browser_AiControlMessage" xml:space="preserve"><value>你可以随时停止。停止后 AI 不会继续操作此窗口。</value></data>
+  <data name="Browser_AiStoppedTitle" xml:space="preserve"><value>已停止 AI 控制</value></data>
+  <data name="Browser_AiStoppedMessage" xml:space="preserve"><value>AI 已停止操作。发送新消息或点击恢复后可继续。</value></data>
+  <data name="Agent_BrowserMenu.Text" xml:space="preserve"><value>AI 浏览器</value></data>
+  <data name="Agent_BrowserSettingsMenu.Text" xml:space="preserve"><value>AI 浏览器设置…</value></data>
+  <data name="Agent_ToolBrowser" xml:space="preserve"><value>浏览器操作</value></data>
+  <data name="Agent_BrowserStopped" xml:space="preserve"><value>已停止 AI 浏览器控制。发送新消息后可再次使用浏览器。</value></data>
+  <data name="Agent_BrowserReady" xml:space="preserve"><value>AI 浏览器已就绪：{0}</value></data>
+  <data name="Agent_QueueModeName" xml:space="preserve"><value>发送方式</value></data>
+  <data name="Agent_QueueModeTip" xml:space="preserve"><value>排队：当前任务结束后发送；插队：中断当前任务并优先发送。点击切换。</value></data>
+  <data name="Agent_QueueModeQueue" xml:space="preserve"><value>排队</value></data>
+  <data name="Agent_QueueModeCutIn" xml:space="preserve"><value>插队</value></data>
+  <data name="Agent_QueuedNotice" xml:space="preserve"><value>已排队，当前任务结束后自动发送。</value></data>
+  <data name="Agent_CutInNotice" xml:space="preserve"><value>已插队，正在停止当前任务并优先发送。</value></data>
+  <data name="Agent_QueueCount" xml:space="preserve"><value>排队中（{0}）</value></data>
+  <data name="Agent_QueueAttachments" xml:space="preserve"><value>（{0} 个附件）</value></data>
+  <data name="Agent_QueueRemove" xml:space="preserve"><value>移除排队消息</value></data>
+  <data name="Browser_ResumeAi" xml:space="preserve"><value>恢复 AI 控制</value></data>
+  <data name="Browser_StopAi" xml:space="preserve"><value>停止 AI 控制</value></data>
 </root>

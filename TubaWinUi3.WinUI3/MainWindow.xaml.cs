@@ -524,6 +524,7 @@ public sealed partial class MainWindow : Window
         // 必须放在「隐藏到托盘」分支之后：隐藏后程序还在后台跑（后台节流本身就是常驻功能），
         // 这时候解除节流等于把用户开着的省电功能关掉。
         try { Services.AiAgent.ComputerControlService.Shutdown(); } catch { }
+        try { Services.AiAgent.AiBrowserHostService.Shutdown(); } catch { }
         Services.AiAgent.ComputerControlService.PendingInteractionRequested -= OpenAssistantInteraction;
         try { SteamAccelerationService.Shutdown(); } catch (Exception ex) { System.Diagnostics.Debug.WriteLine("[Steam] 加速还原失败：" + ex.Message); }
         try { EnergyStarService.Shutdown(); } catch { }
@@ -695,6 +696,31 @@ public sealed partial class MainWindow : Window
         var frame = NavFrame;
         if (frame.CanGoBack)
             frame.GoBack();
+    }
+
+    /// <summary>
+    /// 标题栏 Content 列宽变化：按可用宽度收缩搜索框、空间不足时依次收起右侧按钮和搜索框
+    /// （Issue #262）。TitleBar 会把内容里每个交互控件的布局矩形原样登记为「直通区域」，
+    /// 内容一旦溢出列宽，这些区域就会盖住右侧的最小拖拽区和系统标题按钮。
+    /// </summary>
+    private void TitleBarContent_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var layout = TitleBarLayout.ForContentWidth(e.NewSize.Width);
+
+        TitleSearchArea.Visibility = layout.ShowSearchBox ? Visibility.Visible : Visibility.Collapsed;
+        TitleActionButtons.Visibility = layout.ShowActionButtons ? Visibility.Visible : Visibility.Collapsed;
+
+        if (layout.ShowSearchBox)
+        {
+            TitleSearchArea.Width = layout.SearchBoxWidth;
+            // 搜索建议弹层与搜索框同宽（XAML 里的 318 = 设计宽度 320 - 边框），
+            // 窗口变窄时不能还是 318 宽地悬在窗口外面。
+            SearchPopupBorder.Width = Math.Max(0, layout.SearchBoxWidth - 2);
+        }
+        else
+        {
+            HideSearchPopup();
+        }
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)

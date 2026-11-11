@@ -169,6 +169,8 @@ public static class StorageUsageService
         // ── 个人数据：默认不勾选 ─────────────────────────────
         items.Add(FileItem(StorageGroupKind.UserData, "ai-data", "AI 聊天记录与记忆",
             "AI 助手的会话记录、长期记忆与导入的技能。", Path.Combine(dataDir, "AiAssistant")));
+        items.Add(FileItem(StorageGroupKind.UserData, "ai-browser", "AI 浏览器用户数据",
+            "内置 WebView2 的专属登录状态、缓存与站点设置。删除后网页登录状态会丢失。", Path.Combine(dataDir, "AiBrowser")));
         items.Add(FileItem(StorageGroupKind.UserData, "active-intercept", "主动拦截记录",
             "拦截事件、信任策略与已忽略项。", Path.Combine(dataDir, "active_intercept")));
         items.Add(FileItem(StorageGroupKind.UserData, "game-tunnel", "联机助手数据",

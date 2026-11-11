@@ -89,30 +89,50 @@
         <TitleBar
             x:Name="AppTitleBar"
             Title="图吧工具箱CE"
-
+            AutoRefreshDragRegions="True"
             FontWeight="SemiBold"
             BackRequested="TitleBar_BackRequested"
             IsBackButtonVisible="True"
             IsPaneToggleButtonVisible="True"
             PaneToggleRequested="TitleBar_PaneToggleRequested">
+            <TitleBar.Resources>
+                <!-- TitleBar 默认把 Content 居中；内容宽于可用列宽时会向两侧溢出，
+                     右侧溢出会压到系统的标题按钮上（Issue #262）。改为横向拉伸，
+                     内容只会从左侧起始、宽度由可用空间决定。 -->
+                <HorizontalAlignment x:Key="TitleBarContentHorizontalAlignment">Stretch</HorizontalAlignment>
+            </TitleBar.Resources>
             <TitleBar.IconSource>
                 <ImageIconSource ImageSource="ms-appx:///Assets/AppIcon.ico" />
             </TitleBar.IconSource>
             <TitleBar.Content>
-                <Grid VerticalAlignment="Center">
+                <!-- 内容必须始终收在标题栏 Content 列宽内：TitleBar 会把每个交互控件的
+                     布局矩形原样登记成「直通区域」（不做裁剪），一旦溢出到右侧就会连
+                     最小拖拽区和最小化/最大化/关闭按钮一起吃掉。实际宽度由
+                     TitleBarContent_SizeChanged 按列宽收放搜索框与右侧按钮。 -->
+                <Grid
+                    x:Name="TitleBarContent"
+                    VerticalAlignment="Center"
+                    SizeChanged="TitleBarContent_SizeChanged"
+                    TitleBar.IsDragRegion="True">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="320" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid Grid.Column="0" Width="320">
+                    <Grid
+                        x:Name="TitleSearchArea"
+                        Grid.Column="0"
+                        Width="320"
+                        Margin="0,0,8,0"
+                        HorizontalAlignment="Left">
                         <AutoSuggestBox
                             x:Name="SearchBox"
+                            MinWidth="0"
                             PlaceholderText="搜索工具、设置..."
                             l:Uids.Uid="MainWindow_SearchPlaceholder"
                             QueryIcon="Find"
                             VerticalAlignment="Center"
+                            TitleBar.IsDragRegion="False"
                             GotFocus="SearchBox_GotFocus"
                             LostFocus="SearchBox_LostFocus"
                             TextChanged="SearchBox_TextChanged"
@@ -210,7 +230,8 @@
                     </Grid>
 
                     <StackPanel
-                        Grid.Column="2"
+                        x:Name="TitleActionButtons"
+                        Grid.Column="1"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
                         Spacing="6">
@@ -223,6 +244,7 @@
                             Background="Transparent"
                             ToolTipService.ToolTip="新手教程"
                             AutomationProperties.Name="新手教程"
+                            TitleBar.IsDragRegion="False"
                             l:Uids.Uid="MainWindow_NewbieTutorialButton">
                             <FontIcon FontSize="14" Glyph="&#xE7BE;" />
                         </Button>
@@ -234,7 +256,8 @@
                             Padding="0"
                             BorderThickness="0"
                             Background="Transparent"
-                            AutomationProperties.Name="下载队列">
+                            AutomationProperties.Name="下载队列"
+                            TitleBar.IsDragRegion="False">
                             <Grid>
                                 <FontIcon FontSize="14" Glyph="&#xE896;" />
                                 <InfoBadge

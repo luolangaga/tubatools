@@ -137,6 +137,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "IntegrationSection",
         ["ActiveInterceptNotifyMode"] = "IntegrationSection",
         ["WindowsSearchIndex"] = "IntegrationSection",
+        ["AiBrowser"] = "AiBrowserSection",
     };
 
     private static readonly Dictionary<string, string> SettingKeyToCardName = new(StringComparer.OrdinalIgnoreCase)
@@ -169,6 +170,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["ActiveInterceptEnabled"] = "SettingsActiveInterceptCard",
         ["ActiveInterceptNotifyMode"] = "SettingsActiveInterceptNotifyCard",
         ["WindowsSearchIndex"] = "SettingsSearchIndexCard",
+        ["AiBrowser"] = "SettingsAiBrowserCard",
     };
 
     public SettingsPage()
@@ -206,6 +208,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitProxySettings();
         InitGitHubLoginStatus();
         InitBuiltinToolOpenModeComboBox();
+        InitAiBrowserSettings();
         InitHttpDownloadSettings();
         InitActiveInterceptToggle();
         InitActiveInterceptNotifyModeComboBox();
@@ -238,6 +241,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         // 页面被缓存，构造后不再重跑：开关可能被其它入口改过（如常用页的关闭按钮），进入时重新读取
         InitHardwareStyle();
         RefreshLogDirCard();
+        InitAiBrowserSettings();
+        _ = RefreshAiBrowserStatusAsync();
 
 
 
@@ -257,6 +262,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         base.OnNavigatedFrom(e);
         DownloadQueueService.QueueChanged -= UpdateDownloadQueueStatus;
+        _aiBrowserCts?.Cancel();
     }
 
     private void StartHighlight(string settingKey)
@@ -500,6 +506,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitCpuzDataSourceStatus();
         InitProxySettings();
         InitGitHubLoginStatus();
+        InitAiBrowserSettings();
         ApplyLocalizedAppTitle();
     }
 

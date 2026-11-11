@@ -177,7 +177,7 @@ public sealed partial class AiAssistantPage
             if (_closed || !ReferenceEquals(state, _active)) return;
             if (!Ready || _client is null || _lifetime is null || _preparing || ModelBox.SelectedItem is not AgentModel model) return;
             var title = value.Length > 45 ? value[..45] : value;
-            await BeginRunAsync(state, model, title, value, [], fromCanvas: true);
+            await DrainQueueAsync(state, new QueuedTurn(model, title, value, [], true, false));
         }
         finally { _canvasQueue.Release(); }
     }

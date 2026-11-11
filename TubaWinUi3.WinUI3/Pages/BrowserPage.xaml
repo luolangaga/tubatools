@@ -5,15 +5,23 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:fluentIcons="using:TubaWinUi3.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:TubaWinUi3.Controls"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Unloaded="Page_Unloaded">
 
     <Grid RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+
+        <Grid x:Name="AiTitleBar" Grid.Row="0" Height="48" Visibility="Collapsed">
+            <TextBlock x:Name="AiTitleText" Margin="16,0,160,0" VerticalAlignment="Center"
+                       FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Grid>
 
         <controls:ToolPageHeader ToolId="ai-assistant"
             x:Name="PageHeader"
@@ -35,7 +43,54 @@
             </controls:ToolPageHeader.Actions>
         </controls:ToolPageHeader>
 
-        <Grid Grid.Row="1">
+        <Border x:Name="BrowserToolbar" Grid.Row="1" Visibility="Collapsed"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1" Padding="12,8,12,8">
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="ToolbarBackButton" Click="BackButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="后退">
+                    <FontIcon FontSize="12" Glyph="&#xE72B;" />
+                </Button>
+                <Button x:Name="ToolbarForwardButton" Grid.Column="1" Click="ForwardButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="前进">
+                    <FontIcon FontSize="12" Glyph="&#xE72A;" />
+                </Button>
+                <Button x:Name="ToolbarRefreshButton" Grid.Column="2" Click="RefreshButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="刷新">
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE72C;" />
+                </Button>
+                <TextBox x:Name="AddressBox" Grid.Column="3" MinHeight="32" Padding="10,4" FontSize="13"
+                         VerticalContentAlignment="Center" VerticalAlignment="Center"
+                         PlaceholderText="输入网址或搜索…" l:Uids.Uid="Browser_AddressPlaceholder"
+                         KeyDown="AddressBox_KeyDown" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus"
+                         AutomationProperties.Name="地址栏" />
+                <Button x:Name="ToolbarOpenButton" Grid.Column="4" Click="OpenInBrowserButton_Click" Style="{StaticResource ToolHeaderActionButtonStyle}" ToolTipService.ToolTip="在默认浏览器中打开">
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE774;" />
+                </Button>
+                <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <ProgressRing x:Name="ToolbarLoadingRing" Width="18" Height="18" IsActive="False" />
+                    <Border x:Name="AiStatusChip" Visibility="Collapsed" Padding="8,3" CornerRadius="12"
+                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                            ToolTipService.ToolTip="内置 WebView2 · 专属用户数据，不包含日常浏览器登录状态">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="{ThemeResource AccentTextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="AiStatusText" FontSize="12" VerticalAlignment="Center" />
+                            <Button x:Name="AiControlActionButton" Content="停止" l:Uids.Uid="Browser_StopAi"
+                                    Click="AiControlAction_Click" Style="{StaticResource ToolHeaderActionButtonStyle}"
+                                    Padding="8,2" MinHeight="24" FontSize="12" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
             <WebView2
                 x:Name="WebView"
                 HorizontalAlignment="Stretch"

@@ -2,8 +2,8 @@
 CPU-Z Readme file
 ------------------
 
-Version 3.01
-August 2026
+Version 3.02
+October 2026
 Contact : cpuz@cpuid.com
 Web page: https://www.cpuid.com/softwares/cpu-z.html
 Validation page : https://valid.x86.fr/
@@ -80,6 +80,13 @@ F7 : save cvf file in the current directory
 
 History
 -------
+--------------------------------------------------------------------------------------------------
+3.02 - November 2026
+- Intel Razor Lake support.
+- AMD Radeon AI PRO R9700.
+- Fixed SPD issue on Intel Broadwell-E.
+- Fixed validation issue on Windows XP.
+
 --------------------------------------------------------------------------------------------------
 3.01 - August 2026
 - CPU-Z Validator V3.

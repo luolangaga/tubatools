@@ -176,7 +176,7 @@ public static class ToolUpdateService
         public Task ExecuteAsync(string downloadedFilePath, string destinationPath,
             IProgress<string>? statusProgress, CancellationToken ct)
         {
-            ToolMetadataService.UpdateToolVersion(_update.Match, _update.RemoteVersion);
+            ToolMetadataService.UpdateToolVersion(_update.ToolDir, _update.RemoteVersion);
             ToolCatalog.InvalidateTagsCache();
             ToolMetadataService.InvalidateCache();
             statusProgress?.Report("更新完成");

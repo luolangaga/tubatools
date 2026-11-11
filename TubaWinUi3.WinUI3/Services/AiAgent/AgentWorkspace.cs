@@ -28,6 +28,8 @@ public static class AgentWorkspace
             File.Delete(Path.Combine(toolbox, obsolete));
         var computer = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-computer-use");
         CopySkill(Path.Combine(AppContext.BaseDirectory, "Assets", "AgentSkills", "tuba-computer-use"), computer);
+        var browser = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-browser");
+        CopySkill(Path.Combine(AppContext.BaseDirectory, "Assets", "AgentSkills", "tuba-browser"), browser);
         var canvasSkill = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-canvas");
         CopySkill(Path.Combine(assets, "tuba-canvas"), canvasSkill);
         File.WriteAllText(Path.Combine(toolbox, "toolbox.json"), JsonSerializer.Serialize(new
@@ -49,6 +51,8 @@ public static class AgentWorkspace
             插件测试通过后主动建议发布到 NuGet；真正上传前确认用户同意公开，不代管上传凭据、不上传源码或执行与任务无关的系统变更。
             电脑诊断任务自动加载 tuba-toolbox 和 tuba-computer-use 技能。只有硬件信息保留直接查询；工具启动使用 shell（.opencode/skills/tuba-toolbox/scripts/launch-tool.ps1 或直接执行 Tools 下的程序），打开后的监控、性能平台与修复界面再用 computer-use（优先 AX 语义树，像素/拖动再用 GUI）。禁止用 GUI 双击工具箱卡片启动工具，也禁止调用旧业务 API 或猜测隐藏接口。
             电脑操作前必须出现置顶控制提示，用户停止后不得自行继续控制。查看温度/功耗优先用 HWMonitor，先用 AX observe 读取，失败再 GUI 截图；HWiNFO 适配较差，必要时用 GUI 截图。不编造硬件、监控或跑分结果。
+            网页和登录站点优先使用 browser_use MCP（navigate/snapshot/click/type 等），不要用 computer-use 去点浏览器窗口。浏览器是内置 WebView2，使用工具箱专属用户数据，不是用户日常 Chrome/Edge 的配置，通常没有已登录的账号；每次工具结果首行都会标注这一点。
+            用户停止 AI 浏览器控制后，不得重新获取控制；只有用户明确要求继续或发送新消息后才能再次操作浏览器。网页内操作优先使用 browser_snapshot 返回的 ref，不要首选 GUI 坐标点击。
             教学模式：用户消息以〔教学模式 · 画布 canvas/<会话>/index.html〕开头时，说明本轮是教学任务。只有确实需要可视化讲解（概念演示、可操作示例、结构图）时才把内容写成该 HTML 文件——它会作为一条「画布消息」出现在对话里；普通问答、进度汇报、纯文字能说清的结论不要碰画布文件。写的时候：只改这一个文件，图片放同目录 assets/ 并用相对路径引用；完全离线，不允许 CDN/外链；文档必须以 </html> 结尾；不要让页面用 100vh 或垂直居中撑满整屏。已有画布优先用 edit 局部更新。页面通过 window.tuba 把按钮点击发回对话。讲完只用一两句话说明变化，不要在回复里重复 HTML 源码。
             """);
         File.WriteAllText(Path.Combine(DirectoryPath, "host-tools.md"), """
@@ -61,6 +65,14 @@ public static class AgentWorkspace
             可直接运行 .opencode/skills/tuba-toolbox/scripts/hardware.ps1；它自行读取相邻 toolbox.json，不要求 Node.js。
             JSON 文件内 ok=false 或退出码非零表示失败；报告真实错误，不编造测量结果。
             旧 sensors/disks/cpuz/tools/run 已移除。工具启动用 shell（.opencode/skills/tuba-toolbox/scripts/launch-tool.ps1 或直接执行 Tools 下的程序），打开后的界面用已连接的 computer_use MCP（AX / GUI）操作：先用 AX 查看窗口与控件树，需要像素或拖动时再用 GUI。
+
+            # 浏览器控制
+
+            browser_use MCP 提供 status、navigate、snapshot、click、type、press、scroll、select、screenshot、eval、wait、history。
+            唯一引擎是内置 WebView2，使用工具箱专属用户数据目录，不包含用户日常浏览器的登录状态、书签和历史；需要登录时让用户在这个浏览器窗口里完成。
+            每次工具结果首行都会标注内置 WebView2 与专属用户数据目录。
+            网页内操作优先 snapshot + ref，不要首选 GUI 坐标点击。用户停止浏览器控制后不得继续，直到用户明确要求继续或发送新消息。
+            当前引擎信息写在 browser.md；以每次 browser_use 结果的首行为准。
             工具清单：.opencode/skills/tuba-toolbox/references/gui-tools.md。控制提示未出现或用户点击停止时，不得控制电脑。
             不需要复制宿主，不改变单实例规则，不使用 --takeover，不退出用户正在运行的工具箱。
             """);
@@ -84,6 +96,7 @@ public static class AgentWorkspace
             permissions = AgentPermissionPolicy.Rules(AgentPermissionMode.FullAccess)
         }));
         RefreshProjectIndex();
+        RefreshBrowserContext();
     }
 
     internal static Dictionary<string, object> ComputerServers() => new()
@@ -98,8 +111,25 @@ public static class AgentWorkspace
                 [ComputerUseMcpProxy.SessionVariable] = ComputerUseMcpProxy.DefaultSession,
                 [ComputerUseMcpProxy.ExecutableVariable] = HybridComputerUseService.Executable
             }
+        },
+        ["browser_use"] = new
+        {
+            type = "local", codemode = false,
+            command = new[] { HostExecutable, BrowserUseMcpProxy.Argument },
+            environment = new Dictionary<string, string>
+            {
+                // The MCP side uses the same data root for the stop flag and pipe descriptor.
+                [AiBrowserPaths.RootEnvironment] = AiBrowserPaths.Root
+            }
         }
     };
+
+    /// <summary>Writes the browser context the agent can read before its first tool call.</summary>
+    public static void RefreshBrowserContext()
+    {
+        Directory.CreateDirectory(DirectoryPath);
+        File.WriteAllText(Path.Combine(DirectoryPath, "browser.md"), AiBrowserInfo.DescribeForAgent());
+    }
 
     private static string HostExecutable => Path.Combine(AppContext.BaseDirectory, "TubaWinUi3.exe");
 

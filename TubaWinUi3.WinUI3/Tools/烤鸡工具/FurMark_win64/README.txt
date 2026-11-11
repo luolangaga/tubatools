@@ -1,6 +1,6 @@
 FurMark 2
 GPU Stress Test and OpenGL / Vulkan Benchmark
-Copyright (C) 2007-2025 Geeks3D, All rights reserved.
+Copyright (C) 2007-2026 Geeks3D, All rights reserved.
 Homepage: https://www.geeks3d.com/furmark/
 Support forum: https://www.geeks3d.com/forums/index.php/board,4.0.html
 Discord server: https://www.geeks3d.com/discord/
@@ -40,8 +40,9 @@ real program: furmark.exe (command line). To get the list of
 options open a terminal in FurMark folder and type: 
 furmark --help
 
-If you have issues with FurMark_GUI.exe, you can launch _fm2-gui.exe
-that is a simple GUI with essential functions.
+Windows platform: if you have issues with FurMark_GUI.exe, 
+you can launch _fm2-gui.exe that is a simple GUI with 
+essential functions.
 
 
 ================================================
@@ -54,15 +55,10 @@ https://www.geeks3d.com/furmark/changelog/
 ================================================
 Support / Donate
 ================================================
-If you wish to support the development of Geeks3D software, you have
-two options:
+If you wish to support the development of FurMark, you can
+make a donation by visiting this page:
 
-1/ make a donation: 
-https://www.geeks3d.com/donate/
-
-OR
-
-2/ buy a license (one-time purchase) for the extended/pro version:
-https://www.geeks3d.com/g3dpp/
+https://www.geeks3d.com/donate/furmark-madgpu/
 
 For any questions, send an email at jegx@geeks3d.com
+
