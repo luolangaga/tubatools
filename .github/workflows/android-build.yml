@@ -3,6 +3,14 @@ name: android-build
 # 手动触发：构建「图吧工具箱CE安装助手」Android App 的 APK，上传为 artifact 供侧载
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: '上传 APK 到该 GitHub Release tag（留空只构建 artifact）'
+        required: false
+        type: string
+        default: ''
+permissions:
+  contents: write
 
 jobs:
   build-apk:
@@ -27,6 +35,17 @@ jobs:
           name: tuba-installer-apk
           path: android-tuba-installer/app/build/outputs/apk/debug/app-debug.apk
 
+      - name: 上传 APK 到 Release
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        working-directory: android-tuba-installer
+        run: |
+          VERSION=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | cut -d'"' -f2)
+          cp app/build/outputs/apk/debug/app-debug.apk "../TubaWinUi3_Installer_${VERSION}.apk"
+          gh release upload "$RELEASE_TAG" "../TubaWinUi3_Installer_${VERSION}.apk" --clobber
+
       - name: 上传单元测试报告
         if: always()
         uses: actions/upload-artifact@v4
@@ -37,7 +56,7 @@ jobs:
   build-remote-apk:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -57,3 +76,14 @@ jobs:
         with:
           name: tuba-remote-apk
           path: android-tuba-remote/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: 上传 APK 到 Release
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        working-directory: android-tuba-remote
+        run: |
+          VERSION=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | cut -d'"' -f2)
+          cp app/build/outputs/apk/debug/app-debug.apk "../TubaWinUi3_Remote_${VERSION}.apk"
+          gh release upload "$RELEASE_TAG" "../TubaWinUi3_Remote_${VERSION}.apk" --clobber
