@@ -140,7 +140,7 @@ jobs:
           echo "" >> ../hash_table.md
           echo "| 文件 | SHA256 |" >> ../hash_table.md
           echo "|------|--------|" >> ../hash_table.md
-          for f in *.exe *.zip; do
+          for f in *.exe *.zip *.apk; do
             [ -f "$f" ] || continue
             HASH=$(sha256sum "$f" | awk '{print $1}')
             echo "| \`$f\` | \`$HASH\` |" >> ../hash_table.md
@@ -216,7 +216,7 @@ jobs:
           token = os.environ['GITCODE_ACCESS_TOKEN']
           api_base = os.environ['API_BASE']
 
-          files = glob.glob('release_files/*.exe') + glob.glob('release_files/*.zip')
+          files = glob.glob('release_files/*.exe') + glob.glob('release_files/*.zip') + glob.glob('release_files/*.apk')
           for fpath in files:
               fname = os.path.basename(fpath)
               print(f'Uploading {fname} ...')
