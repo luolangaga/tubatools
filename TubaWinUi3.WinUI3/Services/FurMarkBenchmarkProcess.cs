@@ -4,45 +4,33 @@ namespace TubaWinUi3.Services;
 
 internal static class FurMarkBenchmarkProcess
 {
-    internal static readonly TimeSpan ResultDisplayDuration = TimeSpan.FromSeconds(20);
-
-    // Return true only when we had to terminate the retained result window ourselves.
-    internal static bool WaitForExit(Process process, Func<bool> hasCompleteResult,
-        Action<TimeSpan> reportRemaining, TimeSpan timeout, CancellationToken ct,
-        TimeSpan? displayDuration = null)
+    // FurMark keeps its score window open for an arbitrary while and some machines never exit by
+    // themselves, so wait for a natural exit and terminate whatever is left once the timeout passes.
+    // The exit code is deliberately never inspected: an otherwise perfect run may still report a
+    // nonzero code, and treating that as a crash produces false "abnormal exit" failures.
+    // Returns true when we had to terminate the process ourselves.
+    internal static bool WaitForExit(Process process, TimeSpan timeout, CancellationToken ct,
+        Action<TimeSpan>? reportElapsed = null)
     {
         var elapsed = Stopwatch.StartNew();
-        Stopwatch? resultDisplay = null;
-        TimeSpan hold = displayDuration ?? ResultDisplayDuration;
+        TimeSpan nextReport = TimeSpan.Zero;
         while (!process.WaitForExit(250))
         {
             ct.ThrowIfCancellationRequested();
-            if (resultDisplay is null && hasCompleteResult()) resultDisplay = Stopwatch.StartNew();
-            if (resultDisplay is not null)
-            {
-                var remaining = hold - resultDisplay.Elapsed;
-                if (remaining <= TimeSpan.Zero)
-                {
-                    // Prefer a normal WM_CLOSE; a modal score box may need the fallback.
-                    process.Refresh();
-                    if (!process.HasExited && process.CloseMainWindow() && process.WaitForExit(3000)) return false;
-                    ct.ThrowIfCancellationRequested();
-                    if (!process.HasExited)
-                    {
-                        process.Kill(entireProcessTree: true);
-                        process.WaitForExit();
-                        return true;
-                    }
-                    return false;
-                }
-                reportRemaining(remaining);
-            }
-            else if (elapsed.Elapsed > timeout)
+            if (elapsed.Elapsed > timeout)
             {
                 if (!process.HasExited) process.Kill(entireProcessTree: true);
-                throw new TimeoutException("FurMark 测试超时，本次结果无效。");
+                process.WaitForExit();
+                ct.ThrowIfCancellationRequested();
+                return true;
+            }
+            if (reportElapsed is not null && elapsed.Elapsed >= nextReport)
+            {
+                nextReport = elapsed.Elapsed + TimeSpan.FromSeconds(1);
+                reportElapsed(elapsed.Elapsed);
             }
         }
+        // A cancelled run kills the process, so a natural exit here may still mean "cancelled".
         ct.ThrowIfCancellationRequested();
         return false;
     }

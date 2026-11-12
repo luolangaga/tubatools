@@ -281,58 +281,35 @@ public static class PerformanceBenchmarkService
 			Progress = 0.57
 		});
 		GpuBenchmarkResult? measured = null;
-		bool closedResultWindow;
-		try
-		{
-			closedResultWindow = FurMarkBenchmarkProcess.WaitForExit(process, () =>
-			{
-				try
-				{
-					using var stream = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-					using var reader = new StreamReader(stream);
-					if (!FurMarkBenchmarkLog.TryParse(reader.ReadToEnd(), durationMs, out var parsed)) return false;
-					measured = parsed;
-					return true;
-				}
-				catch (IOException) { return false; }
-				catch (UnauthorizedAccessException) { return false; }
-			}, remaining => progress?.Report(new BenchmarkProgress
+		FurMarkBenchmarkProcess.WaitForExit(process, TimeSpan.FromSeconds(durationSec + 90), ct,
+			elapsed => progress?.Report(new BenchmarkProgress
 			{
 				Phase = "GPU", SubPhase = "FurMark",
-				Detail = $"测试已完成，成绩窗口将在 {Math.Ceiling(remaining.TotalSeconds):F0} 秒后关闭…",
+				Detail = $"FurMark 已运行 {elapsed.TotalSeconds:F0} 秒，等待成绩写入日志…",
 				Progress = 0.58
-			}), TimeSpan.FromSeconds(durationSec + 90), ct);
-		}
-		catch (TimeoutException ex)
-		{
-			throw new TimeoutException($"{ex.Message}日志：{logFile}", ex);
-		}
+			}));
 		ct.ThrowIfCancellationRequested();
-		// Only our deliberate closing of a validated result window may bypass a
-		// nonzero exit code. Crashes and early manual exits remain invalid.
-		if (process.ExitCode != 0 && !closedResultWindow)
-			throw new InvalidOperationException($"FurMark 异常退出（退出码 0x{process.ExitCode:X8}，运行 {sw.Elapsed.TotalSeconds:F1} 秒）。日志：{logFile}");
 		string? readError = null;
-		for (int i = 0; measured is null && i < 10; i++)
+		for (int i = 0; measured is null && i < 20; i++)
 		{
 			ct.ThrowIfCancellationRequested();
 			try
 			{
 				using var stream = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 				using var reader = new StreamReader(stream);
-				if (FurMarkBenchmarkLog.TryParse(reader.ReadToEnd(), durationMs, out var parsed))
+				if (FurMarkBenchmarkLog.TryParse(reader.ReadToEnd(), out var parsed))
 				{
 					measured = parsed;
 					break;
 				}
-				readError = "日志中未找到达到设定时长的完整分数和帧率";
+				readError = "日志中未找到完整的分数和帧率";
 			}
 			catch (IOException ex) { readError = ex.Message; }
 			catch (UnauthorizedAccessException ex) { readError = ex.Message; }
-			if (i < 9) Task.Delay(500, ct).GetAwaiter().GetResult();
+			if (i < 19) Task.Delay(500, ct).GetAwaiter().GetResult();
 		}
 		if (measured is null)
-			throw new InvalidOperationException($"FurMark 未取得有效成绩（退出码 0，运行 {sw.Elapsed.TotalSeconds:F1} 秒）：{readError}。日志：{logFile}");
+			throw new InvalidOperationException($"FurMark 未取得有效成绩（退出码 {process.ExitCode}，运行 {sw.Elapsed.TotalSeconds:F1} 秒）：{readError}。日志：{logFile}");
 		gpu.FurMarkScore = measured.FurMarkScore;
 		gpu.MinFps = measured.MinFps;
 		gpu.AvgFps = measured.AvgFps;
