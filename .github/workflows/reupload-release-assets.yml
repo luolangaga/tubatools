@@ -1,0 +1,31 @@
+name: Reupload Release Assets
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Build run id to download artifacts from'
+        required: true
+        type: string
+      tag:
+        description: 'Release tag to overwrite'
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh run download "${{ inputs.run_id }}" -D artifacts
+
+      - name: Upload assets to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mapfile -t files < <(find artifacts -type f \( -name '*.exe' -o -name '*.zip' \))
+          printf '%s\n' "${files[@]}"
+          gh release upload "$TAG" "${files[@]}" --clobber
