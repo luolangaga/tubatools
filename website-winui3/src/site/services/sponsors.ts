@@ -2,6 +2,34 @@
 // Public display fields only. Keep payment records and transaction IDs out of the site.
 export const sponsors = [
   {
+    id: '20261110-01',
+    name: '琥珀金',
+    amount: 10,
+    date: '2026-11-10',
+    message: '',
+  },
+  {
+    id: '20261104-02',
+    name: '沐清',
+    amount: 1,
+    date: '2026-11-04',
+    message: '',
+  },
+  {
+    id: '20261104-01',
+    name: '刀剑笑',
+    amount: 10,
+    date: '2026-11-04',
+    message: '希望这个软件一直保持干净清爽！',
+  },
+  {
+    id: '20261102-01',
+    name: '游',
+    amount: 5,
+    date: '2026-11-02',
+    message: '',
+  },
+  {
     id: '20261029-01',
     name: 'R*y',
     amount: 50,

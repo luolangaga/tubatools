@@ -77,7 +77,7 @@ export interface SitePageEntry {
 }
 
 const pages: SitePageEntry[] = [
-  { title: '赞助名单', subtitle: '感谢每一位同行者', tag: 'sponsors', url: '/sponsors', text: '赞助 名单 鸣谢 感谢 支持 捐赠 展示墙 胖胖 R*y *天 sponsors donation' },
+  { title: '赞助名单', subtitle: '感谢每一位同行者', tag: 'sponsors', url: '/sponsors', text: '赞助 名单 鸣谢 感谢 支持 捐赠 展示墙 琥珀金 沐清 刀剑笑 游 胖胖 R*y *天 sponsors donation' },
   { title: '首页', subtitle: 'PC 硬件检测利器', tag: 'home', url: '/', text: '图吧工具箱CE 图吧工具箱 硬件检测 CPU-Z GPU-Z CrystalDiskMark WinUI3 免费 开源 下载 工具集' },
   { title: '下载', subtitle: '免费 · 离线运行 · 自动识别架构', tag: 'download', url: '/download', text: '图吧工具箱CE 图吧工具箱 下载 便携版 安装包 微软商店 x64 arm64 系统要求' },
   { title: '功能展示', subtitle: '实机截图与内置工具一览', tag: 'features', url: '/features', text: '功能展示 截图 预览 内置工具 硬件信息 一键验机 烤机 压力测试 游戏监控 游戏联机 流量监控 网速测试 端口占用 垃圾清理 格式转换 时间同步 Windows 镜像 天梯图 跑分 AI 助手 社区工具 设置' },
