@@ -1,29 +1,56 @@
 <Page x:Class="TubaWinUi3.Pages.PluginsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:l="using:WinUI3Localizer" Loaded="Page_Loaded" Unloaded="Page_Unloaded">
+      xmlns:controls="using:TubaWinUi3.Controls"
+      xmlns:l="using:WinUI3Localizer"
+      Loaded="Page_Loaded" Unloaded="Page_Unloaded">
     <Page.Resources>
+        <!-- Store 风格：卡片 8px 圆角、1px 描边；列表项本身不画悬停底色，反馈交给卡片自己。 -->
         <Style x:Key="PluginListItem" TargetType="ListViewItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
             <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
+            <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}"/>
+            <Setter Property="FocusVisualPrimaryThickness" Value="1"/>
+            <Setter Property="FocusVisualSecondaryThickness" Value="0"/>
+            <Setter Property="FocusVisualMargin" Value="0"/>
+        </Style>
+        <Style x:Key="PluginGridItem" TargetType="GridViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,12,12"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
+            <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource AccentFillColorDefaultBrush}"/>
+            <Setter Property="FocusVisualPrimaryThickness" Value="1"/>
+            <Setter Property="FocusVisualSecondaryThickness" Value="0"/>
+            <Setter Property="FocusVisualMargin" Value="0"/>
         </Style>
         <Style x:Key="PluginRowCard" TargetType="Border">
             <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
             <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="112"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+        </Style>
+        <Style x:Key="PluginCardInner" TargetType="Grid">
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="ColumnSpacing" Value="12"/>
         </Style>
         <Style x:Key="PluginIconTile" TargetType="Border">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="Height" Value="64"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
-            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style x:Key="PluginIconGlyph" TargetType="FontIcon">
             <Setter Property="Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
@@ -32,34 +59,592 @@
         </Style>
         <Style x:Key="PluginVersionChip" TargetType="Border">
             <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="6,1"/>
+            <Setter Property="CornerRadius" Value="{StaticResource PillCornerRadiusToken}"/>
+            <Setter Property="Padding" Value="7,2"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="PluginInstallButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}"/>
+        <Style x:Key="PluginInstallButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="74"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="PluginQuietButton" TargetType="Button">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="PluginIconButton" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="StoreNavTab" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style x:Key="StoreCommandButton" TargetType="Button">
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DetailSectionHeader" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+        </Style>
+        <Style x:Key="DetailLinkButton" TargetType="HyperlinkButton">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
     </Page.Resources>
-    <Grid Padding="28" RowSpacing="16">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <Grid ColumnSpacing="12">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-            <StackPanel Spacing="4">
-                <TextBlock Text="插件" l:Uids.Uid="Plugins_Title" Style="{ThemeResource TitleTextBlockStyle}"/>
-                <TextBlock Text="来自 nuget.org · Tubatools" l:Uids.Uid="Plugins_Source" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            </StackPanel>
-            <Button Grid.Column="1" AutomationProperties.AutomationId="PluginsDocs" Content="开发文档" l:Uids.Uid="Plugins_Docs" Click="Docs_Click" VerticalAlignment="Center"/>
-            <Button Grid.Column="2" AutomationProperties.AutomationId="PluginsUpload" Content="上传到 NuGet" l:Uids.Uid="Plugins_Upload" Click="Upload_Click" VerticalAlignment="Center"/>
-            <Button Grid.Column="3" AutomationProperties.AutomationId="PluginsDevelop" Content="AI 开发" l:Uids.Uid="Plugins_Develop" Click="Develop_Click" VerticalAlignment="Center"/>
+
+    <Grid x:Name="PageRoot">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="WindowWidthStates">
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1000"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="HeroIcons.Visibility" Value="Visible"/>
+                        <Setter Target="HeroCard.MinHeight" Value="118"/>
+                        <Setter Target="HeroSourcePill.Visibility" Value="Visible"/>
+                        <Setter Target="UploadButton.Visibility" Value="Visible"/>
+                        <Setter Target="DevelopButton.Visibility" Value="Visible"/>
+                        <Setter Target="DetailSidebar.Visibility" Value="Visible"/>
+                        <Setter Target="DetailSidebarColumn.Width" Value="300"/>
+                        <Setter Target="DetailBody.ColumnSpacing" Value="28"/>
+                        <Setter Target="DetailLeft.MaxWidth" Value="820"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Narrow">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="HeroIcons.Visibility" Value="Collapsed"/>
+                        <Setter Target="HeroCard.MinHeight" Value="104"/>
+                        <Setter Target="HeroSourcePill.Visibility" Value="Collapsed"/>
+                        <Setter Target="UploadButton.Visibility" Value="Collapsed"/>
+                        <Setter Target="DevelopButton.Visibility" Value="Collapsed"/>
+                        <Setter Target="DetailSidebar.Visibility" Value="Collapsed"/>
+                        <Setter Target="DetailSidebarColumn.Width" Value="0"/>
+                        <Setter Target="DetailBody.ColumnSpacing" Value="0"/>
+                        <Setter Target="DetailLeft.MaxWidth" Value="2000"/>
+                        <Setter Target="DetailHeroGrid.Margin" Value="20,16,20,18"/>
+                        <Setter Target="DetailHeroGrid.ColumnSpacing" Value="14"/>
+                        <Setter Target="DetailIconTile.Width" Value="64"/>
+                        <Setter Target="DetailIconTile.Height" Value="64"/>
+                        <Setter Target="DetailTitle.FontSize" Value="22"/>
+                        <Setter Target="DetailActions.(Grid.Row)" Value="1"/>
+                        <Setter Target="DetailActions.(Grid.Column)" Value="1"/>
+                        <Setter Target="DetailActions.HorizontalAlignment" Value="Left"/>
+                        <Setter Target="DetailActions.Margin" Value="0,8,0,0"/>
+                        <Setter Target="DetailInstallButton.MinWidth" Value="120"/>
+                        <Setter Target="DetailInstallButton.Height" Value="32"/>
+                        <Setter Target="DetailHeroNuGet.Visibility" Value="Collapsed"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <Grid x:Name="PageContent" Padding="20,12,20,12" RowSpacing="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid x:Name="PageHeader" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="插件" l:Uids.Uid="Plugins_Title" FontSize="32" Style="{StaticResource PageTitleStyle}"/>
+                    <TextBlock Text="来自 nuget.org · Tubatools" l:Uids.Uid="Plugins_Source" Style="{StaticResource PageSubtitleStyle}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="DocsButton" Content="开发文档" l:Uids.Uid="Plugins_Docs" AutomationProperties.AutomationId="PluginsDocs" Click="Docs_Click" Style="{StaticResource StoreCommandButton}"/>
+                    <Button x:Name="SafeModeButton" Content="以安全模式重启" l:Uids.Uid="Plugins_SafeModeRestart" AutomationProperties.AutomationId="PluginsSafeMode" Click="SafeMode_Click" Style="{StaticResource StoreCommandButton}"/>
+                    <Button x:Name="UploadButton" Content="上传到 NuGet" l:Uids.Uid="Plugins_Upload" AutomationProperties.AutomationId="PluginsUpload" Click="Upload_Click" Style="{StaticResource StoreCommandButton}"/>
+                    <Button x:Name="DevelopButton" Content="AI 开发" l:Uids.Uid="Plugins_Develop" AutomationProperties.AutomationId="PluginsDevelop" Click="Develop_Click" Style="{StaticResource StoreCommandButton}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 商店首页式 hero：强调色低透明度铺底，右侧三枚插件图标做轻微漂浮。 -->
+            <Border Grid.Row="1" x:Name="HeroCard" Margin="0,8,0,0" MinHeight="118"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <Grid>
+                    <Rectangle RadiusX="8" RadiusY="8" Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                               Opacity="0.13" IsHitTestVisible="False"/>
+                    <Rectangle RadiusX="8" RadiusY="8" IsHitTestVisible="False" Opacity="0.30">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                <GradientStop Color="#33FFFFFF" Offset="0.62"/>
+                                <GradientStop Color="#00FFFFFF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+
+                    <Grid Margin="24,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3" Margin="0,10,0,10">
+                            <TextBlock Text="插件商店" l:Uids.Uid="Plugins_StoreEyebrow"
+                                       FontSize="9" FontWeight="SemiBold" CharacterSpacing="120"
+                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="为工具箱添上新能力" l:Uids.Uid="Plugins_StoreHeadline"
+                                       FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            <TextBlock Text="发现由社区打造的界面、工具与皮肤，一键安装。" l:Uids.Uid="Plugins_StoreSubtitle"
+                                       FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,1,0,0">
+                                <Border Style="{StaticResource StatusPillStyle}">
+                                    <TextBlock x:Name="HeroPluginCount" FontSize="10" FontWeight="SemiBold"/>
+                                </Border>
+                                <Border Style="{StaticResource StatusPillStyle}">
+                                    <TextBlock x:Name="HeroInstalledCount" FontSize="10"/>
+                                </Border>
+                                <Border x:Name="HeroSourcePill" Style="{StaticResource StatusPillStyle}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <FontIcon Glyph="&#xE774;" FontSize="9" VerticalAlignment="Center"/>
+                                        <TextBlock Text="NuGet 社区源" FontSize="10"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Canvas x:Name="HeroIcons" Grid.Column="1" Width="260" Height="126" Margin="0,0,24,0"
+                                VerticalAlignment="Center" HorizontalAlignment="Right">
+                            <Border x:Name="HeroTile0" Canvas.Left="0" Canvas.Top="28" Width="72" Height="72"
+                                    CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Grid>
+                                    <FontIcon Glyph="&#xE774;" FontSize="30" Style="{StaticResource PluginIconGlyph}"/>
+                                </Grid>
+                                <Border.RenderTransform><RotateTransform Angle="-8"/></Border.RenderTransform>
+                            </Border>
+                            <Border x:Name="HeroTile1" Canvas.Left="88" Canvas.Top="6" Width="72" Height="72"
+                                    CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Grid>
+                                    <FontIcon Glyph="&#xE774;" FontSize="30" Style="{StaticResource PluginIconGlyph}"/>
+                                </Grid>
+                                <Border.RenderTransform><RotateTransform Angle="4"/></Border.RenderTransform>
+                            </Border>
+                            <Border x:Name="HeroTile2" Canvas.Left="176" Canvas.Top="40" Width="72" Height="72"
+                                    CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Grid>
+                                    <FontIcon Glyph="&#xE774;" FontSize="30" Style="{StaticResource PluginIconGlyph}"/>
+                                </Grid>
+                                <Border.RenderTransform><RotateTransform Angle="10"/></Border.RenderTransform>
+                            </Border>
+                        </Canvas>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2" x:Name="NavBar" Margin="0,10,0,0" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Button x:Name="DiscoverTab" Content="发现" l:Uids.Uid="Plugins_TabDiscover"
+                            AutomationProperties.AutomationId="PluginsDiscoverTab"
+                            Click="DiscoverTab_Click" Style="{StaticResource StoreNavTab}"/>
+                    <Button x:Name="InstalledTab" Content="已安装" l:Uids.Uid="Plugins_TabInstalled"
+                            AutomationProperties.AutomationId="PluginsInstalledTab"
+                            Click="InstalledTab_Click" Style="{StaticResource StoreNavTab}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <AutoSuggestBox x:Name="SearchBox" Width="260" Height="32" AutomationProperties.AutomationId="PluginsSearchBox"
+                                    PlaceholderText="搜索插件" l:Uids.Uid="Plugins_Search" QueryIcon="Find"
+                                    QuerySubmitted="Search_Submitted" TextChanged="SearchBox_TextChanged"
+                                    VerticalContentAlignment="Center"/>
+                    <Button x:Name="RefreshButton" AutomationProperties.AutomationId="PluginsRefresh"
+                            Click="Refresh_Click" Style="{StaticResource PluginIconButton}">
+                        <FontIcon x:Name="RefreshGlyph" Glyph="&#xE72C;" FontSize="15"/>
+                    </Button>
+                </StackPanel>
+                <Rectangle x:Name="NavUnderline" Width="24" Height="2" VerticalAlignment="Bottom"
+                           HorizontalAlignment="Left" Margin="0,0,0,-2"
+                           Fill="{ThemeResource AccentFillColorDefaultBrush}"/>
+            </Grid>
+
+            <Grid Grid.Row="3" x:Name="ContentArea" Margin="0,8,0,0">
+                <Grid x:Name="AvailablePane">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="8" Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock x:Name="AvailableSectionTitle" FontSize="17" FontWeight="SemiBold"/>
+                            <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                                <TextBlock x:Name="AvailableCount" FontSize="11"/>
+                            </Border>
+                        </StackPanel>
+                        <ProgressRing Grid.Column="1" x:Name="Busy" Width="22" Height="22" IsActive="False"
+                                      VerticalAlignment="Center" AutomationProperties.AutomationId="PluginsBusy"/>
+                    </Grid>
+
+                    <GridView Grid.Row="1" x:Name="AvailableList" AutomationProperties.AutomationId="PluginsAvailableList"
+                              SelectionMode="None" IsItemClickEnabled="True" ItemClick="AvailableList_ItemClick"
+                              HorizontalContentAlignment="Stretch" Padding="0"
+                              ItemContainerStyle="{StaticResource PluginGridItem}"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+                    </GridView>
+
+                    <Grid Grid.Row="1" x:Name="AvailableSkeleton" Visibility="Collapsed" IsHitTestVisible="False"
+                          ColumnSpacing="12" RowSpacing="12" VerticalAlignment="Top">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="118"/>
+                            <RowDefinition Height="118"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="120" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="180" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="100" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="160" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="140" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="190" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="110" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="170" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="130" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="185" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource PluginRowCard}">
+                            <Grid Padding="12" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Border Width="48" Height="48" CornerRadius="6" Background="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                                    <Border Height="12" Width="100" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                    <Border Height="10" Width="160" CornerRadius="3" Background="{ThemeResource ControlFillColorSecondaryBrush}" HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" x:Name="AvailableEmpty" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="10" Visibility="Collapsed">
+                        <Border Width="64" Height="64" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <FontIcon Glyph="&#xE721;" FontSize="30" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Border>
+                        <TextBlock Text="未找到插件" l:Uids.Uid="Plugins_NoResults" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="AvailableEmptyHint" MaxWidth="440" TextAlignment="Center" TextWrapping="Wrap"
+                                   FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
+                        <Button Content="重试" l:Uids.Uid="Plugins_Retry" Click="Refresh_Click" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+                        <Button x:Name="LoadMoreButton" AutomationProperties.AutomationId="PluginsNextButton"
+                                Click="LoadMore_Click" Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE74B;" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="加载更多" l:Uids.Uid="Plugins_LoadMore"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock x:Name="PageInfo" VerticalAlignment="Center" FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid x:Name="InstalledPane" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="8" Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="已安装" l:Uids.Uid="Plugins_InstalledSection" FontSize="17" FontWeight="SemiBold"/>
+                            <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                                <TextBlock x:Name="InstalledCount" FontSize="11"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <GridView Grid.Row="1" x:Name="InstalledList" AutomationProperties.AutomationId="PluginsInstalledList"
+                              SelectionMode="None" IsItemClickEnabled="True" ItemClick="InstalledList_ItemClick"
+                              HorizontalContentAlignment="Stretch" Padding="0"
+                              ItemContainerStyle="{StaticResource PluginGridItem}"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <GridView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </GridView.ItemsPanel>
+                    </GridView>
+
+                    <StackPanel Grid.Row="1" x:Name="InstalledEmpty" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="10" Visibility="Collapsed">
+                        <Border Width="64" Height="64" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                            <FontIcon Glyph="&#xE7B8;" FontSize="28" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Border>
+                        <TextBlock x:Name="InstalledEmptyText" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
         </Grid>
-        <AutoSuggestBox Grid.Row="1" x:Name="SearchBox" AutomationProperties.AutomationId="PluginsSearchBox" PlaceholderText="搜索插件" l:Uids.Uid="Plugins_Search" QueryIcon="Find" QuerySubmitted="Search_Submitted"/>
-        <InfoBar Grid.Row="2" x:Name="Status" IsOpen="False" IsClosable="True"/>
-        <TabView Grid.Row="3" x:Name="Tabs" AutomationProperties.AutomationId="PluginsTabs" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False" SelectionChanged="Tabs_Changed">
-            <TabViewItem IsClosable="False" Header="发现" l:Uids.Uid="Plugins_Discover"><ListView x:Name="AvailableList" AutomationProperties.AutomationId="PluginsAvailableList" SelectionMode="None" HorizontalContentAlignment="Stretch" Padding="0" ItemContainerStyle="{StaticResource PluginListItem}"/></TabViewItem>
-            <TabViewItem IsClosable="False" Header="已安装" l:Uids.Uid="Plugins_Installed"><ListView x:Name="InstalledList" AutomationProperties.AutomationId="PluginsInstalledList" SelectionMode="None" HorizontalContentAlignment="Stretch" Padding="0" ItemContainerStyle="{StaticResource PluginListItem}"/></TabViewItem>
-        </TabView>
-        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="12">
-            <Button x:Name="PreviousButton" AutomationProperties.AutomationId="PluginsPreviousButton" Content="上一页" l:Uids.Uid="Plugins_Previous" Click="Previous_Click"/>
-            <Button x:Name="NextButton" AutomationProperties.AutomationId="PluginsNextButton" Content="下一页" l:Uids.Uid="Plugins_Next" Click="Next_Click"/>
-            <ProgressRing x:Name="Busy" Width="24" Height="24" IsActive="False"/>
-        </StackPanel>
+
+        <InfoBar x:Name="Status" AutomationProperties.AutomationId="PluginsStatusBar" IsOpen="False" IsClosable="True"
+                 MaxWidth="560" Margin="24" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                 Canvas.ZIndex="5"/>
+
+        <!-- Store 产品页：整页滑入，背后列表轻微后退；关闭时反向播放。 -->
+        <Grid x:Name="DetailHost" Visibility="Collapsed" Canvas.ZIndex="20" Background="Transparent">
+            <Border x:Name="DetailScrim" Background="{ThemeResource SmokeFillColorDefaultBrush}" Opacity="0"/>
+            <Grid x:Name="DetailSurface" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                  KeyDown="DetailSurface_KeyDown">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="52"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid x:Name="DetailTopBar" Padding="16,0" ColumnSpacing="8" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                      BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="DetailBackButton" Style="{StaticResource TitleBarBackButtonStyle}"
+                            Width="40" Height="32" Click="DetailBack_Click"
+                            AutomationProperties.AutomationId="PluginsDetailBack"/>
+                    <TextBlock x:Name="DetailBreadcrumb" Grid.Column="1" VerticalAlignment="Center"
+                               FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                    <HyperlinkButton x:Name="DetailTopNuGet" Grid.Column="2" VerticalAlignment="Center"
+                                     Padding="10,4" FontSize="13" Content="NuGet"/>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" x:Name="DetailScroll" HorizontalScrollMode="Disabled"
+                              HorizontalScrollBarVisibility="Disabled" VerticalScrollMode="Enabled"
+                              VerticalScrollBarVisibility="Auto" ZoomMode="Disabled">
+                    <StackPanel>
+                        <Border x:Name="DetailHero" MinHeight="280" BorderThickness="0" CornerRadius="0">
+                            <Grid>
+                                <Rectangle x:Name="DetailHeroSheen" IsHitTestVisible="False" Opacity="0.0">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#00FFFFFF" Offset="0"/>
+                                            <GradientStop Color="#2EFFFFFF" Offset="0.5"/>
+                                            <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <Grid x:Name="DetailHeroGrid" Margin="36,30,36,24" ColumnSpacing="20">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border x:Name="DetailIconTile" Grid.RowSpan="2" Width="88" Height="88" CornerRadius="8"
+                                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                            VerticalAlignment="Top">
+                                        <Grid>
+                                            <FontIcon Glyph="&#xE774;" FontSize="36" Style="{StaticResource PluginIconGlyph}"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                                        <TextBlock x:Name="DetailTitle" FontSize="28" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock x:Name="DetailAuthor" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="·" FontSize="14" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                            <TextBlock x:Name="DetailCategory" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,1,0,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <FontIcon Glyph="&#xE896;" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DetailDownloads" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <FontIcon Glyph="&#xE8B5;" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DetailVersion" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <FontIcon Glyph="&#xE8FB;" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="社区插件" l:Uids.Uid="Plugins_CommunityTag" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <TextBlock x:Name="DetailShortDescription" FontSize="14" TextWrapping="Wrap" MaxLines="2"
+                                                   TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock x:Name="DetailProvideNote" FontSize="12" Margin="0,2,0,0"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="DetailActions" Grid.Column="2" Grid.Row="0" Spacing="8" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button x:Name="DetailInstallButton" Style="{StaticResource PluginInstallButton}"
+                                                    MinWidth="140" Height="36" Click="DetailInstall_Click"
+                                                    AutomationProperties.AutomationId="PluginsDetailInstall">
+                                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                                    <FontIcon x:Name="DetailInstallIcon" Glyph="&#xE896;" FontSize="14" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="DetailInstallText" FontSize="14" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <ProgressRing x:Name="DetailInstallRing" Width="20" Height="20" IsActive="False" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <HyperlinkButton x:Name="DetailHeroNuGet" HorizontalAlignment="Center" Padding="8,2" FontSize="12"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Grid x:Name="DetailBody" Padding="32,22,32,36" ColumnSpacing="28">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition x:Name="DetailSidebarColumn" Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel x:Name="DetailLeft" Spacing="14" MaxWidth="820" HorizontalAlignment="Left">
+                                <TextBlock Text="说明" l:Uids.Uid="Plugins_About" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Style="{StaticResource FluentCardStyle}" Padding="20">
+                                    <Grid>
+                                        <StackPanel x:Name="ReadmeSkeleton" Spacing="11" Visibility="Visible">
+                                            <Border Height="14" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" Margin="0,0,90,0"/>
+                                            <Border Height="14" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" Margin="0,0,150,0"/>
+                                            <Border Height="14" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" Margin="0,0,40,0"/>
+                                            <Border Height="14" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" Margin="0,0,210,0"/>
+                                            <Border Height="14" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}" Margin="0,0,120,0"/>
+                                        </StackPanel>
+                                        <controls:MarkdownView x:Name="ReadmeView" Visibility="Collapsed"/>
+                                        <StackPanel x:Name="ReadmeMessage" Spacing="10" Visibility="Collapsed">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="ReadmeMessageText" FontSize="13" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="ReadmeFallback" FontSize="14" TextWrapping="Wrap" LineHeight="22"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed"/>
+                                            <Button x:Name="ReadmeRetryButton" Content="重试" l:Uids.Uid="Plugins_Retry" Click="ReadmeRetry_Click" HorizontalAlignment="Left"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <TextBlock Text="详细信息" l:Uids.Uid="Plugins_DetailsSection" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Style="{StaticResource FluentCardStyle}" Padding="20">
+                                    <StackPanel x:Name="DetailFacts" Spacing="10"/>
+                                </Border>
+
+                                <InfoBar x:Name="DetailStatus" IsOpen="False" IsClosable="True" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" x:Name="DetailSidebar" Width="300" Spacing="14">
+                                <TextBlock Text="开源地址" l:Uids.Uid="Plugins_OpenSource" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Style="{StaticResource FluentCardStyle}" Padding="12">
+                                    <StackPanel x:Name="DetailLinks" Spacing="2"/>
+                                </Border>
+
+                                <TextBlock Text="安全提示" l:Uids.Uid="Plugins_Security" Style="{StaticResource DetailSectionHeader}"/>
+                                <Border Style="{StaticResource FluentCardStyle}" Padding="20">
+                                    <StackPanel Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE72E;" FontSize="18" Foreground="{ThemeResource SystemFillColorCautionBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="插件以工具箱权限运行" l:Uids.Uid="Plugins_SecurityTitle" FontSize="14" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <TextBlock Text="插件会以工具箱的权限执行代码。请仅安装你信任的作者发布的插件。" l:Uids.Uid="Plugins_Trust"
+                                                   FontSize="13" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

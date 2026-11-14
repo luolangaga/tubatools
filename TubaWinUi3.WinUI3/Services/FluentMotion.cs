@@ -8,13 +8,15 @@ namespace TubaWinUi3.Services;
 /// <summary>仅动画视觉层，不触发布局；遵循系统动画设置。</summary>
 internal static class FluentMotion
 {
+    private static readonly UISettings UiSettings = new();
+
     public static void AnimateIcon(FrameworkElement element, bool hovered, bool celebrate = false)
     {
         var visual = ElementCompositionPreview.GetElementVisual(element);
         visual.CenterPoint = new Vector3((float)element.ActualWidth / 2, (float)element.ActualHeight / 2, 0);
         visual.StopAnimation("Scale");
         visual.StopAnimation("RotationAngleInDegrees");
-        if (!new UISettings().AnimationsEnabled)
+        if (!UiSettings.AnimationsEnabled)
         {
             visual.Scale = Vector3.One;
             visual.RotationAngleInDegrees = 0;

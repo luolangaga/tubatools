@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.AiXamlCard</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>给 AI 助手增加原生 XAML 卡片：助手直接写 WinUI 界面并动态编译 C# 代码后置，卡片作为一条消息出现在对话里。</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'Arm64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X86'">win-x86</RuntimeIdentifier>
+    <TubaHostDir Condition="'$(TubaHostDir)' == ''">..\..\TubaWinUi3.WinUI3\bin\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)</TubaHostDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TubaWinUi3.Tests" />
+    <InternalsVisibleTo Include="Tubatools.AiXamlCard.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <!-- 仅编译期引用宿主，运行时由工具箱提供；用来定位 AI 助手页并把卡片挂进消息流。 -->
+    <Reference Include="TubaWinUi3">
+      <HintPath>$(TubaHostDir)\TubaWinUi3.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="assets\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Pack="true" PackagePath="assets/" />
+    <None Include="scripts\**\*" Pack="true" PackagePath="scripts/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+
+  <Target Name="CollectPluginDependencies" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_PluginDependency Include="$(OutputPath)*.dll"
+          Exclude="$(OutputPath)$(AssemblyName).dll;$(OutputPath)TubaWinUi3.dll;$(OutputPath)TubaWinUi3.PluginSdk.dll;$(OutputPath)Microsoft.WinUI.dll;$(OutputPath)Microsoft.ui.xaml.dll;$(OutputPath)Microsoft.Windows.SDK.NET.dll;$(OutputPath)Microsoft.Web.WebView2*.dll;$(OutputPath)WinRT.Runtime.dll;$(OutputPath)*.resources.dll" />
+      <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -8,10 +8,14 @@ internal sealed partial class PluginHostServices
 {
     public T? GetService<T>() where T : class
     {
-        object? service = typeof(T) == typeof(IPluginServices) ? this : typeof(T) == typeof(IPluginBackgroundService) ? new BackgroundFacade(this) :
-            typeof(T) == typeof(IPluginNavigationService) ? new NavigationFacade(this) : typeof(T) == typeof(IPluginHostInfoService) ? new InfoFacade() :
-            typeof(T) == typeof(IPluginDiagnosticsService) ? new DiagnosticsFacade() :
-            typeof(T) == typeof(IPluginHostAccess) && fullTrust ? new HostAccessFacade(this) : null;
+        // 能力清单决定暴露哪些服务：未声明的一律返回 null（插件会看到「宿主不支持」），
+        // fullTrust 与「没有清单」的老插件照旧全部可用。
+        object? service = typeof(T) == typeof(IPluginServices) ? this
+            : typeof(T) == typeof(IPluginBackgroundService) && Allowed(PluginCapabilities.Background) ? new BackgroundFacade(this)
+            : typeof(T) == typeof(IPluginNavigationService) && Allowed(PluginCapabilities.Navigation) ? new NavigationFacade(this)
+            : typeof(T) == typeof(IPluginHostInfoService) ? new InfoFacade()
+            : typeof(T) == typeof(IPluginDiagnosticsService) && Allowed(PluginCapabilities.Diagnostics) ? new DiagnosticsFacade()
+            : typeof(T) == typeof(IPluginHostAccess) && fullTrust ? new HostAccessFacade(this) : null;
         return service as T;
     }
     private sealed class BackgroundFacade(PluginHostServices host) : IPluginBackgroundService

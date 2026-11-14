@@ -76,11 +76,83 @@ public static class PluginManager
             var installed = GetInstalled();
             try { CleanupUnused(installed); }
             catch (Exception ex) { Errors["storage"] = ex.Message; }
+            if (PluginSafeMode.IsActive)
+            {
+                // 安全模式：完全跳过加载，让用户能在没有插件干扰的情况下排查/停用插件。
+                LogFailure("safe-mode", "安全模式已开启，跳过 " + installed.Count(p => p.Enabled) + " 个已启用插件", null);
+                return;
+            }
+            ClearDisabledFailureRecords(installed);
             foreach (var plugin in installed.Where(p => p.Enabled))
                 try { Load(plugin); }
-                catch (Exception ex) { Errors[plugin.Id] = ex.Message; }
+                catch (Exception ex) { HandleLoadFailure(plugin, ex); }
         }
         catch (Exception ex) { Errors["storage"] = ex.Message; }
+    }
+
+    /// <summary>
+    /// 安全模式：记录一次加载失败，连续失败达到阈值就自动停用该插件。
+    /// <paramref name="gateHeld"/> 表示调用方已持有 <see cref="Gate"/>（SemaphoreSlim 不可重入，
+    /// 再 Wait 会死锁）。
+    /// </summary>
+    private static void HandleLoadFailure(InstalledPlugin plugin, Exception ex, bool gateHeld = false)
+    {
+        Errors[plugin.Id] = ex.Message;
+        LogFailure(plugin.Id, "加载失败", ex);
+        if (!PluginFailureStore.RecordLoadFailure(plugin.Id, plugin.Version, ex.Message)) return;
+
+        AutoDisable(plugin.Id, gateHeld);
+        var message = string.Format(
+            LocalizationService.L("PluginUi_AutoDisabled", "已连续 {0} 次加载失败，已自动停用；可在「插件 → 已安装」中重新启用。"), PluginFailureStore.AutoDisableAfter);
+        Errors[plugin.Id] = ex.Message + "\n" + message;
+        LogFailure(plugin.Id, message, null);
+    }
+
+    /// <summary>把自动停用的结果写回安装记录。调用方已持锁时不得再次等待（SemaphoreSlim 不可重入）。</summary>
+    private static void AutoDisable(string id, bool gateHeld = false)
+    {
+        var acquired = gateHeld;
+        try
+        {
+            // 本方法可能在 UI 线程的异步回调里执行：有界等待，抢不到就放弃停用
+            // （宁可下次启动再停，也不能把界面卡死）。
+            if (!acquired && !(acquired = Gate.Wait(TimeSpan.FromSeconds(5))))
+            {
+                Errors["storage"] = "插件自动停用未完成：插件管理器正忙，请重启应用。";
+                return;
+            }
+            var records = GetInstalled().ToList();
+            var index = records.FindIndex(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (index < 0 || !records[index].Enabled) return;
+            records[index] = records[index] with { Enabled = false };
+            Save(records);
+            SetPackageVisible(id, false);
+        }
+        catch (Exception ex) { Errors["storage"] = ex.Message; }
+        finally { if (!gateHeld && acquired) Gate.Release(); }
+    }
+
+    /// <summary>已停用的插件没有运行期故障可谈，顺带清掉它的累计失败记录（重新启用时会再清零一次）。</summary>
+    private static void ClearDisabledFailureRecords(IReadOnlyList<InstalledPlugin> installed)
+    {
+        foreach (var plugin in installed.Where(p => !p.Enabled)) PluginFailureStore.Clear(plugin.Id);
+    }
+
+    private static void LogFailure(string id, string what, Exception? ex)
+    {
+        try { LogService.Error(LogService.Plugin, $"{what}：{id}" + (ex is null ? "" : $"\n{ex}")); }
+        catch { }
+    }
+
+    /// <summary>插件工具执行期异常：只计数与留痕，供插件页展示与排障，不触发自动停用。</summary>
+    internal static void RecordExecutionFailure(string packageId, Exception ex)
+    {
+        try
+        {
+            PluginFailureStore.RecordExecutionFailure(packageId, ex.Message);
+            LogFailure(packageId, "工具执行失败", ex);
+        }
+        catch { }
     }
 
     private static readonly object LoadGate = new();
@@ -88,6 +160,8 @@ public static class PluginManager
 
     /// <summary>
     /// 后台加载已安装插件（磁盘 IO + Assembly.Load），主窗口不必等它完成才出首帧。
+    /// 调用方必须保证：<see cref="PluginSafeMode"/> 已经初始化、恢复提示弹窗已经问过
+    /// （<see cref="PluginSafeMode.AskOnUncleanExitAsync"/>）——否则安全模式会被绕过。
     /// 重复调用复用同一个任务；完成后调用方自行刷新导航（Load 内部会把启动钩子编组回 UI）。
     /// </summary>
     public static Task LoadInstalledAsync()
@@ -98,6 +172,10 @@ public static class PluginManager
 
     private static void Load(InstalledPlugin plugin, bool replace = false)
     {
+        // 安全模式的总闸门：不只是「启动时不遍历」，任何进入点（手动启用、安装、
+        // AI 自动加载）都必须被挡住，否则装个插件就把安全模式绕过去了。
+        if (PluginSafeMode.IsActive) throw new InvalidOperationException(
+            LocalizationService.L("PluginUi_SafeModeBlocked", "安全模式已开启，插件不会被加载。请关闭安全模式并重启后再启用插件。"));
         if (!replace && Loaded.ContainsKey(plugin.Id)) return;
         if (replace) StopPlugin(plugin.Id);
         var root = PackageRoot(plugin);
@@ -115,26 +193,53 @@ public static class PluginManager
             BuiltinIconService.ResetCache();
             if (Loaded.TryGetValue(plugin.Id, out var previous)) Retired.Add(previous);
             Loaded[plugin.Id] = context;
-            if (entry is IPluginStartup startup) Startups[plugin.Id] = new(startup, manifest, root);
+            if (entry is IPluginStartup startup) Startups[plugin.Id] = new(startup, manifest, root, plugin.Version);
             else Startups.Remove(plugin.Id);
             Errors.Remove(plugin.Id);
+            PluginFailureStore.Clear(plugin.Id);
             // 插件可能由后台启动加载：启动钩子必须等主窗口内容完成首次加载，
             // 否则主题类插件操作 NavigationView 会因没有视觉父级而抛异常。
-            if (App.MainWindow is { Content: Microsoft.UI.Xaml.FrameworkElement windowRoot } && windowRoot.IsLoaded)
+            // 注意不能在这里直接碰 App.MainWindow.Content：Load 跑在后台线程，
+            // WinUI 对象跨线程访问会抛 RPC_E_WRONG_THREAD (0x8001010E)，
+            // 而这个异常会被外面当成「插件加载失败」，把好插件也记进失败计数。
+            // 后台加载时一律交给主窗口 Loaded 之后的 StartPlugins() 补做。
+            if (IsWindowReadyForPlugins())
                 StartPlugin(plugin.Id);
         }
         catch { context.Unload(); throw; }
     }
 
+    /// <summary>
+    /// 主窗口是否已经可以承载插件的启动钩子（内容已完成首次加载）。
+    /// 只能从 UI 线程调用：WinUI 的 Window.Content 是单线程亲和对象。
+    /// </summary>
+    private static bool IsWindowReadyForPlugins()
+    {
+        var window = App.MainWindow;
+        if (window is null || !window.DispatcherQueue.HasThreadAccess) return false;
+        return window.Content is Microsoft.UI.Xaml.FrameworkElement root && root.IsLoaded;
+    }
+
     /// <summary>主窗口创建后调用：启动所有已加载插件的可选启动钩子。</summary>
     public static void StartPlugins()
     {
-        if (App.MainWindow is not { Content: Microsoft.UI.Xaml.FrameworkElement windowRoot } || !windowRoot.IsLoaded) return;
+        if (PluginSafeMode.IsActive) return;
+        // App.MainWindow?.Content 只能在 UI 线程读；调用方（App）分布在两个线程上，
+        // 因此这里统一把「能否开始」的判断交给 UI 线程执行。
+        var window = App.MainWindow;
+        if (window is null) return;
+        if (!window.DispatcherQueue.HasThreadAccess)
+        {
+            window.DispatcherQueue.TryEnqueue(StartPlugins);
+            return;
+        }
+        if (window.Content is not Microsoft.UI.Xaml.FrameworkElement windowRoot || !windowRoot.IsLoaded) return;
         foreach (var id in Startups.Keys.ToList()) StartPlugin(id);
     }
 
     private static void StartPlugin(string id)
     {
+        if (PluginSafeMode.IsActive) return;
         if (!Startups.TryGetValue(id, out var registration) || Started.Contains(id)) return;
         if (App.MainWindow is not { } window) return;
         void Run()
@@ -142,19 +247,33 @@ public static class PluginManager
             if (!Started.Add(id)) return;
             try
             {
-                var services = new PluginHostServices(id, "", registration.PackageRoot, window.DispatcherQueue, () => null, _ => { }, registration.Manifest.FullTrust);
+                var services = new PluginHostServices(id, "", registration.PackageRoot, window.DispatcherQueue, () => null, _ => { },
+                    registration.Manifest.FullTrust, registration.Manifest.Permissions);
                 var hostAccess = registration.Manifest.FullTrust ? services.GetService<IPluginHostAccess>() : null;
                 var task = registration.Entry.StartupAsync(new StartupContext(services, hostAccess), CancellationToken.None);
-                if (!task.IsCompletedSuccessfully) _ = ObserveAsync(task.AsTask(), id);
+                if (!task.IsCompletedSuccessfully) _ = ObserveAsync(task.AsTask(), id, registration.Version);
             }
             catch (Exception ex)
             {
-                Errors[id] = ex.Message;
                 Started.Remove(id);
+                ReportStartupFailure(id, registration.Version, ex);
             }
         }
         if (window.DispatcherQueue.HasThreadAccess) Run();
         else window.DispatcherQueue.TryEnqueue(Run);
+    }
+
+    /// <summary>启动钩子失败按「加载失败」处理：坏钩子会让每次启动都异常，连续失败应自动停用。</summary>
+    private static void ReportStartupFailure(string id, string version, Exception ex)
+    {
+        Errors[id] = ex.Message;
+        LogFailure(id, "启动钩子失败", ex);
+        if (!PluginFailureStore.RecordLoadFailure(id, version, ex.Message)) return;
+        AutoDisable(id);
+        var message = string.Format(
+            LocalizationService.L("PluginUi_AutoDisabled", "已连续 {0} 次加载失败，已自动停用；可在「插件 → 已安装」中重新启用。"), PluginFailureStore.AutoDisableAfter);
+        Errors[id] = ex.Message + "\n" + message;
+        LogFailure(id, message, null);
     }
 
     private static void StopPlugin(string id)
@@ -174,13 +293,17 @@ public static class PluginManager
         else Run();
     }
 
-    private static async Task ObserveAsync(Task task, string id)
+    private static async Task ObserveAsync(Task task, string id, string? version = null)
     {
         try { await task; }
-        catch (Exception ex) { Errors[id] = ex.Message; }
+        catch (Exception ex)
+        {
+            if (version is null) Errors[id] = ex.Message;
+            else ReportStartupFailure(id, version, ex);
+        }
     }
 
-    private sealed record StartupRegistration(IPluginStartup Entry, PluginManifest Manifest, string PackageRoot);
+    private sealed record StartupRegistration(IPluginStartup Entry, PluginManifest Manifest, string PackageRoot, string Version = "");
 
     private sealed class StartupContext(PluginHostServices services, IPluginHostAccess? hostAccess) : IPluginStartupContext
     {
@@ -214,11 +337,15 @@ public static class PluginManager
             var updated = installed.Where(p => !p.Id.Equals(package.Id, StringComparison.OrdinalIgnoreCase)).Append(record).ToList();
             Save(updated);
             SetPackageVisible(record.Id, true);
-            try { Load(record, replace: true); }
-            catch
+            // 安全模式下允许安装（文件落盘、下次正常启动生效），只是不加载代码。
+            if (!PluginSafeMode.IsActive)
             {
-                Save(installed);
-                throw;
+                try { Load(record, replace: true); }
+                catch
+                {
+                    Save(installed);
+                    throw;
+                }
             }
             ToolCatalog.OnToolsChanged();
             App.MainWindow?.RefreshToolCategories();
@@ -314,8 +441,14 @@ public static class PluginManager
         installed.Add(record);
         Save(installed);
         SetPackageVisible(record.Id, true);
-        try { Load(record); }
-        catch (Exception ex) { Errors[record.Id] = ex.Message; }
+        // 安装成功后清掉旧版本的失败计数：换了代码就该重新计数。
+        PluginFailureStore.Clear(record.Id);
+        // 安全模式下只落盘、不加载（Load 的总闸门也会拒绝，这里提前判断以免误报错误）。
+        if (!PluginSafeMode.IsActive)
+        {
+            try { Load(record); }
+            catch (Exception ex) { HandleLoadFailure(record, ex, gateHeld: true); }
+        }
         RefreshToolLists();
     }
 
@@ -359,10 +492,14 @@ public static class PluginManager
             if (record is { Enabled: true })
             {
                 SetPackageVisible(record.Id, true);
+                // 用户手动启用即视为「再给它一次机会」：清掉累计失败次数，否则下一次
+                // 单独一次偶发失败就会立刻又触发自动停用。
+                PluginFailureStore.Clear(record.Id);
+                Errors.Remove(record.Id);
                 if (!IsLoaded(record.Id))
                 {
                     try { Load(record); }
-                    catch (Exception ex) { Errors[record.Id] = ex.Message; }
+                    catch (Exception ex) { HandleLoadFailure(record, ex, gateHeld: true); }
                 }
                 StartPlugin(record.Id);
             }
@@ -429,7 +566,8 @@ public static class PluginManager
             }
             PluginToolRules.Validate(tool, xaml);
             var icon = tool.IconPath.Length > 0 ? tool.IconPath : manifest.Icon;
-            _pending.Add(new PluginXamlTool(packageId, tool, icon.Length > 0 ? PluginPackageRules.ResolveIcon(packageRoot, icon) : null, xaml, packageRoot, manifest.FullTrust));
+            _pending.Add(new PluginXamlTool(packageId, tool, icon.Length > 0 ? PluginPackageRules.ResolveIcon(packageRoot, icon) : null,
+                xaml, packageRoot, manifest.FullTrust, manifest.Permissions));
         }
         public void Commit()
         {

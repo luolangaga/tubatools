@@ -70,13 +70,20 @@ public static class NuGetPluginSource
         return value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
     }
 
-    internal static async Task DownloadAsync(PluginPackage package, string destination, CancellationToken ct)
+    /// <summary>平容器（flatcontainer）里的包地址：安装下载和未安装预览共用。</summary>
+    internal static async Task<string> PackageContentUrlAsync(string id, string version, CancellationToken ct)
     {
         var endpoints = await EndpointsAsync(ct);
-        var id = PluginPackageRules.Segment(package.Id);
-        var version = PluginPackageRules.Segment(package.Version);
+        var segmentId = PluginPackageRules.Segment(id);
+        var segmentVersion = PluginPackageRules.Segment(version);
+        return $"{endpoints.Content.TrimEnd('/')}/{segmentId}/{segmentVersion}/{segmentId}.{segmentVersion}.nupkg";
+    }
+
+    internal static async Task DownloadAsync(PluginPackage package, string destination, CancellationToken ct)
+    {
+        var url = await PackageContentUrlAsync(package.Id, package.Version, ct);
         using var http = ProxyService.CreateClient(TimeSpan.FromMinutes(3));
-        using var response = await http.GetAsync($"{endpoints.Content.TrimEnd('/')}/{id}/{version}/{id}.{version}.nupkg", HttpCompletionOption.ResponseHeadersRead, ct);
+        using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentLength > 100 * 1024 * 1024) throw new IOException("插件包超过 100 MB。");
         await using var source = await response.Content.ReadAsStreamAsync(ct);
@@ -88,7 +95,7 @@ public static class NuGetPluginSource
         {
             total += count;
             if (total > 100 * 1024 * 1024) throw new IOException("插件包超过 100 MB。");
-            await target.WriteAsync(buffer.AsMemory(0, count), ct);
+            await target.WriteAsync(buffer.AsMemory(0, count));
         }
     }
 }

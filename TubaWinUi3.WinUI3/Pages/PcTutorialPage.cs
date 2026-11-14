@@ -1245,7 +1245,7 @@ public sealed partial class PcTutorialPage : Page
 
     #region Action Links
 
-    private void OnActionLinkClick(object sender, RoutedEventArgs e)
+    private async void OnActionLinkClick(object sender, RoutedEventArgs e)
     {
         if (sender is not Button and not HyperlinkButton) return;
         var btn = (FrameworkElement)sender;
@@ -1255,10 +1255,10 @@ public sealed partial class PcTutorialPage : Page
             switch (link.Action)
             {
                 case "launch_tool":
-                    LaunchToolByName(link.Target);
+                    await LaunchToolByName(link.Target);
                     break;
                 case "launch_exe":
-                    LaunchToolByExeName(link.Target);
+                    await LaunchToolByExeName(link.Target);
                     break;
                 case "launch_builtin":
                     var builtin = BuiltinToolRegistry.GetById(link.Target);
@@ -1307,9 +1307,9 @@ public sealed partial class PcTutorialPage : Page
         });
     }
 
-    private static void LaunchToolByName(string name)
+    private static async Task LaunchToolByName(string name)
     {
-        var allTools = ToolCatalog.GetAllToolsCached();
+        var allTools = await ToolCatalog.GetAllToolsAsync();
         var tool = allTools.FirstOrDefault(t => t.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
         if (tool is null)
             tool = allTools.FirstOrDefault(t => t.Name.Contains(name, StringComparison.CurrentCultureIgnoreCase));
@@ -1328,7 +1328,7 @@ public sealed partial class PcTutorialPage : Page
         }
     }
 
-    private static void LaunchToolByExeName(string exePartialName)
+    private static async Task LaunchToolByExeName(string exePartialName)
     {
         if (exePartialName.Equals("FurMark", StringComparison.OrdinalIgnoreCase))
         {
@@ -1339,7 +1339,7 @@ public sealed partial class PcTutorialPage : Page
                 return;
             }
         }
-        var allTools = ToolCatalog.GetAllToolsCached();
+        var allTools = await ToolCatalog.GetAllToolsAsync();
         var tool = allTools.FirstOrDefault(t =>
         {
             var p = t.EffectivePath;

@@ -6,7 +6,8 @@ namespace TubaWinUi3.Services.Plugins;
 public sealed record PluginPackage(string Id, string Version, string Description, string Authors,
     long TotalDownloads = 0, string IconUrl = "");
 public sealed record PluginManifest(int ApiVersion, string Assembly, string EntryType,
-    string Name = "", string Description = "", string Author = "", string Website = "", string Icon = "", bool FullTrust = false);
+    string Name = "", string Description = "", string Author = "", string Website = "", string Icon = "", bool FullTrust = false,
+    IReadOnlyList<string>? Permissions = null);
 public sealed record InstalledPlugin(string Id, string Version, bool Enabled = true);
 
 internal static class PluginPackageRules
@@ -40,6 +41,9 @@ internal static class PluginPackageRules
         if (manifest.Website.Length > 0 && (!Uri.TryCreate(manifest.Website, UriKind.Absolute, out var website) || website.Scheme is not ("https" or "http")))
             throw new InvalidDataException("插件主页必须是 HTTP/HTTPS 地址。");
         if (manifest.Icon.Length > 0) ResolveIcon(root, manifest.Icon);
+        // 能力名必须在白名单里：未知名字既不能静默忽略（作者以为声明生效了），
+        // 也不能静默放行（拼错的权限名会变成提权）。
+        PluginCapabilities.Validate(manifest.Permissions);
         return manifest;
     }
 

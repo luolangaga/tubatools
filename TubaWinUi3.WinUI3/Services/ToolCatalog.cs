@@ -232,11 +232,12 @@ public static class ToolCatalog
         if (Directory.Exists(categoryRoot))
         {
             var toolDirs = Directory.GetDirectories(categoryRoot).Where(d => !userDirectories.Contains(d)).ToList();
-            var merged = MergeArchDirectories(toolDirs);
+            var groups = MergeArchGroups(toolDirs);
 
             // 并行扫描各工具目录（递归枚举 + FileVersionInfo 是主要 I/O 开销）
-            Parallel.ForEach(merged, toolDir =>
+            Parallel.ForEach(groups, group =>
             {
+                var toolDir = group.Primary;
                 if (userDirectories.Contains(toolDir)) return;
                 var dirKey = Path.GetFileName(toolDir).Replace(" ", "").Replace("-", "").Replace("_", "");
                 if (declaredDirKeys.Contains(dirKey))
@@ -253,7 +254,7 @@ public static class ToolCatalog
                 if (launchable is not null && !IsCataloguedToolDir(toolDir, launchables))
                     return;
 
-                items.Add(CreateToolItemWithVariants(category, categoryRoot, launchable ?? CreatePlaceholderPath(toolDir), toolDir, launchables));
+                items.Add(CreateToolItemWithVariants(category, categoryRoot, launchable ?? CreatePlaceholderPath(toolDir), toolDir, launchables, group.Siblings));
             });
         }
 
@@ -351,31 +352,36 @@ public static class ToolCatalog
         return ordered;
     }
 
-    private static List<string> MergeArchDirectories(List<string> toolDirs)
+    private sealed record ArchGroup(string Primary, IReadOnlyList<string> Siblings);
+
+    private static List<ArchGroup> MergeArchGroups(List<string> toolDirs)
     {
         var dirNames = toolDirs.Select(d => Path.GetFileName(d)!).ToList();
-        var consumed = new HashSet<int>();
-        var result = new List<string>();
+        var consumed = new bool[toolDirs.Count];
+        var result = new List<ArchGroup>(toolDirs.Count);
 
         for (var i = 0; i < toolDirs.Count; i++)
         {
-            if (consumed.Contains(i))
+            if (consumed[i])
                 continue;
 
             var strippedI = StripArchSuffix(dirNames[i]);
-            result.Add(toolDirs[i]);
+            List<string>? siblings = null;
 
             for (var j = i + 1; j < toolDirs.Count; j++)
             {
-                if (consumed.Contains(j))
+                if (consumed[j])
                     continue;
 
-                var strippedJ = StripArchSuffix(dirNames[j]);
-                if (strippedI.Equals(strippedJ, StringComparison.OrdinalIgnoreCase))
+                if (strippedI.Equals(StripArchSuffix(dirNames[j]), StringComparison.OrdinalIgnoreCase))
                 {
-                    consumed.Add(j);
+                    consumed[j] = true;
+                    if (siblings is null) siblings = [];
+                    siblings.Add(toolDirs[j]);
                 }
             }
+
+            result.Add(new ArchGroup(toolDirs[i], siblings ?? []));
         }
 
         return result;
@@ -573,7 +579,7 @@ public static class ToolCatalog
     }
 
     private static ToolItem CreateToolItemWithVariants(string category, string categoryRoot, string path, string toolDir,
-        IReadOnlyList<string>? launchables = null)
+        IReadOnlyList<string>? launchables = null, IReadOnlyList<string>? siblingDirs = null)
     {
         var extension = Path.GetExtension(path);
         var rawFileName = GetDisplayName(path);
@@ -591,20 +597,17 @@ public static class ToolCatalog
         var name = hasArchVariants ? dirName : rawFileName;
 
         var categoryRootDir = categoryRoot;
-        if (ToolMetadataService.FindJsonMetadataByDir(toolDir)?.Directory is null && Directory.Exists(categoryRootDir))
+        // 同架构家族的其余目录由 MergeArchGroups 一并传出，这里只解析各自的主程序。
+        // 旧实现为了拿回这些目录，对每个工具条目都重新枚举一遍整个分类目录（O(项目数 × 目录数)）。
+        if (siblingDirs is { Count: > 0 })
         {
-            var strippedDir = StripArchSuffix(dirName);
-            foreach (var otherDir in Directory.GetDirectories(categoryRootDir))
+            foreach (var otherDir in siblingDirs)
             {
-                var otherName = Path.GetFileName(otherDir)!;
-                if (otherName.Equals(dirName, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                var strippedOther = StripArchSuffix(otherName);
-                if (!strippedOther.Equals(strippedDir, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 var otherLaunchable = FindPrimaryLaunchable(otherDir);
                 if (otherLaunchable is null)
+                    continue;
+
+                if (alternates.Any(a => a.Path.Equals(otherLaunchable, StringComparison.OrdinalIgnoreCase)))
                     continue;
 
                 var otherFileName = Path.GetFileNameWithoutExtension(otherLaunchable);

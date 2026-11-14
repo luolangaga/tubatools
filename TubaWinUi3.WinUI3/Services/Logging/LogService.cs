@@ -59,12 +59,13 @@ public static class LogService
     public const string Backend = "backend";
     public const string RogueCleaner = "rogue-cleaner";
     public const string PhoneLink = "phone-link";
+    public const string Plugin = "plugin";
 
     /// <summary>已知类别，决定运行日志页的顺序。</summary>
     public static IReadOnlyList<string> KnownCategories { get; } =
     [
         App, Startup, Crash, Agent, GameTunnel, GameOverlay, StressTest,
-        Backend, RogueCleaner, Clipboard, PhoneLink
+        Backend, RogueCleaner, Clipboard, PhoneLink, Plugin
     ];
 
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
@@ -500,6 +501,7 @@ public static class LogService
         Backend => LocalizationService.L("Log_File_backend", "主动拦截后端"),
         RogueCleaner => LocalizationService.L("Log_File_rogue-cleaner", "流氓软件清理"),
         PhoneLink => LocalizationService.L("Log_File_phone-link", "连接手机"),
+        Plugin => LocalizationService.L("Log_File_plugin", "插件"),
         _ => category
     };
 

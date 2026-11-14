@@ -16,10 +16,11 @@
         <StackPanel Spacing="16" Padding="0,4,0,0">
 
             <TextBlock
+                x:Name="LocationSectionHeader"
                 Style="{StaticResource SectionHeaderStyle}"
                 Text="配置存储位置" />
 
-            <Border Style="{StaticResource FluentCardStyle}">
+            <Border x:Name="LocationCard" Style="{StaticResource FluentCardStyle}">
                 <StackPanel Spacing="12">
                     <RadioButton
                         x:Name="AppDataRadio"
@@ -74,6 +75,14 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
+
+            <TextBlock
+                x:Name="LocationLockedNote"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap"
+                Visibility="Collapsed"
+                Text="MSIX 版本的配置存储位置固定为应用数据目录，不支持修改；旧版本修改过的位置会在启动时自动迁回。" />
 
             <TextBlock
                 Style="{StaticResource SectionHeaderStyle}"

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PackageId>Tubatools.FaultyPlugin</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>CommandCode</Authors>
+    <Description>图吧工具箱插件系统的故障注入测试插件（仅用于验证安全模式与故障隔离，勿发布）</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../TubaWinUi3.PluginSdk/TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <None Include="assets/icon.svg" Pack="true" PackagePath="assets/" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="$(OutputPath)FaultyPlugin.dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)FaultyPlugin.deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+</Project>

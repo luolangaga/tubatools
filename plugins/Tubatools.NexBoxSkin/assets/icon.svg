@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="body" x1="20" y1="22" x2="108" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0.000" stop-color="#8DE5E0"/>
+      <stop offset="0.520" stop-color="#38C1C5"/>
+      <stop offset="1.000" stop-color="#2D6CDF"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="34" y1="40" x2="94" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0.000" stop-color="#102A3C"/>
+      <stop offset="1.000" stop-color="#1C4B6E"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="64" cy="112" rx="42" ry="5" fill="#233B58" opacity="0.12"/>
+  <rect x="16" y="28" width="96" height="70" rx="24" fill="url(#body)"/>
+  <rect x="26" y="38" width="76" height="50" rx="17" fill="url(#screen)"/>
+  <path d="M46 62h12M52 56v12" stroke="#EAFBFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="82" cy="58" r="4" fill="#EAFBFF"/>
+  <circle cx="92" cy="68" r="4" fill="#B9FFF7"/>
+  <path d="M34 88c9 7 18 10 30 10s21-3 30-10" stroke="#B9FFF7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

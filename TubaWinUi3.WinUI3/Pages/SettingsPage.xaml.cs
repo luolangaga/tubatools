@@ -27,6 +27,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private bool _isCheckingUpdate;
     private bool _isCheckingToolsBundle;
     private bool _compactModeInitializing;
+    private bool _homeHeroInitializing;
     private bool _navLayoutInitializing;
     private bool _rememberWindowInitializing;
     private bool _closeToTrayInitializing;
@@ -110,6 +111,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private static readonly Dictionary<string, string> SettingKeyToExpander = new(StringComparer.OrdinalIgnoreCase)
     {
         ["CompactMode"] = "AppearanceExpander",
+        ["HomeHero"] = "AppearanceExpander",
         ["NavLayoutMode"] = "AppearanceExpander",
         ["DefaultPage"] = "GeneralExpander",
         ["FastMode"] = "GeneralExpander",
@@ -143,6 +145,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private static readonly Dictionary<string, string> SettingKeyToCardName = new(StringComparer.OrdinalIgnoreCase)
     {
         ["CompactMode"] = "SettingsCompactModeCard",
+        ["HomeHero"] = "SettingsHomeHeroCard",
         ["NavLayoutMode"] = "SettingsNavLayoutCard",
         ["DefaultPage"] = "SettingsDefaultPageCard",
         ["FastMode"] = "SettingsFastModeCard",
@@ -188,6 +191,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         AboutVersionText.Text = version is not null ? $"{version.Major}.{version.Minor}.{version.Build}" : "1.0.0";
         _ = LoadAppIconAsync();
         InitCompactModeToggle();
+        InitHomeHeroToggle();
         InitNavLayoutComboBox();
         InitDefaultPageComboBox();
         InitActiveInterceptToggle();
@@ -380,6 +384,19 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (_compactModeInitializing) return;
         CompactModeService.SetCompactModeEnabled(CompactModeToggle.IsOn);
+    }
+
+    private void InitHomeHeroToggle()
+    {
+        _homeHeroInitializing = true;
+        HomeHeroToggle.IsOn = !AppSettings.GetBool(HomeDashboardContent.HideHeroSettingsKey);
+        _homeHeroInitializing = false;
+    }
+
+    private void HomeHeroToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_homeHeroInitializing) return;
+        AppSettings.Set(HomeDashboardContent.HideHeroSettingsKey, !HomeHeroToggle.IsOn);
     }
 
     private void InitNavLayoutComboBox()

@@ -14,6 +14,7 @@ public static class UnifiedSearchService
         new("Search_SettingHardwareStyle", "硬件信息界面样式", "Search_SettingHardwareStyleDesc", "切换经典列表与硬件全景部件标注", "\uE7F8", "HardwareDiagramStyle"),
         new("Search_SettingTheme", "应用主题", "Search_SettingThemeDesc", "选择浅色、深色或跟随系统", "\uE790", "Theme"),
         new("Search_SettingCompact", "简洁列表模式", "Search_SettingCompactDesc", "原版图吧工具箱的样式", "\uE8FD", "CompactMode"),
+        new("Search_SettingHomeHero", "首页大卡片", "Search_SettingHomeHeroDesc", "显示或隐藏首页顶部的欢迎横幅大图", "\uE91B", "HomeHero"),
         new("Search_SettingBrandLogo", "显示品牌 Logo", "Search_SettingBrandLogoDesc", "在硬件信息页面显示品牌图标", "\uE8F1", "BrandLogo"),
         new("Search_SettingDefaultPage", "默认启动页面", "Search_SettingDefaultPageDesc", "选择应用启动后默认打开的页面", "\uE8A5", "DefaultPage"),
         new("Search_SettingFastMode", "低配模式", "Search_SettingFastModeDesc", "禁用动画与启动预加载，降低老电脑资源占用", "\uEB3F", "FastMode"),

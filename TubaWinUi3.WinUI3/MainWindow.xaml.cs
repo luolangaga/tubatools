@@ -140,6 +140,7 @@ public sealed partial class MainWindow : Window
         AppSettings.SaveFailed += OnPersistenceFailed;
 
         ApplyNavigationIcons();
+        InitializeAiAssistantIntro();
         NavView.ActualThemeChanged += NavigationThemeChanged;
         NavView.Loaded += PluginNavigationLoaded;
         Activated += NavigationWindowActivated;
@@ -235,6 +236,12 @@ public sealed partial class MainWindow : Window
         // NavigationView 内建「设置」项文本由框架按系统语言渲染，必须手动覆写为目标语言
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
             settingsItem.Content = LocalizationService.L("MainWindow_NavSettings", "设置");
+
+        // 安全模式横幅的文案与按钮都是代码赋值，语言切换后要重建
+        ApplySafeModeBanner();
+
+        // AI 助手上线引导与其他代码赋值文案一样，语言切换后重取一次
+        ConfigureAiAssistantIntroTip();
     }
 
     private async Task InitializeAfterSplashAsync()
@@ -265,6 +272,9 @@ public sealed partial class MainWindow : Window
             NavigateToDefaultPage();
 
         await FadeOutSplashAsync();
+
+        // 启动画面退场后再弹上线引导，避免和 Splash/首次向导抢焦点
+        _ = MaybeShowAiAssistantIntroAsync();
     }
 
     private async Task FadeOutSplashAsync()
@@ -329,6 +339,11 @@ public sealed partial class MainWindow : Window
     private void NavFrame_Navigated(object sender, NavigationEventArgs e)
     {
         AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
+
+        // 只要真的打开过 AI 助手（侧栏、内置工具、搜索结果、外部激活都走同一条 Frame），
+        // 就算用户已经发现这个入口，收起侧栏角标并结束引导。
+        if (e.SourcePageType == typeof(AiAssistantPage))
+            OnAiAssistantVisited();
 
         if (_navFromSidebar)
         {
@@ -563,6 +578,10 @@ public sealed partial class MainWindow : Window
 
         // 单实例：停激活监听、释放互斥体（让提权重启的新实例能立即接管）、删 PID 文件
         try { SingleInstanceService.Shutdown(); } catch { }
+
+        // 走到这里＝走完了正常退出流程：记下「干净退出」，下次启动不再询问是否进安全模式。
+        // 必须放在清理末尾——前面任何一步崩溃都应该算「没干净退出」。
+        try { Services.Plugins.PluginSafeMode.MarkCleanExit(); } catch { }
 
         // 通知退出兜底看门狗「清理已跑完」：它据此决定何时可以硬退，
         // 避免 3 秒硬超时砍在清理中途（FPS 的 ETW 会话会因此泄漏）
@@ -991,6 +1010,10 @@ public sealed partial class MainWindow : Window
 
     public void NavigateToToolPage(Type pageType, object? parameter = null)
     {
+        // AI 助手也可能在独立窗口里打开（内置工具入口），同样算用户已经发现该入口
+        if (pageType == typeof(AiAssistantPage))
+            OnAiAssistantVisited();
+
         // 设置"独立窗口"模式，或处于 AI 助手强制独立窗口作用域时，内置工具在新窗口的 Frame 中打开
         if (BuiltinToolWindow.ForceWindowMode || AppSettings.GetBool("BuiltinToolsOpenInWindow", false))
         {
@@ -1283,11 +1306,11 @@ public sealed partial class MainWindow : Window
         _syncingNavSelection = false;
     }
 
-    private void LaunchSearchTool(string toolPath)
+    private async void LaunchSearchTool(string toolPath)
     {
         try
         {
-            var tools = ToolCatalog.GetAllToolsCached();
+            var tools = await ToolCatalog.GetAllToolsAsync();
             var tool = tools.FirstOrDefault(t => t.Path.Equals(toolPath, StringComparison.OrdinalIgnoreCase));
             if (tool is not null)
             {

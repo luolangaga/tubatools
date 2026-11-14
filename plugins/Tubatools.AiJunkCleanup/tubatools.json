@@ -1,0 +1,11 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.AiJunkCleanup.dll",
+  "entryType": "Tubatools.AiJunkCleanup.AiJunkCleanupPlugin",
+  "name": "AI 垃圾清理",
+  "description": "给 AI 助手增加「垃圾清理」模式：AI 只读扫描并给出带原因和风险的清单，由你逐项确认后才会删除。",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg",
+  "fullTrust": true
+}

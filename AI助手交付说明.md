@@ -2,7 +2,7 @@
 
 ## 使用方式
 
-侧边栏或内置工具打开「AI 助手」。插件页的「AI 开发」新建独立会话并填入开发提示，保留已有任务与草稿。首次点击「准备 AI 组件」按系统架构下载组件，过程中显示「正在安装AI组件」与进度；工作区菜单提供组件准备、重新安装和打开工作区。切换会话或暂时离开页面不会停止任务；关闭宿主窗口或主动停止才取消执行。会话保存在本地，重新启动可查看历史；未发送草稿及未提交卡片保留在本次应用进程内。
+侧边栏或内置工具打开「AI 助手」。插件页的「AI 开发」新建独立会话并填入开发提示，保留已有任务与草稿。首次点击「准备 AI 组件」优先从自建 GitCode 镜像下载组件包并解压，过程中显示「正在安装AI组件」与进度；镜像不可用时自动回退官方源并提示「镜像不可用，正在从官方源下载AI组件」。工作区菜单提供组件准备、重新安装和打开工作区。切换会话或暂时离开页面不会停止任务；关闭宿主窗口或主动停止才取消执行。会话保存在本地，重新启动可查看历史；未发送草稿及未提交卡片保留在本次应用进程内。
 
 模型列表实时来自组件，不硬编码模型 ID。首次优先选择输入、输出各计费档位均为零的免费模型，并优先选择发布时间较新的条目；手动选择会记忆。没有标价明确的免费模型时保持未选，不擅自选择收费模型。免费模型的可用性和额度由服务方决定，可选择其他模型重试。组件目前使用独立配置，不导入用户其他客户端的账号和凭据。
 
@@ -35,7 +35,7 @@ MSIX 继续隐藏插件侧边栏，自动加载器与加载服务均拒绝执行
 - `Pages/AiAssistantPage.xaml(.cs)`、`.Run.cs`、`.Sessions.cs`：原生助手界面、每会话任务与时间线、历史和右键菜单。
 - `Services/AiAgent/AgentPermissionPolicy.cs`、`AgentHistory.cs`：统一权限策略、历史合并与 Markdown 导出。
 - `Services/AiAgent/AgentClient.cs`：OpenCode V2 HTTP API 适配，仅连接应用启动的专用本机回环服务，使用随机端口与随机密码。不会修改、连接或停止用户其他客户端的共享服务。
-- `Services/AiAgent/AiComponentService.cs`：下载用户指定的官方 x64/ARM64 ZIP，限制大小、仅提取入口可执行文件、临时目录安装。最新下载地址可变化；当前未做固定版本哈希签名校验，不应将此称为沙箱或可信代码验证。
+- `Services/AiAgent/AiComponentService.cs`：优先下载自建 GitCode 镜像（tubatoolr release 12 的 `opencode.zip`，包内只有一个 x64 `opencode.exe`，ARM64 走 x64 模拟），失败自动回退 opencode.ai 官方 x64/ARM64 ZIP；两条来源共用大小限制、仅提取入口可执行文件、临时目录安装。当前未做固定版本哈希签名校验，不应将此称为沙箱或可信代码验证。
 - `Assets/AiAgent/tuba-plugin/SKILL.md`：随应用分发，导入到工作区 `.opencode/skills/tuba-plugin/`，名称和必需字段已经技能验证器检查。
 - `Controls/AgentQuestionCard.cs` 与 `Services/AiAgent/AgentQuestion.cs`：原生询问卡片、字段解析与回答校验。
 - `Services/AiAgent/AgentPersona.cs`：统一助手提示词与技能自动触发规则；会话统一使用 `tuba` 配置。
@@ -174,3 +174,13 @@ API v2 的原生返回导航已验证：离开页面后重新返回，配置可�
 `ComputerUseTests` 覆盖：工作区注册的是宿主桥接命令与环境变量、官方 `computer-use.exe mcp` 的真实初始化与 `AX`/`GUI` 工具清单、非法参数在桌面访问前被拒绝、桥接在宿主确认提示前拒绝调用并在停止后返回 `USER_STOPPED_COMPUTER_CONTROL`，以及两种桌面工具的时间线标签与目标摘要。
 
 回归记录：`ComputerUseTests`、`AgentCliTests`、`AgentSessionListTests` 共 26 项通过；x64 Debug 主项目构建 0 错误。隔离 WinUI 原生实测确认统一裁切的操作提示、右上角进度卡片及点击穿透流光均可见；通过 UI Automation 点击卡片「停止」后，控制租约撤销且所有覆盖层关闭。复现脚本为 `artifacts/computer-overlay-smoke.ps1`。这些检查没有连接模型、读取用户工具窗口或修改系统设置。
+
+## 组件下载来源调整（2026-11-14）
+
+AI 组件改为「自建 GitCode 镜像优先、官方源兜底」两段式安装：
+
+- 首选 `https://gitcode.com/luolangaga/tubatoolr/releases/download/12/opencode.zip`（与 OfficeCLI 同一个 tubatoolr release 12），包内只有一个 `opencode.exe`，解压后落到 `<DataDir>/AiAssistant/Component/opencode.exe`。
+- 镜像失败（网络异常、404、包损坏或超限）自动改用 `opencode.ai/update/api/latest/cli/opencode/opencode-windows-{x64|arm64}.zip`；界面提示「镜像不可用，正在从官方源下载AI组件」（`Agent_InstallingFallback`）。每次尝试独立使用临时目录，失败即清理，不留下半个组件。
+- GitCode 链接只对 GET 有效：HEAD 返回 401（WAF），GET 302 → `file-cdn.gitcode.com` 200，因此不做 HEAD 预检，直接 GET 并以 `EnsureSuccessStatusCode` 判定。
+
+实测：包内 1 个条目 `opencode.exe`（265,672,584 字节，PE machine `0x8664` = x64），压缩包 124,743,411 字节；.NET `HttpClient` 跟随重定向拿到 200 与 Content-Length（进度百分比可用）；解压后在临时 XDG 目录运行 `opencode.exe --version`，返回 `opencode v2.2.7`。

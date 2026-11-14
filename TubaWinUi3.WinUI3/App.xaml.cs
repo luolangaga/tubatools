@@ -57,6 +57,10 @@ public partial class App : Application
         // LiveCharts/SkiaSharp 不再于启动时初始化：首个图表页面首次访问时才配置（ChartInitializer）。
         // LiveCharts.Configure 在 App() 中已移除，启动不再加载 SkiaSharp 原生库。
 
+        // MSIX 版本不支持修改配置存储位置：旧版本改过的标记必须在读取设置前收回默认目录，
+        // 否则本进程会继续从旧位置加载配置，界面里又看不到切换入口。
+        ConfigManager.EnsurePackagedDefaultLocation();
+
         AppSettings.Load();
 
         // 匿名遥测（在线用户统计 + 错误日志）：默认开启，可在设置中关闭。
@@ -491,11 +495,18 @@ public partial class App : Application
             return;
         }
 
-        // 插件加载是磁盘 IO + Assembly.Load：后台开始，主窗口不必等它完成才出首帧。
-        var pluginLoad = Services.Plugins.PluginManager.LoadInstalledAsync();
+        // 插件安全模式：命令行/上次选择一次性判定，并记下「本次尚未干净退出」。
+        // 必须早于任何插件加载；恢复提示弹窗要等主窗口出来（没有 XamlRoot 弹不了），
+        // 因此真正的加载在下面创建窗口、问过用户之后才开始。
+        Services.Plugins.PluginSafeMode.Initialize(cmdLine);
+
         _window = new MainWindow();
         Services.AgentCli.AgentQueryBroker.StartForMainInstance();
         _window.Activate();
+
+        // 上次异常退出 → 在加载任何插件之前询问是否以安全模式启动。
+        // 这一步必须在 UI 线程上等弹窗结果，所以加载被拆成「窗口可用后才开始」。
+        var pluginLoad = StartPluginLoadingAsync();
         // 插件启动钩子必须等主窗口完成首次加载：NavigationView 等控件在 Activate 前
         // 还没有视觉父级，主题类插件移动/重排控件会抛异常（表现为启动不生效、停用再启用才生效）。
         if (_window.Content is FrameworkElement pluginRoot)
@@ -585,6 +596,22 @@ public partial class App : Application
         _ = CompletePluginLoadingAsync(pluginLoad, intentNeedsPlugins ? intent : null);
 
         _ = RunStartupSequenceAsync();
+    }
+
+    /// <summary>
+    /// 插件加载入口：先等主窗口内容 Loaded（弹窗需要 XamlRoot），再在异常退出时询问是否
+    /// 以安全模式启动，最后才真正开始异步加载。返回的任务在加载结束后完成，
+    /// <see cref="CompletePluginLoadingAsync"/> 依赖它来决定何时刷新导航。
+    /// </summary>
+    private async Task StartPluginLoadingAsync()
+    {
+        var root = await WaitForContentXamlRootAsync();
+        var safeMode = false;
+        try { safeMode = await Services.Plugins.PluginSafeMode.AskOnUncleanExitAsync(root?.XamlRoot); }
+        catch { }
+        if (safeMode) _window?.DispatcherQueue.TryEnqueue(() => _window?.RefreshToolCategories());
+        try { await Services.Plugins.PluginManager.LoadInstalledAsync(); }
+        catch { }
     }
 
     /// <summary>
@@ -755,7 +782,10 @@ public partial class App : Application
         // 主窗口没建起来也要留住进程：错误窗口提供复制/打包/重开，是用户唯一能求助的入口
         try
         {
-            new Pages.ErrorWindow().Activate();
+            var errorWindow = new Pages.ErrorWindow();
+            _errorWindowOpen = true;
+            errorWindow.Closed += (_, _) => _errorWindowOpen = false;
+            errorWindow.Activate();
             return;
         }
         catch (Exception fallbackEx)
@@ -873,6 +903,49 @@ public partial class App : Application
         catch (Exception ex)
         {
             Debug.WriteLine($"[App] Application.Exit 失败（已忽略）: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 重启自身（安全模式切换、配置目录切换等）。
+    /// <list type="bullet">
+    /// <item>必须带 <see cref="LaunchIntent.TakeoverArg"/>：新进程启动时旧实例还在跑，
+    /// 不带的话会被单实例闸门当成重复启动转发掉，「重启」变成什么都没发生。</item>
+    /// <item>打包版优先用执行别名启动，保留包身份（直接起安装目录里的 exe 会丢身份）。</item>
+    /// </list>
+    /// 返回 true 表示已拉起新进程并开始退出本进程。
+    /// </summary>
+    internal static bool TryRestart(params string[] extraArgs)
+    {
+        try
+        {
+            var exePath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(exePath)) return false;
+
+            var target = exePath;
+            if (RuntimeHelper.IsMsixPackaged)
+            {
+                var alias = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Microsoft", "WindowsApps", FileLockShellMenuContract.ExecutionAlias);
+                if (File.Exists(alias)) target = alias;
+            }
+
+            var arguments = string.Join(" ", extraArgs.Append(LaunchIntent.TakeoverArg)
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
+
+            Process.Start(new ProcessStartInfo(target)
+            {
+                Arguments = arguments,
+                UseShellExecute = true
+            });
+            RequestExit();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[App] 重启失败: {ex.Message}");
+            return false;
         }
     }
 
@@ -1010,6 +1083,10 @@ public partial class App : Application
             if (wizardShown)
                 AppSettings.Set("SetupCompleted", true);
         }
+
+        // 首次向导是模态弹窗，会盖住侧栏引导；向导关闭后再补一次展示机会
+        // （已看过/离线/已进过 AI 助手页时由方法内部自行跳过）
+        _ = MainWindow?.MaybeShowAiAssistantIntroAsync();
 
         if (RuntimeHelper.IsPackagedContext)
         {
@@ -1249,6 +1326,8 @@ public partial class App : Application
     }
 
     private static Exception? _pendingException;
+    private static bool _errorWindowOpen;
+    private static bool _errorWindowQueued;
 
     /// <summary>
     /// 已知的 AI 助手面板（FieldCure ChatPanel）销毁竞态：面板已从界面移除、本轮回复作废，
@@ -1329,7 +1408,10 @@ public partial class App : Application
 
         if (IsIgnorableAiPanelTeardownRace(e.Exception)) return;
 
-        _pendingException = e.Exception ?? new Exception(e.Message);
+        _pendingException = e.Exception ?? new Exception(
+            string.IsNullOrWhiteSpace(e.Message)
+                ? "XAML 原生层未提供异常对象与消息（可能为 stowed exception / fail-fast）"
+                : e.Message);
         NavigateToErrorPage();
     }
 
@@ -1342,11 +1424,43 @@ public partial class App : Application
 
     private void NavigateToErrorPage()
     {
-        _window?.DispatcherQueue.TryEnqueue(() =>
+        // 一次未处理异常往往会在紧接着的多个 DispatcherTimer / 布局回调里重复出现。
+        // 这里合并成单个错误窗口，避免几十个 ErrorWindow 同时构建把 UI 线程彻底压死。
+        if (_errorWindowQueued || _errorWindowOpen) return;
+
+        var window = _window;
+        if (window is null) return;
+
+        _errorWindowQueued = true;
+        var enqueued = window.DispatcherQueue.TryEnqueue(() =>
         {
-            var errorWindow = new Pages.ErrorWindow();
-            errorWindow.Activate();
+            _errorWindowQueued = false;
+            if (_errorWindowOpen) return;
+
+            try
+            {
+                var errorWindow = new Pages.ErrorWindow();
+                _errorWindowOpen = true;
+                errorWindow.Closed += (_, _) => _errorWindowOpen = false;
+                errorWindow.Activate();
+            }
+            catch (Exception ex)
+            {
+                _errorWindowOpen = false;
+                Debug.WriteLine($"[ErrorWindow] 错误窗口创建失败: {ex}");
+                // XAML 已经不可用时退回 Win32 消息框，至少让用户拿到异常与日志位置。
+                try
+                {
+                    MessageBoxW(IntPtr.Zero,
+                        $"图吧工具箱遇到未处理异常：\n\n{ex.GetType().Name}: {ex.Message}\n\n" +
+                        $"诊断日志：{LogService.PathFor(LogService.Crash)}",
+                        "图吧工具箱CE - 错误报告",
+                        MB_OK | MB_ICONERROR);
+                }
+                catch { }
+            }
         });
+        if (!enqueued) _errorWindowQueued = false;
     }
 
     private const int SW_MINIMIZE = 6;

@@ -8,18 +8,65 @@ public static class FavoritesService
     public static string? LastSaveError { get; private set; }
     public static event Action<string>? SaveFailed;
 
+    // 收藏文件会被 TUI/其它前端改写，所以每次取用仍按「路径 + 写入时间 + 长度」校验一次；
+    // 命中快照直接复用，避免扫描期为每个工具都开一次命名互斥体并把 JSON 解析两遍。
+    private static readonly object _snapshotGate = new();
+    private static string? _snapshotPath;
+    private static DateTime _snapshotStamp;
+    private static long _snapshotLength = long.MinValue;
+    private static string[] _snapshot = [];
+    private static HashSet<string> _snapshotSet = new(StringComparer.OrdinalIgnoreCase);
+
     public static IReadOnlyList<string> GetFavorites()
     {
-        try { return FavoriteFile.Read(FavoritesPath).Select(PathResolver.MakeAbsolute).ToArray(); }
+        var path = FavoritesPath;
+        try
+        {
+            var info = new FileInfo(path);
+            var exists = info.Exists;
+            var stamp = exists ? info.LastWriteTimeUtc : DateTime.MinValue;
+            var length = exists ? info.Length : -1;
+
+            lock (_snapshotGate)
+            {
+                if (_snapshotPath == path && _snapshotStamp == stamp && _snapshotLength == length)
+                    return _snapshot;
+            }
+
+            var entries = exists
+                ? FavoriteFile.Read(path).Select(PathResolver.MakeAbsolute).ToArray()
+                : [];
+
+            lock (_snapshotGate)
+            {
+                _snapshotPath = path;
+                _snapshotStamp = stamp;
+                _snapshotLength = length;
+                _snapshot = entries;
+                _snapshotSet = new HashSet<string>(entries, StringComparer.OrdinalIgnoreCase);
+            }
+            return entries;
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         { System.Diagnostics.Debug.WriteLine($"[Favorites] {ex.Message}"); return []; }
     }
-    public static bool IsFavorite(string path) => GetFavorites().Contains(path, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>路径是否在收藏里。只查内存快照，文件状态由 GetFavorites 一次 stat 校验。</summary>
+    public static bool IsFavorite(string path)
+    {
+        GetFavorites();
+        lock (_snapshotGate) return _snapshotSet.Contains(path);
+    }
     private static bool Matches(string stored, string path) => string.Equals(PathResolver.MakeAbsolute(stored), path, StringComparison.OrdinalIgnoreCase);
 
     private static void Update(Func<List<string>, List<string>> change)
     {
-        try { FavoriteFile.Update(FavoritesPath, change); LastSaveError = null; }
+        try
+        {
+            FavoriteFile.Update(FavoritesPath, change);
+            LastSaveError = null;
+            InvalidateCache();
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
             LastSaveError = LocalizationService.L("Persistence_FavoritesError", "收藏保存失败，请检查数据目录权限和剩余空间后重试。");
@@ -43,5 +90,16 @@ public static class FavoritesService
         Update(list => ordered.Select(PathResolver.MakeRelative).Concat(list.Where(p =>
             !ordered.Any(path => Matches(p, path)))).ToList());
     }
-    public static void InvalidateCache() { } // Reads always use the current shared file.
+    /// <summary>丢弃内存快照（数据目录切换、收藏写入后调用）。下次读取会重新校验文件状态。</summary>
+    public static void InvalidateCache()
+    {
+        lock (_snapshotGate)
+        {
+            _snapshotPath = null;
+            _snapshotStamp = default;
+            _snapshotLength = long.MinValue;
+            _snapshot = [];
+            _snapshotSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
 }

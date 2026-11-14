@@ -1,0 +1,11 @@
+{
+  "apiVersion": 2,
+  "fullTrust": true,
+  "assembly": "plugin/Tubatools.NexBoxSkin.dll",
+  "entryType": "Tubatools.NexBoxSkin.NexBoxSkinPlugin",
+  "name": "NexBox 皮肤",
+  "description": "NexBox 风格主界面皮肤：工具、硬件、优化、显示滤镜与三角洲专区；默认开启，可在设置中关闭",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

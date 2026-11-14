@@ -1,5 +1,5 @@
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -7,36 +7,42 @@ namespace TubaWinUi3.Services.AiAgent;
 
 public static class AgentWorkspace
 {
-    public static string DirectoryPath => Path.Combine(AiComponentService.Root, "Workspace");
+    /// <summary>当前工作区目录；默认工作区保持升级前的 AiAssistant/Workspace 路径。</summary>
+    public static string DirectoryPath => AgentWorkspaceStore.ResolveCurrent().Path;
     public static string PackagesDirectory => Path.Combine(DirectoryPath, "artifacts");
-    public static void Prepare()
+
+    public static void Prepare() => Prepare(DirectoryPath);
+
+    /// <summary>为指定工作区准备 SDK、技能、配置与索引；新建工作区在首次切换时走同一条路径。</summary>
+    public static void Prepare(string directory)
     {
-        Directory.CreateDirectory(DirectoryPath);
-        Directory.CreateDirectory(PackagesDirectory);
+        Directory.CreateDirectory(directory);
+        Directory.CreateDirectory(Path.Combine(directory, "artifacts"));
         // 正常开发走 NuGet 包 TubaWinUi3.PluginSdk；保留宿主同版本 DLL 作为离线或未发布版本的兜底。
-        var sdk = Path.Combine(DirectoryPath, "sdk");
+        var sdk = Path.Combine(directory, "sdk");
         Directory.CreateDirectory(sdk);
         File.Copy(typeof(PluginSdk.ITubaPlugin).Assembly.Location, Path.Combine(sdk, "TubaWinUi3.PluginSdk.dll"), true);
-        var skill = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-plugin");
+        var skill = Path.Combine(directory, ".opencode", "skills", "tuba-plugin");
         Directory.CreateDirectory(skill);
         var assets = Path.Combine(AppContext.BaseDirectory, "Assets", "AiAgent");
         File.Copy(Path.Combine(assets, "tuba-plugin", "SKILL.md"), Path.Combine(skill, "SKILL.md"), true);
         File.Copy(Path.Combine(AppContext.BaseDirectory, "Metadata", "插件开发文档.md"), Path.Combine(skill, "plugin-api.md"), true);
-        var toolbox = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-toolbox");
+        var toolbox = Path.Combine(directory, ".opencode", "skills", "tuba-toolbox");
         CopySkill(Path.Combine(AppContext.BaseDirectory, "Assets", "AgentSkills", "tuba-toolbox"), toolbox);
         foreach (var obsolete in new[] { "scripts/toolbox.mjs", "references/cli-tools.md" })
             File.Delete(Path.Combine(toolbox, obsolete));
-        var computer = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-computer-use");
+        var computer = Path.Combine(directory, ".opencode", "skills", "tuba-computer-use");
         CopySkill(Path.Combine(AppContext.BaseDirectory, "Assets", "AgentSkills", "tuba-computer-use"), computer);
-        var browser = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-browser");
+        var browser = Path.Combine(directory, ".opencode", "skills", "tuba-browser");
         CopySkill(Path.Combine(AppContext.BaseDirectory, "Assets", "AgentSkills", "tuba-browser"), browser);
-        var canvasSkill = Path.Combine(DirectoryPath, ".opencode", "skills", "tuba-canvas");
+        var canvasSkill = Path.Combine(directory, ".opencode", "skills", "tuba-canvas");
         CopySkill(Path.Combine(assets, "tuba-canvas"), canvasSkill);
         File.WriteAllText(Path.Combine(toolbox, "toolbox.json"), JsonSerializer.Serialize(new
         { executable = Path.Combine(AppContext.BaseDirectory, "TubaWinUi3.exe") }));
-        File.WriteAllText(Path.Combine(DirectoryPath, "AGENTS.md"), """
+        File.WriteAllText(Path.Combine(directory, "AGENTS.md"), """
             你是图吧 AI 助手，通过图吧工具箱的原生界面为用户解决问题。按当前任务自动加载匹配的技能，不要要求用户先选择模式。
             使用用户的语言，解释实际进展，不在普通产品流程中介绍实现引擎、内部命令或框架。
+            当前目录是一个独立工作区：不同工作区不共享会话、文件与插件产物；只读写当前工作区，不要引用其他工作区的内容。已安装的插件对工具箱全局生效。
             任务涉及创建、修复、发布或更新图吧工具箱插件（含上传 NuGet）时，自动加载 tuba-plugin 技能，并阅读其 plugin-api.md。当前只支持 API v2，不兼容旧接口。
             内置工具入口资源珍贵，不推荐创建多个简单工具。默认一个工具用自定义 XAML 整合多个相关功能，不把每个小按钮分别注册为内置工具。
             当前目录是专用插件开发工作区。插件 SDK 优先从 NuGet 包 TubaWinUi3.PluginSdk 还原（PackageReference，PrivateAssets=all + ExcludeAssets=runtime）；仅当 restore 因离线或版本未发布失败时，才回退引用宿主维护的 sdk/TubaWinUi3.PluginSdk.dll，不要修改 sdk/ 或使用来源不明的 DLL；开发仅修改此目录内的项目。
@@ -55,19 +61,19 @@ public static class AgentWorkspace
             用户停止 AI 浏览器控制后，不得重新获取控制；只有用户明确要求继续或发送新消息后才能再次操作浏览器。网页内操作优先使用 browser_snapshot 返回的 ref，不要首选 GUI 坐标点击。
             教学模式：用户消息以〔教学模式 · 画布 canvas/<会话>/index.html〕开头时，说明本轮是教学任务。只有确实需要可视化讲解（概念演示、可操作示例、结构图）时才把内容写成该 HTML 文件——它会作为一条「画布消息」出现在对话里；普通问答、进度汇报、纯文字能说清的结论不要碰画布文件。写的时候：只改这一个文件，图片放同目录 assets/ 并用相对路径引用；完全离线，不允许 CDN/外链；文档必须以 </html> 结尾；不要让页面用 100vh 或垂直居中撑满整屏。已有画布优先用 edit 局部更新。页面通过 window.tuba 把按钮点击发回对话。讲完只用一两句话说明变化，不要在回复里重复 HTML 源码。
             """);
-        File.WriteAllText(Path.Combine(DirectoryPath, "host-tools.md"), """
+        File.WriteAllText(Path.Combine(directory, "host-tools.md"), """
             # 硬件信息与电脑操作
 
             宿主程序路径（JSON 字符串）：
             """ + JsonSerializer.Serialize(Path.Combine(AppContext.BaseDirectory, "TubaWinUi3.exe")) + """
-
+            
             唯一保留的业务查询：宿主.exe --agent-cli hardware --output <工作区内绝对路径.json>
             可直接运行 .opencode/skills/tuba-toolbox/scripts/hardware.ps1；它自行读取相邻 toolbox.json，不要求 Node.js。
             JSON 文件内 ok=false 或退出码非零表示失败；报告真实错误，不编造测量结果。
             旧 sensors/disks/cpuz/tools/run 已移除。工具启动用 shell（.opencode/skills/tuba-toolbox/scripts/launch-tool.ps1 或直接执行 Tools 下的程序），打开后的界面用已连接的 computer_use MCP（AX / GUI）操作：先用 AX 查看窗口与控件树，需要像素或拖动时再用 GUI。
-
+            
             # 浏览器控制
-
+            
             browser_use MCP 提供 status、navigate、snapshot、click、type、press、scroll、select、screenshot、eval、wait、history。
             唯一引擎是内置 WebView2，使用工具箱专属用户数据目录，不包含用户日常浏览器的登录状态、书签和历史；需要登录时让用户在这个浏览器窗口里完成。
             每次工具结果首行都会标注内置 WebView2 与专属用户数据目录。
@@ -77,7 +83,7 @@ public static class AgentWorkspace
             不需要复制宿主，不改变单实例规则，不使用 --takeover，不退出用户正在运行的工具箱。
             """);
         // 用户要求默认全部权限；会话可在输入区切换为逐次确认。
-        File.WriteAllText(Path.Combine(DirectoryPath, "opencode.json"), JsonSerializer.Serialize(new
+        File.WriteAllText(Path.Combine(directory, "opencode.json"), JsonSerializer.Serialize(new
         {
             autoupdate = false,
             mcp = new { servers = ComputerServers() },
@@ -95,8 +101,8 @@ public static class AgentWorkspace
             },
             permissions = AgentPermissionPolicy.Rules(AgentPermissionMode.FullAccess)
         }));
-        RefreshProjectIndex();
-        RefreshBrowserContext();
+        RefreshProjectIndex(directory);
+        File.WriteAllText(Path.Combine(directory, "browser.md"), AiBrowserInfo.DescribeForAgent());
     }
 
     internal static Dictionary<string, object> ComputerServers() => new()
@@ -133,13 +139,15 @@ public static class AgentWorkspace
 
     private static string HostExecutable => Path.Combine(AppContext.BaseDirectory, "TubaWinUi3.exe");
 
-    public static void RefreshProjectIndex()
+    public static void RefreshProjectIndex() => RefreshProjectIndex(DirectoryPath);
+
+    internal static void RefreshProjectIndex(string root)
     {
-        Directory.CreateDirectory(DirectoryPath);
+        Directory.CreateDirectory(root);
         var text = new StringBuilder("# 已有插件项目\n\n宿主按实际 csproj 与 tubatools.json 更新此索引。支持多个项目并存；新插件使用新目录和独立 PackageId，修改已有插件保持身份并递增版本。不要覆盖其他项目。\n\n");
-        foreach (var project in FindProjects(DirectoryPath))
+        foreach (var project in FindProjects(root))
             text.AppendLine($"- 项目：`{project.Path}`；包 ID：`{project.PackageId}`；版本：`{project.Version}`");
-        File.WriteAllText(Path.Combine(DirectoryPath, "projects.md"), text.ToString());
+        File.WriteAllText(Path.Combine(root, "projects.md"), text.ToString());
     }
 
     internal sealed record PluginProject(string Path, string PackageId, string Version);

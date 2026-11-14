@@ -1,0 +1,12 @@
+{
+  "apiVersion": 2,
+  "fullTrust": true,
+  "permissions": ["background", "appearance", "navigation"],
+  "assembly": "plugin/Tubatools.CapybaraLulu.dll",
+  "entryType": "Tubatools.CapybaraLulu.CapybaraPlugin",
+  "name": "水豚噜噜美化包",
+  "description": "柔和动态背景、侧栏页脚小伙伴、角落陪伴与硬件信息页卡片美化，不修改主程序",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.png"
+}

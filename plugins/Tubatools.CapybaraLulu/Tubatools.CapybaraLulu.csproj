@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.CapybaraLulu</PackageId>
+    <Version>1.3.0</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>水豚噜噜美化包：柔和动态背景、侧栏页脚小伙伴、标题栏小噜、角落陪伴与细节设置，全部在一键开关内</Description>
+    <PackageTags>Tubatools;theme;skin;capybara</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <!-- 仅编译引用 WinUI/WinAppSDK；运行时由宿主提供，禁止把框架 DLL 打进插件包。 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="assets\**\*" />
+    <Content Remove="assets\**\*" />
+    <PRIResource Remove="assets\**\*" />
+    <None Remove="assets\**\*" />
+    <None Remove="tools\**\*" />
+    <Compile Remove="tools\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Pack="true" PackagePath="assets/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+</Project>

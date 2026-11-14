@@ -1,0 +1,11 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.AiXamlCard.dll",
+  "entryType": "Tubatools.AiXamlCard.XamlCardPlugin",
+  "name": "AI 界面卡片",
+  "description": "让 AI 助手直接写原生 WinUI 界面，并动态编译 C# 代码后置：卡片作为一条消息出现在对话里。",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg",
+  "fullTrust": true
+}

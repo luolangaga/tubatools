@@ -132,11 +132,23 @@ public sealed class AgentProtocolTests
     }
 
     [Fact]
-    public void InstallAssets_FollowOsArchitecture()
+    public void InstallAssets_PreferMirrorThenOfficialFallback()
     {
-        Assert.EndsWith("opencode-windows-x64.zip", AiComponentService.DownloadUrl(Architecture.X64));
-        Assert.EndsWith("opencode-windows-arm64.zip", AiComponentService.DownloadUrl(Architecture.Arm64));
-        Assert.Throws<PlatformNotSupportedException>(() => AiComponentService.DownloadUrl(Architecture.X86));
+        Assert.Equal("https://gitcode.com/luolangaga/tubatoolr/releases/download/12/opencode.zip", AiComponentService.MirrorUrl);
+        Assert.EndsWith("opencode-windows-x64.zip", AiComponentService.OfficialUrl(Architecture.X64));
+        Assert.EndsWith("opencode-windows-arm64.zip", AiComponentService.OfficialUrl(Architecture.Arm64));
+        Assert.Throws<PlatformNotSupportedException>(() => AiComponentService.OfficialUrl(Architecture.X86));
+
+        foreach (var architecture in new[] { Architecture.X64, Architecture.Arm64 })
+        {
+            var sources = AiComponentService.DownloadSources(architecture);
+            Assert.Equal(2, sources.Count);
+            Assert.Equal(AiComponentService.MirrorUrl, sources[0]);
+            Assert.Equal(AiComponentService.OfficialUrl(architecture), sources[1]);
+        }
+
+        // x86 既跑不了镜像里的 x64 包，也没有官方包，必须在下载前就拒绝。
+        Assert.Throws<PlatformNotSupportedException>(() => AiComponentService.DownloadSources(Architecture.X86));
     }
 
     [Theory]

@@ -432,6 +432,12 @@
   <data name="Search_SettingCompactDesc" xml:space="preserve">
     <value>原版图吧工具箱的样式</value>
   </data>
+  <data name="Search_SettingHomeHero" xml:space="preserve">
+    <value>首页大卡片</value>
+  </data>
+  <data name="Search_SettingHomeHeroDesc" xml:space="preserve">
+    <value>显示或隐藏首页顶部的欢迎横幅大图</value>
+  </data>
   <data name="Search_SettingBrandLogo" xml:space="preserve">
     <value>显示品牌 Logo</value>
   </data>
@@ -765,6 +771,12 @@
   </data>
   <data name="Settings_Compact_Title.Text" xml:space="preserve">
     <value>简洁列表模式</value>
+  </data>
+  <data name="Settings_HomeHero_Title.Text" xml:space="preserve">
+    <value>显示首页大卡片</value>
+  </data>
+  <data name="Settings_HomeHero_Desc.Text" xml:space="preserve">
+    <value>关闭后首页不再显示顶部欢迎横幅大图，直接从工具卡片开始</value>
   </data>
   <data name="Settings_ConfigManager_Button.Text" xml:space="preserve">
     <value>管理</value>
@@ -5311,6 +5323,24 @@ else then stroke=#888888 visible=true
   <data name="Log_File_backend" xml:space="preserve"><value>主动拦截后端</value></data>
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>流氓软件清理</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>连接手机</value></data>
+  <data name="Log_File_plugin" xml:space="preserve"><value>插件</value></data>
+  <data name="SafeMode_Title" xml:space="preserve"><value>插件安全模式</value></data>
+  <data name="SafeMode_ReasonManual" xml:space="preserve"><value>本次启动已跳过全部已安装插件。</value></data>
+  <data name="SafeMode_ReasonAuto" xml:space="preserve"><value>最近几次启动都没能正常完成，已自动跳过全部已安装插件。若工具箱现在一切正常，说明问题来自插件。</value></data>
+  <data name="SafeMode_EnablePlugins" xml:space="preserve"><value>恢复插件并重启</value></data>
+  <data name="SafeMode_RestartFailed" xml:space="preserve"><value>安全模式已关闭，但自动重启失败。请手动关闭并重新打开工具箱，插件会在下次启动时恢复。</value></data>
+  <data name="Plugins_SafeModeRestart" xml:space="preserve"><value>以安全模式重启</value></data>
+  <data name="Plugins_SafeModeTitle" xml:space="preserve"><value>插件安全模式</value></data>
+  <data name="Plugins_SafeModeOffHint" xml:space="preserve"><value>插件与主程序同权限运行。若怀疑某个插件导致启动异常或界面卡死，可以跳过全部插件启动，逐个排查。</value></data>
+  <data name="Plugins_SafeModeOnAuto" xml:space="preserve"><value>最近几次启动都没能正常完成，本次已自动跳过全部插件。若工具箱现在正常，问题大概率来自插件；点上方的按钮可恢复插件并重启。</value></data>
+  <data name="Plugins_SafeModeOnManual" xml:space="preserve"><value>本次启动已跳过全部已安装插件。排查完成后关闭安全模式并重启即可恢复。</value></data>
+  <data name="Plugins_SafeModeExit" xml:space="preserve"><value>关闭安全模式并重启</value></data>
+  <data name="Plugins_SafeModeRestartFailed" xml:space="preserve"><value>设置已保存，但自动重启失败，请手动重开工具箱。</value></data>
+  <data name="Plugins_SkippedBySafeMode" xml:space="preserve"><value>安全模式下本次未加载，关闭安全模式并重启后恢复。</value></data>
+  <data name="Plugins_FailureLoad" xml:space="preserve"><value>加载失败 {0} 次</value></data>
+  <data name="Plugins_FailureExecution" xml:space="preserve"><value>运行报错 {0} 次</value></data>
+  <data name="PluginUi_AutoDisabled" xml:space="preserve"><value>已连续 {0} 次加载失败，已自动停用；可在「插件 → 已安装」中重新启用。</value></data>
+  <data name="PluginUi_SafeModeBlocked" xml:space="preserve"><value>安全模式已开启，插件不会被加载。请关闭安全模式并重启后再启用插件。</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>查看日志</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>赞助</value></data>
   <data name="Settings_StarRequest.Text" xml:space="preserve"><value>如果你喜欢我们的项目可以在Github/GitCode给我们一个Star！</value></data>
@@ -5359,6 +5389,43 @@ else then stroke=#888888 visible=true
   <data name="Builtin_plugins_Desc" xml:space="preserve"><value>从 NuGet 发现、安装和管理图吧工具箱插件。</value></data>
   <data name="Plugins_Title.Text" xml:space="preserve"><value>插件</value></data>
   <data name="Plugins_Source.Text" xml:space="preserve"><value>来自 nuget.org · Tubatools</value></data>
+  <data name="Plugins_StoreEyebrow.Text" xml:space="preserve"><value>插件商店</value></data>
+  <data name="Plugins_StoreHeadline.Text" xml:space="preserve"><value>为工具箱添上新能力</value></data>
+  <data name="Plugins_StoreSubtitle.Text" xml:space="preserve"><value>发现由社区打造的界面、工具与皮肤，一键安装。</value></data>
+  <data name="Plugins_TabDiscover.Content" xml:space="preserve"><value>发现</value></data>
+  <data name="Plugins_TabInstalled.Content" xml:space="preserve"><value>已安装</value></data>
+  <data name="Plugins_AllPlugins" xml:space="preserve"><value>全部插件</value></data>
+  <data name="Plugins_SearchResults" xml:space="preserve"><value>搜索结果</value></data>
+  <data name="Plugins_CountFormat" xml:space="preserve"><value>{0} 个</value></data>
+  <data name="Plugins_ShownFormat" xml:space="preserve"><value>已显示 {0} 个</value></data>
+  <data name="Plugins_HeroPluginCount" xml:space="preserve"><value>共 {0} 个插件</value></data>
+  <data name="Plugins_HeroInstalledCount" xml:space="preserve"><value>已安装 {0} 个</value></data>
+  <data name="Plugins_NoResults.Text" xml:space="preserve"><value>未找到插件</value></data>
+  <data name="Plugins_Retry.Content" xml:space="preserve"><value>重试</value></data>
+  <data name="Plugins_LoadMore.Text" xml:space="preserve"><value>加载更多</value></data>
+  <data name="Plugins_InstalledSection.Text" xml:space="preserve"><value>已安装</value></data>
+  <data name="Plugins_CommunityTag.Text" xml:space="preserve"><value>社区插件</value></data>
+  <data name="Plugins_About.Text" xml:space="preserve"><value>说明</value></data>
+  <data name="Plugins_DetailsSection.Text" xml:space="preserve"><value>详细信息</value></data>
+  <data name="Plugins_OpenSource.Text" xml:space="preserve"><value>开源地址</value></data>
+  <data name="Plugins_Security.Text" xml:space="preserve"><value>安全提示</value></data>
+  <data name="Plugins_SecurityTitle.Text" xml:space="preserve"><value>插件以工具箱权限运行</value></data>
+  <data name="Plugins_DetailBreadcrumb" xml:space="preserve"><value>插件</value></data>
+  <data name="Plugins_Category" xml:space="preserve"><value>图吧工具箱插件</value></data>
+  <data name="Plugins_ProvidedBy" xml:space="preserve"><value>由 {0} 提供 · 安装位置与更新由 NuGet 管理</value></data>
+  <data name="Plugins_Refresh" xml:space="preserve"><value>刷新</value></data>
+  <data name="Plugins_Back" xml:space="preserve"><value>返回</value></data>
+  <data name="Plugins_UpdateAvailable" xml:space="preserve"><value>可更新</value></data>
+  <data name="Plugins_License" xml:space="preserve"><value>许可证</value></data>
+  <data name="Plugins_Tags" xml:space="preserve"><value>标签</value></data>
+  <data name="Plugins_ProjectHome" xml:space="preserve"><value>项目主页</value></data>
+  <data name="Plugins_SourceCode" xml:space="preserve"><value>源代码</value></data>
+  <data name="Plugins_NoOpenSource" xml:space="preserve"><value>这个插件没有声明开源地址。</value></data>
+  <data name="Plugins_ReadmeError" xml:space="preserve"><value>无法从 NuGet 读取这个插件的说明。</value></data>
+  <data name="Plugins_ReadmeMissing" xml:space="preserve"><value>这个插件没有在包内附带 README。</value></data>
+  <data name="Plugins_Installing" xml:space="preserve"><value>正在安装…</value></data>
+  <data name="Plugins_Trust.Text" xml:space="preserve"><value>插件会以工具箱的权限执行代码。请仅安装你信任的作者发布的插件。</value></data>
+  <data name="Plugins_SafeModeRestart.Content" xml:space="preserve"><value>以安全模式重启</value></data>
   <data name="Plugins_Docs.Content" xml:space="preserve"><value>开发文档</value></data>
   <data name="Plugins_Upload.Content" xml:space="preserve"><value>上传到 NuGet</value></data>
   <data name="Plugins_Search.PlaceholderText" xml:space="preserve"><value>搜索插件</value></data>
@@ -5399,6 +5466,7 @@ else then stroke=#888888 visible=true
   <data name="Agent_Running" xml:space="preserve"><value>进行中</value></data>
   <data name="Agent_Architecture" xml:space="preserve"><value>AI 组件需要 x64 或 ARM64 系统。</value></data>
   <data name="Agent_Installing" xml:space="preserve"><value>正在安装AI组件</value></data>
+  <data name="Agent_InstallingFallback" xml:space="preserve"><value>镜像不可用，正在从官方源下载AI组件</value></data>
   <data name="Agent_ReadyToStart" xml:space="preserve"><value>AI 组件已安装，点击准备以连接。</value></data>
   <data name="Agent_Welcome" xml:space="preserve"><value>首次使用需要安装 AI 组件。模型列表会从组件获取，默认优先使用免费模型。</value></data>
   <data name="Agent_Starting" xml:space="preserve"><value>正在连接 AI 组件……</value></data>
@@ -5431,6 +5499,11 @@ else then stroke=#888888 visible=true
   <data name="Agent_Send.Content" xml:space="preserve"><value>发送</value></data>
   <data name="Agent_Stop.Content" xml:space="preserve"><value>停止</value></data>
   <data name="MainWindow_NavAiAssistant.Content" xml:space="preserve"><value>AI 助手</value></data>
+  <data name="AiIntro_Title" xml:space="preserve"><value>AI 助手正式上线</value></data>
+  <data name="AiIntro_Subtitle" xml:space="preserve"><value>免费 · 开箱即用</value></data>
+  <data name="AiIntro_Body" xml:space="preserve"><value>不只是问答。蓝屏、卡顿、驱动、设置，一句话查到底；降压超频、装软件、改设置，直接上手帮你操作；做作业、操作浏览器、控制电脑，也都接得住。真能动手，把活干完。</value></data>
+  <data name="AiIntro_Action" xml:space="preserve"><value>去试试</value></data>
+  <data name="AiIntro_Close" xml:space="preserve"><value>以后再说</value></data>
   <data name="Markdown_Copy" xml:space="preserve"><value>复制代码</value></data>
   <data name="Agent_DevelopPrompt" xml:space="preserve"><value>帮我开发一个图吧工具箱插件：</value></data>
   <data name="Plugins_Develop.Content" xml:space="preserve"><value>AI 开发</value></data>
@@ -5492,6 +5565,7 @@ else then stroke=#888888 visible=true
   <data name="Plugins_UpdateTitle" xml:space="preserve"><value>更新插件</value></data>
   <data name="Plugins_UpdateFrom" xml:space="preserve"><value>当前版本</value></data>
   <data name="Plugins_VersionLabel" xml:space="preserve"><value>版本</value></data>
+  <data name="Plugins_PackageIdLabel" xml:space="preserve"><value>包 ID</value></data>
   <data name="Plugins_AuthorLabel" xml:space="preserve"><value>作者</value></data>
   <data name="Plugins_DownloadsLabel" xml:space="preserve"><value>下载量</value></data>
   <data name="Plugins_UnknownAuthor" xml:space="preserve"><value>未知</value></data>
@@ -5500,6 +5574,32 @@ else then stroke=#888888 visible=true
   <data name="Plugins_EnabledNotice" xml:space="preserve"><value>已启用，插件工具已恢复。</value></data>
   <data name="Plugins_UninstalledNotice" xml:space="preserve"><value>已卸载，插件工具已从列表移除；重启应用后清理文件。</value></data>
   <data name="Agent_WorkspaceTitle.Text" xml:space="preserve"><value>图吧工作区</value></data>
+  <data name="Agent_NewWorkspace.Text" xml:space="preserve"><value>新建工作区…</value></data>
+  <data name="Agent_SwitchWorkspace.Text" xml:space="preserve"><value>切换工作区</value></data>
+  <data name="Agent_RenameWorkspace.Text" xml:space="preserve"><value>重命名工作区…</value></data>
+  <data name="Agent_NewWorkspace" xml:space="preserve"><value>新建工作区</value></data>
+  <data name="Agent_RenameWorkspace" xml:space="preserve"><value>重命名工作区</value></data>
+  <data name="Agent_DefaultWorkspace" xml:space="preserve"><value>默认工作区</value></data>
+  <data name="Agent_Create" xml:space="preserve"><value>创建</value></data>
+  <data name="Agent_WorkspaceName" xml:space="preserve"><value>工作区名称</value></data>
+  <data name="Agent_WorkspaceNamePlaceholder" xml:space="preserve"><value>例如：网络工具插件</value></data>
+  <data name="Agent_WorkspaceNameEmpty" xml:space="preserve"><value>请输入工作区名称。</value></data>
+  <data name="Agent_WorkspaceNameTooLong" xml:space="preserve"><value>名称最多 {0} 个字符。</value></data>
+  <data name="Agent_WorkspaceNameInvalid" xml:space="preserve"><value>名称不能包含 \ / : * ? " &lt; &gt; | 等字符。</value></data>
+  <data name="Agent_WorkspaceNameDuplicate" xml:space="preserve"><value>已有同名工作区。</value></data>
+  <data name="Agent_WorkspaceFolder" xml:space="preserve"><value>工作区目录</value></data>
+  <data name="Agent_WorkspaceFolderPlaceholder" xml:space="preserve"><value>留空则在数据目录下自动创建</value></data>
+  <data name="Agent_ChooseFolder" xml:space="preserve"><value>选择…</value></data>
+  <data name="Agent_ChooseWorkspaceFolder" xml:space="preserve"><value>选择工作区目录</value></data>
+  <data name="Agent_WorkspaceFolderInvalid" xml:space="preserve"><value>目录无效。请选择普通文件夹，不能是盘符根目录或保留位置。</value></data>
+  <data name="Agent_WorkspaceFolderDuplicate" xml:space="preserve"><value>已有工作区使用这个目录。</value></data>
+  <data name="Agent_WorkspaceFolderOverlap" xml:space="preserve"><value>该目录与现有工作区目录重叠，请选择其他位置。</value></data>
+  <data name="Agent_WorkspaceFolderNotDirectory" xml:space="preserve"><value>所选路径是文件，请选择文件夹。</value></data>
+  <data name="Agent_WorkspaceBusy" xml:space="preserve"><value>请先停止正在运行的任务，再新建或切换工作区。</value></data>
+  <data name="Agent_WorkspaceCreateFailed" xml:space="preserve"><value>无法创建工作区，请检查数据目录权限。</value></data>
+  <data name="Agent_WorkspaceRenameFailed" xml:space="preserve"><value>无法重命名工作区，请检查数据目录权限。</value></data>
+  <data name="Agent_WorkspaceSwitchFailed" xml:space="preserve"><value>无法切换工作区，请检查数据目录权限。</value></data>
+  <data name="Agent_WorkspaceRenamed" xml:space="preserve"><value>已重命名为「{0}」。</value></data>
   <data name="Agent_OpenWorkspace.Text" xml:space="preserve"><value>打开工作区</value></data>
   <data name="Agent_PrepareMenu.Text" xml:space="preserve"><value>准备 AI 组件</value></data>
   <data name="Agent_NewLabel.Text" xml:space="preserve"><value>新建会话</value></data>
@@ -5507,6 +5607,25 @@ else then stroke=#888888 visible=true
   <data name="Agent_Older.Content" xml:space="preserve"><value>显示更早的消息</value></data>
   <data name="Agent_EmptyTitle.Text" xml:space="preserve"><value>从一个任务开始</value></data>
   <data name="Agent_EmptyDescription.Text" xml:space="preserve"><value>直接描述要开发的功能或遇到的电脑问题，助手会按任务自动加载对应技能。</value></data>
+  <data name="Agent_StarterHint.Text" xml:space="preserve"><value>试试这些</value></data>
+  <data name="Agent_StarterStutter" xml:space="preserve"><value>卡顿掉帧排查</value></data>
+  <data name="Agent_StarterStutterPrompt" xml:space="preserve"><value>我的电脑最近卡顿、游戏掉帧，帮我查一下 CPU、GPU、内存和磁盘的占用与温度，找出原因。</value></data>
+  <data name="Agent_StarterThermal" xml:space="preserve"><value>温度功耗体检</value></data>
+  <data name="Agent_StarterThermalPrompt" xml:space="preserve"><value>帮我看看 CPU 和 GPU 当前的温度、频率和功耗是否正常，有没有过热降频。</value></data>
+  <data name="Agent_StarterTuning" xml:space="preserve"><value>降压超频调校</value></data>
+  <data name="Agent_StarterTuningPrompt" xml:space="preserve"><value>帮我给 CPU 降压，顺便看看能不能小超频：先读取当前的电压、功耗墙和散热情况，再给出稳妥的参数建议。</value></data>
+  <data name="Agent_StarterDisk" xml:space="preserve"><value>硬盘健康检测</value></data>
+  <data name="Agent_StarterDiskPrompt" xml:space="preserve"><value>帮我检查所有硬盘的健康状态、SMART 信息和通电时间，看看有没有快要坏掉的盘。</value></data>
+  <data name="Agent_StarterCleanup" xml:space="preserve"><value>磁盘空间清理</value></data>
+  <data name="Agent_StarterCleanupPrompt" xml:space="preserve"><value>帮我分析磁盘空间都被什么占用了，清理垃圾文件和不必要的大文件。</value></data>
+  <data name="Agent_StarterBlueScreen" xml:space="preserve"><value>蓝屏稳定性排查</value></data>
+  <data name="Agent_StarterBlueScreenPrompt" xml:space="preserve"><value>我的电脑最近蓝屏或不太稳定，帮我分析原因，需要的话做一次压力测试确认稳定性。</value></data>
+  <data name="Agent_StarterStartup" xml:space="preserve"><value>开机启动优化</value></data>
+  <data name="Agent_StarterStartupPrompt" xml:space="preserve"><value>帮我检查开机启动项和后台进程，看看哪些可以关掉，让开机和运行更快。</value></data>
+  <data name="Agent_StarterNetwork" xml:space="preserve"><value>网络延迟排查</value></data>
+  <data name="Agent_StarterNetworkPrompt" xml:space="preserve"><value>帮我排查网络延迟和端口占用，看看是不是有程序在后台偷偷占用带宽。</value></data>
+  <data name="Agent_StarterPlugin" xml:space="preserve"><value>开发工具箱插件</value></data>
+  <data name="Agent_StarterPluginPrompt" xml:space="preserve"><value>帮我开发一个图吧工具箱插件：</value></data>
   <data name="Agent_AttachFiles.Text" xml:space="preserve"><value>引用本地文件…</value></data>
   <data name="Agent_ComposerPrompt.PlaceholderText" xml:space="preserve"><value>随便问点什么…</value></data>
   <data name="Agent_FullAccess" xml:space="preserve"><value>全部权限</value></data>

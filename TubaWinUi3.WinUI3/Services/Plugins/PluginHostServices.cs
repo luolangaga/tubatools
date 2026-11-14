@@ -8,11 +8,21 @@ using TubaWinUi3.PluginSdk;
 namespace TubaWinUi3.Services.Plugins;
 
 internal sealed partial class PluginHostServices(string pluginId, string toolId, string packageDirectory, DispatcherQueue dispatcher,
-    Func<XamlRoot?> getRoot, Action<string> report, bool fullTrust = false) : IPluginServices
+    Func<XamlRoot?> getRoot, Action<string> report, bool fullTrust = false, IReadOnlyList<string>? permissions = null) : IPluginServices
 {
     private readonly PluginSettingsStore _store = new(pluginId);
     public string PluginId => pluginId;
     public string PackageDirectory => packageDirectory;
+
+    /// <summary>本插件是否声明了某项能力（fullTrust 恒为 true；无清单时兼容放行）。</summary>
+    internal bool Allowed(string capability) => PluginCapabilities.IsAllowed(permissions, fullTrust, capability);
+
+    /// <summary>能力检查：未声明时抛出可直接展示给插件作者的错误。</summary>
+    private void Require(string capability)
+    {
+        if (!Allowed(capability)) throw PluginCapabilities.Denied(capability);
+    }
+
     public string GetAssetPath(string relativePath)
     {
         var path = PluginPackageRules.ResolveFile(packageDirectory, relativePath);
@@ -24,6 +34,7 @@ internal sealed partial class PluginHostServices(string pluginId, string toolId,
     private static string CatalogId(string path) => "catalog:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())));
     public async Task<IReadOnlyList<PluginToolInfo>> GetToolsAsync(CancellationToken ct = default)
     {
+        Require(PluginCapabilities.Tools);
         ct.ThrowIfCancellationRequested();
         var tools = await ToolCatalog.GetAllToolsAsync(); ct.ThrowIfCancellationRequested();
         return BuiltinToolRegistry.Tools.Select(t => new PluginToolInfo(t.Id, t.Name, t.Category, t.Description, true))
@@ -31,6 +42,8 @@ internal sealed partial class PluginHostServices(string pluginId, string toolId,
     }
     public Task RunToolAsync(string id, CancellationToken ct = default) => OnUi(async () =>
     {
+        // 启动外部工具＝执行任意程序，能力要求比「枚举工具列表」更高。
+        Require(PluginCapabilities.Process);
         if (id.Equals(toolId, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("工具不能递归启动自身。请选择页面中的具体功能。");
         if (BuiltinToolRegistry.Tools.FirstOrDefault(t => t.Id.Equals(id, StringComparison.OrdinalIgnoreCase)) is { } builtin)
         {
@@ -58,6 +71,7 @@ internal sealed partial class PluginHostServices(string pluginId, string toolId,
         NavLayoutModeService.IsTabMode() ? PluginNavigationLayout.Tabs : PluginNavigationLayout.Sidebar, CompactModeService.IsCompactModeEnabled());
     public Task ApplyAppearanceAsync(PluginAppearance appearance, CancellationToken ct = default)
     {
+        Require(PluginCapabilities.Appearance);
         ArgumentNullException.ThrowIfNull(appearance);
         if (!Enum.IsDefined(appearance.Theme) || !Enum.IsDefined(appearance.Navigation)) throw new ArgumentOutOfRangeException(nameof(appearance));
         return OnUi(() =>
@@ -71,23 +85,27 @@ internal sealed partial class PluginHostServices(string pluginId, string toolId,
     }
     public Task OpenUriAsync(Uri uri, CancellationToken ct = default)
     {
+        Require(PluginCapabilities.Uri);
         if (!uri.IsAbsoluteUri || uri.Scheme is not ("https" or "http" or "ms-settings")) throw new ArgumentException("只支持 HTTP、HTTPS 和 ms-settings 链接。");
         return OnUi(async () => { if (!await Windows.System.Launcher.LaunchUriAsync(uri)) throw new IOException("无法打开链接。"); }, ct);
     }
     public Task CopyTextAsync(string text, CancellationToken ct = default) => OnUi(() =>
     {
+        Require(PluginCapabilities.Clipboard);
         var result = ClipboardService.TrySetText(text, flush: true);
         if (!result.Success) throw result.Error ?? new InvalidOperationException("剪贴板正被占用，无法复制。");
         return Task.CompletedTask;
     }, ct);
     public async Task<string?> PickOpenFileAsync(string title, CancellationToken ct = default)
     {
+        Require(PluginCapabilities.Files);
         string? path = null;
         await OnUi(() => { path = Win32Dialogs.PickOpen("所有文件\0*.*\0\0", title); return Task.CompletedTask; }, ct);
         return path;
     }
     public async Task<string?> PickFolderAsync(string title, CancellationToken ct = default)
     {
+        Require(PluginCapabilities.Files);
         string? path = null;
         await OnUi(async () => { path = await Win32Dialogs.PickFolderAsync(title); }, ct);
         return path;

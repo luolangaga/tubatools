@@ -19,6 +19,7 @@ public static class HomeDashboardContent
     public const string LegacySettingsKey = "HomeDashboardLayoutV1";
     public const int MaxCards = 500;
     public const string SelectedTabSettingsKey = "HomeDashboardSelectedTab";
+    public const string HideHeroSettingsKey = "HomeDashboardHideHero";
     public static string ResolveTab(string? requested, string? saved) =>
         (requested ?? saved) == "favorites" ? "favorites" : "all";
     public static List<HomeDashboardCard> Defaults() =>

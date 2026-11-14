@@ -55,6 +55,9 @@ public sealed record LaunchIntent(LaunchIntentKind Kind, string? Arg = null)
     /// <summary>命令行是否带 --takeover（提权重启会话需接管旧实例）。</summary>
     public static bool HasTakeover(IEnumerable<string> args) => Has(args as IReadOnlyList<string> ?? args.ToList(), TakeoverArg);
 
+    /// <summary>命令行是否带某个开关（大小写不敏感，去引号）。供不构成导航意图的开关使用。</summary>
+    public static bool HasSwitch(IEnumerable<string> args, string flag) => Has(args as IReadOnlyList<string> ?? args.ToList(), flag);
+
     private static bool Has(IReadOnlyList<string> args, string flag)
     {
         for (var i = 0; i < args.Count; i++)

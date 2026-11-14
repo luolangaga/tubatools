@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.NexBoxSkin</PackageId>
+    <Version>1.0.1</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>NexBox 风格主界面皮肤：工具、硬件、优化、显示滤镜与三角洲专区；默认开启</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU1510;NU1701;CS8618</NoWarn>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'Arm64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture)' == 'X86'">win-x86</RuntimeIdentifier>
+    <TubaHostDir Condition="'$(TubaHostDir)' == ''">..\..\TubaWinUi3.WinUI3\bin\$(Configuration)\net10.0-windows10.0.26100.0\$(RuntimeIdentifier)</TubaHostDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4022.49" ExcludeAssets="runtime;native" />
+    <Reference Include="TubaWinUi3">
+      <HintPath>$(TubaHostDir)\TubaWinUi3.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="assets\**\*" />
+    <Content Remove="assets\**\*" />
+    <PRIResource Remove="assets\**\*" />
+    <None Remove="assets\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Pack="true" PackagePath="assets/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+
+  <Target Name="CollectPluginDependencies" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_PluginDependency Include="$(OutputPath)*.dll"
+          Exclude="$(OutputPath)$(AssemblyName).dll;$(OutputPath)TubaWinUi3.dll;$(OutputPath)TubaWinUi3.PluginSdk.dll;$(OutputPath)Microsoft.*.dll;$(OutputPath)WinRT.Runtime.dll;$(OutputPath)*.resources.dll" />
+      <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
+    </ItemGroup>
+  </Target>
+</Project>

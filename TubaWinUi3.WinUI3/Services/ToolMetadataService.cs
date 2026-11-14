@@ -30,7 +30,16 @@ public static class ToolMetadataService
 
     public static void InvalidateCache()
     {
-        lock (MetadataGate) _metadata = null;
+        lock (MetadataGate)
+        {
+            _metadata = null;
+            _index = null;
+        }
+        lock (LookupGate)
+        {
+            PathLookupCache.Clear();
+            DirLookupCache.Clear();
+        }
     }
 
     public static Task RemoveMetadataAsync(string toolPath)
@@ -110,26 +119,8 @@ public static class ToolMetadataService
             .ToList();
     }
 
-    internal static JsonToolMetadata? FindJsonMetadata(string toolPath)
-    {
-        var metadata = LoadMetadata();
-        var fileName = Path.GetFileNameWithoutExtension(toolPath);
-        var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolPath);
-        var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
-
-        var registered = metadata.FirstOrDefault(item => item.Directory is { Length: > 0 } stored &&
-            UserToolLibrary.IsWithin(toolPath, UserToolLibrary.ResolveDirectory(stored)));
-        if (registered is not null) return registered;
-        if (UserToolLibrary.IsWithin(toolPath, UserToolLibrary.ToolsRoot)) return null;
-        return metadata
-            .Where(item => item.Directory is null &&
-                !string.IsNullOrWhiteSpace(item.Match) &&
-                (fileName.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-                 relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-                 MatchesFlexible(dirName, item.Match)))
-            .OrderByDescending(item => item.Match!.Length)
-            .FirstOrDefault();
-    }
+    internal static JsonToolMetadata? FindJsonMetadata(string toolPath) =>
+        CachedLookup(PathLookupCache, toolPath, LookupByPath);
 
     public static string? GetLaunchTarget(string toolDir)
     {
@@ -317,24 +308,8 @@ public static class ToolMetadataService
         catch { return null; }
     }
 
-    internal static JsonToolMetadata? FindJsonMetadataByDir(string toolDir)
-    {
-        var metadata = LoadMetadata();
-        var dirName = Path.GetFileName(toolDir);
-        var relativePath = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolDir);
-
-        var registered = metadata.FirstOrDefault(item => item.Directory is { Length: > 0 } stored &&
-            Path.GetFullPath(UserToolLibrary.ResolveDirectory(stored)).Equals(Path.GetFullPath(toolDir), StringComparison.OrdinalIgnoreCase));
-        if (registered is not null) return registered;
-        if (UserToolLibrary.IsWithin(toolDir, UserToolLibrary.ToolsRoot)) return null;
-        return metadata
-            .Where(item => item.Directory is null &&
-                !string.IsNullOrWhiteSpace(item.Match) &&
-                (relativePath.Contains(item.Match, StringComparison.CurrentCultureIgnoreCase) ||
-                 MatchesFlexible(dirName, item.Match)))
-            .OrderByDescending(item => item.Match!.Length)
-            .FirstOrDefault();
-    }
+    internal static JsonToolMetadata? FindJsonMetadataByDir(string toolDir) =>
+        CachedLookup(DirLookupCache, toolDir, LookupByDir);
 
     /// <summary>目录名/路径与 tools.json match 字段的灵活匹配规则（去空格-下划线-连字符后子串匹配），供目录定位复用。</summary>
     public static bool MatchesFlexible(string? source, string match)
@@ -390,6 +365,158 @@ public static class ToolMetadataService
     private static readonly object MetadataGate = new();
     private static string? _loadedDataDirectory;
 
+    private sealed record MatchEntry(JsonToolMetadata Entry, string Match, string MatchLower, string MatchNormLower, int Order);
+
+    private sealed class MetadataIndex
+    {
+        internal IReadOnlyList<MatchEntry> Matches { get; init; } = [];
+        internal IReadOnlyList<(string PrefixLower, JsonToolMetadata Entry)> RegisteredPrefixes { get; init; } = [];
+        internal IReadOnlyDictionary<string, JsonToolMetadata> RegisteredDirs { get; init; } = new Dictionary<string, JsonToolMetadata>();
+    }
+
+    private static MetadataIndex? _index;
+    private static IReadOnlyList<JsonToolMetadata>? _indexSource;
+    private static IReadOnlyList<JsonToolMetadata>? _cacheMetadata;
+    private static readonly Dictionary<string, JsonToolMetadata?> PathLookupCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, JsonToolMetadata?> DirLookupCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object LookupGate = new();
+    private static string? _lookupCacheRoot;
+
+    /// <summary>
+    /// tools.json 条目索引：match 分支按 match 长度降序（等价原 OrderByDescending 语义，同长度按原顺序），
+    /// 用户库注册目录预先解析成绝对路径，避免每次查找都对全部条目做 GetFullPath。
+    /// </summary>
+    private static MetadataIndex BuildIndex(IReadOnlyList<JsonToolMetadata> metadata)
+    {
+        var matches = new List<MatchEntry>();
+        var prefixes = new List<(string PrefixLower, JsonToolMetadata Entry)>();
+        var dirs = new Dictionary<string, JsonToolMetadata>(StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < metadata.Count; i++)
+        {
+            var item = metadata[i];
+            if (item.Directory is { Length: > 0 } stored)
+            {
+                try
+                {
+                    var dir = Path.GetFullPath(UserToolLibrary.ResolveDirectory(stored));
+                    if (!dirs.ContainsKey(dir)) dirs[dir] = item;
+                    prefixes.Add((dir.TrimEnd('\\', '/') + Path.DirectorySeparatorChar, item));
+                }
+                catch { }
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(item.Match)) continue;
+            var match = item.Match!;
+            matches.Add(new MatchEntry(item, match, match.ToLowerInvariant(), NormalizeForMatch(match), i));
+        }
+
+        matches.Sort((a, b) => a.Match.Length != b.Match.Length
+            ? b.Match.Length - a.Match.Length
+            : a.Order - b.Order);
+
+        return new MetadataIndex { Matches = matches, RegisteredPrefixes = prefixes, RegisteredDirs = dirs };
+    }
+
+    private static string NormalizeForMatch(string value) =>
+        value.Replace(" ", "", StringComparison.Ordinal)
+             .Replace("-", "", StringComparison.Ordinal)
+             .Replace("_", "", StringComparison.Ordinal)
+             .ToLowerInvariant();
+
+    private static MetadataIndex GetIndex()
+    {
+        // 以 metadata 列表实例为身份：SetMetadataRootForTests / 语言切换会换掉实例，
+        // 索引必须跟着重建，否则测试与真实环境都会读到上一份 tools.json 的匹配结果。
+        var metadata = LoadMetadata();
+        lock (MetadataGate)
+        {
+            if (_index is null || !ReferenceEquals(_indexSource, metadata))
+            {
+                _index = BuildIndex(metadata);
+                _indexSource = metadata;
+            }
+            return _index;
+        }
+    }
+
+    private static JsonToolMetadata? CachedLookup(
+        Dictionary<string, JsonToolMetadata?> cache, string key, Func<string, JsonToolMetadata?> compute)
+    {
+        var metadata = LoadMetadata();
+        var root = ToolCatalog.ToolsRoot;
+        lock (LookupGate)
+        {
+            if (!ReferenceEquals(_cacheMetadata, metadata) ||
+                !string.Equals(_lookupCacheRoot, root, StringComparison.OrdinalIgnoreCase))
+            {
+                PathLookupCache.Clear();
+                DirLookupCache.Clear();
+                _cacheMetadata = metadata;
+                _lookupCacheRoot = root;
+            }
+            if (cache.TryGetValue(key, out var hit)) return hit;
+        }
+
+        var result = compute(key);
+        lock (LookupGate) cache[key] = result;
+        return result;
+    }
+
+    private static JsonToolMetadata? LookupByPath(string toolPath)
+    {
+        var index = GetIndex();
+        var full = Path.GetFullPath(toolPath);
+
+        foreach (var (prefixLower, entry) in index.RegisteredPrefixes)
+        {
+            if (full.StartsWith(prefixLower, StringComparison.OrdinalIgnoreCase)) return entry;
+        }
+        if (UserToolLibrary.IsWithin(full, UserToolLibrary.ToolsRoot)) return null;
+
+        var fileNameLower = Path.GetFileNameWithoutExtension(toolPath).ToLowerInvariant();
+        var relativeLower = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolPath).ToLowerInvariant();
+        var dirName = Path.GetFileName(Path.GetDirectoryName(toolPath));
+        var dirLower = (dirName ?? "").ToLowerInvariant();
+        var dirNormLower = NormalizeForMatch(dirName ?? "");
+
+        foreach (var m in index.Matches)
+        {
+            if (fileNameLower.Contains(m.MatchLower, StringComparison.Ordinal) ||
+                relativeLower.Contains(m.MatchLower, StringComparison.Ordinal) ||
+                dirLower.Contains(m.MatchLower, StringComparison.Ordinal) ||
+                dirNormLower.Contains(m.MatchNormLower, StringComparison.Ordinal))
+                return m.Entry;
+        }
+
+        return null;
+    }
+
+    private static JsonToolMetadata? LookupByDir(string toolDir)
+    {
+        var index = GetIndex();
+        var full = Path.GetFullPath(toolDir);
+
+        if (index.RegisteredDirs.TryGetValue(full, out var registered)) return registered;
+        if (UserToolLibrary.IsWithin(full, UserToolLibrary.ToolsRoot)) return null;
+
+        var relativeLower = Path.GetRelativePath(ToolCatalog.ToolsRoot, toolDir).ToLowerInvariant();
+        var dirName = Path.GetFileName(toolDir);
+        var dirLower = (dirName ?? "").ToLowerInvariant();
+        var dirNormLower = NormalizeForMatch(dirName ?? "");
+
+        foreach (var m in index.Matches)
+        {
+            if (relativeLower.Contains(m.MatchLower, StringComparison.Ordinal) ||
+                dirLower.Contains(m.MatchLower, StringComparison.Ordinal) ||
+                dirNormLower.Contains(m.MatchNormLower, StringComparison.Ordinal))
+                return m.Entry;
+        }
+
+        return null;
+    }
+
     internal static IReadOnlyList<JsonToolMetadata> GetUserTools(string? category = null) =>
         LoadMetadata().Where(t => t.Directory is not null &&
             (category is null || string.Equals(t.Category, category, StringComparison.OrdinalIgnoreCase))).ToList();
@@ -431,6 +558,8 @@ public static class ToolMetadataService
             }
             _loadedDataDirectory = UserToolLibrary.DataDirectory;
             ApplyLanguageOverlay(metadataDirectory);
+            _index = BuildIndex(_metadata!);
+            _indexSource = _metadata;
             return _metadata;
         }
     }

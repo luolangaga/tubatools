@@ -44,6 +44,7 @@ public sealed partial class AiAssistantPage : Page
     private int _historyVersion, _focusVersion;
     private readonly AgentSessionList _historyRows = new();
     private readonly DispatcherTimer _draftHistoryTimer = new() { Interval = TimeSpan.FromMilliseconds(450) };
+    private AgentWorkspaceInfo _workspace = AgentWorkspaceStore.ResolveCurrent();
     private SessionState _active = new();
     private readonly Dictionary<string, SessionState> _sessions = [];
     private readonly HashSet<string> _deleting = [];
@@ -58,6 +59,7 @@ public sealed partial class AiAssistantPage : Page
         _cutIn = AppSettings.Get("AgentQueueMode") == "cutin";
         ToolTipService.SetToolTip(QueueModeButton, L("QueueModeTip", "排队：当前任务结束后发送；插队：中断当前任务并优先发送。点击切换。"));
         ConfigureComposerMenu();
+        BuildStarterPrompts();
         HistoryList.ItemsSource = _historyRows;
         _draftHistoryTimer.Tick += (_, _) => { _draftHistoryTimer.Stop(); if (!_closed) RefreshHistoryView(); };
         _progressTimer.Tick += (_, _) => UpdateRunStatus();
@@ -70,8 +72,7 @@ public sealed partial class AiAssistantPage : Page
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(pair.Element, L(pair.Key,pair.Fallback));
         PermissionBox.Items.Add(L("FullAccess", "全部权限")); PermissionBox.Items.Add(L("AskAccess", "逐次确认"));
         ModeBox.Items.Add(L("ModeChat", "解决问题")); ModeBox.Items.Add(L("ModeTeach", "教学模式"));
-        WorkspacePathText.Text = AgentWorkspace.DirectoryPath;
-        ToolTipService.SetToolTip(WorkspacePathText, AgentWorkspace.DirectoryPath);
+        UpdateWorkspaceHeader();
         _active = NewState(); _syncingUi = false; SyncActive();
     }
     private static SessionState NewState() => new()
@@ -327,7 +328,7 @@ public sealed partial class AiAssistantPage : Page
     }
     private async void Workspace_Click(object sender, RoutedEventArgs e)
     {
-        try { AgentWorkspace.Prepare(); await Windows.System.Launcher.LaunchFolderPathAsync(AgentWorkspace.DirectoryPath); }
+        try { AgentWorkspace.Prepare(_workspace.Path); await Windows.System.Launcher.LaunchFolderPathAsync(_workspace.Path); }
         catch (Exception ex) { SetNotice(_active, ex.Message, true); }
     }
 }

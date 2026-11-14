@@ -34,6 +34,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         // 让卡片始终按当前宽度分列（否则会停留在旧列宽、右侧空出一整列）。
         ToolsGrid.LayoutUpdated += (_, _) => UpdateCardLayout();
         _ready = true;
+        ApplyHeroVisibility();
         ActualThemeChanged += (_, _) => DispatcherQueue.TryEnqueue(RenderCards);
         StatusBar.Closed += (_, _) => StatusBar.Visibility = Visibility.Collapsed;
     }
@@ -53,6 +54,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         _loading = false;
         AppSettings.Set(HomeDashboardContent.SelectedTabSettingsKey, _favorites ? "favorites" : "all");
         _updatingFilter = true; FilterBar.SelectedItem = _favorites ? FavoritesFilter : AllToolsFilter; _updatingFilter = false;
+        ApplyHeroVisibility();
         ApplyLocalization();
         _ = LoadCatalogAsync();
     }
@@ -73,6 +75,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         };
         AllToolsFilter.Text = S("AllTools", "全部工具"); FavoritesFilter.Text = S("Favorites", "收藏");
         ManageButton.Content = S("EditFeatured", "编辑大卡片");
+        CompactManageText.Text = S("EditFeatured", "编辑大卡片");
         ToolSearchBox.PlaceholderText = S("SearchCatalog", "搜索工具");
         RenderCards();
         ApplyToolFilter();

@@ -298,6 +298,20 @@
                                 <ToggleSwitch x:Name="CompactModeToggle" VerticalAlignment="Center" Toggled="CompactModeToggle_Toggled"/>
                             </toolkit:SettingsCard>
                         </Border>
+                        <Border x:Name="SettingsHomeHeroCard" Style="{StaticResource SettingsRowSurface}">
+                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
+                                <toolkit:SettingsCard.Header>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="显示首页大卡片" l:Uids.Uid="Settings_HomeHero_Title" TextWrapping="Wrap"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="关闭后首页不再显示顶部欢迎横幅大图，直接从工具卡片开始" l:Uids.Uid="Settings_HomeHero_Desc"/>
+                                    </StackPanel>
+                                </toolkit:SettingsCard.Header>
+                                <toolkit:SettingsCard.HeaderIcon>
+                                    <FontIcon FontSize="18" Glyph="&#xE91B;" Foreground="{ThemeResource FluentIconForegroundBrush}" />
+                                </toolkit:SettingsCard.HeaderIcon>
+                                <ToggleSwitch x:Name="HomeHeroToggle" VerticalAlignment="Center" Toggled="HomeHeroToggle_Toggled"/>
+                            </toolkit:SettingsCard>
+                        </Border>
                         <Border x:Name="SettingsBackdropCard" Style="{StaticResource SettingsRowSurface}">
                             <toolkit:SettingsExpander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False">
                                 <toolkit:SettingsExpander.Header>

@@ -47,7 +47,18 @@ public sealed partial class ErrorWindow : Window
 
         var ex = App.ConsumePendingException();
         if (ex is not null)
+        {
             SetError(ex);
+        }
+        else
+        {
+            // 异常对象可能已被另一处消费，或来自 XAML 原生层的 fail-fast。
+            // 以前这里会让 ErrorText 保持空白，用户只看到一个「没有任何信息」的错误窗口。
+            _errorDetail = "未能获取异常对象（异常可能已被别处处理，或发生在 XAML 原生层）。\n" +
+                           $"请查看崩溃日志：{LogService.PathFor(LogService.Crash)}\n" +
+                           "也可以点击下方「打包日志」，把压缩包附到 Issue 里。";
+            ErrorText.Text = _errorDetail;
+        }
 
         LoadSystemInfo();
     }

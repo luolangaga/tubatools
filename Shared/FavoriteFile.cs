@@ -13,8 +13,9 @@ internal static class FavoriteFile
 
     private static List<string> ReadLocked(string path)
     {
-        var text = AtomicFile.ReadText(path, text => _ = Parse(text));
-        return text is null ? [] : Parse(text);
+        List<string>? parsed = null;
+        AtomicFile.ReadText(path, text => parsed = Parse(text));
+        return parsed ?? [];
     }
 
     private static List<string> Parse(string text)

@@ -30,6 +30,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
     private HardwareDetailData? _lastDetailData;
     private bool _pageAlive;
     private bool _monitorReadInFlight;
+    private int _monitorGeneration;
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
@@ -94,6 +95,8 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
     {
         _pageAlive = false;
         StopRealtimeMonitor();
+        _statusBarTimer?.Stop();
+        _statusBarTimer = null;
         ContentScroller.SizeChanged -= ContentScroller_SizeChanged;
         RealtimeSection.SizeChanged -= ContentScroller_SizeChanged;
     }
@@ -290,11 +293,13 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _monitorTimer.Tick += MonitorTimer_Tick;
         _monitorTimer.Start();
-        _ = UpdateMonitorAsync();
+        var generation = ++_monitorGeneration;
+        _ = UpdateMonitorAsync(generation);
     }
 
     private void StopRealtimeMonitor()
     {
+        _monitorGeneration++;
         _monitorTimer?.Stop();
         _monitorTimer = null;
     }
@@ -303,7 +308,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
     {
         try
         {
-            await UpdateMonitorAsync();
+            await UpdateMonitorAsync(_monitorGeneration);
         }
         catch
         {
@@ -311,7 +316,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         }
     }
 
-    private async Task UpdateMonitorAsync()
+    private async Task UpdateMonitorAsync(int generation)
     {
         if (_monitorReadInFlight || !CanUpdateRealtimeMonitor()) return;
         _monitorReadInFlight = true;
@@ -329,20 +334,21 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
             _monitorReadInFlight = false;
         }
 
-        // 读取期间页面可能已销毁（用户快速返回）：不再触碰已卸载的 UI
-        if (!CanUpdateRealtimeMonitor()) return;
-
-        Push(_cpuHist, Val(sample.CpuLoad));
-        Push(_gpuHist, Val(sample.GpuLoad));
-        Push(_memHist, Val(sample.MemLoad));
-        Push(_diskReadHist, Val(sample.DiskReadMBs));
-        Push(_diskWriteHist, Val(sample.DiskWriteMBs));
-
-        if (_isLaptop)
-            Push(_batHist, Val(sample.BatPercent));
+        // 读取期间页面可能已销毁（用户快速返回）或主题切换重建了监控，
+        // 这时整批样本作废，不再触碰已卸载/已重建的 UI。
+        if (generation != _monitorGeneration || !CanUpdateRealtimeMonitor()) return;
 
         try
         {
+            Push(_cpuHist, Val(sample.CpuLoad));
+            Push(_gpuHist, Val(sample.GpuLoad));
+            Push(_memHist, Val(sample.MemLoad));
+            Push(_diskReadHist, Val(sample.DiskReadMBs));
+            Push(_diskWriteHist, Val(sample.DiskWriteMBs));
+
+            if (_isLaptop)
+                Push(_batHist, Val(sample.BatPercent));
+
             CpuLoadText.Text = sample.CpuLoad >= 0 ? $"{sample.CpuLoad:0}%" : "--";
             GpuLoadText.Text = sample.GpuLoad >= 0 ? $"{sample.GpuLoad:0}%" : "--";
             MemLoadText.Text = sample.MemLoad >= 0 ? $"{sample.MemLoad:0}%" : "--";
@@ -990,11 +996,17 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
     private void RestartStatusBarTimer(TimeSpan interval)
     {
         _statusBarTimer?.Stop();
+        if (!_pageAlive)
+        {
+            _statusBarTimer = null;
+            return;
+        }
         _statusBarTimer = new DispatcherTimer { Interval = interval };
         _statusBarTimer.Tick += (s, e) =>
         {
-            StatusBar.IsOpen = false;
             ((DispatcherTimer)s!).Stop();
+            if (!_pageAlive) return;
+            StatusBar.IsOpen = false;
         };
         _statusBarTimer.Start();
     }

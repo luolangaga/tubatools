@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -19,6 +20,10 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     private DispatcherTimer? _uptimeTimer;
     private bool _animateUptimeClock;
     private bool _dataLoaded;
+    /// <summary>导航离开后为 false：后台 WMI 盘点、延迟动画与尺寸回调都必须停下来，
+    /// 否则会在已卸载的视觉树上启动 Storyboard / TransformToVisual，触发 WinUI 未处理异常。</summary>
+    private bool _pageAlive = true;
+    private readonly List<DispatcherTimer> _delayedUiTimers = [];
     private bool _animatingDetails;
     private bool _nicknameMode;
     private bool _isAnimatingNickname;
@@ -41,6 +46,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         ApplyCardToolTips();
         ActualThemeChanged += (_, _) =>
         {
+            if (!_pageAlive) return;
             ApplySceneBackground();
             if (_sceneReady)
                 _scene?.Post(System.Text.Json.JsonSerializer.Serialize(
@@ -51,9 +57,15 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void OnSettingChanged(string key)
     {
+        if (!_pageAlive) return;
         if (key == "FastModeEnabled")
         {
-            DispatcherQueue.TryEnqueue(() => { _animateUptimeClock = CanAnimateUptimeClock(); UpdateUptime(true); });
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (!_pageAlive) return;
+                _animateUptimeClock = CanAnimateUptimeClock();
+                UpdateUptime(true);
+            });
             return;
         }
         if (key == "HardwareDiagramStyle")
@@ -105,6 +117,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void HardwarePage_Loaded(object sender, RoutedEventArgs e)
     {
+        _pageAlive = true;
         AppSettings.SettingChanged -= OnSettingChanged;
         AppSettings.SettingChanged += OnSettingChanged;
         ApplyHardwareStyle();
@@ -117,13 +130,20 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         UpdateUptime(true);
         if (_uptimeTimer is not null) return;
         _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _uptimeTimer.Tick += (_, _) => UpdateUptime();
+        _uptimeTimer.Tick += (_, _) =>
+        {
+            if (!_pageAlive) return;
+            UpdateUptime();
+        };
         _uptimeTimer.Start();
     }
 
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        _pageAlive = true;
+        StopDelayedUiActions();
+        _isAnimatingNickname = false;
         StartUptimeTimer();
         // WMI 盘点在首次打开本页时后台执行（LoadAsync 自带缓存与并发合并，页面显示 loading）
         _ = LoadHardwareInfoAsync();
@@ -132,6 +152,9 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        _pageAlive = false;
+        StopDelayedUiActions();
+        _isAnimatingNickname = false;
         SuspendHardwareScene();
         _uptimeTimer?.Stop();
         _uptimeTimer = null;
@@ -139,10 +162,49 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void HardwarePage_Unloaded(object sender, RoutedEventArgs e)
     {
+        _pageAlive = false;
+        StopDelayedUiActions();
         ReleaseHardwareScene();
         _uptimeTimer?.Stop();
         _uptimeTimer = null;
         AppSettings.SettingChanged -= OnSettingChanged;
+    }
+
+    /// <summary>
+    /// 页面级延迟动画的唯一入口：定时器统一登记，导航离开 / 卸载时能一次性停掉。
+    /// 返回值供少量需要单独 Stop 的状态栏定时器使用；页面已销毁时返回 null。
+    /// </summary>
+    private DispatcherTimer? ScheduleUiAction(TimeSpan delay, Action action)
+    {
+        if (!_pageAlive) return null;
+
+        var timer = new DispatcherTimer { Interval = delay };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            _delayedUiTimers.Remove(timer);
+            if (!_pageAlive) return;
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                // 动画是装饰性的：单帧失败不应升级成 UI 线程未处理异常。
+                Debug.WriteLine($"[Hardware] 延迟动画失败: {ex.Message}");
+            }
+        };
+        _delayedUiTimers.Add(timer);
+        timer.Start();
+        return timer;
+    }
+
+    private void StopDelayedUiActions()
+    {
+        foreach (var timer in _delayedUiTimers)
+            timer.Stop();
+        _delayedUiTimers.Clear();
+        _animatingDetails = false;
     }
 
     private static bool CanAnimateUptimeClock()
@@ -168,6 +230,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     /// <summary>语言切换后刷新卡片提示与详情列表（卡片 ToolTip 是附加属性，不能走 Uid）。</summary>
     public void ApplyLocalization()
     {
+        if (!_pageAlive) return;
         ApplyCardToolTips();
         if (_currentSections is not null)
             ApplySections(_currentSections);
@@ -197,7 +260,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private async Task ToggleNicknameWithAnimationAsync()
     {
-        if (_currentSections is null || _isAnimatingNickname) return;
+        if (!_pageAlive || _currentSections is null || _isAnimatingNickname) return;
         _isAnimatingNickname = true;
         _nicknameMode = !_nicknameMode;
 
@@ -254,6 +317,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         if (valueTexts.Count > 0)
             await Task.Delay(eraseDuration + 20);
 
+        if (!_pageAlive) return;
+
         for (int i = 0; i < valueTexts.Count && i < details.Count; i++)
         {
             var newText = _nicknameMode ? details[i].NicknameValue! : _originalValues[details[i]];
@@ -267,12 +332,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         for (int i = 0; i < valueTexts.Count; i++)
         {
             var vt = valueTexts[i];
-            var delay = TimeSpan.FromMilliseconds(i * stagger);
-
-            var timer = new DispatcherTimer { Interval = delay };
-            timer.Tick += (_, _) =>
+            ScheduleUiAction(TimeSpan.FromMilliseconds(i * stagger), () =>
             {
-                timer.Stop();
                 var sb = new Storyboard();
                 var anim = new DoubleAnimation
                 {
@@ -285,14 +346,14 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
                 Storyboard.SetTargetProperty(anim, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
                 sb.Children.Add(anim);
                 sb.Begin();
-            };
-            timer.Start();
+            });
         }
 
         var totalWriteTime = valueTexts.Count * stagger + writeDuration;
         await Task.Delay(totalWriteTime);
 
         _isAnimatingNickname = false;
+        if (!_pageAlive) return;
 
         ShowStatusBar(
             _nicknameMode ? LocalizationService.L("Hw_NicknameModeOn", "彩蛋模式") : LocalizationService.L("Hw_NicknameModeOff", "正常模式"),
@@ -334,6 +395,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private async Task LoadHardwareInfoAsync(bool forceRefresh = false)
     {
+        if (!_pageAlive) return;
         if (forceRefresh)
         {
             _hardwareFocusData = null;
@@ -349,6 +411,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             {
                 ExitStoryboard.Begin();
                 await Task.Delay(200);
+                if (!_pageAlive) return;
             }
         }
 
@@ -357,6 +420,11 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         try
         {
             var sections = await HardwareInfoService.LoadForDisplayAsync(forceRefresh);
+
+            // 冷启动时 WMI 盘点可能耗时数秒；用户可能已经点了「详细信息」。
+            // 这时绝不能在已卸载的页面上重排布局、启动入场动画或创建逐行定时器。
+            if (!_pageAlive) return;
+
             var useCpuz = AppSettings.GetBool("UseCpuzDataSource", false);
 
             ApplySections(sections);
@@ -366,6 +434,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         }
         catch (Exception ex)
         {
+            if (!_pageAlive) return;
             ModelText.Text = LocalizationService.L("Hw_Unknown", "未知");
             SystemText.Text = LocalizationService.L("Hw_Unknown", "未知");
             UpdateUptime(true);
@@ -374,12 +443,13 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         }
         finally
         {
-            SetLoading(false);
+            if (_pageAlive) SetLoading(false);
         }
     }
 
     private void ApplySections(IReadOnlyList<HardwareInfoSection> sections)
     {
+        if (!_pageAlive) return;
         UpdateLayoutStructure();
 
         _currentSections = sections;
@@ -441,6 +511,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
     private void SetLoading(bool isLoading)
     {
         _hardwareInfoLoading = isLoading;
+        if (!_pageAlive) return;
         var showIndicator = isLoading && !UseSettingsStyle;
         LoadingRing.IsActive = showIndicator;
         LoadingRing.Visibility = showIndicator ? Visibility.Visible : Visibility.Collapsed;
@@ -485,24 +556,25 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void ShowCopyToast(string text)
     {
+        if (!_pageAlive) return;
         StatusBar.Title = LocalizationService.L("Hw_Copied", "已复制");
         StatusBar.Message = text.Length > 80 ? text[..80] + "…" : text;
         StatusBar.Severity = InfoBarSeverity.Success;
         StatusBar.IsOpen = true;
 
         _statusBarTimer?.Stop();
-        _statusBarTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        _statusBarTimer.Tick += (s, e) =>
-        {
-            StatusBar.IsOpen = false;
-            ((DispatcherTimer)s!).Stop();
-        };
-        _statusBarTimer.Start();
+        _statusBarTimer = ScheduleUiAction(TimeSpan.FromSeconds(5), () => StatusBar.IsOpen = false);
     }
 
     private void DetailsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
         if (args.Index < 0 || args.Element is not Grid el) return;
+
+        if (!_pageAlive)
+        {
+            el.Opacity = 1;
+            return;
+        }
 
         if (args.Index % 2 == 1)
         {
@@ -549,13 +621,10 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         el.Opacity = 0;
 
         var delay = TimeSpan.FromMilliseconds(350 + idx * 60);
-        var lastIdx = ((IReadOnlyList<HardwareInfoItem>)DetailsRepeater.ItemsSource!).Count - 1;
+        var lastIdx = Math.Max(0, DetailsRepeater.ItemsSourceView.Count - 1);
 
-        var timer = new DispatcherTimer { Interval = delay };
-        timer.Tick += (_, _) =>
+        ScheduleUiAction(delay, () =>
         {
-            timer.Stop();
-
             var sb = new Storyboard();
             var fade = new DoubleAnimation
             {
@@ -571,8 +640,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             sb.Begin();
 
             if (idx == lastIdx) _animatingDetails = false;
-        };
-        timer.Start();
+        });
     }
 
     private bool _isScreenshotting;
@@ -928,18 +996,13 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void ShowStatusBar(string title, string message, InfoBarSeverity severity)
     {
+        if (!_pageAlive) return;
         StatusBar.Title = title;
         StatusBar.Message = message;
         StatusBar.Severity = severity;
         StatusBar.IsOpen = true;
 
         _statusBarAutoCloseTimer?.Stop();
-        _statusBarAutoCloseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        _statusBarAutoCloseTimer.Tick += (s, e) =>
-        {
-            StatusBar.IsOpen = false;
-            ((DispatcherTimer)s!).Stop();
-        };
-        _statusBarAutoCloseTimer.Start();
+        _statusBarAutoCloseTimer = ScheduleUiAction(TimeSpan.FromSeconds(5), () => StatusBar.IsOpen = false);
     }
 }

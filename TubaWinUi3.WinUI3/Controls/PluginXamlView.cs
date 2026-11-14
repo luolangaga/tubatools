@@ -142,7 +142,12 @@ internal sealed class PluginXamlView : UserControl, IDisposable
         _stop.Visibility = _initializing ? Visibility.Collapsed : Visibility.Visible;
         try { await action(CreateExecution(_tool, DispatcherQueue, () => XamlRoot, Report, _action.Token)); }
         catch (OperationCanceledException) when (_action.IsCancellationRequested) { if (!_disposed) Report(L("Cancelled", "操作已停止。")); }
-        catch (Exception ex) { if (!_disposed) ShowStatus(string.IsNullOrWhiteSpace(ex.Message) ? L("Failed", "插件操作失败。") : ex.Message, InfoBarSeverity.Error); }
+        catch (Exception ex)
+        {
+            // 执行期异常不属于「插件坏了」：多是输入或环境问题，只累计供插件页诊断，不自动停用。
+            PluginManager.RecordExecutionFailure(_tool.PackageId, ex);
+            if (!_disposed) ShowStatus(string.IsNullOrWhiteSpace(ex.Message) ? L("Failed", "插件操作失败。") : ex.Message, InfoBarSeverity.Error);
+        }
         finally
         {
             _action.Dispose(); _action = null; _running = false;
@@ -230,7 +235,8 @@ internal sealed class PluginXamlView : UserControl, IDisposable
         }
         return new PluginExecutionContext
         {
-            CancellationToken = ct, Services = new PluginHostServices(tool.PackageId, tool.Id, tool.PackageDirectory, dispatcher, root, report, tool.FullTrust),
+            CancellationToken = ct, Services = new PluginHostServices(tool.PackageId, tool.Id, tool.PackageDirectory, dispatcher, root, report,
+                tool.FullTrust, tool.Permissions),
             ShowMessageAsync = async (title, text) => { await Dialog(title, text, false); }, ConfirmAsync = (title, text) => Dialog(title, text, true), ReportProgress = report
         };
     }

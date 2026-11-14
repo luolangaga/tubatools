@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/FaultyPlugin.dll",
+  "entryType": "FaultyPlugin",
+  "name": "故障注入测试插件",
+  "description": "故意制造 WinUI 层错误的测试插件：XAML 解析失败、未处理异常、UI 线程死锁、启动钩子抛异常",
+  "author": "CommandCode",
+  "icon": "assets/icon.svg",
+  "permissions": []
+}

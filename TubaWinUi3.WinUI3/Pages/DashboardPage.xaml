@@ -98,9 +98,16 @@
                         <SelectorBarItem x:Name="FavoritesFilter" Icon="Favorite" Tag="favorites" Text="收藏" Style="{StaticResource TokenViewSelectorBarItemStyle}" AutomationProperties.AutomationId="DashboardFavorites"/>
                     </SelectorBar>
                     <Grid x:Name="ToolsToolbar" Margin="36,0,36,12" ColumnSpacing="16">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock x:Name="ToolCountText" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center"/>
-                        <TextBox x:Name="ToolSearchBox" Grid.Column="1" Width="240" PlaceholderText="搜索工具" TextChanged="ToolSearchBox_TextChanged" LosingFocus="ToolSearchBox_LosingFocus"
+                        <Button x:Name="CompactManageButton" Grid.Column="1" VerticalAlignment="Center" Padding="12,8" Visibility="Collapsed"
+                                Click="ManageButton_Click" AutomationProperties.AutomationId="DashboardManageContentCompact">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" FontSize="12" Glyph="&#xE70F;"/>
+                                <TextBlock x:Name="CompactManageText" Text="编辑大卡片" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBox x:Name="ToolSearchBox" Grid.Column="2" Width="240" PlaceholderText="搜索工具" TextChanged="ToolSearchBox_TextChanged" LosingFocus="ToolSearchBox_LosingFocus"
                                  IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" AutomationProperties.Name="搜索工具" AutomationProperties.AutomationId="DashboardToolSearch"/>
                     </Grid>
                 </StackPanel>

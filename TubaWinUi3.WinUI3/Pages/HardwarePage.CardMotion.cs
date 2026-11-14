@@ -17,11 +17,15 @@ public sealed partial class HardwarePage
     private bool _diagramFlightRendering;
     private const float DiagramCardInitialScale = .06f;
 
-    private void RevealDiagramCallouts(Button? stableCard = null) =>
+    private void RevealDiagramCallouts(Button? stableCard = null)
+    {
+        if (!_pageAlive) return;
         _calloutRevealTask = RevealDiagramCalloutsAsync(stableCard);
+    }
 
     private async Task RevealDiagramCalloutsAsync(Button? stableCard)
     {
+        if (!_pageAlive) return;
         var version = ++_calloutRevealVersion;
         CancelDiagramCardFlights();
         var cards = _diagramCallouts.OrderBy(item => Canvas.GetTop(item.Card)).ToArray();
@@ -29,7 +33,7 @@ public sealed partial class HardwarePage
 
         // Use the final restored computer pose for the cards' launch points.
         if (stableCard is not null && !ReduceDiagramMotion) await Task.Delay(16);
-        if (version != _calloutRevealVersion || !UseSettingsStyle) return;
+        if (!_pageAlive || version != _calloutRevealVersion || !UseSettingsStyle) return;
         HardwareDiagram.UpdateLayout();
 
         var reducedMotion = ReduceDiagramMotion;
@@ -99,7 +103,7 @@ public sealed partial class HardwarePage
         }
         DrawHardwareConnectors();
         if (!reducedMotion && flightIndex > 0) await Task.Delay((flightIndex - 1) * stagger + duration + 32);
-        if (version != _calloutRevealVersion || !UseSettingsStyle) return;
+        if (!_pageAlive || version != _calloutRevealVersion || !UseSettingsStyle) return;
         CancelDiagramCardFlights();
         foreach (var (card, _, _, _) in cards)
         {
@@ -134,7 +138,7 @@ public sealed partial class HardwarePage
 
     private void DiagramCardFlight_Rendering(object? sender, object e)
     {
-        if (!UseSettingsStyle || _hardwareFocus is not null) { CancelDiagramCardFlights(); return; }
+        if (!_pageAlive || !UseSettingsStyle || _hardwareFocus is not null) { CancelDiagramCardFlights(); return; }
         DrawHardwareConnectors();
     }
 

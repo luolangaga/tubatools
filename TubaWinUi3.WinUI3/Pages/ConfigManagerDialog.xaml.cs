@@ -54,7 +54,17 @@ public sealed partial class ConfigManagerDialog : ContentDialog
         InitializeComponent();
         TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         InitPlaceholderList();
+        ApplyPackagedLimits();
         RefreshUI();
+    }
+
+    private void ApplyPackagedLimits()
+    {
+        if (!RuntimeHelper.IsPackagedContext) return;
+
+        LocationSectionHeader.Visibility = Visibility.Collapsed;
+        LocationCard.Visibility = Visibility.Collapsed;
+        LocationLockedNote.Visibility = Visibility.Visible;
     }
 
     private void InitPlaceholderList()
@@ -99,6 +109,8 @@ public sealed partial class ConfigManagerDialog : ContentDialog
 
     private async void ApplyCustomPathButton_Click(object sender, RoutedEventArgs e)
     {
+        if (RuntimeHelper.IsPackagedContext) return;
+
         var customPath = CustomPathTextBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(customPath))
         {
@@ -134,6 +146,7 @@ public sealed partial class ConfigManagerDialog : ContentDialog
     private async void LocationRadio_Checked(object sender, RoutedEventArgs e)
     {
         if (_locationInitializing) return;
+        if (RuntimeHelper.IsPackagedContext) return;
 
         var radio = sender as RadioButton;
         if (radio?.Tag is not string tag) return;

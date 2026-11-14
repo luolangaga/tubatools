@@ -1,4 +1,6 @@
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -30,6 +32,22 @@ public sealed partial class CpuRankingPage : Page
     private Button _desktopBtn = null!;
     private Button _laptopBtn = null!;
 
+    // 天梯视觉：画刷按当前主题缓存一次，条形长度编码“相对榜首”的性能占比
+    private RankingPalette _palette = new();
+    private Grid _listHeaderHost = null!;
+    private RankingHeaderLabel _metricHeader = null!;
+    private RankingHeaderLabel _secondaryHeader = null!;
+    private long _metricMax = 1;
+    private string? _localMatchedName;
+
+    // 视图：天梯墙（默认，密排 + 相对刻度）/ 列表（逐行明细）
+    private string _viewMode = "ladder";
+    private Border _tableHeader = null!;
+    private Button _ladderViewBtn = null!;
+    private Button _listViewBtn = null!;
+    private int _wallColumns;
+    private List<CpuRankingEntry> _currentEntries = [];
+
     // 视觉色板（名次徽章用图表系列色、品牌芯片用系列色/语义强调色，均取自 ThemeColors，随主题解析）
     private static Color Gold => ThemeColors.Series4;           // 名次 1：金
     private static Color Silver => ThemeColors.Neutral;         // 名次 2：银
@@ -52,6 +70,7 @@ public sealed partial class CpuRankingPage : Page
     private FrameworkElement _headerRow = null!;
     private FrameworkElement _filterRow = null!;
     private FrameworkElement _statsRow = null!;
+    private Grid _statsGrid = null!;
     private StackPanel _localRanking = null!;
     private string _localHardwareName = "";
 
@@ -70,6 +89,7 @@ public sealed partial class CpuRankingPage : Page
         // 代码构建的画刷不会随主题自动刷新，切换主题后按当前筛选状态重渲染
         ActualThemeChanged += (_, _) =>
         {
+            _palette = new RankingPalette();
             if (_brandStack is not null)
                 UpdateBrandButtons(_brandStack, _brand);
             if (_desktopBtn is not null && _laptopBtn is not null)
@@ -78,6 +98,7 @@ public sealed partial class CpuRankingPage : Page
                 UpdateCategoryButtons(desktopActive ? _desktopBtn : _laptopBtn,
                                       desktopActive ? _laptopBtn : _desktopBtn);
             }
+            BuildListHeader();
             RefreshList();
         };
     }
@@ -112,6 +133,19 @@ public sealed partial class CpuRankingPage : Page
         "Qualcomm" => QualcommLogo,
         _ => null
     };
+
+    private static Color BrandColor(string brand) => brand switch
+    {
+        "Intel" => IntelBlue,
+        "AMD" => AmdRed,
+        "Apple" => AppleGray,
+        "Qualcomm" => QualcommPurple,
+        _ => ThemeColors.DimText
+    };
+
+    private static string HeaderSubtitle() =>
+        $"数据来源 TopCPU.net · 更新于 {CpuRankingService.LastUpdated ?? "内置数据"} · " +
+        "Cinebench R23 多核 / 单核 · 条形长度 = 相对榜首性能";
 
     private Grid BuildUI()
     {
@@ -156,7 +190,7 @@ public sealed partial class CpuRankingPage : Page
             ToolId = "cpu-ranking",
             HeaderPadding = new Thickness(0, 16, 0, 0),
             Title = "CPU 天梯图",
-            Subtitle = $"数据来源 TopCPU.net · 更新于 {CpuRankingService.LastUpdated ?? "内置数据"} · 按 Cinebench R23 多核排列",
+            Subtitle = HeaderSubtitle(),
             Glyph = "\uEEA1"
         };
 
@@ -176,6 +210,8 @@ public sealed partial class CpuRankingPage : Page
         };
 
         refreshBtn.Click += async (_, _) => await RefreshDataAsync();
+        // 视图切换放页头右侧：筛选行已经排满，再塞一个分段控件会在 1100 宽的工具窗里溢出
+        _toolHeader.Actions.Add(BuildViewToggle());
         _toolHeader.Actions.Add(refreshBtn);
 
         _infoBar = new InfoBar
@@ -231,7 +267,7 @@ public sealed partial class CpuRankingPage : Page
             _infoBar.Severity = InfoBarSeverity.Success;
             _infoBar.IsOpen = true;
 
-            _toolHeader.Subtitle = $"数据来源 TopCPU.net · 更新于 {CpuRankingService.LastUpdated} · 按 Cinebench R23 多核排列";
+            _toolHeader.Subtitle = HeaderSubtitle();
             RefreshList();
         }
         else
@@ -245,7 +281,7 @@ public sealed partial class CpuRankingPage : Page
 
     private Grid BuildFilterBar()
     {
-        var grid = new Grid { ColumnSpacing = 16, VerticalAlignment = VerticalAlignment.Center };
+        var grid = new Grid { ColumnSpacing = 12, VerticalAlignment = VerticalAlignment.Center };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -261,7 +297,7 @@ public sealed partial class CpuRankingPage : Page
 
         _searchBox = new AutoSuggestBox
         {
-            PlaceholderText = "搜索 CPU 名称、制程...",
+            PlaceholderText = "搜索 CPU 名称、核心数、制程...",
             QueryIcon = new SymbolIcon(Symbol.Find),
             MinWidth = 200
         };
@@ -298,6 +334,69 @@ public sealed partial class CpuRankingPage : Page
         Grid.SetColumn(_sortCombo, 3);
 
         return grid;
+    }
+
+    /// <summary>「天梯 / 列表」切换：天梯看相对位置，列表看逐行明细。</summary>
+    private Border BuildViewToggle()
+    {
+        var ladderBtn = new Button
+        {
+            Content = "天梯",
+            Padding = new Thickness(14, 8, 14, 8),
+            CornerRadius = new CornerRadius(8, 0, 0, 8),
+            Tag = "ladder"
+        };
+        var listBtn = new Button
+        {
+            Content = "列表",
+            Padding = new Thickness(14, 8, 14, 8),
+            CornerRadius = new CornerRadius(0, 8, 8, 0),
+            Tag = "list"
+        };
+
+        ladderBtn.Click += (_, _) => SwitchView("ladder");
+        listBtn.Click += (_, _) => SwitchView("list");
+
+        _ladderViewBtn = ladderBtn;
+        _listViewBtn = listBtn;
+
+        var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0 };
+        stack.Children.Add(ladderBtn);
+        stack.Children.Add(listBtn);
+        UpdateViewToggle();
+
+        return new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(2),
+            Child = stack
+        };
+    }
+
+    private void UpdateViewToggle()
+    {
+        if (_ladderViewBtn is null || _listViewBtn is null) return;
+        var ladderActive = _viewMode != "list";
+        UpdateCategoryButtons(ladderActive ? _ladderViewBtn : _listViewBtn,
+                              ladderActive ? _listViewBtn : _ladderViewBtn);
+    }
+
+    private void SwitchView(string mode)
+    {
+        var changed = _viewMode != mode;
+        _viewMode = mode;
+        if (changed)
+        {
+            UpdateViewToggle();
+            ExpandNav();
+        }
+
+        RefreshList();
+
+        if (changed) _ = _listScroll?.ChangeView(null, 0, null, true);
+        _lastScrollOffset = 0;
     }
 
     private Border BuildCategoryToggle()
@@ -383,22 +482,17 @@ public sealed partial class CpuRankingPage : Page
     private StackPanel BuildBrandFilter()
     {
         var brands = new[] { "全部", "Intel", "AMD", "Apple", "Qualcomm" };
-        var brandColors = new Dictionary<string, Color?>
-        {
-            ["全部"] = null, ["Intel"] = IntelBlue, ["AMD"] = AmdRed, ["Apple"] = AppleGray, ["Qualcomm"] = QualcommPurple
-        };
 
         var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
 
         foreach (var label in brands)
         {
-            var c = brandColors[label];
             var logo = GetBrandLogo(label);
 
             FrameworkElement btnContent;
             if (label == "全部")
             {
-                btnContent = new TextBlock { Text = "全部", FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                btnContent = new TextBlock { Text = "全部", FontSize = 12, FontWeight = FontWeights.SemiBold };
             }
             else if (logo is not null)
             {
@@ -409,13 +503,13 @@ public sealed partial class CpuRankingPage : Page
                     Children =
                     {
                         new Image { Source = logo, Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center },
-                        new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }
+                        new TextBlock { Text = label, FontSize = 12, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }
                     }
                 };
             }
             else
             {
-                btnContent = new TextBlock { Text = label, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+                btnContent = new TextBlock { Text = label, FontSize = 12, FontWeight = FontWeights.SemiBold };
             }
 
             var btn = new Button
@@ -472,31 +566,41 @@ public sealed partial class CpuRankingPage : Page
 
     private Grid BuildStatsCards()
     {
-        var entries = CpuRankingService.GetByCategory(_category);
-        var total = entries.Count;
-        var intelCount = entries.Count(e => e.Brand == "Intel");
-        var amdCount = entries.Count(e => e.Brand == "AMD");
-        var topRating = entries.Count > 0 ? entries.MaxBy(e => e.Rating)?.Rating ?? 0 : 0;
+        _statsGrid = new Grid { ColumnSpacing = 10 };
+        for (var i = 0; i < 4; i++)
+            _statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null);
-        var intelCard = MakeStatCard("Intel", $"{intelCount} 款", "\uE912", IntelBlue, IntelLogo);
-        var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo);
-        var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", ThemeColors.Series4, null);
-
-        var grid = new Grid { ColumnSpacing = 10 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.Children.Add(totalCard);
-        grid.Children.Add(intelCard); Grid.SetColumn(intelCard, 1);
-        grid.Children.Add(amdCard); Grid.SetColumn(amdCard, 2);
-        grid.Children.Add(topCard); Grid.SetColumn(topCard, 3);
-
-        return grid;
+        FillStatsCards(CpuRankingService.GetByCategory(_category));
+        return _statsGrid;
     }
 
-    private static Border MakeStatCard(string label, string value, string glyph, Color accent, SvgImageSource? logo)
+    /// <summary>统计卡：总数、两大品牌占比、榜首。占比与榜首型号让“天梯有多长、顶端是谁”一眼可见。</summary>
+    private void FillStatsCards(List<CpuRankingEntry> filtered)
+    {
+        _statsGrid.Children.Clear();
+
+        var total = filtered.Count;
+        var intelCount = filtered.Count(e => e.Brand == "Intel");
+        var amdCount = filtered.Count(e => e.Brand == "AMD");
+        var top = filtered.MaxBy(e => e.Rating);
+
+        var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null,
+            _brand == "全部" ? "全部品牌" : $"{_brand} 品牌");
+        var intelCard = MakeStatCard("Intel", $"{intelCount} 款", "\uE912", IntelBlue, IntelLogo, Share(intelCount, total));
+        var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo, Share(amdCount, total));
+        var topCard = MakeStatCard("榜首", $"{top?.Rating ?? 0:N0} 分", "\uE8CA", ThemeColors.Series4, null, top?.Name);
+
+        _statsGrid.Children.Add(totalCard);
+        _statsGrid.Children.Add(intelCard); Grid.SetColumn(intelCard, 1);
+        _statsGrid.Children.Add(amdCard); Grid.SetColumn(amdCard, 2);
+        _statsGrid.Children.Add(topCard); Grid.SetColumn(topCard, 3);
+    }
+
+    private static string Share(int count, int total) =>
+        total <= 0 ? "0%" : $"{Math.Round(count * 100.0 / total)}%";
+
+    private static Border MakeStatCard(string label, string value, string glyph, Color accent,
+        SvgImageSource? logo, string? sub = null)
     {
         FrameworkElement iconChild;
         if (logo is not null)
@@ -512,12 +616,21 @@ public sealed partial class CpuRankingPage : Page
             Child = iconChild
         };
 
-        var labelBlock = new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) };
-        var valueBlock = new TextBlock { Text = value, FontSize = 18, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(accent) };
-
         var stack = new StackPanel { Spacing = 2 };
-        stack.Children.Add(labelBlock);
-        stack.Children.Add(valueBlock);
+        stack.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
+        stack.Children.Add(new TextBlock
+        {
+            Text = value, FontSize = 18, FontWeight = FontWeights.SemiBold,
+            Foreground = new SolidColorBrush(accent)
+        });
+        if (!string.IsNullOrWhiteSpace(sub))
+        {
+            stack.Children.Add(new TextBlock
+            {
+                Text = sub, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText),
+                TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1
+            });
+        }
 
         var innerGrid = new Grid { ColumnSpacing = 10 };
         innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(38) });
@@ -538,33 +651,25 @@ public sealed partial class CpuRankingPage : Page
 
     private Grid BuildListArea()
     {
-        var headerGrid = new Grid
+        _listHeaderHost = new Grid
         {
-            ColumnSpacing = 8,
-            Padding = new Thickness(14, 8, 14, 8)
+            Padding = new Thickness(14, 9, 14, 9),
+            ColumnSpacing = 12
         };
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-        headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-
-        AddHeader(headerGrid, "", 0);
-        AddHeader(headerGrid, "排名", 1);
-        AddHeader(headerGrid, "CPU", 2);
-        AddHeader(headerGrid, "多核", 3);
-        AddHeader(headerGrid, "单核", 4);
-        AddHeader(headerGrid, "核心数", 5);
+        ApplyListColumns(_listHeaderHost);
+        BuildListHeader();
 
         var headerBorder = new Border
         {
             Background = new SolidColorBrush(ThemeColors.HeaderBg),
+            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
+            BorderThickness = new Thickness(1, 1, 1, 0),
             CornerRadius = new CornerRadius(8, 8, 0, 0),
-            Child = headerGrid
+            Child = _listHeaderHost
         };
+        _tableHeader = headerBorder;
 
-        _listContainer = new StackPanel { Spacing = 2 };
+        _listContainer = new StackPanel { Spacing = 0 };
 
         _listScroll = new ScrollViewer
         {
@@ -574,6 +679,21 @@ public sealed partial class CpuRankingPage : Page
         };
 
         _listScroll.ViewChanged += OnListScrollChanged;
+
+        // 墙的列数跟随可用宽度：窄窗口单列，宽屏最多四列。
+        // 延到下一拍重建，避免在 SizeChanged（布局过程中）换掉 Content 再次触发布局。
+        _listScroll.SizeChanged += (_, e) =>
+        {
+            if (_viewMode != "ladder" || e.NewSize.Width < 1) return;
+            if (RankingLadderLayout.ColumnsFor(e.NewSize.Width) == _wallColumns) return;
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (_viewMode != "ladder" || _listScroll is null) return;
+                if (RankingLadderLayout.ColumnsFor(_listScroll.ActualWidth) == _wallColumns) return;
+                RebuildList();
+            });
+        };
 
         var listBorder = new Border
         {
@@ -591,6 +711,35 @@ public sealed partial class CpuRankingPage : Page
 
         return outer;
     }
+
+    private static void ApplyListColumns(Grid grid)
+    {
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(RankingColumns.Rank) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(RankingColumns.Metric) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(RankingColumns.Secondary) });
+    }
+
+    private void BuildListHeader()
+    {
+        if (_listHeaderHost is null) return;
+
+        _listHeaderHost.Children.Clear();
+
+        var rank = new RankingHeaderLabel("排名", null, _palette);
+        var model = new RankingHeaderLabel("处理器", null, _palette);
+        _metricHeader = new RankingHeaderLabel(MetricHeaderText(), "条形 = 相对榜首", _palette);
+        _secondaryHeader = new RankingHeaderLabel(SecondaryHeaderText(), null, _palette);
+
+        _listHeaderHost.Children.Add(rank); Grid.SetColumn(rank, 0);
+        _listHeaderHost.Children.Add(model); Grid.SetColumn(model, 1);
+        _listHeaderHost.Children.Add(_metricHeader); Grid.SetColumn(_metricHeader, 2);
+        _listHeaderHost.Children.Add(_secondaryHeader); Grid.SetColumn(_secondaryHeader, 3);
+    }
+
+    private string MetricHeaderText() => _sortBy == "singleCore" ? "单核性能" : "多核性能";
+
+    private string SecondaryHeaderText() => _sortBy == "singleCore" ? "多核" : "单核";
 
     private void OnListScrollChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
@@ -653,19 +802,6 @@ public sealed partial class CpuRankingPage : Page
         }
     }
 
-    private static void AddHeader(Grid grid, string text, int column)
-    {
-        var tb = new TextBlock
-        {
-            Text = text,
-            FontSize = 12,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(ThemeColors.DimText)
-        };
-        grid.Children.Add(tb);
-        Grid.SetColumn(tb, column);
-    }
-
     private async Task LoadLocalRankingAsync()
     {
         try
@@ -674,29 +810,55 @@ public sealed partial class CpuRankingPage : Page
             _localHardwareName = await Task.Run(HardwareInfoService.GetCpuName) ?? "";
         }
         catch { _localHardwareName = "未知"; }
-        UpdateLocalRanking();
+
+        // 本机型号确定后需要重画一次列表：命中的那一行会带“本机”标记
+        RefreshList();
     }
 
     private void UpdateLocalRanking()
     {
         if (_localRanking is null) return;
         _localRanking.Children.Clear();
-        foreach (var name in new[] { _localHardwareName })
+        _localMatchedName = null;
+
+        var entry = LocalRankingMatcher.Find(_localHardwareName,
+            CpuRankingService.Desktop.Concat(CpuRankingService.Laptop), e => e.Name);
+        if (entry is null)
         {
-            var entry = LocalRankingMatcher.Find(name,
-                CpuRankingService.Desktop.Concat(CpuRankingService.Laptop), e => e.Name);
-            if (entry is null || !CpuRankingService.GetByCategory(_category).Contains(entry)) continue;
-            _localRanking.Children.Add(LocalRankingCard.Create("CPU", entry.Name,
-                $"第 {entry.Rank} 名 · 多核 {entry.MultiCore:N0} · 单核 {entry.SingleCore:N0}", () => LocateInFullRanking(entry)));
+            _localRanking.Visibility = Visibility.Collapsed;
+            return;
         }
-        _localRanking.Visibility = _localRanking.Children.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        _localMatchedName = entry.Name;
+
+        // 本机型号可能不在当前分类（桌面 / 笔记本）里
+        var inView = CpuRankingService.GetByCategory(_category)
+            .FirstOrDefault(e => string.Equals(e.Name, entry.Name, StringComparison.OrdinalIgnoreCase));
+        var categoryCount = CpuRankingService.GetByCategory(_category).Count;
+        if (inView is null || categoryCount <= 0)
+        {
+            _localRanking.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var beat = inView.Rank > 0 ? RankingScale.BeatPercent(inView.Rank - 1, categoryCount) : -1;
+        var details = $"第 {inView.Rank} 名 · 多核 {inView.MultiCore:N0} · 单核 {inView.SingleCore:N0}"
+            + (beat >= 0 ? $" · 超过 {beat}% 的机型" : "");
+
+        _localRanking.Children.Add(LocalRankingCard.Create("CPU", inView.Name, details,
+            () => LocateInFullRanking(inView)));
+        _localRanking.Visibility = Visibility.Visible;
     }
 
     private void RefreshList()
     {
         if (_listContainer is null) return;
         UpdateLocalRanking();
+        RebuildList();
+    }
 
+    private void RebuildList()
+    {
         var entries = CpuRankingService.GetByCategory(_category);
         entries = CpuRankingService.Filter(entries, _brand, _keyword);
 
@@ -707,26 +869,266 @@ public sealed partial class CpuRankingPage : Page
             _ => entries.OrderBy(e => e.Rank).ToList()
         };
 
+        _metricMax = MetricMax();
+        _metricHeader?.SetText(MetricHeaderText());
+        _secondaryHeader?.SetText(SecondaryHeaderText());
+        _currentEntries = entries;
+        _tableHeader.Visibility = _viewMode == "list" ? Visibility.Visible : Visibility.Collapsed;
+
+        if (entries.Count == 0)
+        {
+            _listScroll.Content = RankingVisuals.CreateEmptyState(
+                "没有符合条件的处理器",
+                "换个关键词，或清除品牌筛选后再看",
+                ClearFilters, _palette);
+            FillStatsCards(entries);
+            _locateTarget = null;
+            return;
+        }
+
+        if (_viewMode == "ladder")
+        {
+            _listScroll.Content = BuildLadder(entries);
+            FillStatsCards(entries);
+            _locateTarget = null;
+            return;
+        }
+
+        _listScroll.Content = _listContainer;
         _listContainer.Children.Clear();
 
+        // 有筛选时不再用奖牌色，否则“筛选后的前三”会被误读成天梯前三
+        var allowMedal = _brand == "全部" && string.IsNullOrWhiteSpace(_keyword);
         Border? locateRow = null;
-        var displayRank = 0;
-        foreach (var entry in entries)
+
+        void AddRow(int index)
         {
-            displayRank++;
-            var row = CreateRow(entry, entry.Rank > 0 ? entry.Rank : displayRank);
+            var entry = entries[index];
+            var row = CreateRow(entry, index + 1, allowMedal);
             if (_locateTarget is not null && ReferenceEquals(entry, _locateTarget))
                 locateRow = row;
             _listContainer.Children.Add(row);
         }
 
-        RefreshStats(entries);
+        var tiers = RankingTiers.Build(entries.Count);
+        if (tiers.Count == 0)
+        {
+            for (var i = 0; i < entries.Count; i++) AddRow(i);
+        }
+        else
+        {
+            foreach (var tier in tiers)
+            {
+                _listContainer.Children.Add(CreateTierHeader(tier, entries));
+                for (var i = tier.Start; i <= tier.End; i++) AddRow(i);
+            }
+        }
+
+        FillStatsCards(entries);
 
         if (_locateTarget is not null)
         {
             _locateTarget = null;
             if (locateRow is not null) _ = BringRowIntoViewAsync(locateRow);
         }
+    }
+
+    /// <summary>条形基准取“当前分类全量”的最高分：筛选不会让弱型号的条形虚假变长。</summary>
+    private long MetricMax()
+    {
+        var all = CpuRankingService.GetByCategory(_category);
+        if (all.Count == 0) return 1;
+        return Math.Max(1, all.Max(MetricValue));
+    }
+
+    private long MetricValue(CpuRankingEntry entry) =>
+        _sortBy == "singleCore" ? entry.SingleCore : entry.MultiCore;
+
+    /// <summary>天梯墙：型号按当前排序密排成多列，左侧刻度轴标出相对榜首的百分比位置。</summary>
+    private FrameworkElement BuildLadder(List<CpuRankingEntry> entries)
+    {
+        var items = new List<LadderItem>(entries.Count);
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var entry = entries[i];
+            items.Add(new LadderItem(i + 1, entry.Name, entry.Brand, MetricValue(entry), IsLocalModel(entry.Name)));
+        }
+
+        var width = _listScroll?.ActualWidth ?? 0;
+        if (width < 1) width = 1200; // 首次布局前给一个中性宽度，随后由 SizeChanged 校正
+        _wallColumns = RankingLadderLayout.ColumnsFor(width);
+
+        return RankingLadder.Build(items, _metricMax, _wallColumns,
+            ["Intel", "AMD", "Apple", "Qualcomm", "其他"], _palette, BrandColor, OnLadderActivated);
+    }
+
+    private void OnLadderActivated(LadderItem item)
+    {
+        var entry = _currentEntries.ElementAtOrDefault(item.Position - 1);
+        if (entry is null) return;
+
+        // 滚动后头部三行可能已折叠，提示条会看不见，先展开
+        ExpandNav();
+
+        var percent = RankingScale.Percent(item.Metric, _metricMax);
+        _infoBar.Title = "已选中";
+        _infoBar.Message = $"{entry.Name} · 第 {item.Position} 名 · 多核 {entry.MultiCore:N0} · "
+            + $"单核 {entry.SingleCore:N0} · 相对榜首 {percent}%";
+        _infoBar.Severity = InfoBarSeverity.Informational;
+
+        var locate = new Button { Content = "在列表中定位" };
+        locate.Click += (_, _) =>
+        {
+            _locateTarget = entry;
+            SwitchView("list");
+        };
+        _infoBar.ActionButton = locate;
+        _infoBar.IsOpen = true;
+    }
+
+    private Border CreateTierHeader(RankingTier tier, List<CpuRankingEntry> entries)
+    {
+        long high = 0, low = long.MaxValue;
+        for (var i = tier.Start; i <= tier.End; i++)
+        {
+            var value = MetricValue(entries[i]);
+            high = Math.Max(high, value);
+            low = Math.Min(low, value);
+        }
+        if (low == long.MaxValue) low = 0;
+
+        var range = tier.Count == 1 || low == high
+            ? FormatScore(high)
+            : $"{FormatScore(high)} – {FormatScore(low)}";
+
+        return RankingVisuals.CreateTierHeader(tier, $"{tier.Count} 款 · {range}", _palette);
+    }
+
+    private static string FormatScore(long value) => value > 0 ? value.ToString("N0") : "—";
+
+    private Border CreateRow(CpuRankingEntry entry, int position, bool allowMedal)
+    {
+        var brandColor = BrandColor(entry.Brand);
+        var brandLogo = GetBrandLogo(entry.Brand);
+        var metricValue = MetricValue(entry);
+        var secondaryValue = _sortBy == "singleCore" ? entry.MultiCore : entry.SingleCore;
+        var percent = RankingScale.Percent(metricValue, _metricMax);
+
+        var medal = allowMedal && position <= 3
+            ? position == 1 ? Gold : position == 2 ? Silver : Bronze
+            : (Color?)null;
+        var rankBadge = RankingVisuals.CreateRankBadge(position, medal, _palette);
+
+        // 型号列：品牌徽标 + 名称（可带“本机”标记）+ 副行（核心 / 制程 / TDP）
+        var nameText = new TextBlock
+        {
+            Text = entry.Name,
+            FontSize = 14,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = _palette.PrimaryText,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var titleRow = new Grid { ColumnSpacing = 8 };
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        titleRow.Children.Add(nameText);
+        if (IsLocalModel(entry.Name))
+        {
+            var localBadge = RankingVisuals.CreateLocalBadge(_palette);
+            titleRow.Children.Add(localBadge);
+            Grid.SetColumn(localBadge, 1);
+        }
+
+        var textStack = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        textStack.Children.Add(titleRow);
+
+        var meta = BuildMeta(entry);
+        if (meta.Length > 0)
+        {
+            textStack.Children.Add(new TextBlock
+            {
+                Text = meta,
+                FontSize = 12,
+                Foreground = _palette.DimText,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+        }
+
+        var brandMark = RankingVisuals.CreateBrandMark(entry.Brand, brandLogo, brandColor, _palette);
+        var modelCell = new Grid { ColumnSpacing = 10, VerticalAlignment = VerticalAlignment.Center };
+        modelCell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        modelCell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        modelCell.Children.Add(brandMark);
+        Grid.SetColumn(brandMark, 0);
+        modelCell.Children.Add(textStack);
+        Grid.SetColumn(textStack, 1);
+
+        var metricCell = RankingVisuals.CreateMetricCell(metricValue, _metricMax, brandColor, _palette,
+            $"相对榜首 {percent}%");
+
+        var secondaryText = new TextBlock
+        {
+            Text = secondaryValue > 0 ? secondaryValue.ToString("N0") : "—",
+            FontSize = 12,
+            Foreground = _palette.DimText,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var rowGrid = new Grid { ColumnSpacing = 12, VerticalAlignment = VerticalAlignment.Center };
+        ApplyListColumns(rowGrid);
+        rowGrid.Children.Add(rankBadge); Grid.SetColumn(rankBadge, 0);
+        rowGrid.Children.Add(modelCell); Grid.SetColumn(modelCell, 1);
+        rowGrid.Children.Add(metricCell); Grid.SetColumn(metricCell, 2);
+        rowGrid.Children.Add(secondaryText); Grid.SetColumn(secondaryText, 3);
+
+        var row = RankingVisuals.CreateRowShell(rowGrid, _palette,
+            $"{entry.Name}，第 {position} 名，多核 {entry.MultiCore:N0}，单核 {entry.SingleCore:N0}，相对榜首 {percent}%");
+
+        ToolTipService.SetToolTip(row, BuildRowTooltip(entry, position, percent));
+        AutomationProperties.SetHelpText(row, "点击在完整排名中定位");
+        row.Tag = entry;
+        row.Tapped += OnRowTapped;
+        return row;
+    }
+
+    private static string BuildMeta(CpuRankingEntry entry)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(entry.Cores)) parts.Add(entry.Cores);
+        if (!string.IsNullOrWhiteSpace(entry.Process)) parts.Add(entry.Process);
+        if (!string.IsNullOrWhiteSpace(entry.Tdp)) parts.Add($"TDP {entry.Tdp}");
+        return string.Join(" · ", parts);
+    }
+
+    private static string BuildRowTooltip(CpuRankingEntry entry, int position, int percent)
+    {
+        var lines = new List<string> { entry.Name };
+        if (!string.IsNullOrWhiteSpace(entry.Process)) lines.Add($"制程 {entry.Process}");
+        if (!string.IsNullOrWhiteSpace(entry.Cores)) lines.Add($"核心 {entry.Cores}");
+        if (!string.IsNullOrWhiteSpace(entry.Cache)) lines.Add($"缓存 {entry.Cache}");
+        if (!string.IsNullOrWhiteSpace(entry.Tdp)) lines.Add($"TDP {entry.Tdp}");
+        lines.Add($"多核 {FormatScore(entry.MultiCore)} · 单核 {FormatScore(entry.SingleCore)}");
+        if (entry.Rank > 0 && entry.Rank != position) lines.Add($"完整排名 第 {entry.Rank} 名");
+        lines.Add($"相对榜首 {percent}%");
+        lines.Add("点击在完整排名中定位");
+        return string.Join("\n", lines);
+    }
+
+    private bool IsLocalModel(string name) =>
+        !string.IsNullOrEmpty(_localMatchedName)
+        && string.Equals(name, _localMatchedName, StringComparison.OrdinalIgnoreCase);
+
+    private void ClearFilters()
+    {
+        _suppressFilterEvents = true;
+        _keyword = "";
+        _searchBox.Text = "";
+        _brand = "全部";
+        UpdateBrandButtons(_brandStack, "全部");
+        _suppressFilterEvents = false;
+        RefreshList();
     }
 
     private void OnRowTapped(object sender, TappedRoutedEventArgs e)
@@ -737,6 +1139,9 @@ public sealed partial class CpuRankingPage : Page
 
     private void LocateInFullRanking(CpuRankingEntry entry)
     {
+        // 定位是逐行阅读，切回列表视图再跳转
+        _viewMode = "list";
+        UpdateViewToggle();
         ExpandNav();
 
         _locateTarget = entry;
@@ -775,168 +1180,4 @@ public sealed partial class CpuRankingPage : Page
         if (_listContainer.Children.Contains(row))
             SearchHighlightService.HighlightBorder(row);
     }
-
-    private void RefreshStats(List<CpuRankingEntry> filtered)
-    {
-        var mainGrid = Content as Grid;
-        if (mainGrid is null) return;
-
-        var statsRow = mainGrid.Children.FirstOrDefault(c => Grid.GetRow(c as FrameworkElement) == 2);
-        if (statsRow is Grid statsGrid)
-        {
-            statsGrid.Children.Clear();
-
-            var total = filtered.Count;
-            var intelCount = filtered.Count(e => e.Brand == "Intel");
-            var amdCount = filtered.Count(e => e.Brand == "AMD");
-            var topRating = filtered.Count > 0 ? filtered.MaxBy(e => e.Rating)?.Rating ?? 0 : 0;
-
-            var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null);
-            var intelCard = MakeStatCard("Intel", $"{intelCount} 款", "\uE912", IntelBlue, IntelLogo);
-            var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo);
-            var topCard = MakeStatCard("最高分", $"{topRating} 分", "\uE8CA", ThemeColors.Series4, null);
-
-            statsGrid.Children.Add(totalCard);
-            statsGrid.Children.Add(intelCard); Grid.SetColumn(intelCard, 1);
-            statsGrid.Children.Add(amdCard); Grid.SetColumn(amdCard, 2);
-            statsGrid.Children.Add(topCard); Grid.SetColumn(topCard, 3);
-        }
-    }
-
-    private Border CreateRow(CpuRankingEntry entry, int rank)
-    {
-        var rankColor = rank <= 3 ? (rank == 1 ? Gold : rank == 2 ? Silver : Bronze) : ThemeColors.DimText;
-        var brandColor = entry.Brand switch
-        {
-            "Intel" => IntelBlue, "AMD" => AmdRed, "Apple" => AppleGray, "Qualcomm" => QualcommPurple, _ => ThemeColors.DimText
-        };
-
-        var brandLogo = GetBrandLogo(entry.Brand);
-
-        FrameworkElement rankBadge;
-        if (rank <= 3)
-        {
-            rankBadge = new Border
-            {
-                Width = 32, Height = 32,
-                CornerRadius = new CornerRadius(8),
-                Background = new SolidColorBrush(Color.FromArgb(40, rankColor.R, rankColor.G, rankColor.B)),
-                Child = new TextBlock
-                {
-                    Text = rank.ToString(), FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush(rankColor),
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
-                }
-            };
-        }
-        else
-        {
-            rankBadge = new TextBlock
-            {
-                Text = rank.ToString(), FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Width = 32
-            };
-        }
-
-        var nameText = new TextBlock
-        {
-            Text = entry.Name, FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(ThemeColors.PrimaryText), VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var coresSubText = !string.IsNullOrWhiteSpace(entry.Cores)
-            ? new TextBlock
-            {
-                Text = entry.Cores, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
-                VerticalAlignment = VerticalAlignment.Center
-            }
-            : null;
-
-        var namePanel = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
-        namePanel.Children.Add(nameText);
-        if (coresSubText is not null) namePanel.Children.Add(coresSubText);
-
-        var multiCoreColor = entry.MultiCore >= 15000 ? ThemeColors.AccentBlue
-            : entry.MultiCore >= 5000 ? ThemeColors.AccentOrange
-            : ThemeColors.DimText;
-
-        var multiCoreText = new TextBlock
-        {
-            Text = entry.MultiCore > 0 ? entry.MultiCore.ToString("N0") : "-",
-            FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(multiCoreColor), VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var singleCoreColor = entry.SingleCore >= 1500 ? ThemeColors.AccentBlue
-            : entry.SingleCore >= 1000 ? ThemeColors.AccentOrange
-            : ThemeColors.DimText;
-
-        var singleCoreText = new TextBlock
-        {
-            Text = entry.SingleCore > 0 ? entry.SingleCore.ToString("N0") : "-",
-            FontSize = 14, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(singleCoreColor), VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var coresText = new TextBlock
-        {
-            Text = entry.Cores, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        FrameworkElement logoCell;
-        if (brandLogo is not null)
-        {
-            logoCell = new Image { Source = brandLogo, Width = 20, Height = 20, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        }
-        else
-        {
-            logoCell = new Border
-            {
-                Width = 20, Height = 20,
-                CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.FromArgb(30, brandColor.R, brandColor.G, brandColor.B)),
-                Child = new TextBlock
-                {
-                    Text = entry.Brand.Length > 0 ? entry.Brand[..1] : "?",
-                    FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                    Foreground = new SolidColorBrush(brandColor),
-                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
-                }
-            };
-        }
-
-        var rowGrid = new Grid { ColumnSpacing = 10, VerticalAlignment = VerticalAlignment.Center };
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-        rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(90) });
-
-        rowGrid.Children.Add(logoCell); Grid.SetColumn(logoCell, 0);
-        rowGrid.Children.Add(rankBadge); Grid.SetColumn(rankBadge, 1);
-        rowGrid.Children.Add(namePanel); Grid.SetColumn(namePanel, 2);
-        rowGrid.Children.Add(multiCoreText); Grid.SetColumn(multiCoreText, 3);
-        rowGrid.Children.Add(singleCoreText); Grid.SetColumn(singleCoreText, 4);
-        rowGrid.Children.Add(coresText); Grid.SetColumn(coresText, 5);
-
-        var row = new Border
-        {
-            Padding = new Thickness(14, 8, 14, 8),
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = rowGrid,
-            Tag = entry
-        };
-
-        ToolTipService.SetToolTip(row, "点击在完整排名中定位");
-        row.Tapped += OnRowTapped;
-        row.PointerEntered += (s, e) => row.Background = new SolidColorBrush(ThemeColors.RowHover);
-        row.PointerExited += (s, e) => row.Background = new SolidColorBrush(ThemeColors.CardBg);
-
-        return row;
-    }
-
 }

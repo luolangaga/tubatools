@@ -1,0 +1,33 @@
+{
+  "name": "tubatools-gamebox-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.9",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "framer-motion": "^14.10.1",
+    "i18next": "^26.0.5",
+    "lucide-react": "^1.70.0",
+    "lunar-javascript": "^1.7.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^17.0.4",
+    "react-icons": "^5.6.0",
+    "react-router-dom": "^7.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.0.11"
+  }
+}

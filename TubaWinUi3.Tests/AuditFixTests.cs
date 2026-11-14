@@ -143,6 +143,51 @@ public sealed class AuditFixTests : IDisposable
         finally { ConfigManager.LocationMarkerOverride = previous; ConfigManager.ResetLocationCache(); }
     }
 
+    [Fact]
+    public void PackagedResetCarriesLegacyEntriesIntoDefaultDirectory()
+    {
+        var source = Path.Combine(_directory, "legacy");
+        var target = Path.Combine(_directory, "default");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(target);
+        Directory.CreateDirectory(Path.Combine(source, "Backgrounds"));
+        File.WriteAllText(Path.Combine(source, "Backgrounds", "bg.png"), "image");
+
+        File.WriteAllText(Path.Combine(source, "settings.json"), "{\"theme\":\"dark\"}");
+        var targetSettings = Path.Combine(target, "settings.json");
+        File.WriteAllText(targetSettings, "{\"theme\":\"light\"}");
+        File.SetLastWriteTimeUtc(targetSettings, DateTime.UtcNow.AddMinutes(5));
+
+        ConfigManager.MigrateEntriesForPackagedReset(source, target);
+
+        // 目标里较新的配置不被旧副本覆盖，目录整体搬走
+        Assert.Equal("{\"theme\":\"light\"}", File.ReadAllText(targetSettings));
+        Assert.True(File.Exists(Path.Combine(target, "Backgrounds", "bg.png")));
+        Assert.False(Directory.Exists(Path.Combine(source, "Backgrounds")));
+    }
+
+    [Fact]
+    public void PackagedResetTakesNewerLegacyFileAndRefusesOverlappingPaths()
+    {
+        var source = Path.Combine(_directory, "legacy-newer");
+        var target = Path.Combine(_directory, "default-newer");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(target);
+        var targetSettings = Path.Combine(target, "settings.json");
+        File.WriteAllText(targetSettings, "{\"theme\":\"light\"}");
+        File.SetLastWriteTimeUtc(targetSettings, DateTime.UtcNow.AddMinutes(-5));
+        File.WriteAllText(Path.Combine(source, "settings.json"), "{\"theme\":\"dark\"}");
+
+        ConfigManager.MigrateEntriesForPackagedReset(source, target);
+        Assert.Equal("{\"theme\":\"dark\"}", File.ReadAllText(targetSettings));
+
+        var nested = Path.Combine(source, "nested");
+        Directory.CreateDirectory(nested);
+        File.WriteAllText(Path.Combine(nested, "keep.json"), "x");
+        ConfigManager.MigrateEntriesForPackagedReset(nested, source);
+        Assert.True(File.Exists(Path.Combine(nested, "keep.json")));
+    }
+
     private string Zip(params (string Name, string Text)[] files)
     {
         var path = Path.Combine(_directory, Guid.NewGuid() + ".zip");

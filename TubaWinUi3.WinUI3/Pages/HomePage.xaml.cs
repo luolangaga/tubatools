@@ -170,7 +170,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
         storyboard.Begin();
     }
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         SubscribeStaticEvents();
@@ -189,7 +189,7 @@ public sealed partial class HomePage : Page, ILocalizablePage
             _highlightToolPath = target.HighlightToolPath;
             try
             {
-                var tool = ToolCatalog.GetAllToolsCached()
+                var tool = (await ToolCatalog.GetAllToolsAsync())
                     .FirstOrDefault(t => t.Path.Equals(_highlightToolPath, StringComparison.OrdinalIgnoreCase));
                 _category = tool?.Category;
             }

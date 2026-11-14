@@ -23,13 +23,15 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
         InitializeComponent();
         InitBuiltinToolOpenModeComboBox();
         _compactMode = CompactModeService.IsCompactModeEnabled();
-        LoadTools();
     }
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         CompactModeService.CompactModeChanged += OnCompactModeChanged;
+        // 全量扫描挪到线程池：首次进入内置工具页不再阻塞消息泵
+        // （GetBuiltinFavoriteKey 依赖这份缓存，先预热再建卡片）。
+        await ToolCatalog.GetAllToolsAsync();
         RebuildPivot();
 
         // 离开页面期间（如设置页切换简洁模式）事件收不到，回到页面时重新同步，

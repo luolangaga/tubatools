@@ -432,6 +432,12 @@
   <data name="Search_SettingCompactDesc" xml:space="preserve">
     <value>The classic Tuba Toolbox style</value>
   </data>
+  <data name="Search_SettingHomeHero" xml:space="preserve">
+    <value>Home banner</value>
+  </data>
+  <data name="Search_SettingHomeHeroDesc" xml:space="preserve">
+    <value>Show or hide the welcome banner at the top of the home page</value>
+  </data>
   <data name="Search_SettingBrandLogo" xml:space="preserve">
     <value>Show brand logo</value>
   </data>
@@ -765,6 +771,12 @@
   </data>
   <data name="Settings_Compact_Title.Text" xml:space="preserve">
     <value>Compact list mode</value>
+  </data>
+  <data name="Settings_HomeHero_Title.Text" xml:space="preserve">
+    <value>Show home banner</value>
+  </data>
+  <data name="Settings_HomeHero_Desc.Text" xml:space="preserve">
+    <value>When off, the home page skips the welcome banner image and starts with the tool cards</value>
   </data>
   <data name="Settings_ConfigManager_Button.Text" xml:space="preserve">
     <value>Manage</value>
@@ -5295,6 +5307,24 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Log_File_backend" xml:space="preserve"><value>Intercept backend</value></data>
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>Rogue cleaner</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
+  <data name="Log_File_plugin" xml:space="preserve"><value>Plugins</value></data>
+  <data name="SafeMode_Title" xml:space="preserve"><value>Plugin safe mode</value></data>
+  <data name="SafeMode_ReasonManual" xml:space="preserve"><value>All installed plugins were skipped for this launch.</value></data>
+  <data name="SafeMode_ReasonAuto" xml:space="preserve"><value>The last few launches did not finish normally, so all installed plugins were skipped automatically. If the toolbox works now, a plugin is the likely cause.</value></data>
+  <data name="SafeMode_EnablePlugins" xml:space="preserve"><value>Restore plugins and restart</value></data>
+  <data name="SafeMode_RestartFailed" xml:space="preserve"><value>Safe mode is off, but the automatic restart failed. Close and reopen the toolbox manually; plugins load again on the next launch.</value></data>
+  <data name="Plugins_SafeModeRestart" xml:space="preserve"><value>Restart in safe mode</value></data>
+  <data name="Plugins_SafeModeTitle" xml:space="preserve"><value>Plugin safe mode</value></data>
+  <data name="Plugins_SafeModeOffHint" xml:space="preserve"><value>Plugins run with the same privileges as the toolbox. If you suspect a plugin causes startup failures or freezes, launch without any plugins and narrow it down.</value></data>
+  <data name="Plugins_SafeModeOnAuto" xml:space="preserve"><value>The last few launches did not finish normally, so all plugins were skipped this time. If the toolbox works now, a plugin is the likely cause; use the button above to restore plugins and restart.</value></data>
+  <data name="Plugins_SafeModeOnManual" xml:space="preserve"><value>All installed plugins were skipped for this launch. Turn safe mode off and restart to restore them.</value></data>
+  <data name="Plugins_SafeModeExit" xml:space="preserve"><value>Turn off safe mode and restart</value></data>
+  <data name="Plugins_SafeModeRestartFailed" xml:space="preserve"><value>Settings saved, but the automatic restart failed. Reopen the toolbox manually.</value></data>
+  <data name="Plugins_SkippedBySafeMode" xml:space="preserve"><value>Not loaded in safe mode; it returns after you turn safe mode off and restart.</value></data>
+  <data name="Plugins_FailureLoad" xml:space="preserve"><value>Load failed {0} time(s)</value></data>
+  <data name="Plugins_FailureExecution" xml:space="preserve"><value>Runtime error {0} time(s)</value></data>
+  <data name="PluginUi_AutoDisabled" xml:space="preserve"><value>Failed to load {0} times in a row and was disabled automatically. You can re-enable it under Plugins → Installed.</value></data>
+  <data name="PluginUi_SafeModeBlocked" xml:space="preserve"><value>Safe mode is on, so plugins are not loaded. Turn safe mode off and restart before enabling plugins.</value></data>
   <data name="Settings_LogDir_View.Text" xml:space="preserve"><value>View logs</value></data>
   <data name="Settings_SponsorOption.Content" xml:space="preserve"><value>Sponsor</value></data>
   <data name="Settings_StarRequest.Text" xml:space="preserve"><value>If you like our project, please give us a Star on GitHub/GitCode!</value></data>
@@ -5343,6 +5373,43 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Builtin_plugins_Desc" xml:space="preserve"><value>Discover, install and manage plugins from NuGet.</value></data>
   <data name="Plugins_Title.Text" xml:space="preserve"><value>Plugins</value></data>
   <data name="Plugins_Source.Text" xml:space="preserve"><value>From nuget.org · Tubatools</value></data>
+  <data name="Plugins_StoreEyebrow.Text" xml:space="preserve"><value>PLUGIN STORE</value></data>
+  <data name="Plugins_StoreHeadline.Text" xml:space="preserve"><value>Give your toolbox new powers</value></data>
+  <data name="Plugins_StoreSubtitle.Text" xml:space="preserve"><value>Discover interfaces, tools and skins built by the community. Install with one click.</value></data>
+  <data name="Plugins_TabDiscover.Content" xml:space="preserve"><value>Discover</value></data>
+  <data name="Plugins_TabInstalled.Content" xml:space="preserve"><value>Installed</value></data>
+  <data name="Plugins_AllPlugins" xml:space="preserve"><value>All plugins</value></data>
+  <data name="Plugins_SearchResults" xml:space="preserve"><value>Search results</value></data>
+  <data name="Plugins_CountFormat" xml:space="preserve"><value>{0}</value></data>
+  <data name="Plugins_ShownFormat" xml:space="preserve"><value>Showing {0}</value></data>
+  <data name="Plugins_HeroPluginCount" xml:space="preserve"><value>{0} plugins</value></data>
+  <data name="Plugins_HeroInstalledCount" xml:space="preserve"><value>{0} installed</value></data>
+  <data name="Plugins_NoResults.Text" xml:space="preserve"><value>No plugins found</value></data>
+  <data name="Plugins_Retry.Content" xml:space="preserve"><value>Retry</value></data>
+  <data name="Plugins_LoadMore.Text" xml:space="preserve"><value>Load more</value></data>
+  <data name="Plugins_InstalledSection.Text" xml:space="preserve"><value>Installed</value></data>
+  <data name="Plugins_CommunityTag.Text" xml:space="preserve"><value>Community plugin</value></data>
+  <data name="Plugins_About.Text" xml:space="preserve"><value>About</value></data>
+  <data name="Plugins_DetailsSection.Text" xml:space="preserve"><value>Details</value></data>
+  <data name="Plugins_OpenSource.Text" xml:space="preserve"><value>Open source</value></data>
+  <data name="Plugins_Security.Text" xml:space="preserve"><value>Security</value></data>
+  <data name="Plugins_SecurityTitle.Text" xml:space="preserve"><value>Plugins run with toolbox permissions</value></data>
+  <data name="Plugins_DetailBreadcrumb" xml:space="preserve"><value>Plugins</value></data>
+  <data name="Plugins_Category" xml:space="preserve"><value>Toolbox plugin</value></data>
+  <data name="Plugins_ProvidedBy" xml:space="preserve"><value>Provided by {0} · Installation and updates are managed by NuGet</value></data>
+  <data name="Plugins_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Plugins_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Plugins_UpdateAvailable" xml:space="preserve"><value>Update available</value></data>
+  <data name="Plugins_License" xml:space="preserve"><value>License</value></data>
+  <data name="Plugins_Tags" xml:space="preserve"><value>Tags</value></data>
+  <data name="Plugins_ProjectHome" xml:space="preserve"><value>Project home</value></data>
+  <data name="Plugins_SourceCode" xml:space="preserve"><value>Source code</value></data>
+  <data name="Plugins_NoOpenSource" xml:space="preserve"><value>This plugin does not declare an open-source address.</value></data>
+  <data name="Plugins_ReadmeError" xml:space="preserve"><value>Could not read this plugin's description from NuGet.</value></data>
+  <data name="Plugins_ReadmeMissing" xml:space="preserve"><value>This package does not include a README.</value></data>
+  <data name="Plugins_Installing" xml:space="preserve"><value>Installing…</value></data>
+  <data name="Plugins_Trust.Text" xml:space="preserve"><value>Plugins execute code with the toolbox permissions. Install only packages from authors you trust.</value></data>
+  <data name="Plugins_SafeModeRestart.Content" xml:space="preserve"><value>Restart in safe mode</value></data>
   <data name="Plugins_Docs.Content" xml:space="preserve"><value>Developer guide</value></data>
   <data name="Plugins_Upload.Content" xml:space="preserve"><value>Upload to NuGet</value></data>
   <data name="Plugins_Search.PlaceholderText" xml:space="preserve"><value>Search plugins</value></data>
@@ -5383,6 +5450,7 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_Running" xml:space="preserve"><value>In progress</value></data>
   <data name="Agent_Architecture" xml:space="preserve"><value>The AI component requires x64 or ARM64 Windows.</value></data>
   <data name="Agent_Installing" xml:space="preserve"><value>Installing AI component</value></data>
+  <data name="Agent_InstallingFallback" xml:space="preserve"><value>The mirror is unavailable, downloading the AI component from the official source</value></data>
   <data name="Agent_ReadyToStart" xml:space="preserve"><value>AI component installed. Click Prepare to connect.</value></data>
   <data name="Agent_Welcome" xml:space="preserve"><value>Install the AI component to get started. Models come from the component; a free model is preferred by default.</value></data>
   <data name="Agent_Starting" xml:space="preserve"><value>Connecting to AI component…</value></data>
@@ -5415,6 +5483,11 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_Send.Content" xml:space="preserve"><value>Send</value></data>
   <data name="Agent_Stop.Content" xml:space="preserve"><value>Stop</value></data>
   <data name="MainWindow_NavAiAssistant.Content" xml:space="preserve"><value>AI assistant</value></data>
+  <data name="AiIntro_Title" xml:space="preserve"><value>The AI assistant is here</value></data>
+  <data name="AiIntro_Subtitle" xml:space="preserve"><value>Free and ready to use</value></data>
+  <data name="AiIntro_Body" xml:space="preserve"><value>Not just Q&amp;A. Blue screens, lag, drivers, settings — one sentence and it digs to the root. Undervolting, overclocking, installing apps, changing settings — it takes the mouse and keyboard and gets it done. Homework, browsing the web, controlling the PC — it can handle all of it. An AI that actually gets hands-on.</value></data>
+  <data name="AiIntro_Action" xml:space="preserve"><value>Try it</value></data>
+  <data name="AiIntro_Close" xml:space="preserve"><value>Maybe later</value></data>
   <data name="Markdown_Copy" xml:space="preserve"><value>Copy code</value></data>
   <data name="Agent_DevelopPrompt" xml:space="preserve"><value>Help me build a toolbox plugin: </value></data>
   <data name="Plugins_Develop.Content" xml:space="preserve"><value>Build with AI</value></data>
@@ -5476,6 +5549,7 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Plugins_UpdateTitle" xml:space="preserve"><value>Update plugin</value></data>
   <data name="Plugins_UpdateFrom" xml:space="preserve"><value>Current version</value></data>
   <data name="Plugins_VersionLabel" xml:space="preserve"><value>Version</value></data>
+  <data name="Plugins_PackageIdLabel" xml:space="preserve"><value>Package ID</value></data>
   <data name="Plugins_AuthorLabel" xml:space="preserve"><value>Author</value></data>
   <data name="Plugins_DownloadsLabel" xml:space="preserve"><value>Downloads</value></data>
   <data name="Plugins_UnknownAuthor" xml:space="preserve"><value>Unknown</value></data>
@@ -5484,6 +5558,32 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Plugins_EnabledNotice" xml:space="preserve"><value>Enabled. Plugin tools were restored.</value></data>
   <data name="Plugins_UninstalledNotice" xml:space="preserve"><value>Uninstalled. Plugin tools were removed from the list; files are cleaned up after a restart.</value></data>
   <data name="Agent_WorkspaceTitle.Text" xml:space="preserve"><value>Workspace</value></data>
+  <data name="Agent_NewWorkspace.Text" xml:space="preserve"><value>New workspace…</value></data>
+  <data name="Agent_SwitchWorkspace.Text" xml:space="preserve"><value>Switch workspace</value></data>
+  <data name="Agent_RenameWorkspace.Text" xml:space="preserve"><value>Rename workspace…</value></data>
+  <data name="Agent_NewWorkspace" xml:space="preserve"><value>New workspace</value></data>
+  <data name="Agent_RenameWorkspace" xml:space="preserve"><value>Rename workspace</value></data>
+  <data name="Agent_DefaultWorkspace" xml:space="preserve"><value>Default workspace</value></data>
+  <data name="Agent_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Agent_WorkspaceName" xml:space="preserve"><value>Workspace name</value></data>
+  <data name="Agent_WorkspaceNamePlaceholder" xml:space="preserve"><value>For example: Network tools plugin</value></data>
+  <data name="Agent_WorkspaceNameEmpty" xml:space="preserve"><value>Enter a workspace name.</value></data>
+  <data name="Agent_WorkspaceNameTooLong" xml:space="preserve"><value>The name can be at most {0} characters.</value></data>
+  <data name="Agent_WorkspaceNameInvalid" xml:space="preserve"><value>The name cannot contain \ / : * ? " &lt; &gt; | or other reserved characters.</value></data>
+  <data name="Agent_WorkspaceNameDuplicate" xml:space="preserve"><value>A workspace with this name already exists.</value></data>
+  <data name="Agent_WorkspaceFolder" xml:space="preserve"><value>Workspace folder</value></data>
+  <data name="Agent_WorkspaceFolderPlaceholder" xml:space="preserve"><value>Leave empty to create it under the data folder</value></data>
+  <data name="Agent_ChooseFolder" xml:space="preserve"><value>Browse…</value></data>
+  <data name="Agent_ChooseWorkspaceFolder" xml:space="preserve"><value>Choose a workspace folder</value></data>
+  <data name="Agent_WorkspaceFolderInvalid" xml:space="preserve"><value>Invalid folder. Choose a normal folder, not a drive root or reserved location.</value></data>
+  <data name="Agent_WorkspaceFolderDuplicate" xml:space="preserve"><value>Another workspace already uses this folder.</value></data>
+  <data name="Agent_WorkspaceFolderOverlap" xml:space="preserve"><value>This folder overlaps another workspace folder. Choose a different location.</value></data>
+  <data name="Agent_WorkspaceFolderNotDirectory" xml:space="preserve"><value>The selected path is a file. Choose a folder.</value></data>
+  <data name="Agent_WorkspaceBusy" xml:space="preserve"><value>Stop the running task before creating or switching workspaces.</value></data>
+  <data name="Agent_WorkspaceCreateFailed" xml:space="preserve"><value>Could not create the workspace. Check permissions on the data folder.</value></data>
+  <data name="Agent_WorkspaceRenameFailed" xml:space="preserve"><value>Could not rename the workspace. Check permissions on the data folder.</value></data>
+  <data name="Agent_WorkspaceSwitchFailed" xml:space="preserve"><value>Could not switch workspaces. Check permissions on the data folder.</value></data>
+  <data name="Agent_WorkspaceRenamed" xml:space="preserve"><value>Renamed to “{0}”.</value></data>
   <data name="Agent_OpenWorkspace.Text" xml:space="preserve"><value>Open workspace</value></data>
   <data name="Agent_PrepareMenu.Text" xml:space="preserve"><value>Prepare AI component</value></data>
   <data name="Agent_NewLabel.Text" xml:space="preserve"><value>New session</value></data>
@@ -5491,6 +5591,25 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_Older.Content" xml:space="preserve"><value>Show earlier messages</value></data>
   <data name="Agent_EmptyTitle.Text" xml:space="preserve"><value>Start with a task</value></data>
   <data name="Agent_EmptyDescription.Text" xml:space="preserve"><value>Describe the feature you want to build or the computer problem you have. The assistant loads the right skills automatically.</value></data>
+  <data name="Agent_StarterHint.Text" xml:space="preserve"><value>Try one of these</value></data>
+  <data name="Agent_StarterStutter" xml:space="preserve"><value>Diagnose stutter</value></data>
+  <data name="Agent_StarterStutterPrompt" xml:space="preserve"><value>My PC stutters and games drop frames. Check CPU, GPU, memory and disk usage and temperatures, then find the cause.</value></data>
+  <data name="Agent_StarterThermal" xml:space="preserve"><value>Thermals &amp; power</value></data>
+  <data name="Agent_StarterThermalPrompt" xml:space="preserve"><value>Check whether my CPU and GPU temperatures, clocks and power draw are normal, and whether they are overheating or throttling.</value></data>
+  <data name="Agent_StarterTuning" xml:space="preserve"><value>Undervolt / overclock</value></data>
+  <data name="Agent_StarterTuningPrompt" xml:space="preserve"><value>Help me undervolt my CPU and see if a mild overclock is safe: read the current voltages, power limits and cooling first, then suggest safe settings.</value></data>
+  <data name="Agent_StarterDisk" xml:space="preserve"><value>Disk health</value></data>
+  <data name="Agent_StarterDiskPrompt" xml:space="preserve"><value>Check the health, SMART data and power-on hours of all my disks, and tell me if any is about to fail.</value></data>
+  <data name="Agent_StarterCleanup" xml:space="preserve"><value>Free up disk space</value></data>
+  <data name="Agent_StarterCleanupPrompt" xml:space="preserve"><value>Analyze what is using my disk space, then clean up junk files and unnecessary large files.</value></data>
+  <data name="Agent_StarterBlueScreen" xml:space="preserve"><value>Blue screen / stability</value></data>
+  <data name="Agent_StarterBlueScreenPrompt" xml:space="preserve"><value>My PC blue-screens or is unstable. Find the cause and run a stress test if needed to confirm stability.</value></data>
+  <data name="Agent_StarterStartup" xml:space="preserve"><value>Startup &amp; background</value></data>
+  <data name="Agent_StarterStartupPrompt" xml:space="preserve"><value>Check my startup apps and background processes, and tell me what can be disabled to make boot and daily use faster.</value></data>
+  <data name="Agent_StarterNetwork" xml:space="preserve"><value>Network latency</value></data>
+  <data name="Agent_StarterNetworkPrompt" xml:space="preserve"><value>Troubleshoot network latency and port usage, and check whether something is hogging bandwidth in the background.</value></data>
+  <data name="Agent_StarterPlugin" xml:space="preserve"><value>Build a plugin</value></data>
+  <data name="Agent_StarterPluginPrompt" xml:space="preserve"><value>Help me build a Tuba Toolbox plugin:</value></data>
   <data name="Agent_AttachFiles.Text" xml:space="preserve"><value>Reference local files…</value></data>
   <data name="Agent_ComposerPrompt.PlaceholderText" xml:space="preserve"><value>Ask anything…</value></data>
   <data name="Agent_FullAccess" xml:space="preserve"><value>Full access</value></data>

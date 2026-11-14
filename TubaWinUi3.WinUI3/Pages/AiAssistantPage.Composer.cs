@@ -52,6 +52,54 @@ public sealed partial class AiAssistantPage
         PromptBox.ContextFlyout = menu;
     }
 
+    private void BuildStarterPrompts()
+    {
+        (string Key, string Glyph, string Title, string Prompt)[] presets =
+        [
+            ("Stutter", "\uE9D9", L("StarterStutter", "卡顿掉帧排查"), L("StarterStutterPrompt", "我的电脑最近卡顿、游戏掉帧，帮我查一下 CPU、GPU、内存和磁盘的占用与温度，找出原因。")),
+            ("Thermal", "\uE7BA", L("StarterThermal", "温度功耗体检"), L("StarterThermalPrompt", "帮我看看 CPU 和 GPU 当前的温度、频率和功耗是否正常，有没有过热降频。")),
+            ("Tuning", "\uE945", L("StarterTuning", "降压超频调校"), L("StarterTuningPrompt", "帮我给 CPU 降压，顺便看看能不能小超频：先读取当前的电压、功耗墙和散热情况，再给出稳妥的参数建议。")),
+            ("Disk", "\uEDA2", L("StarterDisk", "硬盘健康检测"), L("StarterDiskPrompt", "帮我检查所有硬盘的健康状态、SMART 信息和通电时间，看看有没有快要坏掉的盘。")),
+            ("Cleanup", "\uE74D", L("StarterCleanup", "磁盘空间清理"), L("StarterCleanupPrompt", "帮我分析磁盘空间都被什么占用了，清理垃圾文件和不必要的大文件。")),
+            ("BlueScreen", "\uE783", L("StarterBlueScreen", "蓝屏稳定性排查"), L("StarterBlueScreenPrompt", "我的电脑最近蓝屏或不太稳定，帮我分析原因，需要的话做一次压力测试确认稳定性。")),
+            ("Startup", "\uE713", L("StarterStartup", "开机启动优化"), L("StarterStartupPrompt", "帮我检查开机启动项和后台进程，看看哪些可以关掉，让开机和运行更快。")),
+            ("Network", "\uE774", L("StarterNetwork", "网络延迟排查"), L("StarterNetworkPrompt", "帮我排查网络延迟和端口占用，看看是不是有程序在后台偷偷占用带宽。")),
+            ("Plugin", "\uEC4A", L("StarterPlugin", "开发工具箱插件"), L("StarterPluginPrompt", "帮我开发一个图吧工具箱插件："))
+        ];
+        foreach (var preset in presets)
+        {
+            var chip = new Button
+            {
+                Style = (Style)Resources["AgentStarterChip"],
+                Tag = preset.Prompt,
+                Content = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Children =
+                    {
+                        new FontIcon { Glyph = preset.Glyph, FontSize = 12 },
+                        new TextBlock { Text = preset.Title, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center }
+                    }
+                }
+            };
+            AutomationProperties.SetAutomationId(chip, "AgentStarter" + preset.Key);
+            ToolTipService.SetToolTip(chip, preset.Prompt);
+            chip.Click += StarterChip_Click;
+            StarterPanel.Children.Add(chip);
+        }
+    }
+
+    /// <summary>Prefills the composer instead of sending: the user can adjust details first.</summary>
+    private void StarterChip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_closed || sender is not Button { Tag: string prompt }) return;
+        var existing = PromptBox.Text.TrimEnd();
+        PromptBox.Text = existing.Length == 0 ? prompt : existing + Environment.NewLine + prompt;
+        PromptBox.Select(PromptBox.Text.Length, 0);
+        PromptBox.Focus(FocusState.Programmatic);
+    }
+
     private void AttachDropHandler()
     {
         DetachDropHandler();

@@ -7,6 +7,20 @@ namespace TubaWinUi3.Pages;
 public sealed partial class DashboardPage
 {
     private bool? _lastNarrowLayout;
+    private bool _heroHidden;
+
+    /// <summary>
+    /// 设置里的「首页大卡片」开关：关闭后整块欢迎横幅收起，卡片从页面顶部开始，
+    /// 编辑入口移到工具栏（否则唯一的「编辑大卡片」入口会随横幅一起消失）。
+    /// </summary>
+    private void ApplyHeroVisibility()
+    {
+        if (!_ready) return;
+        _heroHidden = AppSettings.GetBool(HomeDashboardContent.HideHeroSettingsKey);
+        HeroPanel.Visibility = _heroHidden ? Visibility.Collapsed : Visibility.Visible;
+        CompactManageButton.Visibility = _heroHidden ? Visibility.Visible : Visibility.Collapsed;
+        UpdateCardLayout();
+    }
 
     private void DashboardViewport_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -34,7 +48,9 @@ public sealed partial class DashboardPage
         HeroArtwork.Width = HeroLeftBlend.Width = Math.Min(width, HeroPanel.Height * 2.4);
         HeroArtwork.Height = HeroPanel.Height;
         // Keep the raised row clear of the title in short, narrow headers.
-        FeatureStrip.Margin = new Thickness(0, -Math.Min(112, Math.Max(0, HeroPanel.Height - 112)), 0, 0);
+        FeatureStrip.Margin = _heroHidden
+            ? new Thickness(0, 16, 0, 0)
+            : new Thickness(0, -Math.Min(112, Math.Max(0, HeroPanel.Height - 112)), 0, 0);
         double artworkOffset = Math.Min(100, Math.Min(width * .08, width - HeroArtwork.Width));
         HeroArtwork.Margin = HeroLeftBlend.Margin = HeroRightBlend.Margin = new Thickness(0, 0, artworkOffset, 0);
         HeroRightBlend.Width = Math.Min(80, HeroArtwork.Width * .12);

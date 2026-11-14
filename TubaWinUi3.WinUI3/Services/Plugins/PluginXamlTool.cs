@@ -7,7 +7,8 @@ using TubaWinUi3.PluginSdk;
 
 namespace TubaWinUi3.Services.Plugins;
 
-internal sealed class PluginXamlTool(string packageId, PluginToolDefinition definition, string? iconPath, string? xaml = null, string packageDirectory = "", bool fullTrust = false) : IBuiltinTool
+internal sealed class PluginXamlTool(string packageId, PluginToolDefinition definition, string? iconPath, string? xaml = null,
+    string packageDirectory = "", bool fullTrust = false, IReadOnlyList<string>? permissions = null) : IBuiltinTool
 {
     internal string PackageId => packageId;
     internal PluginToolDefinition Definition => definition;
@@ -15,6 +16,7 @@ internal sealed class PluginXamlTool(string packageId, PluginToolDefinition defi
     internal string? Xaml => xaml ?? definition.Xaml;
     internal string PackageDirectory => packageDirectory;
     internal bool FullTrust => fullTrust;
+    internal IReadOnlyList<string>? Permissions => permissions;
     public string Id => $"plugin:{packageId.ToLowerInvariant()}:{definition.Id.ToLowerInvariant()}";
     public string Name => definition.Name;
     public string Category => definition.Category;

@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWinUI>true</UseWinUI>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
+    <PackageId>Tubatools.AiJunkCleanup</PackageId>
+    <Version>1.15.0</Version>
+    <Authors>图吧工具箱</Authors>
+    <Description>给 AI 助手增加「垃圾清理」模式：AI 只读扫描并给出带原因和风险的清单，插件解析后由用户逐项确认，默认只勾选低风险项目，确认后直接删除并显示近似进度。</Description>
+    <PackageTags>Tubatools</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TubaWinUi3.Tests" />
+    <InternalsVisibleTo Include="Tubatools.AiJunkCleanup.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TubaWinUi3.PluginSdk\TubaWinUi3.PluginSdk.csproj" Private="false" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.4" ExcludeAssets="runtime;native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="assets\tuba-junk-cleanup\SKILL.md" LogicalName="TubaJunkCleanupSkill.md" />
+    <EmbeddedResource Include="assets\tuba-junk-cleanup\shallow-scan.ps1" LogicalName="TubaJunkCleanupShallowScanScript.ps1" />
+    <Page Remove="assets\**\*" />
+    <Content Remove="assets\**\*" />
+    <PRIResource Remove="assets\**\*" />
+    <None Remove="assets\**\*" />
+    <None Include="tubatools.json" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="assets\**\*" Exclude="assets\tuba-junk-cleanup\shallow-scan.ps1" Pack="true" PackagePath="assets/" />
+    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
+    <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
+  </ItemGroup>
+
+  <Target Name="CollectPluginDependencies" BeforeTargets="_GetPackageFiles">
+    <ItemGroup>
+      <_PluginDependency Include="$(OutputPath)*.dll"
+          Exclude="$(OutputPath)$(AssemblyName).dll;$(OutputPath)TubaWinUi3.PluginSdk.dll;$(OutputPath)Microsoft.*.dll;$(OutputPath)WinRT.Runtime.dll;$(OutputPath)*.resources.dll" />
+      <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -23,6 +23,7 @@ public sealed partial class HardwarePage
 
     private void ApplyHardwareStyle()
     {
+        if (!_pageAlive) return;
         RootHost.Visibility = UseSettingsStyle ? Visibility.Collapsed : Visibility.Visible;
         SettingsStyleScroll.Visibility = UseSettingsStyle ? Visibility.Visible : Visibility.Collapsed;
         ClassicModeMenu.IsChecked = !UseSettingsStyle;
@@ -42,6 +43,7 @@ public sealed partial class HardwarePage
 
     private void PopulateSettingsStyle(IReadOnlyList<HardwareInfoSection> sections)
     {
+        if (!_pageAlive) return;
         ResetHardwareFocus();
         _widthFitBudget = 8;
         _calloutRevealVersion++;
@@ -153,6 +155,7 @@ public sealed partial class HardwarePage
 
     private void DrawHardwareConnectors()
     {
+        if (!_pageAlive) return;
         if (_hardwareFocus is not null || SettingsStyleRoot.ActualWidth < 960 || !UseSettingsStyle || _modelAnchors.Count == 0)
         {
             foreach (var item in _connectorLines.Values) item.Visibility = Visibility.Collapsed;
@@ -206,22 +209,29 @@ public sealed partial class HardwarePage
 
     private async Task LoadDesktopWallpaperAsync()
     {
-        if (_wallpaperLoading || _pendingScene is not null) return;
+        if (!_pageAlive || _wallpaperLoading || _pendingScene is not null) return;
         _wallpaperLoading = true;
         try
         {
             _diagramLaptop = await Task.Run(HardwareInfoService.IsLaptop);
+            if (!_pageAlive) return;
+
             var wallpaper = await DesktopWallpaperService.LoadDataUriAsync();
-            if (!UseSettingsStyle) return;
+            if (!_pageAlive || !UseSettingsStyle) return;
+
             _pendingScene = new { laptop = _diagramLaptop, wallpaper, embedded = true,
                 dark = ActualTheme == ElementTheme.Dark, reducedMotion = ReduceDiagramMotion,
                 labels = _diagramCallouts.Select(item => item.Label).Distinct().ToArray(),
                 sides = _diagramCallouts.GroupBy(item => item.Label).ToDictionary(group => group.Key, group => group.First().Left),
                 connectors = SettingsStyleRoot.ActualWidth >= 960 };
             await EnsureHardwareSceneAsync();
+            if (!_pageAlive) return;
             ConfigureHardwareScene();
         }
-        catch (Exception ex) { ShowHardwareModelError(ex.Message); }
+        catch (Exception ex)
+        {
+            if (_pageAlive) ShowHardwareModelError(ex.Message);
+        }
         finally { _wallpaperLoading = false; }
     }
 
@@ -234,7 +244,7 @@ public sealed partial class HardwarePage
 
     private async Task EnsureHardwareSceneAsync()
     {
-        if (_sceneInitializing || _sceneReady || !UseSettingsStyle) return;
+        if (!_pageAlive || _sceneInitializing || _sceneReady || !UseSettingsStyle) return;
         _sceneInitializing = true;
         var version = ++_sceneLoadVersion;
         var scene = HardwareSceneRuntime.Create();
@@ -245,7 +255,7 @@ public sealed partial class HardwarePage
         {
             var color = (SettingsStyleScroll.Background as SolidColorBrush)?.Color ?? Windows.UI.Color.FromArgb(0, 0, 0, 0);
             await scene.InitializeAsync(color);
-            if (version != _sceneLoadVersion || !UseSettingsStyle) return;
+            if (version != _sceneLoadVersion || !_pageAlive || !UseSettingsStyle) return;
             _ = WatchHardwareSceneAsync(version);
         }
         catch { _sceneInitializing = false; throw; }
@@ -260,7 +270,7 @@ public sealed partial class HardwarePage
 
     private async void HardwareScene_MessageReceived(string message)
     {
-        if (!UseSettingsStyle || _scene is null) return;
+        if (!_pageAlive || !UseSettingsStyle || _scene is null) return;
         var version = _sceneLoadVersion;
         try
         {
@@ -304,7 +314,7 @@ public sealed partial class HardwarePage
                     using var stream = new MemoryStream(bytes);
                     var bitmap = new BitmapImage();
                     await bitmap.SetSourceAsync(stream.AsRandomAccessStream());
-                    if (version != _sceneLoadVersion) return;
+                    if (version != _sceneLoadVersion || !_pageAlive) return;
                     HardwareModelImage.Source = bitmap;
                     _sceneSnapshotWaiter?.TrySetResult(true);
                 }
@@ -320,6 +330,7 @@ public sealed partial class HardwarePage
 
     private void ShowHardwareModelError(string? message)
     {
+        if (!_pageAlive) return;
         HardwareModelError.Visibility = Visibility.Visible;
         _sceneInitializing = false;
         _bootCompleted = true;
@@ -338,18 +349,20 @@ public sealed partial class HardwarePage
     private async Task PrepareHardwareSceneScreenshotAsync()
     {
         await _hardwareFocusTransition;
+        if (!_pageAlive) return;
         if (!_bootCompleted)
         {
             try { await _bootCompletionWaiter.Task.WaitAsync(TimeSpan.FromSeconds(15)); }
             catch (TimeoutException) { throw new TimeoutException("3D 场景尚未就绪，请稍后再截图"); }
         }
         await _calloutRevealTask;
-        if (!_sceneReady) return;
+        if (!_pageAlive || !_sceneReady) return;
         _sceneSnapshotWaiter = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         _scene?.Post("{\"type\":\"snapshot\"}");
         if (await Task.WhenAny(_sceneSnapshotWaiter.Task, Task.Delay(4000)) != _sceneSnapshotWaiter.Task)
             throw new TimeoutException("3D 模型截图超时，请稍后重试");
 
+        if (!_pageAlive) return;
         HardwareModelImage.Visibility = Visibility.Visible;
         HardwareSceneHost.Visibility = Visibility.Collapsed;
         DrawHardwareConnectors();
@@ -359,6 +372,7 @@ public sealed partial class HardwarePage
 
     private void RestoreHardwareSceneAfterScreenshot()
     {
+        if (!_pageAlive) return;
         HardwareSceneHost.Visibility = Visibility.Visible;
         HardwareModelImage.Visibility = Visibility.Collapsed;
 
@@ -392,6 +406,8 @@ public sealed partial class HardwarePage
 
     private void ReleaseHardwareScene()
     {
+        _calloutRevealVersion++;
+        CancelDiagramCardFlights();
         ResetHardwareFocus();
         _sceneLoadVersion++;
         _sceneReady = false;
@@ -421,6 +437,7 @@ public sealed partial class HardwarePage
 
     private void SettingsStyleScroll_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        if (!_pageAlive) return;
         _widthFitBudget = 8;
         ArrangeSettingsCards();
         DispatcherQueue.TryEnqueue(FitSettingsStyleWidth);
@@ -428,6 +445,7 @@ public sealed partial class HardwarePage
 
     private void SettingsStyleRoot_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        if (!_pageAlive) return;
         ArrangeSettingsCards();
         DispatcherQueue.TryEnqueue(FitSettingsStyleWidth);
     }
@@ -439,7 +457,7 @@ public sealed partial class HardwarePage
     // 页面自然高度随宽度单调不增（板高有下限、换行更少），所以迭代几步必然收敛。
     private void FitSettingsStyleWidth()
     {
-        if (!UseSettingsStyle || _widthFitBudget <= 0) return;
+        if (!_pageAlive || !UseSettingsStyle || _widthFitBudget <= 0) return;
         var root = SettingsStyleRoot;
         var hostWidth = SettingsStyleScroll.ActualWidth;
         var hostHeight = SettingsStyleScroll.ActualHeight;
@@ -466,7 +484,7 @@ public sealed partial class HardwarePage
 
     private void ArrangeSettingsCards()
     {
-        if (_arrangingDiagramCards || _hardwareFocus is not null) return;
+        if (!_pageAlive || _arrangingDiagramCards || _hardwareFocus is not null) return;
         _arrangingDiagramCards = true;
         try
         {

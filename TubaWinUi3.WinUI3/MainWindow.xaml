@@ -280,6 +280,12 @@
                 x:Name="ToolUpdateToast"
                 IsClosable="True"
                 IsOpen="False" />
+            <InfoBar
+                x:Name="SafeModeBar"
+                AutomationProperties.AutomationId="SafeModeBar"
+                Severity="Warning"
+                IsOpen="False"
+                IsClosable="False" />
         </StackPanel>
 
         <Grid Grid.Row="2">
@@ -329,12 +335,36 @@
                             <FontIcon Glyph="&#xE779;" FontWeight="Bold" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem Content="AI 助手" Tag="ai-assistant" l:Uids.Uid="MainWindow_NavAiAssistant">
+                    <NavigationViewItem x:Name="AiAssistantNavItem" Content="AI 助手" Tag="ai-assistant" l:Uids.Uid="MainWindow_NavAiAssistant">
                         <NavigationViewItem.Icon><FontIcon Glyph="&#xE99A;" /></NavigationViewItem.Icon>
                     </NavigationViewItem>
                 </NavigationView.MenuItems>
                 <Frame x:Name="NavFrame" CacheSize="10" />
             </NavigationView>
         </Grid>
+
+        <!-- AI 助手正式上线的首次引导（标题、正文与按钮文案按语言在代码里赋值） -->
+        <TeachingTip
+            x:Name="AiAssistantIntroTip"
+            Grid.RowSpan="3"
+            PreferredPlacement="Right"
+            IsLightDismissEnabled="True"
+            ActionButtonStyle="{StaticResource AccentButtonStyle}"
+            ActionButtonClick="AiAssistantIntroTip_ActionClick"
+            Closed="AiAssistantIntroTip_Closed">
+            <TeachingTip.HeroContent>
+                <Image
+                    Height="144"
+                    AutomationProperties.Name="AI 助手界面演示"
+                    Source="ms-appx:///Assets/AiAssistant/ai-assistant-intro.gif"
+                    Stretch="UniformToFill" />
+            </TeachingTip.HeroContent>
+            <TeachingTip.Content>
+                <TextBlock
+                    x:Name="AiAssistantIntroBody"
+                    Margin="0,4,0,0"
+                    TextWrapping="Wrap" />
+            </TeachingTip.Content>
+        </TeachingTip>
     </Grid>
 </Window>

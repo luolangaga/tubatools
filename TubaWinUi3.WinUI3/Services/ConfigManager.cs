@@ -66,6 +66,9 @@ public static class ConfigManager
 
     public static ConfigLocation GetConfigLocation()
     {
+        // MSIX 版本不支持修改配置存储位置：标记文件里写着什么一律忽略，固定用默认目录。
+        if (RuntimeHelper.IsPackagedContext) return ConfigLocation.AppData;
+
         lock (_lock)
         {
             if (_cachedLocation is not null) return _cachedLocation.Value;
@@ -112,23 +115,36 @@ public static class ConfigManager
     }
 
     private static string ResolveCustomDataDir()
+        => ResolveCustomDataDir(GetCustomPath());
+
+    private static string ResolveCustomDataDir(string? customPath)
     {
-        var customPath = GetCustomPath();
         if (string.IsNullOrWhiteSpace(customPath)) return AppDataDir;
         var expanded = PathResolver.ExpandPath(customPath);
         if (Path.IsPathRooted(expanded)) return expanded;
         return Path.Combine(ToolCatalog.AppDirectory, expanded);
     }
 
+    private static void WriteLocationMarker(ConfigLocation location, string? customPath)
+    {
+        if (location == ConfigLocation.Custom && string.IsNullOrWhiteSpace(customPath))
+            throw new ArgumentException("自定义目录不能为空。", nameof(customPath));
+
+        var value = location == ConfigLocation.Custom
+            ? CustomPathPrefix + customPath!.Trim()
+            : location.ToString();
+        AtomicFile.WriteText(LocationMarkerPath, value);
+    }
+
     public static bool SetConfigLocation(ConfigLocation location, string? customPath = null)
     {
+        if (RuntimeHelper.IsPackagedContext) return false;
+
         try
         {
             AppSettings.Flush();
-            var markerPath = LocationMarkerPath;
             if (location == ConfigLocation.Custom && string.IsNullOrWhiteSpace(customPath)) return false;
-            var value = location == ConfigLocation.Custom ? CustomPathPrefix + customPath!.Trim() : location.ToString();
-            AtomicFile.WriteText(markerPath, value);
+            WriteLocationMarker(location, customPath);
 
             lock (_lock)
             {
@@ -141,6 +157,83 @@ public static class ConfigManager
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// 打包（MSIX）上下文不允许修改配置存储位置。旧版本允许切到「程序根目录 / 自定义目录」，
+    /// 因此启动早期把这类历史选择收回默认目录：先把旧目录里的配置搬回默认目录，再改写标记文件。
+    /// 只搬顶层条目——文件直接复制（配置都很小），目录优先同卷移动；跨卷的大体积目录
+    /// （模型、缓存、下载等可能数 GB）不复制、原样留在旧位置，不拿启动时间换空间。
+    /// </summary>
+    public static void EnsurePackagedDefaultLocation()
+    {
+        if (!RuntimeHelper.IsPackagedContext) return;
+
+        try
+        {
+            var marker = ReadLocationMarker();
+            if (string.IsNullOrWhiteSpace(marker) ||
+                marker.Equals(nameof(ConfigLocation.AppData), StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var previousDir = marker.StartsWith(CustomPathPrefix, StringComparison.OrdinalIgnoreCase)
+                ? ResolveCustomDataDir(marker[CustomPathPrefix.Length..])
+                : AppRootDir;
+
+            MigrateEntriesForPackagedReset(previousDir, AppDataDir);
+            WriteLocationMarker(ConfigLocation.AppData, null);
+
+            lock (_lock)
+            {
+                _cachedDataDir = null;
+                _cachedLocation = null;
+            }
+            AppSettings.InvalidateCache();
+
+            LogService.Info(LogService.App,
+                $"MSIX 版本不支持修改配置存储位置，已收回默认目录 {AppDataDir}（原位置：{previousDir}）。");
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn(LogService.App, "收回 MSIX 配置存储位置失败：" + ex.Message);
+        }
+    }
+
+    internal static void MigrateEntriesForPackagedReset(string sourceDir, string targetDir)
+    {
+        if (!Directory.Exists(sourceDir)) return;
+
+        var source = Path.GetFullPath(sourceDir);
+        var target = Path.GetFullPath(targetDir);
+        if (string.Equals(source, target, StringComparison.OrdinalIgnoreCase)) return;
+        if (UserToolLibrary.IsWithin(target, source) || UserToolLibrary.IsWithin(source, target)) return;
+
+        Directory.CreateDirectory(target);
+
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            try
+            {
+                var dest = Path.Combine(target, Path.GetFileName(file));
+                if (!File.Exists(dest) ||
+                    new FileInfo(file).LastWriteTimeUtc > new FileInfo(dest).LastWriteTimeUtc)
+                {
+                    File.Copy(file, dest, overwrite: true);
+                }
+            }
+            catch { }
+        }
+
+        foreach (var dir in Directory.EnumerateDirectories(source))
+        {
+            try
+            {
+                var dest = Path.Combine(target, Path.GetFileName(dir));
+                if (Directory.Exists(dest)) continue;
+                Directory.Move(dir, dest);
+            }
+            catch { }
         }
     }
 
@@ -177,6 +270,8 @@ public static class ConfigManager
 
     public static bool MigrateData(ConfigLocation targetLocation, bool migrate, string? customPath = null)
     {
+        if (RuntimeHelper.IsPackagedContext) return false;
+
         AppSettings.Flush();
         _ = ToolMetadataService.GetUserTools(); // 迁移旧混合元数据后再搬数据目录。
         var sourceDir = GetDataDir();
