@@ -221,7 +221,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         }];
         CpuChart.XAxes = [new Axis { IsVisible = false }];
         CpuChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0, MaxLimit = 100 }];
-        CpuChart.AnimationsSpeed = TimeSpan.FromMilliseconds(100);
+        CpuChart.AnimationsSpeed = TimeSpan.Zero;
         CpuChart.EasingFunction = null;
 
         GpuChart.Series = [new LineSeries<double>
@@ -234,7 +234,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         }];
         GpuChart.XAxes = [new Axis { IsVisible = false }];
         GpuChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0, MaxLimit = 100 }];
-        GpuChart.AnimationsSpeed = TimeSpan.FromMilliseconds(100);
+        GpuChart.AnimationsSpeed = TimeSpan.Zero;
         GpuChart.EasingFunction = null;
 
         MemChart.Series = [new LineSeries<double>
@@ -247,7 +247,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         }];
         MemChart.XAxes = [new Axis { IsVisible = false }];
         MemChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0, MaxLimit = 100 }];
-        MemChart.AnimationsSpeed = TimeSpan.FromMilliseconds(100);
+        MemChart.AnimationsSpeed = TimeSpan.Zero;
         MemChart.EasingFunction = null;
 
         DiskChart.Series =
@@ -271,7 +271,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         ];
         DiskChart.XAxes = [new Axis { IsVisible = false }];
         DiskChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0 }];
-        DiskChart.AnimationsSpeed = TimeSpan.FromMilliseconds(100);
+        DiskChart.AnimationsSpeed = TimeSpan.Zero;
         DiskChart.EasingFunction = null;
 
         if (_isLaptop)
@@ -286,7 +286,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
             }];
             BatChart.XAxes = [new Axis { IsVisible = false }];
             BatChart.YAxes = [new Axis { IsVisible = false, MinLimit = 0, MaxLimit = 100 }];
-            BatChart.AnimationsSpeed = TimeSpan.FromMilliseconds(100);
+            BatChart.AnimationsSpeed = TimeSpan.Zero;
             BatChart.EasingFunction = null;
         }
 
@@ -489,7 +489,7 @@ public sealed partial class HardwareDetailPage : Page, ILocalizablePage
         if (Frame.CanGoBack)
             Frame.GoBack();
         else
-            Frame.Navigate(typeof(HardwarePage), null, new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
+            Frame.Navigate(typeof(HardwarePage), null, new SuppressNavigationTransitionInfo());
     }
 
     private async void ExportButton_Click(object sender, RoutedEventArgs e)

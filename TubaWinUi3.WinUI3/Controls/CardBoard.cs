@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Foundation;
 
 namespace TubaWinUi3.Controls;
@@ -54,10 +53,10 @@ public sealed class CardBoard : Panel
     private int _columns = 1;
     private double _columnWidth;
 
-    public CardBoard()
-    {
-        ChildrenTransitions = [new RepositionThemeTransition()];
-    }
+    // 刻意不设置 ChildrenTransitions：这个面板每次测量都会按自然高度重新分列，
+    // 再叠加「铺满高度」的一次重排；RepositionThemeTransition 会让每次重排的卡片位置
+    // 都跑一遍动画，动画帧又反过来触发重排，形成布局/动画循环（数秒后报错、界面卡死）。
+    // 瀑布流保持静态定位，Issue #266。
 
     protected override Size MeasureOverride(Size availableSize)
     {

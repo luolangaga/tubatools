@@ -250,7 +250,8 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
     private void DetailButton_Click(object sender, RoutedEventArgs e)
     {
-        Frame.Navigate(typeof(HardwareDetailPage), null, new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
+        // 不做滑动过渡：详情页卡片多、图表持续刷新，滑动动画会与首帧布局叠加（Issue #266）
+        Frame.Navigate(typeof(HardwareDetailPage), null, new SuppressNavigationTransitionInfo());
     }
 
     private void TitleText_Tapped(object sender, TappedRoutedEventArgs e)
