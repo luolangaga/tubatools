@@ -402,7 +402,7 @@ Root `package.json` + `src/docs/` are a **VitePress** site only (`npm run dev` /
 
 ## README badges
 
-README 顶部徽章是仓库内置 SVG（`images/readme/badges/`），**不要再改回 img.shields.io**：GitHub 会把外部图片经 camo.githubusercontent.com 中转，该域名在国内网络常超时，徽章会整行显示为空白（2026-11 实测，shields.io 本身可达但 camo 不可达）。外观按 shields flat-square 复刻（Verdana 11px、labelColor #5b624a、跟随系统深色切换），中英各一套，链接指向 releases 与指南。
+README 顶部徽章是仓库内置 SVG（`images/readme/badges/`），**不要再改回 img.shields.io**：GitHub 会把外部图片经 camo.githubusercontent.com 中转，该域名在国内网络常超时（本机 curl 实测 15s 无响应），徽章会整行空白；且 Markdown 写在 `<div align="center">` 里在 GitCode 等渲染器下不被解析。徽章一律用 HTML `<a><img>` 引用。外观按 shields flat-square 复刻（Verdana 11px、labelColor #5b624a、跟随系统深色切换），中英各一套，链接指向 releases 与指南。Trendshift / AtomGit 的荣誉卡片同为 HTML img，直连 trendshift.io、atomgit.com（国内实测可达）。
 刷新版本号/下载量：`pwsh -File scripts/update-readme-badges.ps1`（从 GitHub API 取值，只重写 SVG，不改 README 文本；可加 `-ReleaseTag` / `-Downloads` 离线指定）。
 
 ## Conventions

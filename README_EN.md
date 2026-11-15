@@ -27,6 +27,11 @@
   <a href="LICENSE"><img src="images/readme/badges/license-en.svg" height="20" alt="License GPL-3.0"></a>
 </p>
 
+<p align="center">
+  <a href="https://trendshift.io/repositories/51042?utm_source=repository-badge&utm_medium=badge&utm_campaign=badge-repository-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/51042" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+  <a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/daily?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
+</p>
+
 Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup and everyday maintenance.
 
 [Official website and docs](https://tubawinui3.cn) · [Download mirror](https://gitcode.com/luolangaga/tubatool)
@@ -114,8 +119,6 @@ Thanks to everyone who has contributed code, filed issues or improved the docs �
 
 <a href="https://hellogithub.com/repository/luolangaga/tubatools" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=f86864b693ec4f5ca75749cc152de2e8&claim_uid=9j2VeIwBLtJZzfr" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 <a href="https://atomgit.com/luolangaga/tubatool"><img alt="AtomGit G-Star" src="https://atomgit.com/luolangaga/tubatool/star/new_badge.svg" height="55"/></a>
-<a href="https://trendshift.io/repositories/51042?utm_source=repository-badge&utm_medium=badge&utm_campaign=badge-repository-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/51042" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
-<a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/daily?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
 <a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/51042/monthly?language=C%23" alt="luolangaga%2Ftubatools | Trendshift" width="250" height="55"/></a>
 
 </details>
