@@ -10,6 +10,18 @@ namespace TubaWinUi3.Services.Plugins;
 internal sealed partial class PluginHostServices(string pluginId, string toolId, string packageDirectory, DispatcherQueue dispatcher,
     Func<XamlRoot?> getRoot, Action<string> report, bool fullTrust = false, IReadOnlyList<string>? permissions = null) : IPluginServices
 {
+    /// <summary>
+    /// 兼容 1.9.0 及更早版本的 fullTrust 插件：像 MacSkin 这类插件会用反射按
+    /// 「7 个参数」的构造函数重建一份宿主服务（SDK 没有暴露 IPluginServices，它只能这么做）。
+    /// 反射构造按参数个数精确匹配，可选参数不算数——所以一旦给主构造函数加参数，
+    /// 这些插件就会在启动时抛 MissingMethodException。保留这个旧签名，新增参数请只加在后面。
+    /// </summary>
+    internal PluginHostServices(string pluginId, string toolId, string packageDirectory, DispatcherQueue dispatcher,
+        Func<XamlRoot?> getRoot, Action<string> report, bool fullTrust)
+        : this(pluginId, toolId, packageDirectory, dispatcher, getRoot, report, fullTrust, null)
+    {
+    }
+
     private readonly PluginSettingsStore _store = new(pluginId);
     public string PluginId => pluginId;
     public string PackageDirectory => packageDirectory;

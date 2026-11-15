@@ -32,6 +32,53 @@ public sealed class PluginTests : IDisposable
         Assert.Throws<InvalidDataException>(() => PluginPackageRules.ResolveFile(_root, path));
 
     [Fact]
+    public void StartupNavigation_DoesNotReferencePluginSdkConcreteType()
+    {
+        // #265：安装/更新不完整导致 TubaWinUi3.PluginSdk.dll 缺失时，
+        // 主窗口导航不能在 JIT 阶段就因 PluginXamlTool 类型加载失败而闪退。
+        var navigation = File.ReadAllText(Path.Combine(TestPaths.AppRoot, "MainWindow.PluginNavigation.cs"));
+        var icons = File.ReadAllText(Path.Combine(TestPaths.AppRoot, "MainWindow.NavigationIcons.cs"));
+
+        Assert.DoesNotContain("PluginXamlTool", navigation);
+        Assert.DoesNotContain("PluginXamlTool", icons);
+        Assert.Contains("TryApplyPluginNavigationCustomization", navigation);
+    }
+
+    [Fact]
+    public void HostServices_KeepsLegacySevenParameterConstructor()
+    {
+        // 1.9.0 及更早的 fullTrust 插件（如 MacSkin 1.1.0）用反射按 7 参数签名重建 PluginHostServices。
+        // Activator.CreateInstance 按参数个数精确匹配，给主构造函数加参数（如 permissions）
+        // 会让这些插件启动时抛 MissingMethodException 并整体失效。
+        var constructor = typeof(PluginHostServices).GetConstructor(
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+            binder: null,
+            [typeof(string), typeof(string), typeof(string), typeof(Microsoft.UI.Dispatching.DispatcherQueue),
+             typeof(Func<Microsoft.UI.Xaml.XamlRoot?>), typeof(Action<string>), typeof(bool)],
+            modifiers: null);
+
+        Assert.NotNull(constructor);
+        Assert.Equal(7, constructor!.GetParameters().Length);
+    }
+
+    [Fact]
+    public void HostServices_LegacyReflectionConstructionStillWorks()
+    {
+        // 与 MacSkin.Chrome.ModernShell.CreateServices() 相同的调用方式：7 个实参 + Activator。
+        // 只检查签名存在不够——真正要保证的是这条反射路径能选中构造函数并实例化成功。
+        var instance = Activator.CreateInstance(
+            typeof(PluginHostServices),
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+            binder: null,
+            args: ["plugin-test", "plugin:test:tool", _root, null,
+                   (Func<Microsoft.UI.Xaml.XamlRoot?>)(() => null), (Action<string>)(_ => { }), true],
+            culture: null);
+
+        Assert.NotNull(instance);
+        Assert.Equal("plugin-test", ((TubaWinUi3.PluginSdk.IPluginServices)instance!).PluginId);
+    }
+
+    [Fact]
     public void Search_RequiresExactTag_IgnoresCase()
     {
         var packages = NuGetPluginSource.ParseSearch("""

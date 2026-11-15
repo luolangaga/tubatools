@@ -12,6 +12,13 @@ public interface IBuiltinTool
     string Category { get; }
     BuiltinToolKind Kind { get; }
 
+    /// <summary>
+    /// 是否作为独立入口显示在侧边栏（插件工具使用；内置工具默认 false）。
+    /// 放在接口上是为了让主窗口启动路径不必引用 PluginSdk 的 PluginXamlTool 类型：
+    /// 更新不完整导致 TubaWinUi3.PluginSdk.dll 缺失时，导航仍能降级启动而不是闪退（#265）。
+    /// </summary>
+    bool ShowInSidebar => false;
+
     Task ExecuteAsync(BuiltinToolContext context);
 }
 

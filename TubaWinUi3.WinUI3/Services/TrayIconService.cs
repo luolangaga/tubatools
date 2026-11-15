@@ -11,7 +11,10 @@ namespace TubaWinUi3.Services;
 /// 3. 内置工具在后台运行（流量监控器 / 网络调度器 / 游戏防晕3D …）—— 由各页面调用 <see cref="Show"/>。
 ///
 /// 任一理由成立图标就可见；理由全部消失时自动收起，不留一个点了没反应的托盘图标。
-/// 托盘菜单：打开主窗口 / [停止「工具名」并退出] / 退出图吧工具箱。
+///
+/// <b>鼠标语义：左键单击图标 = 直接恢复主窗口</b>（单击就有反应，不再要求双击；
+/// 双击的第二下会再触发一次恢复，恢复本身是幂等的）；右键 = 弹出托盘菜单
+/// （打开主窗口 / [停止「工具名」并退出] / 退出图吧工具箱）。
 ///
 /// <b>实现直接调 Win32 Shell_NotifyIcon（隐藏消息窗口 + TrackPopupMenu）</b>，不用
 /// System.Windows.Forms.NotifyIcon：后者需要 FrameworkReference
@@ -174,6 +177,7 @@ public static class TrayIconService
     private const uint WM_APP = 0x8000;
     private const uint WM_TRAYICON = WM_APP + 1;
     private const uint WM_NULL = 0x0000;
+    private const uint WM_LBUTTONUP = 0x0202;
     private const uint WM_LBUTTONDBLCLK = 0x0203;
     private const uint WM_RBUTTONUP = 0x0205;
     private const uint WM_CONTEXTMENU = 0x007B;
@@ -266,10 +270,15 @@ public static class TrayIconService
             // 未调用 NIM_SETVERSION → 回调里 lParam 低字就是鼠标消息
             var mouseMessage = (uint)(lParam.ToInt64() & 0xFFFF);
 
-            if (mouseMessage == WM_LBUTTONDBLCLK)
-                RestoreMainWindow();
-            else if (mouseMessage is WM_RBUTTONUP or WM_CONTEXTMENU)
-                ShowContextMenu();
+            switch (TrayMouseActionFor(mouseMessage))
+            {
+                case TrayMouseAction.RestoreMainWindow:
+                    RestoreMainWindow();
+                    break;
+                case TrayMouseAction.ShowMenu:
+                    ShowContextMenu();
+                    break;
+            }
 
             return IntPtr.Zero;
         }
@@ -283,6 +292,32 @@ public static class TrayIconService
 
         return DefWindowProcW(hwnd, msg, wParam, lParam);
     }
+
+    /// <summary>托盘图标收到的鼠标消息该做什么（纯逻辑，可单测）。</summary>
+    internal enum TrayMouseAction
+    {
+        /// <summary>不处理（鼠标移动、按下等杂项消息）。</summary>
+        None,
+
+        /// <summary>直接恢复主窗口。</summary>
+        RestoreMainWindow,
+
+        /// <summary>弹出托盘菜单。</summary>
+        ShowMenu
+    }
+
+    /// <summary>
+    /// 鼠标语义：<b>左键单击（WM_LBUTTONUP）就恢复主窗口</b>—— 用户点托盘图标就是想看界面，
+    /// 不该要求双击。双击（WM_LBUTTONDBLCLK）继续接：双击序列里第一下 WM_LBUTTONUP 已经恢复，
+    /// 这里再接到也不会出错（RestoreMainWindow 幂等），但能兜住极端情况下丢失第一下的场景。
+    /// 右键（以及键盘选择图标时系统补发的 WM_CONTEXTMENU）才弹菜单。
+    /// </summary>
+    internal static TrayMouseAction TrayMouseActionFor(uint mouseMessage) => mouseMessage switch
+    {
+        WM_LBUTTONUP or WM_LBUTTONDBLCLK => TrayMouseAction.RestoreMainWindow,
+        WM_RBUTTONUP or WM_CONTEXTMENU => TrayMouseAction.ShowMenu,
+        _ => TrayMouseAction.None
+    };
 
     private static void UpdateIcon()
     {
@@ -517,7 +552,10 @@ public static class TrayIconService
             {
                 App.IsLiteMode = false;
                 _restoreAction?.Invoke();
-                restored = mainWindow.RestoreFromTray();
+                // 托盘点击是「用户明确要把界面叫回来」：走 ActivateFromExternal 的强制置前路径
+                // （ShowWindow + BringWindowToTop + SetForegroundWindow），只用 Activate() 时
+                // 前台锁会把窗口留在别的程序后面，看起来像「点了没反应」。
+                restored = mainWindow.ActivateFromExternal();
             }
             catch (Exception ex)
             {

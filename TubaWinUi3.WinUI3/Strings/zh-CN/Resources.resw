@@ -557,7 +557,7 @@
     <value>图吧工具箱仍在后台运行</value>
   </data>
   <data name="Tray_BalloonText" xml:space="preserve">
-    <value>程序已最小化到系统托盘，硬件信息等数据依然保留，再次打开无需重新检测。双击托盘图标可恢复窗口；右键图标可退出程序。</value>
+    <value>程序已最小化到系统托盘，硬件信息等数据依然保留，再次打开无需重新检测。单击托盘图标即可恢复窗口；右键图标可退出程序。</value>
   </data>
 
   <!-- 更新提示条 -->
@@ -758,7 +758,7 @@
     <value>独立窗口</value>
   </data>
   <data name="Settings_CloseToTray_Desc.Text" xml:space="preserve">
-    <value>点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；双击托盘图标恢复窗口，右键可退出</value>
+    <value>点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；单击托盘图标恢复窗口，右键可退出</value>
   </data>
   <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
     <value>关闭主窗口时最小化到系统托盘</value>

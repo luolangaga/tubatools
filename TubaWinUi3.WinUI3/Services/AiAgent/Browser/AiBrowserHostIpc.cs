@@ -38,6 +38,12 @@ internal sealed class AiBrowserHostClient : IAsyncDisposable
                 await EnsureConnectedAsync(ct);
                 return await SendCoreAsync(op, cdp, parameters, ct);
             }
+            catch (OperationCanceledException)
+            {
+                // 取消后管道里可能还压着一个晚到的响应；丢掉连接，让下一次调用重新握手，否则会读到上一条的结果。
+                await ResetAsync();
+                throw;
+            }
         }
         finally { _gate.Release(); }
     }

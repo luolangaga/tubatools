@@ -664,7 +664,7 @@ public sealed partial class MainWindow : Window
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
-        // 窗口被重新显示（托盘双击、页面里的 App.MainWindow?.Activate() 等任何路径）：
+        // 窗口被重新显示（托盘单击图标、页面里的 App.MainWindow?.Activate() 等任何路径）：
         // 收起「已最小化到托盘」标记，否则会留下一个提示"已最小化到系统托盘"的过期图标
         if (args.DidVisibilityChange && sender.IsVisible)
         {
@@ -859,7 +859,7 @@ public sealed partial class MainWindow : Window
         }
         // MSIX 下插件工具不占用侧边栏入口（只隐藏展示，工具本身仍在内置工具索引里）。
         if (!RuntimeHelper.IsPackagedContext)
-            foreach (var plugin in BuiltinToolRegistry.Tools.OfType<PluginXamlTool>().Where(p => p.Definition.ShowInSidebar))
+            foreach (var plugin in BuiltinToolRegistry.Tools.Where(p => p.ShowInSidebar))
             {
                 AddDynamic(new NavigationViewItem
                 {
@@ -868,7 +868,7 @@ public sealed partial class MainWindow : Window
                         ? new ImageIcon { Source = icon } : new FontIcon { Glyph = plugin.Glyph }
                 });
             }
-        ApplyPluginNavigationCustomization();
+        TryApplyPluginNavigationCustomization();
     }
 
     private async Task LaunchPluginPageAsync(PluginXamlTool plugin)

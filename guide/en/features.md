@@ -24,7 +24,7 @@ The left navigation browses every tool by category, the search box at the top fi
 * **System Optimization & Security** — junk cleaner / startup manager / context menu manager / malware blocker / sandbox analysis / time sync
 * **Network Tools** — speed test / traffic monitor / port viewer / hosts editor / LAN file sharing
 * **Native Fluent Experience** — Mica material, rounded windows, light & dark themes, English and Chinese UI, global search, drag-to-reorder favorites
-* **No Accidental Quits** — turn on "minimize to the system tray on close" in Settings (or the first-run wizard) and closing the window keeps the app resident, so the hardware data already loaded is not scanned again; double-click the tray icon to restore the window, or right-click it to really exit
+* **No Accidental Quits** — turn on "minimize to the system tray on close" in Settings (or the first-run wizard) and closing the window keeps the app resident, so the hardware data already loaded is not scanned again; click the tray icon to restore the window, or right-click it to really exit
 * **An Extensible Tool List** — drop your own tools into the `Tools/` folder and they are picked up; metadata lives in `Metadata/tools.json`
 * **Clean** — the portable build runs straight after extraction and the installer is per-user; there are no background services, and "Exit" in the tray menu really ends the process
 

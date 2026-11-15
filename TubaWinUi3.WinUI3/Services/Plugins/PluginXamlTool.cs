@@ -23,6 +23,7 @@ internal sealed class PluginXamlTool(string packageId, PluginToolDefinition defi
     public string Description => definition.Description;
     public string Glyph => definition.Glyph;
     public BuiltinToolKind Kind => BuiltinToolKind.InstantAction;
+    public bool ShowInSidebar => Definition.ShowInSidebar;
     public async Task ExecuteAsync(BuiltinToolContext context)
     {
         if (definition.ExecuteAsync is { } action)

@@ -584,7 +584,11 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
     {
         if (sender is FrameworkElement fe && fe.DataContext is ToolItem tool)
         {
-            var flyout = (MenuFlyout)Resources["FavItemFlyout"];
+            MenuFlyout? flyout = null;
+            try { flyout = Resources["FavItemFlyout"] as MenuFlyout; } catch { }
+            // 资源表在极端情况下可能尚未加载；右键菜单缺失不应把页面带崩（#99）。
+            if (flyout is null) return;
+
             PopulateArchSubmenu(flyout, tool);
             UpdateTutorialVisibility(flyout, tool);
             UpdateBuiltinLinkFlyoutItems(flyout, tool);

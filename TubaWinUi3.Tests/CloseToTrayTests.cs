@@ -161,5 +161,11 @@ public class CloseToTrayTests
         Assert.Contains("{0}", values["Tray_TooltipResident"]);
         Assert.Contains("{0}", values["Tray_TooltipTool"]);
         Assert.Contains("{1}", values["Tray_TooltipTool"]);
+
+        // 交互说明必须与实现一致：左键单击就恢复窗口。文案写「双击」会让用户以为点一下没反应。
+        // 见 TrayClickTests（WM_LBUTTONUP → 恢复主窗口）与 TrayIconService.TrayMouseActionFor。
+        var doubleClickWord = language == "zh-CN" ? "双击" : "Double-click";
+        Assert.DoesNotContain(doubleClickWord, values["Tray_BalloonText"]);
+        Assert.DoesNotContain(doubleClickWord, values["Settings_CloseToTray_Desc.Text"]);
     }
 }

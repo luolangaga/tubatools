@@ -110,7 +110,7 @@ public static class CloseToTrayService
         var title = LocalizationService.L("Tray_BalloonTitle", "图吧工具箱仍在后台运行");
         var text = LocalizationService.L(
             "Tray_BalloonText",
-            "程序已最小化到系统托盘，硬件信息等数据依然保留，再次打开无需重新检测。双击托盘图标可恢复窗口；右键图标可退出程序。");
+            "程序已最小化到系统托盘，硬件信息等数据依然保留，再次打开无需重新检测。单击托盘图标即可恢复窗口；右键图标可退出程序。");
         if (text.Length > BalloonTextMaxLength) text = text[..BalloonTextMaxLength];
 
         TrayIconService.ShowBalloon(title, text);

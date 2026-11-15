@@ -230,28 +230,61 @@ public static class ToolIconService
         }
     }
 
-    public static void CleanExpiredCache()
+    public static void CleanExpiredCache() => CleanExpiredCacheAt(CacheRoot, fullCleanup: true);
+
+    /// <summary>
+    /// 清理过期图标缓存。缓存目录可能被外部清理工具/磁盘错误损坏，
+    /// Directory.EnumerateFiles 会抛 IOException，而这段逻辑在启动路径上，
+    /// 不能让缓存问题把整个工具箱带崩（#120）。损坏时直接重建缓存目录。
+    /// </summary>
+    internal static void CleanExpiredCacheAt(string cacheRoot, bool fullCleanup = false)
     {
         Interlocked.Increment(ref _cacheRevision);
-        if (!Directory.Exists(CacheRoot))
+        if (!Directory.Exists(cacheRoot))
             return;
 
         _memoryCache.Clear();
 
         var cutoff = DateTime.UtcNow - CacheMaxAge;
 
-        foreach (var file in Directory.EnumerateFiles(CacheRoot, "*.png"))
+        try
         {
-            try
+            foreach (var file in Directory.EnumerateFiles(cacheRoot, "*.png"))
             {
-                if (File.GetLastWriteTimeUtc(file) < cutoff)
-                    File.Delete(file);
+                try
+                {
+                    if (File.GetLastWriteTimeUtc(file) < cutoff)
+                        File.Delete(file);
+                }
+                catch { }
             }
-            catch { }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[ToolIcon] Cache cleanup failed, rebuilding: {ex.Message}");
+            ResetCacheDirectory(cacheRoot);
         }
 
-        CleanOrphanedCache();
-        EnforceCacheSizeLimit();
+        if (fullCleanup)
+        {
+            CleanOrphanedCache();
+            EnforceCacheSizeLimit();
+        }
+    }
+
+    private static void ResetCacheDirectory(string cacheRoot)
+    {
+        try
+        {
+            if (Directory.Exists(cacheRoot)) Directory.Delete(cacheRoot, true);
+        }
+        catch { }
+
+        try
+        {
+            Directory.CreateDirectory(cacheRoot);
+        }
+        catch { }
     }
 
     public static void CleanAllCache()

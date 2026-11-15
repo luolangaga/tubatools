@@ -75,7 +75,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "tuishortcut"; Description: "{cm:CreateTuiIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "publish_x64_installer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "publish_x64_installer\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs restartreplace
 Source: "TubaWinUi3.Tui\Assets\{#MyTuiIconName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -122,7 +122,14 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
+  begin
     SaveStringToFile(ExpandConstant('{app}\.installed'), 'installed', False);
+    // 被占用的文件（如 AIDA64 驱动 .sys）已由 restartreplace 安排重启替换；
+    // 这里只做完整性校验，避免杀软/权限问题静默留下不完整安装（#265）。
+    if not FileExists(ExpandConstant('{app}\TubaWinUi3.PluginSdk.dll')) then
+      MsgBox('安装文件不完整：缺少 TubaWinUi3.PluginSdk.dll。' + #13#10 +
+        '请把安装目录加入杀毒软件白名单后重新运行安装程序。', mbError, MB_OK);
+  end;
 end;
 
 function IsWindowsVersionOk: Boolean;

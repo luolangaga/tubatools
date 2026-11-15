@@ -54,7 +54,9 @@ internal sealed class AgentOperationView : UserControl
         if (old?.Id != operation.Id) { _collapseTimer.Stop(); _collapseAt = null; _expanded = false; _userToggled = false; }
         _icon.Glyph = operation.Kind switch { "computer" => "\uE7F4", "command" => "\uE756", "read" => "\uE8A5", "edit" => "\uE70F", "skill" => "\uE8F1", "search" => "\uE721", "question" => "\uE9CE", "load" => "\uE8B7", _ => "\uE713" };
         _label.Text = operation.Kind switch { "command" => "Shell", "read" => "Read", "edit" => "Edit", "skill" => "Skill", "search" => "Search", "question" => "Ask", "load" => L("ToolLoad", "加载插件"), _ => operation.Label };
-        _target.Text = operation.Target.Length == 0 ? L("PreparingArguments", "正在准备参数…") : operation.Target;
+        // 占位文案只属于「还没拿到参数」的在途调用：工具无参数（截图/快照/状态）或已结束的调用不能再显示它。
+        var inFlight = operation.Status is not ("completed" or "error" or "cancelled");
+        _target.Text = operation.Target.Length > 0 ? operation.Target : inFlight ? L("PreparingArguments", "正在准备参数…") : "";
         _status.Text = operation.StatusText;
         _status.Foreground = _stateIcon.Foreground = Brush(operation.Status switch { "error" => "SystemFillColorCriticalBrush", "completed" => "SystemFillColorSuccessBrush", _ => "TextFillColorSecondaryBrush" });
         _spinner.IsActive = operation.Status == "running"; _spinner.Visibility = _spinner.IsActive ? Visibility.Visible : Visibility.Collapsed;

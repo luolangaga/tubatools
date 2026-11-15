@@ -250,6 +250,34 @@ public static class FormatConvertCatalog
     /// <summary>PDF 拆分目标（单份 PDF 时出现）。</summary>
     public static readonly FormatOption SplitPdfTarget = new("拆分为单页 PDF", ".pdf", "", "", ConvertSpecial.SplitPdf);
 
+    /// <summary>
+    /// 校验拖入/选择到的路径确实是可读取的文件。
+    /// 文件选择器或拖放偶尔会给出目录、失效的快捷方式或已被移走的路径；
+    /// 直接 new FileInfo(path).Length 会抛 FileNotFoundException（#264），
+    /// 因此所有入队路径都必须先过这里。
+    /// </summary>
+    public static bool TryGetInputFile(string filePath, out string fullPath, out long size)
+    {
+        fullPath = "";
+        size = 0;
+        if (string.IsNullOrWhiteSpace(filePath))
+            return false;
+
+        try
+        {
+            var info = new FileInfo(filePath);
+            if (!info.Exists || (info.Attributes & FileAttributes.Directory) != 0)
+                return false;
+            fullPath = info.FullName;
+            size = info.Length;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>按扩展名（带不带点均可、大小写不敏感）识别类别。</summary>
     public static SourceCategory Classify(string filePath)
     {

@@ -93,6 +93,32 @@ public sealed class ToolIconLoadingTests : IDisposable
         Assert.Equal(writeTime, File.GetLastWriteTimeUtc(path!));
     }
 
+    [Fact]
+    public void CleanExpiredCache_RemovesOnlyExpiredEntries_AndToleratesInvalidRoot()
+    {
+        var cache = Path.Combine(_root, "IconCache");
+        Directory.CreateDirectory(cache);
+
+        var old = Path.Combine(cache, "old.png");
+        var fresh = Path.Combine(cache, "fresh.png");
+        File.WriteAllBytes(old, [1]);
+        File.WriteAllBytes(fresh, [1]);
+        File.SetLastWriteTimeUtc(old, DateTime.UtcNow.AddDays(-ToolIconCacheMaxAgeDays - 1));
+        File.SetLastWriteTimeUtc(fresh, DateTime.UtcNow);
+
+        ToolIconService.CleanExpiredCacheAt(cache, fullCleanup: false);
+
+        Assert.False(File.Exists(old));
+        Assert.True(File.Exists(fresh));
+
+        // 损坏的场景表现为「缓存根不是目录」，清理逻辑必须静默跳过而不是抛异常（#120）。
+        var notADirectory = Path.Combine(_root, "IconCacheCorrupt");
+        File.WriteAllText(notADirectory, "not a directory");
+        ToolIconService.CleanExpiredCacheAt(notADirectory, fullCleanup: false);
+    }
+
+    private const int ToolIconCacheMaxAgeDays = 90;
+
     public void Dispose()
     {
         ConfigManager.DataDirectoryOverride = _previousOverride;

@@ -296,23 +296,42 @@ public sealed partial class FormatConverterPage : Page
             return;
         }
 
+        var accepted = new List<(string Path, long Size, SourceCategory Category)>();
+        var skipped = 0;
+        foreach (var p in paths)
+        {
+            // 目录、已删除路径、失效快捷方式不能进队列：FileInfo.Length 会直接抛异常（#264）。
+            if (!FormatConvertCatalog.TryGetInputFile(p, out var fullPath, out var size))
+            {
+                skipped++;
+                continue;
+            }
+            accepted.Add((fullPath, size, FormatConvertCatalog.Classify(fullPath)));
+        }
+
+        if (accepted.Count == 0)
+        {
+            ShowToast("无法添加文件", skipped > 0 ? "所选路径不是可读取的文件，请重新选择" : "没有可添加的文件", InfoBarSeverity.Warning);
+            return;
+        }
+
         _queue.Clear();
         var unsupported = 0;
         var mixed = 0;
         SourceCategory? firstCategory = null;
 
-        foreach (var p in paths)
+        foreach (var entry in accepted)
         {
-            var cat = FormatConvertCatalog.Classify(p);
+            var cat = entry.Category;
             if (cat == SourceCategory.Unsupported) unsupported++;
             else if (firstCategory is null) firstCategory = cat;
             else if (cat != firstCategory) mixed++;
 
             var item = new QueueItem
             {
-                FullPath = p,
-                Name = Path.GetFileName(p),
-                SizeText = DownloadQueueService.FormatSize(new FileInfo(p).Length),
+                FullPath = entry.Path,
+                Name = Path.GetFileName(entry.Path),
+                SizeText = DownloadQueueService.FormatSize(entry.Size),
                 Category = cat,
                 CategoryGlyph = CategoryGlyph(cat)
             };
@@ -323,6 +342,8 @@ public sealed partial class FormatConverterPage : Page
 
         _category = firstCategory ?? SourceCategory.Unsupported;
 
+        if (skipped > 0)
+            ShowToast("部分路径已跳过", $"{skipped} 个路径不是可读取的文件，未加入队列", InfoBarSeverity.Informational);
         if (unsupported > 0)
             ShowToast("部分文件类型未知",
                 $"{unsupported} 个文件无法识别格式，仍可打包为 ZIP 压缩包", InfoBarSeverity.Informational);

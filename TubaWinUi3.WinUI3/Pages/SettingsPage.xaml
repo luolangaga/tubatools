@@ -198,7 +198,7 @@
                                 <toolkit:SettingsCard.Header>
                                     <StackPanel VerticalAlignment="Center" Spacing="2">
                                         <TextBlock Style="{StaticResource SettingsRowTitle}" Text="关闭主窗口时最小化到系统托盘" l:Uids.Uid="Settings_CloseToTray_Title" TextWrapping="Wrap"/>
-                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；双击托盘图标恢复窗口，右键可退出" l:Uids.Uid="Settings_CloseToTray_Desc"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；单击托盘图标恢复窗口，右键可退出" l:Uids.Uid="Settings_CloseToTray_Desc"/>
                                     </StackPanel>
                                 </toolkit:SettingsCard.Header>
                                 <toolkit:SettingsCard.HeaderIcon>

@@ -381,7 +381,7 @@ public sealed partial class PhoneLinkPage : Page
             {
                 TextWrapping = TextWrapping.Wrap,
                 Text = LocalizationService.L("Settings_CloseToTray_Desc",
-                           "点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；双击托盘图标恢复窗口，右键可退出")
+                           "点关闭按钮不再退出程序，而是留在系统托盘继续运行，避免误关闭后重启时重新检测硬件信息；单击托盘图标恢复窗口，右键可退出")
                        + "\n\n开启后关闭窗口时，手机连接会继续在系统托盘后台运行，手机随时可以再连上。"
             },
             PrimaryButtonText = "开启",

@@ -16,7 +16,7 @@ public sealed partial class MainWindow
     };
     private PluginNavigationItem NavigationDefault(NavigationViewItem item, string tag)
     {
-        if (tag.StartsWith("plugin-page:", StringComparison.Ordinal) && BuiltinToolRegistry.GetById(tag[12..]) is PluginXamlTool plugin)
+        if (tag.StartsWith("plugin-page:", StringComparison.Ordinal) && BuiltinToolRegistry.GetById(tag[12..]) is { } plugin)
             return new(PluginNavigationId(tag), plugin.Name, plugin.Glyph, true, 10 + Math.Max(0, _dynamicMenuItems.IndexOf(item)));
         var defaults = tag switch
         {
@@ -41,7 +41,21 @@ public sealed partial class MainWindow
         return items;
     }
     internal IReadOnlyList<PluginNavigationItem> GetPluginNavigationItems() => PluginNavigationStore.Apply(NavigationDefaults(), PluginNavigationStore.Read());
-    private void PluginNavigationLoaded(object sender, RoutedEventArgs e) => ApplyPluginNavigationCustomization();
+    private void PluginNavigationLoaded(object sender, RoutedEventArgs e) => TryApplyPluginNavigationCustomization();
+
+    /// <summary>
+    /// 插件导航定制依赖 TubaWinUi3.PluginSdk。安装/更新不完整导致 SDK 缺失时，
+    /// 方法在 JIT 阶段就会抛 FileNotFoundException；调用点必须兜住并跳过插件导航，
+    /// 让主窗口仍能启动（#265）。
+    /// </summary>
+    private void TryApplyPluginNavigationCustomization()
+    {
+        try { ApplyPluginNavigationCustomization(); }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("[PluginNavigation] " + ex.GetType().Name + ": " + ex.Message);
+        }
+    }
 
     internal void ApplyPluginNavigationCustomization()
     {
@@ -61,7 +75,7 @@ public sealed partial class MainWindow
             if (change is { IconPath.Length: > 0 } && File.Exists(change.IconPath) && !_navigationHighContrast)
                 control.Icon = new ImageIcon { Source = BuiltinIconService.LoadAsset(change.IconPath) };
             else if (change is { Glyph.Length: > 0 }) control.Icon = new FontIcon { Glyph = item.Glyph };
-            else if (control.Tag is string pluginTag && pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal) && BuiltinToolRegistry.GetById(pluginTag[12..]) is PluginXamlTool plugin)
+            else if (control.Tag is string pluginTag && pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal) && BuiltinToolRegistry.GetById(pluginTag[12..]) is { } plugin)
                 control.Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } source ? new ImageIcon { Source = source } : new FontIcon { Glyph = plugin.Glyph };
             else control.Icon = NavigationIconService.Create(item.Id == "settings" ? "settings" : (string)control.Tag, item.Glyph, _navigationHighContrast);
         }

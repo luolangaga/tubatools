@@ -15,6 +15,17 @@ internal sealed record BrowserToolResult(string Text, byte[]? Image = null, stri
 internal static class BrowserUseMcpProxy
 {
     internal const string Argument = "--browser-use-mcp";
+
+    /// <summary>
+    /// 单次 browser_use 工具调用的硬上限。到点由 <see cref="BrowserMcpTools"/> 的墙钟看门狗强制返回
+    /// BROWSER_TIMEOUT——不依赖底层 CDP / 命名管道是否响应取消令牌（曾有单次调用挂了两小时没被拦住）。
+    /// 只结束这一次调用，不停止整轮 AI 运行，也不等于用户停止控制。
+    /// </summary>
+    internal static readonly TimeSpan MaxOperationTimeout = TimeSpan.FromMinutes(30);
+
+    internal static string TimeoutText =>
+        $"BROWSER_TIMEOUT: 单次浏览器操作超过 {MaxOperationTimeout.TotalMinutes:0} 分钟硬上限，已强制结束（不再等页面响应）。先调用 browser_status 查看页面状态，或让用户手动处理；同一步骤不要重复重试。";
+
     private static readonly object WriteLock = new();
     private static readonly JsonSerializerOptions Json = new()
     {
@@ -124,8 +135,9 @@ internal static class BrowserUseMcpProxy
                             catch (JsonException) { }
                         }
                         var key = id?.ToJsonString() ?? Guid.NewGuid().ToString("N");
-                        var source = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-                        source.CancelAfter(TimeSpan.FromMinutes(3));
+                        // 外层只做兜底：比墙钟看门狗晚一分钟，正常情况下由 BrowserMcpTools 先返回 BROWSER_TIMEOUT。
+                        var timeoutSource = new CancellationTokenSource(MaxOperationTimeout + TimeSpan.FromMinutes(1));
+                        var source = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token, timeoutSource.Token);
                         lock (calls) calls[key] = source;
                         var task = Task.Run(async () =>
                         {
@@ -140,7 +152,9 @@ internal static class BrowserUseMcpProxy
                             }
                             catch (OperationCanceledException)
                             {
-                                result = new("CANCELLED: 浏览器操作已取消。", IsError: true);
+                                result = timeoutSource.IsCancellationRequested && !lifetime.IsCancellationRequested
+                                    ? new(BrowserUseMcpProxy.TimeoutText, IsError: true)
+                                    : new("CANCELLED: 浏览器操作已取消。", IsError: true);
                             }
                             catch (Exception ex)
                             {
@@ -149,6 +163,7 @@ internal static class BrowserUseMcpProxy
                             finally
                             {
                                 lock (calls) calls.Remove(key);
+                                timeoutSource.Dispose();
                                 source.Dispose();
                             }
                             if (!lifetime.IsCancellationRequested) WriteToolResult(id, result);
@@ -245,12 +260,12 @@ internal static class BrowserUseMcpProxy
             "在页面中执行 JavaScript 并返回结果。只在语义操作（snapshot/click/type）无法完成时使用；不要用它绕过用户停止或读取本机任意文件。",
             new JsonObject { ["expression"] = Text("要执行的 JavaScript 表达式。") }, "expression"),
         Tool(BrowserToolNames.Wait,
-            "等待页面出现指定 CSS selector 或可见文字，最多 60 秒。",
+            $"等待页面出现指定 CSS selector 或可见文字，最多 {MaxOperationTimeout.TotalMinutes:0} 分钟。",
             new JsonObject
             {
                 ["selector"] = Text("等待出现的 CSS 选择器。"),
                 ["text"] = Text("等待出现的页面文字。"),
-                ["timeout_ms"] = Number("超时毫秒数，默认 10000，最大 60000。")
+                ["timeout_ms"] = Number($"超时毫秒数，默认 10000，最大 {(int)MaxOperationTimeout.TotalMilliseconds}（{MaxOperationTimeout.TotalMinutes:0} 分钟）。")
             }),
         Tool(BrowserToolNames.History,
             "页面后退、前进或刷新。",
@@ -338,8 +353,28 @@ internal static class BrowserMcpTools
     internal static async Task<BrowserToolResult> CallAsync(BrowserMcpSession session, string name, JsonObject arguments, CancellationToken ct)
     {
         await Gate.WaitAsync(ct);
-        try { return await CallCoreAsync(session, name, arguments, ct); }
-        finally { Gate.Release(); }
+        var released = false;
+        // 只释放一次：墙钟看门狗提前放行后，卡住的真实调用迟到结束时不再重复释放。
+        void Release() { if (released) return; released = true; Gate.Release(); }
+        try
+        {
+            var work = CallCoreAsync(session, name, arguments, ct);
+            using var bail = new CancellationTokenSource();
+            var delay = Task.Delay(BrowserUseMcpProxy.MaxOperationTimeout, bail.Token);
+            var winner = await Task.WhenAny(work, delay);
+            if (!ReferenceEquals(winner, work))
+            {
+                if (ct.IsCancellationRequested) throw new OperationCanceledException(ct);
+                // 底层调用可能完全无视取消令牌（WebView2 / 命名管道读），因此这里按墙钟直接给模型一个结果，
+                // 同时放行信号量，避免后续调用排在一个永不返回的任务后面。
+                Release();
+                _ = work.ContinueWith(_ => { }, TaskScheduler.Default);
+                return new(BrowserUseMcpProxy.TimeoutText, IsError: true);
+            }
+            bail.Cancel();
+            return await work;
+        }
+        finally { Release(); }
     }
 
     private static async Task<BrowserToolResult> CallCoreAsync(BrowserMcpSession session, string name, JsonObject arguments, CancellationToken ct)
@@ -410,7 +445,7 @@ internal static class BrowserMcpTools
                 }
                 case BrowserToolNames.Wait:
                 {
-                    var timeout = Math.Clamp(Num(arguments, "timeout_ms", 10000), 100, 60000);
+                    var timeout = Math.Clamp(Num(arguments, "timeout_ms", 10000), 100, BrowserUseMcpProxy.MaxOperationTimeout.TotalMilliseconds);
                     return new(header + "\n" + await BrowserAutomation.WaitAsync(runtime, Str(arguments, "selector"),
                         Str(arguments, "text"), TimeSpan.FromMilliseconds(timeout), ct));
                 }

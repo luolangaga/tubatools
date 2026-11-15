@@ -106,10 +106,38 @@ public sealed partial class ErrorPage : Page
 
     private void RestartButton_Click(object sender, RoutedEventArgs e)
     {
-        Process.Start(Environment.ProcessPath!);
+        var processPath = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(processPath) || !File.Exists(processPath))
+        {
+            ShowRestartError("找不到当前程序文件：" + (processPath ?? "（未知路径）"));
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(processPath)
+            {
+                UseShellExecute = true,
+                WorkingDirectory = Path.GetDirectoryName(processPath) ?? AppContext.BaseDirectory
+            });
+        }
+        catch (Exception ex)
+        {
+            // 重开失败必须停在错误页说明原因；这里再抛一次只会让用户看到空白窗口。
+            ShowRestartError(ex.Message);
+            return;
+        }
+
         // 「重开」= 新实例接管，旧实例必须真的退出（App.RequestExit：「关闭时最小化到
         // 系统托盘」会把直接关窗口解读成隐藏，留下两个实例）
         App.RequestExit();
+    }
+
+    private void ShowRestartError(string message)
+    {
+        ErrorText.Text = _errorDetail +
+            "\n\n重开失败：" + message +
+            "\n请手动关闭本程序后重新打开。";
     }
 
     private static string GetAppVersion()

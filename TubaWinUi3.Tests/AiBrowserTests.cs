@@ -1,3 +1,4 @@
+using System.Text.Json;
 using TubaWinUi3.Services.AiAgent;
 
 namespace TubaWinUi3.Tests;
@@ -85,6 +86,32 @@ public class AiBrowserTests
     public void ToolName_NormalizesClientPrefixes(string input, string expected)
     {
         Assert.Equal(expected, BrowserToolNames.Normalize(input));
+    }
+
+    [Fact]
+    public void OperationTimeout_IsThirtyMinutesAndSharedWithWaitTool()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(30), BrowserUseMcpProxy.MaxOperationTimeout);
+
+        var wait = BrowserUseMcpProxy.Definitions().First(item => item!["name"]!.GetValue<string>() == "wait")!;
+        var timeout = wait["inputSchema"]!["properties"]!["timeout_ms"]!["description"]!.GetValue<string>();
+
+        Assert.Contains(((int)BrowserUseMcpProxy.MaxOperationTimeout.TotalMilliseconds).ToString(), timeout);
+        Assert.Contains("30 分钟", timeout);
+        Assert.Contains("30 分钟", wait["description"]!.GetValue<string>());
+    }
+
+    [Theory]
+    [InlineData("browser_status", "查看页面状态")]
+    [InlineData("browser_snapshot", "页面快照")]
+    [InlineData("browser_screenshot", "页面截图")]
+    [InlineData("browser_scroll", "滚动页面")]
+    public void BrowserTarget_NeverLeavesArgumentlessToolsEmpty(string name, string expected)
+    {
+        // 空目标在操作时间线里会被渲染成「正在准备参数」；无参数工具必须给出自己的目标文案。
+        using var document = JsonDocument.Parse("{}");
+
+        Assert.Equal(expected, AgentProtocol.BrowserTarget(name, document.RootElement));
     }
 
     [Fact]

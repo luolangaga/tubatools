@@ -51,6 +51,31 @@ public class FormatConvertCatalogTests
         => Assert.Equal(SourceCategory.Video, FormatConvertCatalog.Classify("C:\\Video\\X.Mp4"));
 
     [Fact]
+    public void TryGetInputFile_RejectsDirectoriesAndMissingPaths()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "TubaFormatGuard_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var file = Path.Combine(root, "草稿1.png");
+            File.WriteAllBytes(file, [1, 2, 3]);
+
+            Assert.True(FormatConvertCatalog.TryGetInputFile(file, out var fullPath, out var size));
+            Assert.Equal(file, fullPath);
+            Assert.Equal(3, size);
+
+            // #264：文件选择器/拖放返回目录或失效路径时，不能靠 FileInfo.Length 抛异常。
+            Assert.False(FormatConvertCatalog.TryGetInputFile(root, out _, out _));
+            Assert.False(FormatConvertCatalog.TryGetInputFile(Path.Combine(root, "missing.png"), out _, out _));
+            Assert.False(FormatConvertCatalog.TryGetInputFile("", out _, out _));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void GetTargetFormats_Video_IncludesAudioExtraction()
     {
         var formats = FormatConvertCatalog.GetTargetFormats(SourceCategory.Video);

@@ -159,6 +159,12 @@ internal static class AgentProtocol
             BrowserToolNames.Wait => Text(input, "selector", Text(input, "text")),
             BrowserToolNames.History => Text(input, "action"),
             BrowserToolNames.Eval => "JavaScript",
+            // 这几个工具没有参数，不能落到空目标：空目标在时间线里会被当成「正在准备参数」。
+            BrowserToolNames.Status => AgentText.L("BrowserStatusTarget", "查看页面状态"),
+            BrowserToolNames.Snapshot => AgentText.L("BrowserSnapshotTarget", "页面快照"),
+            BrowserToolNames.Screenshot => AgentText.L("BrowserScreenshotTarget", "页面截图"),
+            BrowserToolNames.Press => Text(input, "key"),
+            BrowserToolNames.Scroll => AgentText.L("BrowserScrollTarget", "滚动页面"),
             _ => ""
         };
     }

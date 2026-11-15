@@ -557,7 +557,7 @@
     <value>Tuba Toolbox is still running</value>
   </data>
   <data name="Tray_BalloonText" xml:space="preserve">
-    <value>The app is now minimized to the system tray and keeps its loaded data, so reopening it needs no new hardware scan. Double-click the tray icon to restore the window, or right-click it to exit.</value>
+    <value>The app is now minimized to the system tray and keeps its loaded data, so reopening it needs no new hardware scan. Click the tray icon to restore the window, or right-click it to exit.</value>
   </data>
 
   <!-- Update banner -->
@@ -758,7 +758,7 @@
     <value>Separate window</value>
   </data>
   <data name="Settings_CloseToTray_Desc.Text" xml:space="preserve">
-    <value>Closing the window keeps the app running in the system tray instead of exiting, so an accidental close never forces a fresh hardware scan. Double-click the tray icon to restore the window, or right-click it to exit.</value>
+    <value>Closing the window keeps the app running in the system tray instead of exiting, so an accidental close never forces a fresh hardware scan. Click the tray icon to restore the window, or right-click it to exit.</value>
   </data>
   <data name="Settings_CloseToTray_Title.Text" xml:space="preserve">
     <value>Minimize to the system tray when closing</value>

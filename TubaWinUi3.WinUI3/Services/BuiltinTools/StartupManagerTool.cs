@@ -1144,16 +1144,31 @@ public sealed class StartupManagerTool : IBuiltinTool
         };
         actionRow.Children.Add(copyBtn);
 
+        Button? detailDeleteBtn = null;
         if (vm.CanOperate)
         {
-            var deleteBtn = new Button { Content = "删除" };
-            deleteBtn.Click += (_, _) => _ = DeleteSelectedAsync(vm);
-            actionRow.Children.Add(deleteBtn);
+            detailDeleteBtn = new Button { Content = "删除" };
+            actionRow.Children.Add(detailDeleteBtn);
         }
         stack.Children.Add(actionRow);
 
         var dlg = MakeContext().CreateDialog(e.Entry.Length > 0 ? e.Entry : "（未命名项）");
         dlg.Content = new ScrollViewer { Content = stack, MaxHeight = 480, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+
+        if (detailDeleteBtn is not null)
+        {
+            var closed = new TaskCompletionSource();
+            dlg.Closed += (_, _) => closed.TrySetResult();
+            detailDeleteBtn.Click += async (_, _) =>
+            {
+                // WinUI 同一时间只允许一个 ContentDialog；先关详情，再弹删除确认。
+                detailDeleteBtn.IsEnabled = false;
+                dlg.Hide();
+                await closed.Task;
+                await DeleteSelectedAsync(vm);
+            };
+        }
+
         _ = dlg.ShowAsync();
     }
 

@@ -14,7 +14,7 @@ public sealed partial class MainWindow
         foreach (var item in NavView.MenuItems.OfType<NavigationViewItem>())
         {
             if (item.Tag is string pluginTag && pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal) &&
-                BuiltinToolRegistry.GetById(pluginTag[12..]) is Services.Plugins.PluginXamlTool plugin)
+                BuiltinToolRegistry.GetById(pluginTag[12..]) is { } plugin)
                 item.Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } icon
                     ? new ImageIcon { Source = icon } : new FontIcon { Glyph = plugin.Glyph };
             else if (item.Tag is string tag)
@@ -22,7 +22,7 @@ public sealed partial class MainWindow
         }
         if (NavView.SettingsItem is NavigationViewItem settings)
             settings.Icon = NavigationIconService.Create("settings", "\uE713", _navigationHighContrast);
-        ApplyPluginNavigationCustomization();
+        TryApplyPluginNavigationCustomization();
     }
 
     private static string NavigationFallbackGlyph(string tag) => tag switch

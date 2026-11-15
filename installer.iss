@@ -77,8 +77,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "tuishortcut"; Description: "{cm:CreateTuiIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "publish_x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsX64
-Source: "publish_arm64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsARM64
+Source: "publish_x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs restartreplace; Check: IsX64
+Source: "publish_arm64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs restartreplace; Check: IsARM64
 Source: "TubaWinUi3.Tui\Assets\{#MyTuiIconName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -135,7 +135,12 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
+  begin
     SaveStringToFile(ExpandConstant('{app}\.installed'), 'installed', False);
+    if not FileExists(ExpandConstant('{app}\TubaWinUi3.PluginSdk.dll')) then
+      MsgBox('安装文件不完整：缺少 TubaWinUi3.PluginSdk.dll。' + #13#10 +
+        '请把安装目录加入杀毒软件白名单后重新运行安装程序。', mbError, MB_OK);
+  end;
 end;
 
 function IsWindowsVersionOk: Boolean;
