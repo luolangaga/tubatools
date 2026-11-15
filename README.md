@@ -18,7 +18,14 @@
 
 <div align="center">
 
-[![Release](https://img.shields.io/github/v/release/luolangaga/tubatools?style=flat-square&labelColor=5b624a&color=a7bc77&logo=windows11&logoColor=white)](https://github.com/luolangaga/tubatools/releases/latest) [![Downloads](https://img.shields.io/github/downloads/luolangaga/tubatools/total?style=flat-square&labelColor=5b624a&color=a7bc77)](https://github.com/luolangaga/tubatools/releases) [![Platform](https://img.shields.io/badge/Windows-10%201809%2B-a8d6d9?style=flat-square&labelColor=5b624a&logo=windows&logoColor=white)](guide/getting-started.md#系统要求) [![.NET](https://img.shields.io/badge/.NET-10-b8c69a?style=flat-square&labelColor=5b624a&logo=dotnet&logoColor=white)](guide/getting-started.md#从源码构建) [![Toolkit](https://img.shields.io/badge/%E6%94%B6%E5%BD%95%E5%B7%A5%E5%85%B7-89%20%E6%AC%BE-b8c69a?style=flat-square&labelColor=5b624a)](guide/bundled-tools.md) [![License](https://img.shields.io/badge/License-GPL--3.0-a8d6d9?style=flat-square&labelColor=5b624a)](LICENSE)
+<p align="center">
+  <a href="https://github.com/luolangaga/tubatools/releases/latest"><img src="images/readme/badges/release-cn.svg" height="20" alt="最新版本"></a>
+  <a href="https://github.com/luolangaga/tubatools/releases"><img src="images/readme/badges/downloads-cn.svg" height="20" alt="累计下载量"></a>
+  <a href="guide/getting-started.md#系统要求"><img src="images/readme/badges/platform-cn.svg" height="20" alt="支持 Windows 10 1809 及以上"></a>
+  <a href="guide/getting-started.md#从源码构建"><img src="images/readme/badges/dotnet-cn.svg" height="20" alt="基于 .NET 10"></a>
+  <a href="guide/bundled-tools.md"><img src="images/readme/badges/toolkit-cn.svg" height="20" alt="收录 89 款随包工具"></a>
+  <a href="LICENSE"><img src="images/readme/badges/license-cn.svg" height="20" alt="许可证 GPL-3.0"></a>
+</p>
 
 一台新电脑，从验机、跑分、装驱动到日常清理维护，都能在这里找到工具。
 

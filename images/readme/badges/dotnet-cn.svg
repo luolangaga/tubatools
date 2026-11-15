@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="20" viewBox="0 0 60 20" role="img" aria-label=".NET：10">
+  <title>.NET：10</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#b8c69a; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#455138; --value-ink:#eef4e6; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="36" height="20" fill="var(--label-bg)"/>
+    <rect x="36" width="24" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="180" y="140" textLength="260" transform="scale(.1)">.NET</text>
+    <text x="480" y="140" textLength="140" transform="scale(.1)" fill="var(--value-ink)">10</text>
+  </g>
+</svg>

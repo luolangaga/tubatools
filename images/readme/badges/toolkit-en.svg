@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="141" height="20" viewBox="0 0 141 20" role="img" aria-label="Bundled Tools：89 apps">
+  <title>Bundled Tools：89 apps</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#b8c69a; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#455138; --value-ink:#eef4e6; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="87" height="20" fill="var(--label-bg)"/>
+    <rect x="87" width="54" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="435" y="140" textLength="770" transform="scale(.1)">Bundled Tools</text>
+    <text x="1140" y="140" textLength="440" transform="scale(.1)" fill="var(--value-ink)">89 apps</text>
+  </g>
+</svg>

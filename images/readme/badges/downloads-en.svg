@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="107" height="20" viewBox="0 0 107 20" role="img" aria-label="Downloads：163k">
+  <title>Downloads：163k</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#a7bc77; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#4a5a35; --value-ink:#eef4e6; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="70" height="20" fill="var(--label-bg)"/>
+    <rect x="70" width="37" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="350" y="140" textLength="600" transform="scale(.1)">Downloads</text>
+    <text x="885" y="140" textLength="270" transform="scale(.1)" fill="var(--value-ink)">163k</text>
+  </g>
+</svg>

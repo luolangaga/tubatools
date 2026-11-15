@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="98" height="20" viewBox="0 0 98 20" role="img" aria-label="收录工具：89 款">
+  <title>收录工具：89 款</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#b8c69a; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#455138; --value-ink:#eef4e6; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="58" height="20" fill="var(--label-bg)"/>
+    <rect x="58" width="40" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="290" y="140" textLength="480" transform="scale(.1)">收录工具</text>
+    <text x="780" y="140" textLength="300" transform="scale(.1)" fill="var(--value-ink)">89 款</text>
+  </g>
+</svg>

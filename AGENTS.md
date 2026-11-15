@@ -400,6 +400,11 @@ Root `package.json` + `src/docs/` are a **VitePress** site only (`npm run dev` /
 
 `website-winui3/` is the new official website, built on **WinUIonWeb** (Vue 3 + Web WinUI controls, `npm run dev` / `npm run build`). Docs markdown lives in `website-winui3/src/docs/` (migrated from `src/docs/`), tutorial images in `website-winui3/public/tutorials/images/`. Icon glyphs must exist in `src/assets/Fonts/SEGOEICONS.TTF` (check with `node check-font` against the cmap table).
 
+## README badges
+
+README 顶部徽章是仓库内置 SVG（`images/readme/badges/`），**不要再改回 img.shields.io**：GitHub 会把外部图片经 camo.githubusercontent.com 中转，该域名在国内网络常超时，徽章会整行显示为空白（2026-11 实测，shields.io 本身可达但 camo 不可达）。外观按 shields flat-square 复刻（Verdana 11px、labelColor #5b624a、跟随系统深色切换），中英各一套，链接指向 releases 与指南。
+刷新版本号/下载量：`pwsh -File scripts/update-readme-badges.ps1`（从 GitHub API 取值，只重写 SVG，不改 README 文本；可加 `-ReleaseTag` / `-Downloads` 离线指定）。
+
 ## Conventions
 
 - Namespaces: `TubaWinUi3` / `.Pages` / `.Services` / `.Models`. PascalCase; XAML + code-behind pairs.

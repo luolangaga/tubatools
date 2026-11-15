@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="152" height="20" viewBox="0 0 152 20" role="img" aria-label="平台：Windows 10 1809+">
+  <title>平台：Windows 10 1809+</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#a8d6d9; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#2f4b4e; --value-ink:#e3f1f2; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="34" height="20" fill="var(--label-bg)"/>
+    <rect x="34" width="118" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="170" y="140" textLength="240" transform="scale(.1)">平台</text>
+    <text x="930" y="140" textLength="1080" transform="scale(.1)" fill="var(--value-ink)">Windows 10 1809+</text>
+  </g>
+</svg>

@@ -18,7 +18,14 @@
 
 <div align="center">
 
-[![Release](https://img.shields.io/github/v/release/luolangaga/tubatools?style=flat-square&labelColor=5b624a&color=a7bc77&logo=windows11&logoColor=white)](https://github.com/luolangaga/tubatools/releases/latest) [![Downloads](https://img.shields.io/github/downloads/luolangaga/tubatools/total?style=flat-square&labelColor=5b624a&color=a7bc77)](https://github.com/luolangaga/tubatools/releases) [![Platform](https://img.shields.io/badge/Windows-10%201809%2B-a8d6d9?style=flat-square&labelColor=5b624a&logo=windows&logoColor=white)](guide/en/getting-started.md#system-requirements) [![.NET](https://img.shields.io/badge/.NET-10-b8c69a?style=flat-square&labelColor=5b624a&logo=dotnet&logoColor=white)](guide/en/getting-started.md#build-from-source) [![Bundled Tools](https://img.shields.io/badge/Bundled%20Tools-89%20apps-b8c69a?style=flat-square&labelColor=5b624a)](guide/en/bundled-tools.md) [![License](https://img.shields.io/badge/License-GPL--3.0-a8d6d9?style=flat-square&labelColor=5b624a)](LICENSE)
+<p align="center">
+  <a href="https://github.com/luolangaga/tubatools/releases/latest"><img src="images/readme/badges/release-en.svg" height="20" alt="Latest release"></a>
+  <a href="https://github.com/luolangaga/tubatools/releases"><img src="images/readme/badges/downloads-en.svg" height="20" alt="Total downloads"></a>
+  <a href="guide/en/getting-started.md#system-requirements"><img src="images/readme/badges/platform-en.svg" height="20" alt="Runs on Windows 10 1809 and later"></a>
+  <a href="guide/en/getting-started.md#build-from-source"><img src="images/readme/badges/dotnet-en.svg" height="20" alt="Built on .NET 10"></a>
+  <a href="guide/en/bundled-tools.md"><img src="images/readme/badges/toolkit-en.svg" height="20" alt="89 bundled tools"></a>
+  <a href="LICENSE"><img src="images/readme/badges/license-en.svg" height="20" alt="License GPL-3.0"></a>
+</p>
 
 Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup and everyday maintenance.
 

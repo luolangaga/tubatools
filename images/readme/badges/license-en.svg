@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="105" height="20" viewBox="0 0 105 20" role="img" aria-label="License：GPL-3.0">
+  <title>License：GPL-3.0</title>
+  <style>
+    svg { --label-bg:#5b624a; --label-ink:#ffffff; --value-bg:#a8d6d9; --value-ink:#333333; }
+    @media (prefers-color-scheme: dark) { svg { --value-bg:#2f4b4e; --value-ink:#e3f1f2; } }
+  </style>
+  <g shape-rendering="crispEdges">
+    <rect width="51" height="20" fill="var(--label-bg)"/>
+    <rect x="51" width="54" height="20" fill="var(--value-bg)"/>
+  </g>
+  <g fill="var(--label-ink)" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,Microsoft YaHei,PingFang SC,sans-serif" text-rendering="geometricPrecision" font-size="110">
+    <text x="255" y="140" textLength="410" transform="scale(.1)">License</text>
+    <text x="780" y="140" textLength="440" transform="scale(.1)" fill="var(--value-ink)">GPL-3.0</text>
+  </g>
+</svg>
