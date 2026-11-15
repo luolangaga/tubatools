@@ -153,7 +153,7 @@ jobs:
           GITCODE_ACCESS_TOKEN: ${{ secrets.GITCODE_ACCESS_TOKEN }}
           TAG: ${{ steps.release-info.outputs.tag }}
           RELEASE_STATUS: ${{ steps.release-info.outputs.release_status }}
-          API_BASE: https://api.atomgit.com/api/v5/repos/luolangaga/tubatool
+          API_BASE: https://api.gitcode.com/api/v5/repos/luolangaga/tubatool
         run: |
           echo "Creating GitCode release for tag $TAG (status=$RELEASE_STATUS) ..."
 
@@ -207,7 +207,7 @@ jobs:
         env:
           GITCODE_ACCESS_TOKEN: ${{ secrets.GITCODE_ACCESS_TOKEN }}
           TAG: ${{ steps.release-info.outputs.tag }}
-          API_BASE: https://api.atomgit.com/api/v5/repos/luolangaga/tubatool
+          API_BASE: https://api.gitcode.com/api/v5/repos/luolangaga/tubatool
         run: |
           python3 -c "
           import json, urllib.request, urllib.error, os, glob
