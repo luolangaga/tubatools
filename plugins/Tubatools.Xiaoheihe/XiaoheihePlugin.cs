@@ -1,4 +1,5 @@
 using TubaWinUi3.PluginSdk;
+using Tubatools.Onboarding;
 
 namespace Tubatools.Xiaoheihe;
 
@@ -20,5 +21,18 @@ public sealed class XiaoheihePlugin : ITubaPlugin
             Tags = ["小黑盒", "Heybox", "社区", "游戏", "论坛"],
             CreateContent = XiaoheiheView.Create
         });
+        PluginOpenCompat.RegisterToolEntry(host, "xiaoheihe");
+        PluginOnboardingDialog.ScheduleInstallGuide(PluginOnboardingDialog.Guide(
+            chinese ? "小黑盒" : "Xiaoheihe",
+            chinese ? "小黑盒客户端已就绪，打开后扫码登录即可。" : "The Xiaoheihe client is ready; open it and scan the QR code to sign in.",
+            [
+                new OnboardingEntry(
+                    chinese ? "内置工具" : "Built-in tool",
+                    chinese ? "小黑盒" : "Xiaoheihe",
+                    chinese ? "已添加到「游戏工具」分类，打开后扫码登录。" : "Added under Gaming tools. Open it and scan the QR code to sign in.",
+                    "\uE7FC",
+                    chinese ? "打开" : "Open",
+                    PluginOnboardingDialog.OpenTool("xiaoheihe"))
+            ], chinese));
     }
 }

@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.SteamToolbox</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.3</Version>
     <Authors>图吧工具箱</Authors>
     <Description>Steam 工具箱插件：本机账号与多存储库游戏管理、封面与时长、SteamKit 挂时长</Description>
     <PackageTags>Tubatools</PackageTags>
@@ -53,4 +53,8 @@
       <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>

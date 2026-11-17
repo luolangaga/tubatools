@@ -85,7 +85,7 @@ dotnet test --filter "FullyQualifiedName~ToolCatalogTests"        # one class / 
 - `AiAssistantPage` 的 `.Run.cs` / `.Sessions.cs` 按会话保留任务、草稿、表单与消息，导航离页不取消执行。会话操作使用右键菜单，必须捕获被右键项的 ID；历史读取所有游标分页，流式尾部通过 `AgentHistory.Merge` 合并，不能覆盖早期消息。
 - 长任务状态来自 `AgentClient.Events.cs` 原生事件流与 HTTP 快照。快照可能在推理/压缩完成前不变，禁止恢复「三分钟无消息变化就 interrupt」；`AgentRunMonitor` 只给出等待状态。只在用户取消时发送单会话 interrupt，失败不能杀掉整个组件。
 - 自定义提供商由 `.Providers.cs` 与 `AgentProviderStore` 管理，四种协议，支持多个模型与模型发现。密钥用 `ProtectedApiKeyConverter` / DPAPI 落盘，只通过子进程环境注入工作区配置；保存时有运行任务必须延后重连，不丢草稿或消息。不要把提供商密钥打印到日志或写进工作区 JSON。
-- 插件 SDK 2.1 保持 API v2/AssemblyVersion 2.0，增加 BindValueChanged 与 GetService<T>。ToggleSwitch 的 BindClick 转接 Toggled，SetValue/初始化不得触发动作；ReportProgress 空白必须关闭提示条。插件宿主服务包括工具箱背景、稳定 ID 导航自定义、宿主信息与只读诊断；此 SDK 与 AI/CLI 电脑维护路径相互独立，不要让维护 Agent 用诊断接口代替真实 GUI。背景不修改 Windows 壁纸，导航覆盖独立保存在 PluginCustomization/，不能改变原 Tag 跳转目标。导航动态项按对象跟踪，不能在排序后按末尾数量删除。
+- 插件 SDK 2.2 保持 API v2/AssemblyVersion 2.0：2.1 增加 BindValueChanged 与 GetService<T>，2.2 增加可选的 `IPluginHost.RegisterOpen` 插件「打开」入口（未注册的旧插件仍显示「已安装」，插件页按钮改绿色由 PluginsPage 的 ApplyOpenPalette 覆盖 AccentButton* 主题键实现，不要另写模板）。ToggleSwitch 的 BindClick 转接 Toggled，SetValue/初始化不得触发动作；ReportProgress 空白必须关闭提示条。插件宿主服务包括工具箱背景、稳定 ID 导航自定义、宿主信息与只读诊断；此 SDK 与 AI/CLI 电脑维护路径相互独立，不要让维护 Agent 用诊断接口代替真实 GUI。背景不修改 Windows 壁纸，导航覆盖独立保存在 PluginCustomization/，不能改变原 Tag 跳转目标。导航动态项按对象跟踪，不能在排序后按末尾数量删除。
 - AgentOperationView 编辑完成两秒后自动收起详情，保留标题/状态/增删行数；手动展开取消自动收起，轮询不能重置用户选择。
 - 支持多插件并存。AgentWorkspace 更新 projects.md，按真实 csproj + tubatools.json 识别项目；每插件独立目录/PackageId，修改保留身份并递增版本，不覆盖其他项目。
 - 本地 AI 试炼场 AiPlaygroundPage 独立保留；提供商配置仍在 Services/Ai/AiProviderStore.cs，密钥用 ProtectedApiKeyConverter。

@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <Description>图吧工具箱插件契约（API v2）</Description>
     <PackageTags>TubaWinUi3;SDK;plugin</PackageTags>

@@ -12,7 +12,7 @@ public sealed class PluginApiV2Tests : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), "tuba-api2-" + Guid.NewGuid().ToString("N"));
     private readonly string? _previous = ConfigManager.DataDirectoryOverride;
     public PluginApiV2Tests() { Directory.CreateDirectory(_root); ConfigManager.DataDirectoryOverride = _root; }
-    public void Dispose() { BuiltinToolRegistry.ReplacePluginTools("api2-test", []); ConfigManager.DataDirectoryOverride = _previous; Directory.Delete(_root, true); }
+    public void Dispose() { BuiltinToolRegistry.ReplacePluginTools("api2-test", []); PluginManager.ClearOpenEntry("api2-test"); PluginManager.ClearOpenEntry("open-test"); ConfigManager.DataDirectoryOverride = _previous; Directory.Delete(_root, true); }
     private static PluginToolDefinition Definition(string id = "suite") => new()
     { Id = id, Name = "维护工具", Xaml = "<Grid xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" />" };
     [Fact]
@@ -79,6 +79,44 @@ public sealed class PluginApiV2Tests : IDisposable
         }
         finally { BuiltinToolRegistry.ReplacePluginTools("full-test", []); }
     }
+    [Fact]
+    public void OpenEntry_IsOptionalAndOnlyRegisteredDuringRegister()
+    {
+        var host = new PluginManager.RegistrationHost("open-test", _root, new(2, "entry.dll", "Entry"));
+        host.RegisterTool(Definition());
+        host.RegisterOpen(_ => Task.CompletedTask);
+        Assert.Throws<ArgumentNullException>(() => host.RegisterOpen(null!));
+        Assert.Throws<InvalidOperationException>(() => host.RegisterOpen(_ => Task.CompletedTask));
+        host.Commit();
+        try
+        {
+            Assert.True(PluginManager.HasOpenEntry("open-test"));
+            // 本次没有加载程序集：插件页保持「已安装」，不显示可点却无反应的「打开」。
+            Assert.False(PluginManager.CanOpen("open-test"));
+            Assert.Throws<InvalidOperationException>(() => host.RegisterOpen(_ => Task.CompletedTask));
+        }
+        finally { BuiltinToolRegistry.ReplacePluginTools("open-test", []); }
+    }
+
+    [Fact]
+    public void ReloadWithoutOpenEntry_ClearsPreviousRegistration()
+    {
+        var first = new PluginManager.RegistrationHost("open-test", _root, new(2, "entry.dll", "Entry"));
+        first.RegisterTool(Definition());
+        first.RegisterOpen(_ => Task.CompletedTask);
+        first.Commit();
+        Assert.True(PluginManager.HasOpenEntry("open-test"));
+        // 新版本只注册工具、没再注册打开入口：旧委托必须被同批提交清掉。
+        var second = new PluginManager.RegistrationHost("open-test", _root, new(2, "entry.dll", "Entry"));
+        second.RegisterTool(Definition());
+        second.Commit();
+        Assert.False(PluginManager.HasOpenEntry("open-test"));
+        BuiltinToolRegistry.ReplacePluginTools("open-test", []);
+    }
+
+    [Fact]
+    public void UnknownPackage_HasNoOpenEntry() => Assert.False(PluginManager.HasOpenEntry("missing-package"));
+
     [Theory]
     [InlineData("<Grid />")]
     [InlineData("<Grid xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" x:Class=\"Entry\" />")]

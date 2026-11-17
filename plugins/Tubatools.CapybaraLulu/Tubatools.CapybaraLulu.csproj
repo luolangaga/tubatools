@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.CapybaraLulu</PackageId>
-    <Version>1.3.0</Version>
+    <Version>1.3.2</Version>
     <Authors>图吧工具箱</Authors>
     <Description>水豚噜噜美化包：柔和动态背景、侧栏页脚小伙伴、标题栏小噜、角落陪伴与细节设置，全部在一键开关内</Description>
     <PackageTags>Tubatools;theme;skin;capybara</PackageTags>
@@ -39,4 +39,8 @@
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
     <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>

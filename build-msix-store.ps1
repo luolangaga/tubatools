@@ -158,7 +158,7 @@ function Write-CleanManifest {
 
     $lines = @(
         '<?xml version="1.0" encoding="utf-8"?>'
-        '<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4" xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5" xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10" IgnorableNamespaces="uap uap3 rescap desktop desktop4 desktop5 com">'
+        '<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4" xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5" xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10" IgnorableNamespaces="uap uap3 uap5 rescap desktop desktop4 desktop5 com">'
         "  <Identity Name=`"$PackageName`" Publisher=`"$Publisher`" Version=`"$Version`" ProcessorArchitecture=`"$Arch`" />"
         '  <Properties>'
         "    <DisplayName>$DisplayName</DisplayName>"
@@ -184,6 +184,9 @@ function Write-CleanManifest {
         '            <desktop:ExecutionAlias Alias="TubaWinUi3.exe" />'
         '          </uap3:AppExecutionAlias>'
         '        </uap3:Extension>'
+        '        <uap5:Extension Category="windows.startupTask" Executable="TubaWinUi3.exe" EntryPoint="Windows.FullTrustApplication">'
+        "          <uap5:StartupTask TaskId=`"TubaWinUi3AutoStart`" Enabled=`"false`" DisplayName=`"$DisplayName`" />"
+        '        </uap5:Extension>'
         '        <desktop4:Extension Category="windows.fileExplorerContextMenus">'
         '          <desktop4:FileExplorerContextMenus>'
         '            <desktop4:ItemType Type="*">'

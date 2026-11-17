@@ -71,6 +71,15 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        <!-- 「打开」按钮：与安装按钮同尺寸，底色由代码按 AccentButton* 资源换成绿色（见 ApplyOpenPalette）。 -->
+        <Style x:Key="PluginOpenButton" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="74"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
         <Style x:Key="PluginQuietButton" TargetType="Button">
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="Height" Value="28"/>

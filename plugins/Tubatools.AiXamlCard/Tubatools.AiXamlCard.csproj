@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.AiXamlCard</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.2</Version>
     <Authors>图吧工具箱</Authors>
     <Description>给 AI 助手增加原生 XAML 卡片：助手直接写 WinUI 界面并动态编译 C# 代码后置，卡片作为一条消息出现在对话里。</Description>
     <PackageTags>Tubatools</PackageTags>
@@ -58,4 +58,8 @@
       <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>

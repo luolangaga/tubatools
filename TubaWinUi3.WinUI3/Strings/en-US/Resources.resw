@@ -5539,6 +5539,7 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Plugins_NuGetPage" xml:space="preserve"><value>NuGet page</value></data>
   <data name="Plugins_InstallAction" xml:space="preserve"><value>Install</value></data>
   <data name="Plugins_UpdateAction" xml:space="preserve"><value>Update</value></data>
+  <data name="Plugins_OpenAction" xml:space="preserve"><value>Open</value></data>
   <data name="Plugins_UpdateTo" xml:space="preserve"><value>Update to {0}</value></data>
   <data name="Plugins_UpToDate" xml:space="preserve"><value>Installed · up to date</value></data>
   <data name="Plugins_InstalledVersion" xml:space="preserve"><value>Installed {0}</value></data>

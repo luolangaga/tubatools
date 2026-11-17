@@ -1,7 +1,10 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.UI.Xaml;
 using Tubatools.AiJunkCleanup.Models;
 using Tubatools.AiJunkCleanup.Services;
+using Tubatools.AiJunkCleanup.UI;
+using Tubatools.Onboarding;
 using TubaWinUi3.PluginSdk;
 
 namespace Tubatools.AiJunkCleanup.Runtime;
@@ -10,6 +13,50 @@ namespace Tubatools.AiJunkCleanup.Runtime;
 internal sealed class AiJunkCleanupRuntime
 {
     internal static AiJunkCleanupRuntime Current { get; } = new();
+
+    private static bool _installGuideScheduled;
+
+    /// <summary>
+    /// 安装/更新时调度已有的五步教程。必须从 Register 调用：已加载插件的启动钩子不会重跑，
+    /// 只靠 StartupAsync 会出现「装完没反应、重启才弹」。
+    /// </summary>
+    internal static bool ScheduleInstallGuide()
+    {
+        _installGuideScheduled = PluginOnboardingDialog.ScheduleInstallGuide(ShowInstallGuideAsync);
+        return _installGuideScheduled;
+    }
+
+    private static async Task ShowInstallGuideAsync(XamlRoot root)
+    {
+        var dialog = new TutorialDialog(root);
+        await dialog.ShowAsync();
+        // 教程已经看过：下次启动不再由启动钩子重复弹出。
+        await MarkStartupTutorialShownAsync();
+    }
+
+    private static async Task MarkStartupTutorialShownAsync()
+    {
+        try
+        {
+            var data = HostBridge.TryGetDataDirectory();
+            if (string.IsNullOrEmpty(data)) return;
+            var directory = Path.Combine(data, "PluginData", "tubatools.aijunkcleanup");
+            Directory.CreateDirectory(directory);
+            var path = Path.Combine(directory, "settings.json");
+            var values = File.Exists(path)
+                ? JsonSerializer.Deserialize<Dictionary<string, string>>(await File.ReadAllTextAsync(path))
+                  ?? new Dictionary<string, string>()
+                : new Dictionary<string, string>();
+            values["startupTutorialShown"] = "true";
+            var temporary = path + ".tmp";
+            await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(values));
+            File.Move(temporary, path, true);
+        }
+        catch
+        {
+            // 设置写不进去最多导致下次启动再显示一次教程。
+        }
+    }
 
     private IPluginStartupContext? _context;
     private IPluginHostAccess? _access;
@@ -47,7 +94,7 @@ internal sealed class AiJunkCleanupRuntime
 
         await _access.RunOnUiThreadAsync(() =>
         {
-            _injector = new AgentModeInjector(_access!, _depth, _tutorialShown, _handled, SaveSettingAsync, () => _lastPlan,
+            _injector = new AgentModeInjector(_access!, _depth, _tutorialShown || _installGuideScheduled, _handled, SaveSettingAsync, () => _lastPlan,
                 RememberPlan, RememberResult, ScanShallowAsync, _dataDirectory);
             _injector.Attach();
             _ = _injector.ShowTutorialAtStartupAsync();

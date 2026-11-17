@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.NexBoxSkin</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.3</Version>
     <Authors>图吧工具箱</Authors>
     <Description>NexBox 风格主界面皮肤：工具、硬件、优化、显示滤镜与三角洲专区；默认开启</Description>
     <PackageTags>Tubatools</PackageTags>
@@ -55,4 +55,8 @@
       <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>

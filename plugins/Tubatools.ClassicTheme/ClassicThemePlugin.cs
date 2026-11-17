@@ -1,4 +1,5 @@
 using TubaWinUi3.PluginSdk;
+using Tubatools.Onboarding;
 
 namespace Tubatools.ClassicTheme;
 
@@ -20,6 +21,19 @@ public sealed class ClassicThemePlugin : ITubaPlugin, IPluginStartup
             Tags = ["主题", "外观", "经典", "蓝色", "Theme"],
             CreateContent = ClassicThemePage.Create
         });
+        PluginOpenCompat.RegisterToolEntry(host, "classic-theme");
+        PluginOnboardingDialog.ScheduleInstallGuide(PluginOnboardingDialog.Guide(
+            chinese ? "经典样式" : "Classic Theme",
+            chinese ? "经典蓝色主题已应用到主界面，立即生效。" : "The classic blue theme is applied to the main window right away.",
+            [
+                new OnboardingEntry(
+                    chinese ? "外观" : "Appearance",
+                    chinese ? "经典样式" : "Classic Theme",
+                    chinese ? "深蓝侧栏、浅蓝内容区与半透明白色卡片已启用；想换回其它外观时在这里关闭。" : "The dark sidebar and light content area are active. Turn it off here to switch back.",
+                    "\uE790",
+                    chinese ? "调整主题" : "Adjust theme",
+                    PluginOnboardingDialog.OpenTool("classic-theme"))
+            ], chinese));
     }
 
     public ValueTask StartupAsync(IPluginStartupContext context, CancellationToken ct = default)

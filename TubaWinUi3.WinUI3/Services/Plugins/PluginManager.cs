@@ -1,7 +1,10 @@
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.PluginSdk;
 
 namespace TubaWinUi3.Services.Plugins;
@@ -14,6 +17,11 @@ public static class PluginManager
     // 已打开的旧工具可继续使用原上下文；新注册指向新版本，不强制卸载正在执行的代码。
     private static readonly List<PluginLoadContext> Retired = [];
     private static readonly Dictionary<string, StartupRegistration> Startups = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// 插件「打开」入口（SDK 2.2 可选）。只有调用 RegisterOpen 的插件才登记；停用/卸载或重载后
+    /// 没再注册时会被清掉，所以旧插件不注册时行为完全不变（插件页显示「已安装」）。
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, OpenRegistration> Opens = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> Started = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> Errors = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object VisibilityGate = new();
@@ -22,6 +30,108 @@ public static class PluginManager
     private static string StatePath => Path.Combine(Root, "installed.json");
     public static string? GetError(string id) => Errors.GetValueOrDefault(id);
     public static bool IsLoaded(string id) => Loaded.ContainsKey(id);
+
+    /// <summary>插件是否注册了「打开」入口（不区分本次是否加载）。</summary>
+    internal static bool HasOpenEntry(string id) => Opens.ContainsKey(id);
+
+    /// <summary>
+    /// 插件页「打开」按钮是否可用：本次会话已加载 + 注册了打开入口。
+    /// 没加载（安全模式、加载失败、已停用）时照旧显示「已安装」，避免点了没反应。
+    /// </summary>
+    public static bool CanOpen(string id) => IsLoaded(id) && Opens.ContainsKey(id);
+
+    /// <summary>与工具同批提交打开入口；handler 为 null 表示这个版本没有注册，清除旧版本留下的入口。</summary>
+    internal static void SetOpenEntry(string packageId, PluginOpenHandler? handler, string packageRoot, PluginManifest manifest)
+    {
+        if (handler is null) Opens.TryRemove(packageId, out _);
+        else Opens[packageId] = new OpenRegistration(handler, manifest, packageRoot);
+    }
+
+    internal static void ClearOpenEntry(string packageId) => Opens.TryRemove(packageId, out _);
+
+    /// <summary>
+    /// 执行插件注册的「打开」入口。插件代码在宿主 UI 线程运行，可以打开工具页或自建窗口；
+    /// 异常原样抛给插件页展示，不记入插件失败计数（打开失败不等于插件坏掉）。
+    /// </summary>
+    public static async Task OpenAsync(string packageId, CancellationToken ct = default)
+    {
+        if (!Opens.TryGetValue(packageId, out var registration))
+            throw new InvalidOperationException("这个插件没有注册「打开」入口。");
+        if (!IsLoaded(packageId))
+            throw new InvalidOperationException("插件本次没有加载，无法打开。请确认插件已启用后重启工具箱。");
+        var dispatcher = App.MainWindow?.DispatcherQueue ?? throw new InvalidOperationException("主窗口不可用。");
+        var services = new PluginHostServices(packageId, "", registration.PackageRoot, dispatcher,
+            () => App.MainWindow?.Content?.XamlRoot, _ => { }, registration.Manifest.FullTrust, registration.Manifest.Permissions);
+
+        async Task<bool> DialogAsync(string title, string text, bool confirm)
+        {
+            var accepted = false;
+            await PluginUiThread.RunAsync(dispatcher, async () =>
+            {
+                var dialog = new TubaWinUi3.Controls.FluentContentDialog
+                {
+                    XamlRoot = App.MainWindow?.Content?.XamlRoot ?? throw new InvalidOperationException("主窗口不可用。"),
+                    Title = title,
+                    Content = new ScrollViewer
+                    {
+                        MaxHeight = 400,
+                        Content = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true }
+                    },
+                    CloseButtonText = LocalizationService.L("PluginUi_Close", "关闭"),
+                    DefaultButton = ContentDialogButton.Close,
+                    RequestedTheme = ThemeService.CurrentElementTheme
+                };
+                if (confirm)
+                {
+                    dialog.PrimaryButtonText = LocalizationService.L("PluginUi_Confirm", "确认");
+                    dialog.CloseButtonText = LocalizationService.L("PluginUi_Cancel", "取消");
+                }
+                using var cancel = ct.Register(() => dispatcher.TryEnqueue(dialog.Hide));
+                accepted = await dialog.ShowAsync() == ContentDialogResult.Primary;
+                ct.ThrowIfCancellationRequested();
+            }, ct);
+            return accepted;
+        }
+
+        var context = new PluginOpenContext
+        {
+            CancellationToken = ct,
+            Services = services,
+            HostAccess = registration.Manifest.FullTrust ? services.GetService<IPluginHostAccess>() : null,
+            OpenToolAsync = toolId => OpenOwnToolAsync(packageId, toolId, ct),
+            ShowMessageAsync = (title, text) => DialogAsync(title, text, false),
+            ConfirmAsync = (title, text) => DialogAsync(title, text, true)
+        };
+        await PluginUiThread.RunAsync(dispatcher, () => registration.Handler(context), ct);
+    }
+
+    /// <summary>OpenToolAsync 的宿主实现：按包内工具 Id（或全局 Id）打开本插件注册的工具页。</summary>
+    private static Task OpenOwnToolAsync(string packageId, string? toolId, CancellationToken ct)
+    {
+        var dispatcher = App.MainWindow?.DispatcherQueue ?? throw new InvalidOperationException("主窗口不可用。");
+        return PluginUiThread.RunAsync(dispatcher, async () =>
+        {
+            var tool = FindPluginTool(packageId, toolId);
+            await BuiltinToolExecution.ExecuteTrackedAsync(tool, new BuiltinToolContext
+            {
+                XamlRoot = App.MainWindow?.Content?.XamlRoot ?? throw new InvalidOperationException("主窗口不可用。"),
+                CancellationToken = ct
+            });
+        }, ct);
+    }
+
+    private static PluginXamlTool FindPluginTool(string packageId, string? toolId)
+    {
+        // 用 AllTools 而不是 Tools：打开入口只会在插件已启用、已加载时出现，这里不必再过滤一次可见性。
+        var tools = BuiltinToolRegistry.AllTools.OfType<PluginXamlTool>()
+            .Where(t => t.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (tools.Count == 0) throw new InvalidOperationException("这个插件没有注册工具页，请在打开入口里使用插件自己的界面。");
+        if (string.IsNullOrWhiteSpace(toolId)) return tools[0];
+        var id = toolId.Trim();
+        return tools.FirstOrDefault(t => t.Definition.Id.Equals(id, StringComparison.OrdinalIgnoreCase) ||
+                                          t.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+            ?? throw new ArgumentException($"插件没有注册工具「{toolId}」。");
+    }
 
     /// <summary>停用/卸载后立即从工具列表、搜索和导航中隐藏，不必等重启。</summary>
     internal static bool IsPackageVisible(string packageId)
@@ -36,6 +146,9 @@ public static class PluginManager
             if (visible) HiddenPackages.Remove(packageId);
             else HiddenPackages.Add(packageId);
         }
+        // 停用 / 自动停用 / 卸载时一并摘掉「打开」入口：程序集此时仍在进程里（IsLoaded 还是 true），
+        // 只看加载状态会让已停用的插件继续显示可点的「打开」。
+        if (!visible) ClearOpenEntry(packageId);
     }
 
     private static void RefreshToolLists()
@@ -305,6 +418,8 @@ public static class PluginManager
 
     private sealed record StartupRegistration(IPluginStartup Entry, PluginManifest Manifest, string PackageRoot, string Version = "");
 
+    private sealed record OpenRegistration(PluginOpenHandler Handler, PluginManifest Manifest, string PackageRoot);
+
     private sealed class StartupContext(PluginHostServices services, IPluginHostAccess? hostAccess) : IPluginStartupContext
     {
         public string PluginId => services.PluginId;
@@ -550,6 +665,7 @@ public static class PluginManager
     internal sealed class RegistrationHost(string packageId, string packageRoot, PluginManifest manifest) : IPluginHost
     {
         private readonly List<IBuiltinTool> _pending = [];
+        private PluginOpenHandler? _open;
         private bool _committed;
         public int ApiVersion => 2;
         public string Language => LocalizationService.CurrentLanguage;
@@ -569,10 +685,19 @@ public static class PluginManager
             _pending.Add(new PluginXamlTool(packageId, tool, icon.Length > 0 ? PluginPackageRules.ResolveIcon(packageRoot, icon) : null,
                 xaml, packageRoot, manifest.FullTrust, manifest.Permissions));
         }
+        public void RegisterOpen(PluginOpenHandler open)
+        {
+            if (_committed) throw new InvalidOperationException("只能在 Register 期间注册打开入口。");
+            ArgumentNullException.ThrowIfNull(open);
+            if (_open is not null) throw new InvalidOperationException("每个插件只能注册一个打开入口。");
+            _open = open;
+        }
         public void Commit()
         {
             if (_committed) throw new InvalidOperationException("注册已提交。");
             BuiltinToolRegistry.ReplacePluginTools(packageId, _pending);
+            // 打开入口与工具同批提交：新版本没再注册就自动清除，旧委托不会残留。
+            SetOpenEntry(packageId, _open, packageRoot, manifest);
             _committed = true;
         }
     }

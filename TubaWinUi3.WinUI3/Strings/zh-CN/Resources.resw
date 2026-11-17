@@ -5555,6 +5555,7 @@ else then stroke=#888888 visible=true
   <data name="Plugins_NuGetPage" xml:space="preserve"><value>NuGet 页面</value></data>
   <data name="Plugins_InstallAction" xml:space="preserve"><value>安装</value></data>
   <data name="Plugins_UpdateAction" xml:space="preserve"><value>更新</value></data>
+  <data name="Plugins_OpenAction" xml:space="preserve"><value>打开</value></data>
   <data name="Plugins_UpdateTo" xml:space="preserve"><value>更新到 {0}</value></data>
   <data name="Plugins_UpToDate" xml:space="preserve"><value>已安装 · 最新</value></data>
   <data name="Plugins_InstalledVersion" xml:space="preserve"><value>已安装 {0}</value></data>

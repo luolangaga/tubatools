@@ -1,4 +1,5 @@
 using TubaWinUi3.PluginSdk;
+using Tubatools.Onboarding;
 
 namespace Tubatools.Windows11Optimizer;
 
@@ -25,5 +26,20 @@ public sealed class Windows11OptimizerPlugin : ITubaPlugin
                 return Task.CompletedTask;
             }
         });
+        PluginOpenCompat.RegisterToolEntry(host, "windows11-optimizer");
+        PluginOnboardingDialog.ScheduleInstallGuide(PluginOnboardingDialog.Guide(
+            chinese ? "Windows 11 优化" : "Windows 11 Optimizer",
+            chinese
+                ? "内置工具已就绪：可以按分类逐项调整 Windows，改动前会说明影响。"
+                : "The built-in tool is ready. Review tweaks by category; each change explains its impact first.",
+            [
+                new OnboardingEntry(
+                    chinese ? "内置工具" : "Built-in tool",
+                    chinese ? "Windows 11 优化" : "Windows 11 Optimizer",
+                    chinese ? "已添加到「系统工具」分类，也可以直接在搜索里找到。" : "Added under System tools. You can also find it with search.",
+                    "\uE713",
+                    chinese ? "打开" : "Open",
+                    PluginOnboardingDialog.OpenTool("windows11-optimizer"))
+            ], chinese));
     }
 }

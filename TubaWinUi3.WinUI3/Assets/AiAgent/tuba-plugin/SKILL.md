@@ -5,7 +5,7 @@ description: 为图吧工具箱开发 API v2 插件：从需求、XAML 页面、
 
 # 图吧工具箱插件开发（API v2，陪跑版）
 
-先读同目录 `plugin-api.md`（当前 API v2 契约）。SDK 优先从 nuget.org 的 `TubaWinUi3.PluginSdk` 包获取（当前 2.1.0）；仅当 NuGet 无法访问或宿主 SDK 尚未发布时，才回退引用工作区 `sdk/` 副本（由宿主维护，不要修改）。不要从网上找猜测的旧 SDK 包。API v1 已移除，`RegisterTool` 的旧多参数回调不存在。
+先读同目录 `plugin-api.md`（当前 API v2 契约）。SDK 优先从 nuget.org 的 `TubaWinUi3.PluginSdk` 包获取（当前 2.2.0）；仅当 NuGet 无法访问或宿主 SDK 尚未发布时，才回退引用工作区 `sdk/` 副本（由宿主维护，不要修改）。不要从网上找猜测的旧 SDK 包。API v1 已移除，`RegisterTool` 的旧多参数回调不存在。
 
 工作方式：用户可能完全不懂编程。每一步都先用一句人话说明“要做什么、为什么”，再执行；做完告诉用户“会看到什么”，等反馈，不要一口气丢十条命令。**没有实际构建/安装/验证前，不要声称插件已经可用。**
 
@@ -97,6 +97,7 @@ public sealed class Entry : ITubaPlugin
 - `CreateContent` 只给确实需要引用 WinUI 类型的高级插件；普通插件优先 SDK + XAML 字符串，避免把 WinUI/宿主 DLL 带进包。
 - 包内图片/SVG 不要假设 `ms-appx:///` 指向插件包；用 `SetImage` 或 `Services.GetAssetPath` 拿真实路径。
 - `fullTrust` 只在确实要操作宿主界面、主题、任意宿主设置时打开；它不是安全沙箱，只给可信插件，并且宿主升级后可能需要重新编译。启动型插件用 `IPluginStartup`，宿主会在主窗口加载后调用；停用/卸载时在 `ShutdownAsync` 还原。
+- 想让插件页（发现/已安装/详情）的按钮从「已安装」变成绿色「打开」，就在 `Register` 里额外调用一次 `host.RegisterOpen(async context => await context.OpenToolAsync())`（SDK 2.2 可选 API）：点击时执行插件代码，可以打开本插件工具页、自建窗口或先 `ConfirmAsync`。不注册就不显示，旧插件无需改动。
 
 ## 2. 图标、清单和项目
 
@@ -133,7 +134,7 @@ public sealed class Entry : ITubaPlugin
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="TubaWinUi3.PluginSdk" Version="2.1.0" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="TubaWinUi3.PluginSdk" Version="2.2.0" PrivateAssets="all" ExcludeAssets="runtime" />
     <None Include="tubatools.json" Pack="true" PackagePath="/" />
     <None Include="assets/**/*" Pack="true" PackagePath="%(Identity)" />
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />

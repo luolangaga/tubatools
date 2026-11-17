@@ -1,4 +1,5 @@
 using TubaWinUi3.PluginSdk;
+using Tubatools.Onboarding;
 
 namespace Tubatools.SteamToolbox;
 
@@ -27,5 +28,18 @@ public sealed class SteamToolboxPlugin : ITubaPlugin
             Tags = ["Steam", "游戏", "挂卡", "时长"],
             CreateContent = SteamToolboxView.Create
         });
+        PluginOpenCompat.RegisterToolEntry(host, "steam-toolbox");
+        PluginOnboardingDialog.ScheduleInstallGuide(PluginOnboardingDialog.Guide(
+            chinese ? "Steam 工具箱" : "Steam Toolbox",
+            chinese ? "登录 Steam 后即可查看本机账号、多库游戏并开始挂卡。" : "Sign in to Steam to review local accounts, game libraries and start idling.",
+            [
+                new OnboardingEntry(
+                    chinese ? "内置工具" : "Built-in tool",
+                    chinese ? "Steam 工具箱" : "Steam Toolbox",
+                    chinese ? "已添加到「游戏工具」分类，打开后可登录 Steam 账号。" : "Added under Gaming tools. Open it to sign in to Steam.",
+                    "\uE7FC",
+                    chinese ? "打开" : "Open",
+                    PluginOnboardingDialog.OpenTool("steam-toolbox"))
+            ], chinese));
     }
 }

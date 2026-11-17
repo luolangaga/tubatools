@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.ClassicTheme</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.4</Version>
     <Authors>图吧工具箱</Authors>
     <Description>经典样式主题包：蓝色渐变主界面、深蓝侧栏、半透明白色卡片与白色文字</Description>
     <PackageTags>Tubatools</PackageTags>
@@ -34,4 +34,8 @@
     <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="plugin/" />
     <None Include="$(OutputPath)$(AssemblyName).deps.json" Pack="true" PackagePath="plugin/" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>

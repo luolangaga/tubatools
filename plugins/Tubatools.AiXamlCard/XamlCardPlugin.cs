@@ -2,6 +2,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using TubaWinUi3.PluginSdk;
+using Tubatools.Onboarding;
 
 namespace Tubatools.AiXamlCard;
 
@@ -15,20 +16,44 @@ public sealed class XamlCardPlugin : ITubaPlugin, IPluginStartup
     private static CardRequestWatcher? _watcher;
     private static CardWorkspaceWatcher? _rules;
 
-    public void Register(IPluginHost host) => host.RegisterTool(new PluginToolDefinition
+    public void Register(IPluginHost host)
     {
-        Id = ToolId,
-        Name = host.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase) ? "AI UI Cards" : "AI 界面卡片",
-        Category = "其他工具",
-        Description = host.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-            ? "Render native WinUI cards the assistant writes, with dynamically compiled C# code-behind."
-            : "渲染助手写的原生 WinUI 卡片：XAML 界面 + 动态编译的 C# 代码后置。",
-        IconPath = "assets/icon.svg",
-        Tags = ["AI", "XAML", "界面", "动态编译"],
-        ShowInSettings = true,
-        CreateContent = CreateCardPage,
-        InitializeAsync = InitializeCardPage,
-    });
+        bool chinese = host.Language.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
+        host.RegisterTool(new PluginToolDefinition
+        {
+            Id = ToolId,
+            Name = host.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase) ? "AI UI Cards" : "AI 界面卡片",
+            Category = "其他工具",
+            Description = host.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                ? "Render native WinUI cards the assistant writes, with dynamically compiled C# code-behind."
+                : "渲染助手写的原生 WinUI 卡片：XAML 界面 + 动态编译的 C# 代码后置。",
+            IconPath = "assets/icon.svg",
+            Tags = ["AI", "XAML", "界面", "动态编译"],
+            ShowInSettings = true,
+            CreateContent = CreateCardPage,
+            InitializeAsync = InitializeCardPage,
+        });
+        PluginOpenCompat.RegisterToolEntry(host, ToolId);
+        PluginOnboardingDialog.ScheduleInstallGuide(PluginOnboardingDialog.Guide(
+            chinese ? "AI 界面卡片" : "AI UI Cards",
+            chinese ? "AI 助手现在可以直接生成原生 WinUI 卡片，并作为一条消息出现在对话里。" : "The assistant can now render native WinUI cards directly as chat messages.",
+            [
+                new OnboardingEntry(
+                    chinese ? "内置工具" : "Built-in tool",
+                    chinese ? "AI 界面卡片" : "AI UI Cards",
+                    chinese ? "已添加到「其他工具」分类，可以查看已经生成的卡片。" : "Added under Other tools. Open it to review generated cards.",
+                    "\uE8F1",
+                    chinese ? "打开" : "Open",
+                    PluginOnboardingDialog.OpenTool(ToolId)),
+                new OnboardingEntry(
+                    chinese ? "AI 助手" : "AI Assistant",
+                    chinese ? "在对话里生成卡片" : "Generate cards in chat",
+                    chinese ? "对 AI 助手说「做一张…的卡片」，生成结果会直接显示在对话中。" : "Ask the assistant to “make a card for …” and the result appears right in the chat.",
+                    "\uE99A",
+                    chinese ? "打开 AI 助手" : "Open AI Assistant",
+                    PluginOnboardingDialog.OpenAiAssistant())
+            ], chinese));
+    }
 
     public ValueTask StartupAsync(IPluginStartupContext context, CancellationToken ct = default)
     {

@@ -1,9 +1,9 @@
 # TubaWinUi3.PluginSdk
 
-图吧工具箱（TubaWinUi3）插件契约（API v2）。插件项目引用本包后实现 `ITubaPlugin` 并通过 `IPluginHost.RegisterTool` 注册工具；注册的工具会出现在工具箱的「内置工具」中。
+图吧工具箱（TubaWinUi3）插件契约（API v2）。插件项目引用本包后实现 `ITubaPlugin` 并通过 `IPluginHost.RegisterTool` 注册工具；注册的工具会出现在工具箱的「内置工具」中。SDK 2.2 起还可以在 `Register` 期间调用 `IPluginHost.RegisterOpen` 注册可选的「打开」入口：注册后插件页显示绿色「打开」按钮并执行插件代码，不注册的插件继续显示「已安装」。
 
 ```xml
-<PackageReference Include="TubaWinUi3.PluginSdk" Version="2.1.0" PrivateAssets="all" ExcludeAssets="runtime" />
+<PackageReference Include="TubaWinUi3.PluginSdk" Version="2.2.0" PrivateAssets="all" ExcludeAssets="runtime" />
 ```
 
 - 目标框架：`net10.0`，无 WinUI 依赖，普通 XAML 插件可直接编译。

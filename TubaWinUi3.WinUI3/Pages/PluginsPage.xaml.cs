@@ -32,6 +32,7 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
     private readonly HashSet<string> _previewStarted = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _previewGate = new(3);
     private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
+    private readonly Windows.UI.ViewManagement.AccessibilitySettings _accessibility = new();
     private bool _busy;
     private bool _hasMore;
     private bool _showDocs;
@@ -229,16 +230,27 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
         {
             var package = _packages[i];
             var installed = installedPackages.FirstOrDefault(p => p.Id.Equals(package.Id, StringComparison.OrdinalIgnoreCase));
-            var state = Describe(package, installed);
+            var action = Describe(package, installed);
             var key = PackageKey(package);
-            var button = new Button { Content = state.Label, IsEnabled = state.Enabled };
-            if (state.Accent) button.Style = (Style)Resources["PluginInstallButton"];
-            button.Click += async (_, _) => await OpenDetailAsync(package, installed, _availableRows.GetValueOrDefault(key)?.Icon);
+            var button = new Button { Content = ActionLabel(action), IsEnabled = action is not PluginAction.Installed };
+            if (action is PluginAction.Install or PluginAction.Update)
+                button.Style = (Style)Resources["PluginInstallButton"];
+            else if (action == PluginAction.Open)
+            {
+                button.Style = (Style)Resources["PluginOpenButton"];
+                ApplyOpenPalette(button, true);
+            }
+            button.Click += async (_, _) =>
+            {
+                // 「打开」直接执行插件自己的代码；安装/更新仍然先进详情页确认。
+                if (action == PluginAction.Open) await OpenPluginAsync(package.Id);
+                else await OpenDetailAsync(package, installed, _availableRows.GetValueOrDefault(key)?.Icon);
+            };
             var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
             actions.Children.Add(button);
 
             var row = Row(package.Id, AvailableMeta(package, installed), package.Description,
-                PackageIcon(package.IconUrl), actions, state.Badge);
+                PackageIcon(package.IconUrl), actions, ActionBadge(action));
             row.Card.Tag = package;
             AvailableList.Items.Add(row.Card);
             added.Add(row.Card);
@@ -255,12 +267,69 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
         UpdateEmptyState();
     }
 
-    private static (string Label, bool Enabled, bool Accent, string? Badge) Describe(PluginPackage package, InstalledPlugin? installed)
+    /// <summary>插件卡片右侧按钮的三种形态：安装/更新 = 强调色，打开 = 绿色，已安装 = 灰色不可点。</summary>
+    private enum PluginAction { Install, Update, Open, Installed }
+
+    /// <summary>
+    /// 插件注册了「打开」入口（SDK 2.2 可选）后按钮变成绿色「打开」；没有注册的旧插件仍显示「已安装」。
+    /// 只在本次会话真正加载成功时才算可用，否则点了没反应比不可点更糟。
+    /// </summary>
+    private static PluginAction Describe(PluginPackage package, InstalledPlugin? installed)
     {
-        if (installed is null) return (L("InstallAction", "安装"), true, true, null);
-        return CompareVersions(package.Version, installed.Version) > 0
-            ? (L("UpdateAction", "更新"), true, true, L("UpdateAvailable", "可更新"))
-            : (L("AlreadyInstalled", "已安装"), false, false, L("AlreadyInstalled", "已安装"));
+        if (installed is null) return PluginAction.Install;
+        if (CompareVersions(package.Version, installed.Version) > 0) return PluginAction.Update;
+        return PluginManager.CanOpen(package.Id) ? PluginAction.Open : PluginAction.Installed;
+    }
+
+    private static string ActionLabel(PluginAction action) => action switch
+    {
+        PluginAction.Install => L("InstallAction", "安装"),
+        PluginAction.Update => L("UpdateAction", "更新"),
+        PluginAction.Open => L("OpenAction", "打开"),
+        _ => L("AlreadyInstalled", "已安装")
+    };
+
+    private static string? ActionBadge(PluginAction action) => action switch
+    {
+        PluginAction.Update => L("UpdateAvailable", "可更新"),
+        PluginAction.Install => null,
+        _ => L("AlreadyInstalled", "已安装")
+    };
+
+    /// <summary>
+    /// 给单个按钮换上绿色「打开」配色。AccentButtonStyle 的底色/前景全部走 AccentButton* 主题资源，
+    /// 在按钮自己的 Resources 里覆盖这些键即可连同悬停、按下、禁用状态一起变绿，无需另写模板。
+    /// 高对比度下不覆盖，交给系统强调色，避免破坏系统配色。
+    /// </summary>
+    private void ApplyOpenPalette(Button button, bool open)
+    {
+        string[] keys =
+        [
+            "AccentButtonBackground", "AccentButtonBackgroundPointerOver", "AccentButtonBackgroundPressed", "AccentButtonBackgroundDisabled",
+            "AccentButtonForeground", "AccentButtonForegroundPointerOver", "AccentButtonForegroundPressed", "AccentButtonForegroundDisabled",
+            "AccentButtonBorderBrush", "AccentButtonBorderBrushPointerOver", "AccentButtonBorderBrushPressed", "AccentButtonBorderBrushDisabled"
+        ];
+        if (!open || _accessibility.HighContrast)
+        {
+            foreach (var key in keys) button.Resources.Remove(key);
+            return;
+        }
+        var normal = new SolidColorBrush(Color.FromArgb(255, 0x10, 0x7C, 0x10));
+        var hover = new SolidColorBrush(Color.FromArgb(255, 0x18, 0x91, 0x18));
+        var pressed = new SolidColorBrush(Color.FromArgb(255, 0x0B, 0x5C, 0x0B));
+        button.Resources["AccentButtonBackground"] = normal;
+        button.Resources["AccentButtonBackgroundPointerOver"] = hover;
+        button.Resources["AccentButtonBackgroundPressed"] = pressed;
+        button.Resources["AccentButtonBackgroundDisabled"] = normal;
+        button.Resources["AccentButtonBorderBrush"] = normal;
+        button.Resources["AccentButtonBorderBrushPointerOver"] = hover;
+        button.Resources["AccentButtonBorderBrushPressed"] = pressed;
+        button.Resources["AccentButtonBorderBrushDisabled"] = normal;
+        var white = new SolidColorBrush(Microsoft.UI.Colors.White);
+        button.Resources["AccentButtonForeground"] = white;
+        button.Resources["AccentButtonForegroundPointerOver"] = white;
+        button.Resources["AccentButtonForegroundPressed"] = white;
+        button.Resources["AccentButtonForegroundDisabled"] = new SolidColorBrush(Color.FromArgb(0x99, 0xFF, 0xFF, 0xFF));
     }
 
     private static string AvailableMeta(PluginPackage package, InstalledPlugin? installed)
@@ -593,6 +662,14 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
                 var title = string.IsNullOrWhiteSpace(metadata?.Name) ? p.Id : metadata.Name;
                 var icon = iconPath is not null ? BuiltinIconService.LoadAsset(iconPath) : null;
                 var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+                // 已安装列表也提供「打开」：注册了入口的插件不必回商店详情节就能进自己的界面。
+                if (PluginManager.CanOpen(p.Id))
+                {
+                    var open = new Button { Content = L("OpenAction", "打开"), Style = (Style)Resources["PluginOpenButton"] };
+                    ApplyOpenPalette(open, true);
+                    open.Click += async (_, _) => await OpenPluginAsync(p.Id);
+                    actions.Children.Add(open);
+                }
                 actions.Children.Add(toggle);
                 actions.Children.Add(remove);
                 var package = new PluginPackage(p.Id, p.Version, metadata?.Description ?? "", metadata?.Author ?? "");
@@ -949,11 +1026,20 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
         }
     }
 
-    private void UpdateDetailInstallState(PluginPackage package, InstalledPlugin? installed)    {
-        var state = Describe(package, installed);
-        DetailInstallText.Text = state.Label;
-        DetailInstallIcon.Glyph = state.Enabled ? "\uE896" : "\uE73E";
-        DetailInstallButton.IsEnabled = !_detailBusy && state.Enabled;
+    private void UpdateDetailInstallState(PluginPackage package, InstalledPlugin? installed)
+    {
+        var action = Describe(package, installed);
+        DetailInstallText.Text = ActionLabel(action);
+        DetailInstallIcon.Glyph = action switch
+        {
+            PluginAction.Open => "\uE8E5",
+            PluginAction.Installed => "\uE73E",
+            _ => "\uE896"
+        };
+        var open = action == PluginAction.Open;
+        DetailInstallButton.Style = (Style)Resources[open ? "PluginOpenButton" : "PluginInstallButton"];
+        ApplyOpenPalette(DetailInstallButton, open);
+        DetailInstallButton.IsEnabled = !_detailBusy && action is not PluginAction.Installed;
     }
 
     private void PopulateDetailFacts(PluginPackage package, InstalledPlugin? installed, PackageDetails? details)
@@ -1152,10 +1238,34 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
         }
     }
 
+    /// <summary>执行插件的「打开」入口；失败在插件页（或详情页）的 InfoBar 里说明，不弹系统错误框。</summary>
+    private async Task OpenPluginAsync(string packageId, InfoBar? status = null)
+    {
+        try
+        {
+            await PluginManager.OpenAsync(packageId);
+            if (status is null) Status.IsOpen = false;
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            var bar = status ?? Status;
+            bar.Severity = InfoBarSeverity.Error;
+            bar.Message = ex.Message;
+            bar.IsOpen = true;
+        }
+    }
+
     private async void DetailInstall_Click(object sender, RoutedEventArgs e)
     {
         if (_selectedPackage is null || _detailBusy || _busy) return;
         var package = _selectedPackage;
+        // 注册了「打开」入口的插件，这个按钮此时就是「打开」：执行插件代码，不再走安装流程。
+        if (PluginManager.CanOpen(package.Id))
+        {
+            await OpenPluginAsync(package.Id, DetailStatus);
+            return;
+        }
         SetDetailBusy(true);
         DetailStatus.IsOpen = false;
         try

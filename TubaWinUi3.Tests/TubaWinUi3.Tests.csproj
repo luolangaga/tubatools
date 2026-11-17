@@ -45,6 +45,7 @@
     <ProjectReference Include="..\samples\HelloPlugin\HelloPlugin.csproj" />
     <ProjectReference Include="..\plugins\Tubatools.SteamToolbox\Tubatools.SteamToolbox.csproj" />
     <ProjectReference Include="..\plugins\Tubatools.Windows11Optimizer\Tubatools.Windows11Optimizer.csproj" />
+    <ProjectReference Include="..\plugins\Tubatools.MinecraftLauncher\Tubatools.MinecraftLauncher.csproj" />
     <ProjectReference Include="..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" Aliases="backend" />
   </ItemGroup>
 

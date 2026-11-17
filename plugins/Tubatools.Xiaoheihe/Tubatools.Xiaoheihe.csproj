@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.Xiaoheihe</PackageId>
-    <Version>1.0.13</Version>
+    <Version>1.0.15</Version>
     <Authors>图吧工具箱</Authors>
     <Description>小黑盒社区客户端：扫码登录、推荐流、社区、搜索、帖子评论、签到、收藏、历史、游戏库</Description>
     <PackageTags>Tubatools</PackageTags>
@@ -52,4 +52,8 @@
       <None Include="@(_PluginDependency)" Pack="true" PackagePath="plugin/" />
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <Compile Include="..\Shared\PluginOnboardingDialog.cs" Link="Onboarding\PluginOnboardingDialog.cs" />
+  </ItemGroup>
+
 </Project>
