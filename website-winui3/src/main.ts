@@ -10,10 +10,12 @@ import appIcon512Url from './assets/site/logo.png?url'
 import { createI18n, i18nKey } from './components/i18n/index'
 import siteEnUS from './site/Strings/en-US/Resources'
 import siteZhCN from './site/Strings/zh-CN/Resources'
+import siteThanksEnUS from './site/Strings/en-US/Thanks'
+import siteThanksZhCN from './site/Strings/zh-CN/Thanks'
 
 const i18n = createI18n(navigator.language, {
-  'en-US': siteEnUS,
-  'zh-CN': siteZhCN
+  'en-US': { ...siteEnUS, ...siteThanksEnUS },
+  'zh-CN': { ...siteZhCN, ...siteThanksZhCN }
 })
 
 const manifestResources = manifestTemplate.resources ?? {}
