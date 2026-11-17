@@ -18,19 +18,19 @@
     </Style>
 
     <!-- 简洁模式卡片容器（间距略小，原生反馈与常规卡一致） -->
-    <Style x:Key="CompactToolCardItemStyle" TargetType="GridViewItem" BasedOn="{StaticResource ToolCardItemStyle}">
+    <Style x:Key="CompactToolCardItemStyle" BasedOn="{StaticResource ToolCardItemStyle}" TargetType="GridViewItem">
         <Setter Property="Margin" Value="0,0,10,10" />
     </Style>
 
     <!-- 页头操作按钮（返回键旁的刷新/导出等紧凑按钮） -->
-    <Style x:Key="ToolHeaderActionButtonStyle" TargetType="Button">
+    <Style x:Key="ToolHeaderActionButtonStyle" BasedOn="{StaticResource DefaultButtonStyle}" TargetType="Button">
         <Setter Property="Padding" Value="12,5" />
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <!-- 工具卡底部图标操作按钮（占满所在单元格） -->
-    <Style x:Key="ToolCardActionButtonStyle" TargetType="Button">
+    <Style x:Key="ToolCardActionButtonStyle" BasedOn="{StaticResource DefaultButtonStyle}" TargetType="Button">
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
