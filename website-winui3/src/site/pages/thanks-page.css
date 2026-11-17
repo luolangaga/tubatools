@@ -513,6 +513,10 @@
   .installer-footer {
     flex-wrap: wrap;
   }
+
+  .installer-hint {
+    flex-basis: 100%;
+  }
 }
 
 @media (max-width: 420px) {
