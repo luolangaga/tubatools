@@ -35,10 +35,14 @@ public static class ToolCardLayout
         return Math.Max(1, (rowWidth - Math.Max(0, slack)) / columns);
     }
 
-    /// <summary>用网格实际宽度（扣掉内边距）更新 ItemsWrapGrid.ItemWidth。</summary>
+    /// <summary>
+    /// 用网格实际宽度（扣掉内边距）更新 ItemsWrapGrid.ItemWidth。
+    /// 实际写入交给 <see cref="CardGridReflow"/>：连续拖边时合并重排、跳过无变化的赋值，
+    /// 换列时再补一段滑入动画。
+    /// </summary>
     public static void Apply(GridView grid, bool compact = false)
     {
-        if (grid.ItemsPanelRoot is not ItemsWrapGrid panel) return;
+        if (grid.ItemsPanelRoot is not ItemsWrapGrid) return;
 
         var minItemWidth = compact ? CompactMinItemWidth : NormalMinItemWidth;
         var spacing = compact ? CompactSpacing : NormalSpacing;
@@ -46,6 +50,6 @@ public static class ToolCardLayout
         if (availableWidth <= 0) return;
 
         var (_, itemWidth) = Compute(availableWidth, minItemWidth, spacing);
-        panel.ItemWidth = itemWidth;
+        CardGridReflow.Request(grid, itemWidth);
     }
 }

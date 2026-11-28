@@ -71,8 +71,6 @@ public sealed partial class GpuRankingPage : Page
     private ToolPageHeader _toolHeader = null!;
     private FrameworkElement _headerRow = null!;
     private FrameworkElement _filterRow = null!;
-    private FrameworkElement _statsRow = null!;
-    private Grid _statsGrid = null!;
     private StackPanel _localRanking = null!;
 
     public GpuRankingPage()
@@ -151,7 +149,6 @@ public sealed partial class GpuRankingPage : Page
         };
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
         _headerRow = BuildHeader();
@@ -162,18 +159,14 @@ public sealed partial class GpuRankingPage : Page
         mainGrid.Children.Add(_filterRow);
         Grid.SetRow(_filterRow, 1);
 
-        _statsRow = BuildStatsCards();
-        mainGrid.Children.Add(_statsRow);
-        Grid.SetRow(_statsRow, 2);
-
         var listRow = BuildListArea();
         mainGrid.Children.Add(listRow);
-        Grid.SetRow(listRow, 3);
+        Grid.SetRow(listRow, 2);
 
         mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         _localRanking = new StackPanel { Spacing = 8, Visibility = Visibility.Collapsed };
         mainGrid.Children.Add(_localRanking);
-        Grid.SetRow(_localRanking, 4);
+        Grid.SetRow(_localRanking, 3);
 
         return mainGrid;
     }
@@ -182,7 +175,7 @@ public sealed partial class GpuRankingPage : Page
     {
         _toolHeader = new ToolPageHeader
         {
-            ToolId = "gpu-ranking",
+            ToolId = "performance-ranking",
             HeaderPadding = new Thickness(0, 16, 0, 0),
             Title = "GPU 天梯图",
             Subtitle = HeaderSubtitle(),
@@ -543,91 +536,6 @@ public sealed partial class GpuRankingPage : Page
         }
     }
 
-    private Grid BuildStatsCards()
-    {
-        _statsGrid = new Grid { ColumnSpacing = 10 };
-        for (var i = 0; i < 4; i++)
-            _statsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-        FillStatsCards(GpuRankingService.GetByCategory(_category));
-        return _statsGrid;
-    }
-
-    /// <summary>统计卡：总数、两大品牌占比、榜首。占比与榜首型号让“天梯有多长、顶端是谁”一眼可见。</summary>
-    private void FillStatsCards(List<GpuRankingEntry> filtered)
-    {
-        _statsGrid.Children.Clear();
-
-        var total = filtered.Count;
-        var nvidiaCount = filtered.Count(e => e.Brand == "Nvidia");
-        var amdCount = filtered.Count(e => e.Brand == "AMD");
-        var top = filtered.MaxBy(e => e.Rating);
-
-        var totalCard = MakeStatCard("总计", $"{total} 款", "\uE9D9", ThemeColors.AccentBlue, null,
-            _brand == "全部" ? "全部品牌" : $"{_brand} 品牌");
-        var nvidiaCard = MakeStatCard("Nvidia", $"{nvidiaCount} 款", "\uE912", NvidiaGreen, NvidiaLogo, Share(nvidiaCount, total));
-        var amdCard = MakeStatCard("AMD", $"{amdCount} 款", "\uE9D5", AmdRed, AmdLogo, Share(amdCount, total));
-        var topCard = MakeStatCard("榜首", $"{top?.Rating ?? 0:N0} 分", "\uE8CA", ThemeColors.Series4, null, top?.Name);
-
-        _statsGrid.Children.Add(totalCard);
-        _statsGrid.Children.Add(nvidiaCard); Grid.SetColumn(nvidiaCard, 1);
-        _statsGrid.Children.Add(amdCard); Grid.SetColumn(amdCard, 2);
-        _statsGrid.Children.Add(topCard); Grid.SetColumn(topCard, 3);
-    }
-
-    private static string Share(int count, int total) =>
-        total <= 0 ? "0%" : $"{Math.Round(count * 100.0 / total)}%";
-
-    private static Border MakeStatCard(string label, string value, string glyph, Color accent,
-        SvgImageSource? logo, string? sub = null)
-    {
-        FrameworkElement iconChild;
-        if (logo is not null)
-            iconChild = new Image { Source = logo, Width = 18, Height = 18 };
-        else
-            iconChild = new FontIcon { FontSize = 16, Foreground = new SolidColorBrush(accent), Glyph = glyph };
-
-        var iconBorder = new Border
-        {
-            Width = 38, Height = 38,
-            Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
-            CornerRadius = new CornerRadius(8),
-            Child = iconChild
-        };
-
-        var stack = new StackPanel { Spacing = 2 };
-        stack.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = new SolidColorBrush(ThemeColors.DimText) });
-        stack.Children.Add(new TextBlock
-        {
-            Text = value, FontSize = 18, FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(accent)
-        });
-        if (!string.IsNullOrWhiteSpace(sub))
-        {
-            stack.Children.Add(new TextBlock
-            {
-                Text = sub, FontSize = 11, Foreground = new SolidColorBrush(ThemeColors.DimText),
-                TextTrimming = TextTrimming.CharacterEllipsis, MaxLines = 1
-            });
-        }
-
-        var innerGrid = new Grid { ColumnSpacing = 10 };
-        innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(38) });
-        innerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        innerGrid.Children.Add(iconBorder);
-        innerGrid.Children.Add(stack); Grid.SetColumn(stack, 1);
-
-        return new Border
-        {
-            Padding = new Thickness(14, 10, 14, 10),
-            Background = new SolidColorBrush(ThemeColors.CardBg),
-            BorderBrush = new SolidColorBrush(ThemeColors.BorderColor),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Child = innerGrid
-        };
-    }
-
     private Grid BuildListArea()
     {
         _listHeaderHost = new Grid
@@ -761,7 +669,6 @@ public sealed partial class GpuRankingPage : Page
         try
         {
             var visibility = _navCollapsed ? Visibility.Collapsed : Visibility.Visible;
-            if (_statsRow is not null) _statsRow.Visibility = visibility;
             if (_filterRow is not null) _filterRow.Visibility = visibility;
             if (_headerRow is not null) _headerRow.Visibility = visibility;
 
@@ -845,7 +752,6 @@ public sealed partial class GpuRankingPage : Page
                 "没有符合条件的显卡",
                 "换个关键词，或清除品牌筛选后再看",
                 ClearFilters, _palette);
-            FillStatsCards(entries);
             _locateTarget = null;
             return;
         }
@@ -853,7 +759,6 @@ public sealed partial class GpuRankingPage : Page
         if (_viewMode == "ladder")
         {
             _listScroll.Content = BuildLadder(entries);
-            FillStatsCards(entries);
             _locateTarget = null;
             return;
         }
@@ -887,8 +792,6 @@ public sealed partial class GpuRankingPage : Page
                 for (var i = tier.Start; i <= tier.End; i++) AddRow(i);
             }
         }
-
-        FillStatsCards(entries);
 
         if (_locateTarget is not null)
         {

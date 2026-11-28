@@ -15,7 +15,7 @@
   <Identity
     Name="DA3D64F4.winui3"
     Publisher="CN=CC2339A5-C760-46C3-91D8-130408AF3528"
-    Version="1.9.1.0" />
+    Version="1.9.2.0" />
 
   <Properties>
     <DisplayName>图吧工具箱CE</DisplayName>
@@ -40,7 +40,7 @@
       <uap:VisualElements
         DisplayName="图吧工具箱CE"
         Description="图吧工具箱CE - PC硬件检测与系统维护工具集"
-        BackgroundColor="transparent"
+        BackgroundColor="#8B5CC8"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />

@@ -12,8 +12,8 @@ public class BuiltinIconTests
 {
     private static string IconDir => Path.Combine(AppContext.BaseDirectory, "Assets", "BuiltinIcons");
 
-    /// <summary>MSIX 打包时不注册，但图标文件同样要留着。</summary>
-    private static readonly string[] ExtraKnownIds = ["community-tools"];
+    /// <summary>MSIX 打包时不注册，但图标文件同样要留着；运行日志页仍从设置页直达。</summary>
+    private static readonly string[] ExtraKnownIds = ["community-tools", "log-viewer"];
 
     /// <summary>
     /// 注册表是全局静态的，且被同集合的其他测试清空/填充过；

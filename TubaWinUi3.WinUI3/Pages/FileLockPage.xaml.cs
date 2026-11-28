@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -178,7 +178,7 @@ public sealed partial class FileLockPage : Page, ILocalizablePage
         }
     }
 
-    /// <summary>首次打开本工具页询问一次是否加入右键菜单（先写标记防重复，仿 GameMonitorBackendService）。</summary>
+    /// <summary>首次打开本工具页询问一次是否加入右键菜单（先写标记防重复，仿 GameMonitorAutoService）。</summary>
     private async Task MaybePromptShellMenuAsync()
     {
         if (AppSettings.GetBool("FileLockShellMenuPrompted", false)) return;

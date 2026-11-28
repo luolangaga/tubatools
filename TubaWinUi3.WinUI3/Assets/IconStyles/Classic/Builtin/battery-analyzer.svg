@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- battery-analyzer 电池消耗分析 -->
+  <path fill="none" d="M6 6.5H16.5C17.6 6.5 18.5 7.4 18.5 8.5V15.5C18.5 16.6 17.6 17.5 16.5 17.5H6C4.9 17.5 4 16.6 4 15.5V8.5C4 7.4 4.9 6.5 6 6.5Z" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M20.5 10.5V13.5" stroke="#107C10" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12.6 8.6L9.9 12.6H11.7L11.2 15.4L13.9 11.4H12.1L12.6 8.6Z" fill="#6BB700"/>
+</svg>

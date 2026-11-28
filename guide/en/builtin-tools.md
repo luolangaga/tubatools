@@ -1,13 +1,13 @@
 [← Back to README](../../README_EN.md)
 
-# Built-in Tools (47)
+# Built-in Tools (43)
 
 > A native tool set built with Fluent Design — no third-party software required. It covers system optimization, hardware detection, network diagnostics, gaming and more.
 
 | Category | Count | Representative tools |
 |:--------:|:-----:|:---------------------|
-| **System** | 13 | Junk Cleaner / Rogue Cleaner / Malware Blocker / Startup Manager / Time Sync / Windows Image |
-| **Hardware** | 12 | Benchmark / Stress Test / Fractal GPU Test / New-PC Wizard / Disk Health / Keyboard Test / Battery Analyzer |
+| **System** | 12 | Junk Cleaner / Rogue Cleaner / Malware Blocker / Startup Manager / Time Sync / Windows Image |
+| **Hardware** | 9 | Benchmark / Performance Rankings / Stress Test / Fractal GPU Test / New-PC Wizard / Disk Health / Keyboard Test / Battery Analyzer |
 | **Network** | 8 | Speed Test / Traffic Monitor / Port Viewer / Hosts Editor / LAN File Share / Network Optimizer |
 | **Gaming** | 5 | Game Monitor / Recording Viewer / LAN Co-op Helper / Runtime Repair / 3D Anti-Motion-Sickness |
 | **Utilities** | 9 | AI Assistant / Format Converter / PC Tutorials / Official Websites / Genuine Software Store / UniGetUI |
@@ -30,7 +30,7 @@
 ## Hardware Tools
 
 - **Benchmark** — Full CPU / GPU / memory / disk / browser testing, scored into gaming and office performance ratings, exported as a professional PDF report
-- **Benchmark Ranking** — Upload reports to the community, browse global leaderboards and compare with same-hardware users
+- **Performance Rankings** — One entry for CPU / GPU ladders, community benchmark leaderboards and core-to-core latency heatmaps, with brand filters and sorting (data from NanoReview)
 - **Stress Test** — Run CPU and GPU stress tests separately or together, with live temperature, clock speed, and power monitoring
 - **Fractal GPU Test** — GPU fractal stress testing in easy / medium / extreme levels, with super-resolution rendering beyond the screen and live FPS monitoring
 - **New-PC Check Wizard** — One-stop inspection: appearance, hardware info, disk power-on hours, dead pixels, peripherals, camera, audio and burn-in tests
@@ -38,8 +38,6 @@
 - **Battery Analyzer** — Battery drain trends and per-app power rankings, a stronger battery report than Windows Settings
 - **Keyboard Test** — Verifies every key with highlighted feedback, full-size / compact layouts, left-right Shift / Ctrl / Alt distinction and Copilot key support
 - **Screen Test** — Full-screen solid colors and test patterns to spot dead pixels, backlight bleed and banding
-- **CPU / GPU Ranking** — Desktop and laptop performance leaderboards with brand filters and sorting (data from NanoReview)
-- **Core-to-Core Latency** — Browse community-uploaded core-to-core latency heatmaps to compare CPUs
 
 ## Network Tools
 

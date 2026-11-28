@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.MacOSInstaller.dll",
+  "entryType": "Tubatools.MacOSInstaller.MacOSInstallerPlugin",
+  "name": "macOS 安装助手",
+  "description": "新手向导：四步完成硬件检查、OpenCore EFI 生成、BIOS 设置与 macOS 安装 U 盘制作",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

@@ -186,13 +186,13 @@ internal static class TweakCatalog
 
         // ── 资源管理器 ────────────────────────────────────────────────────────────
         list.Add(Toggle("shortcut-arrow", OptimizerTab.Explorer, "快捷方式图标", "去除快捷方式箭头",
-            "使用空白图标覆盖快捷方式左下角的小箭头。重启资源管理器后生效。",
-            S(RegistryHive.LocalMachine, ShellIcons, "29", @"%SystemRoot%\System32\shell32.dll,-50", null, expand: true))
+            "使用插件安装的透明 ICO 覆盖快捷方式左下角的小箭头，避免部分系统重启后把空白资源画成黑块。重启资源管理器后生效。",
+            S(RegistryHive.LocalMachine, ShellIcons, "29", ShortcutIconOverlay.BlankIconPath, null, expand: true))
             with { Recommended = true, NeedsExplorerRestart = true });
 
         list.Add(Toggle("shortcut-shield", OptimizerTab.Explorer, "快捷方式图标", "去除快捷方式盾牌",
-            "隐藏需要管理员权限的快捷方式右下角 UAC 盾牌。重启资源管理器后生效。",
-            S(RegistryHive.LocalMachine, ShellIcons, "77", @"%SystemRoot%\System32\shell32.dll,-50", null, expand: true))
+            "使用插件安装的透明 ICO 隐藏需要管理员权限的快捷方式右下角 UAC 盾牌。重启资源管理器后生效。",
+            S(RegistryHive.LocalMachine, ShellIcons, "77", ShortcutIconOverlay.BlankIconPath, null, expand: true))
             with { Recommended = true, NeedsExplorerRestart = true });
 
         list.Add(Toggle("shortcut-arrow-hard", OptimizerTab.Explorer, "快捷方式图标", "彻底移除快捷方式箭头（进阶）",

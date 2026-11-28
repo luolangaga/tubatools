@@ -38,6 +38,9 @@ public sealed class BuiltinToolContext
     public CancellationToken CancellationToken { get; init; }
     public Func<string, string, string, Task<bool>>? ConfirmDownload { get; init; }
 
+    /// <summary>合并类工具可指定初始标签（如性能排行的 benchmark / cpu / gpu / latency）。</summary>
+    public string? PreferredTab { get; init; }
+
     public ContentDialog CreateDialog(string title, string closeButtonText = "关闭")
     {
         return new TubaWinUi3.Controls.FluentContentDialog

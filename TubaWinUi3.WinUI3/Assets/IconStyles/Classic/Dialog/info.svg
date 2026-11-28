@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- dialog info 普通消息 -->
+  <path fill="none" d="M12 3.5A8.5 8.5 0 1 1 12 20.5A8.5 8.5 0 1 1 12 3.5Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 10.5V16M12 7.3V8.3" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

@@ -6,7 +6,7 @@
   "description": "图吧工具箱CE WinUI3 官方网站（基于 WinUIonWeb 构建）",
   "scripts": {
     "dev": "vite . --host=0.0.0.0",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "npm run type-check && npm run build-only",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",

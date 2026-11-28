@@ -23,7 +23,7 @@ public sealed partial class AgentClient : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (IsReady) return;
         StopProcess();
-        if (!AiComponentService.IsInstalled) throw new InvalidOperationException("AI component missing.");
+        if (!AiComponentService.IsInstalled) throw new IOException(AgentText.L("ComponentMissing", "AI 组件尚未安装，请先准备 AI 组件。"));
         await HybridComputerUseService.EnsureInstalledAsync(ct);
         AgentWorkspace.Prepare();
         var port = FindPort();
@@ -31,7 +31,7 @@ public sealed partial class AgentClient : IDisposable
         var info = AiComponentService.StartInfo(AiComponentService.Executable, AgentWorkspace.DirectoryPath);
         foreach (var argument in new[] { "serve", "--hostname", "127.0.0.1", "--port", port.ToString() }) info.ArgumentList.Add(argument);
         info.Environment["OPENCODE_PASSWORD"] = password;
-        _process = Process.Start(info) ?? throw new IOException("AI component failed to start.");
+        _process = Process.Start(info) ?? throw new IOException(AgentText.L("ComponentStartFailed", "AI 组件启动失败，请重新安装 AI 组件。"));
         ChildProcessJob.Assign(_process);
         // 服务日志可能包含连接密码，不转发到界面或持久日志。
         _process.OutputDataReceived += (_, _) => { };
@@ -51,7 +51,7 @@ public sealed partial class AgentClient : IDisposable
             while (true)
             {
                 deadline.Token.ThrowIfCancellationRequested();
-                if (_process.HasExited) throw new IOException("AI component exited.");
+                if (_process.HasExited) throw new IOException(AgentText.L("ComponentExited", "AI 组件进程已退出，请点「继续」重新连接。"));
                 try
                 {
                     using var response = await _http.GetAsync("api/info", deadline.Token);
@@ -73,21 +73,52 @@ public sealed partial class AgentClient : IDisposable
             catch (SocketException) { }
             finally { listener.Stop(); }
         }
-        throw new IOException("No available local port.");
+        throw new IOException(AgentText.L("ComponentNoPort", "找不到可用的本地端口，请重试。"));
     }
 
     internal async Task<JsonElement> RequestAsync(HttpMethod method, string path, object? body, CancellationToken ct)
     {
-        if (!IsReady) throw new IOException("AI component not running.");
+        if (!IsReady) throw new IOException(AgentText.L("ComponentNotRunning", "AI 组件未运行，请点「继续」重新连接。"));
         using var request = new HttpRequestMessage(method, path);
         if (body is not null) request.Content = JsonContent.Create(body);
-        using var response = await _http!.SendAsync(request, ct);
-        if (!response.IsSuccessStatusCode) throw new HttpRequestException($"AI request failed ({(int)response.StatusCode}).", null, response.StatusCode);
-        if (response.StatusCode == HttpStatusCode.NoContent) return default;
-        var text = await response.Content.ReadAsStringAsync(ct);
-        if (text.Length == 0) return default;
-        using var document = JsonDocument.Parse(text);
-        return document.RootElement.Clone();
+        HttpResponseMessage response;
+        try
+        {
+            response = await _http!.SendAsync(request, ct);
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException(AgentText.L("ComponentTimeout", "AI 组件超过 15 秒没有响应，请重试。"));
+        }
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                // Keep the component's own explanation: surface it instead of a bare status code.
+                var detail = "";
+                try
+                {
+                    detail = CleanResponse(await response.Content.ReadAsStringAsync(ct));
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested && (ex is HttpRequestException or IOException or TaskCanceledException)) { }
+                throw new HttpRequestException($"AI 组件请求失败（HTTP {(int)response.StatusCode}）" + (detail.Length > 0 ? "\n" + detail : ""),
+                    null, response.StatusCode);
+            }
+            if (response.StatusCode == HttpStatusCode.NoContent) return default;
+            var text = await response.Content.ReadAsStringAsync(ct);
+            if (text.Length == 0) return default;
+            using var document = JsonDocument.Parse(text);
+            return document.RootElement.Clone();
+        }
+    }
+
+    private static string CleanResponse(string body)
+    {
+        var text = body.Trim();
+        if (text.StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) || text.StartsWith("<html", StringComparison.OrdinalIgnoreCase))
+            return "组件返回了 HTML 页面。";
+        if (text.Length > 300) text = text[..300] + "…";
+        return text.Replace("\r", "").Replace("\n", " ").Trim();
     }
 
     private static string Location => "location%5Bdirectory%5D=" + Uri.EscapeDataString(AgentWorkspace.DirectoryPath);
@@ -251,8 +282,9 @@ public sealed partial class AgentClient : IDisposable
                 {
                     var completed = await GetMessagesAsync(id, ct);
                     update(completed);
-                    if (completed.LastOrDefault(m => m.Role == "assistant")?.Error is { } error)
-                        throw new AgentModelFailureException(error);
+                    var last = completed.LastOrDefault(m => m.Role == "assistant");
+                    if (last?.Failure is { } failure) throw new AgentModelFailureException(failure);
+                    if (last?.Error is { } error) throw new AgentModelFailureException(AgentErrorParser.Parse(error, model.ProviderId));
                     return;
                 }
                 await Task.Delay(500, ct);

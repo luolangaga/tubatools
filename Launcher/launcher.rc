@@ -3,6 +3,12 @@
 
 IDI_APP ICON "..\\TubaWinUi3.WinUI3\\Assets\\AppIcon.ico"
 
+// RequireAdministrator 清单（CREATEPROCESS_MANIFEST_RESOURCE_ID=1, RT_MANIFEST=24）。
+// 必须真正嵌入：UAC 在 launcher 进程创建前弹出，主程序直接以管理员启动，
+// 省掉主程序内部 runas 二次提权重启（便携版单次完整启动）。
+// 主程序本体保持 asInvoker，--copy-path 等免提权子模式不受影响。
+1 24 "launcher.exe.manifest"
+
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION 1,0,0,0
 PRODUCTVERSION 1,0,0,0

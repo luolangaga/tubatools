@@ -184,7 +184,7 @@ public sealed class InterceptPipeClient : IDisposable
                 var line = await reader.ReadLineAsync().WaitAsync(cancellationToken);
                 if (line is null)
                 {
-                    throw new InvalidOperationException("后端管道在返回响应前关闭。");
+                    throw new InvalidOperationException("拦截服务管道在返回响应前关闭。");
                 }
 
                 InterceptPipeEnvelope? responseEnvelope;
@@ -227,7 +227,7 @@ public sealed class InterceptPipeClient : IDisposable
         }
         catch (TimeoutException)
         {
-            throw new BackendRequestException("连接后端超时，请确认后端服务是否在运行。", "PIPE_TIMEOUT");
+            throw new BackendRequestException("连接拦截服务超时，请确认「主动拦截」已开启。", "PIPE_TIMEOUT");
         }
         finally
         {
@@ -269,13 +269,13 @@ public sealed class InterceptPipeClient : IDisposable
                 var ackLine = await reader.ReadLineAsync().WaitAsync(cancellationToken);
                 if (ackLine is null)
                 {
-                    throw new InvalidOperationException("后端管道在确认订阅前关闭。");
+                    throw new InvalidOperationException("拦截服务管道在确认订阅前关闭。");
                 }
 
                 var ackEnvelope = JsonSerializer.Deserialize<InterceptPipeEnvelope>(ackLine, JsonOptions);
                 if (ackEnvelope?.Response is not { Success: true })
                 {
-                    throw new InvalidOperationException(ackEnvelope?.Response?.Message ?? "后端拒绝了通知订阅。");
+                    throw new InvalidOperationException(ackEnvelope?.Response?.Message ?? "拦截服务拒绝了通知订阅。");
                 }
 
                 _isConnected = true;
@@ -301,7 +301,7 @@ public sealed class InterceptPipeClient : IDisposable
             }
             catch
             {
-                // 后端未启动/重启：稍后重连
+                // 拦截服务未启动/重启：稍后重连
             }
             finally
             {

@@ -9,6 +9,10 @@ public sealed partial class DashboardPage
     private bool? _lastNarrowLayout;
     private bool _heroHidden;
 
+    /// <summary>上一次成功套用列宽的面板实例与视口宽度，用于跳过重复计算。</summary>
+    private ItemsWrapGrid? _layoutPanel;
+    private double _layoutWidth = double.NaN;
+
     /// <summary>
     /// 设置里的「首页大卡片」开关：关闭后整块欢迎横幅收起，卡片从页面顶部开始，
     /// 编辑入口移到工具栏（否则唯一的「编辑大卡片」入口会随横幅一起消失）。
@@ -29,7 +33,21 @@ public sealed partial class DashboardPage
     }
 
     /// <summary>
-    /// 按当前视口宽度重算页头与卡片网格。所有赋值都是幂等的，可以在布局更新时反复调用：
+    /// LayoutUpdated 入口：只为「ItemsWrapGrid 迟到 / 被重建」兜底。
+    /// 常规宽度变化由 <see cref="DashboardViewport_SizeChanged"/> 处理；这里只在面板实例
+    /// 或视口宽度真的变了时才继续，避免每个布局帧重复赋值引发再次布局。
+    /// </summary>
+    private void UpdateCardLayoutIfPanelChanged()
+    {
+        if (!_ready) return;
+        if (ToolsGrid.ItemsPanelRoot is not ItemsWrapGrid panel) return;
+        if (ReferenceEquals(panel, _layoutPanel) &&
+            Math.Abs(DashboardViewport.ActualWidth - _layoutWidth) < 0.5) return;
+        UpdateCardLayout();
+    }
+
+    /// <summary>
+    /// 按当前视口宽度重算页头与卡片网格。所有赋值都是幂等的：
     /// ItemsPanelRoot 在部分时机（页面刚加载、面板被重建）还是 null，此时不能把宽度当成
     /// 已处理，否则面板出现后卡片仍停留在旧列宽，右侧就会空出一整列（窗口拉大后尤其明显）。
     /// </summary>
@@ -65,7 +83,8 @@ public sealed partial class DashboardPage
             _lastNarrowLayout = narrow;
         }
         ToolSearchBox.Width = Math.Min(240, Math.Max(120, width * .4));
-        if (ToolsGrid.ItemsPanelRoot is ItemsWrapGrid panel)
+        var panel = ToolsGrid.ItemsPanelRoot as ItemsWrapGrid;
+        if (panel is not null)
         {
             double available = Math.Max(1, width - margin * 2);
             int columns = Math.Max(1, (int)((available + 12) / (narrow ? 232 : 280)));
@@ -73,13 +92,16 @@ public sealed partial class DashboardPage
             // 否则特定宽度下列宽会正好顶到边界，最后一整列被挤到下一行。
             double itemWidth = ToolCardLayout.FitItemWidth(available + 12, columns);
             var panelMargin = new Thickness(margin, 0, Math.Max(0, margin - 12), 28);
-            if (panel.ItemWidth != itemWidth || panel.ItemHeight != 108 || panel.Margin != panelMargin)
+            if (panel.ItemHeight != 108 || panel.Margin != panelMargin)
             {
-                panel.ItemWidth = itemWidth;
                 panel.ItemHeight = 108;
                 panel.Margin = panelMargin;
             }
+            // 列宽走统一的节流 + 动画入口：拖边时不逐像素重排整张网格，换列时卡片滑入新位置。
+            CardGridReflow.Request(ToolsGrid, itemWidth);
         }
+        _layoutPanel = panel;
+        _layoutWidth = width;
         UpdateFeatureButtons();
     }
 

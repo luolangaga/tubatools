@@ -40,7 +40,7 @@ test('admin gets searchable catalog, zero-use tools and both rankings from one q
   assert.equal(data.mode, 'full');
   const rows = data.panels.toolsAll.rows;
   assert.ok(rows.length > 100);
-  assert.ok(rows.some(([name, uses, devices]) => name === '句柄清理' && uses === 0 && devices === 0));
+  assert.ok(rows.some(([name, uses, devices]) => name === '性能排行' && uses === 0 && devices === 0));
   assert.ok(rows.some(([name, uses]) => name === 'TestCustomTool' && uses === 1));
   assert.equal(rows.filter(([name]) => name === 'CPU-Z').length, 1);
   assert.equal(rows.find(([name]) => name === '格式转换')[1], 2);

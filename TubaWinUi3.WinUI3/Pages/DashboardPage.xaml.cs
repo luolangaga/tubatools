@@ -1,3 +1,4 @@
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -30,9 +31,11 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
         _filterDebounce.Tick += (_, _) => ApplyToolFilter();
         _ = new CustomToolDropHandler(this, LoadCatalogAsync, ShowStatus);
         ToolsGrid.Loaded += (_, _) => UpdateCardLayout();
-        // 视口宽度变化之外，ItemsPanel 也可能稍后生成或被重建：布局更新时补算一次，
-        // 让卡片始终按当前宽度分列（否则会停留在旧列宽、右侧空出一整列）。
-        ToolsGrid.LayoutUpdated += (_, _) => UpdateCardLayout();
+        // 视口宽度变化之外，ItemsPanel 也可能稍后生成或被重建：布局时补算一次。
+        // 但 LayoutUpdated 每个布局帧都会触发，不能无条件重算——窗口拖边缩放时每帧
+        // 多次赋值标题/卡片尺寸，会让整页 re-measure，拖拽明显发飘。只在面板实例
+        // 变化或视口宽度真的变了时才重算（判据在 UpdateCardLayoutIfPanelChanged）。
+        ToolsGrid.LayoutUpdated += (_, _) => UpdateCardLayoutIfPanelChanged();
         _ready = true;
         ApplyHeroVisibility();
         ActualThemeChanged += (_, _) => DispatcherQueue.TryEnqueue(RenderCards);
@@ -43,6 +46,7 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     {
         base.OnNavigatedTo(e);
         LaunchHistoryService.HistoryChanged += OnLaunchHistoryChanged;
+        FestivalService.Changed += OnFestivalChanged;
         _baseCatalog = null;
         _historyDirty = true;
         _cards = HomeDashboardContent.LoadFeatured(AppSettings.Get(HomeDashboardContent.SettingsKey),
@@ -62,23 +66,131 @@ public sealed partial class DashboardPage : Page, ILocalizablePage
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         LaunchHistoryService.HistoryChanged -= OnLaunchHistoryChanged;
+        FestivalService.Changed -= OnFestivalChanged;
+        StopFestivalTimer();
         _filterDebounce.Stop();
         _requestVersion++; _iconCts?.Cancel(); base.OnNavigatedFrom(e);
     }
 
     public void ApplyLocalization()
     {
+        ApplyGreeting();
+        AllToolsFilter.Text = S("AllTools", "全部工具"); FavoritesFilter.Text = S("Favorites", "收藏");
+        ManageButton.Content = S("EditFeatured", "编辑大卡片");
+        CompactManageText.Text = S("EditFeatured", "编辑大卡片");
+        ToolSearchBox.PlaceholderText = S("SearchCatalog", "搜索工具");
+        ApplyFestival();
+        RenderCards();
+        ApplyToolFilter();
+    }
+
+    private void ApplyGreeting()
+    {
         GreetingText.Text = DateTime.Now.Hour switch
         {
             < 6 => S("GreetingNight", "夜深了，欢迎回来"), < 12 => S("GreetingMorning", "上午好，欢迎回来"),
             < 18 => S("GreetingAfternoon", "下午好，欢迎回来"), _ => S("GreetingEvening", "晚上好，欢迎回来")
         };
-        AllToolsFilter.Text = S("AllTools", "全部工具"); FavoritesFilter.Text = S("Favorites", "收藏");
-        ManageButton.Content = S("EditFeatured", "编辑大卡片");
-        CompactManageText.Text = S("EditFeatured", "编辑大卡片");
-        ToolSearchBox.PlaceholderText = S("SearchCatalog", "搜索工具");
-        RenderCards();
-        ApplyToolFilter();
+    }
+
+    /// <summary>
+    /// 节日彩蛋的首页呈现：hero 主视觉 + 配色 tint + 问候语覆盖 + 可点徽章。
+    /// 没有节日 / 关闭彩蛋时全部收起，问候语回到正常的时段问候。
+    /// </summary>
+    private void ApplyFestival()
+    {
+        var occasion = FestivalService.IsVisible ? FestivalService.Current : null;
+        GreetingText.Visibility = Visibility.Visible;
+        if (occasion is null)
+        {
+            FestivalBadge.Visibility = Visibility.Collapsed;
+            FestivalHeroEmblem.Visibility = Visibility.Collapsed;
+            FestivalEnvelopeButton.Visibility = Visibility.Collapsed;
+            FestivalHeroTint.Visibility = Visibility.Collapsed;
+            FestivalCountdownText.Visibility = Visibility.Collapsed;
+            StopFestivalTimer();
+            ApplyGreeting();
+            return;
+        }
+
+        // 春节用实体红包图（可点击领红包），其余节日用 emoji 主视觉。
+        var isSpring = occasion.Definition.Id == FestivalCatalog.Spring;
+        FestivalEnvelopeButton.Visibility = isSpring ? Visibility.Visible : Visibility.Collapsed;
+        FestivalHeroEmblem.Text = occasion.Definition.HeroEmoji;
+        FestivalHeroEmblem.Visibility = isSpring ? Visibility.Collapsed : Visibility.Visible;
+        FestivalHeroTintBrush.Color = FestivalCopy.AccentColor(occasion.Definition);
+        FestivalHeroTint.Visibility = Visibility.Visible;
+
+        FestivalBadgeEmoji.Text = occasion.Definition.Emoji;
+        FestivalBadgeText.Text = FestivalService.BadgeText();
+        FestivalBadge.Visibility = Visibility.Visible;
+        GreetingText.Text = FestivalCopy.Greeting(occasion);
+
+        if (occasion.Definition.Id == FestivalCatalog.NewYear)
+        {
+            UpdateFestivalCountdown();
+            StartFestivalTimer();
+        }
+        else
+        {
+            FestivalCountdownText.Visibility = Visibility.Collapsed;
+            GreetingText.Visibility = Visibility.Visible;
+            StopFestivalTimer();
+        }
+    }
+
+    /// <summary>元旦前一天的首页大字倒数；1 月 1 日归零后收起，问候语恢复。</summary>
+    private void UpdateFestivalCountdown()
+    {
+        var current = FestivalService.Current;
+        var span = FestivalService.NewYearCountdown();
+        if (current is null || span is null || span.Value <= TimeSpan.Zero)
+        {
+            FestivalCountdownText.Visibility = Visibility.Collapsed;
+            GreetingText.Visibility = Visibility.Visible;
+            return;
+        }
+
+        var target = FestivalService.CountdownTarget(current.FestivalDate);
+        FestivalCountdownText.Text = FestivalCopy.Countdown(target.Year, span.Value);
+        FestivalCountdownText.Visibility = Visibility.Visible;
+        GreetingText.Visibility = Visibility.Collapsed;
+    }
+
+    private DispatcherQueueTimer? _festivalTimer;
+
+    private void StartFestivalTimer()
+    {
+        if (_festivalTimer is null)
+        {
+            _festivalTimer = DispatcherQueue.CreateTimer();
+            _festivalTimer.Interval = TimeSpan.FromSeconds(1);
+            _festivalTimer.IsRepeating = true;
+            _festivalTimer.Tick += (_, _) =>
+            {
+                if (FestivalService.IsVisible && FestivalService.Current?.Definition.Id == FestivalCatalog.NewYear)
+                {
+                    FestivalBadgeText.Text = FestivalService.BadgeText();
+                    UpdateFestivalCountdown();
+                }
+            };
+        }
+        if (!_festivalTimer.IsRunning) _festivalTimer.Start();
+    }
+
+    private void StopFestivalTimer() => _festivalTimer?.Stop();
+
+    private void OnFestivalChanged() => DispatcherQueue.TryEnqueue(ApplyFestival);
+
+    private async void FestivalBadge_Click(object sender, RoutedEventArgs e)
+    {
+        await FestivalService.ShowEggDialogAsync(XamlRoot);
+    }
+
+    /// <summary>点实体红包 = 领红包：弹出春节彩蛋（里面是带支付宝口令的红包图）。</summary>
+    private async void FestivalEnvelope_Click(object sender, RoutedEventArgs e)
+    {
+        await FestivalService.ShowEggDialogAsync(XamlRoot);
     }
 
     private ToolChoice Describe(string target) => target switch

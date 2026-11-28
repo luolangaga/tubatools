@@ -29,6 +29,7 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
     {
         base.OnNavigatedTo(e);
         CompactModeService.CompactModeChanged += OnCompactModeChanged;
+        IconThemeService.Changed += OnIconThemeChanged;
         // 全量扫描挪到线程池：首次进入内置工具页不再阻塞消息泵
         // （GetBuiltinFavoriteKey 依赖这份缓存，先预热再建卡片）。
         await ToolCatalog.GetAllToolsAsync();
@@ -78,7 +79,10 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
     {
         base.OnNavigatedFrom(e);
         CompactModeService.CompactModeChanged -= OnCompactModeChanged;
+        IconThemeService.Changed -= OnIconThemeChanged;
     }
+
+    private void OnIconThemeChanged() => RebuildPivot();
 
     private void OnCompactModeChanged(bool enabled)
     {
@@ -200,6 +204,18 @@ public sealed partial class BuiltinToolsPage : Page, ILocalizablePage
             System.Diagnostics.Debug.WriteLine($"[BuiltinToolsPage] 未找到内置工具: {builtinId}");
             return;
         }
+
+        // 旧的 CPU/GPU/跑分/延迟快捷方式仍可直达合并后的对应标签。
+        var legacyTab = builtinId switch
+        {
+            "cpu-ranking" => "cpu",
+            "gpu-ranking" => "gpu",
+            "benchmark-cloud" => "benchmark",
+            "latency-image-query" => "latency",
+            _ => null
+        };
+        if (legacyTab is not null)
+            PerformanceRankingPage.PrepareTab(legacyTab);
 
         try
         {
@@ -516,6 +532,14 @@ public sealed class BuiltinToolViewModel : INotifyPropertyChanged
             }
             return _iconSource;
         }
+    }
+
+    /// <summary>图标预设/自定义图片变化后丢弃惰性缓存，并通知卡片重新绑定。</summary>
+    public void RefreshIcon()
+    {
+        _iconSourceResolved = true;
+        _iconSource = BuiltinIconService.Get(Id);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IconSource)));
     }
 
     public string Category => Tool.Category;

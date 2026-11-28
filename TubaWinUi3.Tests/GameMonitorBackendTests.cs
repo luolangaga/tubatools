@@ -1,8 +1,7 @@
-extern alias backend;
 using System.Text.Json;
-using backend::TubaWinUI3.BackEnd;
-using backend::TubaWinUI3.BackEnd.GameMonitor;
-using backend::TubaWinUI3.BackEnd.Models;
+using TubaWinUi3.Services.ActiveIntercept.Runtime;
+using TubaWinUi3.Services.ActiveIntercept.Runtime.GameMonitor;
+using TubaWinUi3.Services.ActiveIntercept.Runtime.Models;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Tests;

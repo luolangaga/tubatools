@@ -20,9 +20,11 @@ internal sealed class ActivationInbox : IDisposable
         _watcher.Changed += (_, _) => Drain();
         _watcher.Renamed += (_, _) => Drain();
         _watcher.Error += (_, _) => Drain();
+        // 只在真的读到「写了一半」的文件时才补一次重试；常驻 1 秒轮询会永久占用一次系统唤醒。
+        // 必须先于 watcher 启用而创建：事件回调里会用到这里。
+        _retry = new Timer(_ => Drain(), null, Timeout.Infinite, Timeout.Infinite);
         // Subscribe before enabling; enable before taking the backlog snapshot.
         _watcher.EnableRaisingEvents = true;
-        _retry = new Timer(_ => Drain(), null, 1000, 1000);
         Drain();
     }
 
@@ -56,7 +58,10 @@ internal sealed class ActivationInbox : IDisposable
                     catch (JsonException)
                     { try { File.Move(file, file + ".invalid", true); } catch (IOException) { } }
                     catch (Exception ex)
-                    { System.Diagnostics.Debug.WriteLine($"[SingleInstance] 请求稍后重试: {ex.Message}"); }
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[SingleInstance] 请求稍后重试: {ex.Message}");
+                        _retry.Change(400, Timeout.Infinite);
+                    }
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }

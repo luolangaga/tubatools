@@ -43,8 +43,7 @@ public sealed class BuiltinToolWindow
         _frame.RequestedTheme = ThemeService.CurrentElementTheme;
         _frame.Navigate(pageType, parameter, new DrillInNavigationTransitionInfo());
         _window.Content = _frame;
-        BuiltinWindowHelper.ApplyStandardStyle(_window, title);
-        ThemeService.ThemeChanged += OnThemeChanged;
+        BuiltinWindowHelper.ApplyStandardStyle(_window, title);        ThemeService.ThemeChanged += OnThemeChanged;
         _window.Activated += (_, e) =>
         {
             if (e.WindowActivationState != WindowActivationState.Deactivated)

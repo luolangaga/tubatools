@@ -20,6 +20,9 @@ public partial class App : Application
     public static MainWindow? MainWindow => (Current as App)?._window;
     public static bool IsLiteMode { get; set; } = false;
 
+    /// <summary>本次启动是「登录自启 + 隐藏界面」：不弹向导、不弹引导、不显示主窗口。</summary>
+    internal static bool IsHiddenStartup { get; private set; }
+
     private static bool _exiting;
 
     /// <summary>是否已进入退出流程（托盘「退出」等明确退出请求）——窗口关闭拦截据此放行，不再隐藏到托盘。</summary>
@@ -114,33 +117,7 @@ public partial class App : Application
         finally { Interlocked.Exchange(ref _providerNoticePending, 0); }
     });
 
-    internal static bool IsRunningAsAdmin()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        var principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
-    private static void ElevateAndRestart()
-    {
-        var exePath = Process.GetCurrentProcess().MainModule?.FileName;
-        if (string.IsNullOrEmpty(exePath)) return;
-
-        try
-        {
-            // 保留原始命令行参数（--open-builtin 等）以便提权后继续执行
-            var originalArgs = string.Join(" ", Environment.GetCommandLineArgs().Skip(1).Select(a => a.Contains(' ') ? $"\"{a}\"" : a));
-            Process.Start(new ProcessStartInfo(exePath)
-            {
-                Arguments = originalArgs,
-                Verb = "runas",
-                UseShellExecute = true
-            });
-        }
-        catch
-        {
-        }
-    }
+    internal static bool IsRunningAsAdmin() => LaunchElevation.IsRunningAsAdmin();
 
     /// <summary>
     /// 「以管理员身份重新启动」按钮的提权重启（按需提权，不叠加原命令行参数）。
@@ -258,6 +235,12 @@ public partial class App : Application
         // 唤醒本程序复制路径到剪贴板（后台模式，不显示主窗口）。
         var cmdLine = Environment.GetCommandLineArgs();
 
+        // 登录自启：便携版由计划任务传 --autostart；商店版由 StartupTask 激活。
+        // 只有「自启 + 用户选择隐藏」才隐藏窗口；手动双击永远显示主界面。
+        var isAutoStartLaunch = AutoStartService.IsStartupLaunch(cmdLine);
+        IsHiddenStartup = isAutoStartLaunch &&
+            (LaunchIntent.HasHideUi(cmdLine) || AutoStartService.HideUiOnStartup);
+
         // stdio MCP bridge in front of the official Hybrid Computer Use server.
         // Runs before elevation and the single-instance gate: the bridge must never open a
         // window, forward a launch intent or pop UAC.
@@ -350,41 +333,6 @@ public partial class App : Application
             return;
         }
 
-        // 后端 --toast 模式：读取通知文件，弹出 Windows 原生 Toast 后立即退出（不显示主窗口）。
-        // 双通道防重复：主程序已运行时 FileSystemWatcher 先消费文件，此处读不到即跳过。
-        var toastIndex = Array.FindIndex(cmdLine, a => string.Equals(a, "--toast", StringComparison.OrdinalIgnoreCase));
-        if (toastIndex >= 0 && toastIndex + 1 < cmdLine.Length)
-        {
-            var notifFile = cmdLine[toastIndex + 1];
-            try
-            {
-                // 延迟等待 FileSystemWatcher 先处理（主程序已运行时）
-                Thread.Sleep(500);
-                if (File.Exists(notifFile))
-                {
-                    var json = File.ReadAllText(notifFile);
-                    var req = System.Text.Json.JsonSerializer.Deserialize(
-                        json, Services.ActiveIntercept.ActiveInterceptJsonContext.Default.NotificationRequest);
-                    if (req is not null && !string.IsNullOrWhiteSpace(req.Title))
-                    {
-                        new Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder()
-                            .AddText(req.Title)
-                            .AddText(req.Body)
-                            .AddArgument("action", "show-active-intercept")
-                            .Show(toast =>
-                            {
-                                toast.ExpirationTime = DateTimeOffset.Now.AddMinutes(10);
-                            });
-                    }
-                    try { File.Delete(notifFile); } catch { }
-                }
-                // 文件已被 FileSystemWatcher 消费 → 无需重复弹通知
-            }
-            catch { }
-            Exit();
-            return;
-        }
-
         // 「连接手机」Toast 点击：Windows 通过注册的 COM 服务器启动本程序（--phone-toast-handler + key=value 参数）。
         // 主实例已在运行 → 写激活文件交给它（恢复窗口 + 打开聊天/任务弹窗）后退出；
         // 没有主实例 → 记下待处理目标，继续正常启动流程（后续自动提权、建窗、导航并消费）。
@@ -471,10 +419,13 @@ public partial class App : Application
         }
 
         // MSIX 默认以普通权限启动；需要管理员权限时由用户在工具页面主动重启提权。
+        // 非打包版的自动提权已前移到 Program.Main（LaunchElevation，XAML 初始化之前，
+        // 避免首个普通权限进程白付一遍完整启动成本）；走到这里仍非管理员的，只会是
+        // 前置允许清单放行的启动（Toast 激活但无主实例、带未知参数等），此块作为兜底。
         if (!RuntimeHelper.IsPackagedContext && !IsRunningAsAdmin()
             && Environment.GetEnvironmentVariable("TUBA_SCREENSHOT_NOELEVATE") != "1")
         {
-            ElevateAndRestart();
+            LaunchElevation.RelaunchElevated();
             Exit();
             return;
         }
@@ -483,13 +434,20 @@ public partial class App : Application
         // 任何方式重复启动工具箱（双击 exe / 快捷方式 / 搜索 / 右键菜单 / 后端 Toast）都
         // 不再开第二个实例：转发导航意图给已运行实例并退出。
         // 闸门只能在非打包版的自动提权块之后（MSIX 默认普通权限）；且此前的 --copy-path /
-        // --context-title-probe / --toast / --phone-toast-handler / --energystar-silent
+        // --context-title-probe / --phone-toast-handler / --energystar-silent
         // 等无窗口辅助模式都已 return，绝不能被误拦。
         var intent = LaunchIntent.Parse(cmdLine);
         if (!SingleInstanceService.TryEnter(LaunchIntent.HasTakeover(cmdLine)))
         {
-            // 已有实例：写激活文件唤醒它（按本次启动的意图导航；--game-overlay-auto 会被内部
-            // 静默忽略，不抢游戏焦点），随后退出。
+            // 登录自启的第二个实例：用户已经登录且工具箱已在运行，静默退出即可，
+            // 绝不能把主窗口叫到前台（登录瞬间抢焦点比「没启动」更烦人）。
+            if (isAutoStartLaunch)
+            {
+                Exit();
+                return;
+            }
+
+            // 其余重复启动：写激活文件唤醒已运行实例（按本次意图导航），随后退出。
             SingleInstanceService.Forward(intent);
             Exit();
             return;
@@ -503,6 +461,9 @@ public partial class App : Application
         _window = new MainWindow();
         Services.AgentCli.AgentQueryBroker.StartForMainInstance();
         _window.Activate();
+
+        // 登录自启 + 隐藏界面：立刻收起窗口，只留托盘；后续加载照常进行，点托盘即可打开。
+        if (IsHiddenStartup) _window.HideToTrayOnStartup();
 
         // 上次异常退出 → 在加载任何插件之前询问是否以安全模式启动。
         // 这一步必须在 UI 线程上等弹窗结果，所以加载被拆成「窗口可用后才开始」。
@@ -539,12 +500,9 @@ public partial class App : Application
             _window.DispatcherQueue.TryEnqueue(() => OpenPhoneLinkActivation(null));
         // 首次连接授权：配对成功但是本机未批准过的设备时，弹窗请用户确认。
         PhoneLinkService.PairApprovalHandler = RequestPairApprovalAsync;
-        // 普通启动只打开工具箱，不继承上次的游戏自动监控状态。
-        // 后端专用启动只响应用户已手动开启的后台监控。
-        if (intent.Kind == LaunchIntentKind.GameOverlayAuto && GameMonitorBackendService.IsEnabled)
+        // 游戏自动监控已内置到主程序：只要开关开启，主程序启动后就常驻轮询信号文件。
+        if (Services.ActiveIntercept.GameMonitorAutoService.IsEnabled)
             Services.GameOverlayAutoService.Instance.Start();
-        else
-            GameMonitorBackendService.ResetOnManualLaunch();
 
         // 环境变量页要靠窗口子类化才能收到外部程序的 WM_SETTINGCHANGE；
         // 装不上只是少个提示，绝不能因此让启动失败。
@@ -556,33 +514,6 @@ public partial class App : Application
         catch (Exception ex)
         {
             Debug.WriteLine($"[EnvVars] 环境变量变更监听安装失败: {ex.Message}");
-        }
-
-        // 后端检测到游戏自动拉起主程序时（--game-overlay-auto）：
-        // 用户在玩游戏，主界面不应抢焦点弹到游戏前面 —— 最小化到任务栏即可。
-        if (intent.Kind == LaunchIntentKind.GameOverlayAuto)
-        {
-            Services.GameOverlayAutoService.Log($"后端自动拉起启动（exe={Environment.ProcessPath}），主窗口将延迟最小化");
-            // 不要在 OnLaunched 里立即最小化：窗口尚未完成首次布局，此刻动窗口状态
-            // 与 WinUI 启动竞态，曾触发 ArgumentException 崩溃。延迟到渲染稳定后。
-            // 用 SW_SHOWMINNOACTIVE（最小化且不激活）：Activate() 已经把主窗口弹到
-            // 游戏前面抢了焦点，普通 SW_MINIMIZE 前这 1.5 秒游戏会丢失前台；
-            // NOACTIVE 不改前台归属，游戏不受影响（实测 2026-09-11 23:37 前台被抢 20s）。
-            var w = _window;
-            w.DispatcherQueue.TryEnqueue(async () =>
-            {
-                await Task.Delay(1500);
-                try
-                {
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(w);
-                    ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
-                    Services.GameOverlayAutoService.Log("主窗口已延迟最小化（NOACTIVE，不抢前台）");
-                }
-                catch (Exception ex)
-                {
-                    Services.GameOverlayAutoService.Log($"最小化主窗口失败: {ex.Message}");
-                }
-            });
         }
 
         // 首次启动按命令行意图导航（与重复启动转发共用同一分派逻辑）。
@@ -673,7 +604,7 @@ public partial class App : Application
 
     /// <summary>
     /// 收到另一个进程的激活请求：唤醒主窗口（从托盘恢复 + 置前），并按请求意图导航。
-    /// 在 UI 线程调用；GameOverlayAuto 已在 <see cref="SingleInstanceService.Forward"/> 处被过滤。
+    /// 在 UI 线程调用；登录自启（--autostart/--hide-ui）已在单实例分支静默退出，不会走到这里。
     /// </summary>
     private void ActivateExisting(LaunchIntent intent)
     {
@@ -1047,14 +978,19 @@ public partial class App : Application
             }));
         }
 
-        // 后端进程统一入口：按「主动拦截 + 游戏后台监控」两个功能的开关状态同步。
-        // 有任一功能开启 → 拉起 NativeAOT 后端（独立常驻进程）；MSIX 沙箱下不支持。
+        // 主动拦截 / 游戏自动监控的进程内运行时统一入口（不再拉起独立后端进程）。
+        // 升级后先清理旧版后端计划任务与残留进程，再按设置装配本进程内的运行时。
+        if (!RuntimeHelper.IsPackagedContext) ActiveInterceptRuntime.CleanupLegacyBackend();
         ActiveInterceptService.SyncBackend();
+
+        // 开机自启对账（后台）：迁移旧插件设置、修复指向旧路径/旧版参数的计划任务。
+        _ = AutoStartService.ReconcileOnStartupAsync();
 
         var wizardShown = false;
         try
         {
-            if (AppSettings.Get("SetupCompleted") == null)
+            // 登录自启 + 隐藏界面时绝不弹首次设置向导：窗口不可见，弹窗等于卡住后台。
+            if (!IsHiddenStartup && AppSettings.Get("SetupCompleted") == null)
             {
                 // 等待主窗口内容挂载（XamlRoot 就绪）后再显示向导：
                 // Activate() 返回时 XAML 树可能尚未挂载，直接 ShowAsync 会因
@@ -1086,11 +1022,12 @@ public partial class App : Application
 
         // 首次向导是模态弹窗，会盖住侧栏引导；向导关闭后再补一次展示机会
         // （已看过/离线/已进过 AI 助手页时由方法内部自行跳过）
-        _ = MainWindow?.MaybeShowAiAssistantIntroAsync();
+        if (!IsHiddenStartup)
+            _ = MainWindow?.MaybeShowAiAssistantIntroAsync();
 
         if (RuntimeHelper.IsPackagedContext)
         {
-            if (!ToolsBundleService.IsToolsBundleReady())
+            if (!IsHiddenStartup && !ToolsBundleService.IsToolsBundleReady())
             {
                 await ShowToolsBundleDownloadDialogAsync();
             }
@@ -1462,10 +1399,4 @@ public partial class App : Application
         });
         if (!enqueued) _errorWindowQueued = false;
     }
-
-    private const int SW_MINIMIZE = 6;
-    private const int SW_SHOWMINNOACTIVE = 7;
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 }

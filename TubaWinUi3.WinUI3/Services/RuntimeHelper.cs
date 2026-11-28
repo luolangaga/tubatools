@@ -18,7 +18,7 @@ public static class RuntimeHelper
 
     /// <summary>
     /// 打包上下文：物理 MSIX 打包，或由打包版提权重启的会话。凡「商店版应如何表现」的行为判定
-    /// （自更新跳过、社区工具隐藏、Tools/数据根、后端不启动等）都走这里，而不是 IsMsixPackaged。
+    /// （自更新跳过、社区工具隐藏、Tools/数据根、主动拦截不启动等）都走这里，而不是 IsMsixPackaged。
     /// </summary>
     public static bool IsPackagedContext => _isMsixPackaged || _msixAdminSession;
 

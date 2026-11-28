@@ -116,7 +116,7 @@ internal static class WindowsSearchIndexService
                 {
                     CreateShortcut(shortcutPath, appExe, appDir,
                         $"{displayName} - {builtin.Category}",
-                        $"--open-builtin {builtin.Id}", EnsureBuiltinIcon(builtin));
+                        $"--open-builtin {builtin.Id}", EnsureBuiltinIcon(builtin), runAsAdmin: true);
                     VerifyShortcutTarget(shortcutPath, appExe);
                     registered++;
                 }
@@ -184,8 +184,14 @@ internal static class WindowsSearchIndexService
     /// （936 / 1252 / UTF-8 beta）影响。
     /// </summary>
     private static void CreateShortcut(string shortcutPath, string targetPath, string workingDir,
-        string description, string? arguments = null, string? iconPath = null)
-        => RunOnSta(() => CreateShortcutOnSta(shortcutPath, targetPath, workingDir, description, arguments, iconPath));
+        string description, string? arguments = null, string? iconPath = null, bool runAsAdmin = false)
+        => RunOnSta(() =>
+        {
+            CreateShortcutOnSta(shortcutPath, targetPath, workingDir, description, arguments, iconPath);
+            // RunAs 标志必须在 Save() 之后补丁（IWshShortcut 不暴露且会清掉该位）；
+            // 失败不阻断：快捷方式仍可用，只是退回程序内提权路径。
+            if (runAsAdmin) ShortcutRunAsFlag.TrySetOnFile(shortcutPath);
+        });
 
     private static void RunOnSta(Action action)
     {
@@ -374,7 +380,7 @@ internal static class WindowsSearchIndexService
         }
 
         CreateShortcut(shortcutPath, appExe, AppContext.BaseDirectory,
-            $"{tool.Name} - {tool.Category}", $"--open-builtin {tool.Id}", iconPath);
+            $"{tool.Name} - {tool.Category}", $"--open-builtin {tool.Id}", iconPath, runAsAdmin: true);
 
         VerifyShortcutTarget(shortcutPath, appExe);
         return shortcutPath;

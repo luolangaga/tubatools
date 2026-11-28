@@ -1,0 +1,530 @@
+.thanks-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.thanks-shell {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 18px 36px 0 36px;
+  box-sizing: border-box;
+}
+
+.thanks-crumbs {
+  margin-bottom: 26px;
+}
+
+/* ---------- 标题区 ---------- */
+.thanks-head {
+  position: relative;
+  padding: 2px 0 4px;
+}
+
+.thanks-title {
+  margin: 0;
+  font-size: clamp(40px, 6.4vw, 56px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -1.4px;
+  background: linear-gradient(96deg, var(--accent-base) 0%, #3FA9F5 58%, #7CD4FF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-box-decoration-break: clone;
+  text-wrap: balance;
+}
+
+.thanks-product {
+  margin: 12px 0 0;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 32px;
+  color: var(--text-primary);
+}
+
+.thanks-source {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text-tertiary);
+}
+
+.thanks-lead {
+  margin: 16px 0 0;
+  max-width: 640px;
+  font-size: 14.5px;
+  line-height: 23px;
+  color: var(--text-secondary);
+}
+
+.thanks-started {
+  color: var(--SystemFillColorSuccessBrush, #0f7b0f);
+  font-weight: 600;
+}
+
+.thanks-inline-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent-base);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.thanks-inline-link:hover {
+  color: var(--accent-hover, var(--accent-base));
+}
+
+.thanks-inline-link:focus-visible {
+  outline: 2px solid var(--accent-base);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.thanks-alert {
+  margin-top: 18px;
+}
+
+/* ---------- 直接链接 / 校验和 ---------- */
+.thanks-links {
+  margin-top: 22px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-stroke);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.thanks-link-row {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--stroke-divider);
+}
+
+.thanks-link-row:last-child {
+  border-bottom: 0;
+}
+
+.thanks-link-label {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-secondary);
+}
+
+.thanks-link-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.thanks-link-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.thanks-mono {
+  font-family: 'Cascadia Code', 'Consolas', 'SF Mono', ui-monospace, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.1px;
+}
+
+.thanks-link-muted {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.thanks-inline-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thanks-copy-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.thanks-glyph {
+  font-family: 'WinUIOnWebIcons';
+  font-size: 13px;
+  line-height: 1;
+}
+
+.thanks-copy {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+}
+
+.thanks-copy[disabled] {
+  opacity: 0.4;
+}
+
+/* ---------- 校验说明 ---------- */
+.thanks-verify {
+  margin: 12px 2px 0;
+  font-size: 13.5px;
+  line-height: 21px;
+  color: var(--text-secondary);
+}
+
+.thanks-verify-panel {
+  margin-top: 14px;
+  padding: 16px 20px 14px;
+  background: var(--card-bg-secondary, var(--subtle-secondary));
+  border: 1px solid var(--card-stroke);
+  border-radius: 8px;
+}
+
+.thanks-verify-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.thanks-verify-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13.5px;
+  line-height: 21px;
+  color: var(--text-secondary);
+}
+
+.thanks-verify-steps li {
+  margin: 2px 0;
+}
+
+.thanks-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 6px;
+  padding: 8px 12px;
+  background: var(--ctrl-fill-default, var(--subtle-secondary));
+  border: 1px solid var(--card-stroke);
+  border-radius: 6px;
+}
+
+.thanks-cmd code {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: 'Cascadia Code', 'Consolas', 'SF Mono', monospace;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  word-break: break-all;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.thanks-cmd-copy {
+  flex: 0 0 auto;
+}
+
+/* ---------- 动作 ---------- */
+.thanks-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ---------- 预览 ---------- */
+.thanks-preview {
+  margin: 38px 0 0;
+}
+
+.installer-window,
+.app-window {
+  max-width: 660px;
+  margin: 0 auto;
+  border: 1px solid var(--card-stroke);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card-bg);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.installer-titlebar,
+.app-window-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--card-bg-secondary, rgba(255, 255, 255, 0.6));
+  border-bottom: 1px solid var(--stroke-divider);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.installer-titlebar-icon,
+.app-window-titlebar img {
+  width: 16px;
+  height: 16px;
+}
+
+.installer-titlebar-text,
+.app-window-titlebar span:not(.app-window-controls) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.installer-titlebar-controls,
+.app-window-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'WinUIOnWebIcons';
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.installer-body {
+  padding: 26px 30px 20px;
+  background: var(--card-bg);
+}
+
+.installer-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.installer-appicon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+}
+
+.installer-head-copy h4 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+
+.installer-head-copy p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 19px;
+  color: var(--text-secondary);
+}
+
+.installer-field {
+  margin-top: 22px;
+}
+
+.installer-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.installer-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ctrl-border, rgba(0, 0, 0, 0.16));
+  border-radius: 5px;
+  background: var(--ctrl-fill-default, #fff);
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.installer-input > span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.installer-browse {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--card-stroke);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+
+.installer-tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.installer-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.installer-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--ctrl-border, rgba(0, 0, 0, 0.4));
+  border-radius: 2px;
+  font-family: 'WinUIOnWebIcons';
+  font-size: 9px;
+  line-height: 1;
+  color: var(--accent-text);
+  background: var(--accent-base);
+}
+
+.installer-box:not(.checked) {
+  background: transparent;
+}
+
+.installer-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid var(--stroke-divider);
+}
+
+.installer-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11.5px;
+  line-height: 17px;
+  color: var(--text-tertiary);
+}
+
+.installer-buttons {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.installer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--ctrl-border, rgba(0, 0, 0, 0.16));
+  border-radius: 5px;
+  background: var(--ctrl-fill-default, #fff);
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.installer-btn.primary {
+  border-color: transparent;
+  background: var(--accent-base);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.app-window-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.thanks-caption {
+  margin: 12px auto 0;
+  max-width: 660px;
+  font-size: 12.5px;
+  line-height: 19px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .thanks-shell {
+    padding: 12px 20px 0;
+  }
+
+  .thanks-crumbs {
+    display: none;
+  }
+
+  .thanks-title {
+    font-size: 38px;
+    letter-spacing: -1px;
+  }
+
+  .thanks-product {
+    font-size: 18px;
+    line-height: 26px;
+  }
+
+  .thanks-link-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .thanks-link-main {
+    width: 100%;
+  }
+
+  .thanks-cmd {
+    flex-wrap: wrap;
+  }
+
+  .thanks-actions {
+    gap: 8px;
+  }
+
+  .installer-body {
+    padding: 20px 18px 16px;
+  }
+
+  .installer-footer {
+    flex-wrap: wrap;
+  }
+
+  .installer-hint {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .thanks-copy-inner span:last-child {
+    display: none;
+  }
+
+  .thanks-copy {
+    min-width: 34px !important;
+  }
+}

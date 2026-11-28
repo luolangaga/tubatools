@@ -30,8 +30,7 @@ public static class ErrorReportService
 
     /// <summary>
     /// 判定事件日志是否与本程序相关的关键字（大小写不敏感）：
-    /// 覆盖主程序 TubaWinUi3.exe、启动器 图吧工具箱WinUI3_*.exe、兼容版、
-    /// 后端 TubaWinUI3.BackEnd.exe 与 MSIX 包标识。
+    /// 覆盖主程序 TubaWinUi3.exe、启动器 图吧工具箱WinUI3_*.exe、兼容版与 MSIX 包标识。
     /// </summary>
     private static readonly string[] AppMarkers = ["TubaWinUi3", "图吧工具箱", "DA3D64F4.winui3"];
 

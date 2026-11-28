@@ -22,21 +22,7 @@
         </div>
       </div>
 
-      <!-- 外观设置 -->
-      <div class="about-section">
-        <h2 class="about-section-title">{{ t('about.appearance') }}</h2>
-        <WinExpander
-          Height="64"
-          :Header="t('about.theme')"
-          :Description="t('about.theme-desc')"
-          HeaderIcon="&#xE790;">
-          <WinRadioButtons :SelectedIndex="themeIndex" @SelectionChanged="onThemeSelectionChanged">
-            <WinRadioButton :Content="t('about.use-system')" />
-            <WinRadioButton :Content="t('about.light')" />
-            <WinRadioButton :Content="t('about.dark')" />
-          </WinRadioButtons>
-        </WinExpander>
-      </div>
+      <!-- 外观设置已移到顶栏全局主题切换 -->
 
       <!-- 社区与源码 -->
       <div class="about-section">
@@ -103,27 +89,15 @@
 </template>
 
 <script setup>
-import { computed, inject, ref } from 'vue';
 import WinScrollViewer from '../../components/WinScrollViewer.vue';
 import WinButton from '../../components/WinButton.vue';
 import WinHyperlinkButton from '../../components/WinHyperlinkButton.vue';
-import WinExpander from '../../components/WinExpander.vue';
-import WinRadioButton from '../../components/WinRadioButton.vue';
-import WinRadioButtons from '../../components/WinRadioButtons.vue';
 import WinInfoBar from '../../components/WinInfoBar.vue';
 import SiteFooter from '../components/SiteFooter.vue';
 import logoUrl from '../../assets/site/logo.svg';
 import { useI18n } from '../../components/i18n/index';
 
 const { t } = useI18n();
-const themeSetting = inject('themeSetting', ref('system'));
-
-const themeOptions = ['system', 'light', 'dark'];
-const themeIndex = computed(() => themeOptions.indexOf(themeSetting.value));
-
-const onThemeSelectionChanged = sender => {
-  themeSetting.value = themeOptions[Math.max(0, sender?.SelectedIndex ?? 0)] ?? 'system';
-};
 
 const openRepository = () => window.open(t('app.repository'), '_blank', 'noopener');
 const openDmca = () => window.open('https://tubawinui3.cn/dmca', '_blank', 'noopener');

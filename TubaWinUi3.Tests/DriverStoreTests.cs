@@ -45,6 +45,30 @@ public class DriverStoreTests
         Signer:              Microsoft Windows Hardware Compatibility Publisher
         """;
 
+    /// <summary>真实 Windows 11 pnputil 输出（含 Class GUID / Extension ID / Attributes 等额外字段）。</summary>
+    private const string RealEnumOutput = """
+        Microsoft PnP Utility
+
+        Published Name:     oem88.inf
+        Original Name:      avolutenh3cnxtext.inf
+        Provider Name:      A-Volute
+        Class Name:         Extension
+        Class GUID:         {e2f84ce7-8efa-411c-aa69-97454ca4cb57}
+        Extension ID:       {3d3e1c0a-3539-4ac7-9472-7acccb291632}
+        Driver Version:     01/15/2026 1.3.34.0
+        Signer Name:        Microsoft Windows Hardware Compatibility Publisher
+        Attributes:         Universal
+        WHCP Version:       Unknown
+
+        Published Name:     oem47.inf
+        Original Name:      bjptl104.inf
+        Provider Name:      HONOR
+        Class Name:         Firmware
+        Class GUID:         {f2e7dd72-6468-4e36-b6f1-6488f42c1b52}
+        Driver Version:     04/07/2026 0.1.0.4
+        Signer Name:        Microsoft Windows Hardware Compatibility Publisher
+        """;
+
     [Fact]
     public void NativeStruct_UsesDismPackedAbi()
         => Assert.Equal(IntPtr.Size == 8 ? 100 : 72, DriverStoreNative.PackageStructSize);
@@ -158,6 +182,27 @@ public class DriverStoreTests
     }
 
     [Fact]
+    public void ParseEnumDrivers_RealWindowsOutput_ParsesClassGuidAndIgnoresExtraFields()
+    {
+        var packages = DriverStoreService.ParseEnumDrivers(RealEnumOutput);
+
+        Assert.Equal(2, packages.Count);
+        var first = packages[0];
+        Assert.Equal("oem88.inf", first.InfName);
+        Assert.Equal("avolutenh3cnxtext.inf", first.OriginalInfName);
+        Assert.Equal("A-Volute", first.Provider);
+        Assert.Equal("Extension", first.ClassName);
+        Assert.Equal("{e2f84ce7-8efa-411c-aa69-97454ca4cb57}", first.ClassGuid);
+        Assert.Equal("1.3.34.0", first.Version);
+        Assert.Equal(new DateTime(2026, 1, 15), first.Date);
+        Assert.Contains("Hardware Compatibility", first.Signer);
+
+        Assert.Equal("{f2e7dd72-6468-4e36-b6f1-6488f42c1b52}", packages[1].ClassGuid);
+        Assert.Equal("0.1.0.4", packages[1].Version);
+        Assert.Equal(new DateTime(2026, 4, 7), packages[1].Date);
+    }
+
+    [Fact]
     public void ParseEnumDrivers_UnknownLocale_StillExtractsInfNamesAndVersions()
     {
         // 任意语言的输出：值模式（oemNN.inf / inf / 日期+版本）仍然成立
@@ -196,6 +241,8 @@ public class DriverStoreTests
     [InlineData("06/21/2006", 2006, 6, 21)]   // MM/DD/YYYY
     [InlineData("2023/03/30", 2023, 3, 30)]    // YYYY/MM/DD
     [InlineData("2023.03.30", 2023, 3, 30)]    // 点分隔
+    [InlineData("30/03/2023", 2023, 3, 30)]    // DD/MM/YYYY（en-GB / 俄语等区域）
+    [InlineData("13/12/2023", 2023, 12, 13)]   // DD/MM/YYYY（两个数都能当月份时的判定）
     public void ParseDriverDate_CommonFormats(string text, int y, int m, int d)
         => Assert.Equal(new DateTime(y, m, d), DriverStoreService.ParseDriverDate(text));
 
@@ -250,10 +297,10 @@ public class DriverStoreTests
         Assert.False(group.Packages[1].IsNewest);
     }
 
-    // ══════════════════ FileRepository 大小匹配 ══════════════════
+    // ══════════════════ FileRepository 大小与路径匹配 ══════════════════
 
     [Fact]
-    public void AssignRepositorySizes_ExactVersionMatch_Wins()
+    public void AssignRepositoryInfo_ExactVersionMatch_Wins()
     {
         var packages = new List<DriverPackage>
         {
@@ -266,14 +313,16 @@ public class DriverStoreTests
             new("nvlt.inf_amd64_bbb", "nvlt.inf", "32.0.15.6114", 900),
         };
 
-        DriverStoreService.AssignRepositorySizes(packages, dirs);
+        DriverStoreService.AssignRepositoryInfo(packages, dirs);
 
         Assert.Equal(500, packages[0].SizeBytes);
         Assert.Equal(900, packages[1].SizeBytes);
+        Assert.True(packages[0].SizeKnown);
+        Assert.True(packages[1].SizeKnown);
     }
 
     [Fact]
-    public void AssignRepositorySizes_SingleDirFallback_WhenVersionUnknown()
+    public void AssignRepositoryInfo_SingleDirFallback_WhenVersionUnknown()
     {
         var packages = new List<DriverPackage>
         {
@@ -284,13 +333,13 @@ public class DriverStoreTests
             new("only.inf_amd64_x", "only.inf", "", 777),
         };
 
-        DriverStoreService.AssignRepositorySizes(packages, dirs);
+        DriverStoreService.AssignRepositoryInfo(packages, dirs);
 
         Assert.Equal(777, packages[0].SizeBytes);
     }
 
     [Fact]
-    public void AssignRepositorySizes_NoMatchingDir_StaysZero()
+    public void AssignRepositoryInfo_NoMatchingDir_StaysUnknown()
     {
         var packages = new List<DriverPackage>
         {
@@ -302,9 +351,44 @@ public class DriverStoreTests
             new("b.inf_amd64_y", "b.inf", "1.0", 200),
         };
 
-        DriverStoreService.AssignRepositorySizes(packages, dirs);
+        DriverStoreService.AssignRepositoryInfo(packages, dirs);
 
         Assert.Equal(0, packages[0].SizeBytes);
+        Assert.False(packages[0].SizeKnown);
+    }
+
+    [Fact]
+    public void AssignRepositoryInfo_FillsStoreInfPath_FromRepositoryDirectory()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "DriverStoreInfo-" + Guid.NewGuid());
+        try
+        {
+            var dirName = "nvlt.inf_amd64_aaa";
+            Directory.CreateDirectory(Path.Combine(root, dirName));
+            var inf = Path.Combine(root, dirName, "nvlt.inf");
+            File.WriteAllText(inf, "[Version]\r\nDriverVer = 03/30/2023, 31.0.15.5222");
+            var pkg = new DriverPackage { InfName = "oem14.inf", OriginalInfName = "nvlt.inf", Version = "31.0.15.5222" };
+
+            DriverStoreService.AssignRepositoryInfo([pkg],
+                [new DriverStoreService.RepoDirInfo(dirName, "nvlt.inf", "31.0.15.5222", 1234)], root);
+
+            Assert.True(pkg.SizeKnown);
+            Assert.Equal(1234, pkg.SizeBytes);
+            Assert.Equal(inf, pkg.StoreInfPath);
+        }
+        finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public void AssignRepositoryInfo_NeverTouchesOfflinePackages()
+    {
+        var pkg = new DriverPackage { InfName = "oem1.inf", OriginalInfName = "a.inf", IsOffline = true };
+
+        DriverStoreService.AssignRepositoryInfo([pkg],
+            [new DriverStoreService.RepoDirInfo("a.inf_amd64_x", "a.inf", "", 100)], DriverStoreService.DriverStorePath);
+
+        Assert.False(pkg.SizeKnown);
+        Assert.Equal("", pkg.StoreInfPath);
     }
 
     [Theory]

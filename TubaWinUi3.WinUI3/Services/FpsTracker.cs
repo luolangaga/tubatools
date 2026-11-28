@@ -4,8 +4,8 @@ using TubaWinUi3.Models;
 
 /// <summary>
 /// DxgKrnl / Win32k present 事件家族常量与「一帧只计一次」判据。
-/// 主程序（TraceEvent 库消费）与 NativeAOT 后端（原生 ETW API 消费）共享：
-/// 事件 ID、去重窗口、分层权威源判据任何一边改动，两边自动同步。
+/// 主程序内的 FPS 服务与游戏覆盖层共用：
+/// 事件 ID、去重窗口、分层权威源判据都在这里维护，避免多处实现漂移。
 /// </summary>
 internal static class FpsPresentEvents
 {

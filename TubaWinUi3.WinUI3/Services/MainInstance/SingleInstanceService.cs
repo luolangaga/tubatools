@@ -11,11 +11,11 @@ namespace TubaWinUi3.Services;
 /// 机制（全部复用仓库既有、已验证的写法）：
 /// - 单实例判据 = 命名互斥体 <see cref="MutexName"/>（原 App 里的名字，保持不变）；
 /// - 跨进程激活通道 = 数据目录下的 JSON 文件 + FileSystemWatcher（与 Services\PhoneLink\PhoneLinkActivation 同构）；
-/// - 提权重启接管 = Mutex.WaitOne + AbandonedMutexException（与 TubaWinUI3.BackEnd\Program.cs 一致）。
+/// - 提权重启接管 = Mutex.WaitOne + AbandonedMutexException。
 ///
 /// 注意：闸门只能在 <c>App.OnLaunchedCore</c> 的非打包版自动提权块之后启用（MSIX 默认普通权限）；
-/// 且 --copy-path / --toast / --phone-toast-handler / --energystar-silent 等无窗口辅助模式
-/// 都在闸门之前 return，本类只服务于「要建主窗口」的启动路径。
+/// 且 --copy-path / --phone-toast-handler / --energystar-silent 等无窗口模式都在闸门之前 return。
+/// --autostart 是登录自启修饰符，仍会建主窗口（隐藏与否由设置决定）；重复的登录自启实例由 App 静默退出。
 /// </summary>
 public static class SingleInstanceService
 {
@@ -122,14 +122,10 @@ public static class SingleInstanceService
 
     /// <summary>
     /// 把 <paramref name="intent"/> 转发给已运行的主实例并让出前台权限。
-    /// <see cref="LaunchIntentKind.GameOverlayAuto"/> 直接忽略——用户正在游戏，
-    /// 主实例自身的 <see cref="GameOverlayAutoService"/> 已在轮询信号文件自动显示悬浮窗，
-    /// 这里绝不能恢复/置前主窗口去抢焦点。
+    /// 登录自启（<c>--autostart</c>）不适用本方法：调用方已提前静默退出，绝不唤醒主窗口。
     /// </summary>
     public static void Forward(LaunchIntent intent)
     {
-        if (intent.Kind == LaunchIntentKind.GameOverlayAuto) return;
-
         // 尽力把前台权限交给主实例：从后台进程 SetForegroundWindow 常被系统拒绝，
         // AllowSetForegroundWindow(ownerPid) 让主实例随后的置前合法。
         TryAllowForegroundToOwner();

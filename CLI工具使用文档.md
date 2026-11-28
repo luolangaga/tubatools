@@ -49,7 +49,6 @@
 | nvidiaInspector | 显卡 | `显卡工具\nvidiaInspector\nvidiaInspector.exe` | 命令行超频/风扇/电压控制 |
 | nvidiaProfileInspector | 显卡 | `显卡工具\nvidiaProfileInspector\nvidiaProfileInspector.exe` | 驱动配置档导入导出/应用 |
 | CrystalDiskInfo | 硬盘 | `硬盘工具\CrystalDiskInfo\DiskInfo64S.exe` | SMART 信息导出（/CopyExit） |
-| Defraggler | 硬盘 | `硬盘工具\Defraggler\df.exe` | 命令行碎片整理/分析 |
 | DiskGenius | 硬盘 | `硬盘工具\DiskGenius\DiskGenius.exe` | /cmd 脚本化分区管理 |
 | urwtest | 硬盘 | `硬盘工具\URWTEST\urwtest_v18.exe` | 纯命令行坏块/可靠性测试 |
 | WizTree | 硬盘 | `硬盘工具\WizTree\WizTree.exe` | CSV 导出/树图导出/MFT 导出 |
@@ -297,37 +296,6 @@ nvidiaInspector.exe -<选项> <gpu索引>,<值> [,<gpu索引>,<值> ...]
 
 - `DiskInfo.txt` 生成在与 exe 相同的目录（即 `硬盘工具\CrystalDiskInfo\`）。
 - 部分 SMART 属性（如温度历史）需要管理员权限读取。
-
-### Defraggler —— 碎片整理（命令行版 df.exe）
-
-- **路径**：`硬盘工具\Defraggler\df.exe`（GUI 版为 `Defraggler.exe`）
-- **说明**：Piriform 出品的磁盘碎片整理工具，`df.exe` 为独立命令行版。※
-
-**核心参数表**
-
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `/A` | 只分析不整理 | `df.exe /A C:` |
-| `/D` | 整理指定驱动器 | `df.exe /D C:` |
-| `/E` | 整理可用空间（快速整理） | `df.exe /E C:` |
-| `/H` | 整理休眠文件 | |
-| `/L` | 低优先级运行（后台整理不影响使用） | `df.exe /D C: /L` |
-| `/Q` | 静默模式 | |
-| `/T <秒>` | 限制整理时长 | `df.exe /D C: /T 60` |
-| `/X` | 排除指定文件夹 | `df.exe /D C: /X "C:\Windows"` |
-| `/V` | 详细输出 | |
-
-**示例**
-
-```bat
-:: 只分析 C 盘
-"Tools\硬盘工具\Defraggler\df.exe" /A C:
-
-:: 低优先级后台整理 D 盘，限时 10 分钟
-"Tools\硬盘工具\Defraggler\df.exe" /D D: /L /T 600
-
-:: SSD 用户注意：SSD 无需碎片整理，仅机械硬盘（HDD）适用
-```
 
 ### DiskGenius —— 分区管理/数据恢复（命令行模式）※
 
@@ -931,7 +899,7 @@ echo 已导出非微软启动项，见桌面 startup_items.csv
 | 显卡 | GPU-Z、DDU、DXVAChecker、MSI Afterburner、**GpuTest** | GUI 工具（GpuTest 实测命令行参数无效，仅 GUI） |
 | 硬盘 | CrystalDiskMark、AS SSD、ATTO、HDTune、HD Tune、BOOTICE、SpaceSniffer、WinDirStat、TxBENCH、SSDZ、H2testw、LLFTOOL、DiskGenius GUI 模式 | GUI 工具（BOOTICE 无命令行；H2testw 仅交互式） |
 | 内存 | MemTest64、memtest、memtestpro、TestMem5（TM5）、ZenTimings、Thaiphoon、魔方内存盘、RAMMap | GUI 工具（TM5 可通过 TM5.ini 配置测试档） |
-| 综合检测 | HWMonitor、Speccy、RWEverything、LatencyMon | GUI 工具 |
+| 综合检测 | HWMonitor、RWEverything、LatencyMon | GUI 工具 |
 | 其他 | procexp（Process Explorer）、Geek Uninstaller、HiBit Uninstaller、GifCam、DesktopOK、SpaceSniffer、DirectX Repair、BatteryInfoView 之外的 NirSoft GUI 工具、**UltraISO** | GUI 工具（UltraISO 实测命令行挂起，仅 GUI） |
 
 > 说明：这些工具仍然可以从命令行**启动**（`"路径\xxx.exe"`），只是没有可供脚本化的参数开关。

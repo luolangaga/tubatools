@@ -161,7 +161,7 @@ $lines = @(
     '  </Resources>'
     '  <Applications>'
     "    <Application Id=`"$DevAppId`" Executable=`"TubaWinUi3.exe`" EntryPoint=`"Windows.FullTrustApplication`">"
-    '      <uap:VisualElements DisplayName="图吧工具箱CE (Dev)" Description="TubaWinUi3 packaged dev run" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">'
+    '      <uap:VisualElements DisplayName="图吧工具箱CE (Dev)" Description="TubaWinUi3 packaged dev run" BackgroundColor="#8B5CC8" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">'
     '        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />'
     '        <uap:SplashScreen Image="Assets\SplashScreen.png" />'
     '      </uap:VisualElements>'

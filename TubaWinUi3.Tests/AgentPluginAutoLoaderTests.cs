@@ -1,4 +1,8 @@
+using System.ComponentModel;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32.SafeHandles;
 using TubaWinUi3.Services.AiAgent;
 
 namespace TubaWinUi3.Tests;
@@ -6,11 +10,55 @@ namespace TubaWinUi3.Tests;
 public sealed class AgentPluginAutoLoaderTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "tuba-auto-plugin-" + Guid.NewGuid().ToString("N"));
+    private readonly List<string> _junctions = [];
     public AgentPluginAutoLoaderTests() => Directory.CreateDirectory(_root);
-    public void Dispose() => Directory.Delete(_root, true);
-    private string Package(string version = "1.0.0", string id = "Tubatools.AutoTest")
+    public void Dispose()
     {
-        var path = Path.Combine(_root, id + "." + version + ".nupkg");
+        // 先摘掉联接，再删根目录，避免递归删除跟随到目标目录。
+        foreach (var junction in _junctions)
+            try { Directory.Delete(junction); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        Directory.Delete(_root, true);
+    }
+
+    /// <summary>建目录联接（不需要管理员权限），模拟系统盘搬家把用户目录/AppData 做成链接的机器。</summary>
+    private void Junction(string alias, string target)
+    {
+        Directory.CreateDirectory(alias);
+        var substitute = Encoding.Unicode.GetBytes(@"\??\" + target);
+        var print = Encoding.Unicode.GetBytes(target);
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        writer.Write(0xA0000003u); // IO_REPARSE_TAG_MOUNT_POINT
+        writer.Write(checked((ushort)(8 + substitute.Length + 2 + print.Length + 2)));
+        writer.Write((ushort)0);
+        writer.Write((ushort)0);
+        writer.Write(checked((ushort)substitute.Length));
+        writer.Write(checked((ushort)(substitute.Length + 2)));
+        writer.Write(checked((ushort)print.Length));
+        writer.Write(substitute);
+        writer.Write((ushort)0);
+        writer.Write(print);
+        writer.Write((ushort)0);
+        var buffer = stream.ToArray();
+        using var handle = CreateFileW(alias, 0x40000000, 0, IntPtr.Zero, 3, 0x02200000, IntPtr.Zero);
+        if (handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+        if (!DeviceIoControl(handle, 0x000900A4, buffer, buffer.Length, IntPtr.Zero, 0, out _, IntPtr.Zero))
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        _junctions.Add(alias);
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+    private static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security,
+        uint creation, uint flags, IntPtr template);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DeviceIoControl(SafeFileHandle handle, uint code, byte[] input, int inputSize,
+        IntPtr output, int outputSize, out int returned, IntPtr overlapped);
+
+    private string Package(string version = "1.0.0", string id = "Tubatools.AutoTest", string? directory = null)
+    {
+        var path = Path.Combine(directory ?? _root, id + "." + version + ".nupkg");
         using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
         using var writer = new StreamWriter(zip.CreateEntry("auto.nuspec").Open());
         writer.Write($"<package><metadata><id>{id}</id><version>{version}</version><tags>Tubatools</tags></metadata></package>");
@@ -101,5 +149,35 @@ public sealed class AgentPluginAutoLoaderTests : IDisposable
         Assert.False(Assert.Single(result).Success);
         Assert.Equal("error", progress.Last().Status);
         Assert.Contains("Missing entry", progress.Last().Output);
+    }
+
+    /// <summary>上层目录被系统盘搬家工具做成联接时必须继续工作，否则整轮 AI 对话都以「AI 组件不可用」失败。</summary>
+    [Fact]
+    public async Task LinkedWorkspaceAboveArtifacts_StillAutoLoads()
+    {
+        var workspace = Path.Combine(_root, "real-workspace");
+        Directory.CreateDirectory(Path.Combine(workspace, "artifacts"));
+        Junction(Path.Combine(_root, "workspace-link"), workspace);
+        var artifacts = Path.Combine(_root, "workspace-link", "artifacts");
+        var installed = new List<string>();
+        var loader = await AgentPluginAutoLoader.CaptureAsync([], default, artifacts,
+            (p, _) => { installed.Add(p); return Task.CompletedTask; });
+        var path = Package(directory: artifacts);
+        Assert.True(Assert.Single(await loader.LoadAsync(Messages(path), _ => { }, default)).Success);
+        Assert.Equal(path, Assert.Single(installed));
+    }
+
+    /// <summary>产物目录自身是联接时仍然拒绝扫描，避免从任意位置加载包。</summary>
+    [Fact]
+    public async Task LinkedArtifactsDirectory_IsStillRejected()
+    {
+        var outside = Path.Combine(_root, "outside");
+        Directory.CreateDirectory(outside);
+        var artifacts = Path.Combine(_root, "work", "artifacts");
+        Directory.CreateDirectory(Path.GetDirectoryName(artifacts)!);
+        Junction(artifacts, outside);
+        var error = await Assert.ThrowsAsync<IOException>(() =>
+            AgentPluginAutoLoader.CaptureAsync([], default, artifacts, (_, _) => Task.CompletedTask));
+        Assert.Contains("不能是链接", error.Message);
     }
 }

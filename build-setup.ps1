@@ -7,43 +7,12 @@ $Version     = '1.0.2.0'
 $VersionShort = '1.0.2'
 
 function Remove-UnnecessaryFiles {
-    param([string]$Root)
+    param([string]$Root, [string]$Arch)
 
     Get-ChildItem -LiteralPath $Root -Filter '*.pdb' -Recurse -Force -ErrorAction SilentlyContinue |
         Remove-Item -Force -ErrorAction SilentlyContinue
 
-    $tools = Join-Path $Root 'Tools'
-    if (-not (Test-Path -LiteralPath $tools)) { return }
-
-    $removeNames = @(
-        'Speccy.exe', 'HWMonitor_x32.exe', 'hwmonitor_arm64.exe', 'cpuz_x32.exe',
-        'HWiNFO32.exe', 'Core Temp x86.exe', 'DiskInfo32S.exe',
-        'procexp.exe', 'Ventoy2Disk_ARM.exe', 'Ventoy2Disk_ARM64.exe',
-        'VentoyPlugson_X64.exe', 'Rw.ini.bak',
-        'Display Driver Uninstaller.pdb'
-    )
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in $removeNames } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-
-    $themeRemove = @('ShizukuBackground-300.png', 'Background-300.png', 'ShizukuVoice.dll')
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in $themeRemove } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter '32-bit' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'LinX' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*DDU*' -and $_.Name -notlike '*Chinese*' -and $_.Name -ne 'English.xml' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.x86.dll' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter '*.arm64.dll' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Parent.Name -like '*Plugin*' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
+    & (Join-Path $RepoRoot 'build-prune-tools.ps1') -Root $Root -Arch $Arch
 }
 
 function Publish-Tui {
@@ -62,7 +31,7 @@ function Publish-Tui {
         return $false
     }
 
-    Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $ProjectDir "publish_$Arch") -Force
+    Copy-Item -LiteralPath $tuiExe -Destination (Join-Path $RepoRoot "publish_$Arch") -Force
     Write-Host '  Bundled TUI compatibility edition' -ForegroundColor Green
     return $true
 }
@@ -75,7 +44,9 @@ function Publish-Arch {
     Write-Host "  Publishing win-$Arch" -ForegroundColor Cyan
     Write-Host '========================================' -ForegroundColor Cyan
 
-    $outDir = Join-Path $ProjectDir "publish_$Arch"
+    # installer.iss 的 [Files] 以仓库根为相对路径（publish_x64 / publish_arm64），
+    # 输出必须落在根目录；放到 TubaWinUi3.WinUI3\publish_* 会让 ISCC 找不到文件。
+    $outDir = Join-Path $RepoRoot "publish_$Arch"
 
     if (Test-Path -LiteralPath $outDir) { Remove-Item -LiteralPath $outDir -Recurse -Force }
 
@@ -93,7 +64,10 @@ function Publish-Arch {
     }
 
     Write-Host '  Removing unnecessary files...' -ForegroundColor Yellow
-    Remove-UnnecessaryFiles $outDir
+    Remove-UnnecessaryFiles $outDir $Arch
+
+    Write-Host '  Trimming WinUI MUI language resources...' -ForegroundColor Yellow
+    & (Join-Path $RepoRoot 'build-trim-publish.ps1') -Root $outDir
 
     Remove-Item -LiteralPath (Join-Path $outDir 'TubaWinUi3.pdb') -Force -ErrorAction SilentlyContinue
 
@@ -155,7 +129,7 @@ Write-Host '========================================' -ForegroundColor Green
 Write-Host '  BUILD COMPLETE' -ForegroundColor Green
 Write-Host '========================================' -ForegroundColor Green
 
-$setupDir = Join-Path $ProjectDir 'SetupOutput'
+$setupDir = Join-Path $RepoRoot 'SetupOutput'
 if (Test-Path -LiteralPath $setupDir) {
     Get-ChildItem -LiteralPath $setupDir -Filter '*.exe' | ForEach-Object {
         $size = [math]::Round($_.Length / 1MB, 1)

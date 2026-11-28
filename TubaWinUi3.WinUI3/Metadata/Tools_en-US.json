@@ -220,15 +220,6 @@
                                ]
                   },
                   {
-                      "match":  "Defraggler",
-                      "description":  "Disk defragmentation tool with per-file and per-folder defrag support.",
-                      "publisher":  "Piriform",
-                      "tags":  [
-                                   "Disk",
-                                   "Defrag"
-                               ]
-                  },
-                  {
                       "match":  "FinalData",
                       "description":  "Data recovery tool for accidentally deleted, formatted, or virus-damaged files. Note: SSDs auto-clear data via TRIM, so recovery rates are usually low.",
                       "publisher":  "FINALDATA Inc.",
@@ -529,15 +520,6 @@
                       "tags":  [
                                    "System Info",
                                    "Low-level Access"
-                               ]
-                  },
-                  {
-                      "match":  "Speccy",
-                      "description":  "Quick system hardware information viewer with a concise configuration summary.",
-                      "publisher":  "Piriform",
-                      "tags":  [
-                                   "System Info",
-                                   "Hardware Info"
                                ]
                   },
                   {

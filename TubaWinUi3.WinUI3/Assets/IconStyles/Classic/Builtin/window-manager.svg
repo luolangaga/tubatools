@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- window-manager 窗口管理 -->
+  <path fill="none" d="M5 8.5H14C14.6 8.5 15 8.9 15 9.5V17.5C15 18.1 14.6 18.5 14 18.5H5C4.4 18.5 4 18.1 4 17.5V9.5C4 8.9 4.4 8.5 5 8.5Z" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M9 5.5H19C19.6 5.5 20 5.9 20 6.5V14.5C20 15.1 19.6 15.5 19 15.5H18M15 8.5V6.5" stroke="#8E92E0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M6.5 11H12.5M6.5 13.5H10.5" stroke="#8E92E0" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

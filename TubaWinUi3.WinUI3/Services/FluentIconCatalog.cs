@@ -28,18 +28,40 @@ public sealed class DialogTitleGlyphConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var title = value?.ToString() ?? "";
-        if (Has("下载", "更新", "安装")) return "\uE896";
-        if (Has("网络", "联机", "房间", "加入")) return "\uE774";
-        if (Has("手机", "连接")) return "\uE787";
-        if (Has("聊天", "AI", "模型", "提供商")) return "\uE950";
-        if (Has("存储", "磁盘", "空间")) return "\uE7C3";
-        if (Has("配置", "设置", "管理")) return "\uE713";
-        if (Has("文件", "目录", "路径")) return "\uE8B7";
-        if (Has("导出", "保存")) return "\uE74E";
-        if (Has("导入", "添加")) return "\uE710";
-        if (Has("安全", "权限", "拦截")) return "\uE72E";
-        return "\uE946";
-        bool Has(params string[] words) => words.Any(w => title.Contains(w, StringComparison.OrdinalIgnoreCase));
+        return IconStudioCatalog.GlyphForDialog(IconStudioCatalog.DialogCategoryForTitle(title));
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+}
+
+/// <summary>对话框标题的自定义/复古图片；默认预设返回空，让 FluentColorIcon 自己加载彩色矢量图。</summary>
+public sealed class DialogTitleImageConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        var title = value?.ToString() ?? "";
+        var id = IconStudioCatalog.DialogCategoryForTitle(title);
+        if (IconThemeService.GetDialogCustomImage(id) is { } custom) return custom;
+        return IconThemeService.Preset switch
+        {
+            PluginSdk.PluginIconPreset.ClassicColor => IconStudioCatalog.ClassicDialogImage(id) ?? "",
+            PluginSdk.PluginIconPreset.FluentGlyph => "",
+            _ => ""
+        };
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
+}
+
+/// <summary>Fluent 字形预设下关闭彩色矢量图，只显示 Segoe Fluent Icons 字形。</summary>
+public sealed class DialogTitleGlyphOnlyConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        var id = IconStudioCatalog.DialogCategoryForTitle(value?.ToString() ?? "");
+        // 单图标自定义优先于预设：Fluent/Classic 只在使用预设时才强制字形。
+        if (IconThemeService.GetDialogCustomImage(id) is not null) return false;
+        if (IconThemeService.Preset == PluginSdk.PluginIconPreset.FluentGlyph) return true;
+        if (IconThemeService.Preset != PluginSdk.PluginIconPreset.ClassicColor) return false;
+        return IconStudioCatalog.ClassicDialogImage(id) is null;
     }
     public object ConvertBack(object value, Type targetType, object parameter, string language) => throw new NotSupportedException();
 }

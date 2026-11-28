@@ -16,7 +16,7 @@ public sealed class FpsService : IDisposable
     private static readonly Guid Win32kProviderId = FpsPresentEvents.Win32kProviderId;
 
     // present 事件家族常量、同帧去重窗口与 TryRecordPresent 判据已下沉到
-    // FpsPresentEvents（FpsTracker.cs）—— 主程序与 NativeAOT 后端共享同一份。
+    // FpsPresentEvents（FpsTracker.cs）—— 覆盖层、硬件页与游戏检测共用同一份判据。
 
     private readonly ConcurrentDictionary<int, FpsTracker> _trackers = new();
     private readonly PresentMonCapture _presentMon = new();

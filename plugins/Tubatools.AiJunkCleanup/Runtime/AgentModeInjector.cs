@@ -738,7 +738,7 @@ internal sealed class AgentModeInjector : IDisposable
     internal static string BuildTemplate(JunkScanDepth depth) =>
         Marker + "先加载 tuba-junk-cleanup 技能（失败则读 .opencode/skills/tuba-junk-cleanup/SKILL.md）；扫描深度：" +
         JunkScanDepths.Label(depth) +
-        "。本次消息末尾会自动附带插件刚完成的 NTFS/MFT 浅层扫描结果（根目录下三层）；直接使用它，不要再跑全盘递归扫描。工作区还有 scan-index.json（同一次扫描导出的更深目录 + 大文件索引），需要深层数据时直接查询它，不要再枚举硬盘；需要更多浅层细节时读取工作区 shallow-scan.json。不要只根据索引里的大文件下结论：临时目录、浏览器缓存（Cache/Code Cache/GPUCache）、Windows 更新下载缓存、崩溃转储、WER、日志、缩略图/图标缓存、应用缓存和旧安装包无论大小都要主动检查。若末尾没有结果（扫描失败），再按技能运行慢速回退。最后输出一个 tuba-junk-plan 代码块，禁止删除、移动或重命名任何文件。字段：summary, items[{path,kind,sizeBytes,risk(low|medium|high),category,reason,riskDetail,suggestion}]。\n" +
+        "。本次消息末尾会自动附带插件刚完成的 NTFS/MFT 浅层扫描结果（根目录下三层）；直接使用它，不要再跑全盘递归扫描。工作区还有 scan-index.json（同一次扫描导出的更深目录 + 大文件索引），需要深层数据时直接查询它，不要再枚举硬盘；需要更多浅层细节时读取工作区 shallow-scan.json。不要只根据索引里的大文件下结论：临时目录、浏览器缓存（Cache/Code Cache/GPUCache）、Windows 更新下载缓存、崩溃转储、WER、日志、缩略图/图标缓存、应用缓存和旧安装包无论大小都要主动检查。清单颗粒度：每一项必须是单个文件或用途单一的子目录，不要把整个「下载」「旧备份」「镜像」目录合成一项；按内容拆不按大小拆——混装目录一律拆开，只有单一来源、全是可再生成缓存（Cache/Logs/CrashDumps）才允许整目录一项；每项大小用实测或 scan-index.json 的数值。若末尾没有结果（扫描失败），再按技能运行慢速回退。最后输出一个 tuba-junk-plan 代码块，禁止删除、移动或重命名任何文件。字段：summary, items[{path,kind,sizeBytes,risk(low|medium|high),category,reason,riskDetail,suggestion}]。\n" +
         TargetLabel + "\n";
 
     /// <summary>AI 在垃圾清理模式里只能读。发现删除/移动/写入命令时立即取消本轮运行。</summary>

@@ -7,8 +7,10 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.UI.Xaml.Hosting;
 using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 using Windows.ApplicationModel.DataTransfer;
@@ -19,16 +21,19 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 {
     private DispatcherTimer? _uptimeTimer;
     private bool _animateUptimeClock;
-    private bool _dataLoaded;
     /// <summary>导航离开后为 false：后台 WMI 盘点、延迟动画与尺寸回调都必须停下来，
     /// 否则会在已卸载的视觉树上启动 Storyboard / TransformToVisual，触发 WinUI 未处理异常。</summary>
     private bool _pageAlive = true;
     private readonly List<DispatcherTimer> _delayedUiTimers = [];
-    private bool _animatingDetails;
     private bool _nicknameMode;
     private bool _isAnimatingNickname;
     private IReadOnlyList<HardwareInfoSection>? _currentSections;
     private readonly Dictionary<HardwareInfoItem, string> _originalValues = [];
+
+    /// <summary>本次刷新里刚拿到真实值的行标签：只给这些行播数据填充动画，其余行静止落位。</summary>
+    private readonly HashSet<string> _fillingLabels = [];
+    /// <summary>上一帧每行显示的值：值没变就不重播动画，避免整张列表跟着闪。</summary>
+    private readonly Dictionary<string, string> _shownValues = [];
 
     private static SvgImageSource? IntelLogo;
     private static SvgImageSource? AmdLogo;
@@ -204,7 +209,6 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         foreach (var timer in _delayedUiTimers)
             timer.Stop();
         _delayedUiTimers.Clear();
-        _animatingDetails = false;
     }
 
     private static bool CanAnimateUptimeClock()
@@ -394,48 +398,72 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         sb.Begin();
     }
 
+    /// <summary>当前这轮加载的序号：刷新与逐项补齐的快照可能交错到达，旧一轮的回调必须丢弃。</summary>
+    private int _loadGeneration;
+
+    /// <summary>已展示的详情行数。详情项只增不减，晚到的旧帧行数更少，直接丢弃避免列表回退。</summary>
+    private int _appliedDetailRows;
+
     private async Task LoadHardwareInfoAsync(bool forceRefresh = false)
     {
         if (!_pageAlive) return;
+        var generation = ++_loadGeneration;
+        _appliedDetailRows = 0;
         if (forceRefresh)
         {
             _hardwareFocusData = null;
             _hardwareFocusForceRefresh = true;
-        }
-        if (_dataLoaded && !UseSettingsStyle)
-        {
-            if (FastModeService.IsFastModeEnabled())
-            {
-                SetElementStatesToExit();
-            }
-            else
-            {
-                ExitStoryboard.Begin();
-                await Task.Delay(200);
-                if (!_pageAlive) return;
-            }
+            // 主动刷新时清空已展示值：这样一轮刷新也是「逐行填进来」，而不是整块文本替换。
+            _shownValues.Clear();
         }
 
         SetLoading(true);
 
+        // 「先展开，再填充」：首帧之前就把骨架铺满（三个分区 + 全部详情行都在最终位置），
+        // 之后每一帧只是往已有的行里填值，版面不会从空长到满、也不会反复伸缩。
+        if (_currentSections is null)
+        {
+            ApplySections(HardwareInfoService.BuildSkeletonSections());
+            SetLoading(false);
+        }
+
+        // 不再有整页入场/退场动画：内容一帧就位，唯一的动效是每行数据的填充。
+        var dispatcher = DispatcherQueue;
+
+        void ShowSections(IReadOnlyList<HardwareInfoSection> sections, bool isFinal)
+        {
+            if (!_pageAlive || generation != _loadGeneration) return;
+            // 3D 全景按整页重排标注与聚焦，逐帧刷新会打断正在进行的旋转/选中：
+            // 该视图只在整份数据就绪时刷新一次。经典视图才享受「先到先显示」。
+            if (UseSettingsStyle && !isFinal) return;
+            // 多个详情项可能同时完成，后到的旧帧行数更少：丢弃它，别让列表倒回去。
+            var loadedRows = sections[2].Items.Count(item => !item.IsPending);
+            if (!isFinal && loadedRows < _appliedDetailRows) return;
+            _appliedDetailRows = loadedRows;
+            ApplySections(sections);
+            // 内容已经出来，转圈会挡住卡片；未完成的慢项作为占位行留在列表末尾继续补齐。
+            SetLoading(false);
+        }
+
         try
         {
-            var sections = await HardwareInfoService.LoadForDisplayAsync(forceRefresh);
+            var sections = await HardwareInfoService.LoadForDisplayAsync(forceRefresh, snapshot =>
+                dispatcher.TryEnqueue(() => ShowSections(snapshot, isFinal: false)));
 
             // 冷启动时 WMI 盘点可能耗时数秒；用户可能已经点了「详细信息」。
-            // 这时绝不能在已卸载的页面上重排布局、启动入场动画或创建逐行定时器。
-            if (!_pageAlive) return;
+            // 这时绝不能在已卸载的页面上重排布局或启动动画。
+            if (!_pageAlive || generation != _loadGeneration) return;
+
+            ShowSections(sections, isFinal: true);
 
             var useCpuz = AppSettings.GetBool("UseCpuzDataSource", false);
-
-            ApplySections(sections);
             HardwareSourceText.Text = $"数据来源：{(useCpuz && CpuzInfoService.CachedInfo is not null ? "WMI / DXGI，CPU-Z 补充" : "WMI / DXGI")} / LibreHardwareMonitor · 系统查询时间：{HardwareInfoService.LastCapturedAt:f}。温度为本次刷新读数；共享显存为上限，内存设备数不代表可更换插槽。";
             UpdateDiagramSource();
             StatusBar.IsOpen = false;
         }
         catch (Exception ex)
         {
-            if (!_pageAlive) return;
+            if (!_pageAlive || generation != _loadGeneration) return;
             ModelText.Text = LocalizationService.L("Hw_Unknown", "未知");
             SystemText.Text = LocalizationService.L("Hw_Unknown", "未知");
             UpdateUptime(true);
@@ -444,10 +472,13 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         }
         finally
         {
-            if (_pageAlive) SetLoading(false);
+            if (_pageAlive && generation == _loadGeneration) SetLoading(false);
         }
     }
 
+    /// <summary>
+    /// 渲染一帧硬件信息。没有整页动画：页面元素保持静止，只有本帧真正拿到新值的行播填充动画。
+    /// </summary>
     private void ApplySections(IReadOnlyList<HardwareInfoSection> sections)
     {
         if (!_pageAlive) return;
@@ -460,14 +491,30 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
         var summary = sections[0].Items;
         var system = sections[1].Items;
         var details = sections[2].Items;
-        foreach (var item in details.Where(item => item.PortCapabilities is not null))
-            item.Value = HardwarePortService.BuildSummary(item.PortCapabilities!);
+
+        // 仍在采集的行：服务层只给占位标记，文案由界面按当前语言补齐。
+        // 占位行不算「填充」——它们只是骨架，拿到真值的那一帧才播动画。
+        _fillingLabels.Clear();
+        var pendingText = LocalizationService.L("Hw_ReadingPending", "正在读取…");
+        foreach (var item in details)
+        {
+            if (item.IsPending)
+            {
+                item.Value = pendingText;
+                continue;
+            }
+            if (item.PortCapabilities is not null)
+                item.Value = HardwarePortService.BuildSummary(item.PortCapabilities!);
+            if (!_shownValues.TryGetValue(item.Label, out var shown) ||
+                !string.Equals(shown, item.Value, StringComparison.Ordinal))
+                _fillingLabels.Add(item.Label);
+            _shownValues[item.Label] = item.Value;
+        }
         SettingsStylePorts.Text = details.FirstOrDefault(item => item.Label == "接口支持")?.Value ?? "";
 
-        ModelText.Text = summary.FirstOrDefault(item => item.Label == "设备型号")?.Value ?? LocalizationService.L("Hw_Unknown", "未知");
-        SystemText.Text = system.FirstOrDefault(item => item.Label == "系统")?.Value ?? LocalizationService.L("Hw_Unknown", "未知");
+        SetCardText(ModelText, SummaryValue(summary, "设备型号", pendingText));
+        SetCardText(SystemText, SummaryValue(system, "系统", pendingText));
         UpdateUptime();
-        _animatingDetails = !FastModeService.IsFastModeEnabled();
         DetailsRepeater.ItemsSource = details;
         ApplyHardwareStyle();
 
@@ -475,36 +522,57 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        if (UseSettingsStyle || FastModeService.IsFastModeEnabled())
-        {
-            SetElementStatesToVisible();
-        }
-        else
-        {
-            EntranceStoryboard.Begin();
-        }
-        _dataLoaded = true;
+        // 页面元素保持静止：整页入场/退场动画已移除，唯一的动效由每行的数据填充提供。
     }
 
-    private void SetElementStatesToVisible()
+    /// <summary>摘要/系统分区的取值：仍在采集时显示「正在读取…」，避免骨架里出现「未知」。</summary>
+    private static string SummaryValue(IReadOnlyList<HardwareInfoItem> items, string label, string pendingText)
     {
-        HeaderPanel.Opacity = 1;
-        HeaderPanel.RenderTransform = new TranslateTransform { Y = 0 };
-        MetricsPanel.Opacity = 1;
-        MetricsPanel.RenderTransform = new TranslateTransform { Y = 0 };
-        // Keep the named instances: entrance and hover animations target them directly.
-        Card1Scale.ScaleX = Card1Scale.ScaleY = 1;
-        Card2Scale.ScaleX = Card2Scale.ScaleY = 1;
-        Card3Scale.ScaleX = Card3Scale.ScaleY = 1;
-        DetailsPanel.Opacity = 1;
-        DetailsPanel.RenderTransform = new TranslateTransform { Y = 0 };
+        var item = items.FirstOrDefault(candidate => candidate.Label == label);
+        if (item is null) return LocalizationService.L("Hw_Unknown", "未知");
+        return item.IsPending ? pendingText : item.Value;
     }
 
-    private void SetElementStatesToExit()
+    /// <summary>指标卡文字：值变了就地换新值，并播一次「填进来」的动画（空 → 正在读取… 也算一次填充）。</summary>
+    private void SetCardText(TextBlock target, string value)
     {
-        HeaderPanel.Opacity = 0;
-        MetricsPanel.Opacity = 0;
-        DetailsPanel.Opacity = 0;
+        if (string.Equals(target.Text, value, StringComparison.Ordinal)) return;
+        var animate = !string.IsNullOrEmpty(target.Text) && !FastModeService.IsFastModeEnabled();
+        target.Text = value;
+        if (animate) PlayTextFill(target);
+    }
+
+    /// <summary>指标卡数值的填充动画：淡入 + 轻微上浮。</summary>
+    private static void PlayTextFill(TextBlock target)
+    {
+        try
+        {
+            ElementCompositionPreview.SetIsTranslationEnabled(target, true);
+            var visual = ElementCompositionPreview.GetElementVisual(target);
+            visual.StopAnimation("Opacity");
+            visual.StopAnimation("Translation");
+
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.16f, 1f), new Vector2(0.3f, 1f));
+
+            var fade = compositor.CreateScalarKeyFrameAnimation();
+            fade.InsertKeyFrame(0f, 0f);
+            fade.InsertKeyFrame(1f, 1f, ease);
+            fade.Duration = TimeSpan.FromMilliseconds(220);
+            visual.Opacity = 0;
+            visual.StartAnimation("Opacity", fade);
+
+            var rise = compositor.CreateVector3KeyFrameAnimation();
+            rise.InsertKeyFrame(0f, new Vector3(0f, 8f, 0f));
+            rise.InsertKeyFrame(1f, Vector3.Zero, ease);
+            rise.Duration = TimeSpan.FromMilliseconds(320);
+            visual.StartAnimation("Translation", rise);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Hardware] 指标卡填充动画失败: {ex.Message}");
+            target.Opacity = 1;
+        }
     }
 
     private bool _hardwareInfoLoading;
@@ -573,7 +641,7 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
 
         if (!_pageAlive)
         {
-            el.Opacity = 1;
+            ResetRowVisual(el, dimmed: false);
             return;
         }
 
@@ -582,19 +650,25 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             var brush = App.Current.Resources.TryGetValue("SubtleFillColorSecondaryBrush", out var b) ? b : null;
             if (brush is not null) el.Background = (Microsoft.UI.Xaml.Media.Brush)brush;
         }
+        else
+        {
+            // 元素会被回收复用，偶数行必须清掉上一行留下的条纹底色。
+            el.Background = null;
+        }
 
+        HardwareInfoItem? row = null;
         if (DetailsRepeater.ItemsSource is IReadOnlyList<HardwareInfoItem> items && args.Index < items.Count)
         {
-            var item = items[args.Index];
+            row = items[args.Index];
 
             // 功能图标在标签内部；品牌标志仍只更新行末的专用 Image。
             var logoImage = el.Children.OfType<Microsoft.UI.Xaml.Controls.Image>().FirstOrDefault(image => image.Name == "HardwareBrandLogo");
             if (logoImage is not null)
             {
                 var showLogo = AppSettings.GetBool("ShowBrandLogo", true);
-                if (showLogo && !string.IsNullOrEmpty(item.BrandKey))
+                if (showLogo && !string.IsNullOrEmpty(row.BrandKey))
                 {
-                    var logo = GetBrandLogo(item.BrandKey);
+                    var logo = GetBrandLogo(row.BrandKey);
                     if (logo is not null)
                     {
                         logoImage.Source = logo;
@@ -612,36 +686,90 @@ public sealed partial class HardwarePage : Page, ILocalizablePage
             }
         }
 
-        if (!_animatingDetails)
+        // 数据填充动画：这一帧真正拿到新值的行点亮；还没拿到的行保持骨架的弱化状态。
+        if (row is not null && _fillingLabels.Contains(row.Label) && !FastModeService.IsFastModeEnabled())
+            PlayRowFill(el, (int)args.Index);
+        else
+            ResetRowVisual(el, row?.IsPending == true);
+    }
+
+    /// <summary>
+    /// 这一行刚拿到真实值：内容淡入 + 轻微上浮 + 一道柔和的高光衬底淡出（约 650ms）。
+    /// 同一帧里到手多行时按行号错开 24ms（最多 5 档），读起来像数据一行行落位。
+    /// </summary>
+    private static void PlayRowFill(Grid row, int index)
+    {
+        var stagger = Math.Min(Math.Max(index, 0), 5) * 24;
+        try
         {
-            el.Opacity = 1;
-            return;
+            ElementCompositionPreview.SetIsTranslationEnabled(row, true);
+            var visual = ElementCompositionPreview.GetElementVisual(row);
+            visual.StopAnimation("Opacity");
+            visual.StopAnimation("Translation");
+            row.Opacity = 1;
+
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.16f, 1f), new Vector2(0.3f, 1f));
+
+            var fade = compositor.CreateScalarKeyFrameAnimation();
+            fade.InsertKeyFrame(0f, 0f);
+            fade.InsertKeyFrame(1f, 1f, ease);
+            fade.Duration = TimeSpan.FromMilliseconds(220);
+            fade.DelayTime = TimeSpan.FromMilliseconds(stagger);
+            visual.Opacity = 0;
+            visual.StartAnimation("Opacity", fade);
+
+            var slide = compositor.CreateVector3KeyFrameAnimation();
+            slide.InsertKeyFrame(0f, new Vector3(0f, 10f, 0f));
+            slide.InsertKeyFrame(1f, Vector3.Zero, ease);
+            slide.Duration = TimeSpan.FromMilliseconds(340);
+            slide.DelayTime = TimeSpan.FromMilliseconds(stagger);
+            visual.StartAnimation("Translation", slide);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Hardware] 数据填充动画失败: {ex.Message}");
+            row.Opacity = 1;
         }
 
-        var idx = (int)args.Index;
-        el.Opacity = 0;
-
-        var delay = TimeSpan.FromMilliseconds(350 + idx * 60);
-        var lastIdx = Math.Max(0, DetailsRepeater.ItemsSourceView.Count - 1);
-
-        ScheduleUiAction(delay, () =>
+        // 高光衬底：一层很淡的底色从有到无，像数据刚落进这一行。
+        if (FindChildByName<Border>(row, "FillFlash") is { } flash)
         {
-            var sb = new Storyboard();
-            var fade = new DoubleAnimation
+            flash.Opacity = 0;
+            var sb = new Storyboard { BeginTime = TimeSpan.FromMilliseconds(stagger) };
+            var wash = new DoubleAnimation
             {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromMilliseconds(300),
+                From = 0.55,
+                To = 0,
+                Duration = TimeSpan.FromMilliseconds(650),
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
-            Storyboard.SetTarget(fade, el);
-            Storyboard.SetTargetProperty(fade, "Opacity");
-            sb.Children.Add(fade);
-
+            Storyboard.SetTarget(wash, flash);
+            Storyboard.SetTargetProperty(wash, "Opacity");
+            sb.Children.Add(wash);
             sb.Begin();
+        }
+    }
 
-            if (idx == lastIdx) _animatingDetails = false;
-        });
+    /// <summary>把行恢复成静止状态（元素回收复用后必须清掉上一行残留的动画与位移）。</summary>
+    private static void ResetRowVisual(Grid row, bool dimmed)
+    {
+        try
+        {
+            var visual = ElementCompositionPreview.GetElementVisual(row);
+            visual.StopAnimation("Opacity");
+            visual.StopAnimation("Translation");
+            visual.Properties.InsertVector3("Translation", Vector3.Zero);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Hardware] 重置行视觉失败: {ex.Message}");
+        }
+        // 还在采集的行整体压暗一点：骨架在位、内容待填。
+        row.Opacity = dimmed ? 0.62 : 1;
+
+        if (FindChildByName<Border>(row, "FillFlash") is { } flash)
+            flash.Opacity = 0;
     }
 
     private bool _isScreenshotting;

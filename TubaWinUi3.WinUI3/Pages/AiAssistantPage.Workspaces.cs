@@ -57,7 +57,7 @@ public sealed partial class AiAssistantPage
         try { workspace = AgentWorkspaceStore.Create(draft.Name, draft.Directory); }
         catch (Exception ex)
         {
-            SetNotice(_active, L("WorkspaceCreateFailed", "无法创建工作区，请检查数据目录权限。") + "\n" + ex.Message, true);
+            SetNotice(_active, L("WorkspaceCreateFailed", "无法创建工作区。") + "\n" + ex.Message, true);
             return;
         }
         await SwitchWorkspaceAsync(workspace);
@@ -104,7 +104,7 @@ public sealed partial class AiAssistantPage
         }
         catch (Exception ex)
         {
-            SetNotice(_active, L("WorkspaceSwitchFailed", "无法切换工作区，请检查数据目录权限。") + "\n" + ex.Message, true);
+            SetNotice(_active, L("WorkspaceSwitchFailed", "无法切换工作区。") + "\n" + ex.Message, true);
             return;
         }
         finally

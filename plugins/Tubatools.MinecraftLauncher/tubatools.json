@@ -1,0 +1,10 @@
+{
+  "apiVersion": 2,
+  "assembly": "plugin/Tubatools.MinecraftLauncher.dll",
+  "entryType": "Tubatools.MinecraftLauncher.MinecraftLauncherPlugin",
+  "name": "我的世界启动器",
+  "description": "现代 Minecraft 风格：一键安装原版/Fabric/Quilt/Forge/NeoForge，Modrinth 模组、光影与资源包一键下载，微软正版与离线账户",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

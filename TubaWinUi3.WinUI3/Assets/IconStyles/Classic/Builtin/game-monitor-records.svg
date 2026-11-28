@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- game-monitor-records 记录查看 -->
+  <path fill="none" d="M12 6.5V20.5" stroke="#C50F1F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10.9 6A1.1 1.1 0 1 1 13.1 6A1.1 1.1 0 1 1 10.9 6Z M10.9 13A1.1 1.1 0 1 1 13.1 13A1.1 1.1 0 1 1 10.9 13Z M10.9 20A1.1 1.1 0 1 1 13.1 20A1.1 1.1 0 1 1 10.9 20Z" fill="#C50F1F"/>
+  <path fill="none" d="M15.5 6H19.5M15.5 13H19.5M15.5 20H19.5M4.5 6H8.5" stroke="#E86E7A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -393,18 +393,6 @@
       "version": 1
     },
     {
-      "match": "Defraggler",
-      "order": 24,
-      "description": "磁盘碎片整理工具，支持按文件/文件夹级别整理碎片。",
-      "publisher": "Piriform",
-      "tags": [
-        "硬盘",
-        "碎片整理"
-      ],
-      "downloadUrl": "gc:Tools/硬盘工具/Defraggler",
-      "version": 1
-    },
-    {
       "match": "FinalData",
       "order": 25,
       "description": "数据恢复工具，恢复误删除、格式化或病毒破坏的文件。注意：固态硬盘（SSD）因 TRIM 自动清理数据，恢复成功率通常较低。",
@@ -849,24 +837,6 @@
       "version": 1
     },
     {
-      "match": "Speccy",
-      "order": 60,
-      "description": "系统硬件信息快速查看工具，提供简洁的硬件配置摘要。",
-      "publisher": "Piriform",
-      "tags": [
-        "综合检测",
-        "硬件信息"
-      ],
-      "downloadUrl": "gc:Tools/综合检测/speccy",
-      "archVariants": [
-        {
-          "file": "Speccy64.exe",
-          "arch": "x64"
-        }
-      ],
-      "version": 1
-    },
-    {
       "match": "LatencyMon",
       "order": 61,
       "description": "系统实时音频延迟检测工具，分析 DPC/ISR 延迟和硬页面错误，排查音频卡顿和爆音。",
@@ -1301,20 +1271,6 @@
       ]
     },
     {
-      "match": "Windows常规优化",
-      "builtin": "windows-optimize",
-      "categories": [
-        "其他工具"
-      ]
-    },
-    {
-      "match": "Windows激活",
-      "builtin": "windows-activation",
-      "categories": [
-        "其他工具"
-      ]
-    },
-    {
       "match": "Windows镜像",
       "builtin": "windows-image",
       "categories": [
@@ -1447,13 +1403,6 @@
       ]
     },
     {
-      "match": "CPU排行",
-      "builtin": "cpu-ranking",
-      "categories": [
-        "处理器工具"
-      ]
-    },
-    {
       "match": "y-cruncher",
       "category": "烤鸡工具",
       "categories": [
@@ -1465,13 +1414,6 @@
       "builtin": "performance-benchmark",
       "categories": [
         "处理器工具"
-      ]
-    },
-    {
-      "match": "GPU排行",
-      "builtin": "gpu-ranking",
-      "categories": [
-        "显卡工具"
       ]
     },
     {
@@ -1510,8 +1452,8 @@
       ]
     },
     {
-      "match": "跑分排行",
-      "builtin": "benchmark-cloud",
+      "match": "性能排行",
+      "builtin": "performance-ranking",
       "categories": [
         "综合检测"
       ]
@@ -1550,13 +1492,6 @@
       "builtin": "game-tunnel",
       "categories": [
         "其他工具"
-      ]
-    },
-    {
-      "match": "核间延迟查询",
-      "builtin": "latency-image-query",
-      "categories": [
-        "处理器工具"
       ]
     },
     {
@@ -1634,13 +1569,6 @@
       "builtin": "time-sync",
       "categories": [
         "其他工具"
-      ]
-    },
-    {
-      "match": "运行日志",
-      "builtin": "log-viewer",
-      "categories": [
-        "系统工具"
       ]
     },
     {

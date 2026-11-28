@@ -120,33 +120,6 @@ function Remove-UnnecessaryFiles {
         Remove-Item -Force -ErrorAction SilentlyContinue
     Get-ChildItem -LiteralPath $Root -Filter '*.appxrecipe' -Recurse -Force -ErrorAction SilentlyContinue |
         Remove-Item -Force -ErrorAction SilentlyContinue
-
-    $tools = Join-Path $Root 'Tools'
-    if (-not (Test-Path -LiteralPath $tools)) { return }
-
-    # DDU non-Chinese/English language XML
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Directory.Name -eq 'Languages' -and $_.Directory.Parent.Name -like '*DDU*' -and $_.Name -notlike '*Chinese*' -and $_.Name -ne 'English.xml' } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Get-ChildItem -LiteralPath $tools -Recurse -File -Filter 'Display Driver Uninstaller.pdb' -ErrorAction SilentlyContinue |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-
-    # x86/ARM64 alternatives (keep x64)
-    $removeNames = @('Speccy.exe','HWMonitor_x32.exe','hwmonitor_arm64.exe','cpuz_x32.exe','HWiNFO32.exe','Core Temp x86.exe','DiskInfo32S.exe','procexp.exe','Ventoy2Disk_ARM.exe','Ventoy2Disk_ARM64.exe','VentoyPlugson_X64.exe','Rw.ini.bak')
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in $removeNames } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-
-    # LinX 32-bit dir
-    Get-ChildItem -LiteralPath $tools -Recurse -Directory -Filter '32-bit' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Parent.Name -eq 'LinX' } |
-        Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
-    # Big Shizuku theme images
-    $themeRemove = @('ShizukuBackground-300.png','Background-300.png','ShizukuVoice.dll')
-    Get-ChildItem -LiteralPath $tools -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -in $themeRemove } |
-        Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 function Build-ArchPackage {
@@ -169,6 +142,8 @@ function Build-ArchPackage {
         Write-Host "  ERROR: Publish failed for $Arch" -ForegroundColor Red
         return $null
     }
+
+    & (Join-Path $PSScriptRoot 'build-trim-publish.ps1') -Root $archDir
 
     # Copy Assets from project
     Copy-Item -Path "$ProjectDir\Assets\*" -Destination "$archDir\Assets\" -Recurse -Force
@@ -201,11 +176,6 @@ function Build-ArchPackage {
         Remove-Item -LiteralPath $toolsDir -Recurse -Force
         Write-Host '  Removed Tools directory (downloaded at runtime in MSIX mode)' -ForegroundColor Yellow
     }
-
-    # Remove backend exe (MSIX sandbox cannot launch independent child processes)
-    Get-ChildItem -LiteralPath $archDir -Filter 'TubaWinUI3.BackEnd.*' -File -ErrorAction SilentlyContinue |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-    Write-Host '  Removed TubaWinUI3.BackEnd.* (not supported in MSIX sandbox)' -ForegroundColor Yellow
 
     Write-Host '  Writing manifest...' -ForegroundColor Yellow
     Write-CleanManifest (Join-Path $archDir 'AppxManifest.xml') $Arch

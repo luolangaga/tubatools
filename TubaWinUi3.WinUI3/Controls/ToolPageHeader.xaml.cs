@@ -24,6 +24,7 @@ public sealed partial class ToolPageHeader : UserControl
         _defaultIconBackground = IconTile.Background;
         _defaultIconForeground = IconGlyph.Foreground;
         ActualThemeChanged += (_, _) => ApplyIcon();
+        Unloaded += (_, _) => IconThemeService.Changed -= ApplyIcon;
     }
 
     /// <summary>右侧操作区（刷新/重新检测等页面级按钮）。</summary>
@@ -175,6 +176,8 @@ public sealed partial class ToolPageHeader : UserControl
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ApplyHostLayout();
+        IconThemeService.Changed -= ApplyIcon;
+        IconThemeService.Changed += ApplyIcon;
         ApplyIcon();
     }
 

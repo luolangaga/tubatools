@@ -5,6 +5,12 @@ namespace TubaWinUi3.Services;
 
 public static class WindowSizeService
 {
+    /// <summary>最小窗口尺寸（物理像素）。</summary>
+    public const int MinWidth = 800;
+
+    /// <summary>最小窗口尺寸（物理像素）。</summary>
+    public const int MinHeight = 600;
+
     private const string WidthKey = "WindowWidth";
     private const string HeightKey = "WindowHeight";
     private const string MaximizedKey = "WindowMaximized";
@@ -23,6 +29,30 @@ public static class WindowSizeService
             AppSettings.Remove(WidthKey);
             AppSettings.Remove(HeightKey);
             AppSettings.Remove(MaximizedKey);
+        }
+    }
+
+    /// <summary>
+    /// 把最小尺寸交给系统呈现器钳制。
+    ///
+    /// 以前是在 <c>AppWindow.Changed</c> 里发现尺寸小于 800×600 再 <c>Resize</c> 回去，等于在
+    /// 用户拖边缩放/贴边分屏的过程中不断由应用改写窗口尺寸：拖动被打断、窗口跟手性差。
+    /// <c>OverlappedPresenter.PreferredMinimumWidth/Height</c> 由系统在缩放与贴边时直接限制，
+    /// 不再产生「先变小再被拉回」的反馈回环（它同样作用于 AppWindow.Resize 调用）。
+    /// </summary>
+    public static void ApplyMinimumWindowSize(Window window)
+    {
+        if (window?.AppWindow.Presenter is not OverlappedPresenter presenter) return;
+
+        try
+        {
+            presenter.PreferredMinimumWidth = MinWidth;
+            presenter.PreferredMinimumHeight = MinHeight;
+        }
+        catch (Exception ex)
+        {
+            // 少数旧系统不接受该属性：保持 0，由 AppWindow_Changed 的 Resize 兜底。
+            System.Diagnostics.Debug.WriteLine($"[WindowSize] 设置最小窗口尺寸失败（改用兜底）: {ex.Message}");
         }
     }
 
@@ -72,7 +102,7 @@ public static class WindowSizeService
 
         try
         {
-            appWindow.Resize(new Windows.Graphics.SizeInt32(Math.Max(800, width), Math.Max(600, height)));
+            appWindow.Resize(new Windows.Graphics.SizeInt32(Math.Max(MinWidth, width), Math.Max(MinHeight, height)));
 
             if (AppSettings.GetBool(MaximizedKey))
                 (appWindow.Presenter as OverlappedPresenter)?.Maximize();
@@ -94,8 +124,8 @@ public static class WindowSizeService
             if (displayArea is null) return;
 
             var workArea = displayArea.WorkArea;
-            int width = Math.Max(800, (int)(workArea.Width * 0.8));
-            int height = Math.Max(600, (int)(workArea.Height * 0.8));
+            int width = Math.Max(MinWidth, (int)(workArea.Width * 0.8));
+            int height = Math.Max(MinHeight, (int)(workArea.Height * 0.8));
 
             appWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
             appWindow.Move(new Windows.Graphics.PointInt32(

@@ -466,6 +466,8 @@ internal sealed class JunkPlanDialog : ContentDialog
             VerticalAlignment = VerticalAlignment.Center
         };
         AutomationProperties.SetName(check, (blocked ? "不建议删除：" : "删除：") + path);
+        if (blocked)
+            ToolTipService.SetToolTip(check, "安全规则已锁定，不能勾选：" + safety.Note);
 
         var badgeLabel = new TextBlock
         {
@@ -512,6 +514,18 @@ internal sealed class JunkPlanDialog : ContentDialog
         var content = new StackPanel { Spacing = 2 };
         content.Children.Add(title);
         content.Children.Add(reason);
+        if (blocked && !string.IsNullOrWhiteSpace(safety.Note))
+        {
+            // 锁定原因直接摆出来：否则用户只看到一个勾不动的复选框，不知道是安全规则锁的。
+            content.Children.Add(new TextBlock
+            {
+                Text = "安全规则已锁定：" + safety.Note,
+                FontSize = 11,
+                Foreground = Ui.Critical,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                MaxLines = 2
+            });
+        }
         content.Children.Add(pathText);
 
         var sizeText = new TextBlock

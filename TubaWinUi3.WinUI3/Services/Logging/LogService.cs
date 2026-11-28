@@ -498,7 +498,7 @@ public static class LogService
         GameTunnel => LocalizationService.L("Log_File_game-tunnel", "游戏联机"),
         GameOverlay => LocalizationService.L("Log_File_game-overlay", "游戏监控"),
         StressTest => LocalizationService.L("Log_File_stress-test", "压力测试"),
-        Backend => LocalizationService.L("Log_File_backend", "主动拦截后端"),
+        Backend => LocalizationService.L("Log_File_backend", "主动拦截运行时"),
         RogueCleaner => LocalizationService.L("Log_File_rogue-cleaner", "流氓软件清理"),
         PhoneLink => LocalizationService.L("Log_File_phone-link", "连接手机"),
         Plugin => LocalizationService.L("Log_File_plugin", "插件"),

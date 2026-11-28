@@ -17,11 +17,11 @@
         :class="{ 'is-media-error': mediaError }"
         :poster="posterUri"
         :autoplay="AutoPlay"
-        crossorigin="anonymous"
+        :crossorigin="CrossOrigin || undefined"
         preload="metadata"
         :style="videoStyle"
         playsinline
-        @loadedmetadata="syncFromVideo"
+        @loadedmetadata="onMediaMetadata"
         @timeupdate="syncFromVideo"
         @durationchange="syncFromVideo"
         @loadeddata="onMediaLoaded"
@@ -192,6 +192,7 @@ import { useI18n } from './i18n/index';
 const props = defineProps({
   Source: { type: [String, Object], default: '' },
   AreTransportControlsEnabled: { type: Boolean, default: false },
+  CrossOrigin: { type: String, default: '' },
   PosterSource: { type: [String, Object], default: '' },
   Stretch: { type: String, default: 'Uniform' },
   AutoPlay: { type: Boolean, default: false },
@@ -336,6 +337,14 @@ const onMediaLoaded = () => {
   mediaError.value = false;
   isBuffering.value = false;
   isMediaLoading.value = false;
+  syncFromVideo();
+};
+
+// preload="metadata" 只加载元数据，不会触发 loadeddata；元数据到手就说明容器可解码，
+// 必须在这里清掉 12 秒的加载看门狗，否则会误报「媒体加载失败」。
+const onMediaMetadata = () => {
+  clearMediaLoadTimer();
+  mediaError.value = false;
   syncFromVideo();
 };
 

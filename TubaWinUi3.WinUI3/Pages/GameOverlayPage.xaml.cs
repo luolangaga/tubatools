@@ -170,7 +170,7 @@ public sealed partial class GameOverlayPage : Page
     {
         // 开关状态可能被设置页/另一处改过，每次进入页面都刷新
         _backendToggleInitializing = true;
-        TglBackendMonitor.IsOn = GameMonitorBackendService.IsEnabled;
+        TglBackendMonitor.IsOn = GameMonitorAutoService.IsEnabled;
         _backendToggleInitializing = false;
         UpdateBackendMonitorStatus();
 
@@ -191,26 +191,17 @@ public sealed partial class GameOverlayPage : Page
         // 浏览页面不弹开启邀请；只有用户操作开关或启动按钮才启用监控。
     }
 
-    // ================= 后台自动监控（与流氓软件拦截共用后端进程） =================
+    // ================= 后台自动监控（随工具箱进程运行） =================
 
     private bool _backendToggleInitializing;
 
     /// <summary>
-    /// 初始化「后台自动监控」开关：MSIX 打包模式 / 后端 exe 缺失时整个选项隐藏。
+    /// 初始化「游戏自动监控」开关：已内置到主程序，任何部署形态都可用。
     /// </summary>
     private void InitBackendMonitorToggle()
     {
         _backendToggleInitializing = true;
-
-        if (!GameMonitorBackendService.IsSupported || !GameMonitorBackendService.IsBackendAvailable)
-        {
-            TglBackendMonitor.Visibility = Visibility.Collapsed;
-        }
-        else
-        {
-            TglBackendMonitor.IsOn = GameMonitorBackendService.IsEnabled;
-        }
-
+        TglBackendMonitor.IsOn = GameMonitorAutoService.IsEnabled;
         _backendToggleInitializing = false;
         UpdateBackendMonitorStatus();
     }
@@ -218,26 +209,26 @@ public sealed partial class GameOverlayPage : Page
     private void TglBackendMonitor_Toggled(object sender, RoutedEventArgs e)
     {
         if (_backendToggleInitializing) return;
-        GameMonitorBackendService.SetEnabled(TglBackendMonitor.IsOn);
+        GameMonitorAutoService.SetEnabled(TglBackendMonitor.IsOn);
         UpdateBackendMonitorStatus();
     }
 
     private void UpdateBackendMonitorStatus()
     {
-        if (!GameMonitorBackendService.IsSupported) return;
-
         if (!TglBackendMonitor.IsOn)
         {
             TxtBackendStatus.Text = "";
+            return;
         }
-        else if (ActiveInterceptService.IsRunning)
+
+        if (GameMonitorAutoService.IsRunning)
         {
             TxtBackendStatus.Text = "运行中";
             TxtBackendStatus.Foreground = new SolidColorBrush(ThemeColors.AccentGreen);
         }
         else
         {
-            TxtBackendStatus.Text = "未运行（后端缺失）";
+            TxtBackendStatus.Text = "启动失败，详见日志";
             TxtBackendStatus.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
     }
@@ -247,19 +238,18 @@ public sealed partial class GameOverlayPage : Page
     {
         try
         {
-            if (!GameMonitorBackendService.IsSupported || !GameMonitorBackendService.IsBackendAvailable) return;
-            if (GameMonitorBackendService.HasPrompted) return;
+            if (GameMonitorAutoService.HasPrompted) return;
             if (XamlRoot is null) return;
 
-            GameMonitorBackendService.MarkPrompted();
+            GameMonitorAutoService.MarkPrompted();
 
             var dialog = new TubaWinUi3.Controls.FluentContentDialog
             {
                 XamlRoot = XamlRoot,
-                Title = "开启游戏后台自动监控？",
-                Content = "开启后，即使图吧工具箱没有运行，后台服务也会在检测到全屏/无边框游戏时，"
-                        + "自动在游戏窗口上显示 FPS、1% Low、帧生成时间等读数。\n\n"
-                        + "该功能与「流氓软件拦截」共用同一个轻量后台服务，随时可以在本页面开关。",
+                Title = "开启游戏自动监控？",
+                Content = "开启后，图吧工具箱运行期间检测到全屏/无边框游戏时，"
+                        + "会自动在游戏窗口上显示 FPS、1% Low、帧生成时间等读数。\n\n"
+                        + "功能随工具箱主程序运行，不需要额外的后台进程，也不要求管理员权限；随时可以在本页面开关。",
                 PrimaryButtonText = "开启",
                 CloseButtonText = "暂不",
                 DefaultButton = ContentDialogButton.Primary,
@@ -271,7 +261,7 @@ public sealed partial class GameOverlayPage : Page
                 _backendToggleInitializing = true;
                 TglBackendMonitor.IsOn = true;
                 _backendToggleInitializing = false;
-                GameMonitorBackendService.SetEnabled(true);
+                GameMonitorAutoService.SetEnabled(true);
                 UpdateBackendMonitorStatus();
             }
         }

@@ -115,6 +115,18 @@ public class FavoritesServiceTests : IDisposable
     }
 
     [Fact]
+    public void GetFavorites_MigratesLegacyRankingVirtualPaths()
+    {
+        var favoritesPath = ConfigManager.GetFavoritesPath();
+        Directory.CreateDirectory(Path.GetDirectoryName(favoritesPath)!);
+        var legacy = Path.Combine("{ToolsRoot}", "处理器工具", "CPU排行");
+        File.WriteAllText(favoritesPath, JsonSerializer.Serialize(new[] { legacy }));
+
+        var expected = Path.Combine(ToolCatalog.ToolsRoot, "综合检测", "性能排行");
+        Assert.Equal([expected], FavoritesService.GetFavorites());
+    }
+
+    [Fact]
     public void SaveOrder_AfterCacheInvalidation_KeepsOrder()
     {
         FavoritesService.AddFavorite(P("a.exe"));

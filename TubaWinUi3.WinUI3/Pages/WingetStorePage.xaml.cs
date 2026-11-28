@@ -191,10 +191,10 @@ public sealed partial class WingetStorePage : Page
 
     private void PackageGrid_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (PackageGrid.ItemsPanelRoot is not ItemsWrapGrid panel) return;
+        if (PackageGrid.ItemsPanelRoot is not ItemsWrapGrid) return;
         var available = Math.Max(1, e.NewSize.Width - 16);
         var columns = Math.Clamp((int)(available / 280), 1, 4);
-        panel.ItemWidth = available / columns;
+        CardGridReflow.Request(PackageGrid, available / columns);
         HomeIntro.Width = Math.Max(1, available - 12);
     }
 

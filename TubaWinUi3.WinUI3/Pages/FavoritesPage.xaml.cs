@@ -33,6 +33,7 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        IconThemeService.Changed += RefreshToolIcons;
         _ = LoadFrequentToolsAsync();
         _ = LoadToolsAsync();
     }
@@ -40,9 +41,16 @@ public sealed partial class FavoritesPage : Page, ILocalizablePage
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        IconThemeService.Changed -= RefreshToolIcons;
         ExitEditMode();
         _iconLoadCts?.Cancel();
         _frequentIconLoadCts?.Cancel();
+    }
+
+    private void RefreshToolIcons()
+    {
+        foreach (var tool in _tools) tool.RefreshIcon();
+        foreach (var tool in _frequentTools) tool.RefreshIcon();
     }
 
     private async Task LoadFrequentToolsAsync()

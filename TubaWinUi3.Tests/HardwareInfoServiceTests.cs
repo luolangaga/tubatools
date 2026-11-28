@@ -1,3 +1,4 @@
+using TubaWinUi3.Models;
 using TubaWinUi3.Services;
 
 namespace TubaWinUi3.Tests;
@@ -469,5 +470,48 @@ public class HardwareInfoServiceTests
     {
         var cpuz = new CpuzInfo();
         Assert.Equal("", HardwareInfoService.BuildCpuzMemoryLabel(cpuz));
+    }
+
+    [Fact]
+    public void ComposeDetailRows_LoadedRowsFirstThenPendingPlaceholders()
+    {
+        var items = new HardwareInfoItem?[11];
+        var completed = new bool[11];
+
+        // 只完成「内存」和「主板」：已完成的按规范顺序在前，其余必备项以占位行排在末尾。
+        items[2] = new HardwareInfoItem { Label = "内存", Value = "32 GB" };
+        completed[2] = true;
+        items[0] = new HardwareInfoItem { Label = "主板", Value = "B650" };
+        completed[0] = true;
+
+        var rows = HardwareInfoService.ComposeDetailRows(items, completed);
+
+        Assert.Equal(new[] { "主板", "内存" }, rows.Take(2).Select(row => row.Label));
+        Assert.All(rows.Skip(2), row => Assert.True(row.IsPending));
+        // 可选行（NPU / 电池）还没结果时不生成占位行。
+        Assert.DoesNotContain(rows, row => row.Label is "NPU" or "电池");
+        // 未完成的必备项都在，且顺序与规范顺序一致。
+        Assert.Equal(
+            new[] { "处理器", "显卡", "显示器", "硬盘", "声卡", "网卡", "接口支持" },
+            rows.Skip(2).Select(row => row.Label));
+    }
+
+    [Fact]
+    public void ComposeDetailRows_AllCompleted_HasNoPendingRows()
+    {
+        var items = new HardwareInfoItem?[11];
+        var completed = new bool[11];
+        for (var i = 0; i < items.Length; i++)
+        {
+            completed[i] = true;
+            // 可选行没有结果：直接不展示。
+            if (i is 4 or 7) continue;
+            items[i] = new HardwareInfoItem { Label = $"行{i}", Value = "v" };
+        }
+
+        var rows = HardwareInfoService.ComposeDetailRows(items, completed);
+
+        Assert.Equal(9, rows.Count);
+        Assert.DoesNotContain(rows, row => row.IsPending);
     }
 }

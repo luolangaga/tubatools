@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using TubaWinUi3.Storage;
 
 namespace TubaWinUi3.Services;
 
@@ -29,20 +30,7 @@ internal static class UserToolLibrary
     }
 
     internal static void WriteObject(string path, JsonObject value)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        try
-        {
-            File.WriteAllText(temporary, value.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-            if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
-            else File.Move(temporary, path);
-        }
-        finally
-        {
-            if (File.Exists(temporary)) File.Delete(temporary);
-        }
-    }
+        => AtomicFile.WriteText(path, value.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
     private static JsonArray Tools(JsonObject root)
     {

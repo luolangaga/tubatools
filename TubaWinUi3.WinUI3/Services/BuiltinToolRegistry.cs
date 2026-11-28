@@ -58,15 +58,12 @@ public static class BuiltinToolRegistry
         Register(new SpeedTestTool());
         Register(new WifiPasswordTool());
 
-        Register(new CpuRankingTool());
-        Register(new GpuRankingTool());
+        Register(new PerformanceRankingTool());
         Register(new ContextMenuMgrTool());
         Register(new HardwareSpooferTool());
         Register(new NetworkAdapterProxyTool());
         Register(new UniGetUITool());
         Register(new PerformanceBenchmarkTool());
-        Register(new BenchmarkCloudTool());
-        Register(new LatencyImageQueryTool());
         Register(new WindowsImageTool());
         Register(new PcTutorialTool());
         Register(new AntiMotionSicknessTool());
@@ -98,13 +95,11 @@ public static class BuiltinToolRegistry
         Register(new DigitalLiteracyTestTool());
         Register(new TimeSyncTool());
         Register(new FileLocksmithTool());
-        Register(new HandleCleanerTool());
         Register(new EnvironmentVariablesTool());
         Register(new AiPlaygroundTool());
         Register(new AiAssistantTool());
         Register(new MemoryManagerTool());
         Register(new DriverStoreTool());
-        Register(new LogViewerTool());
         Register(new WindowManagerTool());
     }
 
@@ -129,6 +124,8 @@ public static class BuiltinToolRegistry
     {
         // Existing desktop shortcuts / history continue to open the merged tool.
         if (id == "junk-cleaner") id = "space-cleanup";
+        if (id is "cpu-ranking" or "gpu-ranking" or "benchmark-cloud" or "latency-image-query")
+            id = "performance-ranking";
         return Tools.FirstOrDefault(t => t.Id == id);
     }
 }

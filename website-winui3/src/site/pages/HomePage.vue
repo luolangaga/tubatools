@@ -2,7 +2,7 @@
   <WinScrollViewer class="site-home-scroll" VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
     <div class="site-home">
       <!-- Hero -->
-      <header class="site-hero" ref="heroRef">
+      <header class="site-hero">
         <div class="site-hero-inner">
           <div class="site-hero-copy">
             <span class="site-hero-badge">
@@ -16,8 +16,6 @@
                 class="hero-download-btn"
                 Style="AccentButtonStyle"
                 :Content="t('home.hero.download')"
-                Background="#FFB6C1"
-                Foreground="#2B2B2B"
                 Height="40"
                 Padding="20,0"
                 @Click="goDownload" />
@@ -25,8 +23,6 @@
                 class="hero-github-btn"
                 Style="SubtleButtonStyle"
                 :Content="t('home.hero.view-github')"
-                Background="#FFFFFF"
-                Foreground="#2B2B2B"
                 Height="40"
                 Padding="16,0"
                 @Click="openGithub" />
@@ -34,36 +30,19 @@
                 class="hero-why-btn"
                 Style="SubtleButtonStyle"
                 :Content="t('home.hero.why-choose')"
-                Background="#FFFFFF"
-                Foreground="#2B2B2B"
                 Height="40"
                 Padding="16,0"
                 @Click="goWhyChoose" />
             </div>
             <div class="site-hero-badges">
-            <div class="site-hero-stats">
-              <a href="https://github.com/luolangaga/tubatool" target="_blank" rel="noopener">
-                <img src="https://img.shields.io/github/stars/luolangaga/tubatool?style=for-the-badge&logo=github&label=Stars&color=ffd33d&logoColor=white" alt="GitHub Stars" />
-              </a>
-              <a href="https://gitcode.com/luolangaga/tubatool" target="_blank" rel="noopener">
-                <img src="https://gitcode.com/luolangaga/tubatool/star/badge.svg" alt="GitCode Stars" />
-              </a>
-              <a href="https://github.com/luolangaga/tubatool" target="_blank" rel="noopener">
-                <img src="https://img.shields.io/github/forks/luolangaga/tubatool?style=for-the-badge&logo=github&label=Forks&color=8b5cf6&logoColor=white" alt="GitHub Forks" />
-              </a>
-              <a href="https://github.com/luolangaga/tubatool/releases" target="_blank" rel="noopener">
-                <img src="https://img.shields.io/github/downloads/luolangaga/tubatool/total?style=for-the-badge&logo=github&label=Downloads&color=0078d4&logoColor=white" alt="GitHub Downloads" />
-              </a>
-            </div>
-              <div class="site-hero-trendshift">
-                <a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer">
-                  <img src="https://trendshift.io/api/badge/trendshift/repositories/51042/daily?language=C%23" alt="Trendshift Daily" />
+              <div class="site-hero-stats">
+                <a class="site-stat-badge site-stat-stars" href="https://github.com/luolangaga/tubatools" target="_blank" rel="noopener">
+                  <span class="site-stat-label">STARS</span>
+                  <span class="site-stat-value">6.3k</span>
                 </a>
-                <a href="https://trendshift.io/repositories/51042?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-51042" target="_blank" rel="noopener noreferrer">
-                  <img src="https://trendshift.io/api/badge/trendshift/repositories/51042/weekly?language=C%23" alt="Trendshift Weekly" />
-                </a>
-                <a href="https://atomgit.com/luolangaga/tubatool" target="_blank" rel="noopener">
-                  <img alt="AtomGit G-Star" src="https://atomgit.com/luolangaga/tubatool/star/new_badge.svg" />
+                <a class="site-stat-badge site-stat-downloads" href="https://github.com/luolangaga/tubatools/releases" target="_blank" rel="noopener" :title="t('home.hero.downloads-title')">
+                  <span class="site-stat-label">DOWNLOADS</span>
+                  <span class="site-stat-value">{{ totalDownloads }}</span>
                 </a>
               </div>
             </div>
@@ -86,94 +65,50 @@
         {{ t('home.hero.store-tip-end') }}
       </p>
 
-      <!-- 特性总览 -->
-      <section class="site-section">
+      <!-- 宣传片 -->
+      <section class="site-section home-promo">
         <div class="site-section-inner">
-          <h2 class="site-section-title">{{ t('home.features.title') }}</h2>
-          <p class="site-section-subtitle">{{ t('home.features.subtitle') }}</p>
+          <WinMediaPlayerElement
+            :Source="promoVideo"
+            :PosterSource="promoPoster"
+            :AreTransportControlsEnabled="true" />
         </div>
       </section>
 
-      <!-- Section 1: 开源且完全免费 -->
-      <section class="site-feature">
-        <div class="site-section-inner site-feature-row">
-          <div class="site-feature-img">
-            <img :src="screenshotTools" alt="工具目录界面" />
-          </div>
-          <div class="site-feature-text">
-            <h3>{{ t('home.section1.title') }}</h3>
-            <p class="site-feature-lead">{{ t('home.section1.text1') }}</p>
-            <p class="site-feature-intro">{{ t('home.section1.text2') }}</p>
-            <ul class="site-check-list">
-              <li v-for="item in section1Items" :key="item">
-                <span class="site-check-glyph" aria-hidden="true">&#xE73D;</span>{{ item }}
-              </li>
-            </ul>
-            <p class="site-feature-intro">{{ t('home.section1.text3') }}</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 2: 硬件信息一目了然 -->
-      <section class="site-feature">
-        <div class="site-section-inner site-feature-row reverse">
-          <div class="site-feature-img">
-            <img :src="screenshotHardware" alt="硬件信息界面" />
-          </div>
-          <div class="site-feature-text">
-            <h3>{{ t('home.section2.title') }}</h3>
-            <p class="site-feature-lead">{{ t('home.section2.text1') }}</p>
-            <ul class="site-check-list">
-              <li v-for="item in section2Items" :key="item">
-                <span class="site-check-glyph" aria-hidden="true">&#xE73D;</span>{{ item }}
-              </li>
-            </ul>
-            <p class="site-feature-intro">{{ t('home.section2.text2') }}</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 3: WinUI 3 原生体验 -->
-      <section class="site-feature">
-        <div class="site-section-inner site-feature-row">
-          <div class="site-feature-img">
-            <img :src="screenshotTools" alt="WinUI 3 原生界面" />
-          </div>
-          <div class="site-feature-text">
-            <h3>{{ t('home.section3.title') }}</h3>
-            <p class="site-feature-lead">{{ t('home.section3.text1') }}</p>
-            <ul class="site-check-list">
-              <li v-for="item in section3Items" :key="item">
-                <span class="site-check-glyph" aria-hidden="true">&#xE73D;</span>{{ item }}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 4: 内置工具 -->
-      <section class="site-feature">
-        <div class="site-section-inner site-feature-row reverse">
-          <div class="site-feature-img">
-            <img :src="screenshotBuiltin" alt="内置工具界面" />
-          </div>
-          <div class="site-feature-text">
-            <h3>{{ t('home.section4.title') }}</h3>
-            <p class="site-feature-lead">{{ t('home.section4.text1') }}</p>
-            <ul class="site-check-list">
-              <li v-for="item in section4Items" :key="item">
-                <span class="site-check-glyph" aria-hidden="true">&#xE73D;</span>{{ item }}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- 功能截图画廊 -->
-      <section class="site-section">
+      <!-- 三个核心卖点 -->
+      <section class="site-section home-core">
         <div class="site-section-inner">
-          <h2 class="site-section-title">{{ t('home.gallery.title') }}</h2>
-          <p class="site-section-subtitle">{{ t('home.gallery.subtitle') }}</p>
+          <div class="home-section-head">
+            <span class="home-eyebrow">{{ t('home.core.eyebrow') }}</span>
+            <h2 class="site-section-title">{{ t('home.features.title') }}</h2>
+            <p class="site-section-subtitle">{{ t('home.features.subtitle') }}</p>
+          </div>
+          <div class="home-core-grid">
+            <article v-for="card in coreCards" :key="card.titleKey" class="site-card home-core-card">
+              <span class="home-core-icon icon" aria-hidden="true">{{ card.icon }}</span>
+              <h3>{{ t(card.titleKey) }}</h3>
+              <p>{{ t(card.descKey) }}</p>
+              <router-link to="/features" class="home-text-link">{{ t('home.core.more') }} <span aria-hidden="true">›</span></router-link>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 精选实机截图 -->
+      <section class="site-section home-shots">
+        <div class="site-section-inner">
+          <div class="home-section-head home-section-head-row">
+            <div>
+              <h2 class="site-section-title">{{ t('home.shots.title') }}</h2>
+              <p class="site-section-subtitle">{{ t('home.shots.subtitle') }}</p>
+            </div>
+            <WinButton
+              Style="SubtleButtonStyle"
+              :Content="t('home.gallery.more')"
+              Height="36"
+              Padding="16,0"
+              @Click="goFeatures" />
+          </div>
           <div class="site-gallery">
             <button
               v-for="item in galleryItems"
@@ -189,51 +124,69 @@
               </span>
             </button>
           </div>
-          <div class="site-gallery-actions">
-            <WinButton
-              Style="AccentButtonStyle"
-              :Content="t('home.gallery.more')"
-              Height="40"
-              Padding="20,0"
-              @Click="goFeatures" />
-          </div>
         </div>
       </section>
 
-      <!-- 工具分类网格 -->
-      <section class="site-section">
+      <!-- 社区跑分排行：保留可见的排行卡片入口 -->
+      <section class="site-section home-rank">
         <div class="site-section-inner">
-          <h2 class="site-section-title">{{ t('home.tools.title') }}</h2>
-          <div class="site-tool-grid">
-            <div v-for="(col, ci) in toolColumns" :key="`col-${ci}`" class="site-tool-col">
-              <div v-for="group in col" :key="group.title" class="site-card site-tool-col-card">
-                <h4>{{ group.title }}</h4>
-                <ul class="site-check-list">
-                  <li v-for="tool in group.tools" :key="tool.name">
-                    <span class="site-check-glyph" aria-hidden="true">&#xE73D;</span>
-                    <router-link v-if="tool.url && !tool.url.startsWith('http')" :to="tool.url">{{ tool.name }}</router-link>
-                    <a v-else-if="tool.url" :href="tool.url" target="_blank" rel="noopener">{{ tool.name }}</a>
-                    <span v-else>{{ tool.name }}</span>
-                  </li>
-                </ul>
-              </div>
+          <div class="home-section-head home-section-head-row">
+            <div>
+              <h2 class="site-section-title">{{ t('home.rank.title') }}</h2>
+              <p class="site-section-subtitle">{{ t('home.rank.subtitle') }}</p>
             </div>
+            <WinButton
+              Style="SubtleButtonStyle"
+              :Content="t('home.rank.view-all')"
+              Height="36"
+              Padding="16,0"
+              @Click="goRanking" />
           </div>
+          <div v-if="rankPreview.length" class="home-rank-grid">
+            <button
+              v-for="(row, i) in rankPreview"
+              :key="row.entry.id"
+              type="button"
+              class="site-card home-rank-card"
+              @click="goRanking">
+              <span class="home-rank-medal" :class="`home-rank-medal-${i + 1}`">{{ i + 1 }}</span>
+              <span class="home-rank-body">
+                <span class="home-rank-author">@{{ row.entry.author }}</span>
+                <span class="home-rank-hw">{{ row.entry.cpuName }}<template v-if="row.entry.gpuName"> · {{ row.entry.gpuName }}</template></span>
+              </span>
+              <span class="home-rank-score">
+                {{ row.entry.gamingScore }}
+                <span>{{ t('rank.game') }}</span>
+              </span>
+            </button>
+          </div>
+          <p v-else-if="rankLoading" class="home-rank-empty">{{ t('home.rank.loading') }}</p>
+          <p v-else class="home-rank-empty">{{ t('home.rank.empty') }}</p>
         </div>
       </section>
 
-      <!-- 支持我们 -->
-      <section class="site-section">
+      <!-- 最终下载 CTA -->
+      <section class="site-section home-cta-wrap">
         <div class="site-section-inner">
-          <div class="site-card site-support-card">
-            <h3>{{ t('home.support.title') }}</h3>
-            <p>
-              {{ t('home.support.text1') }}
-              <a href="https://github.com/luolangaga/tubatool" target="_blank" rel="noopener">{{ t('home.support.star') }}</a>，
-              <a href="https://github.com/luolangaga/tubatool/issues/new/choose" target="_blank" rel="noopener">{{ t('home.support.feedback') }}</a>，
-              <a href="https://github.com/luolangaga/tubatool/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">{{ t('home.support.contribute') }}</a>，
-              {{ t('home.support.text2') }}
-            </p>
+          <div class="site-card home-cta">
+            <div>
+              <h2>{{ t('home.cta.title') }}</h2>
+              <p>{{ t('home.cta.desc') }}</p>
+            </div>
+            <div class="home-cta-actions">
+              <WinButton
+                Style="AccentButtonStyle"
+                :Content="t('home.cta.download')"
+                Height="40"
+                Padding="20,0"
+                @Click="goDownload" />
+              <WinButton
+                Style="SubtleButtonStyle"
+                :Content="t('home.cta.docs')"
+                Height="40"
+                Padding="16,0"
+                @Click="goDocs" />
+            </div>
           </div>
         </div>
       </section>
@@ -244,88 +197,118 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import WinScrollViewer from '../../components/WinScrollViewer.vue';
 import WinButton from '../../components/WinButton.vue';
+import WinMediaPlayerElement from '../../components/WinMediaPlayerElement.vue';
 import SiteFooter from '../components/SiteFooter.vue';
-import screenshotTools from '../../assets/site/screenshot-tools.png';
-import screenshotHardware from '../../assets/site/screenshot-hardware.png';
-import screenshotBuiltin from '../../assets/site/screenshot-builtin.png';
+import screenshotTools from '../../assets/site/screenshot-tools.webp';
 import { features } from '../services/features';
+import { buildLeaderboard, getLeaderboardData } from '../services/benchmarkData';
 import { useI18n } from '../../components/i18n/index';
 
 const { t } = useI18n();
 const navigate = inject('navigate', () => {});
-const heroRef = ref(null);
 
-/* 首页画廊精选：覆盖「进阶玩法」的关键功能 */
-const galleryIds = ['ai-assistant', 'game-monitor', 'game-tunnel', 'format-converter', 'junk-cleaner', 'stress-test', 'cpu-ranking', 'traffic-monitor'];
+// 宣传片：4.7 MB / 720p60 的 Web 版（由 23 MB 的 v12 母版转码，faststart）。
+// 视频放 GitHub raw：支持 Range、无 HTTP/3 通告；Cloudflare 的媒体请求在部分网络下
+// 会卡在不可用的 HTTP/3 连接上（readyState 一直为 0）。
+const promoVideo = 'https://raw.githubusercontent.com/luolangaga/tubatools-media/main/tuba-promo-web.mp4';
+const promoPoster = '/videos/tuba-promo-poster-web.jpg';
+
+const coreCards = [
+  { icon: '\uE8B7', titleKey: 'home.core.free.title', descKey: 'home.core.free.desc' },
+  { icon: '\uE950', titleKey: 'home.core.hardware.title', descKey: 'home.core.hardware.desc' },
+  { icon: '\uE8F1', titleKey: 'home.core.tools.title', descKey: 'home.core.tools.desc' }
+];
+
+const galleryIds = ['ai-playground', 'game-monitor', 'junk-cleaner', 'cpu-ranking'];
 const galleryItems = computed(() => galleryIds.map((id) => features.find((item) => item.id === id)).filter(Boolean));
 
-const section1Items = computed(() => t('home.section1.items').split('|'));
-const section2Items = computed(() => t('home.section2.items').split('|'));
-const section3Items = computed(() => t('home.section3.items').split('|'));
-const section4Items = computed(() => t('home.section4.items').split('|'));
+const rankPreview = ref([]);
+const rankLoading = ref(true);
+const totalDownloads = ref('3.75M');
 
-const toolColumns = [
-  [
-    { title: '处理器工具', tools: [
-      { name: 'CPU-Z' }, { name: 'Core Temp' }, { name: 'Prime95' }, { name: 'LinX' }, { name: 'SuperPI' } ] },
-    { title: '显卡工具', tools: [
-      { name: 'GPU-Z' }, { name: 'DDU' }, { name: 'FurMark' }, { name: 'NVFlash' }, { name: 'nvidiaInspector' } ] }
-  ],
-  [
-    { title: '硬盘工具', tools: [
-      { name: 'CrystalDiskMark' }, { name: 'CrystalDiskInfo' }, { name: 'AS SSD Benchmark' }, { name: 'DiskGenius' }, { name: 'HDTune' } ] },
-    { title: '内存工具', tools: [
-      { name: 'MemTest' }, { name: 'TM5' }, { name: 'Thaiphoon' }, { name: 'ZenTimings' }, { name: 'MemTest64' } ] }
-  ],
-  [
-    { title: '综合检测', tools: [
-      { name: 'AIDA64' }, { name: 'HWiNFO' }, { name: 'HWMonitor' }, { name: 'Speccy' }, { name: 'FanControl' } ] },
-    { title: '显示器工具', tools: [
-      { name: '色域检测' }, { name: '屏幕测试' }, { name: 'UFO 测试' } ] },
-    { title: '烤鸡工具', tools: [
-      { name: 'FurMark' }, { name: 'FurMark 64' }, { name: 'y-cruncher' } ] }
-  ],
-  [
-    { title: '外设工具', tools: [
-      { name: '键盘测试' }, { name: 'MouseTester' }, { name: '鼠标回报率' }, { name: 'KeyTweak' }, { name: '鼠标单击变双击' } ] },
-    { title: '内置工具', tools: [
-      { name: 'AI 助手' }, { name: '游戏联机助手' }, { name: 'CPU / GPU 烤机' }, { name: '格式转换' }, { name: '垃圾清理' }, { name: '流氓软件的克星' }, { name: '端口占用' }, { name: '时间同步' }, { name: '启动项管理' }, { name: 'Windows 镜像' }, { name: t('home.tools.more'), url: '/features' } ] }
-  ]
-];
+const GITCODE_DOWNLOADS_FALLBACK = 3585950;
+const GITHUB_DOWNLOADS_FALLBACK = 165258;
+
+function formatCount(value) {
+  const count = Number(value);
+  if (!Number.isFinite(count) || count <= 0) return null;
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(2).replace(/\.?0+$/, '')}M`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  }
+  return String(count);
+}
+
+async function loadTotalDownloads() {
+  let gitcodeDownloads = GITCODE_DOWNLOADS_FALLBACK;
+  let githubDownloads = GITHUB_DOWNLOADS_FALLBACK;
+
+  try {
+    // GitCode 与 AtomGit 是同一平台，这里只取一份，避免重复累计
+    const response = await fetch(
+      'https://api.gitcode.com/api/v5/repos/luolangaga/tubatool/download_statistics?direction=desc',
+      { headers: { Accept: 'application/json' } }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      const count = Number(data?.download_statistics_history_total);
+      if (Number.isFinite(count) && count > 0) gitcodeDownloads = count;
+    }
+  } catch {
+    /* 接口不可用时使用快照值 */
+  }
+
+  try {
+    const response = await fetch(
+      'https://api.github.com/repos/luolangaga/tubatools/releases?per_page=100',
+      { headers: { Accept: 'application/vnd.github+json' } }
+    );
+    if (response.ok) {
+      const releases = await response.json();
+      if (Array.isArray(releases)) {
+        const count = releases.reduce((sum, release) => {
+          const assets = Array.isArray(release?.assets) ? release.assets : [];
+          return sum + assets.reduce((assetSum, asset) => assetSum + Number(asset?.download_count ?? 0), 0);
+        }, 0);
+        if (Number.isFinite(count) && count > 0) githubDownloads = count;
+      }
+    }
+  } catch {
+    /* 接口不可用时使用快照值 */
+  }
+
+  const total = formatCount(gitcodeDownloads + githubDownloads);
+  if (total) totalDownloads.value = total;
+}
+
+async function loadRankPreview() {
+  try {
+    const data = await getLeaderboardData(false);
+    rankPreview.value = buildLeaderboard(data, 'gaming', '').slice(0, 3);
+  } catch {
+    rankPreview.value = [];
+  } finally {
+    rankLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  void loadTotalDownloads();
+  void loadRankPreview();
+});
 
 const goDownload = () => navigate('download');
 const goFeatures = () => navigate('features');
-const openGithub = () => window.open(t('app.repository'), '_blank', 'noopener');
+const goDocs = () => navigate('docs');
 const goWhyChoose = () => navigate('why');
-
-let parallaxObserver = null;
-let reducedMotion = false;
-
-onMounted(() => {
-  reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reducedMotion) return;
-  parallaxObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('site-feature-visible');
-      } else {
-        entry.target.classList.remove('site-feature-visible');
-      }
-    });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.site-feature-row, .site-tool-col, .site-support-card').forEach((el) => {
-    parallaxObserver.observe(el);
-  });
-});
-
-onUnmounted(() => {
-  parallaxObserver?.disconnect();
-});
+const goRanking = () => navigate('ranking');
+const openGithub = () => window.open(t('app.repository'), '_blank', 'noopener');
 </script>
-
 <style scoped>
 .site-home {
   width: 100%;
@@ -467,6 +450,57 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 8px;
   max-width: 100%;
+}
+
+/* 站内统计徽章：不依赖 shields.io，避免第三方图片加载失败 */
+.site-stat-badge {
+  display: inline-flex;
+  align-items: stretch;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.site-stat-label,
+.site-stat-value {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.site-stat-value {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.site-stat-stars .site-stat-label {
+  background: #3a3f45;
+  color: #f2f4f7;
+}
+
+.site-stat-stars .site-stat-value {
+  background: #ffd33d;
+  color: #24292f;
+}
+
+.site-stat-downloads .site-stat-label {
+  background: #0078d4;
+  color: #fff;
+}
+
+.site-stat-downloads .site-stat-value {
+  background: #005a9e;
+  color: #fff;
+}
+
+.site-stat-badge:hover {
+  opacity: 0.9;
 }
 
 .site-hero-trendshift {
@@ -864,4 +898,293 @@ onUnmounted(() => {
     padding-right: 20px;
   }
 }
+/* ---------- 精简后的首页 ---------- */
+
+.home-promo {
+  margin-top: 40px;
+}
+
+.home-promo .site-section-inner {
+  max-width: 960px;
+}
+
+.home-promo :deep(.win-media-player-surface) {
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.home-core {
+  margin-top: 40px;
+}
+
+.home-section-head {
+  max-width: 760px;
+  margin-bottom: 20px;
+}
+
+.home-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent-base);
+}
+
+.home-section-head .site-section-title {
+  margin: 0 0 6px;
+}
+
+.home-section-head .site-section-subtitle {
+  margin: 0;
+}
+
+.home-section-head-row {
+  max-width: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.home-core-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-core-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 190px;
+  padding: 22px 24px;
+}
+
+.home-core-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--subtle-secondary);
+  color: var(--accent-base);
+  font-family: 'WinUIOnWebIcons';
+  font-size: 20px;
+}
+
+.home-core-card h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+
+.home-core-card p {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--text-secondary);
+}
+
+.home-text-link {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-base);
+  text-decoration: none;
+}
+
+.home-text-link:hover {
+  text-decoration: underline;
+}
+
+.home-shots,
+.home-rank,
+.home-cta-wrap {
+  margin-top: 52px;
+}
+
+/* ---------- 社区排行 ---------- */
+
+.home-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-rank-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.home-rank-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent-base) 34%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.home-rank-medal {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--subtle-secondary);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-rank-medal-1 {
+  background: #ffd33d;
+  color: #5a4100;
+}
+
+.home-rank-medal-2 {
+  background: #e8e8e8;
+  color: #4b4b4b;
+}
+
+.home-rank-medal-3 {
+  background: #f0c7a5;
+  color: #5d3517;
+}
+
+.home-rank-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.home-rank-author,
+.home-rank-hw {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-rank-author {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--text-primary);
+}
+
+.home-rank-hw {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+
+.home-rank-score {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--text-primary);
+}
+
+.home-rank-score span {
+  display: block;
+  margin-top: 1px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  color: var(--text-secondary);
+}
+
+.home-rank-empty {
+  margin: 0;
+  padding: 18px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.home-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+}
+
+.home-cta h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  color: var(--text-primary);
+}
+
+.home-cta p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--text-secondary);
+}
+
+.home-cta-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .home-core-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-rank-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-section-head-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .home-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-core-card {
+    min-height: 0;
+  }
+
+  .home-cta {
+    padding: 22px 20px;
+  }
+
+  .home-cta-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .home-cta-actions .win-btn {
+    width: 100%;
+  }
+}
+
 </style>

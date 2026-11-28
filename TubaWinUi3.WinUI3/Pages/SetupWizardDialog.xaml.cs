@@ -15,6 +15,9 @@ public sealed partial class SetupWizardDialog : ContentDialog
         InitializeComponent();
         TubaWinUi3.Services.FluentDialogLayout.Attach(this);
         LayoutChoices.SelectedIndex = CompactModeService.IsCompactModeEnabled() ? 1 : 0;
+        NavStyleChoices.SelectedItem = NavStyleChoices.Items.Cast<ComboBoxItem>()
+            .FirstOrDefault(i => (string)i.Tag == NavLayoutModeService.GetNavLayoutMode())
+            ?? NavStyleChoices.Items[0];
         var backdrop = BackdropService.GetBackdropType().ToString();
         BackdropChoices.SelectedItem = BackdropChoices.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == backdrop)
             ?? BackdropChoices.Items[0];
@@ -130,6 +133,8 @@ public sealed partial class SetupWizardDialog : ContentDialog
     private void ApplyPreferences()
     {
         CompactModeService.SetCompactModeEnabled(LayoutChoices.SelectedIndex == 1);
+        if (NavStyleChoices.SelectedItem is ComboBoxItem { Tag: string navMode })
+            NavLayoutModeService.SetNavLayoutMode(navMode);
         if (BackdropChoices.SelectedItem is ComboBoxItem { Tag: string value } && Enum.TryParse<BackdropType>(value, out var backdrop))
             BackdropService.SetBackdropType(backdrop);
         CloseToTrayService.SetEnabled(WizardCloseToTrayToggle.IsOn);

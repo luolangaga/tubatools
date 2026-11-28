@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 namespace TubaWinUi3.Services.ActiveIntercept;
 
 // =====================================================================
-// 命名管道 IPC 契约（与后端 TubaWinUI3.BackEnd\PipeContracts.cs 对齐；
+// 命名管道 IPC 契约（与进程内 Runtime\PipeContracts.cs 对齐；
 // 线上格式：UTF-8 无 BOM、每行一条 JSON，camelCase，枚举按数字）。
 // 协议移植自 ContextMenuMgr（GPL-3.0，https://github.com/PLFJY/ContextMenuMgr）。
 // =====================================================================
 
 public static class InterceptPipeConstants
 {
-    /// <summary>后端管道名（与后端 InterceptPipeConstants.PipeName 一致）。</summary>
+    /// <summary>拦截服务管道名（与运行时 InterceptPipeConstants.PipeName 保持一致）。</summary>
     public const string PipeName = "TubaWinUi3.Intercept.Backend";
 
     /// <summary>连接超时（毫秒）。</summary>

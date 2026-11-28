@@ -167,6 +167,7 @@ public static class AgentWorkspaceStore
 
         var existed = Directory.Exists(path);
         Directory.CreateDirectory(path);
+        ProbeWritable(path);
         var entry = new Entry { Id = id, Name = trimmed, Folder = folder, Path = custom, Created = DateTimeOffset.UtcNow.ToString("O") };
         registry.Workspaces.Add(entry);
         try { Save(registry); }
@@ -181,6 +182,30 @@ public static class AgentWorkspaceStore
             throw;
         }
         return new(id, trimmed, path, false);
+    }
+
+    /// <summary>目录能建不代表能写文件：EFS 加密目录新建文件会报 Win32 6000，只读目录报拒绝访问。
+    /// 在创建工作区时就暴露，别等切换工作区准备文件时才失败。</summary>
+    private static void ProbeWritable(string directory)
+    {
+        var probe = Path.Combine(directory, ".tuba-write-" + Guid.NewGuid().ToString("N") + ".tmp");
+        try
+        {
+            using (File.Create(probe)) { }
+        }
+        catch (IOException ex) when (AgentWorkspace.IsEncryptionFailure(ex))
+        {
+            throw new IOException(AgentWorkspace.EncryptedFolderMessage, ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new IOException(AgentText.L("WorkspaceFolderNotWritable",
+                "工作区目录不可写，请检查该文件夹的权限或换一个位置。"), ex);
+        }
+        finally
+        {
+            try { File.Delete(probe); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
     }
 
     public static void Select(AgentWorkspaceInfo workspace)

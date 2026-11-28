@@ -21,7 +21,7 @@ internal sealed class CanvasBubble : UserControl
     private const double ViewportMargin = 190;
 
     private readonly Border _frame;
-    private readonly WebView2 _view = new() { HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+    private WebView2? _view;
     private readonly Grid _stage;
     // A Grid (not a StackPanel): only a Grid hands leftover height to the page area in
     // full screen, which is what makes the WebView2 fill the window.
@@ -42,7 +42,7 @@ internal sealed class CanvasBubble : UserControl
     private string? _directory;
     private string? _relativePath;
     private string _titleText = "";
-    private bool _initialized, _disposed, _pendingReload, _fullScreen;
+    private bool _initialized, _disposed, _pendingReload, _fullScreen, _suspended;
     private DateTime? _lastStamp;
     private double _contentHeight = FallbackInlineHeight;
     private double _inlineMax = 560;
@@ -73,14 +73,15 @@ internal sealed class CanvasBubble : UserControl
         _retry.Click += (_, _) => { ReattachWatcher(); _ = ReloadAsync(true); };
         _empty.Children.Add(_retry);
 
-        _view.DefaultBackgroundColor = Colors.Transparent;
         // No ScrollViewer around the WebView2: a ScrollViewer measures its content with an
         // infinite extent, which leaves the browser at zero height. The page scrolls itself.
+        // The WebView2 itself is created on demand (see EnsureView): every live instance costs
+        // a browser renderer process, so bubbles are released when the AI page is left.
         _stage = new Grid
         {
             Height = FallbackInlineHeight,
             Background = Brush("CardBackgroundFillColorDefaultBrush"),
-            Children = { _view, _loading, _empty }
+            Children = { _loading, _empty }
         };
 
         _expand = IconButton("CanvasFullScreen", "全屏", "\uE740", "AgentCanvasFullScreen", (_, _) => ToggleFullScreen());
@@ -239,7 +240,7 @@ internal sealed class CanvasBubble : UserControl
         _stage.Height = double.NaN;
         UpdateExpandGlyph();
         FullScreenChanged?.Invoke(true);
-        _view.Focus(FocusState.Programmatic);
+        _view?.Focus(FocusState.Programmatic);
     }
 
     private void ExitFullScreen()
@@ -321,11 +322,12 @@ internal sealed class CanvasBubble : UserControl
             ShowEmpty(L("CanvasMissing", "这条画布消息的内容已被清理。"), "", false);
             return;
         }
-        if (samePage && _view.CoreWebView2 is not null) return;
+        if (_suspended) { _pendingReload = true; return; }
+        if (samePage && _view?.CoreWebView2 is not null) return;
         _contentHeight = FallbackInlineHeight;
         ApplyContentHeight();
         _empty.Visibility = Visibility.Collapsed;
-        _view.Visibility = Visibility.Visible;
+        if (_view is not null) _view.Visibility = Visibility.Visible;
         _ = ReloadAsync(true);
     }
 
@@ -346,20 +348,35 @@ internal sealed class CanvasBubble : UserControl
         _emptyHint.Visibility = hint.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         _retry.Visibility = showRetry ? Visibility.Visible : Visibility.Collapsed;
         _empty.Visibility = Visibility.Visible;
-        _view.Visibility = Visibility.Collapsed;
+        if (_view is not null) _view.Visibility = Visibility.Collapsed;
         _loading.IsActive = false;
         _loading.Visibility = Visibility.Collapsed;
     }
 
+    private WebView2 EnsureView()
+    {
+        if (_view is not null) return _view;
+        var view = new WebView2
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            DefaultBackgroundColor = Colors.Transparent
+        };
+        _view = view;
+        _stage.Children.Insert(0, view);
+        return view;
+    }
+
     private async Task EnsureInitializedAsync()
     {
-        if (_initialized || _disposed) return;
+        if (_initialized || _disposed || _suspended) return;
         _initialized = true;
+        var view = EnsureView();
         try
         {
-            await _view.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync());
-            if (_disposed) return;
-            var core = _view.CoreWebView2 ?? throw new InvalidOperationException(L("CanvasFailed", "画布未能启动，请检查 WebView2 运行时。"));
+            await view.EnsureCoreWebView2Async(await WebView2EnvironmentService.GetAsync());
+            if (_disposed || _suspended) return;
+            var core = view.CoreWebView2 ?? throw new InvalidOperationException(L("CanvasFailed", "画布未能启动，请检查 WebView2 运行时。"));
             core.Settings.AreDevToolsEnabled = false;
             core.Settings.AreDefaultContextMenusEnabled = true;
             core.Settings.IsStatusBarEnabled = false;
@@ -439,10 +456,11 @@ internal sealed class CanvasBubble : UserControl
 
     private async Task ReloadAsync(bool force)
     {
-        if (_disposed || _sessionId is null || _directory is null) return;
+        if (_disposed || _suspended || _sessionId is null || _directory is null) return;
         _pendingReload = false;
         await EnsureInitializedAsync();
-        if (_disposed || _view.CoreWebView2 is null) return;
+        var view = _view;
+        if (_disposed || _suspended || view?.CoreWebView2 is not { } core) return;
         var page = AgentCanvasStore.ResolvePage(_sessionId, _relativePath ?? "");
         if (page is null)
         {
@@ -450,16 +468,16 @@ internal sealed class CanvasBubble : UserControl
             return;
         }
         _empty.Visibility = Visibility.Collapsed;
-        _view.Visibility = Visibility.Visible;
+        view.Visibility = Visibility.Visible;
         try
         {
-            _view.CoreWebView2.SetVirtualHostNameToFolderMapping(CanvasShim.HostName,
+            core.SetVirtualHostNameToFolderMapping(CanvasShim.HostName,
                 _directory, Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.DenyCors);
             _lastStamp = LastWrite();
             _loading.Visibility = Visibility.Visible;
             _loading.IsActive = true;
             var relative = (_relativePath ?? AgentCanvasStore.IndexName).Replace('\\', '/');
-            _view.CoreWebView2.Navigate(CanvasShim.Origin + relative + "?v=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            core.Navigate(CanvasShim.Origin + relative + "?v=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or ArgumentException)
         {
@@ -472,7 +490,7 @@ internal sealed class CanvasBubble : UserControl
     /// <summary>Reloads only when the file really changed and is a complete document again.</summary>
     public void RefreshIfChanged()
     {
-        if (_disposed || _sessionId is null || _relativePath is null) return;
+        if (_disposed || _suspended || _sessionId is null || _relativePath is null) return;
         // Archived snapshots never change; only the live page does.
         if (!string.Equals(_relativePath, AgentCanvasStore.IndexName, StringComparison.OrdinalIgnoreCase)) return;
         var stamp = LastWrite();
@@ -547,6 +565,7 @@ internal sealed class CanvasBubble : UserControl
     {
         if (_disposed) return;
         _pendingReload = true;
+        if (_suspended) return;
         DispatcherQueue.TryEnqueue(() => { _reload.Stop(); _reload.Start(); });
     }
 
@@ -557,8 +576,8 @@ internal sealed class CanvasBubble : UserControl
 
     private void Post(string json)
     {
-        if (_disposed || _view.CoreWebView2 is null) return;
-        try { _view.CoreWebView2.PostWebMessageAsJson(json); }
+        if (_disposed || _view?.CoreWebView2 is not { } core) return;
+        try { core.PostWebMessageAsJson(json); }
         catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
     }
 
@@ -588,27 +607,56 @@ internal sealed class CanvasBubble : UserControl
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
     }
 
+    /// <summary>
+    /// Closes the WebView2 while keeping the card in the transcript. Every live instance owns a
+    /// browser renderer process, so the AI page releases all canvases when it is navigated away
+    /// from and rebuilds them lazily on return.
+    /// </summary>
+    public void Suspend()
+    {
+        if (_disposed) return;
+        _suspended = true;
+        _reload.Stop();
+        ExitFullScreen();
+        var view = _view;
+        _view = null;
+        _initialized = false;
+        if (view is null) return;
+        DetachCore(view);
+        if (view.Parent is Panel owner) owner.Children.Remove(view);
+        try { view.Close(); }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
+    }
+
+    /// <summary>Re-creates the WebView2 after <see cref="Suspend"/>; reloads the current page.</summary>
+    public void Resume()
+    {
+        if (_disposed || !_suspended) return;
+        _suspended = false;
+        ReattachWatcher();
+        _ = ReloadAsync(true);
+    }
+
+    private void DetachCore(WebView2 view)
+    {
+        try
+        {
+            if (view.CoreWebView2 is not { } core) return;
+            core.WebMessageReceived -= OnWebMessageReceived;
+            core.NavigationStarting -= OnNavigationStarting;
+            core.NavigationCompleted -= OnNavigationCompleted;
+            core.NewWindowRequested -= OnNewWindowRequested;
+            core.ProcessFailed -= OnProcessFailed;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
+        Suspend();
         _disposed = true;
-        ExitFullScreen();
         DetachWatcher();
-        _reload.Stop();
-        try
-        {
-            if (_view.CoreWebView2 is { } core)
-            {
-                core.WebMessageReceived -= OnWebMessageReceived;
-                core.NavigationStarting -= OnNavigationStarting;
-                core.NavigationCompleted -= OnNavigationCompleted;
-                core.NewWindowRequested -= OnNewWindowRequested;
-                core.ProcessFailed -= OnProcessFailed;
-            }
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
-        try { _view.Close(); }
-        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
         Content = null;
     }
 }

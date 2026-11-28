@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.UI.Xaml;
@@ -117,6 +118,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["FastMode"] = "GeneralExpander",
         ["RememberWindow"] = "GeneralExpander",
         ["CloseToTray"] = "GeneralExpander",
+        ["ShellTabsEnabled"] = "GeneralExpander",
         ["Update"] = "UpdatesSection",
         ["ToolsBundle"] = "UpdatesSection",
         ["Background"] = "AppearanceExpander",
@@ -151,6 +153,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["FastMode"] = "SettingsFastModeCard",
         ["RememberWindow"] = "SettingsRememberWindowCard",
         ["CloseToTray"] = "SettingsCloseToTrayCard",
+        ["ShellTabsEnabled"] = "SettingsTabsCard",
         ["Update"] = "SettingsUpdateCard",
         ["ToolsBundle"] = "SettingsToolsBundleCard",
         ["Background"] = "SettingsBackgroundCard",
@@ -172,6 +175,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         ["CommunityTool"] = "SettingsCommunityCard",
         ["ActiveInterceptEnabled"] = "SettingsActiveInterceptCard",
         ["ActiveInterceptNotifyMode"] = "SettingsActiveInterceptNotifyCard",
+        ["AutoStartEnabled"] = "SettingsAutoStartCard",
+        ["AutoStartHideUi"] = "SettingsAutoStartHideCard",
         ["WindowsSearchIndex"] = "SettingsSearchIndexCard",
         ["AiBrowser"] = "SettingsAiBrowserCard",
     };
@@ -199,6 +204,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitThemeSelector();
         InitRememberWindowToggle();
         InitCloseToTrayToggle();
+        InitTabsToggle();
         InitFastModeToggle();
         InitUpdateSection();
         InitBackdropSettings();
@@ -216,6 +222,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         InitHttpDownloadSettings();
         InitActiveInterceptToggle();
         InitActiveInterceptNotifyModeComboBox();
+        InitAutoStartToggles();
         InitTelemetryToggle();
         Loaded += (_, _) => AppSettings.SettingChanged += OnInterceptSettingChanged;
         Unloaded += (_, _) => AppSettings.SettingChanged -= OnInterceptSettingChanged;
@@ -244,9 +251,12 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
         // 页面被缓存，构造后不再重跑：开关可能被其它入口改过（如常用页的关闭按钮），进入时重新读取
         InitHardwareStyle();
+        InitAutoStartToggles();
         RefreshLogDirCard();
         InitAiBrowserSettings();
         _ = RefreshAiBrowserStatusAsync();
+        // OnNavigatedFrom 释放了背景预览与缩略图位图，这里按当前设置重建（折叠状态不建位图）。
+        LoadBackgroundSettings();
 
 
 
@@ -267,6 +277,19 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         base.OnNavigatedFrom(e);
         DownloadQueueService.QueueChanged -= UpdateDownloadQueueStatus;
         _aiBrowserCts?.Cancel();
+        ReleaseBackgroundBitmaps();
+    }
+
+    /// <summary>
+    /// 页面本身是 NavigationCacheMode=Enabled（值得保留：整棵树 900+ 元素，重建要 0.3–1.5 秒），
+    /// 但解码后的位图在离开时没人看得到，全部释放掉，回来时按当前设置重新建。
+    /// 这样既不牺牲再次进入的速度，也不让背景图/缩略图的像素缓冲区常驻。
+    /// </summary>
+    private void ReleaseBackgroundBitmaps()
+    {
+        BgPreviewImage.Source = null;
+        _bgItems.Clear();
+        BgListRepeater.ItemsSource = null;
     }
 
     private void StartHighlight(string settingKey)
@@ -402,16 +425,28 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     private void InitNavLayoutComboBox()
     {
         _navLayoutInitializing = true;
+        NavLayoutComboBox.Items.Clear();
         NavLayoutComboBox.Items.Add(LocalizationService.L("Settings_NavLayoutOptionSidebar", "侧边栏"));
         NavLayoutComboBox.Items.Add(LocalizationService.L("Settings_NavLayoutOptionTabs", "顶部标签页"));
-        NavLayoutComboBox.SelectedIndex = NavLayoutModeService.IsTabMode() ? 1 : 0;
+        NavLayoutComboBox.Items.Add(LocalizationService.L("Settings_NavLayoutOptionRail", "图标菜单"));
+        NavLayoutComboBox.SelectedIndex = NavLayoutModeService.GetNavLayoutMode() switch
+        {
+            NavLayoutModeService.TabsMode => 1,
+            NavLayoutModeService.RailMode => 2,
+            _ => 0,
+        };
         _navLayoutInitializing = false;
     }
 
     private void NavLayoutComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_navLayoutInitializing) return;
-        var mode = NavLayoutComboBox.SelectedIndex == 1 ? "tabs" : "sidebar";
+        if (_navLayoutInitializing || NavLayoutComboBox.SelectedIndex < 0) return;
+        var mode = NavLayoutComboBox.SelectedIndex switch
+        {
+            1 => NavLayoutModeService.TabsMode,
+            2 => NavLayoutModeService.RailMode,
+            _ => NavLayoutModeService.SidebarMode,
+        };
         NavLayoutModeService.SetNavLayoutMode(mode);
     }
 
@@ -572,6 +607,22 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (_closeToTrayInitializing) return;
         CloseToTrayService.SetEnabled(CloseToTrayToggle.IsOn);
+    }
+
+    /// <summary>多标签页开关：默认关闭，改动经 AppSettings.SettingChanged 立刻作用到主窗口。</summary>
+    private bool _tabsInitializing;
+
+    private void InitTabsToggle()
+    {
+        _tabsInitializing = true;
+        TabsToggle.IsOn = AppSettings.GetBool(MainWindow.TabsEnabledSettingKey, MainWindow.TabsEnabledDefault);
+        _tabsInitializing = false;
+    }
+
+    private void TabsToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_tabsInitializing) return;
+        AppSettings.Set(MainWindow.TabsEnabledSettingKey, TabsToggle.IsOn);
     }
 
     private void InitFastModeToggle()
@@ -869,13 +920,25 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         PopulateBgList();
     }
 
+    /// <summary>已导入背景图的展示项：缩略图按 280px 解码，只由 ItemsRepeater 为可见项创建。</summary>
+    internal sealed class BgThumbnailItem
+    {
+        public required string Path { get; init; }
+        public required string FileName { get; init; }
+        public required bool IsSelected { get; init; }
+        public Visibility SelectedVisibility => IsSelected ? Visibility.Visible : Visibility.Collapsed;
+        public BitmapImage? Thumbnail { get; init; }
+    }
+
+    private readonly ObservableCollection<BgThumbnailItem> _bgItems = [];
+
     private void PopulateBgList()
     {
         var entries = BackgroundService.GetImportedBackgrounds();
-        BgListPanel.Children.Clear();
-
         if (entries.Count == 0)
         {
+            _bgItems.Clear();
+            BgListRepeater.ItemsSource = null;
             BgListEmptyText.Visibility = Visibility.Visible;
             BgListScrollViewer.Visibility = Visibility.Collapsed;
             BgHistoryCountText.Text = "";
@@ -888,114 +951,45 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         BgHistoryCountText.Text = $"({entries.Count})";
         BgHistoryExpander.Visibility = Visibility.Visible;
 
+        // 图库默认折叠：折叠状态只维护条目数据，不建位图；展开后才真正解码，
+        // 并且 ItemsRepeater 只会为视口内的条目实例化模板。
+        var withThumbnails = BgHistoryExpander.IsExpanded;
+        _bgItems.Clear();
         foreach (var entry in entries)
-        {
-            var item = CreateBgListItem(entry);
-            BgListPanel.Children.Add(item);
-        }
+            _bgItems.Add(new BgThumbnailItem
+            {
+                Path = entry.Path,
+                FileName = entry.FileName,
+                IsSelected = entry.IsSelected,
+                // 140×80 的缩略图：按原尺寸解码 4K/8K 背景图会为每张缩略图各占几十 MB 像素内存。
+                Thumbnail = withThumbnails ? new BitmapImage { DecodePixelWidth = 280, UriSource = new Uri(entry.Path) } : null,
+            });
+        if (!ReferenceEquals(BgListRepeater.ItemsSource, _bgItems)) BgListRepeater.ItemsSource = _bgItems;
     }
 
-    private Border CreateBgListItem(BackgroundImageEntry entry)
+    private void BgHistoryExpander_Expanding(Expander sender, ExpanderExpandingEventArgs args)
     {
-        var isSelected = entry.IsSelected;
-        var accentBrush = (Brush)App.Current.Resources["AccentFillColorDefaultBrush"];
+        // 首次展开（以及离开页面释放位图后的再次展开）才解码缩略图。
+        PopulateBgList();
+    }
 
-        var thumbnailBorder = new Border
-        {
-            Width = 140,
-            CornerRadius = new CornerRadius(8),
-            BorderThickness = new Thickness(isSelected ? 2 : 1),
-            BorderBrush = isSelected ? accentBrush : (Brush)App.Current.Resources["CardStrokeColorDefaultBrush"],
-            Tag = entry.Path,
-            Padding = new Thickness(0),
-        };
+    private void BgThumbnail_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: BgThumbnailItem item }) BgListItem_Tapped(item.Path);
+    }
 
-        var grid = new Grid { RowSpacing = 0 };
-        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(80) });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+    private void BgThumbnailDelete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: BgThumbnailItem item }) return;
+        BackgroundService.DeleteBackground(item.Path);
 
-        var image = new Image
-        {
-            Stretch = Stretch.UniformToFill,
-            Source = new BitmapImage(new Uri(entry.Path)),
-        };
-        Grid.SetRow(image, 0);
-        grid.Children.Add(image);
+        var currentPath = BackgroundService.GetBackgroundPath();
+        if (string.IsNullOrWhiteSpace(currentPath))
+            HideBgPreview();
+        else
+            ShowBgPreview(currentPath);
 
-        var infoPanel = new Grid
-        {
-            Padding = new Thickness(6, 4, 6, 4),
-            ColumnSpacing = 4,
-        };
-        Grid.SetRow(infoPanel, 1);
-        infoPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        infoPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        var nameText = new TextBlock
-        {
-            Text = entry.FileName,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        Grid.SetColumn(nameText, 0);
-        infoPanel.Children.Add(nameText);
-
-        var deleteButton = new Button
-        {
-            Padding = new Thickness(2),
-            MinWidth = 0,
-            MinHeight = 0,
-            Width = 22,
-            Height = 22,
-            VerticalAlignment = VerticalAlignment.Center,
-            Tag = entry.Path,
-        };
-        var deleteIcon = new FontIcon
-        {
-            Glyph = "\uE74D",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(ThemeColors.SecondaryText),
-        };
-        deleteButton.Content = deleteIcon;
-        deleteButton.Click += BgDeleteItem_Click;
-        Grid.SetColumn(deleteButton, 1);
-        infoPanel.Children.Add(deleteButton);
-
-        grid.Children.Add(infoPanel);
-        thumbnailBorder.Child = grid;
-
-        if (isSelected)
-        {
-            var checkBadge = new Border
-            {
-                Width = 20,
-                Height = 20,
-                CornerRadius = new CornerRadius(12),
-                Background = accentBrush,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(0, 4, 4, 0),
-            };
-            var checkIcon = new FontIcon
-            {
-                Glyph = "\uE73E",
-                FontSize = 12,
-                Foreground = (Brush)App.Current.Resources["TextOnAccentFillColorPrimaryBrush"],
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            checkBadge.Child = checkIcon;
-            grid.Children.Add(checkBadge);
-        }
-
-        thumbnailBorder.PointerPressed += (s, e) =>
-        {
-            BgListItem_Tapped(entry.Path);
-        };
-
-        return thumbnailBorder;
+        PopulateBgList();
     }
 
     private void BgListItem_Tapped(string path)
@@ -1007,26 +1001,11 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         PopulateBgList();
     }
 
-    private void BgDeleteItem_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button btn || btn.Tag is not string path) return;
-
-        BackgroundService.DeleteBackground(path);
-
-        var currentPath = BackgroundService.GetBackgroundPath();
-        if (string.IsNullOrWhiteSpace(currentPath))
-            HideBgPreview();
-        else
-            ShowBgPreview(currentPath);
-
-        PopulateBgList();
-    }
-
     private void ShowBgPreview(string path)
     {
         try
         {
-            BgPreviewImage.Source = new BitmapImage(new Uri(path));
+            BgPreviewImage.Source = new BitmapImage { DecodePixelWidth = 640, UriSource = new Uri(path) };
             BgFileNameText.Text = Path.GetFileName(path);
             BgPreviewPanel.Visibility = Visibility.Visible;
             BgPreviewBorder.Visibility = Visibility.Visible;
@@ -1243,7 +1222,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
     private void InitActiveInterceptToggle()
     {
-        // MSIX 沙箱下不支持主动拦截后端，隐藏相关卡片
+        // MSIX 沙箱内无法写 HKLM，主动拦截不可用，隐藏相关卡片
         if (RuntimeHelper.IsPackagedContext)
         {
             if (SettingsActiveInterceptCard is not null)
@@ -1263,22 +1242,25 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
     {
         if (key == "ActiveInterceptEnabled")
             DispatcherQueue.TryEnqueue(InitActiveInterceptToggle);
+        else if (key is AutoStartService.EnabledSettingKey or AutoStartService.HideUiSettingKey)
+            DispatcherQueue.TryEnqueue(InitAutoStartToggles);
     }
 
-    private async void ActiveInterceptToggle_Toggled(object sender, RoutedEventArgs e)
+    private void ActiveInterceptToggle_Toggled(object sender, RoutedEventArgs e)
     {
         if (_activeInterceptInitializing) return;
         var enabled = ActiveInterceptToggle.IsOn;
         ActiveInterceptToggle.IsEnabled = false;
         try
         {
-            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(enabled);
-            if (!result.Success)
-                ActiveInterceptStatusText.Text = result.Error ?? "操作失败";
+            // 运行时已内置：只写设置并热启停，不再创建独立后端计划任务。
+            var ok = ActiveInterceptService.SetEnabled(enabled);
+            if (!ok)
+                ActiveInterceptStatusText.Text = enabled ? "启动失败，详见日志" : "关闭失败";
             _activeInterceptInitializing = true;
             ActiveInterceptToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
             _activeInterceptInitializing = false;
-            if (result.Success) UpdateActiveInterceptStatus();
+            UpdateActiveInterceptStatus();
         }
         catch (Exception ex)
         {
@@ -1393,14 +1375,93 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
         }
         else
         {
-            ActiveInterceptStatusText.Text = LocalizationService.L("Settings_InterceptStatusBackendMissing", "未运行（后端缺失）");
+            ActiveInterceptStatusText.Text = LocalizationService.L("Settings_InterceptStatusBackendMissing", "未运行（拦截引擎启动失败，详见日志）");
             ActiveInterceptStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
         }
     }
 
-    private void InitTelemetryToggle()
+    // ========== 开机自启 ==========
+
+    private bool _autoStartInitializing;
+
+    private void InitAutoStartToggles()
     {
-        _telemetryInitializing = true;
+        if (AutoStartToggle is null) return;
+        AutoStartService.MigrateLegacySettings();
+        _autoStartInitializing = true;
+        AutoStartToggle.IsOn = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
+        AutoStartHideUiToggle.IsOn = AppSettings.GetBool(AutoStartService.HideUiSettingKey, false);
+        _autoStartInitializing = false;
+        _ = RefreshAutoStartStatusAsync();
+    }
+
+    private async Task RefreshAutoStartStatusAsync()
+    {
+        try
+        {
+            var status = await AutoStartService.QueryAsync();
+            AutoStartStatusText.Text = status.State switch
+            {
+                AutoStartState.On => "已开启",
+                AutoStartState.NeedsRepair => "待修复：" + (status.Detail ?? "任务配置已变化"),
+                AutoStartState.Off => "未开启",
+                _ => status.Detail ?? "状态未知",
+            };
+            AutoStartStatusText.Foreground = new SolidColorBrush(status.State switch
+            {
+                AutoStartState.On => ThemeColors.AccentGreen,
+                AutoStartState.NeedsRepair => ThemeColors.AccentOrange,
+                AutoStartState.Error => ThemeColors.AccentRed,
+                _ => ThemeColors.Neutral,
+            });
+        }
+        catch (Exception ex)
+        {
+            AutoStartStatusText.Text = "状态未知：" + ex.Message;
+            AutoStartStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
+        }
+    }
+
+    private async void AutoStartToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_autoStartInitializing) return;
+        var desired = AutoStartToggle.IsOn;
+        AutoStartToggle.IsEnabled = false;
+        AutoStartStatusText.Text = desired ? "正在启用…" : "正在关闭…";
+        try
+        {
+            var result = await AutoStartService.SetEnabledAsync(desired);
+            AutoStartStatusText.Text = result.Message;
+            AutoStartStatusText.Foreground = new SolidColorBrush(
+                result.Success ? ThemeColors.AccentGreen : ThemeColors.AccentRed);
+
+            // 失败时回到设置的真实状态（成功时设置已由服务写入）
+            _autoStartInitializing = true;
+            AutoStartToggle.IsOn = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
+            _autoStartInitializing = false;
+        }
+        catch (Exception ex)
+        {
+            AutoStartStatusText.Text = "操作失败：" + ex.Message;
+            AutoStartStatusText.Foreground = new SolidColorBrush(ThemeColors.AccentRed);
+            _autoStartInitializing = true;
+            AutoStartToggle.IsOn = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
+            _autoStartInitializing = false;
+        }
+        finally
+        {
+            AutoStartToggle.IsEnabled = true;
+        }
+    }
+
+    private void AutoStartHideUiToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_autoStartInitializing) return;
+        AutoStartService.SetHideUi(AutoStartHideUiToggle.IsOn);
+    }
+
+    private void InitTelemetryToggle()
+    {        _telemetryInitializing = true;
         TelemetryToggle.IsOn = AppSettings.GetBool(TelemetryService.SettingKey, true);
         _telemetryInitializing = false;
     }
@@ -1441,7 +1502,7 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
             _ => "always",
         };
         AppSettings.Set("ActiveInterceptNotifyMode", mode);
-        // 重启后端使新配置生效
+        // 重建拦截运行时，使新的通知配置生效
         ActiveInterceptService.RestartBackend();
     }
 
@@ -1932,7 +1993,8 @@ public sealed partial class SettingsPage : Page, ILocalizablePage
 
                     if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
                     {
-                        GitHubAvatar.ProfilePicture = new BitmapImage(new Uri(user.AvatarUrl));
+                        // 32×32 的头像：GitHub 原图常是 460×460，按原尺寸解码没必要。
+                        GitHubAvatar.ProfilePicture = new BitmapImage { DecodePixelWidth = 64, UriSource = new Uri(user.AvatarUrl) };
                     }
                     return;
                 }

@@ -1,8 +1,11 @@
 # Homepage hero artwork
 
-`hero-light.png` is the layout approved by the user on 2026-10-27. `hero-dark.png`
+`hero-light.jpg` is the layout approved by the user on 2026-10-27. `hero-dark.jpg`
 uses the same arrangement with charcoal materials. These are generated image assets,
-not the original reference images and not WinUI Gallery's banner.
+not the original reference images and not WinUI Gallery's banner. The approved PNG
+masters were re-encoded as high-quality JPEG (q92, 4:4:4) to cut the packaged size
+from ~4.4 MB to ~0.8 MB; the PNG masters are no longer kept in the repo, so restore
+them from git history if the artwork itself changes.
 
 The user supplied the two `WW_win95_v004_*_wide_post.png` pictures as art direction.
 The approved illustration keeps their tactile beveled desktop style, with a Tuba

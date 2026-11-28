@@ -18,7 +18,8 @@ public sealed partial class AiAssistantPage
             state.Operations.AddRange(AgentActivityStore.Read(sessionId));
             _sessions[sessionId] = state;
         }
-        _active = state; SyncActive();
+        _active = state; state.LastTouchedUtc = DateTimeOffset.UtcNow; SyncActive();
+        TrimLoadedSessionMessages();
         if (!state.Loaded && state.Run is null && _client is not null && _lifetime is not null)
         {
             try { state.Messages = await _client.GetAllMessagesAsync(sessionId, _lifetime.Token); state.Loaded = true; }
@@ -28,6 +29,24 @@ public sealed partial class AiAssistantPage
         RenderTimeline(); JumpToLatest();
         if (state.Questions.Count > 0 && state.Questions[^1].View is { } question)
             DispatcherQueue.TryEnqueue(() => { if (!_closed && ReferenceEquals(_active, state)) question.FocusFirstAnswer(); });
+    }
+
+    /// <summary>
+    /// 只在内存里保留当前会话（外加一个刚看过、非运行中的会话）的完整消息；
+    /// 其余会话重新打开时再从 AI 组件按需加载，避免越开越多的历史长期占着托管堆。
+    /// </summary>
+    private void TrimLoadedSessionMessages()
+    {
+        var stale = _sessions.Values
+            .Where(s => !ReferenceEquals(s, _active) && s.Loaded && s.Id is not null && s.Run is null && !s.Draining)
+            .OrderByDescending(s => s.LastTouchedUtc)
+            .Skip(1)
+            .ToArray();
+        foreach (var state in stale)
+        {
+            state.Messages = [];
+            state.Loaded = false;
+        }
     }
 
     private void History_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)

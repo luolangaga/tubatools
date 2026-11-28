@@ -66,8 +66,48 @@ internal static class TweakEngine
             await tweak.ApplyToggle(on, ct).ConfigureAwait(false);
             return;
         }
+        if (on && UsesTransparentShortcutIcon(tweak)) ShortcutIconOverlay.EnsureInstalled();
         foreach (var op in tweak.Ops) RegistryAccess.Write(op.Target, on ? op.OnValue : op.OffValue);
     }
+
+    /// <summary>
+    /// 旧版把 Shell Icons 29/77 指向 shell32.dll,-50，部分 Windows 11 机器重启后会显示黑块。
+    /// 打开插件时把旧值迁移到固定透明 ICO；只改注册表，不擅自重启资源管理器。
+    /// </summary>
+    public static int RepairShortcutOverlayIcons()
+    {
+        var overlays = TweakCatalog.Tweaks
+            .Where(t => UsesTransparentShortcutIcon(t) && t.Ops.Count == 1)
+            .Select(t => t.Ops[0])
+            .ToList();
+        if (overlays.Count == 0) return 0;
+
+        var legacy = new List<RegistryOp>();
+        var needsIconFile = false;
+        foreach (var op in overlays)
+        {
+            var value = RegistryAccess.Read(op.Target) as string;
+            if (ShortcutIconOverlay.IsLegacyShell32Blank(value))
+            {
+                legacy.Add(op);
+            }
+            else if (RegistryAccess.Matches(op.Target, op.OnValue) &&
+                     !ShortcutIconOverlay.HasCurrentIcon(ShortcutIconOverlay.InstallPath))
+            {
+                needsIconFile = true;
+            }
+        }
+
+        if (legacy.Count == 0 && !needsIconFile) return 0;
+        ShortcutIconOverlay.EnsureInstalled();
+        foreach (var op in legacy) RegistryAccess.Write(op.Target, op.OnValue);
+        return legacy.Count + (needsIconFile ? 1 : 0);
+    }
+
+    private static bool UsesTransparentShortcutIcon(TweakDefinition tweak) =>
+        tweak.Ops.Any(op => op.OnValue is string value &&
+                            value.Equals(ShortcutIconOverlay.BlankIconPath, StringComparison.OrdinalIgnoreCase));
+
 
     public static async Task ApplyChoiceAsync(TweakDefinition tweak, int index, CancellationToken ct)
     {

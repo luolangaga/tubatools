@@ -7,6 +7,10 @@ public static class BackgroundService
     private const string PathKey = "BackgroundImagePath";
     private const string OpacityKey = "BackgroundOpacity";
 
+    // The wallpaper is drawn at 15% opacity behind the shell; decoding a 4K/8K file at its
+    // native size costs tens to hundreds of MB of pixel memory for pixels nobody can see.
+    private const int DecodeWidth = 2560;
+
     private static BitmapImage? _cachedImage;
     private static string? _cachedPath;
 
@@ -45,7 +49,9 @@ public static class BackgroundService
 
         try
         {
-            _cachedImage = new BitmapImage(new Uri(path));
+            var bitmap = new BitmapImage { DecodePixelWidth = DecodeWidth };
+            bitmap.UriSource = new Uri(path);
+            _cachedImage = bitmap;
             _cachedPath = path;
             return _cachedImage;
         }

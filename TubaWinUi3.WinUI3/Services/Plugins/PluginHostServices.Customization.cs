@@ -15,6 +15,7 @@ internal sealed partial class PluginHostServices
             : typeof(T) == typeof(IPluginNavigationService) && Allowed(PluginCapabilities.Navigation) ? new NavigationFacade(this)
             : typeof(T) == typeof(IPluginHostInfoService) ? new InfoFacade()
             : typeof(T) == typeof(IPluginDiagnosticsService) && Allowed(PluginCapabilities.Diagnostics) ? new DiagnosticsFacade()
+            : typeof(T) == typeof(IPluginIconService) && Allowed(PluginCapabilities.Icons) ? new IconFacade(this)
             : typeof(T) == typeof(IPluginHostAccess) && fullTrust ? new HostAccessFacade(this) : null;
         return service as T;
     }

@@ -49,7 +49,7 @@ Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup an
   <a href="https://tubawinui3.cn/features"><img src="images/screenshots/home.png" width="880" alt="Tuba Toolbox CE home screen with categorized tools and global search"></a>
 </p>
 
-**89 classic tools and 47 native utilities** share cards, favorites, sorting and desktop shortcuts. Browse a category, search for a tool, and star the ones you use most.
+**89 classic tools and 43 native utilities** share cards, favorites, sorting and desktop shortcuts. Browse a category, search for a tool, and star the ones you use most.
 
 <p align="center">
   <picture>
@@ -88,7 +88,7 @@ Tools for a new PC, from first-boot checks and benchmarks to drivers, cleanup an
 | Document | Contents |
 |:---------|:---------|
 | [Features](guide/en/features.md) | AI Assistant, hardware detection & performance, gaming, system optimization, network, format conversion, utilities |
-| [Built-in Tools (47)](guide/en/builtin-tools.md) | The complete native Fluent tool list |
+| [Built-in Tools (43)](guide/en/builtin-tools.md) | The complete native Fluent tool list |
 | [Bundled Tools (89)](guide/en/bundled-tools.md) | Third-party tools that ship with the app, by category |
 | [Getting Started](guide/en/getting-started.md) | System requirements, installation (Releases / Winget / Scoop / Store), building from source |
 | [Architecture](guide/en/architecture.md) | Directory layout, module notes and implementation details |

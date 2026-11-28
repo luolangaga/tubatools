@@ -20,10 +20,10 @@ Verified toolchain facts (re-check them whenever the SDK or csproj changes):
 | Project | Kind | Role |
 | --- | --- | --- |
 | `TubaWinUi3.WinUI3/` | WinUI 3 `WinExe` | The app: all XAML pages, `Services/`, `Models/`, `Metadata/`, `Tools/` |
-| `TubaWinUI3.BackEnd/` | NativeAOT `Exe` | "主动拦截" backend: state store + context-menu/COM monitor + named-pipe server (`NamedPipeBackendServer.cs`, `PipeContracts.cs`); single instance via global mutex; CLI `--config <path>` / `--once` / `--stop`; built by `build-backend-aot.ps1` |
 | `TubaWinUI3.ShellExtension/` | NativeAOT `Library` | Win11 `IExplorerCommand` ("文件占用查看"), loaded by `dllhost` through the app manifest's `com:SurrogateServer`; shares `FileLockShellMenuContract.cs` by linked compile; built by `build-shell-ext-aot.ps1` (MSIX-only) |
 | `TubaWinUi3.Tui/` | `net8.0-windows` console | Spectre.Console compatibility edition published with Native AOT |
-| `TubaWinUi3.Tests/` | xUnit | ~1280 tests; references the app and BackEnd (`Aliases="backend"`) |
+| `TubaWinUi3.Tests/` | xUnit | ~1280 tests; references the app and the in-process intercept runtime |
+| `TubaWinUi3.PluginSdk/` | `net10.0` Library | Plugin contract shared with dynamic plugins and `InternalsVisibleTo` tests |
 
 Other top-level folders (`website-winui3/`, `cloudflare-worker/`, `rating-worker/`, `benchmark-worker/`, `telemetry-dashboard/`, `file-transfer-web/`, `android-tuba-installer/`, `android-tuba-remote/`, `Launcher/`, `DxTraceDiag/`, `remotedefender/`) are side projects and are not part of the desktop app build.
 
@@ -108,8 +108,8 @@ Tools/               → bundled third-party executables in Chinese-named catego
 - `ToolCatalog.FindToolsRoot()` walks up from `AppContext.BaseDirectory` to locate `Tools/` — works packaged and unpackaged.
 - `LiteMonitorService` uses LibreHardwareMonitorLib (nvapi64 / ATI ADL / D3DKMT / WMI) and installs no kernel driver; the FPS overlay uses an ETW DxgKrnl trace session (`FpsService`) and needs admin.
 - `Package.appxmanifest` declares `runFullTrust` and the `webcam` device capability, plus the `com:SurrogateServer` entry for the shell extension. It does **not** declare `systemAIModels`.
-- MSIX/Store builds strip the backend (`build-store.ps1` deletes `TubaWinUI3.BackEnd.*`, unsupported in the MSIX sandbox).
+- MSIX/Store builds rely on the in-process runtime; the MSIX sandbox cannot write HKLM, so 主动拦截 cards stay hidden and no named pipe starts.
 - Node/JS assets are not part of the .NET build: the root `package.json` is a VitePress site pointing at `src/docs/` (that folder no longer exists), the current site is `website-winui3/` (Vite + pnpm); `*-worker/` and `file-transfer-web/` are separate deployments.
-- Build scripts at the repo root: `build-setup.ps1` (Inno Setup, x64/ARM64), `build-store.ps1` / `build-msix-store.ps1` (MSIX for Store), `build-backend-aot.ps1`, `build-shell-ext-aot.ps1`, `build-icon-cache.ps1`.
+- Build scripts at the repo root: `build-setup.ps1` (Inno Setup, x64/ARM64), `build-store.ps1` / `build-msix-store.ps1` (MSIX for Store), `build-shell-ext-aot.ps1`, `build-icon-cache.ps1`.
 - Workflows in `.github/workflows/`: `build-test.yml` (Lite/PE publish smoke, no tests), `build-release.yml` (manual dispatch; portable zips + Inno installer), `sign-test.yml`, `android-build.yml`, `sync-to-gitcode.yml`.
 - This file has drifted before (SDK version, tool count, test framework, CI description). When you change build, test or tool-registration facts, update the matching section here in the same change.

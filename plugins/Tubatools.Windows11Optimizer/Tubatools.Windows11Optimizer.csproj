@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.Windows11Optimizer</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.6</Version>
     <Authors>图吧工具箱</Authors>
     <Description>Windows 11 优化插件：去快捷方式箭头与盾牌、隐私遥测、性能游戏、Windows 更新、电源声音、通知建议、预装应用清理与常用软件安装</Description>
     <PackageTags>Tubatools</PackageTags>

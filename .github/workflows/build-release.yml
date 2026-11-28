@@ -201,6 +201,16 @@ jobs:
           }
           New-Item -ItemType File -Path (Join-Path "publish_${{ matrix.arch }}_installer" '.installed') -Force | Out-Null
 
+      - name: Trim WinUI MUI language resources
+        shell: pwsh
+        run: |
+          ./build-trim-publish.ps1 -Root "publish_${{ matrix.arch }}", "publish_${{ matrix.arch }}_installer"
+
+      - name: Prune architecture-specific tools
+        shell: pwsh
+        run: |
+          ./build-prune-tools.ps1 -Root "publish_${{ matrix.arch }}", "publish_${{ matrix.arch }}_installer" -Arch "${{ matrix.arch }}"
+
       - name: Verify remotedefender in publish output
         shell: pwsh
         run: |
@@ -384,6 +394,18 @@ jobs:
             Copy-Item -LiteralPath $priFile -Destination publish_x64_lite -Force
             Write-Host "Restored TubaWinUi3.pri for lite"
           }
+
+      - name: Trim WinUI MUI language resources (lite)
+        if: matrix.arch == 'x64'
+        shell: pwsh
+        run: |
+          ./build-trim-publish.ps1 -Root "publish_x64_lite"
+
+      - name: Prune architecture-specific tools (lite)
+        if: matrix.arch == 'x64'
+        shell: pwsh
+        run: |
+          ./build-prune-tools.ps1 -Root "publish_x64_lite" -Arch x64
 
       - name: Create lite portable zip (bundled essential tools, with marker, x64 only)
         if: matrix.arch == 'x64'

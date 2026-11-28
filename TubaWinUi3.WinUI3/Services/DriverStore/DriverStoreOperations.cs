@@ -11,7 +11,7 @@ public static partial class DriverStoreService
 
     private static List<DriverGroup> ScanNative(Action<string>? progress, CancellationToken ct, string? offlineRoot)
     {
-        progress?.Invoke("正在通过 Windows API 枚举驱动包…");
+        progress?.Invoke(offlineRoot is null ? "正在读取已安装的驱动包…" : "正在读取离线映像的驱动包…");
         var packages = DriverStoreNative.Enumerate(offlineRoot);
         ct.ThrowIfCancellationRequested();
         if (offlineRoot is null)
@@ -29,10 +29,12 @@ public static partial class DriverStoreService
             }
         }
         progress?.Invoke("正在计算驱动包大小…");
+        // 本机驱动库同时把大小与原始 INF 路径补回来（pnputil 只给发布名，路径靠 FileRepository 目录还原）。
+        if (offlineRoot is null) AssignRepositoryInfo(packages);
         foreach (var pkg in packages)
         {
             ct.ThrowIfCancellationRequested();
-            if (string.IsNullOrEmpty(pkg.StoreInfPath)) continue;
+            if (pkg.SizeKnown || string.IsNullOrEmpty(pkg.StoreInfPath)) continue;
             try
             {
                 pkg.SizeBytes = PackageFiles(Path.GetDirectoryName(pkg.StoreInfPath)!).Sum(f => new FileInfo(f).Length);
@@ -67,6 +69,7 @@ public static partial class DriverStoreService
             var packages = DriverStoreNative.Enumerate(offlineRoot)
                 .Where(p => infName == "*" || p.InfName.Equals(infName, StringComparison.OrdinalIgnoreCase)).ToList();
             if (packages.Count == 0) return DriverOpResult.Fail("没有找到要导出的驱动包");
+            if (offlineRoot is null) AssignRepositoryInfo(packages); // 备份需要原始 INF 所在的驱动库目录
             var errors = new List<string>();
             foreach (var pkg in packages)
             {

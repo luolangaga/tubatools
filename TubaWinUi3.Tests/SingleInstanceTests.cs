@@ -48,10 +48,12 @@ public class SingleInstanceTests
     }
 
     [Fact]
-    public void Parse_GameOverlayAuto()
+    public void Parse_AutoStart_IsModifierNotNavigation()
     {
-        var intent = LaunchIntent.Parse(new[] { "app.exe", "--game-overlay-auto" });
-        Assert.Equal(LaunchIntentKind.GameOverlayAuto, intent.Kind);
+        var args = new[] { "app.exe", "--autostart", "--hide-ui" };
+        Assert.Equal(LaunchIntentKind.Normal, LaunchIntent.Parse(args).Kind);
+        Assert.True(LaunchIntent.HasAutoStart(args));
+        Assert.True(LaunchIntent.HasHideUi(args));
     }
 
     [Fact]

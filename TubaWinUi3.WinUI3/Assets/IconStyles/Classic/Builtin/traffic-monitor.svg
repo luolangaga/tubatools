@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- traffic-monitor 流量监控器 -->
+  <path fill="none" d="M4.5 4.5V18.5C4.5 19.6 5.4 20.5 6.5 20.5H20" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M7.5 16.5L11 11.5L14 14.5L18.5 8.5" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

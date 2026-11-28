@@ -16,9 +16,87 @@ public static class FavoritesService
     private static long _snapshotLength = long.MinValue;
     private static string[] _snapshot = [];
     private static HashSet<string> _snapshotSet = new(StringComparer.OrdinalIgnoreCase);
+    private static bool _legacyBuiltinPathsChecked;
+
+    private static readonly (string OldSuffix, string NewSuffix)[] LegacyBuiltinFavoriteSuffixes =
+    [
+        (JoinPath("处理器工具", "CPU排行"), JoinPath("综合检测", "性能排行")),
+        (JoinPath("显卡工具", "GPU排行"), JoinPath("综合检测", "性能排行")),
+        (JoinPath("综合检测", "跑分排行"), JoinPath("综合检测", "性能排行")),
+        (JoinPath("处理器工具", "核间延迟查询"), JoinPath("综合检测", "性能排行")),
+    ];
+
+    private static string JoinPath(params string[] parts) => string.Join(Path.DirectorySeparatorChar, parts);
+
+    /// <summary>
+    /// 四个榜单卡片合并后，旧收藏仍然指向已删除的虚拟目录；在读取收藏时一次性映射到新卡片。
+    /// 只处理 ToolsRoot 下的内置虚拟路径，避免误改同名的第三方工具目录。
+    /// </summary>
+    private static void MigrateLegacyBuiltinPaths()
+    {
+        if (_legacyBuiltinPathsChecked) return;
+        _legacyBuiltinPathsChecked = true;
+        try
+        {
+            var path = FavoritesPath;
+            if (!File.Exists(path)) return;
+
+            var entries = FavoriteFile.Read(path);
+            var migrated = new List<string>(entries.Count);
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var changed = false;
+
+            foreach (var entry in entries)
+            {
+                var normalized = MapLegacyBuiltinPath(entry);
+                if (!string.Equals(normalized, entry, StringComparison.Ordinal))
+                    changed = true;
+                if (!seen.Add(normalized))
+                {
+                    changed = true;
+                    continue;
+                }
+                migrated.Add(normalized);
+            }
+
+            if (changed)
+                FavoriteFile.Update(path, _ => migrated);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            _legacyBuiltinPathsChecked = false;
+            System.Diagnostics.Debug.WriteLine($"[Favorites] legacy path migration skipped: {ex.Message}");
+        }
+    }
+
+    private static string MapLegacyBuiltinPath(string stored)
+    {
+        try
+        {
+            var relative = PathResolver.MakeRelative(PathResolver.MakeAbsolute(stored))
+                .Replace('/', Path.DirectorySeparatorChar);
+            var toolsRootPrefix = "{ToolsRoot}" + Path.DirectorySeparatorChar;
+            var userToolsRootPrefix = "{UserToolsRoot}" + Path.DirectorySeparatorChar;
+            if (!relative.StartsWith(toolsRootPrefix, StringComparison.OrdinalIgnoreCase)
+                && !relative.StartsWith(userToolsRootPrefix, StringComparison.OrdinalIgnoreCase))
+                return stored;
+
+            foreach (var (oldSuffix, newSuffix) in LegacyBuiltinFavoriteSuffixes)
+            {
+                if (relative.EndsWith(oldSuffix, StringComparison.OrdinalIgnoreCase))
+                    return relative[..^oldSuffix.Length] + newSuffix;
+            }
+            return stored;
+        }
+        catch
+        {
+            return stored;
+        }
+    }
 
     public static IReadOnlyList<string> GetFavorites()
     {
+        MigrateLegacyBuiltinPaths();
         var path = FavoritesPath;
         try
         {
@@ -71,6 +149,7 @@ public static class FavoritesService
         {
             LastSaveError = LocalizationService.L("Persistence_FavoritesError", "收藏保存失败，请检查数据目录权限和剩余空间后重试。");
             System.Diagnostics.Debug.WriteLine($"[Favorites] {ex}");
+            try { LogService.Warn(LogService.App, $"收藏保存失败：{ex.GetType().Name}: {ex.Message} (0x{ex.HResult:X8}) → {FavoritesPath}"); } catch { }
             SaveFailed?.Invoke(LastSaveError);
         }
     }
@@ -100,6 +179,7 @@ public static class FavoritesService
             _snapshotLength = long.MinValue;
             _snapshot = [];
             _snapshotSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _legacyBuiltinPathsChecked = false;
         }
     }
 }

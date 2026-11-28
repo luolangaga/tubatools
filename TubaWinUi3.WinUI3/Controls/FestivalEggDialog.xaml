@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentDialog
+    x:Class="TubaWinUi3.Controls.FestivalEggDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    PrimaryButtonText="收下祝福"
+    CloseButtonText="下次再说"
+    DefaultButton="Primary"
+    MaxWidth="440">
+
+    <ScrollViewer
+        MaxHeight="540"
+        HorizontalScrollMode="Disabled"
+        VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12" MaxWidth="360">
+            <Border
+                x:Name="EnvelopeFrame"
+                Visibility="Collapsed"
+                CornerRadius="12"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Padding="8">
+                <Grid MinHeight="190">
+                    <Border x:Name="EnvelopePulse" Background="#1AC62828" CornerRadius="10" Opacity="0.2" />
+                    <Image
+                        x:Name="EnvelopeImage"
+                        MaxHeight="300"
+                        Stretch="Uniform"
+                        Opacity="0"
+                        AutomationProperties.Name="春节红包" />
+                    <!-- 云端红包图下载需要时间，先给一个明确在转圈的加载态，避免被误认为「没有图」。 -->
+                    <StackPanel
+                        x:Name="EnvelopeLoading"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="10">
+                        <ProgressRing
+                            x:Name="EnvelopeRing"
+                            IsActive="True"
+                            Width="42"
+                            Height="42"
+                            HorizontalAlignment="Center" />
+                        <TextBlock
+                            x:Name="EnvelopeLoadingText"
+                            FontSize="12"
+                            TextAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock x:Name="BodyText" TextWrapping="Wrap" />
+
+            <Button
+                x:Name="ActionButton"
+                Click="ActionButton_Click"
+                HorizontalAlignment="Left"
+                Style="{StaticResource AccentButtonStyle}" />
+
+            <TextBlock
+                x:Name="ResultText"
+                TextWrapping="Wrap"
+                FontSize="16"
+                Visibility="Collapsed"
+                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+
+            <TextBlock
+                x:Name="HintText"
+                TextWrapping="Wrap"
+                FontSize="12"
+                Visibility="Collapsed"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <HyperlinkButton
+                x:Name="EnvelopeLink"
+                Visibility="Collapsed"
+                Click="EnvelopeLink_Click"
+                Content="在浏览器打开红包大图" />
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

@@ -14,14 +14,18 @@ public sealed partial class MainWindow
             .Select(element => (Element: element, element.Visibility)).ToArray();
         var heights = root.RowDefinitions.Take(2).Select(row => row.Height).ToArray();
         bool paneVisible = NavView.IsPaneVisible;
+        var railVisibility = NavRail.Visibility;
         foreach (var item in chrome) item.Element.Visibility = Visibility.Collapsed;
         foreach (var row in root.RowDefinitions.Take(2)) row.Height = new GridLength(0);
         NavView.IsPaneVisible = false;
+        // 图标菜单是侧栏的另一种呈现，全屏工具同样要让出这块区域。
+        NavRail.Visibility = Visibility.Collapsed;
         return () =>
         {
             foreach (var item in chrome) item.Element.Visibility = item.Visibility;
             for (int index = 0; index < heights.Length; index++) root.RowDefinitions[index].Height = heights[index];
             NavView.IsPaneVisible = paneVisible;
+            NavRail.Visibility = railVisibility;
         };
     }
 }

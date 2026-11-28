@@ -40,6 +40,12 @@ public sealed partial class MainWindow : Window
     /// <summary>当前正在执行的内置工具名称（入口页在 ExecuteAsync 前设置），供独立窗口标题使用。</summary>
     public static string? ActiveToolName { get; set; }
 
+    /// <summary>上一次应用的标题栏布局。用于跳过内容没有变化的重复赋值（见 TitleBarContent_SizeChanged）。</summary>
+    private TitleBarLayout.Presentation? _lastTitleBarLayout;
+
+    /// <summary>是否已经排了一次「布局后再刷新拖动区域」，用于合并批量标签操作。</summary>
+    private bool _dragRegionRefreshQueued;
+
     public Image? GetBackgroundImage() => BackgroundImg;
 
     public void ShowUpdateBanner(Models.UpdateInfo update, bool autoDownload)
@@ -135,16 +141,21 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // 节日日历是纯本地计算，先在构造阶段解析一次（启动页也要显示节日问候）；
+        // 粒子层要等启动页退场后才初始化，不抢占启动时间。
+        FestivalService.Initialize();
+        FestivalService.Changed += OnFestivalChanged;
+        InitializeTabs();
         Services.AiAgent.ComputerControlService.PendingInteractionRequested += OpenAssistantInteraction;
         FavoritesService.SaveFailed += OnPersistenceFailed;
         AppSettings.SaveFailed += OnPersistenceFailed;
 
         ApplyNavigationIcons();
+        Services.IconThemeService.Changed += ApplyNavigationIcons;
         InitializeAiAssistantIntro();
         NavView.ActualThemeChanged += NavigationThemeChanged;
         NavView.Loaded += PluginNavigationLoaded;
         Activated += NavigationWindowActivated;
-
         SearchListView.ItemsSource = _searchResults;
 
         // AutoSuggestBox 会先于实例处理 Escape（置 Handled），键盘导航必须用 handledEventsToo 注册
@@ -174,6 +185,7 @@ public sealed partial class MainWindow : Window
         BackdropService.ApplyBackdrop(this);
         BackdropService.BackdropChanged += OnBackdropChanged;
 
+        WindowSizeService.ApplyMinimumWindowSize(this);
         WindowSizeService.ApplySavedWindowSize(this);
 
         Closed += MainWindow_Closed;
@@ -183,8 +195,8 @@ public sealed partial class MainWindow : Window
         // Handled 分支保留给编程式 Close()（App.MainWindow?.Close()，后台工具页面在用），
         // 两条路径共用同一个判据，先到先得。
         AppWindow.Closing += MainWindow_Closing;
-        NavFrame.Navigated += NavFrame_Navigated;
         NavView.ItemInvoked += NavView_ItemInvoked;
+        NavRail.ItemInvoked += NavRail_ItemInvoked;
 
         if (RuntimeHelper.IsPackagedContext)
         {
@@ -194,6 +206,7 @@ public sealed partial class MainWindow : Window
         }
 
         SplashVersionText.Text = UpdateService.CurrentVersion.ToString();
+        UpdateSplashFestivalText();
         // 命令行可能在 Loaded 前直接执行内置工具，下载队列须先具备 UI dispatcher。
         DownloadQueueService.Initialize(DispatcherQueue);
         DownloadQueueService.QueueChanged += OnDownloadQueueChanged;
@@ -212,6 +225,44 @@ public sealed partial class MainWindow : Window
         _ = InitializeAfterSplashAsync();
     }
 
+    private void OnFestivalChanged()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            FestivalLayer.Refresh();
+            UpdateFestivalEffectCloseButton();
+            UpdateSplashFestivalText();
+        });
+    }
+
+    /// <summary>只有当前节日正在展示特效、且用户还没手动关过时，才显示关闭按钮。</summary>
+    private void UpdateFestivalEffectCloseButton()
+    {
+        var occasion = FestivalService.IsVisible ? FestivalService.Current : null;
+        var canShow = occasion is not null && !FestivalService.IsEffectDismissed(occasion);
+        FestivalEffectCloseButton.Visibility = canShow ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void FestivalEffectClose_Click(object sender, RoutedEventArgs e)
+    {
+        var occasion = FestivalService.Current;
+        if (occasion is not null) FestivalService.DismissEffect(occasion);
+        FestivalLayer.Dismiss();
+        FestivalEffectCloseButton.Visibility = Visibility.Collapsed;
+    }
+
+    private void UpdateSplashFestivalText()
+    {
+        var occasion = FestivalService.IsVisible ? FestivalService.Current : null;
+        if (occasion is null)
+        {
+            SplashFestivalText.Visibility = Visibility.Collapsed;
+            return;
+        }
+        SplashFestivalText.Text = FestivalCopy.Splash(occasion.Definition);
+        SplashFestivalText.Visibility = Visibility.Visible;
+    }
+
     private void OnLanguageChanged()
     {
         ApplyLocalizedShellText();
@@ -219,6 +270,8 @@ public sealed partial class MainWindow : Window
         ToolMetadataService.InvalidateCache();
         ToolCatalog.InvalidateTagsCache();
         RefreshToolCategories();
+        // 每个标签的标题都要按新语言重算（后台标签也要）
+        RefreshAllTabTitles();
         if (NavFrame.Content is ILocalizablePage page)
             page.ApplyLocalization();
     }
@@ -228,10 +281,14 @@ public sealed partial class MainWindow : Window
     {
         var title = LocalizationService.L("App_Title", "图吧工具箱CE");
         Title = title;
-        AppTitleBar.Title = title;
+        UpdateSplashFestivalText();
+        // 多标签开启时标题栏只显示标签条，标题文字让出空间
+        AppTitleBar.Title = _tabsEnabled ? string.Empty : title;
+        RefreshTitleBarDragRegions();
 
         AutomationProperties.SetName(NewbieTutorialButton, LocalizationService.L("MainWindow_NewbieTutorialButton", "新手教程"));
         AutomationProperties.SetName(DownloadQueueButton, LocalizationService.L("MainWindow_DownloadQueueButton", "下载队列"));
+        AutomationProperties.SetName(ShellTabView, LocalizationService.L("ShellTab_StripName", "标签页"));
 
         // NavigationView 内建「设置」项文本由框架按系统语言渲染，必须手动覆写为目标语言
         if (NavView.SettingsItem is NavigationViewItem settingsItem)
@@ -239,6 +296,9 @@ public sealed partial class MainWindow : Window
 
         // 安全模式横幅的文案与按钮都是代码赋值，语言切换后要重建
         ApplySafeModeBanner();
+
+        // 图标栏标题来自菜单项 Content，语言切换后要重取；隐藏时跳过。
+        RefreshNavRail();
 
         // AI 助手上线引导与其他代码赋值文案一样，语言切换后重取一次
         ConfigureAiAssistantIntroTip();
@@ -251,27 +311,31 @@ public sealed partial class MainWindow : Window
         // 仅应用本地自定义背景（品牌壁纸彩蛋已移除：不再自动检测主板品牌、下载或加载壁纸）
         ApplyBackground();
 
-        // 分类菜单只依赖目录名/元数据，不必等待所有可执行文件扫描。
-        // Loaded 后初始化也让 App 先设置 UI dispatcher、处理命令行导航，
+        // 首帧不等工具目录扫描：布局模式只读设置，先应用；默认页（首页/硬件信息/内置工具，
+        // 都是静态导航项，不依赖动态分类）立即导航——页面自己的 GetAllToolsAsync 会发起
+        // single-flight 并行扫描。分类菜单在后台共享同一次扫描结果，就绪后再填充侧栏
+        // （RefreshToolCategories 自带 in-flight/pending 去重，与插件加载完成后的刷新不冲突）。
+        // 仍放在 NavView.Loaded 之后：让 App 先设置 UI dispatcher、处理命令行导航，
         // 避免 --open-builtin 等启动先创建并扫描一个马上被替换的首页。
-        try
-        {
-            var categories = await Task.Run(() => ToolCatalog.GetVisibleCategories().ToList());
-            if (App.IsExiting) return;
-            PopulateCategories(categories);
-            ApplyNavLayoutMode();
-            NavLayoutModeService.NavLayoutModeChanged += OnNavLayoutModeChanged;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[Startup] 分类加载失败: {ex.Message}");
-        }
+        ApplyNavLayoutMode();
+        NavLayoutModeService.NavLayoutModeChanged += OnNavLayoutModeChanged;
 
         // 命令行激活或用户已导航时不覆盖当前页面。
         if (NavFrame.Content is null)
             NavigateToDefaultPage();
 
+        RefreshToolCategories();
+
         await FadeOutSplashAsync();
+
+        // 首帧耗时落盘（进程启动 → 启动页退场），供 startup.log 对比优化效果。
+        try
+        {
+            using var proc = System.Diagnostics.Process.GetCurrentProcess();
+            LogService.Info(LogService.Startup,
+                $"首帧就绪（进程启动→启动页退场）: {(DateTime.Now - proc.StartTime).TotalMilliseconds:0} ms");
+        }
+        catch { }
 
         // 启动画面退场后再弹上线引导，避免和 Splash/首次向导抢焦点
         _ = MaybeShowAiAssistantIntroAsync();
@@ -293,6 +357,10 @@ public sealed partial class MainWindow : Window
         await tcs.Task;
 
         SplashOverlay.Visibility = Visibility.Collapsed;
+
+        // 启动页退场后再构建彩蛋层：此时窗口已布局，首帧不会为粒子多算一帧。
+        FestivalLayer.Initialize();
+        UpdateFestivalEffectCloseButton();
     }
 
     private DoubleAnimation CreateSplashAnimation(string targetProperty, double from, double to, TimeSpan duration, EasingFunctionBase easing)
@@ -313,6 +381,9 @@ public sealed partial class MainWindow : Window
     {
         if (key == "BackgroundImagePath" || key == "BackgroundOpacity")
             DispatcherQueue.TryEnqueue(ApplyBackground);
+        // 设置页切「多标签页」开关后立即生效，不需要重启
+        else if (key == TabsEnabledSettingKey)
+            DispatcherQueue.TryEnqueue(() => ApplyTabsEnabled(AppSettings.GetBool(TabsEnabledSettingKey, TabsEnabledDefault)));
     }
 
     private void ApplyBackground()
@@ -334,46 +405,6 @@ public sealed partial class MainWindow : Window
     private void UpdateSplashStatus(string text)
     {
         DispatcherQueue.TryEnqueue(() => SplashStatusText.Text = text);
-    }
-
-    private void NavFrame_Navigated(object sender, NavigationEventArgs e)
-    {
-        AppTitleBar.IsBackButtonVisible = NavFrame.CanGoBack;
-
-        // 只要真的打开过 AI 助手（侧栏、内置工具、搜索结果、外部激活都走同一条 Frame），
-        // 就算用户已经发现这个入口，收起侧栏角标并结束引导。
-        if (e.SourcePageType == typeof(AiAssistantPage))
-            OnAiAssistantVisited();
-
-        if (_navFromSidebar)
-        {
-            _navFromSidebar = false;
-            return;
-        }
-
-        _syncingNavSelection = true;
-
-        if (e.SourcePageType == typeof(SettingsPage))
-        {
-            NavView.SelectedItem = NavView.SettingsItem;
-        }
-        else
-        {
-            var targetTag = ResolvePageTag(e.SourcePageType, e.Parameter);
-            if (targetTag is not null)
-            {
-                foreach (var item in NavView.MenuItems)
-                {
-                    if (item is NavigationViewItem navItem && navItem.Tag is string t && t == targetTag)
-                    {
-                        NavView.SelectedItem = navItem;
-                        break;
-                    }
-                }
-            }
-        }
-
-        _syncingNavSelection = false;
     }
 
     private static string? ResolvePageTag(Type pageType, object? parameter)
@@ -469,6 +500,40 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
+    /// 登录自启 + 设置要求隐藏界面：窗口刚 Activate 完立刻收起（此时合成器还没出帧，用户看不到闪烁），
+    /// 只留托盘图标。首次隐藏给一次气泡说明，之后静默。
+    /// </summary>
+    public void HideToTrayOnStartup()
+    {
+        try
+        {
+            AppWindow.Hide();
+            AppWindow.IsShownInSwitchers = false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 自启隐藏窗口失败: {ex.Message}");
+        }
+
+        try
+        {
+            TrayIconService.ShowForCloseToTray();
+            if (!AppSettings.GetBool("AutoStartHiddenHintShown", false))
+            {
+                AppSettings.Set("AutoStartHiddenHintShown", true);
+                TrayIconService.ShowBalloon(
+                    "图吧工具箱CE",
+                    "已随 Windows 登录在后台启动。单击托盘图标打开主界面，右键可退出。",
+                    4000);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 自启隐藏托盘设置失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 从托盘恢复主窗口（显示 + 取消最小化 + 激活）。
     /// 返回窗口是否真的显示出来了——失败时调用方不能收起托盘图标，
     /// 否则用户会同时失去窗口和托盘入口。
@@ -479,6 +544,9 @@ public sealed partial class MainWindow : Window
         {
             if (!AppWindow.IsVisible)
                 AppWindow.Show();
+
+            // 登录自启隐藏时把它移出了 Alt-Tab；用户从托盘恢复后要重新出现在任务切换器里。
+            AppWindow.IsShownInSwitchers = true;
 
             if (AppWindow.Presenter is OverlappedPresenter { State: OverlappedPresenterState.Minimized } presenter)
                 presenter.Restore();
@@ -546,8 +614,16 @@ public sealed partial class MainWindow : Window
 
         FavoritesService.SaveFailed -= OnPersistenceFailed;
         AppSettings.SaveFailed -= OnPersistenceFailed;
+        // 后台标签页的页面不会收到 OnNavigatedFrom：窗口关闭前统一走一遍清理
+        foreach (var tab in _tabs.ToList())
+        {
+            try { DetachClosedPage(tab); } catch { }
+        }
         BackdropService.BackdropChanged -= OnBackdropChanged;
+        FestivalService.Changed -= OnFestivalChanged;
+        FestivalLayer.Stop();
         NavView.ActualThemeChanged -= NavigationThemeChanged;
+        NavRail.ItemInvoked -= NavRail_ItemInvoked;
         NavView.Loaded -= PluginNavigationLoaded;
         Activated -= NavigationWindowActivated;
         AppWindow.Changed -= AppWindow_Changed;
@@ -573,6 +649,8 @@ public sealed partial class MainWindow : Window
         try { Services.DisplayTools.DisplayColorAdjustment.RestoreAll(); } catch { }
         // 游戏联机：停掉 EasyTier 子进程并释放配置（作业对象之外的第二道保险）
         try { Services.TunnelSession.Instance.Shutdown(); } catch { }
+        // 主动拦截 / 游戏自动监控已并入本进程：退出前停掉轮询线程、管道服务与覆盖层信号
+        try { Services.ActiveIntercept.ActiveInterceptService.Shutdown(); } catch { }
         // 托盘图标必须显式移除：进程退出后残留的图标要等鼠标划过去才消失
         try { TrayIconService.Dispose(); } catch { }
 
@@ -674,9 +752,15 @@ public sealed partial class MainWindow : Window
         }
 
         if (!args.DidSizeChange) return;
+
+        // 最小尺寸已经交给 OverlappedPresenter 在系统侧钳制（拖边缩放/贴边分屏时跟手）。
+        // 这里只给不支持的呈现器或属性设置失败的情况兜底，避免在拖拽过程中反写窗口尺寸。
+        if (sender.Presenter is OverlappedPresenter { PreferredMinimumWidth: > 0, PreferredMinimumHeight: > 0 })
+            return;
+
         var size = sender.Size;
-        var minWidth = 800;
-        var minHeight = 600;
+        var minWidth = WindowSizeService.MinWidth;
+        var minHeight = WindowSizeService.MinHeight;
         var needsResize = false;
         var newW = size.Width;
         var newH = size.Height;
@@ -721,11 +805,22 @@ public sealed partial class MainWindow : Window
     /// 标题栏 Content 列宽变化：按可用宽度收缩搜索框、空间不足时依次收起右侧按钮和搜索框
     /// （Issue #262）。TitleBar 会把内容里每个交互控件的布局矩形原样登记为「直通区域」，
     /// 内容一旦溢出列宽，这些区域就会盖住右侧的最小拖拽区和系统标题按钮。
+    ///
+    /// 只在布局结果真的变化时才写依赖属性：拖边缩放时 SizeChanged 每帧都来，
+    /// 重复赋值会让标签条/搜索框反复 measure，拖拽手感明显变差。
     /// </summary>
     private void TitleBarContent_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         var layout = TitleBarLayout.ForContentWidth(e.NewSize.Width);
+        if (_lastTitleBarLayout == layout) return;
+        _lastTitleBarLayout = layout;
 
+        // 多标签关闭时不接管标签条的显隐（设置里关掉就该一直不显示）
+        if (_tabsEnabled)
+        {
+            ShellTabView.Visibility = layout.ShowTabStrip ? Visibility.Visible : Visibility.Collapsed;
+            ShellTabView.MaxWidth = layout.TabStripWidth;
+        }
         TitleSearchArea.Visibility = layout.ShowSearchBox ? Visibility.Visible : Visibility.Collapsed;
         TitleActionButtons.Visibility = layout.ShowActionButtons ? Visibility.Visible : Visibility.Collapsed;
 
@@ -740,10 +835,46 @@ public sealed partial class MainWindow : Window
         {
             HideSearchPopup();
         }
+
+        RefreshTitleBarDragRegions();
+    }
+
+    /// <summary>
+    /// 显式刷新标题栏的拖动/直通区域。
+    /// <see cref="Microsoft.UI.Xaml.Controls.TitleBar.AutoRefreshDragRegions"/> 会在每个布局帧
+    /// 重算并写入非客户区（官方文档明确提示影响性能），窗口拖拽/缩放时会随布局反复触发；
+    /// 这里改为只在标题栏内容真的变化后刷新一次（尺寸变化、标签增删/重排、动作按钮显隐、标题文字）。
+    /// </summary>
+    private void RefreshTitleBarDragRegions()
+    {
+        if (!AppTitleBar.IsLoaded) return;
+        try
+        {
+            AppTitleBar.RecomputeDragRegions();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] 刷新标题栏拖动区域失败（已忽略）: {ex.Message}");
+        }
+    }
+
+    /// <summary>下一轮消息、等布局跑完后再刷新拖动区域（批量标签操作会合并成一次）。</summary>
+    private void QueueTitleBarDragRegionRefresh()
+    {
+        if (_dragRegionRefreshQueued) return;
+        _dragRegionRefreshQueued = true;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _dragRegionRefreshQueued = false;
+            RefreshTitleBarDragRegions();
+        });
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
+        // 图标菜单的选中态始终跟随 NavigationView，哪怕这次是代码同步（_syncingNavSelection）。
+        UpdateNavRailSelection();
+
         if (_syncingNavSelection) return;
 
         // 设置入口改由 ItemInvoked 统一处理：布局切换（Top/侧边栏）后 NavigationView
@@ -753,44 +884,51 @@ public sealed partial class MainWindow : Window
 
         _navFromSidebar = true;
 
-        if (args.SelectedItem is NavigationViewItem item)
-        {
-            switch (item.Tag)
-            {
-                case string pluginTag when pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal):
-                    if (BuiltinToolRegistry.GetById(pluginTag[12..]) is PluginXamlTool plugin) _ = LaunchPluginPageAsync(plugin);
-                    break;
-                case "home":
-                    NavFrame.Navigate(typeof(DashboardPage));
-                    break;
-                case "all":
-                    NavFrame.Navigate(typeof(DashboardPage));
-                    break;
-                case "favorites":
-                    NavFrame.Navigate(typeof(DashboardPage), "favorites");
-                    break;
-                case "hardware":
-                    NavFrame.Navigate(typeof(HardwarePage));
-                    break;
-                case "builtin":
-                    NavFrame.Navigate(typeof(BuiltinToolsPage));
-                    break;
-                case "ai-assistant":
-                    NavFrame.Navigate(typeof(AiAssistantPage));
-                    break;
-                case "community":
-                    if (RuntimeHelper.IsPackagedContext) break;
-                    NavFrame.Navigate(typeof(PluginsPage));
-                    break;
+        if (args.SelectedItem is NavigationViewItem { Tag: string tag })
+            NavigateToTag(tag);
+    }
 
-                case "benchmark":
-                    _navFromSidebar = false;
-                    _ = ExecuteBenchmarkToolAsync();
-                    break;
-                case string category:
-                    NavFrame.Navigate(typeof(HomePage), category);
-                    break;
-            }
+    /// <summary>
+    /// 按菜单 Tag 导航。NavigationView 与图标菜单共用同一套 Tag → 页面映射，
+    /// 保证两种布局行为一致（性能测试仍按原逻辑走页面内跑分入口）。
+    /// </summary>
+    private void NavigateToTag(string tag)
+    {
+        switch (tag)
+        {
+            case string pluginTag when pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal):
+                if (BuiltinToolRegistry.GetById(pluginTag[12..]) is PluginXamlTool plugin) _ = LaunchPluginPageAsync(plugin);
+                break;
+            case "home":
+                NavFrame.Navigate(typeof(DashboardPage));
+                break;
+            case "all":
+                NavFrame.Navigate(typeof(DashboardPage));
+                break;
+            case "favorites":
+                NavFrame.Navigate(typeof(DashboardPage), "favorites");
+                break;
+            case "hardware":
+                NavFrame.Navigate(typeof(HardwarePage));
+                break;
+            case "builtin":
+                NavFrame.Navigate(typeof(BuiltinToolsPage));
+                break;
+            case "ai-assistant":
+                NavFrame.Navigate(typeof(AiAssistantPage));
+                break;
+            case "community":
+                if (RuntimeHelper.IsPackagedContext) break;
+                NavFrame.Navigate(typeof(PluginsPage));
+                break;
+
+            case "benchmark":
+                _navFromSidebar = false;
+                _ = ExecuteBenchmarkToolAsync();
+                break;
+            default:
+                NavFrame.Navigate(typeof(HomePage), tag);
+                break;
         }
     }
 
@@ -826,7 +964,6 @@ public sealed partial class MainWindow : Window
             NavFrame.Navigate(typeof(DashboardPage));
         }
     }
-
     private readonly List<NavigationViewItem> _dynamicMenuItems = [];
 
     private void PopulateCategories(IReadOnlyList<string> categories)
@@ -865,10 +1002,11 @@ public sealed partial class MainWindow : Window
                 {
                     Content = plugin.Name, Tag = "plugin-page:" + plugin.Id,
                     Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } icon
-                        ? new ImageIcon { Source = icon } : new FontIcon { Glyph = plugin.Glyph }
+                        ? NavigationIconService.CreateImageIcon(icon) : new FontIcon { Glyph = plugin.Glyph }
                 });
             }
         TryApplyPluginNavigationCustomization();
+        RefreshNavRail();
     }
 
     private async Task LaunchPluginPageAsync(PluginXamlTool plugin)
@@ -932,7 +1070,7 @@ public sealed partial class MainWindow : Window
             {
                 try
                 {
-                    PopulateCategories(categories);
+                    if (!App.IsExiting) PopulateCategories(categories);
                 }
                 finally
                 {
@@ -974,11 +1112,18 @@ public sealed partial class MainWindow : Window
 
     private void ApplyNavLayoutMode()
     {
-        var isTabMode = NavLayoutModeService.IsTabMode();
+        var mode = NavLayoutModeService.GetNavLayoutMode();
+        var isTabMode = mode == NavLayoutModeService.TabsMode;
+        var isRailMode = mode == NavLayoutModeService.RailMode;
+
         NavView.PaneDisplayMode = isTabMode
             ? NavigationViewPaneDisplayMode.Top
             : NavigationViewPaneDisplayMode.Auto;
-        AppTitleBar.IsPaneToggleButtonVisible = !isTabMode;
+        // 图标菜单自己绘制左侧栏，NavigationView 只保留内容区；切回其它布局时恢复侧栏。
+        NavView.IsPaneVisible = !isRailMode;
+        NavRail.Visibility = isRailMode ? Visibility.Visible : Visibility.Collapsed;
+        AppTitleBar.IsPaneToggleButtonVisible = !isTabMode && !isRailMode;
+        RefreshNavRail();
     }
 
     private async Task ExecuteBenchmarkToolAsync()
@@ -1295,6 +1440,13 @@ public sealed partial class MainWindow : Window
     private void SyncNavSelection(string tag)
     {
         _syncingNavSelection = true;
+        if (tag == "settings" && NavView.SettingsItem is NavigationViewItem settingsItem)
+        {
+            NavView.SelectedItem = settingsItem;
+            _syncingNavSelection = false;
+            UpdateNavRailSelection();
+            return;
+        }
         foreach (var item in NavView.MenuItems)
         {
             if (item is NavigationViewItem navItem && navItem.Tag is string t && t == tag)
@@ -1304,6 +1456,7 @@ public sealed partial class MainWindow : Window
             }
         }
         _syncingNavSelection = false;
+        UpdateNavRailSelection();
     }
 
     private async void LaunchSearchTool(string toolPath)

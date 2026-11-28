@@ -8,10 +8,10 @@ const displayNames = {
   'dotnet-completion': '.NET 环境补全',
   'energy-star': '后台节流省电神器',
   'format-converter': '格式转换',
-  'gpu-ranking': 'GPU 天梯图',
   'hardware-spoofer': '配置修改器',
-  'hosts-editor': 'Hosts 编辑',
   'performance-benchmark': '性能测试',
+  'performance-ranking': '性能排行',
+  'hosts-editor': 'Hosts 编辑',
   'port-viewer': '端口占用',
   'space-cleanup': '空间清理',
   'speed-test': '网速测试',
@@ -26,7 +26,7 @@ const key = name => name.trim().toLowerCase();
 const catalog = new Map();
 const aliases = new Map();
 
-for (const entry of [...metadata.tools, { match: '句柄清理', builtin: 'handle-cleaner' }]) {
+for (const entry of metadata.tools) {
   const name = entry.match?.trim();
   if (!name) continue;
   const directory = entry.downloadUrl?.startsWith('gc:Tools/')

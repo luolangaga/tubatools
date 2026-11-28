@@ -8,7 +8,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <EnableDefaultPRIResourceItems>false</EnableDefaultPRIResourceItems>
     <PackageId>Tubatools.AiJunkCleanup</PackageId>
-    <Version>1.15.2</Version>
+    <Version>1.15.3</Version>
     <Authors>图吧工具箱</Authors>
     <Description>给 AI 助手增加「垃圾清理」模式：AI 只读扫描并给出带原因和风险的清单，插件解析后由用户逐项确认，默认只勾选低风险项目，确认后直接删除并显示近似进度。</Description>
     <PackageTags>Tubatools</PackageTags>
