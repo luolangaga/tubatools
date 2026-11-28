@@ -207,4 +207,17 @@ public sealed class AgentWorkspaceTests : IDisposable
         Assert.Single(AgentWorkspaceStore.List());
         Assert.Equal(AgentWorkspaceStore.DefaultId, AgentWorkspaceStore.ResolveCurrent().Id);
     }
+
+    /// <summary>EFS 加密目录的写入失败是 Win32 6000（ERROR_ENCRYPTION_FAILED），
+    /// 必须识别成「取消文件夹加密」的指引，而不是笼统的「检查数据目录权限」。</summary>
+    [Fact]
+    public void EfsEncryptionFailure_IsRecognizedByWin32Code()
+    {
+        var encrypted = new IOException("无法加密指定的文件。") { HResult = unchecked((int)0x80071770) };
+
+        Assert.True(AgentWorkspace.IsEncryptionFailure(encrypted));
+        Assert.False(AgentWorkspace.IsEncryptionFailure(new IOException("其他写入错误")));
+        Assert.False(AgentWorkspace.IsEncryptionFailure(new UnauthorizedAccessException()));
+        Assert.False(AgentWorkspace.IsEncryptionFailure(new IOException("无法加密指定的文件。") { HResult = unchecked((int)0x80070005) }));
+    }
 }

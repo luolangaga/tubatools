@@ -43,7 +43,9 @@ internal static class ComputerControlService
     internal static void Attach(Window owner)
     {
         _owner = owner; _dispatcher = DispatcherQueue.GetForCurrentThread(); Directory.CreateDirectory(Root);
-        Timer.Tick -= Tick; Timer.Tick += Tick; Timer.Start();
+        Timer.Tick -= Tick; Timer.Tick += Tick;
+        // 先跑一轮清理上次异常退出留下的 lease 文件；空闲时 Tick 会自己停表。
+        Timer.Start();
         EdgeTimer.Tick -= EdgeTick; EdgeTimer.Tick += EdgeTick;
     }
     internal static void BeginSession(string id, Action stop)
@@ -51,6 +53,7 @@ internal static class ComputerControlService
         Sessions[id] = stop;
         SessionProgress[id] = new("waiting");
         SessionStarted[id] = DateTime.UtcNow;
+        if (!Timer.IsEnabled) Timer.Start();
         TryDelete(Path.Combine(Root, "stop-" + SessionKey(id) + ".flag"));
         // A new user turn is the explicit permission to use the computer again.
         TryDelete(Path.Combine(Root, "stop-" + SessionKey(ComputerUseMcpProxy.DefaultSession) + ".flag"));
@@ -60,6 +63,7 @@ internal static class ComputerControlService
         void Apply()
         {
             if (!Sessions.ContainsKey(id)) return;
+            if (!Timer.IsEnabled) Timer.Start();
             SessionProgress[id] = progress;
             _latestProgressSession = id;
             if (_progressPopup is not null)
@@ -84,44 +88,81 @@ internal static class ComputerControlService
         TryDelete(Path.Combine(Root, "shown-" + key + ".flag"));
         Leases.Remove(key);
         if (Leases.Count == 0) CloseAllOverlays();
+        StopIfIdle();
     }
     private static bool ValidKey(string? key) => key is { Length: 32 } && key.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f');
+    private static bool _scanning;
     private static void Tick(object? sender, object e)
     {
-        if (_owner is null) return;
-        ProcessCaptureSignals();
+        if (_owner is null) { Timer.Stop(); return; }
+        // 上一轮后台扫描还没回来就跳过这一拍：扫描比 250 ms 慢时不会堆积任务。
+        if (_scanning) return;
+        _scanning = true;
+        // Sessions 只在 UI 线程写，这里先在 UI 线程拍一份快照再交给后台读。
+        var sessions = new HashSet<string>(Sessions.Keys, StringComparer.Ordinal);
+        _ = Task.Run(() => ScanLeases(sessions));
+    }
+
+    /// <summary>后台线程：枚举 lease / 清理失效文件。结果回到 UI 线程再驱动覆盖层。</summary>
+    private static void ScanLeases(HashSet<string> sessions)
+    {
+        var signals = new List<string?>();
         var live = new Dictionary<string, Lease>(StringComparer.Ordinal);
+        var ok = false;
         try
         {
-            foreach (var file in Directory.EnumerateFiles(Root, "lease-*.json").Take(64))
+            signals = ReadCaptureSignals();
+            try
             {
-                try
+                foreach (var file in Directory.EnumerateFiles(Root, "lease-*.json").Take(64))
                 {
-                    if (new FileInfo(file).Length > 4096) continue;
-                    var lease = JsonSerializer.Deserialize<Lease>(File.ReadAllText(file), Json);
-                    if (lease is null || !ValidKey(lease.Key) || Path.GetFileName(file) != "lease-" + lease.Key + ".json" ||
-                        lease.SessionId is not { Length: > 0 and <= 256 } || !Guid.TryParseExact(lease.RequestId, "N", out _) || lease.Key != SessionKey(lease.SessionId)) continue;
-                    if (File.Exists(Path.Combine(Root, "stop-" + lease.Key + ".flag")))
-                    { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + lease.Key + ".flag")); continue; }
-                    using var process = Process.GetProcessById(lease.ProcessId);
-                    if (process.HasExited || (!Sessions.ContainsKey(lease.SessionId) && DateTimeOffset.UtcNow.ToUnixTimeSeconds() - lease.UpdatedAt > 120))
-                    { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + lease.Key + ".flag")); continue; }
-                    live[lease.Key] = lease;
+                    try
+                    {
+                        if (new FileInfo(file).Length > 4096) continue;
+                        var lease = JsonSerializer.Deserialize<Lease>(File.ReadAllText(file), Json);
+                        if (lease is null || !ValidKey(lease.Key) || Path.GetFileName(file) != "lease-" + lease.Key + ".json" ||
+                            lease.SessionId is not { Length: > 0 and <= 256 } || !Guid.TryParseExact(lease.RequestId, "N", out _) || lease.Key != SessionKey(lease.SessionId)) continue;
+                        if (File.Exists(Path.Combine(Root, "stop-" + lease.Key + ".flag")))
+                        { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + lease.Key + ".flag")); continue; }
+                        using var process = Process.GetProcessById(lease.ProcessId);
+                        if (process.HasExited || (!sessions.Contains(lease.SessionId) && DateTimeOffset.UtcNow.ToUnixTimeSeconds() - lease.UpdatedAt > 120))
+                        { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + lease.Key + ".flag")); continue; }
+                        live[lease.Key] = lease;
+                    }
+                    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+                    {
+                        var key = Path.GetFileNameWithoutExtension(file)[6..];
+                        if (ValidKey(key)) { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + key + ".flag")); }
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { }
                 }
-                catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
-                {
-                    var key = Path.GetFileNameWithoutExtension(file)[6..];
-                    if (ValidKey(key)) { TryDelete(file); TryDelete(Path.Combine(Root, "shown-" + key + ".flag")); }
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { }
+                ok = true;
             }
+            catch (IOException) { }
         }
-        catch (IOException) { return; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        finally
+        {
+            // 无论成败都要落回 UI 线程并放开闸门：卡住的话下一拍永远不会再扫描。
+            var applied = ok;
+            if (_dispatcher?.TryEnqueue(() => { _scanning = false; if (applied) ApplyLeases(live, signals); }) != true)
+                _scanning = false;
+        }
+    }
+
+    private static void ApplyLeases(Dictionary<string, Lease> live, List<string?> signals)
+    {
+        if (_owner is null) { Timer.Stop(); return; }
+        foreach (var hint in signals)
+        {
+            if (!string.IsNullOrWhiteSpace(hint) && (_banner is not null || _progressPopup is not null))
+                ShowCaptureFlash(hint);
+        }
         Leases.Clear(); foreach (var pair in live) Leases[pair.Key] = pair.Value;
         foreach (var lease in Leases.Values) ComputerSessions.Add(ResolveProgressSession(lease) ?? lease.SessionId);
         if (Leases.Count == 0)
         {
-            if (_banner is null && _progressPopup is null && _edgeLine is null) return;
+            if (_banner is null && _progressPopup is null && _edgeLine is null) { StopIfIdle(); return; }
             if (!_overlayIdle) { _overlayIdle = true; _overlayIdleSince = DateTime.UtcNow; }
             // Between tool calls the turn still owns the desktop; keep the indicator briefly
             // instead of flickering it off and on for every AX/GUI call.
@@ -198,8 +239,10 @@ internal static class ComputerControlService
         foreach (var lease in Leases.Values)
             try { File.WriteAllText(Path.Combine(Root, "shown-" + lease.Key + ".flag"), JsonSerializer.Serialize(new { requestId = lease.RequestId, hostPid = Environment.ProcessId })); } catch (IOException) { }
     }
-    private static void ProcessCaptureSignals()
+    /// <summary>后台线程：删掉并读出 capture 信号文件，返回需要闪边框的窗口提示。</summary>
+    private static List<string?> ReadCaptureSignals()
     {
+        var signals = new List<string?>();
         try
         {
             foreach (var file in Directory.EnumerateFiles(Root, "capture-*.json").Take(16))
@@ -212,12 +255,12 @@ internal static class ComputerControlService
                 }
                 catch (Exception ex) when (ex is IOException or JsonException) { }
                 TryDelete(file);
-                if (!string.IsNullOrWhiteSpace(signal?.Window) && (_banner is not null || _progressPopup is not null))
-                    ShowCaptureFlash(signal.Window);
+                signals.Add(signal?.Window);
             }
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
+        return signals;
     }
     private static void ShowCaptureFlash(string? hint)
     {
@@ -386,6 +429,13 @@ internal static class ComputerControlService
         CloseBanner(); CloseProgressPopup(); StopEdgeLine();
         _captureFlash?.Dispose(); _captureFlash = null;
         ComputerSessions.Clear();
+        StopIfIdle();
+    }
+    /// <summary>没有会话、没有 lease、也没有任何覆盖层时停掉 250 ms 轮询，等下一次 BeginSession 再启动。</summary>
+    private static void StopIfIdle()
+    {
+        if (Sessions.Count == 0 && Leases.Count == 0 && _banner is null && _progressPopup is null && _edgeLine is null && _captureFlash is null)
+            Timer.Stop();
     }
     private static void TryDelete(string path) { try { File.Delete(path); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();

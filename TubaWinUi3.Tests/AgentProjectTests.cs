@@ -43,7 +43,7 @@ public sealed class AgentProjectTests
 
             var skill = File.ReadAllText(Path.Combine(AgentWorkspace.DirectoryPath, ".opencode", "skills", "tuba-plugin", "SKILL.md"));
             Assert.Contains("PackageReference Include=\"TubaWinUi3.PluginSdk\"", skill);
-            Assert.Contains("Version=\"2.1.0\"", skill);
+            Assert.Contains("Version=\"2.4.0\"", skill);
             Assert.Contains("../sdk/TubaWinUi3.PluginSdk.dll", skill);
             Assert.Contains("dotnet --list-sdks", skill);
             Assert.Contains("winget install --id Microsoft.DotNet.SDK.10", skill);

@@ -47,6 +47,18 @@ public static class BuiltinIconService
     public static ImageSource? Get(string? toolId)
     {
         if (string.IsNullOrWhiteSpace(toolId)) return null;
+
+        // 图标工坊：自定义图片优先；预设为字体字形时不返回图片。
+        if (IconThemeService.GetBuiltinCustomImage(toolId) is { } custom)
+            return Cache.GetOrAdd("custom:" + custom, LoadAsset);
+        var preset = IconThemeService.Preset;
+        if (preset == PluginSdk.PluginIconPreset.FluentGlyph) return null;
+        if (preset == PluginSdk.PluginIconPreset.ClassicColor)
+        {
+            var classic = IconStudioCatalog.ClassicBuiltinImage(toolId);
+            return classic is null ? null : Cache.GetOrAdd("classic:" + classic, LoadAsset);
+        }
+
         if (BuiltinToolRegistry.GetById(toolId) is Plugins.PluginXamlTool { IconPath: { } path })
             return Cache.GetOrAdd(path, LoadAsset);
         return Cache.GetOrAdd(toolId, Create);

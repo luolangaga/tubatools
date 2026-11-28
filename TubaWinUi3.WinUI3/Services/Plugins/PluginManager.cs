@@ -699,6 +699,10 @@ public static class PluginManager
             // 打开入口与工具同批提交：新版本没再注册就自动清除，旧委托不会残留。
             SetOpenEntry(packageId, _open, packageRoot, manifest);
             _committed = true;
+            // 提交后释放注册期清单：工具已进注册表，这里再留一份
+            // 会让插件委托（InitializeAsync 等）多活一倍时间，阻碍 ALC 卸载。
+            _pending.Clear();
+            _open = null;
         }
     }
 

@@ -181,8 +181,17 @@ public static class ToolCatalog
     /// </summary>
     public static IReadOnlyList<string> GetVisibleCategories()
     {
+        var categories = GetCategories();
+
+        // 与首页共享 single-flight 全量扫描：各分类并行扫盘并进缓存，下面的 GetTools
+        // 全部命中缓存。避免冷启动时逐分类串行扫描（侧栏首帧前的主要延迟），
+        // 也避免与首页的 GetAllToolsAsync 并发时同一分类被重复扫两遍。
+        // 扫描失败不阻断：退回逐分类查询，单个分类异常不影响其余分类。
+        try { GetAllToolsCached(); }
+        catch { }
+
         var visible = new List<string>();
-        foreach (var category in GetCategories())
+        foreach (var category in categories)
         {
             try
             {

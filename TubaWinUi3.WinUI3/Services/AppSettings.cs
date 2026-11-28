@@ -16,6 +16,8 @@ public static class AppSettings
     private static readonly object _gate = new();
     private static Dictionary<string, string>? _cache;
     private static bool _dirty;
+    // 持续失败（权限/占用）时保存会随每次 Set 重试：同一个错误只提示一次，别刷屏。
+    private static bool _reportedSaveFailure;
 
     // 写盘去抖：连续 Set 合并为一次落盘，拖拽排序等高频调用不再每次都
     // 全量序列化 + 同步写文件；Save 在后台线程执行，不阻塞调用方。
@@ -60,6 +62,8 @@ public static class AppSettings
 
     public static void Save()
     {
+        string? failure = null;
+        string? failureDetail = null;
         lock (_gate)
         {
             if (!_dirty || _cache is null) return;
@@ -73,28 +77,52 @@ public static class AppSettings
                 var json = JsonSerializer.Serialize(_cache);
                 using var lease = AtomicFile.Lock(SettingsPath);
                 AtomicFile.WriteText(SettingsPath, json);
-                if (File.Exists(SettingsPath + ".bak"))
-                {
-                    var previous = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(SettingsPath + ".bak"));
-                    if (previous is not null)
-                    {
-                        foreach (var key in previous.Keys.Where(IsSecretKey).ToArray())
-                            if (previous[key]?.StartsWith("dpapi:v1:", StringComparison.Ordinal) != true)
-                                previous[key] = ProtectedApiKeyConverter.Encode(previous[key] ?? "");
-                        AtomicFile.WriteText(SettingsPath + ".bak", JsonSerializer.Serialize(previous), backup: false);
-                    }
-                }
+                RefreshBackupSecrets();
                 LastSaveError = null;
                 _dirty = false;
+                _reportedSaveFailure = false;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[AppSettings] Save failed: {ex.Message}");
                 LastSaveError = LocalizationService.L("Persistence_SettingsError", "设置保存失败，请检查数据目录权限和剩余空间后重试。");
-                // Invoke outside the storage lock and isolate subscriber exceptions.
-                var message = LastSaveError;
-                ThreadPool.QueueUserWorkItem(_ => { try { SaveFailed?.Invoke(message); } catch { } });
+                failure = LastSaveError;
+                failureDetail = $"{ex.GetType().Name}: {ex.Message} (0x{ex.HResult:X8}) → {SettingsPath}";
             }
+        }
+        if (failure is null) return;
+        if (_reportedSaveFailure) return;
+        _reportedSaveFailure = true;
+        System.Diagnostics.Debug.WriteLine($"[AppSettings] Save failed: {failureDetail}");
+        // 日志必须在释放 _gate 之后写：LogService 会反向读取设置，同锁内调用可能互相等待。
+        try { LogService.Warn(LogService.App, "设置保存失败：" + failureDetail); } catch { }
+        // Invoke outside the storage lock and isolate subscriber exceptions.
+        ThreadPool.QueueUserWorkItem(_ => { try { SaveFailed?.Invoke(failure); } catch { } });
+    }
+
+    /// <summary>
+    /// 把 .bak 里遗留的明文密钥补成 DPAPI。备份只是恢复副本：它损坏、被占用或只读都不能
+    /// 把已经写好的主文件判成「保存失败」。
+    /// </summary>
+    private static void RefreshBackupSecrets()
+    {
+        try
+        {
+            var backupPath = SettingsPath + ".bak";
+            if (!File.Exists(backupPath)) return;
+            var previous = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(backupPath));
+            if (previous is null) return;
+            var changed = false;
+            foreach (var key in previous.Keys.Where(IsSecretKey).ToArray())
+                if (previous[key]?.StartsWith("dpapi:v1:", StringComparison.Ordinal) != true)
+                {
+                    previous[key] = ProtectedApiKeyConverter.Encode(previous[key] ?? "");
+                    changed = true;
+                }
+            if (changed) AtomicFile.WriteText(backupPath, JsonSerializer.Serialize(previous), backup: false);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AppSettings] Backup refresh skipped: {ex.Message}");
         }
     }
 
@@ -204,6 +232,7 @@ public static class AppSettings
         {
             _cache = null;
             _dirty = false;
+            _reportedSaveFailure = false;
         }
     }
 }

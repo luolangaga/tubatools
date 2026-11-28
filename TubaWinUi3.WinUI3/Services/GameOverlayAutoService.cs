@@ -6,11 +6,11 @@ using Windows.System;
 namespace TubaWinUi3.Services;
 
 /// <summary>
-/// 游戏后台自动覆盖层（2026-09-11 重构）：
-/// 后端（TubaWinUI3.BackEnd.exe）检测到全屏游戏后，把信号写入数据目录下的
-/// game_overlay_signal.json；本服务在主程序启动后常驻轮询该文件（1 秒），
+/// 游戏自动覆盖层（进程内版）：
+/// 主程序内的游戏检测器（ActiveInterceptRuntime/GameMonitorService）检测到全屏游戏后，
+/// 把信号写入数据目录下的 game_overlay_signal.json；本服务随主程序启动后常驻轮询该文件（1 秒），
 /// 命中时用现成的 Pages.GameOverlayWindow 显示悬浮窗并绑定游戏窗口，
-/// 游戏退出前台（或信号过期 —— 后端意外退出）后自动关闭。
+/// 游戏退出前台（或信号过期 —— 检测线程意外停止）后自动关闭。
 ///
 /// 与手动覆盖层的共存规则：
 /// - 本服务只管理自己启动的覆盖层（_autoManaged 标记）；
@@ -22,7 +22,7 @@ public sealed class GameOverlayAutoService
 
     private const string SignalFileName = "game_overlay_signal.json";
     private const string SettingsPrefix = "GameOverlay_";
-    /// <summary>信号超过该时长未刷新视为后端已退出/失效（后端每 ≤6s 刷新一次时间戳）。</summary>
+    /// <summary>信号超过该时长未刷新视为检测线程已停止/失效（检测器每 ≤6s 刷新一次时间戳）。</summary>
     private static readonly TimeSpan SignalStaleAfter = TimeSpan.FromSeconds(60);
 
     private DispatcherQueueTimer? _pollTimer;
@@ -85,9 +85,8 @@ public sealed class GameOverlayAutoService
 
     private void PollSignal()
     {
-        // 「游戏后台监控」未开启时后端进程不会运行、更不会写信号文件（App.OnLaunched 统一同步后端），
-        // 跳过每秒一次的磁盘探测；开启后功能行为不变。
-        if (!GameMonitorBackendService.IsEnabled) return;
+        // 「游戏自动监控」未开启时不会写信号文件，跳过每秒一次的磁盘探测。
+        if (!GameMonitorAutoService.IsEnabled) return;
 
         var path = Path.Combine(ConfigManager.GetDataDir(), SignalFileName);
         if (!File.Exists(path)) return;
@@ -109,14 +108,14 @@ public sealed class GameOverlayAutoService
         if (active && DateTime.TryParse(signal.Utc, out var utc) &&
             DateTimeOffset.UtcNow - utc > SignalStaleAfter)
         {
-            active = false; // 后端意外退出 → 信号过期，当作 inactive 处理
+            active = false; // 检测线程意外停止 → 信号过期，当作 inactive 处理
             stale = true;
         }
 
         if (active != _lastLoggedActive)
         {
             _lastLoggedActive = active;
-            Log($"信号状态 → active={active}{(stale ? "（信号过期，后端疑似已退出）" : "")} process={signal.Process} pid={signal.Pid} hwnd=0x{signal.Hwnd:X}");
+            Log($"信号状态 → active={active}{(stale ? "（信号过期，检测线程疑似已停止）" : "")} process={signal.Process} pid={signal.Pid} hwnd=0x{signal.Hwnd:X}");
         }
 
         if (active)
@@ -411,7 +410,7 @@ public sealed class GameOverlayAutoService
 
     private sealed class SignalData
     {
-        // 键名必须与后端 FrontendOverlayBridge.OverlaySignal 的 JsonPropertyName 一致；
+        // 键名必须与 FrontendOverlayBridge.OverlaySignal 的 JsonPropertyName 一致；
         // System.Text.Json 默认区分大小写，漏了这里的 attribute 会导致 Active 恒为 false
         //（信号永远"读不到"，悬浮窗永远不显示 —— 2026-09-11 实测踩坑）。
         [System.Text.Json.Serialization.JsonPropertyName("active")]

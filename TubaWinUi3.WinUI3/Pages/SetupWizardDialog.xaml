@@ -86,6 +86,22 @@
                     </Grid>
                     <Grid ColumnSpacing="12">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="32" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Image Width="32" Height="32" VerticalAlignment="Top" Source="ms-appx:///Assets/BuiltinIcons/window-manager.svg" />
+                        <StackPanel Grid.Column="1" Spacing="8">
+                            <TextBlock Text="导航样式" FontWeight="SemiBold" />
+                            <ComboBox x:Name="NavStyleChoices" HorizontalAlignment="Stretch"
+                                AutomationProperties.AutomationId="WizardNavStyle">
+                                <ComboBoxItem Content="侧边栏（默认）" Tag="sidebar" />
+                                <ComboBoxItem Content="顶部标签页" Tag="tabs" />
+                                <ComboBoxItem Content="图标菜单（类似 Microsoft Store）" Tag="rail" />
+                            </ComboBox>
+                            <TextBlock Text="以后可在设置 → 外观和布局 → 导航布局中随时切换。" TextWrapping="Wrap"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="32" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                         <Image Width="32" Height="32" VerticalAlignment="Top" Source="ms-appx:///Assets/BuiltinIcons/windows-feature.svg" />
                         <ComboBox x:Name="BackdropChoices" Grid.Column="1" Header="窗口背景" HorizontalAlignment="Stretch"
                             AutomationProperties.AutomationId="WizardBackdrop">

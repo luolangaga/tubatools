@@ -21,7 +21,7 @@ TubaWinUi3.WinUI3/            The app (WinUI 3 / .NET 10 / Windows App SDK)
     DocEngine/                WebView2 document engine (markdown-it / pdf.js / SheetJS / pdf-lib)
   Strings/<lang>/             UI language resources (zh-CN / en-US)
   Metadata/tools.json         Single source of truth for tool metadata (description / order / categories / built-in mounts)
-TubaWinUI3.BackEnd/           NativeAOT helper process (active interception)
+  Services/ActiveIntercept/Runtime/  In-process active-intercept runtime (the former helper process now lives in the app)
 TubaWinUi3.Tui/               .NET 8 Native AOT terminal compatibility edition
 TubaWinUi3.Tests/             xUnit tests (catalog / time sync / co-op / junk cleaner / localization…)
 Tools/                        Bundled third-party tools, arranged in category folders

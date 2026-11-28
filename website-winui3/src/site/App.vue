@@ -19,6 +19,16 @@
       :OpenOnFocus="false"
       class="site-search-box"
       @QuerySubmitted="onSearchQuerySubmitted" />
+    <template #RightHeader>
+      <button
+        class="site-theme-toggle"
+        type="button"
+        :title="themeLabel"
+        :aria-label="themeLabel"
+        @click="cycleTheme">
+        <span class="icon" aria-hidden="true">{{ themeGlyph }}</span>
+      </button>
+    </template>
   </WinTitleBar>
   <div class="site-app-content">
     <div class="site-nav-host">
@@ -80,6 +90,24 @@ const navPosition = ref('Top');
 const isTopNavMode = computed(() => navPosition.value === 'Top');
 const isPaneOpen = ref(localStorage.getItem('winui-pane-open') === 'true');
 const themeSetting = ref(readStoredSetting('winui-theme-setting', 'system', ['system', 'light', 'dark']));
+
+const themeOrder = ['system', 'light', 'dark'];
+const themeLabels = {
+  system: 'about.use-system',
+  light: 'about.light',
+  dark: 'about.dark'
+};
+const themeGlyphs = {
+  system: '◐',
+  light: '☀',
+  dark: '☾'
+};
+const themeLabel = computed(() => `${t('about.theme')}: ${t(themeLabels[themeSetting.value])}`);
+const themeGlyph = computed(() => themeGlyphs[themeSetting.value] ?? themeGlyphs.system);
+const cycleTheme = () => {
+  const index = themeOrder.indexOf(themeSetting.value);
+  themeSetting.value = themeOrder[(index + 1) % themeOrder.length];
+};
 
 /* 官方 WinUI 页面切换过渡（与 WinUI Gallery 一致） */
 const navigationTransitionInfo = ref(DefaultNavigationTransitionInfo);
@@ -226,10 +254,18 @@ const navMenuItems = [
   { Tag: 'download', Icon: '\uE896', Content: t('nav.download') },
   { Tag: 'features', Icon: '\uE91B', Content: t('nav.features') },
   { Tag: 'docs', Icon: '\uE8A1', Content: t('nav.docs') },
-  { Tag: 'ranking', Icon: '\uE9D5', Content: t('nav.ranking') },
-  { Tag: 'latency', Icon: '\uE9D9', Content: t('nav.latency') },
-  { Tag: 'telemetry', Icon: '\uE9D9', Content: t('nav.telemetry') },
-  { Tag: 'mushroom', Icon: '\uE9F5', Content: t('nav.mushroom') },
+  {
+    Tag: 'lab',
+    Icon: '\uE9D5',
+    Content: t('nav.lab'),
+    SelectsOnInvoked: false,
+    MenuItems: [
+      { Tag: 'ranking', Icon: '\uE9D5', Content: t('nav.ranking') },
+      { Tag: 'latency', Icon: '\uE9D9', Content: t('nav.latency') },
+      { Tag: 'telemetry', Icon: '\uE9D9', Content: t('nav.telemetry') },
+      { Tag: 'mushroom', Icon: '\uE9F5', Content: t('nav.mushroom') }
+    ]
+  },
   { Tag: 'about', Icon: '\uE946', Content: t('nav.about') }
 ];
 
@@ -275,16 +311,24 @@ const onSearchQuerySubmitted = ({ QueryText, ChosenSuggestion }) => {
   }
 };
 
+const findNavItem = tag => {
+  for (const item of navMenuItems) {
+    if (item.Tag === tag) return item;
+    const child = item.MenuItems?.find(entry => entry.Tag === tag);
+    if (child) return child;
+  }
+  return undefined;
+};
+
 const selectedNavigationItem = computed({
   get: () => {
     if (currentPage.value === 'sponsors') {
-      return navMenuItems.find(entry => entry.Tag === 'about') ?? navMenuItems[0];
+      return findNavItem('about') ?? navMenuItems[0];
     }
     if (currentPage.value === 'thanks') {
-      return navMenuItems.find(entry => entry.Tag === 'download') ?? navMenuItems[0];
+      return findNavItem('download') ?? navMenuItems[0];
     }
-    const item = navMenuItems.find(entry => entry.Tag === currentPage.value);
-    return item ?? navMenuItems[0];
+    return findNavItem(currentPage.value) ?? navMenuItems[0];
   },
   set: item => {
     if (item?.Tag) navigate(item.Tag);
@@ -625,4 +669,31 @@ systemThemeQuery.addEventListener('change', onSystemThemeChange);
     font-family: 'WinUIOnWebIcons';
     color: var(--SystemFillColorSuccessBrush, #0F7B0F);
   }
+/* 顶栏主题切换：从“关于”页移到全局 */
+.site-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.site-theme-toggle:hover {
+  background: var(--subtle-secondary);
+  color: var(--text-primary);
+}
+
+.site-theme-toggle .icon {
+  font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+}
 </style>

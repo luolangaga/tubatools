@@ -85,6 +85,14 @@ public sealed class ToolItem : INotifyPropertyChanged
         }
     }
 
+    /// <summary>图标预设/自定义图片变化后丢弃惰性缓存，并通知卡片重新绑定。</summary>
+    public void RefreshIcon()
+    {
+        _iconSourceResolved = true;
+        _iconSource = IsBuiltinLink ? BuiltinIconService.Get(BuiltinToolId) : null;
+        RaisePropertyChanged(nameof(IconSource));
+    }
+
     public string? Description { get; init; }
 
     public string? Publisher { get; init; }

@@ -58,9 +58,11 @@ public class BuiltinShortcutIconTests
             create.Invoke(null, new object?[]
             {
                 lnk, @"C:\Windows\System32\notepad.exe", @"C:\Windows",
-                "屏幕坏点检测 - 硬件工具", "--open-builtin screen-test", iconPath
+                "屏幕坏点检测 - 硬件工具", "--open-builtin screen-test", iconPath, false
             });
             Assert.True(File.Exists(lnk));
+            // 不要求 RunAs 时不得置位（第三方工具快捷方式同口径）
+            Assert.False(ShortcutRunAsFlag.IsSet(File.ReadAllBytes(lnk)));
 
             // 读回验证（WScript.Shell 需 STA）
             string? target = null, args = null, iconLocation = null;
@@ -78,6 +80,24 @@ public class BuiltinShortcutIconTests
             Assert.Equal(@"C:\Windows\System32\notepad.exe", target);
             Assert.Equal("--open-builtin screen-test", args);
             Assert.Equal(iconPath + ",0", iconLocation);
+
+            // runAsAdmin=true：COM 写完后补丁 RunAsUser 位，目标/参数/图标不受影响
+            var runAsLnk = Path.Combine(dir, "屏幕坏点检测-管理员.lnk");
+            create.Invoke(null, new object?[]
+            {
+                runAsLnk, @"C:\Windows\System32\notepad.exe", @"C:\Windows",
+                "屏幕坏点检测 - 硬件工具", "--open-builtin screen-test", iconPath, true
+            });
+            Assert.True(ShortcutRunAsFlag.IsSet(File.ReadAllBytes(runAsLnk)));
+            RunSta(() =>
+            {
+                dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+                dynamic sc = shell.CreateShortcut(runAsLnk);
+                Assert.Equal(@"C:\Windows\System32\notepad.exe", (string)sc.TargetPath);
+                Assert.Equal("--open-builtin screen-test", (string)sc.Arguments);
+                Marshal.FinalReleaseComObject(sc);
+                Marshal.FinalReleaseComObject(shell);
+            });
         }
         finally
         {

@@ -57,7 +57,22 @@ internal sealed class Windows11OptimizerView : Grid
 
     public static FrameworkElement Create(PluginExecutionContext host) => new Windows11OptimizerView(host);
 
-    public void Attach(PluginViewContext view) => view.OnClosed(Dispose);
+    public void Attach(PluginViewContext view)
+    {
+        view.OnClosed(Dispose);
+        try
+        {
+            if (TweakEngine.RepairShortcutOverlayIcons() > 0)
+            {
+                SetStatus("已修复旧版去箭头/盾牌配置，重启资源管理器后生效。", InfoBarSeverity.Success, "已自动修复");
+                Rebuild();
+            }
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"快捷方式图标修复失败：{ex.Message}", InfoBarSeverity.Warning, "修复未完成");
+        }
+    }
 
     private bool IsDark => ActualTheme == ElementTheme.Dark ||
         (ActualTheme == ElementTheme.Default && Application.Current.RequestedTheme == ApplicationTheme.Dark);

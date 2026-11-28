@@ -11,7 +11,7 @@
     xmlns:l="using:WinUI3Localizer"
     mc:Ignorable="d">
 
-    <Grid PointerPressed="RootGrid_PointerPressed">
+    <Grid x:Name="RootGrid" PointerPressed="RootGrid_PointerPressed">
         <Grid.Resources>
             <local:IconPathToVisibilityConverter x:Key="IconPathToVisibility" />
         </Grid.Resources>
@@ -31,7 +31,7 @@
             <Grid.RenderTransform>
                 <ScaleTransform />
             </Grid.RenderTransform>
-            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" RowSpacing="24">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" RowSpacing="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -39,20 +39,16 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border
+                <!-- 启动页 Logo 直接用高分位图（600×600 缩放到 96），颜色由图标自身承载：
+                     不再垫 AccentFillColorDefaultBrush 方块（那圈蓝色底就是用户看到的「蓝边」），
+                     也不要退回 .ico —— WinUI 的 Image 解码 ico 时会挑小尺寸帧再放大，边缘发糊。 -->
+                <Image
                     Width="96"
                     Height="96"
-                    Background="{ThemeResource AccentFillColorDefaultBrush}"
-                    CornerRadius="12"
-                    HorizontalAlignment="Center">
-                    <Image
-                        Width="64"
-                        Height="64"
-                        Source="ms-appx:///Assets/AppIcon.ico"
-                        Stretch="Uniform"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center" />
-                </Border>
+                    Source="ms-appx:///Assets/AppLogo.png"
+                    Stretch="Uniform"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
 
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="4">
                     <TextBlock
@@ -68,6 +64,13 @@
                         x:Name="SplashStatusText"
                         l:Uids.Uid="MainWindow_SplashStatus"
                         Text="正在初始化..." />
+                    <TextBlock
+                        x:Name="SplashFestivalText"
+                        FontSize="12"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed" />
                 </StackPanel>
 
                 <ProgressBar
@@ -86,10 +89,13 @@
             </Grid>
         </Grid>
 
+        <!-- 拖动/直通区域由代码显式刷新（MainWindow.RefreshTitleBarDragRegions）。
+             官方 AutoRefreshDragRegions 会在「每个布局帧」重算并写入非客户区，
+             窗口拖拽或拖边缩放时随每个布局 pass 重复触发，是最直接的掉帧来源；
+             本标题栏的内容变化点只有标签条、搜索框、动作按钮和标题文字，可以精确控制。 -->
         <TitleBar
             x:Name="AppTitleBar"
             Title="图吧工具箱CE"
-            AutoRefreshDragRegions="True"
             FontWeight="SemiBold"
             BackRequested="TitleBar_BackRequested"
             IsBackButtonVisible="True"
@@ -115,160 +121,202 @@
                     SizeChanged="TitleBarContent_SizeChanged"
                     TitleBar.IsDragRegion="True">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid
-                        x:Name="TitleSearchArea"
+                    <!-- 资源管理器式多标签条：占用标题栏左侧，新建 / 关闭 / 重排由 TabView 自带。
+                         两列布局 = 标签条 ｜ 右侧面板（贴右）+ 中间剩余空白（整段都能拖动窗口）。
+                         右侧面板固定在最右边，不受标签数量影响：开更多标签时标签条只会借用中间的
+                         空白（上限与最小拖拽区见 TitleBarLayout），搜索/教程/下载不会被推着走。
+                         每个标签各持一个 Frame，内容区在 NavigationView.Content 的 TabContentHost 里切换。 -->
+                    <TabView
+                        x:Name="ShellTabView"
                         Grid.Column="0"
-                        Width="320"
-                        Margin="0,0,8,0"
-                        HorizontalAlignment="Left">
-                        <AutoSuggestBox
-                            x:Name="SearchBox"
-                            MinWidth="0"
-                            PlaceholderText="搜索工具、设置..."
-                            l:Uids.Uid="MainWindow_SearchPlaceholder"
-                            QueryIcon="Find"
-                            VerticalAlignment="Center"
-                            TitleBar.IsDragRegion="False"
-                            GotFocus="SearchBox_GotFocus"
-                            LostFocus="SearchBox_LostFocus"
-                            TextChanged="SearchBox_TextChanged"
-                            QuerySubmitted="SearchBox_QuerySubmitted" />
-                        <Popup
-                            x:Name="SearchPopup"
-                            VerticalOffset="32"
-                            GettingFocus="SearchPopup_GettingFocus">
-                            <Popup.Transitions>
-                                <TransitionCollection>
-                                    <PopupThemeTransition />
-                                </TransitionCollection>
-                            </Popup.Transitions>
-                            <Border
-                                x:Name="SearchPopupBorder"
-                                Width="318"
-                                MaxHeight="400"
-                                Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="4">
-                                <ListView
-                                    x:Name="SearchListView"
-                                    SelectionMode="Single"
-                                    IsItemClickEnabled="True"
-                                    KeyDown="SearchListView_KeyDown"
-                                    ItemClick="SearchListView_ItemClick">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnSpacing="12" Padding="4,6">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="32" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <Border
-                                                    Width="32"
-                                                    Height="32"
-                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                                    CornerRadius="8">
-                                                    <Grid>
-                                                        <Image
-                                                            Width="24" Height="24"
-                                                            Stretch="Uniform"
-                                                            Source="{Binding IconPath}"
-                                                            Visibility="{Binding HasIconPath, Converter={StaticResource IconPathToVisibility}}" />
-                                                        <Image
-                                                            Width="24" Height="24"
-                                                            Stretch="Uniform"
-                                                            Source="{Binding IconSource}"
-                                                            Visibility="{Binding HasIconSource, Converter={StaticResource IconPathToVisibility}}" />
-                                                        <FontIcon
-                                                            FontSize="14"
-                                                            HorizontalAlignment="Center"
-                                                            VerticalAlignment="Center"
-                                                            Glyph="{Binding Glyph}"
-                                                            Visibility="{Binding HasGlyphFallback, Converter={StaticResource IconPathToVisibility}}" />
-                                                    </Grid>
-                                                </Border>
-
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                                                    <TextBlock
-
-                                                        FontSize="14"
-                                                        FontWeight="SemiBold"
-                                                        MaxLines="1"
-                                                        Text="{Binding Title}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock
-
-                                                        FontSize="12"
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        MaxLines="1"
-                                                        Text="{Binding Subtitle}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                </StackPanel>
-
-                                                <Border
-                                                    Grid.Column="2"
-                                                    Style="{StaticResource StatusPillStyle}"
-                                                    VerticalAlignment="Center">
-                                                    <TextBlock
-
-                                                        FontSize="12"
-                                                        Text="{Binding KindText}" />
-                                                </Border>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                            </Border>
-                        </Popup>
-                    </Grid>
+                        Margin="12,0,8,0"
+                        MaxWidth="520"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        TabWidthMode="SizeToContent"
+                        CanReorderTabs="True"
+                        IsAddTabButtonVisible="True"
+                        AddTabButtonClick="ShellTabView_AddTabButtonClick"
+                        TabCloseRequested="ShellTabView_TabCloseRequested"
+                        SelectionChanged="ShellTabView_SelectionChanged"
+                        TitleBar.IsDragRegion="False">
+                        <TabView.Resources>
+                            <!-- 标题栏里不需要 TabView 自带的面板底色与底部横线 -->
+                            <SolidColorBrush x:Key="TabViewBackground" Color="Transparent" />
+                            <SolidColorBrush x:Key="TabViewBorderBrush" Color="Transparent" />
+                            <Thickness x:Key="TabViewHeaderPadding">0</Thickness>
+                            <Thickness x:Key="TabViewItemHeaderPadding">10,2,4,2</Thickness>
+                            <x:Double x:Key="TabViewItemMinHeight">30</x:Double>
+                            <x:Double x:Key="TabViewItemMaxWidth">220</x:Double>
+                        </TabView.Resources>
+                        <TabView.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTabAccelerator_Invoked" />
+                            <KeyboardAccelerator Key="W" Modifiers="Control" Invoked="CloseTabAccelerator_Invoked" />
+                            <KeyboardAccelerator Key="Tab" Modifiers="Control" Invoked="NextTabAccelerator_Invoked" />
+                        </TabView.KeyboardAccelerators>
+                    </TabView>
 
                     <StackPanel
-                        x:Name="TitleActionButtons"
+                        x:Name="TitleRightPanel"
                         Grid.Column="1"
                         Orientation="Horizontal"
+                        HorizontalAlignment="Right"
                         VerticalAlignment="Center"
+                        Margin="0,0,4,0"
                         Spacing="6">
-                        <Button
-                            x:Name="NewbieTutorialButton"
-                            Click="NewbieTutorialButton_Click"
-                            Width="34" Height="30"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            ToolTipService.ToolTip="新手教程"
-                            AutomationProperties.Name="新手教程"
-                            TitleBar.IsDragRegion="False"
-                            l:Uids.Uid="MainWindow_NewbieTutorialButton">
-                            <FontIcon FontSize="14" Glyph="&#xE7BE;" />
-                        </Button>
 
-                        <Button
-                            x:Name="DownloadQueueButton"
-                            Click="DownloadQueueButton_Click"
-                            Width="34" Height="30"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            AutomationProperties.Name="下载队列"
-                            TitleBar.IsDragRegion="False">
-                            <Grid>
-                                <FontIcon FontSize="14" Glyph="&#xE896;" />
-                                <InfoBadge
-                                    x:Name="DownloadQueueBadge"
-                                    Value="0"
-                                    Visibility="Collapsed"
-                                    VerticalAlignment="Top"
-                                    HorizontalAlignment="Right"
-                                    Margin="0,-4,-4,0" />
-                            </Grid>
-                        </Button>
+                        <Grid
+                            x:Name="TitleSearchArea"
+                            Width="240"
+                            Margin="0,0,2,0">
+                            <AutoSuggestBox
+                                x:Name="SearchBox"
+                                MinWidth="0"
+                                PlaceholderText="搜索工具、设置..."
+                                l:Uids.Uid="MainWindow_SearchPlaceholder"
+                                QueryIcon="Find"
+                                VerticalAlignment="Center"
+                                TitleBar.IsDragRegion="False"
+                                GotFocus="SearchBox_GotFocus"
+                                LostFocus="SearchBox_LostFocus"
+                                TextChanged="SearchBox_TextChanged"
+                                QuerySubmitted="SearchBox_QuerySubmitted" />
+                            <Popup
+                                x:Name="SearchPopup"
+                                VerticalOffset="32"
+                                GettingFocus="SearchPopup_GettingFocus">
+                                <Popup.Transitions>
+                                    <TransitionCollection>
+                                        <PopupThemeTransition />
+                                    </TransitionCollection>
+                                </Popup.Transitions>
+                                <Border
+                                    x:Name="SearchPopupBorder"
+                                    Width="318"
+                                    MaxHeight="400"
+                                    Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="4">
+                                    <ListView
+                                        x:Name="SearchListView"
+                                        SelectionMode="Single"
+                                        IsItemClickEnabled="True"
+                                        KeyDown="SearchListView_KeyDown"
+                                        ItemClick="SearchListView_ItemClick">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnSpacing="12" Padding="4,6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="32" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Border
+                                                        Width="32"
+                                                        Height="32"
+                                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                        CornerRadius="8">
+                                                        <Grid>
+                                                            <Image
+                                                                Width="24" Height="24"
+                                                                Stretch="Uniform"
+                                                                Source="{Binding IconPath}"
+                                                                Visibility="{Binding HasIconPath, Converter={StaticResource IconPathToVisibility}}" />
+                                                            <Image
+                                                                Width="24" Height="24"
+                                                                Stretch="Uniform"
+                                                                Source="{Binding IconSource}"
+                                                                Visibility="{Binding HasIconSource, Converter={StaticResource IconPathToVisibility}}" />
+                                                            <FontIcon
+                                                                FontSize="14"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Glyph="{Binding Glyph}"
+                                                                Visibility="{Binding HasGlyphFallback, Converter={StaticResource IconPathToVisibility}}" />
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                        <TextBlock
+
+                                                            FontSize="14"
+                                                            FontWeight="SemiBold"
+                                                            MaxLines="1"
+                                                            Text="{Binding Title}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock
+
+                                                            FontSize="12"
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            MaxLines="1"
+                                                            Text="{Binding Subtitle}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+
+                                                    <Border
+                                                        Grid.Column="2"
+                                                        Style="{StaticResource StatusPillStyle}"
+                                                        VerticalAlignment="Center">
+                                                        <TextBlock
+
+                                                            FontSize="12"
+                                                            Text="{Binding KindText}" />
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <StackPanel
+                            x:Name="TitleActionButtons"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="6">
+                            <Button
+                                x:Name="NewbieTutorialButton"
+                                Click="NewbieTutorialButton_Click"
+                                Width="34" Height="30"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                ToolTipService.ToolTip="新手教程"
+                                AutomationProperties.Name="新手教程"
+                                TitleBar.IsDragRegion="False"
+                                l:Uids.Uid="MainWindow_NewbieTutorialButton">
+                                <FontIcon FontSize="14" Glyph="&#xE7BE;" />
+                            </Button>
+
+                            <Button
+                                x:Name="DownloadQueueButton"
+                                Click="DownloadQueueButton_Click"
+                                Width="34" Height="30"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                AutomationProperties.Name="下载队列"
+                                TitleBar.IsDragRegion="False">
+                                <Grid>
+                                    <FontIcon FontSize="14" Glyph="&#xE896;" />
+                                    <InfoBadge
+                                        x:Name="DownloadQueueBadge"
+                                        Value="0"
+                                        Visibility="Collapsed"
+                                        VerticalAlignment="Top"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,-4,-4,0" />
+                                </Grid>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </TitleBar.Content>
@@ -289,6 +337,20 @@
         </StackPanel>
 
         <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 商店式图标菜单（“图标菜单”导航布局）：默认折叠，只在 NavLayoutMode=rail 时显示。
+                 菜单项与选中状态都由 MainWindow.NavRail.cs 从 NavView 同步，避免维护两份导航状态。 -->
+            <controls:NavRail
+                x:Name="NavRail"
+                Grid.Column="0"
+                Width="88"
+                Visibility="Collapsed" />
+
+            <Grid Grid.Column="1">
             <Image
                 x:Name="BackgroundImg"
                 Stretch="UniformToFill"
@@ -339,9 +401,37 @@
                         <NavigationViewItem.Icon><FontIcon Glyph="&#xE99A;" /></NavigationViewItem.Icon>
                     </NavigationViewItem>
                 </NavigationView.MenuItems>
-                <Frame x:Name="NavFrame" CacheSize="10" />
+                <!-- 内容区由 MainWindow.Tabs.cs 在构造时换成标签宿主（Border + 当前标签的 Frame），
+                     每个标签各自持有独立的 Frame 与导航栈。 -->
             </NavigationView>
+            </Grid>
         </Grid>
+
+        <!-- 节日彩蛋：全窗氛围层，ZIndex 位于内容之上、启动页(9999)之下；
+             根节点不参与命中测试，不会挡住标题栏拖动或工具卡点击。 -->
+        <controls:FestivalOverlay
+            x:Name="FestivalLayer"
+            Grid.RowSpan="3"
+            Canvas.ZIndex="9000"
+            Visibility="Collapsed" />
+
+        <!-- 全窗特效是覆盖层，必须给用户一个明确的手动关闭入口；
+             只收粒子/装饰，首页的节日徽章与元旦倒计时不受影响。 -->
+        <Button x:Name="FestivalEffectCloseButton"
+                Grid.RowSpan="3" Canvas.ZIndex="9001"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,16"
+                Visibility="Collapsed" Click="FestivalEffectClose_Click"
+                Padding="12,6" CornerRadius="16" BorderThickness="1"
+                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                FontSize="12" AutomationProperties.Name="关闭节日特效"
+                ToolTipService.ToolTip="收起全窗节日动画，节日徽章和倒计时保留">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <FontIcon Glyph="&#xE711;" FontSize="12"/>
+                <TextBlock Text="关闭特效"/>
+            </StackPanel>
+        </Button>
 
         <!-- AI 助手正式上线的首次引导（标题、正文与按钮文案按语言在代码里赋值） -->
         <TeachingTip

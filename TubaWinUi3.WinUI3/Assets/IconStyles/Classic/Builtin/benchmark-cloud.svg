@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- benchmark-cloud 跑分排行 -->
+  <path fill="none" d="M4.5 8.5L8.5 12.5L12 6.5L15.5 12.5L19.5 8.5V17.5H4.5V8.5Z" stroke="#7719AA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.5 6.5A1.1 1.1 0 1 1 8.7 6.5A1.1 1.1 0 1 1 6.5 6.5Z" fill="#B47BD6"/>
+  <path d="M10.9 4.5A1.1 1.1 0 1 1 13.1 4.5A1.1 1.1 0 1 1 10.9 4.5Z" fill="#B47BD6"/>
+  <path d="M15.3 6.5A1.1 1.1 0 1 1 17.5 6.5A1.1 1.1 0 1 1 15.3 6.5Z" fill="#B47BD6"/>
+</svg>

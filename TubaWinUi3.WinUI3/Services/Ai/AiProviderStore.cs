@@ -322,21 +322,8 @@ public static class AiProviderStore
     }
 
     private static void WriteAtomic(string path, string content)
-    {
-        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        try
-        {
-            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                var bytes = System.Text.Encoding.UTF8.GetBytes(content);
-                stream.Write(bytes);
-                stream.Flush(flushToDisk: true);
-            }
-            if (File.Exists(path)) File.Replace(temporary, path, null);
-            else File.Move(temporary, path);
-        }
-        finally { if (File.Exists(temporary)) File.Delete(temporary); }
-    }
+        // 备份由 Save 显式维护（先写 .bak 再写主文件），这里不再轮转出 .bak.bak。
+        => TubaWinUi3.Storage.AtomicFile.WriteText(path, content, backup: false);
 
     /// <summary>清空缓存（测试用 / 数据目录切换后）。</summary>
     public static void InvalidateCache()

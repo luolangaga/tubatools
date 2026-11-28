@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- disk-health 磁盘健康 -->
+  <path fill="none" d="M4 7.5C4 6.12 5.12 5 6.5 5H17.5C18.88 5 20 6.12 20 7.5V16.5C20 17.88 18.88 19 17.5 19H6.5C5.12 19 4 17.88 4 16.5V7.5Z" stroke="#026467" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.5 8.8A1.1 1.1 0 1 1 8.7 8.8A1.1 1.1 0 1 1 6.5 8.8Z" fill="#4DBFC4"/>
+  <path fill="none" d="M6.75 15H9.25L10.75 12L12.75 16.5L14.25 14.75H17.25" stroke="#026467" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

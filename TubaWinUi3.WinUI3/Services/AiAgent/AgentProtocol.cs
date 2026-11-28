@@ -14,16 +14,22 @@ public sealed record AgentConversation(string Id, string Title)
 }
 public sealed record AgentMessage(string Id, string Role, string Text, string Activity, string? Error = null,
     IReadOnlyList<AgentContent>? Content = null, bool Thinking = false, bool Completed = false, int Revision = 0,
-    IReadOnlyList<AgentAttachment>? Attachments = null);
+    IReadOnlyList<AgentAttachment>? Attachments = null)
+{
+    /// <summary>Parsed failure behind <see cref="Error"/>, kept raw-free for concrete notices and sign-in hints.</summary>
+    internal AgentErrorNotice? Failure { get; init; }
+}
 public sealed record AgentPermission(string Id, string Action, string[] Resources, string Message);
-internal sealed class AgentModelFailureException(string message) : Exception(message);
+internal sealed class AgentModelFailureException(AgentErrorNotice notice) : Exception(notice.Detail.Length > 0 ? notice.Detail : "模型返回错误。")
+{
+    internal AgentErrorNotice Notice { get; } = notice;
+}
 
 internal static class AgentText
 {
     public static string L(string key, string fallback) => LocalizationService.L("Agent_" + key, fallback);
-    public static string FriendlyError(Exception ex) => ex is AgentModelFailureException ? ex.Message : ex is OperationCanceledException
-        ? L("Cancelled", "任务已停止。")
-        : L("Failed", "AI 任务未完成，请检查网络、模型可用性和 AI 组件状态后重试。");
+    public static string FriendlyError(Exception ex, string providerId = "") =>
+        AgentErrorParser.Compose(AgentErrorParser.FromException(ex, providerId), providerId);
 }
 
 internal static class AgentProtocol
@@ -57,6 +63,7 @@ internal static class AgentProtocol
             if (role is not ("user" or "assistant")) continue;
             var text = Text(item, "text");
             string? errorMessage = null;
+            AgentErrorNotice? failure = null;
             var activities = new List<string>();
             var parts = new List<AgentContent>();
             var messageId = Text(item, "id");
@@ -88,7 +95,9 @@ internal static class AgentProtocol
             }
             if (role == "assistant" && item.TryGetProperty("error", out var error) && error.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
             {
-                errorMessage = ModelError(error);
+                var providerId = Text(item, "providerID");
+                failure = AgentErrorParser.Parse(error, providerId, CreatedAt(item));
+                errorMessage = AgentErrorParser.Compose(failure, providerId);
                 text += "\n\n" + errorMessage;
                 parts.Add(new(messageId + ":error", errorMessage));
             }
@@ -104,23 +113,20 @@ internal static class AgentProtocol
                     if (Uri.TryCreate(Text(reference, "uri"), UriKind.Absolute, out var uri) && uri.IsFile &&
                         !attachments.Any(a => a.Path.Equals(uri.LocalPath, StringComparison.OrdinalIgnoreCase)))
                         attachments.Add(new(uri.LocalPath, Text(reference, "name", Path.GetFileName(uri.LocalPath)), Text(reference, "mime")));
-            messages.Add(new(Text(item, "id"), role, text, string.Join("\n", activities), errorMessage, parts,
-                thinking && !completed, completed, role == "user" ? HashCode.Combine(messageId, text) : item.GetRawText().GetHashCode(StringComparison.Ordinal), attachments));
+            var message = new AgentMessage(Text(item, "id"), role, text, string.Join("\n", activities), errorMessage, parts,
+                thinking && !completed, completed, role == "user" ? HashCode.Combine(messageId, text) : item.GetRawText().GetHashCode(StringComparison.Ordinal), attachments);
+            messages.Add(failure is null ? message : message with { Failure = failure });
         }
         return messages;
     }
 
-    private static string ModelError(JsonElement error)
+    /// <summary>Message creation time (epoch ms), used so reserved quota times stay accurate for history.</summary>
+    private static DateTimeOffset? CreatedAt(JsonElement item)
     {
-        var detail = error.ToString();
-        if (Text(error, "type") == "aborted" || detail.Contains("interrupted", StringComparison.OrdinalIgnoreCase))
-            return AgentText.L("Cancelled", "任务已停止。");
-        if (detail.Contains("429") || detail.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
-            detail.Contains("rate_limit", StringComparison.OrdinalIgnoreCase) || detail.Contains("quota", StringComparison.OrdinalIgnoreCase))
-            return AgentText.L("ModelBusy", "当前模型繁忙或额度已用尽，请稍后重试，或从列表选择其他模型。");
-        if (detail.Contains("fetch", StringComparison.OrdinalIgnoreCase) || detail.Contains("connect", StringComparison.OrdinalIgnoreCase))
-            return AgentText.L("ModelNetwork", "连接模型服务失败，请检查网络和代理设置后重试。");
-        return AgentText.L("ModelError", "模型返回错误，请重试或选择其他可用模型。");
+        if (!item.TryGetProperty("time", out var time) || time.ValueKind != JsonValueKind.Object ||
+            !time.TryGetProperty("created", out var created) || created.ValueKind != JsonValueKind.Number ||
+            !created.TryGetDouble(out var value) || value <= 0) return null;
+        return value > 1e11 ? DateTimeOffset.FromUnixTimeMilliseconds((long)value) : DateTimeOffset.FromUnixTimeSeconds((long)value);
     }
 
     internal static string ToolLabel(string name) => name switch

@@ -1,4 +1,3 @@
-extern alias backend;
 using System.Net;
 using System.Net.Http;
 using System.IO.Pipes;
@@ -212,7 +211,7 @@ public sealed class SecurityHardeningTests : IDisposable
     [Fact]
     public void Pipe_OnlySystemAndElevatedAdministratorsReceiveAccess()
     {
-        var security = backend::TubaWinUI3.BackEnd.NamedPipeBackendServer.CreatePipeSecurity();
+        var security = TubaWinUi3.Services.ActiveIntercept.Runtime.NamedPipeBackendServer.CreatePipeSecurity();
         Assert.True(security.AreAccessRulesProtected);
         var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<PipeAccessRule>().ToArray();
         Assert.Equal(2, rules.Length);

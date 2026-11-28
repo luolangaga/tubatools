@@ -85,6 +85,20 @@ public class BuiltinToolRegistryTests
     }
 
     [Fact]
+    public void LegacyRankingIds_ResolveToMergedTool()
+    {
+        ClearRegistry();
+        var tool = new PerformanceRankingTool(); BuiltinToolRegistry.Register(tool);
+        Assert.Same(tool, BuiltinToolRegistry.GetById("performance-ranking"));
+        Assert.Same(tool, BuiltinToolRegistry.GetById("cpu-ranking"));
+        Assert.Same(tool, BuiltinToolRegistry.GetById("gpu-ranking"));
+        Assert.Same(tool, BuiltinToolRegistry.GetById("benchmark-cloud"));
+        Assert.Same(tool, BuiltinToolRegistry.GetById("latency-image-query"));
+        Assert.Single(BuiltinToolRegistry.AllTools);
+        ClearRegistry();
+    }
+
+    [Fact]
     public void GetCategories_ReturnsDistinctCategories()
     {
         ClearRegistry();

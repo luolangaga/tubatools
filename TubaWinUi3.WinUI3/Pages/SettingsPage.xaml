@@ -16,6 +16,38 @@
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+        <!-- 背景图库：缩略图按需创建，只实例化视口内可见的几张。
+             之前是一次性把每张图都建成 Border+Image 常驻内存，图多了就是上百个元素 + 上百份解码位图。 -->
+        <StackLayout x:Key="BgThumbnailLayout" Orientation="Horizontal" Spacing="8"/>
+        <DataTemplate x:Key="BgThumbnailTemplate">
+            <Border Width="140" Height="104" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    PointerPressed="BgThumbnail_PointerPressed">
+                <Grid RowSpacing="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="80"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Image Stretch="UniformToFill" Source="{Binding Thumbnail}"/>
+                    <FontIcon Glyph="&#xE73E;" FontSize="12" Visibility="{Binding SelectedVisibility}"
+                              HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,8,0"
+                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <Grid Grid.Row="1" Padding="6,2,4,2" ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding FileName}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <Button Grid.Column="1" Width="22" Height="22" MinWidth="0" MinHeight="0" Padding="2"
+                                VerticalAlignment="Center" Click="BgThumbnailDelete_Click" ToolTipService.ToolTip="删除">
+                            <FontIcon Glyph="&#xE74D;" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
     </Page.Resources>
     <Grid Background="Transparent">
         <ScrollViewer x:Name="RootScrollViewer" HorizontalScrollMode="Disabled" VerticalScrollBarVisibility="Auto">
@@ -179,6 +211,20 @@
                                 <ComboBox x:Name="DefaultPageComboBox" MinWidth="120" SelectionChanged="DefaultPageComboBox_SelectionChanged" VerticalAlignment="Center"/>
                             </toolkit:SettingsCard>
                         </Border>
+                        <Border x:Name="SettingsTabsCard" Style="{StaticResource SettingsRowSurface}">
+                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
+                                <toolkit:SettingsCard.Header>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="多标签页" l:Uids.Uid="Settings_Tabs_Title" TextWrapping="Wrap"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="像资源管理器那样在标题栏显示标签页，可同时打开多个页面；关闭后只保留单一页面" l:Uids.Uid="Settings_Tabs_Desc"/>
+                                    </StackPanel>
+                                </toolkit:SettingsCard.Header>
+                                <toolkit:SettingsCard.HeaderIcon>
+                                    <FontIcon FontSize="18" Glyph="&#xE7C4;" Foreground="{ThemeResource FluentIconForegroundBrush}" />
+                                </toolkit:SettingsCard.HeaderIcon>
+                                <ToggleSwitch x:Name="TabsToggle" VerticalAlignment="Center" Toggled="TabsToggle_Toggled"/>
+                            </toolkit:SettingsCard>
+                        </Border>
                         <Border x:Name="SettingsRememberWindowCard" Style="{StaticResource SettingsRowSurface}">
                             <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
                                 <toolkit:SettingsCard.Header>
@@ -275,7 +321,7 @@
                                 <toolkit:SettingsCard.Header>
                                     <StackPanel VerticalAlignment="Center" Spacing="2">
                                         <TextBlock Style="{StaticResource SettingsRowTitle}" Text="导航布局" l:Uids.Uid="Settings_NavLayout_Title" TextWrapping="Wrap"/>
-                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="切换侧边栏或顶部标签页导航" l:Uids.Uid="Settings_NavLayout_Desc"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="切换侧边栏、顶部标签页或图标菜单" l:Uids.Uid="Settings_NavLayout_Desc"/>
                                     </StackPanel>
                                 </toolkit:SettingsCard.Header>
                                 <toolkit:SettingsCard.HeaderIcon>
@@ -533,7 +579,7 @@
                                                         </StackPanel>
                                                     </StackPanel>
                                                 </Grid>
-                                                <Expander x:Name="BgHistoryExpander" Grid.Row="3" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False">
+                                                <Expander x:Name="BgHistoryExpander" Grid.Row="3" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" IsExpanded="False" Expanding="BgHistoryExpander_Expanding">
                                                     <Expander.Header>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <FontIcon FontSize="14" Glyph=""/>
@@ -544,7 +590,7 @@
                                                     <Expander.Content>
                                                         <StackPanel Spacing="8" Padding="0,4,0,0">
                                                             <ScrollViewer x:Name="BgListScrollViewer" HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled" VerticalScrollBarVisibility="Disabled" VerticalScrollMode="Disabled">
-                                                                <StackPanel x:Name="BgListPanel" Orientation="Horizontal" Spacing="8"/>
+                                                                <ItemsRepeater x:Name="BgListRepeater" Layout="{StaticResource BgThumbnailLayout}" ItemTemplate="{StaticResource BgThumbnailTemplate}"/>
                                                             </ScrollViewer>
                                                             <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="BgListEmptyText" FontSize="12" Text="还没有导入过图片" l:Uids.Uid="Settings_BgHistory_Empty" Visibility="Collapsed" TextWrapping="Wrap"/>
                                                         </StackPanel>
@@ -754,6 +800,37 @@
                             </toolkit:SettingsCard>
                         </Border>
                         <InfoBar x:Name="SearchRegistrationResultBar" IsOpen="False" IsClosable="True" />
+                        <Border x:Name="SettingsAutoStartCard" Style="{StaticResource SettingsRowSurface}">
+                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
+                                <toolkit:SettingsCard.Header>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Style="{StaticResource SettingsRowTitle}" Text="开机自启" l:Uids.Uid="Settings_AutoStart_Title" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="AutoStartStatusText" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="登录 Windows 后自动启动工具箱。便携版以管理员权限静默启动，不弹 UAC；商店版由系统启动任务激活。" l:Uids.Uid="Settings_AutoStart_Desc"/>
+                                    </StackPanel>
+                                </toolkit:SettingsCard.Header>
+                                <toolkit:SettingsCard.HeaderIcon>
+                                    <FontIcon FontSize="18" Glyph="&#xE7E8;"/>
+                                </toolkit:SettingsCard.HeaderIcon>
+                                <ToggleSwitch x:Name="AutoStartToggle" VerticalAlignment="Center" Toggled="AutoStartToggle_Toggled"/>
+                            </toolkit:SettingsCard>
+                        </Border>
+                        <Border x:Name="SettingsAutoStartHideCard" Style="{StaticResource SettingsRowSurface}">
+                            <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
+                                <toolkit:SettingsCard.Header>
+                                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Style="{StaticResource SettingsRowTitle}" Text="自启后隐藏界面" l:Uids.Uid="Settings_AutoStartHide_Title" TextWrapping="Wrap"/>
+                                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Text="开启后，开机自启时只驻留系统托盘，不显示主窗口与首次向导；单击托盘图标恢复界面。手动双击启动始终显示界面。" l:Uids.Uid="Settings_AutoStartHide_Desc"/>
+                                    </StackPanel>
+                                </toolkit:SettingsCard.Header>
+                                <toolkit:SettingsCard.HeaderIcon>
+                                    <FontIcon FontSize="18" Glyph="&#xE7B3;"/>
+                                </toolkit:SettingsCard.HeaderIcon>
+                                <ToggleSwitch x:Name="AutoStartHideUiToggle" VerticalAlignment="Center" Toggled="AutoStartHideUiToggle_Toggled"/>
+                            </toolkit:SettingsCard>
+                        </Border>
                         <Border x:Name="SettingsActiveInterceptCard" Style="{StaticResource SettingsRowSurface}">
                             <toolkit:SettingsCard HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" MinHeight="76">
                                 <toolkit:SettingsCard.Header>

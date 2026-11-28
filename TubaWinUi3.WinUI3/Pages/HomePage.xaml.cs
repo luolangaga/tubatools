@@ -58,12 +58,19 @@ public sealed partial class HomePage : Page, ILocalizablePage
     {
         CompactModeService.CompactModeChanged += OnCompactModeChanged;
         ToolCatalog.ToolsChanged += OnToolsChanged;
+        IconThemeService.Changed += RefreshToolIcons;
     }
 
     private void UnsubscribeStaticEvents()
     {
         CompactModeService.CompactModeChanged -= OnCompactModeChanged;
         ToolCatalog.ToolsChanged -= OnToolsChanged;
+        IconThemeService.Changed -= RefreshToolIcons;
+    }
+
+    private void RefreshToolIcons()
+    {
+        foreach (var tool in _tools) tool.RefreshIcon();
     }
 
     private void OnCompactModeChanged(bool enabled)

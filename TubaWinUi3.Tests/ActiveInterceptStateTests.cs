@@ -1,6 +1,5 @@
-extern alias backend;
-using backend::TubaWinUI3.BackEnd;
-using backend::TubaWinUI3.BackEnd.Models;
+using TubaWinUi3.Services.ActiveIntercept.Runtime;
+using TubaWinUi3.Services.ActiveIntercept.Runtime.Models;
 
 namespace TubaWinUi3.Tests;
 
@@ -171,8 +170,8 @@ public class ActiveInterceptStateTests
     {
         // 纯函数路径规范化测试（不访问注册表）
         Assert.Equal(@"C:\Program Files\App\a.dll",
-            backend::TubaWinUI3.BackEnd.ClsidResolver.NormalizeServerPath(@"""C:\Program Files\App\a.dll"" -embedding"));
+            TubaWinUi3.Services.ActiveIntercept.Runtime.ClsidResolver.NormalizeServerPath(@"""C:\Program Files\App\a.dll"" -embedding"));
         Assert.Equal(@"C:\Windows\System32\b.dll",
-            backend::TubaWinUI3.BackEnd.ClsidResolver.NormalizeServerPath(@"C:\Windows\System32\b.dll,"));
+            TubaWinUi3.Services.ActiveIntercept.Runtime.ClsidResolver.NormalizeServerPath(@"C:\Windows\System32\b.dll,"));
     }
 }

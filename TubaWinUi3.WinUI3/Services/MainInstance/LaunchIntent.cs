@@ -14,9 +14,6 @@ public enum LaunchIntentKind
 
     /// <summary>--show-active-intercept：跳转「主动拦截」审核页。</summary>
     ActiveIntercept,
-
-    /// <summary>--game-overlay-auto：后端检测到游戏自动拉起（不得抢焦点，子进程静默退出）。</summary>
-    GameOverlayAuto,
 }
 
 /// <summary>解析出的启动意图。<see cref="Arg"/> 仅 OpenBuiltin / FileLock 有值。</summary>
@@ -28,12 +25,17 @@ public sealed record LaunchIntent(LaunchIntentKind Kind, string? Arg = null)
     public const string OpenBuiltinArg = "--open-builtin";
     public const string FileLockArg = "--file-lock";
     public const string ActiveInterceptArg = "--show-active-intercept";
-    public const string GameOverlayAutoArg = "--game-overlay-auto";
+
+    /// <summary>开机自启计划任务传入：本次是登录启动，用于区分手动双击。</summary>
+    public const string AutoStartArg = "--autostart";
+
+    /// <summary>开机自启 + 设置要求隐藏界面：创建窗口后直接驻留托盘。</summary>
+    public const string HideUiArg = "--hide-ui";
 
     /// <summary>
     /// 从命令行（不含 argv[0] 或包含均可）解析导航意图。
     /// 优先级与 <c>App.OnLaunchedCore</c> 的内联判定保持一致：
-    /// --file-lock &gt; --open-builtin &gt; --show-active-intercept &gt; --game-overlay-auto &gt; 普通。
+    /// --file-lock &gt; --open-builtin &gt; --show-active-intercept &gt; 普通。
     /// 各开关大小写不敏感；带值的开关取紧随其后的 token（去引号）。
     /// </summary>
     public static LaunchIntent Parse(IEnumerable<string> args)
@@ -47,10 +49,15 @@ public sealed record LaunchIntent(LaunchIntentKind Kind, string? Arg = null)
         if (openBuiltin is not null) return new LaunchIntent(LaunchIntentKind.OpenBuiltin, openBuiltin);
 
         if (Has(list, ActiveInterceptArg)) return new LaunchIntent(LaunchIntentKind.ActiveIntercept);
-        if (Has(list, GameOverlayAutoArg)) return new LaunchIntent(LaunchIntentKind.GameOverlayAuto);
 
         return new LaunchIntent(LaunchIntentKind.Normal);
     }
+
+    /// <summary>命令行是否带 --autostart（开机自启计划任务传入）。</summary>
+    public static bool HasAutoStart(IEnumerable<string> args) => HasSwitch(args, AutoStartArg);
+
+    /// <summary>命令行是否带 --hide-ui（登录启动时隐藏主窗口）。</summary>
+    public static bool HasHideUi(IEnumerable<string> args) => HasSwitch(args, HideUiArg);
 
     /// <summary>命令行是否带 --takeover（提权重启会话需接管旧实例）。</summary>
     public static bool HasTakeover(IEnumerable<string> args) => Has(args as IReadOnlyList<string> ?? args.ToList(), TakeoverArg);

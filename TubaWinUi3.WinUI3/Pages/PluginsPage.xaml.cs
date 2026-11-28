@@ -158,9 +158,10 @@ public sealed partial class PluginsPage : Page, ILocalizablePage
         var columns = width >= 780 ? 3 : width >= 520 ? 2 : 1;
         var gap = 12.0;
         var itemWidth = Math.Max(180.0, (width - columns * gap) / columns);
-        if (Math.Abs(panel.ItemWidth - itemWidth) < .5 && Math.Abs(panel.ItemHeight - itemHeight) < .5) return;
-        panel.ItemWidth = itemWidth;
-        panel.ItemHeight = itemHeight;
+        if (Math.Abs(panel.ItemHeight - itemHeight) >= .5)
+            panel.ItemHeight = itemHeight;
+        // 与其他工具卡片网格共用节流 + 换列滑入动画。
+        CardGridReflow.Request(grid, itemWidth);
     }
 
     private void Notice(string message, bool error = false)

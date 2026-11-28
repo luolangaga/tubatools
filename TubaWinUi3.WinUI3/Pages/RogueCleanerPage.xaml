@@ -736,7 +736,7 @@
                     </Grid>
                 </Grid>
 
-<!-- ============ 主动拦截（后端审核） ============ -->
+<!-- ============ 主动拦截（审核） ============ -->
                 <Grid x:Name="ActiveInterceptPanel" Visibility="Collapsed" RowSpacing="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -759,7 +759,7 @@
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
                             <Ellipse x:Name="AiStatusDot" Width="10" Height="10" VerticalAlignment="Center" Fill="Gray"/>
                             <TextBlock x:Name="AiRunningText" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="主动拦截后端：检测中…"/>
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="主动拦截：检测中…"/>
                         </StackPanel>
                         <TextBlock x:Name="AiCountText" Grid.Column="1" FontSize="12" VerticalAlignment="Center"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
@@ -803,7 +803,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="主动拦截流氓软件（含开机自启）"/>
+                                <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="主动拦截流氓软件（随工具箱运行）"/>
                                 <TextBlock x:Name="AiStartupHint" FontSize="12" TextWrapping="Wrap"
                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             </StackPanel>

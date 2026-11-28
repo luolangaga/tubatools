@@ -13,8 +13,29 @@ public static class AgentWorkspace
 
     public static void Prepare() => Prepare(DirectoryPath);
 
+    /// <summary>ERROR_ENCRYPTION_FAILED：父文件夹启用了 EFS 加密，而当前账户没有可用的加密证书时，写入会抛这个 Win32 错误。</summary>
+    private const int ErrorEncryptionFailed = 6000;
+
+    internal static bool IsEncryptionFailure(Exception ex) =>
+        ex is IOException && (ex.HResult & 0xFFFF) == ErrorEncryptionFailed;
+
+    private const string EncryptedFolderFallback = "工作区目录启用了「加密内容以便保护数据」（EFS），当前 Windows 账户无法在其中创建文件。"
+        + "请取消该文件夹的加密（右键属性 → 高级 → 取消勾选「加密内容以便保护数据」），或换一个普通文件夹作为工作区。";
+
+    internal static string EncryptedFolderMessage => AgentText.L("WorkspaceFolderEncrypted", EncryptedFolderFallback);
+
     /// <summary>为指定工作区准备 SDK、技能、配置与索引；新建工作区在首次切换时走同一条路径。</summary>
     public static void Prepare(string directory)
+    {
+        try { PrepareCore(directory); }
+        catch (IOException ex) when (IsEncryptionFailure(ex))
+        {
+            // 「检查数据目录权限」对 EFS 没有意义，这里给出能直接照做的一步。
+            throw new IOException(EncryptedFolderMessage, ex);
+        }
+    }
+
+    private static void PrepareCore(string directory)
     {
         Directory.CreateDirectory(directory);
         Directory.CreateDirectory(Path.Combine(directory, "artifacts"));

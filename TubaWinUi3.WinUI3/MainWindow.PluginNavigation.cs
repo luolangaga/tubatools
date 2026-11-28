@@ -72,16 +72,26 @@ public sealed partial class MainWindow
             if (!items.TryGetValue(item.Id, out var control)) continue;
             control.Content = item.Title; control.Visibility = item.IsVisible ? Visibility.Visible : Visibility.Collapsed;
             var change = changes.FirstOrDefault(c => c.Id == item.Id);
-            if (change is { IconPath.Length: > 0 } && File.Exists(change.IconPath) && !_navigationHighContrast)
-                control.Icon = new ImageIcon { Source = BuiltinIconService.LoadAsset(change.IconPath) };
+            var tag = control.Tag is string t ? t : (item.Id == "settings" ? "settings" : item.Id);
+            var studioImage = _navigationHighContrast ? null : IconThemeService.GetNavigationCustomImage(tag);
+            if (studioImage is not null && BuiltinIconService.LoadAsset(studioImage) is { } studioSource)
+                control.Icon = NavigationIconService.CreateImageIcon(studioSource);
+            else if (change is { IconPath.Length: > 0 } && !_navigationHighContrast &&
+                     File.Exists(change.IconPath) && BuiltinIconService.LoadAsset(change.IconPath) is { } changeSource)
+                control.Icon = NavigationIconService.CreateImageIcon(changeSource);
             else if (change is { Glyph.Length: > 0 }) control.Icon = new FontIcon { Glyph = item.Glyph };
             else if (control.Tag is string pluginTag && pluginTag.StartsWith("plugin-page:", StringComparison.Ordinal) && BuiltinToolRegistry.GetById(pluginTag[12..]) is { } plugin)
-                control.Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } source ? new ImageIcon { Source = source } : new FontIcon { Glyph = plugin.Glyph };
+                control.Icon = !_navigationHighContrast && BuiltinIconService.Get(plugin.Id) is { } source
+                    ? NavigationIconService.CreateImageIcon(source) : new FontIcon { Glyph = plugin.Glyph };
             else control.Icon = NavigationIconService.Create(item.Id == "settings" ? "settings" : (string)control.Tag, item.Glyph, _navigationHighContrast);
         }
         var ordered = data.Where(i => !i.IsFooter).Select(i => items[i.Id]).ToArray();
         var current = NavView.MenuItems.OfType<NavigationViewItem>().ToArray();
-        if (current.SequenceEqual(ordered)) return;
+        if (current.SequenceEqual(ordered))
+        {
+            RefreshNavRail();
+            return;
+        }
         var selected = NavView.SelectedItem; var syncing = _syncingNavSelection; _syncingNavSelection = true;
         try
         {
@@ -90,5 +100,6 @@ public sealed partial class MainWindow
             NavView.MenuItems.Clear(); foreach (var item in updated) NavView.MenuItems.Add(item); NavView.SelectedItem = selected;
         }
         finally { _syncingNavSelection = syncing; }
+        RefreshNavRail();
     }
 }

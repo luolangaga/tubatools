@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- runtime-repair 运行库修复 -->
+  <path fill="none" d="M12 7.5C14.49 7.5 16.5 9.51 16.5 12C16.5 14.49 14.49 16.5 12 16.5C9.51 16.5 7.5 14.49 7.5 12C7.5 9.51 9.51 7.5 12 7.5Z" stroke="#CA5010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 3.5V5.6M12 18.4V20.5M3.5 12H5.6M18.4 12H20.5M6 6L7.5 7.5M16.5 16.5L18 18M18 6L16.5 7.5M7.5 16.5L6 18" stroke="#CA5010" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 9.8V14.2M9.8 12H14.2" stroke="#E8935A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

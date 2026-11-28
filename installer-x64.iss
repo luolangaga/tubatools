@@ -119,11 +119,29 @@ begin
   end;
 end;
 
+// 主程序快捷方式置「以管理员身份运行」标志：Inno 无原生 RunAs 参数，按 MS-SHLLINK 在
+// .lnk 生成后补丁字节——LinkFlags DWORD 位于偏移 0x14，SLDF_RUNAS_USER=0x2000，
+// 即第 22 字节（1-based）|= 0x20。Explorer 随后直接弹 UAC 并以管理员单进程启动，
+// 跳过主程序内部的提权重启。仅主程序快捷方式；TUI/卸载快捷方式不加。
+procedure TubaSetShortcutRunAs(const Path: String);
+var
+  Bytes: AnsiString;
+begin
+  if not FileExists(Path) then Exit;
+  if not LoadStringFromFile(Path, Bytes) then Exit;
+  if Length(Bytes) < 24 then Exit;
+  if Copy(Bytes, 1, 4) <> 'L' + #0 + #0 + #0 then Exit;
+  Bytes[22] := Chr(Ord(Bytes[22]) or $20);
+  SaveStringToFile(Path, Bytes, False);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
     SaveStringToFile(ExpandConstant('{app}\.installed'), 'installed', False);
+    TubaSetShortcutRunAs(ExpandConstant('{group}\{#MyAppName}.lnk'));
+    TubaSetShortcutRunAs(ExpandConstant('{autodesktop}\{#MyAppName}.lnk'));
     // 被占用的文件（如 AIDA64 驱动 .sys）已由 restartreplace 安排重启替换；
     // 这里只做完整性校验，避免杀软/权限问题静默留下不完整安装（#265）。
     if not FileExists(ExpandConstant('{app}\TubaWinUi3.PluginSdk.dll')) then

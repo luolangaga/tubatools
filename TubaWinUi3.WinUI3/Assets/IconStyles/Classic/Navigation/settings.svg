@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- navigation settings 设置 -->
+  <path fill="none" d="M12 8.2A3.8 3.8 0 1 1 12 15.8A3.8 3.8 0 1 1 12 8.2Z" stroke="#0F6CBD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 3.2V5.2M12 18.8V20.8M3.2 12H5.2M18.8 12H20.8M5.9 5.9L7.3 7.3M16.7 16.7L18.1 18.1M18.1 5.9L16.7 7.3M7.3 16.7L5.9 18.1" stroke="#6CB8F0" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

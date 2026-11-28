@@ -210,6 +210,7 @@ public sealed partial class AiAssistantPage
             state.Draining = false;
             UpdateQueueView(state);
             if (ReferenceEquals(state, _active)) UpdateButtons();
+            if (_zenLoginPending) await ApplyZenLoginAsync();
         }
     }
 
@@ -361,9 +362,13 @@ public sealed partial class AiAssistantPage
                     foreach (var attachment in attachments)
                         if (!state.Attachments.Any(a => a.Path == attachment.Path)) state.Attachments.Add(attachment);
                 }
-                SetNotice(state, AgentText.FriendlyError(ex), ex is not OperationCanceledException, retry: ex is OperationCanceledException || fromCanvas ? "" : "run");
+                var notice = AgentErrorParser.FromException(ex, model.ProviderId);
+                var text = AgentErrorParser.Compose(notice, model.ProviderId);
+                var cancelled = notice.Kind == AgentErrorKind.Cancelled;
+                SetNotice(state, text, !cancelled, retry: cancelled || fromCanvas ? "" : "run",
+                    login: AgentErrorParser.CanLoginWithZen(notice, model.ProviderId));
                 if (fromCanvas)
-                    foreach (var bubble in _canvasBubbles.Values) bubble.Notice(AgentText.FriendlyError(ex), true);
+                    foreach (var bubble in _canvasBubbles.Values) bubble.Notice(text, true);
                 if (ReferenceEquals(state, _active)) { if (!fromCanvas && PromptBox.Text.Length == 0) PromptBox.Text = state.Draft; RenderTimeline(); }
             }
         }
@@ -377,6 +382,7 @@ public sealed partial class AiAssistantPage
                 RefreshHistoryView();
                 try { if (_lifetime is { IsCancellationRequested: false }) await RefreshHistoryAsync(_lifetime.Token); } catch { }
                 await ApplyProvidersAsync();
+                if (_zenLoginPending) await ApplyZenLoginAsync();
                 AfterTurn(state);
             }
         }

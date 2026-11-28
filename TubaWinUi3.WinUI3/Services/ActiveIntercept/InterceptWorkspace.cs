@@ -55,15 +55,15 @@ public static class InterceptWorkspace
     /// <summary>新条目录入待审核（驱动页面 InfoBar 与新项高亮）。</summary>
     public static event EventHandler<InterceptItemDto>? PendingApprovalDetected;
 
-    /// <summary>后端服务消息（需用户注意）。</summary>
+    /// <summary>拦截服务消息（需用户注意）。</summary>
     public static event EventHandler<string>? ServiceAttention;
 
-    /// <summary>后端连接状态变化（参数：是否已连接）。</summary>
+    /// <summary>拦截服务连接状态变化（参数：是否已连接）。</summary>
     public static event EventHandler<bool>? ConnectionChanged;
 
     // ================= 生命周期 =================
 
-    /// <summary>在主程序启动主动拦截后端后调用（UI 线程）。</summary>
+    /// <summary>在主程序启动主动拦截运行时后调用（UI 线程）。</summary>
     public static void Initialize(DispatcherQueue uiQueue)
     {
         lock (Sync)
@@ -310,8 +310,8 @@ public static class InterceptWorkspace
 
     /// <summary>
     /// 把「已停止追踪」条目合并进拦截列表（IsIgnored=true）。
-    /// 后端新版本已会在快照中返回这些条目；即便如此前台仍做一次合并兜底，
-    /// 保证哪怕运行的是旧后端，「已停止追踪」筛选/计数/恢复追踪也始终可见可用。
+    /// 运行时新版本已会在快照中返回这些条目；即便如此前台仍做一次合并兜底，
+    /// 保证哪怕运行的是旧版运行时，「已停止追踪」筛选/计数/恢复追踪也始终可见可用。
     /// </summary>
     private static List<InterceptItemDto> MergeIgnoredItems(
         IEnumerable<InterceptItemDto> items, IEnumerable<InterceptIgnoredDto> ignored)

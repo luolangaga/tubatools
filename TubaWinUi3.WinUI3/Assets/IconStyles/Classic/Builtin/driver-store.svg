@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- driver-store 驱动管理 -->
+  <path fill="none" d="M12 4.5A3 3 0 1 1 12 10.5A3 3 0 1 1 12 4.5Z" stroke="#986F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M12 2.8V4.5M12 10.5V12.2M7.8 7.5H9.5M14.5 7.5H16.2M9 4.5L10.2 5.7M13.8 9.3L15 10.5M15 4.5L13.8 5.7M10.2 9.3L9 10.5" stroke="#986F0B" stroke-width="1.2" stroke-linecap="round"/>
+  <path fill="none" d="M6.5 14.5H17.5C18.1 14.5 18.5 14.9 18.5 15.5V19.5H5.5V15.5C5.5 14.9 5.9 14.5 6.5 14.5Z" stroke="#D6B44B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M8.5 14.5V12.8M15.5 14.5V12.8" stroke="#D6B44B" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

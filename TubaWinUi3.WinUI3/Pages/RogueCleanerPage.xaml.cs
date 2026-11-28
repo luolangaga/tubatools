@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Microsoft.UI.Dispatching;
@@ -442,45 +442,48 @@ public sealed partial class RogueCleanerPage : Page
             if (running)
             {
                 AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentGreen);
-                AiRunningText.Text = "主动拦截后端：运行中";
+                AiRunningText.Text = "主动拦截：运行中（随工具箱进程）";
                 CloseAiStatus();
-                // 后端已在运行但工作区未初始化（如开机自启场景），补初始化管道连接
+                // 运行时已在本进程内，工作区没有连接过时补一次初始化
                 InterceptWorkspace.Initialize(DispatcherQueue);
             }
             else
             {
                 AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentOrange);
-                AiRunningText.Text = "主动拦截后端：未运行";
-                ShowAiStatus("主动拦截后端未在运行，请点击「启用主动拦截」启动常驻后端。", InfoBarSeverity.Warning);
+                AiRunningText.Text = "主动拦截：未运行";
+                ShowAiStatus("拦截引擎未运行（需要管理员权限，或启动失败）。可点击「启用主动拦截」重试。", InfoBarSeverity.Warning);
             }
         }
         else
         {
             AiStatusDot.Fill = new SolidColorBrush(ThemeColors.Neutral);
-            AiRunningText.Text = "主动拦截后端：已关闭";
+            AiRunningText.Text = "主动拦截：已关闭";
             AiDisableBackendBtn.Visibility = Visibility.Collapsed;
             AiEnableBackendBtn.Visibility = Visibility.Visible;
-            ShowAiStatus("主动拦截后端已关闭：新增第三方右键菜单不会被自动拦截。可在上方或设置页开启。", InfoBarSeverity.Warning);
+            ShowAiStatus("主动拦截已关闭：新增第三方右键菜单不会被自动拦截。可在上方或设置页开启。", InfoBarSeverity.Warning);
         }
 
         _ = AiRefreshStartupStateAsync();
         _ = AiRefreshAllAsync(quiet: false);
     }
 
-    /// <summary>读取开机自启计划任务状态并刷新开关 UI。</summary>
+    /// <summary>读取「工具箱开机自启」状态并刷新开关 UI。</summary>
     private async Task AiRefreshStartupStateAsync()
     {
         if (AiStartupToggle is null) return;
         try
         {
-            var type = await ActiveInterceptStartupService.GetStartupTypeAsync();
-            var on = AppSettings.GetBool("ActiveInterceptEnabled", false);
+            var status = await AutoStartService.QueryAsync();
+            var on = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
             _aiStartupInitializing = true;
             AiStartupToggle.IsOn = on;
             _aiStartupInitializing = false;
-            AiStartupHint.Text = type != ActiveInterceptStartupService.StartupType.None
-                ? $"计划任务：{ActiveInterceptStartupService.ScheduleTaskName}"
-                : "未配置开机自启";
+            AiStartupHint.Text = status.State switch
+            {
+                AutoStartState.On => $"已随工具箱自启（计划任务：{AutoStartService.TaskName}）",
+                AutoStartState.NeedsRepair => $"自启任务待修复：{status.Detail ?? "配置已变化"}",
+                _ => "未配置开机自启（工具箱不运行时主动拦截也会停止）",
+            };
         }
         catch (Exception ex)
         {
@@ -495,22 +498,21 @@ public sealed partial class RogueCleanerPage : Page
         AiStartupToggle.IsEnabled = false;
         try
         {
-            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(desired);
+            var result = await AutoStartService.SetEnabledAsync(desired);
             if (result.Success)
             {
                 RefreshActiveIntercept();
                 AiStartupHint.Text = desired
-                    ? $"计划任务：{ActiveInterceptStartupService.ScheduleTaskName}"
-                    : "未配置开机自启";
-                ShowAiStatus(desired ? "已设置主动拦截后端开机自启。" : "已取消主动拦截后端开机自启。", InfoBarSeverity.Success);
+                    ? $"已随工具箱自启（计划任务：{AutoStartService.TaskName}）"
+                    : "未配置开机自启（工具箱不运行时主动拦截也会停止）";
+                ShowAiStatus(desired ? "已设置工具箱开机自启。" : "已取消工具箱开机自启。", InfoBarSeverity.Success);
             }
             else
             {
                 _aiStartupInitializing = true;
-                AiStartupToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
+                AiStartupToggle.IsOn = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
                 _aiStartupInitializing = false;
-                // 显示 schtasks 的真实报错（XML 解析失败 / 后端缺失 / 提权被拒都有各自的文案）
-                var reason = result.Error ?? "未知原因";
+                var reason = result.Message;
                 AiStartupHint.Text = (desired ? "开机自启设置失败：" : "取消开机自启失败：") + reason;
                 ShowAiStatus((desired ? "开机自启设置失败：" : "取消开机自启失败：") + reason, InfoBarSeverity.Error);
             }
@@ -518,7 +520,7 @@ public sealed partial class RogueCleanerPage : Page
         catch (Exception ex)
         {
             _aiStartupInitializing = true;
-            AiStartupToggle.IsOn = AppSettings.GetBool("ActiveInterceptEnabled", false);
+            AiStartupToggle.IsOn = AppSettings.GetBool(AutoStartService.EnabledSettingKey, false);
             _aiStartupInitializing = false;
             AiStartupHint.Text = $"操作失败：{ex.Message}";
             ShowAiStatus("操作开机自启失败。", InfoBarSeverity.Error);
@@ -565,12 +567,12 @@ public sealed partial class RogueCleanerPage : Page
         {
             CloseAiStatus();
             AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentGreen);
-            AiRunningText.Text = "主动拦截后端：运行中";
+            AiRunningText.Text = "主动拦截：运行中（随工具箱进程）";
         }
         else
         {
             AiStatusDot.Fill = new SolidColorBrush(ThemeColors.AccentOrange);
-            AiRunningText.Text = "主动拦截后端：连接中断";
+            AiRunningText.Text = "主动拦截：连接中断";
         }
         _ = AiRefreshAllAsync(quiet: true);
     }
@@ -609,7 +611,7 @@ public sealed partial class RogueCleanerPage : Page
             }
             else if (!quiet)
             {
-                ShowAiStatus("无法连接主动拦截后端（命名管道未就绪），请确认后端已启用。", InfoBarSeverity.Warning);
+                ShowAiStatus("无法连接拦截引擎（命名管道未就绪）。请确认主动拦截已开启，且工具箱以管理员权限运行。", InfoBarSeverity.Warning);
             }
             ApplyAiView();
         }
@@ -1357,7 +1359,7 @@ public sealed partial class RogueCleanerPage : Page
     {
         if (!AppSettings.GetBool("ActiveInterceptEnabled", false) || !ActiveInterceptService.IsRunning)
         {
-            ShowAiStatus("主动拦截后端未在运行，请先点击「启用主动拦截」。", InfoBarSeverity.Warning);
+            ShowAiStatus("主动拦截未在运行，请先点击「启用主动拦截」。", InfoBarSeverity.Warning);
             return false;
         }
         return true;
@@ -1946,7 +1948,7 @@ public sealed partial class RogueCleanerPage : Page
         }
     }
 
-    // ================= 后端开关 / 设置 =================
+    // ================= 运行时开关 / 设置 =================
 
     private void AiOpenSettings_Click(object sender, RoutedEventArgs e)
     {
@@ -1969,8 +1971,8 @@ public sealed partial class RogueCleanerPage : Page
     {
         try
         {
-            var result = await ActiveInterceptStartupService.SetStartupEnabledAsync(enabled);
-            if (!result.Success) ShowAiStatus(result.Error ?? "操作失败", InfoBarSeverity.Error);
+            var ok = ActiveInterceptService.SetEnabled(enabled);
+            if (!ok && enabled) ShowAiStatus("拦截引擎启动失败，详见日志。", InfoBarSeverity.Error);
             await AiRefreshStartupStateAsync();
         }
         catch (Exception ex) { ShowAiStatus(ex.Message, InfoBarSeverity.Error); }

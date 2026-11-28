@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using Tubatools.AiJunkCleanup;
@@ -273,6 +274,9 @@ public sealed class AiJunkCleanupTests
         Assert.Contains("自动附带", template);
         Assert.Contains("临时目录", template);
         Assert.Contains("不要只根据索引里的大文件", template);
+        Assert.Contains("清单颗粒度", template);
+        Assert.Contains("单个文件", template);
+        Assert.Contains("按内容拆不按大小拆", template);
         Assert.Contains("我的清理目标", template);
     }
 
@@ -374,6 +378,11 @@ public sealed class AiJunkCleanupTests
         Assert.Contains("按下发送", text);
         Assert.Contains("不要只盯着大文件", text);
         Assert.Contains("临时目录", text);
+        // 清单颗粒度：要求 AI 给到具体文件/子目录，而不是一大片容器目录。
+        Assert.Contains("清单颗粒度", text);
+        Assert.Contains("一项 = 一个具体对象", text);
+        Assert.Contains("按内容拆，不按大小拆", text);
+        Assert.Contains("输出前自检", text);
     }
 
     [Fact]
@@ -457,6 +466,38 @@ public sealed class AiJunkCleanupTests
         Assert.True(JunkSafety.Evaluate(Item(missing), env).Blocked);
         Assert.True(JunkSafety.Evaluate(Item("relative\\path.tmp"), env).Blocked);
         Assert.True(JunkSafety.Evaluate(Item(@"\\server\share\file.tmp"), env).Blocked);
+    }
+
+    [Fact]
+    public void Safety_AllowsContentUnderAncestorJunctionButStillRefusesTheJunctionAndProtectedTargets()
+    {
+        using var root = new TempTree();
+        var env = root.Environment;
+
+        // 用户把「下载」重定向到别的盘（常见做法）：Downloads 变成目录联接。
+        var realDownloads = root.Dir("AnotherDrive", "Download");
+        root.Dir("AnotherDrive", "Download", "WindowsImages");
+        var downloads = Path.Combine(root.Path, "Users", "Tester", "Downloads");
+        Directory.Delete(downloads, true);
+        if (!TryCreateJunction(downloads, realDownloads)) return; // 环境不允许建联接时跳过。
+
+        // 上级是联接的内容照常放行，不再是「不建议」；风险等级仍按逻辑路径（下载）评估。
+        var inside = JunkSafety.Evaluate(Item(Path.Combine(downloads, "WindowsImages"), isDirectory: true), env);
+        Assert.False(inside.Blocked);
+        Assert.Equal(JunkRisk.High, inside.Risk);
+        Assert.Contains("重定向", inside.Note);
+
+        // 联接本身不能删（会移除链接或穿过它删目标）。
+        Assert.True(JunkSafety.Evaluate(Item(downloads, isDirectory: true), env).Blocked);
+
+        // 联接指向受保护目录时，按真实路径复核后仍然拒绝。
+        var windows = root.Dir("Windows", "System32");
+        var jump = Path.Combine(root.Path, "Users", "Tester", "JumpToWindows");
+        if (TryCreateJunction(jump, Path.GetDirectoryName(windows)!))
+        {
+            Assert.True(JunkSafety.Evaluate(Item(Path.Combine(jump, "System32"), isDirectory: true), env).Blocked);
+            Directory.Delete(jump);
+        }
     }
 
     [Fact]
@@ -659,6 +700,28 @@ public sealed class AiJunkCleanupTests
     {
         public List<PluginToolDefinition> Tools { get; } = [];
         public void RegisterTool(PluginToolDefinition tool) => Tools.Add(tool);
+    }
+
+    /// <summary>建目录联接（junction）模拟被重定向的用户目录；建不了时返回 false，由调用方跳过。</summary>
+    private static bool TryCreateJunction(string link, string target)
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo("cmd.exe", "/c mklink /J \"" + link + "\" \"" + target + "\"")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            });
+            if (process is null) return false;
+            process.WaitForExit(10_000);
+            return process.HasExited && process.ExitCode == 0 && Directory.Exists(link);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     private sealed class TempTree : IDisposable

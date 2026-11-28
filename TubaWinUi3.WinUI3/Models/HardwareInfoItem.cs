@@ -18,6 +18,9 @@ public sealed class HardwareInfoItem
 
     public IReadOnlyList<HardwarePortInfo>? PortCapabilities { get; set; }
 
+    /// <summary>该行数据仍在采集中：界面显示为占位文案，并排在列表末尾。</summary>
+    public bool IsPending { get; init; }
+
     public string? NicknameValue { get; set; }
 
     /// <summary>显示用标签：按当前界面语言翻译（Label 本身是数据键，服务内部比较仍用中文）。</summary>

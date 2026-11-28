@@ -1264,7 +1264,16 @@ public sealed partial class PcTutorialPage : Page
                     var builtin = BuiltinToolRegistry.GetById(link.Target);
                     if (builtin is not null && XamlRoot is not null)
                     {
-                        var ctx = new BuiltinToolContext { XamlRoot = XamlRoot };
+                        // 旧榜单入口已经合并到「性能排行」，按旧 ID 预选对应标签。
+                        var preferredTab = link.Target switch
+                        {
+                            "cpu-ranking" => "cpu",
+                            "gpu-ranking" => "gpu",
+                            "benchmark-cloud" => "benchmark",
+                            "latency-image-query" => "latency",
+                            _ => null
+                        };
+                        var ctx = new BuiltinToolContext { XamlRoot = XamlRoot, PreferredTab = preferredTab };
                         _ = builtin.ExecuteTrackedAsync(ctx);
                     }
                     break;
@@ -1485,8 +1494,8 @@ public sealed partial class PcTutorialPage : Page
          [new ActionLink("查看硬件信息", "\uE950", "navigate_page", "HardwarePage")]),
 
         ("怎么激活 Windows？",
-         "正版激活：①品牌机一般已内置数字许可证，联网自动激活 ②零售密钥在「设置→系统→激活」中输入。工具箱也提供了 KMS 激活工具，但建议优先使用正版授权。",
-         [new ActionLink("KMS 激活工具", "\uEC19", "launch_builtin", "windows-activation")])
+         "正版激活：①品牌机一般已内置数字许可证，联网自动激活 ②零售密钥在「设置→系统→激活」中输入。优先使用正版授权。",
+         null)
     ];
 
     private static List<GuideStep> GetGuideSteps() =>

@@ -1250,8 +1250,8 @@ public sealed partial class PerformanceBenchmarkPage : Page
 
 	private void OnRankingClick(object sender, RoutedEventArgs e)
 	{
-		var tool = new BenchmarkCloudTool();
-		var context = new BuiltinToolContext { XamlRoot = XamlRoot };
+		var tool = new PerformanceRankingTool();
+		var context = new BuiltinToolContext { XamlRoot = XamlRoot, PreferredTab = "benchmark" };
 		MainWindow.ActiveToolName = tool.Name;
 		tool.ExecuteTrackedAsync(context);
 	}

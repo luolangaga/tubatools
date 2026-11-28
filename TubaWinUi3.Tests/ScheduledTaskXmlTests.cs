@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using TubaWinUi3.Services;
-using TubaWinUi3.Services.ActiveIntercept;
 
 namespace TubaWinUi3.Tests;
 
@@ -31,9 +30,8 @@ public class ScheduledTaskXmlTests
             EnergyStarStartupService.BuildTaskXml(@"C:\App\TubaWinUi3.exe", @"PC\user")
         },
         {
-            "ActiveIntercept",
-            ActiveInterceptStartupService.BuildTaskXml(
-                @"C:\App\TubaWinUi3.BackEnd.exe", "\"--config\" \"C:\\cfg.json\"", @"PC\user")
+            "AutoStart",
+            AutoStartService.BuildTaskXml(@"C:\App\TubaWinUi3.exe", @"PC\user")
         },
     };
 
@@ -87,14 +85,13 @@ public class ScheduledTaskXmlTests
     }
 
     [Fact]
-    public void ActiveInterceptTaskXml_CarriesBackendPathAndConfigArguments()
+    public void AutoStartTaskXml_CarriesExePathAndAutoStartSwitch()
     {
-        var xml = ActiveInterceptStartupService.BuildTaskXml(
-            @"C:\App\TubaWinUi3.BackEnd.exe", "\"--config\" \"C:\\cfg.json\"", @"PC\user");
+        var xml = AutoStartService.BuildTaskXml(@"C:\App\TubaWinUi3.exe", @"PC\user");
 
-        Assert.Contains(@"C:\App\TubaWinUi3.BackEnd.exe", xml, StringComparison.Ordinal);
-        Assert.Contains("--config", xml, StringComparison.Ordinal);
-        Assert.Contains(ActiveInterceptStartupService.ScheduleTaskName, xml, StringComparison.Ordinal);
+        Assert.Contains(@"C:\App\TubaWinUi3.exe", xml, StringComparison.Ordinal);
+        Assert.Contains(LaunchIntent.AutoStartArg, xml, StringComparison.Ordinal);
+        Assert.Contains(AutoStartService.TaskName, xml, StringComparison.Ordinal);
     }
 
     // ---------------------------------------------------------------------
@@ -127,17 +124,16 @@ public class ScheduledTaskXmlTests
 
     [Theory]
     [MemberData(nameof(UnsafePaths))]
-    public void ActiveInterceptTaskXml_StaysWellFormedAndRoundTripsUnsafePath(string exePath)
+    public void AutoStartTaskXml_StaysWellFormedAndRoundTripsUnsafePath(string exePath)
     {
-        var arguments = $"\"--config\" \"{exePath}.json\"";
-
-        var xml = ActiveInterceptStartupService.BuildTaskXml(exePath, arguments, @"PC & Co\user");
+        var xml = AutoStartService.BuildTaskXml(exePath, @"PC & Co\user");
 
         var doc = XDocument.Parse(xml);
         var ns = doc.Root!.GetDefaultNamespace();
 
         Assert.Equal(exePath, doc.Descendants(ns + "Command").Single().Value);
-        Assert.Equal(arguments, doc.Descendants(ns + "Arguments").Single().Value);
+        Assert.Equal(LaunchIntent.AutoStartArg, doc.Descendants(ns + "Arguments").Single().Value);
+        Assert.Equal(@"PC & Co\user", doc.Descendants(ns + "UserId").Single().Value);
     }
 
     [Fact]

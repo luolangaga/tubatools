@@ -20,10 +20,11 @@ internal static class PluginCapabilities
     internal const string Clipboard = "clipboard";
     internal const string Files = "files";
     internal const string Uri = "uri";
+    internal const string Icons = "icons";
 
     /// <summary>全部已知能力（也是清单校验的白名单）。</summary>
     internal static IReadOnlyList<string> All { get; } =
-        [Background, Navigation, Appearance, Diagnostics, Tools, Process, Clipboard, Files, Uri];
+        [Background, Navigation, Appearance, Diagnostics, Tools, Process, Clipboard, Files, Uri, Icons];
 
     /// <summary>能力的中文说明，用于插件页展示与校验报错。</summary>
     internal static string Describe(string capability) => capability switch
@@ -37,6 +38,7 @@ internal static class PluginCapabilities
         Clipboard => "写入剪贴板",
         Files => "弹出文件与文件夹选择器",
         Uri => "打开外部链接",
+        Icons => "自定义内置工具、侧栏菜单与消息弹窗图标",
         _ => capability
     };
 

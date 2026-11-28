@@ -171,6 +171,27 @@
   <data name="MainWindow_NavSettings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="ShellTab_New" xml:space="preserve">
+    <value>New tab</value>
+  </data>
+  <data name="ShellTab_Close" xml:space="preserve">
+    <value>Close tab</value>
+  </data>
+  <data name="ShellTab_CloseOthers" xml:space="preserve">
+    <value>Close other tabs</value>
+  </data>
+  <data name="ShellTab_CloseRight" xml:space="preserve">
+    <value>Close tabs to the right</value>
+  </data>
+  <data name="ShellTab_StripName" xml:space="preserve">
+    <value>Tabs</value>
+  </data>
+  <data name="Settings_Tabs_Title" xml:space="preserve">
+    <value>Tabs</value>
+  </data>
+  <data name="Settings_Tabs_Desc" xml:space="preserve">
+    <value>Show Explorer-style tabs in the title bar so several pages can stay open at once. Turn off to keep a single page.</value>
+  </data>
   <data name="MainWindow_BuiltinToolFallback" xml:space="preserve">
     <value>Built-in Tool</value>
   </data>
@@ -1175,7 +1196,7 @@
     <value>Never notify</value>
   </data>
   <data name="Settings_InterceptStatusBackendMissing" xml:space="preserve">
-    <value>Not running (backend missing)</value>
+    <value>Not running (intercept engine failed to start)</value>
   </data>
   <data name="Settings_InterceptStatusOff" xml:space="preserve">
     <value>Off</value>
@@ -1184,10 +1205,13 @@
     <value>Running</value>
   </data>
   <data name="Settings_NavLayout_Desc.Text" xml:space="preserve">
-    <value>Switch between sidebar and top tab navigation</value>
+    <value>Switch between sidebar, top tabs, or icon menu navigation</value>
   </data>
   <data name="Settings_NavLayout_Title.Text" xml:space="preserve">
     <value>Navigation layout</value>
+  </data>
+  <data name="Settings_NavLayoutOptionRail" xml:space="preserve">
+    <value>Icon menu</value>
   </data>
   <data name="Settings_NavLayoutOptionSidebar" xml:space="preserve">
     <value>Sidebar</value>
@@ -2006,12 +2030,6 @@ Permissions
   <data name="Builtin_battery-analyzer_Name" xml:space="preserve">
     <value>Battery Usage Analysis</value>
   </data>
-  <data name="Builtin_benchmark-cloud_Desc" xml:space="preserve">
-    <value>Upload test reports to the community, browse global leaderboards, and compare against users with the same hardware.</value>
-  </data>
-  <data name="Builtin_benchmark-cloud_Name" xml:space="preserve">
-    <value>Benchmark Leaderboard</value>
-  </data>
   <data name="Builtin_cert-block_Desc" xml:space="preserve">
     <value>Blocks rogue software from installing or running by adding vendor certificates to the system untrusted list.</value>
   </data>
@@ -2029,12 +2047,6 @@ Permissions
   </data>
   <data name="Builtin_context-menu-mgr_Name" xml:space="preserve">
     <value>Context Menu Manager</value>
-  </data>
-  <data name="Builtin_cpu-ranking_Desc" xml:space="preserve">
-    <value>Browse desktop and laptop CPU performance rankings with brand filters and sorting. Data from NanoReview</value>
-  </data>
-  <data name="Builtin_cpu-ranking_Name" xml:space="preserve">
-    <value>CPU Ranking</value>
   </data>
   <data name="Builtin_digital-literacy-test_Desc" xml:space="preserve">
     <value>Test your PC knowledge: are you an "electronic illiterate"? 25 multiple-choice questions, 100 points total.</value>
@@ -2096,12 +2108,6 @@ Permissions
   <data name="Builtin_game-tunnel_Name" xml:space="preserve">
     <value>Game Tunnel</value>
   </data>
-  <data name="Builtin_gpu-ranking_Desc" xml:space="preserve">
-    <value>Browse desktop and laptop GPU performance rankings with brand filters and sorting. Data from NanoReview</value>
-  </data>
-  <data name="Builtin_gpu-ranking_Name" xml:space="preserve">
-    <value>GPU Ranking</value>
-  </data>
   <data name="Builtin_hardware-spoofer_Desc" xml:space="preserve">
     <value>Edit how CPU, GPU, and system information appear in the registry, with one-click restore of the original values.</value>
   </data>
@@ -2132,12 +2138,6 @@ Permissions
   <data name="Builtin_lan-file-share_Name" xml:space="preserve">
     <value>LAN File Share</value>
   </data>
-  <data name="Builtin_latency-image-query_Desc" xml:space="preserve">
-    <value>Browse community-uploaded core-to-core latency heatmaps and compare inter-core communication across CPUs.</value>
-  </data>
-  <data name="Builtin_latency-image-query_Name" xml:space="preserve">
-    <value>Core Latency Lookup</value>
-  </data>
   <data name="Builtin_network-adapter-proxy_Desc" xml:space="preserve">
     <value>Aggregate multiple network adapters, distribute traffic intelligently, and accelerate Wi-Fi and Ethernet automatically.</value>
   </data>
@@ -2167,6 +2167,24 @@ Permissions
   </data>
   <data name="Builtin_performance-benchmark_Name" xml:space="preserve">
     <value>Performance Benchmark</value>
+  </data>
+  <data name="Builtin_performance-ranking_Desc" xml:space="preserve">
+    <value>CPU and GPU ladders, community benchmark leaderboards and core-to-core latency all in one page, with tab switching.</value>
+  </data>
+  <data name="Builtin_performance-ranking_Name" xml:space="preserve">
+    <value>Performance Rankings</value>
+  </data>
+  <data name="PerformanceRanking_TabBenchmark" xml:space="preserve">
+    <value>Benchmarks</value>
+  </data>
+  <data name="PerformanceRanking_TabCpu" xml:space="preserve">
+    <value>CPU ranking</value>
+  </data>
+  <data name="PerformanceRanking_TabGpu" xml:space="preserve">
+    <value>GPU ranking</value>
+  </data>
+  <data name="PerformanceRanking_TabLatency" xml:space="preserve">
+    <value>Core-to-core latency</value>
   </data>
   <data name="Builtin_port-viewer_Desc" xml:space="preserve">
     <value>View all TCP/UDP port usage and find the process holding each port.</value>
@@ -3052,6 +3070,9 @@ Permissions
   <data name="Hw_Unknown" xml:space="preserve">
     <value>Unknown</value>
   </data>
+  <data name="Hw_ReadingPending" xml:space="preserve">
+    <value>Reading…</value>
+  </data>
   <data name="Hw_LoadFailed" xml:space="preserve">
     <value>Failed to read hardware information</value>
   </data>
@@ -3528,621 +3549,6 @@ Permissions
   </data>
   <data name="HwDetail_UsbTruncated" xml:space="preserve">
     <value>{0} total (showing first {1})</value>
-  </data>
-  <data name="Builtin_handle-cleaner_Name" xml:space="preserve">
-    <value>Handle Cleaner</value>
-  </data>
-  <data name="Builtin_handle-cleaner_Desc" xml:space="preserve">
-    <value>Scans system-wide handle usage and suspected leaks, and safely closes stale handles to deleted files in one click to ease slowdowns after long uptime.</value>
-  </data>
-  <data name="HandleCleaner_PageHeader.Title" xml:space="preserve">
-    <value>Handle Cleaner</value>
-  </data>
-  <data name="HandleCleaner_PageHeader.Subtitle" xml:space="preserve">
-    <value>Safely close stale file handles · handle usage ranking · ease slowdowns after long uptime</value>
-  </data>
-  <data name="HandleCleaner_RefreshButton.Text" xml:space="preserve">
-    <value>Rescan</value>
-  </data>
-  <data name="HandleCleaner_HelpButton.Text" xml:space="preserve">
-    <value>Help</value>
-  </data>
-  <data name="HandleCleaner_AdminRestart.Text" xml:space="preserve">
-    <value>Restart as administrator</value>
-  </data>
-  <data name="HandleCleaner_AdminBarTitle" xml:space="preserve">
-    <value>Not running as administrator</value>
-  </data>
-  <data name="HandleCleaner_AdminBarMessage" xml:space="preserve">
-    <value>Handles of some system processes cannot be read, so the cleanup scope is limited. Restarting as administrator enables a full scan and cleanup.</value>
-  </data>
-  <data name="HandleCleaner_AdminFailedTitle" xml:space="preserve">
-    <value>Cannot restart elevated</value>
-  </data>
-  <data name="HandleCleaner_AdminFailedMessage" xml:space="preserve">
-    <value>The elevation request failed: {0}</value>
-  </data>
-  <data name="HandleCleaner_StatTotalLabel.Text" xml:space="preserve">
-    <value>Total handles</value>
-  </data>
-  <data name="HandleCleaner_StatProcessLabel.Text" xml:space="preserve">
-    <value>Processes</value>
-  </data>
-  <data name="HandleCleaner_StatSuspectLabel.Text" xml:space="preserve">
-    <value>Suspected leaks</value>
-  </data>
-  <data name="HandleCleaner_HeroSuspectTitle" xml:space="preserve">
-    <value>{0} process(es) with suspected handle leaks</value>
-  </data>
-  <data name="HandleCleaner_HeroSuspectDetail" xml:space="preserve">
-    <value>{0:N0} handles system-wide ({1:N0} file handles); a safe cleanup is recommended after long uptime.</value>
-  </data>
-  <data name="HandleCleaner_HeroNormalTitle" xml:space="preserve">
-    <value>Handle usage looks normal</value>
-  </data>
-  <data name="HandleCleaner_HeroNormalDetail" xml:space="preserve">
-    <value>{0:N0} handles system-wide ({1:N0} file handles); no obvious leaks found.</value>
-  </data>
-  <data name="HandleCleaner_LastCleanNone" xml:space="preserve">
-    <value>No cleanup yet</value>
-  </data>
-  <data name="HandleCleaner_LastCleanNone.Text" xml:space="preserve">
-    <value>No cleanup yet</value>
-  </data>
-  <data name="HandleCleaner_LastCleanFormat" xml:space="preserve">
-    <value>Last cleanup: {0} · freed {1} handles</value>
-  </data>
-  <data name="HandleCleaner_QuickCleanButton.Text" xml:space="preserve">
-    <value>One-click safe cleanup</value>
-  </data>
-  <data name="HandleCleaner_QuickCleanHint.Text" xml:space="preserve">
-    <value>Only closes stale handles to deleted files, never touches other handle types</value>
-  </data>
-  <data name="HandleCleaner_CancelButton.Text" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="HandleCleaner_Cancelling" xml:space="preserve">
-    <value>Cancelling…</value>
-  </data>
-  <data name="HandleCleaner_ReadingOverview" xml:space="preserve">
-    <value>Reading system-wide handle usage…</value>
-  </data>
-  <data name="HandleCleaner_ScanningPhase" xml:space="preserve">
-    <value>Scanning file handles of each process…</value>
-  </data>
-  <data name="HandleCleaner_CleaningPhase" xml:space="preserve">
-    <value>Closing stale handles…</value>
-  </data>
-  <data name="HandleCleaner_ProgressFormat" xml:space="preserve">
-    <value>Checked {0} / {1} file handles</value>
-  </data>
-  <data name="HandleCleaner_CleanProgressFormat" xml:space="preserve">
-    <value>Closing handle {0} / {1}</value>
-  </data>
-  <data name="HandleCleaner_ScanCancelled" xml:space="preserve">
-    <value>Scan cancelled</value>
-  </data>
-  <data name="HandleCleaner_ScanFailedTitle" xml:space="preserve">
-    <value>Scanning stale handles failed</value>
-  </data>
-  <data name="HandleCleaner_TypeIndexFailedTitle" xml:space="preserve">
-    <value>Cannot identify the file handle type</value>
-  </data>
-  <data name="HandleCleaner_TypeIndexFailedDetail" xml:space="preserve">
-    <value>This launch failed to identify the File object type index (sample handle creation failed). Please retry or restart the app.</value>
-  </data>
-  <data name="HandleCleaner_NoCandidatesTitle" xml:space="preserve">
-    <value>No stale handles found</value>
-  </data>
-  <data name="HandleCleaner_CandidatesFoundFormat" xml:space="preserve">
-    <value>Found {0} stale handles in {1} processes</value>
-  </data>
-  <data name="HandleCleaner_TagProtected" xml:space="preserve">
-    <value>Protected</value>
-  </data>
-  <data name="HandleCleaner_TagLeak" xml:space="preserve">
-    <value>Suspected leak</value>
-  </data>
-  <data name="HandleCleaner_TagLeakCritical" xml:space="preserve">
-    <value>Heavy leak</value>
-  </data>
-  <data name="HandleCleaner_TagCandidates" xml:space="preserve">
-    <value>Stale {0}</value>
-  </data>
-  <data name="HandleCleaner_RankingTitle.Text" xml:space="preserve">
-    <value>Handle usage by process</value>
-  </data>
-  <data name="HandleCleaner_RankingSummaryFormat" xml:space="preserve">
-    <value>{0} processes</value>
-  </data>
-  <data name="HandleCleaner_RankingSearchPlaceholder.PlaceholderText" xml:space="preserve">
-    <value>Search process name or PID</value>
-  </data>
-  <data name="HandleCleaner_ColProcess.Text" xml:space="preserve">
-    <value>Process</value>
-  </data>
-  <data name="HandleCleaner_ColPid.Text" xml:space="preserve">
-    <value>PID</value>
-  </data>
-  <data name="HandleCleaner_ColTotal.Text" xml:space="preserve">
-    <value>Handles</value>
-  </data>
-  <data name="HandleCleaner_ColFile.Text" xml:space="preserve">
-    <value>File handles</value>
-  </data>
-  <data name="HandleCleaner_ColTypes.Text" xml:space="preserve">
-    <value>Top types</value>
-  </data>
-  <data name="HandleCleaner_SearchEmpty.Text" xml:space="preserve">
-    <value>No matching processes</value>
-  </data>
-  <data name="HandleCleaner_RankingHint.Text" xml:space="preserve">
-    <value>Click any row to see the handle type breakdown and clean that process's stale handles only.</value>
-  </data>
-  <data name="HandleCleaner_ConfirmTitle" xml:space="preserve">
-    <value>Confirm stale handle cleanup</value>
-  </data>
-  <data name="HandleCleaner_ConfirmMessage" xml:space="preserve">
-    <value>The following handles point to deleted files and will be closed. Those files are gone for good; closing a handle only releases the leftover reference, and a program that still uses it will simply get an error, which usually causes no harm.</value>
-  </data>
-  <data name="HandleCleaner_ConfirmPrimaryFormat" xml:space="preserve">
-    <value>Close {0} handles</value>
-  </data>
-  <data name="HandleCleaner_ConfirmProcessFormat" xml:space="preserve">
-    <value>{0} (PID {1}) — {2} stale</value>
-  </data>
-  <data name="HandleCleaner_CleanFailedTitle" xml:space="preserve">
-    <value>Cleanup failed</value>
-  </data>
-  <data name="HandleCleaner_CleanDoneFormat" xml:space="preserve">
-    <value>Freed {0} handles · {1} processes involved</value>
-  </data>
-  <data name="HandleCleaner_CleanNoneFreedTitle" xml:space="preserve">
-    <value>No handles were freed</value>
-  </data>
-  <data name="HandleCleaner_CleanSkippedGone" xml:space="preserve">
-    <value>{0} already released</value>
-  </data>
-  <data name="HandleCleaner_CleanSkippedDenied" xml:space="preserve">
-    <value>{0} denied by permissions</value>
-  </data>
-  <data name="HandleCleaner_CleanSkippedProcess" xml:space="preserve">
-    <value>{0} skipped (process exited or changed)</value>
-  </data>
-  <data name="HandleCleaner_CleanSkippedType" xml:space="preserve">
-    <value>{0} no longer match the type</value>
-  </data>
-  <data name="HandleCleaner_CleanSkippedOther" xml:space="preserve">
-    <value>{0} other failures</value>
-  </data>
-  <data name="HandleCleaner_CleanTimedOut" xml:space="preserve">
-    <value>Cleanup timed out; remaining handles were skipped</value>
-  </data>
-  <data name="HandleCleaner_CleanAllGood" xml:space="preserve">
-    <value>All candidate handles were processed</value>
-  </data>
-  <data name="HandleCleaner_ScanStatsFormat" xml:space="preserve">
-    <value>Checked {0:N0} file handles ({1:F1} s)</value>
-  </data>
-  <data name="HandleCleaner_FoundHintFormat" xml:space="preserve">
-    <value>{0} stale handles in {1} processes</value>
-  </data>
-  <data name="HandleCleaner_UnknownHintFormat" xml:space="preserve">
-    <value>{0:N0} handles could not be determined and were skipped (never closed)</value>
-  </data>
-  <data name="HandleCleaner_SkippedHintFormat" xml:space="preserve">
-    <value>{0} processes skipped due to insufficient permissions</value>
-  </data>
-  <data name="HandleCleaner_GuardedHintFormat" xml:space="preserve">
-    <value>{0} handles skipped because the system stalled on them</value>
-  </data>
-  <data name="HandleCleaner_TruncatedHint" xml:space="preserve">
-    <value>The scan was truncated; results may be incomplete</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailTitle" xml:space="preserve">
-    <value>Process details · {0} (PID {1})</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailTotalFormat" xml:space="preserve">
-    <value>{0:N0} handles in total ({1:N0} file handles)</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailProtected" xml:space="preserve">
-    <value>This is a critical system process; the tool never cleans its handles.</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailCandidates" xml:space="preserve">
-    <value>{0} stale handles found so far</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailCleanHint" xml:space="preserve">
-    <value>Use the button below to scan and clean this process's stale handles.</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailTypes" xml:space="preserve">
-    <value>Handle type breakdown</value>
-  </data>
-  <data name="HandleCleaner_ProcessDetailCleanButton" xml:space="preserve">
-    <value>Clean this process's stale handles</value>
-  </data>
-  <data name="HandleCleaner_QuickActionsTitle.Text" xml:space="preserve">
-    <value>Quick actions</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerButton.Text" xml:space="preserve">
-    <value>Restart Explorer</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerButton2.Text" xml:space="preserve">
-    <value>Restart Explorer</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerDesc.Text" xml:space="preserve">
-    <value>Explorer is a frequent handle leaker; restarting the shell releases every handle it holds at once (desktop and taskbar briefly disappear, then come back).</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerConfirmTitle" xml:space="preserve">
-    <value>Restart Explorer</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerConfirmMessage" xml:space="preserve">
-    <value>explorer.exe will be closed and started again: open folder windows will close and the desktop and taskbar will briefly disappear, then come back.&#10;Other running programs are not affected.</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerConfirmPrimary" xml:space="preserve">
-    <value>Restart now</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerBusy" xml:space="preserve">
-    <value>Restarting Explorer…</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerDone" xml:space="preserve">
-    <value>Explorer restarted</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerDoneDetail" xml:space="preserve">
-    <value>explorer.exe and every handle it held were released by the restart.</value>
-  </data>
-  <data name="HandleCleaner_RestartExplorerFailed" xml:space="preserve">
-    <value>Restarting Explorer failed</value>
-  </data>
-  <data name="HandleCleaner_CopyReportButton.Text" xml:space="preserve">
-    <value>Copy diagnostic report</value>
-  </data>
-  <data name="HandleCleaner_CopyReportButton2.Text" xml:space="preserve">
-    <value>Copy report</value>
-  </data>
-  <data name="HandleCleaner_CopyReportDesc.Text" xml:space="preserve">
-    <value>Packs handle totals, the process ranking, stale-handle stats and the runtime environment into text you can paste to others.</value>
-  </data>
-  <data name="HandleCleaner_ReportFailedTitle" xml:space="preserve">
-    <value>Copying the diagnostic report failed</value>
-  </data>
-  <data name="HandleCleaner_ReportCopiedTitle" xml:space="preserve">
-    <value>Diagnostic report copied</value>
-  </data>
-  <data name="HandleCleaner_ReportCopiedDetail" xml:space="preserve">
-    <value>It contains handle totals, the process ranking, stale-handle stats and the runtime environment — paste it anywhere for troubleshooting.</value>
-  </data>
-  <data name="HandleCleaner_ReportHeader" xml:space="preserve">
-    <value>Handle Cleaner diagnostic report</value>
-  </data>
-  <data name="HandleCleaner_ReportSystemFormat" xml:space="preserve">
-    <value>Total handles: {0} | Processes: {1} | Suspected leaks: {2}</value>
-  </data>
-  <data name="HandleCleaner_ReportAdminFormat" xml:space="preserve">
-    <value>Running as: {0}</value>
-  </data>
-  <data name="HandleCleaner_ReportAdminYes" xml:space="preserve">
-    <value>Administrator</value>
-  </data>
-  <data name="HandleCleaner_ReportAdminNo" xml:space="preserve">
-    <value>Standard user</value>
-  </data>
-  <data name="HandleCleaner_ReportNoScan" xml:space="preserve">
-    <value>No stale-handle scan has been run in this session yet.</value>
-  </data>
-  <data name="HandleCleaner_ReportScanFormat" xml:space="preserve">
-    <value>Stale-handle scan: {0} file handles checked, {1} stale found (in {2} processes), {3} undetermined, {4} processes skipped</value>
-  </data>
-  <data name="HandleCleaner_ReportCandidates" xml:space="preserve">
-    <value>Stale handle distribution:</value>
-  </data>
-  <data name="HandleCleaner_ReportCandidateRowFormat" xml:space="preserve">
-    <value>· {0} (PID {1}) — {2} stale</value>
-  </data>
-  <data name="HandleCleaner_ReportTopProcesses" xml:space="preserve">
-    <value>Top 20 processes by handles:</value>
-  </data>
-  <data name="HandleCleaner_ReportRowFormat" xml:space="preserve">
-    <value>{0}. {1} (PID {2}) — {3} handles ({4} file)</value>
-  </data>
-  <data name="HandleCleaner_ReportGeneratedFormat" xml:space="preserve">
-    <value>Generated at: {0}</value>
-  </data>
-  <data name="HandleCleaner_ExplainTitle.Text" xml:space="preserve">
-    <value>Why does handle cleanup ease slowdowns?</value>
-  </data>
-  <data name="HandleCleaner_Explain1.Text" xml:space="preserve">
-    <value>· Every opened file, event or registry key costs the system a "handle"; when a program forgets to release it (a leak), the handle keeps holding kernel resources.</value>
-  </data>
-  <data name="HandleCleaner_Explain2.Text" xml:space="preserve">
-    <value>· Handles pile up over a long uptime; as the system handle table nears its limit, file and network operations start to stall system-wide.</value>
-  </data>
-  <data name="HandleCleaner_Explain3.Text" xml:space="preserve">
-    <value>· Safe mode only closes stale handles to deleted files (those files are already unusable — lowest risk); deep mode can close any handle on demand — more freedom, so understand the risk first.</value>
-  </data>
-  <data name="HandleCleaner_Explain4.Text" xml:space="preserve">
-    <value>· Every mode skips critical system processes; before closing, it re-verifies the process identity and the object itself (handle values recycled into other objects are skipped automatically); restarting programs that keep accumulating handles is recommended afterwards.</value>
-  </data>
-  <data name="HandleCleaner_HelpTitle" xml:space="preserve">
-    <value>How to use Handle Cleaner</value>
-  </data>
-  <data name="HandleCleaner_HelpBody" xml:space="preserve">
-    <value>What it does&#10;· Overview: total handles system-wide and per-process usage ranking; processes above 50,000 handles are tagged "Suspected leak" (red above 200,000).&#10;· Safe mode | One-click safe cleanup: closes stale handles that point to deleted files — those files are gone for good, so the handle is just leftover usage.&#10;· Deep mode | Release file locks: find every handle in the system that holds a given path and force-close them (optionally delete the file afterwards) — for files you cannot delete or modify.&#10;· Deep mode | Handle browser: click any process in the ranking to inspect all of its handles (type / object name / access / risk), with search, type filter, multi-select force-close and copy-to-clipboard.&#10;· Quick actions: restart Explorer (the number-one handle leaker) and copy a diagnostic report.&#10;&#10;Safe mode vs deep mode&#10;· Safe mode only handles File handles to deleted files: the file itself is already unusable, so releasing the leftover is well-established as safe.&#10;· Deep mode can close any handle (events / mutexes / registry keys / sections / ...): more freedom, but it may make the target program error out, hang or lose data; every handle carries a risk level (low / medium / high).&#10;&#10;Never happens, in any mode (hard guardrails)&#10;· Handles of critical system processes (System, csrss, lsass, services, winlogon, ...) are never closed — deep mode can only view them;&#10;· Before closing, process identity (guarding against PID reuse) and the object itself are re-verified: handle values recycled into different objects are skipped automatically;&#10;· When not running as administrator, protected processes cannot be read and the skipped count is reported honestly.&#10;&#10;Implementation basis (official docs)&#10;· Closing a remote handle: DuplicateHandle + DUPLICATE_CLOSE_SOURCE;&#10;· Deletion state: DeletePending from GetFileInformationByHandleEx(FileStandardInfo);&#10;· Handle table enumeration uses NtQuerySystemInformation(SystemExtendedHandleInformation), an internal Windows interface (same approach as this app's File Locksmith, mirroring Microsoft PowerToys File Locksmith).&#10;&#10;Tips&#10;· After a long uptime (a week or more) or whenever the system feels sluggish, check the ranking first (who holds the most) and then run the one-click safe cleanup;&#10;· For programs whose handle count stays high, restart them or look for an update;&#10;· Save your work before using deep mode, in case the target program misbehaves.</value>
-  </data>
-  <data name="HandleCleaner_HelpLink1" xml:space="preserve">
-    <value>DuplicateHandle documentation</value>
-  </data>
-  <data name="HandleCleaner_HelpLink2" xml:space="preserve">
-    <value>FILE_STANDARD_INFO documentation</value>
-  </data>
-  <data name="HandleCleaner_ViewDetails" xml:space="preserve">
-    <value>View details</value>
-  </data>
-  <data name="HandleCleaner_ActionDetails" xml:space="preserve">
-    <value>Details</value>
-  </data>
-  <data name="HandleCleaner_Type_File" xml:space="preserve">
-    <value>File</value>
-  </data>
-  <data name="HandleCleaner_Type_Event" xml:space="preserve">
-    <value>Event</value>
-  </data>
-  <data name="HandleCleaner_Type_Mutant" xml:space="preserve">
-    <value>Mutex</value>
-  </data>
-  <data name="HandleCleaner_Type_Semaphore" xml:space="preserve">
-    <value>Semaphore</value>
-  </data>
-  <data name="HandleCleaner_Type_Section" xml:space="preserve">
-    <value>Section</value>
-  </data>
-  <data name="HandleCleaner_Type_Key" xml:space="preserve">
-    <value>Registry key</value>
-  </data>
-  <data name="HandleCleaner_Type_Process" xml:space="preserve">
-    <value>Process</value>
-  </data>
-  <data name="HandleCleaner_Type_Thread" xml:space="preserve">
-    <value>Thread</value>
-  </data>
-  <data name="HandleCleaner_Type_Token" xml:space="preserve">
-    <value>Token</value>
-  </data>
-  <data name="HandleCleaner_Type_Timer" xml:space="preserve">
-    <value>Timer</value>
-  </data>
-  <data name="HandleCleaner_Type_IoCompletion" xml:space="preserve">
-    <value>I/O completion</value>
-  </data>
-  <data name="HandleCleaner_Type_Other" xml:space="preserve">
-    <value>Other</value>
-  </data>
-  <data name="HandleCleaner_ModeTitle.Text" xml:space="preserve">
-    <value>Mode</value>
-  </data>
-  <data name="HandleCleaner_ModeHint.Text" xml:space="preserve">
-    <value>Deep mode can close any handle — use with care</value>
-  </data>
-  <data name="HandleCleaner_ModeSafe.Text" xml:space="preserve">
-    <value>Safe mode</value>
-  </data>
-  <data name="HandleCleaner_ModeSafeDesc.Text" xml:space="preserve">
-    <value>Only closes stale handles to deleted files — lowest risk</value>
-  </data>
-  <data name="HandleCleaner_ModeDeep.Text" xml:space="preserve">
-    <value>Deep mode</value>
-  </data>
-  <data name="HandleCleaner_ModeDeepDesc.Text" xml:space="preserve">
-    <value>Browse / close any handle · force-release file locks by path</value>
-  </data>
-  <data name="HandleCleaner_DeepWarning.Title" xml:space="preserve">
-    <value>Deep mode is on</value>
-  </data>
-  <data name="HandleCleaner_DeepWarning.Message" xml:space="preserve">
-    <value>You can close any handle of any process (including events, mutexes, registry keys, ...). This may make the target program error out, hang or lose data — use it only when you know exactly what you are doing. Critical system processes stay protected.</value>
-  </data>
-  <data name="HandleCleaner_UnlockTitle.Text" xml:space="preserve">
-    <value>Release file locks</value>
-  </data>
-  <data name="HandleCleaner_UnlockTagline.Text" xml:space="preserve">
-    <value>Force-close other processes' handles on a path — for files you cannot delete or modify</value>
-  </data>
-  <data name="HandleCleaner_UnlockPlaceholder.PlaceholderText" xml:space="preserve">
-    <value>Enter or pick the file / directory path to release</value>
-  </data>
-  <data name="HandleCleaner_UnlockPickFile.Text" xml:space="preserve">
-    <value>Pick file</value>
-  </data>
-  <data name="HandleCleaner_UnlockPickFolder.Text" xml:space="preserve">
-    <value>Pick folder</value>
-  </data>
-  <data name="HandleCleaner_UnlockScanButton.Text" xml:space="preserve">
-    <value>Scan locks</value>
-  </data>
-  <data name="HandleCleaner_UnlockCloseDelete.Text" xml:space="preserve">
-    <value>Close &amp; try to delete</value>
-  </data>
-  <data name="HandleCleaner_UnlockScanningPhase" xml:space="preserve">
-    <value>Scanning handles that hold this path…</value>
-  </data>
-  <data name="HandleCleaner_UnlockProgressFormat" xml:space="preserve">
-    <value>Checked {0} / {1} file handles</value>
-  </data>
-  <data name="HandleCleaner_UnlockEmptyPathTitle" xml:space="preserve">
-    <value>Enter a file or directory path first</value>
-  </data>
-  <data name="HandleCleaner_UnlockPathNotFound" xml:space="preserve">
-    <value>The path does not exist</value>
-  </data>
-  <data name="HandleCleaner_UnlockGroupFormat" xml:space="preserve">
-    <value>{0} (PID {1}) — {2} handles</value>
-  </data>
-  <data name="HandleCleaner_UnlockFoundFormat" xml:space="preserve">
-    <value>Found {0} handles in {1} processes; check the ones to force-close.</value>
-  </data>
-  <data name="HandleCleaner_UnlockEmpty" xml:space="preserve">
-    <value>No process holds a handle to this path.</value>
-  </data>
-  <data name="HandleCleaner_UnlockCloseSelectedFormat" xml:space="preserve">
-    <value>Close selected ({0})</value>
-  </data>
-  <data name="HandleCleaner_UnlockNothingSelected" xml:space="preserve">
-    <value>Check the processes whose handles should be closed first</value>
-  </data>
-  <data name="HandleCleaner_UnlockConfirmTitle" xml:space="preserve">
-    <value>Force-close handles</value>
-  </data>
-  <data name="HandleCleaner_UnlockConfirmMessage" xml:space="preserve">
-    <value>{0} selected handles will be force-closed. Programs that keep using them will get an error, which may cause misbehavior or hangs; afterwards the file can usually be deleted or moved.&#10;&#10;Built-in protection: handles whose values were recycled into different objects are skipped automatically.&#10;Continue?</value>
-  </data>
-  <data name="HandleCleaner_UnlockConfirmPrimary" xml:space="preserve">
-    <value>Force close</value>
-  </data>
-  <data name="HandleCleaner_UnlockDoneFormat" xml:space="preserve">
-    <value>Closed {0} handles ({1} skipped)</value>
-  </data>
-  <data name="HandleCleaner_UnlockOnlyFiles" xml:space="preserve">
-    <value>Only files support automatic deletion; handle directories manually</value>
-  </data>
-  <data name="HandleCleaner_UnlockDeleteOk" xml:space="preserve">
-    <value>Handles closed and the file was deleted</value>
-  </data>
-  <data name="HandleCleaner_UnlockDeleteFailedFormat" xml:space="preserve">
-    <value>Handles closed, but deletion still failed: {0}</value>
-  </data>
-  <data name="HandleCleaner_ForceClosePhase" xml:space="preserve">
-    <value>Closing handles…</value>
-  </data>
-  <data name="HandleCleaner_ForceProgressFormat" xml:space="preserve">
-    <value>Closing handle {0} / {1}</value>
-  </data>
-  <data name="HandleCleaner_ForceSkippedGone" xml:space="preserve">
-    <value>{0} already released</value>
-  </data>
-  <data name="HandleCleaner_ForceSkippedRecycled" xml:space="preserve">
-    <value>{0} handle values were recycled (different objects) and skipped</value>
-  </data>
-  <data name="HandleCleaner_ForceSkippedUnverifiable" xml:space="preserve">
-    <value>{0} could not be re-verified and were skipped</value>
-  </data>
-  <data name="HandleCleaner_ForceDenied" xml:space="preserve">
-    <value>{0} denied by permissions</value>
-  </data>
-  <data name="HandleCleaner_ForceProcessGone" xml:space="preserve">
-    <value>{0} skipped (process exited or changed)</value>
-  </data>
-  <data name="HandleCleaner_ForceProtected" xml:space="preserve">
-    <value>{0} protected (critical system process)</value>
-  </data>
-  <data name="HandleCleaner_ForceOther" xml:space="preserve">
-    <value>{0} other failures</value>
-  </data>
-  <data name="HandleCleaner_EnumPhase" xml:space="preserve">
-    <value>Reading handles of {0}…</value>
-  </data>
-  <data name="HandleCleaner_EnumProgressFormat" xml:space="preserve">
-    <value>Read {0} / {1} handles</value>
-  </data>
-  <data name="HandleCleaner_BrowserTip.Text" xml:space="preserve">
-    <value>Click any process in the ranking below to open the handle browser: inspect every handle (type / object name / access / risk) and force-close the ones you check.</value>
-  </data>
-  <data name="HandleCleaner_BrowserBack.Text" xml:space="preserve">
-    <value>Back</value>
-  </data>
-  <data name="HandleCleaner_BrowserRefresh.Text" xml:space="preserve">
-    <value>Refresh</value>
-  </data>
-  <data name="HandleCleaner_BrowserCopy.Text" xml:space="preserve">
-    <value>Copy list</value>
-  </data>
-  <data name="HandleCleaner_BrowserHint.Text" xml:space="preserve">
-    <value>Check the handles to close. Closing any handle can affect the target program (errors / hangs) — be careful; critical system processes are view-only.</value>
-  </data>
-  <data name="HandleCleaner_BrowserHintProtected" xml:space="preserve">
-    <value>This is a critical system process: its handles can be viewed, but the tool will never close them.</value>
-  </data>
-  <data name="HandleCleaner_BrowserSearch.PlaceholderText" xml:space="preserve">
-    <value>Search object name / handle value</value>
-  </data>
-  <data name="HandleCleaner_BrowserDeletedOnly.Content" xml:space="preserve">
-    <value>Deleted files only (low risk)</value>
-  </data>
-  <data name="HandleCleaner_BrowserSelectAll.Text" xml:space="preserve">
-    <value>Select all shown</value>
-  </data>
-  <data name="HandleCleaner_BrowserClear.Text" xml:space="preserve">
-    <value>Clear selection</value>
-  </data>
-  <data name="HandleCleaner_BrowserEmpty.Text" xml:space="preserve">
-    <value>No matching handles</value>
-  </data>
-  <data name="HandleCleaner_BrowserTitleFormat" xml:space="preserve">
-    <value>Handle browser · {0} (PID {1})</value>
-  </data>
-  <data name="HandleCleaner_BrowserSubtitleFormat" xml:space="preserve">
-    <value>{0:N0} handles in total · {1:N0} shown</value>
-  </data>
-  <data name="HandleCleaner_BrowserTruncatedFormat" xml:space="preserve">
-    <value>Too many handles — showing the first {0:N0}; filter by type to see the rest</value>
-  </data>
-  <data name="HandleCleaner_BrowserFailedTitle" xml:space="preserve">
-    <value>Reading handles failed: {0}</value>
-  </data>
-  <data name="HandleCleaner_BrowserTypeAllFormat" xml:space="preserve">
-    <value>All types ({0:N0})</value>
-  </data>
-  <data name="HandleCleaner_BrowserTypeFormat" xml:space="preserve">
-    <value>{0} ({1:N0})</value>
-  </data>
-  <data name="HandleCleaner_BrowserCountFormat" xml:space="preserve">
-    <value>Showing {0:N0} / {1:N0}</value>
-  </data>
-  <data name="HandleCleaner_BrowserCloseSelectedFormat" xml:space="preserve">
-    <value>Close selected ({0})</value>
-  </data>
-  <data name="HandleCleaner_BrowserCloseSelectedIdle" xml:space="preserve">
-    <value>Close selected</value>
-  </data>
-  <data name="HandleCleaner_BrowserNothingToCopy" xml:space="preserve">
-    <value>Nothing to copy</value>
-  </data>
-  <data name="HandleCleaner_BrowserCopyHeader" xml:space="preserve">
-    <value>Type&#9;Access&#9;Handle&#9;Object name</value>
-  </data>
-  <data name="HandleCleaner_BrowserCopied" xml:space="preserve">
-    <value>Copied {0:N0} handle rows to the clipboard</value>
-  </data>
-  <data name="HandleCleaner_BrowserProtected" xml:space="preserve">
-    <value>Handles of critical system processes are protected and cannot be closed.</value>
-  </data>
-  <data name="HandleCleaner_BrowserConfirmTitle" xml:space="preserve">
-    <value>Force-close handles</value>
-  </data>
-  <data name="HandleCleaner_BrowserConfirmBody" xml:space="preserve">
-    <value>{0} selected handles will be force-closed ({1}). Programs that keep using them will get errors, which may cause misbehavior, hangs or broken features.&#10;&#10;Built-in protection: handles whose values were recycled into different objects are skipped automatically.&#10;Continue?</value>
-  </data>
-  <data name="HandleCleaner_BrowserCloseDoneFormat" xml:space="preserve">
-    <value>Closed {0} · skipped {1} · failed {2}</value>
-  </data>
-  <data name="HandleCleaner_BrowserCloseFailedTitle" xml:space="preserve">
-    <value>Closing handles failed: {0}</value>
-  </data>
-  <data name="HandleCleaner_BrowserUnnamed" xml:space="preserve">
-    <value>(unnamed object)</value>
-  </data>
-  <data name="HandleCleaner_DeletedTag" xml:space="preserve">
-    <value>deleted</value>
-  </data>
-  <data name="HandleCleaner_RiskSummaryLow" xml:space="preserve">
-    <value>{0} low-risk</value>
-  </data>
-  <data name="HandleCleaner_RiskSummaryMedium" xml:space="preserve">
-    <value>{0} medium-risk</value>
-  </data>
-  <data name="HandleCleaner_RiskSummaryHigh" xml:space="preserve">
-    <value>{0} high-risk</value>
-  </data>
-  <data name="HandleCleaner_RankingHintDeep" xml:space="preserve">
-    <value>Deep mode: click any row to open the handle browser (any handle can be closed); critical system processes are view-only.</value>
   </data>
   <data name="EnvVars_PageHeader.Subtitle" xml:space="preserve">
     <value>View and edit user/system environment variables; edit PATH entry by entry; a refresh is broadcast after saving</value>
@@ -5270,8 +4676,6 @@ Fields: label class_id score x y w h; Functions: count/contains/startsWith/endsW
   <data name="SearchPicker_Synchronized" xml:space="preserve"><value>Start and Windows Search now match your selection. Selecting none removes all tool registrations.</value></data>
 
   <!-- 运行日志（统一日志查看器） -->
-  <data name="Builtin_log-viewer_Name" xml:space="preserve"><value>Runtime logs</value></data>
-  <data name="Builtin_log-viewer_Desc" xml:space="preserve"><value>One place for startup trace, crash, AI assistant, game tunnel and stress-test logs — with live tail, level and keyword filters, copy, clear and open-folder actions</value></data>
   <data name="LogViewer_PageHeader.Title" xml:space="preserve"><value>Runtime logs</value></data>
   <data name="LogViewer_PageHeader.Subtitle" xml:space="preserve"><value>Startup trace, crash, AI assistant, game tunnel and stress-test logs live here — view live, search, or bundle them for feedback</value></data>
   <data name="LogViewer_Live.Text" xml:space="preserve"><value>Live</value></data>
@@ -5304,7 +4708,7 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Log_File_game-tunnel" xml:space="preserve"><value>Game tunnel</value></data>
   <data name="Log_File_game-overlay" xml:space="preserve"><value>Game overlay</value></data>
   <data name="Log_File_stress-test" xml:space="preserve"><value>Stress test</value></data>
-  <data name="Log_File_backend" xml:space="preserve"><value>Intercept backend</value></data>
+  <data name="Log_File_backend" xml:space="preserve"><value>Active intercept runtime</value></data>
   <data name="Log_File_rogue-cleaner" xml:space="preserve"><value>Rogue cleaner</value></data>
   <data name="Log_File_phone-link" xml:space="preserve"><value>Phone link</value></data>
   <data name="Log_File_plugin" xml:space="preserve"><value>Plugins</value></data>
@@ -5494,6 +4898,40 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_Repair.Text" xml:space="preserve"><value>Reinstall AI component</value></data>
   <data name="Agent_ModelBusy" xml:space="preserve"><value>The model is busy or its quota is exhausted. Retry later or select another model.</value></data>
   <data name="Agent_ModelNetwork" xml:space="preserve"><value>Could not connect to the model service. Check the network and proxy settings, then retry.</value></data>
+  <data name="Agent_ErrLimitZen" xml:space="preserve"><value>The free OpenCode Zen models have reached their usage limit.</value></data>
+  <data name="Agent_ErrLimit" xml:space="preserve"><value>The model has reached its usage limit.</value></data>
+  <data name="Agent_ErrLimitActionZen" xml:space="preserve"><value>Sign in to raise the free allowance, or switch to another model.</value></data>
+  <data name="Agent_ErrLimitAction" xml:space="preserve"><value>Switch to another model, or retry after the limit resets.</value></data>
+  <data name="Agent_ErrLimitActionPlain" xml:space="preserve"><value>Switch to another model, or retry later.</value></data>
+  <data name="Agent_ErrAuth" xml:space="preserve"><value>The model service rejected the request: the API key is invalid or lacks access.</value></data>
+  <data name="Agent_ErrAuthActionZen" xml:space="preserve"><value>Sign in to get a new OpenCode Zen API key.</value></data>
+  <data name="Agent_ErrAuthAction" xml:space="preserve"><value>Check that service's API key in AI providers.</value></data>
+  <data name="Agent_ErrNetwork" xml:space="preserve"><value>Could not connect to the model service. Check the network or proxy settings, then retry.</value></data>
+  <data name="Agent_ErrComponent" xml:space="preserve"><value>The AI component is unavailable.</value></data>
+  <data name="Agent_ComponentMissing" xml:space="preserve"><value>The AI component is not installed. Prepare it first.</value></data>
+  <data name="Agent_ComponentStartFailed" xml:space="preserve"><value>The AI component failed to start. Reinstall it.</value></data>
+  <data name="Agent_ComponentExited" xml:space="preserve"><value>The AI component exited. Choose Continue to reconnect.</value></data>
+  <data name="Agent_ComponentNotRunning" xml:space="preserve"><value>The AI component is not running. Choose Continue to reconnect.</value></data>
+  <data name="Agent_ComponentNoPort" xml:space="preserve"><value>No free local port was found. Retry.</value></data>
+  <data name="Agent_ErrUnknown" xml:space="preserve"><value>The AI task did not finish.</value></data>
+  <data name="Agent_ErrReason" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Agent_ErrDetail" xml:space="preserve"><value>Service response: {0}</value></data>
+  <data name="Agent_ErrResetReady" xml:space="preserve"><value>Limit resets at {0}; you can retry now.</value></data>
+  <data name="Agent_ErrResetDaily" xml:space="preserve"><value>The free quota resets daily at {0} (in {1}).</value></data>
+  <data name="Agent_ErrResetAt" xml:space="preserve"><value>Limit resets at {0} (in {1}).</value></data>
+  <data name="Agent_ErrToday" xml:space="preserve"><value>today</value></data>
+  <data name="Agent_ErrTomorrow" xml:space="preserve"><value>tomorrow</value></data>
+  <data name="Agent_ErrDateFormat" xml:space="preserve"><value>MMM d</value></data>
+  <data name="Agent_ErrClock" xml:space="preserve"><value>{0} {1}</value></data>
+  <data name="Agent_ErrDurSoon" xml:space="preserve"><value>less than a minute</value></data>
+  <data name="Agent_ErrDurMinutes" xml:space="preserve"><value>{0} min</value></data>
+  <data name="Agent_ErrDurHours" xml:space="preserve"><value>{0} h</value></data>
+  <data name="Agent_ErrDurHoursMinutes" xml:space="preserve"><value>{0} h {1} min</value></data>
+  <data name="Agent_Login.Content" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Agent_ZenLoginTip" xml:space="preserve"><value>Sign in to OpenCode Zen for a higher free allowance. The key stays in this PC's AI component data folder.</value></data>
+  <data name="Agent_ZenLoginDeferred" xml:space="preserve"><value>OpenCode Zen sign-in saved. The AI component restarts automatically when the current task finishes.</value></data>
+  <data name="Agent_ZenLoginDone" xml:space="preserve"><value>Signed in to OpenCode Zen — the free model allowance is now higher.</value></data>
+  <data name="Agent_ComponentTimeout" xml:space="preserve"><value>The AI component did not respond within 15 seconds. Retry.</value></data>
   <data name="Agent_ToolLoad" xml:space="preserve"><value>Load plugin automatically</value></data>
   <data name="Agent_PreparingArguments" xml:space="preserve"><value>Preparing arguments…</value></data>
   <data name="Agent_CommandOutput" xml:space="preserve"><value>Command output</value></data>
@@ -5580,10 +5018,12 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_WorkspaceFolderDuplicate" xml:space="preserve"><value>Another workspace already uses this folder.</value></data>
   <data name="Agent_WorkspaceFolderOverlap" xml:space="preserve"><value>This folder overlaps another workspace folder. Choose a different location.</value></data>
   <data name="Agent_WorkspaceFolderNotDirectory" xml:space="preserve"><value>The selected path is a file. Choose a folder.</value></data>
+  <data name="Agent_WorkspaceFolderEncrypted" xml:space="preserve"><value>This workspace folder is encrypted with EFS, and the current Windows account cannot create files there. Turn off “Encrypt contents to secure data” (folder Properties → Advanced), or choose a normal folder for the workspace.</value></data>
+  <data name="Agent_WorkspaceFolderNotWritable" xml:space="preserve"><value>The workspace folder is not writable. Check its permissions or choose another location.</value></data>
   <data name="Agent_WorkspaceBusy" xml:space="preserve"><value>Stop the running task before creating or switching workspaces.</value></data>
-  <data name="Agent_WorkspaceCreateFailed" xml:space="preserve"><value>Could not create the workspace. Check permissions on the data folder.</value></data>
+  <data name="Agent_WorkspaceCreateFailed" xml:space="preserve"><value>Could not create the workspace.</value></data>
   <data name="Agent_WorkspaceRenameFailed" xml:space="preserve"><value>Could not rename the workspace. Check permissions on the data folder.</value></data>
-  <data name="Agent_WorkspaceSwitchFailed" xml:space="preserve"><value>Could not switch workspaces. Check permissions on the data folder.</value></data>
+  <data name="Agent_WorkspaceSwitchFailed" xml:space="preserve"><value>Could not switch workspaces.</value></data>
   <data name="Agent_WorkspaceRenamed" xml:space="preserve"><value>Renamed to “{0}”.</value></data>
   <data name="Agent_OpenWorkspace.Text" xml:space="preserve"><value>Open workspace</value></data>
   <data name="Agent_PrepareMenu.Text" xml:space="preserve"><value>Prepare AI component</value></data>
@@ -5804,4 +5244,8 @@ Using {1} of {2} (oldest logs are pruned automatically)</value></data>
   <data name="Agent_QueueRemove" xml:space="preserve"><value>Remove queued message</value></data>
   <data name="Browser_ResumeAi" xml:space="preserve"><value>Resume AI control</value></data>
   <data name="Browser_StopAi" xml:space="preserve"><value>Stop AI control</value></data>
+  <data name="Settings_AutoStart_Title.Text" xml:space="preserve"><value>Launch at startup</value></data>
+  <data name="Settings_AutoStart_Desc.Text" xml:space="preserve"><value>Start the toolbox automatically when you sign in to Windows. The portable build starts elevated without a UAC prompt; the Store build is activated by its system startup task.</value></data>
+  <data name="Settings_AutoStartHide_Title.Text" xml:space="preserve"><value>Hide window at startup</value></data>
+  <data name="Settings_AutoStartHide_Desc.Text" xml:space="preserve"><value>When enabled, autostart stays in the system tray without showing the main window or the first-run wizard. Click the tray icon to restore. Manual launches always show the window.</value></data>
 </root>

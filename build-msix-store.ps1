@@ -174,7 +174,7 @@ function Write-CleanManifest {
         '  </Resources>'
         '  <Applications>'
         '    <Application Id="App" Executable="TubaWinUi3.exe" EntryPoint="Windows.FullTrustApplication">'
-        "      <uap:VisualElements DisplayName=`"$DisplayName`" Description=`"$Description`" BackgroundColor=`"transparent`" Square150x150Logo=`"Assets\Square150x150Logo.png`" Square44x44Logo=`"Assets\Square44x44Logo.png`">"
+        "      <uap:VisualElements DisplayName=`"$DisplayName`" Description=`"$Description`" BackgroundColor=`"#8B5CC8`" Square150x150Logo=`"Assets\Square150x150Logo.png`" Square44x44Logo=`"Assets\Square44x44Logo.png`">"
         '        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />'
         '        <uap:SplashScreen Image="Assets\SplashScreen.png" />'
         '      </uap:VisualElements>'
@@ -255,6 +255,8 @@ function Build-ArchPackage {
         Write-Host "  ERROR: Publish failed for $Arch" -ForegroundColor Red
         return $null
     }
+
+    & (Join-Path $PSScriptRoot 'build-trim-publish.ps1') -Root $archDir
 
     $exePath = Join-Path $archDir 'TubaWinUi3.exe'
     if (-not (Test-Path -LiteralPath $exePath)) {

@@ -126,7 +126,12 @@
                     <Button Grid.Column="3" x:Name="SessionMenuButton" Style="{StaticResource AgentIconButton}" Click="SessionMenu_Click" AutomationProperties.Name="会话菜单" AutomationProperties.AutomationId="AgentSessionMenu"><FontIcon Glyph="&#xE712;" FontSize="14"/></Button>
                 </Grid>
                 <InfoBar Grid.Row="1" x:Name="NoticeBar" Margin="24,0,24,8" IsOpen="False" IsClosable="True" Severity="Error">
-                    <InfoBar.ActionButton><Button x:Name="RetryButton" Content="继续" l:Uids.Uid="Agent_Retry" Click="Retry_Click" AutomationProperties.AutomationId="AgentRetry"/></InfoBar.ActionButton>
+                    <InfoBar.Content>
+                        <StackPanel x:Name="NoticeActions" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" Visibility="Collapsed">
+                            <Button x:Name="LoginButton" Content="登录" l:Uids.Uid="Agent_Login" Visibility="Collapsed" Click="LoginZen_Click" AutomationProperties.AutomationId="AgentLoginZen"/>
+                            <Button x:Name="RetryButton" Content="继续" l:Uids.Uid="Agent_Retry" Click="Retry_Click" AutomationProperties.AutomationId="AgentRetry"/>
+                        </StackPanel>
+                    </InfoBar.Content>
                 </InfoBar>
                 <Grid Grid.Row="2">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="grassTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8FE05B"/>
+      <stop offset="1" stop-color="#4F9E2E"/>
+    </linearGradient>
+    <linearGradient id="dirtLeft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#A9764B"/>
+      <stop offset="1" stop-color="#6E4426"/>
+    </linearGradient>
+    <linearGradient id="dirtRight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8C6038"/>
+      <stop offset="1" stop-color="#57331B"/>
+    </linearGradient>
+    <linearGradient id="grassLip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6BBF3C"/>
+      <stop offset="1" stop-color="#3F8524"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#grassTop)" d="M64 14 112 40 64 66 16 40Z"/>
+  <path fill="url(#dirtLeft)" d="M16 40 64 66 64 114 16 88Z"/>
+  <path fill="url(#dirtRight)" d="M112 40 112 88 64 114 64 66Z"/>
+  <path fill="url(#grassLip)" d="M16 40 64 66 64 78 16 52Z"/>
+  <path fill="url(#grassLip)" d="M112 40 112 52 64 78 64 66Z"/>
+  <path fill="#00000022" d="M64 66 64 78 112 52 112 40Z"/>
+  <path fill="#00000018" d="M28 52 40 58 40 66 28 60Z"/>
+  <path fill="#00000018" d="M86 64 98 58 98 66 86 72Z"/>
+  <path fill="#FFFFFF1F" d="M46 24 58 30 30 44 18 38Z"/>
+</svg>

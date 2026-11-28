@@ -20,7 +20,7 @@ public sealed record DriverPackage
     public bool IsOffline { get; init; }
     public bool BootCritical { get; init; }
     public string ClassGuid { get; init; } = "";
-    public string StoreInfPath { get; init; } = "";
+    public string StoreInfPath { get; internal set; } = "";
     public bool SizeKnown { get; internal set; }
     public string DisplayTitle => $"{OriginalInfName} · {Version}";
     public string DisplayMetadata => $"{InfName} · {Provider} · {ClassName} · {Date:yyyy-MM-dd} · " + (SizeKnown ? $"{SizeBytes / 1048576d:F1} MB" : "大小未知");
@@ -53,7 +53,7 @@ public sealed record DriverOpResult(bool Success, bool RebootRequired, string Me
     public static DriverOpResult Fail(string message) => new(false, false, message);
 }
 
-/// <summary>Windows 原生驱动管理：DISM + SetupAPI + NewDev。旧文本解析仅保留用于历史回归测试，不用于生产扫描。</summary>
+/// <summary>Windows 原生驱动管理：本机驱动库用 pnputil + SetupAPI + NewDev，离线映像用 DISM API。</summary>
 public static partial class DriverStoreService
 {
     private static readonly Regex OemInfRegex = new(@"oem\d+\.inf", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -124,6 +124,11 @@ public static partial class DriverStoreService
                 var value = ExtractColonValue(line);
                 if (!string.IsNullOrEmpty(value)) { current = current with { Signer = value }; result[^1] = current; }
             }
+            else if (Regex.IsMatch(line, @"^(类\s*GUID|Class\s*GUID)\s*[:：]", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            {
+                var value = ExtractColonValue(line);
+                if (!string.IsNullOrEmpty(value)) { current = current with { ClassGuid = value }; result[^1] = current; }
+            }
             else if (line.Contains("类名") || line.Contains("Class Name", StringComparison.OrdinalIgnoreCase) ||
                      Regex.IsMatch(line, "^类[:：]", RegexOptions.None))
             {
@@ -149,7 +154,7 @@ public static partial class DriverStoreService
         return value.Length == 0 ? null : value;
     }
 
-    /// <summary>解析 pnputil 日期字段：MM/DD/YYYY 或 YYYY/MM/DD（其他格式返回 null，排序退回版本号）。</summary>
+    /// <summary>解析 pnputil 日期字段：MM/DD/YYYY、YYYY/MM/DD 或 DD/MM/YYYY（其他格式返回 null，排序退回版本号）。</summary>
     internal static DateTime? ParseDriverDate(string text)
     {
         var parts = text.Split(['/', '.']);
@@ -157,7 +162,9 @@ public static partial class DriverStoreService
         if (int.TryParse(parts[0], out var first) && first > 31)
             return TryDate(int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2])); // YYYY/MM/DD
         if (int.TryParse(parts[0], out var mm) && int.TryParse(parts[1], out var dd) && int.TryParse(parts[2], out var yy))
-            return TryDate(yy < 100 ? 2000 + yy : yy, mm, dd); // MM/DD/YYYY
+            // 第一部分 > 12 只可能是「日」，兼容 en-GB / 俄语等 DD/MM/YYYY 区域格式。
+            if (mm > 12 && dd <= 12) return TryDate(yy < 100 ? 2000 + yy : yy, dd, mm);
+            else return TryDate(yy < 100 ? 2000 + yy : yy, mm, dd); // MM/DD/YYYY
         return null;
 
         static DateTime? TryDate(int y, int m, int d)
@@ -232,22 +239,33 @@ public static partial class DriverStoreService
         catch { return ""; }
     }
 
-    /// <summary>把 FileRepository 目录大小匹配回驱动包：原始名+版本都一致优先，退回该原始名唯一目录（纯函数，可单测）。</summary>
-    internal static void AssignRepositorySizes(List<DriverPackage> packages, List<RepoDirInfo>? repoDirs = null)
+    /// <summary>
+    /// 把 FileRepository 目录的大小与原始 INF 路径匹配回驱动包：原始名+版本都一致优先，退回该原始名唯一目录。
+    /// 目录名前缀 = 原始 inf 名，目录内的同名 INF 就是驱动库里的原始 INF（导出 / 大小都以它为准）。
+    /// </summary>
+    internal static void AssignRepositoryInfo(List<DriverPackage> packages, List<RepoDirInfo>? repoDirs = null, string? storeRoot = null)
     {
-        repoDirs ??= ScanRepositoryDirs(DriverStorePath);
+        storeRoot = string.IsNullOrEmpty(storeRoot) ? DriverStorePath : storeRoot;
+        repoDirs ??= ScanRepositoryDirs(storeRoot);
         var byOriginal = repoDirs.GroupBy(d => d.OriginalInfName, StringComparer.OrdinalIgnoreCase)
                                  .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
 
         foreach (var pkg in packages)
         {
+            // 离线映像的路径由 DISM 给出；绝不能回退到宿主机同名驱动。
+            if (pkg.IsOffline) continue;
             if (!byOriginal.TryGetValue(pkg.OriginalInfName, out var dirs) || dirs.Count == 0)
                 continue;
 
             var exact = dirs.FirstOrDefault(d =>
                 !string.IsNullOrEmpty(d.Version) && !string.IsNullOrEmpty(pkg.Version) &&
                 string.Equals(d.Version, pkg.Version, StringComparison.OrdinalIgnoreCase));
-            pkg.SizeBytes = (exact ?? (dirs.Count == 1 ? dirs[0] : null))?.SizeBytes ?? 0;
+            var chosen = exact ?? (dirs.Count == 1 ? dirs[0] : null);
+            if (chosen is null) continue;
+            pkg.SizeBytes = chosen.SizeBytes;
+            pkg.SizeKnown = true;
+            var inf = Path.Combine(storeRoot, chosen.DirName, pkg.OriginalInfName);
+            if (File.Exists(inf)) pkg.StoreInfPath = inf;
         }
     }
 

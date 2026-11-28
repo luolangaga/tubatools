@@ -53,7 +53,9 @@ internal sealed record JunkSafetyResult(
 
 /// <summary>
 /// 清单展示前和真正删除前的最后一道防线。AI 的等级只升不降；系统目录、个人目录根、
-/// 磁盘根、链接/挂载点、工具箱自身目录一律不可删除。
+/// 磁盘根、链接/挂载点本身、工具箱自身目录一律不可删除。
+/// 注意：上级目录是链接（例如用户把「下载」重定向到 D:\Download）不等于危险——按真实路径复核后照常放行，
+/// 否则这类机器上的「下载」目录会整片变成「不建议」，一条都勾不了。
 /// </summary>
 internal static class JunkSafety
 {
@@ -75,16 +77,6 @@ internal static class JunkSafety
     internal static JunkSafetyResult Evaluate(JunkPlanItem item, JunkSafetyEnvironment env)
     {
         var aiRisk = item.Risk;
-        var risk = aiRisk;
-        string? escalation = null;
-        var notes = new List<string>();
-
-        void Raise(JunkRisk candidate, string note)
-        {
-            if (candidate <= risk) return;
-            risk = candidate;
-            escalation = note;
-        }
 
         string full;
         try
@@ -113,9 +105,42 @@ internal static class JunkSafety
         if (!existsFile && !existsDirectory) return Blocked(aiRisk, "路径不存在，可能已经被清理。", exists: false);
         var isDirectory = existsDirectory;
 
-        // 删除链接/挂载点会穿过它指向别处；必须拒绝。
-        if (HasReparsePoint(full))
-            return Blocked(aiRisk, "路径或其上级包含链接/挂载点，已阻止删除。", exists: true, isDirectory: isDirectory);
+        // 待删项目本身就是链接/挂载点：删除它会移除链接本身，或被递归删除穿过去删目标里的内容；必须拒绝。
+        if (IsLink(full))
+            return Blocked(aiRisk, "这本身就是链接/挂载点，删除会移除链接或穿过它删除目标内容。", exists: true, isDirectory: isDirectory);
+
+        // 上级目录是链接（用户把「下载」「桌面」重定向到别的盘很常见）：展开成真实路径后再校验一次。
+        // 真实路径落在受保护位置就拒绝；否则按原路径（用户看到的路径）照常评估，只附一条说明。
+        var resolved = ResolveLinkedAncestors(full);
+        if (resolved is null)
+            return Blocked(aiRisk, "无法确认上级路径是否经过链接/挂载点，已阻止删除。", exists: true, isDirectory: isDirectory);
+
+        var result = EvaluateCore(full, isDirectory, aiRisk, env);
+        if (result.Blocked) return result;
+
+        if (!Same(resolved, full))
+        {
+            var real = EvaluateCore(resolved, isDirectory, aiRisk, env);
+            if (real.Blocked)
+                return real with { Note = "该路径经链接重定向到「" + resolved + "」。" + real.Note };
+            return result with { Note = "该路径经链接重定向到「" + resolved + "」，已按真实路径复核。" + result.Note };
+        }
+
+        return result;
+    }
+
+    /// <summary>按逻辑路径做风险/保护判定（不处理链接）。</summary>
+    private static JunkSafetyResult EvaluateCore(string full, bool isDirectory, JunkRisk aiRisk, JunkSafetyEnvironment env)
+    {
+        var risk = aiRisk;
+        string? escalation = null;
+
+        void Raise(JunkRisk candidate, string note)
+        {
+            if (candidate <= risk) return;
+            risk = candidate;
+            escalation = note;
+        }
 
         // 任意磁盘上的系统关键一级目录都要拒绝，避免只保护系统盘而放过第二块盘上的 Windows/Program Files。
         var driveRoot = Path.GetPathRoot(full) ?? "";
@@ -165,7 +190,7 @@ internal static class JunkSafety
         // 系统关键目录已在上面的 ProtectedRoots 与 SystemVolumeFolders 中被拒绝。
         if (IsTopLevel(full))
         {
-            if (isDirectory && fileName.Equals("Windows.old", StringComparison.OrdinalIgnoreCase))
+            if (isDirectory && Path.GetFileName(full).Equals("Windows.old", StringComparison.OrdinalIgnoreCase))
                 Raise(JunkRisk.High, "Windows.old 是旧系统备份，删除后无法回退到上一个 Windows 版本。");
             else
                 Raise(JunkRisk.High, "位于磁盘根目录下的一级项目，可能是意外留下的大文件或旧目录；请确认它不是正在使用的程序或数据。");
@@ -259,12 +284,56 @@ internal static class JunkSafety
             if (Same(path, full))
                 return Blocked(aiRisk, "这是系统卷目录：" + name + "，不能删除。", exists: true, isDirectory: isDirectory);
 
-        var note = notes.Count > 0 ? string.Join(" ", notes) : "";
-        return new JunkSafetyResult(risk, false, true, isDirectory, note, escalation, full);
+        return new JunkSafetyResult(risk, false, true, isDirectory, "", escalation, full);
     }
 
     private static JunkSafetyResult Blocked(JunkRisk risk, string note, bool exists = true, bool isDirectory = false) =>
         new(risk == JunkRisk.Low ? JunkRisk.High : risk, true, exists, isDirectory, note, null);
+
+    /// <summary>路径自身是不是链接/挂载点。读不到属性时按「是」处理（失败关闭）。</summary>
+    private static bool IsLink(string path)
+    {
+        try
+        {
+            return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0;
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return false; }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { return true; }
+    }
+
+    /// <summary>
+    /// 把上级目录中的链接/挂载点展开成真实路径：例如「下载」被重定向到 D:\Download 时，
+    /// C:\Users\me\Downloads\x 会解析成 D:\Download\x。项目自身是链接时原样返回（由调用方单独拒绝）。
+    /// 无法确认（读不到属性或解析失败）返回 null，由调用方按失败关闭处理。
+    /// </summary>
+    private static string? ResolveLinkedAncestors(string full)
+    {
+        var root = Path.GetPathRoot(full);
+        if (string.IsNullOrEmpty(root)) return full;
+        var segments = full[root.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        var current = root;
+        for (var index = 0; index < segments.Length; index++)
+        {
+            var candidate = Path.Combine(current, segments[index]);
+            FileAttributes attributes;
+            try { attributes = File.GetAttributes(candidate); }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return null; }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { return null; }
+
+            if ((attributes & FileAttributes.ReparsePoint) == 0) { current = candidate; continue; }
+            if (index == segments.Length - 1) return full; // 项目自身是链接，交给外层拒绝。
+
+            FileSystemInfo info = (attributes & FileAttributes.Directory) != 0
+                ? new DirectoryInfo(candidate)
+                : new FileInfo(candidate);
+            FileSystemInfo? target;
+            try { target = info.ResolveLinkTarget(returnFinalTarget: true); }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { return null; }
+            if (target is null) return null;
+            current = Path.TrimEndingDirectorySeparator(target.FullName);
+        }
+        return Path.TrimEndingDirectorySeparator(current);
+    }
 
     private static IEnumerable<(string Name, string? Path)> ProtectedRoots(JunkSafetyEnvironment env)
     {
@@ -322,24 +391,6 @@ internal static class JunkSafety
         yield return ("Windows\\SysWOW64", Path.Combine(env.Windows ?? "", "SysWOW64"));
         yield return ("Windows\\WinSxS", Path.Combine(env.Windows ?? "", "WinSxS"));
         yield return ("Windows\\Installer", Path.Combine(env.Windows ?? "", "Installer"));
-    }
-
-    private static bool HasReparsePoint(string path)
-    {
-        for (var current = path; !string.IsNullOrEmpty(current); current = Path.GetDirectoryName(current))
-        {
-            try
-            {
-                if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) return true;
-            }
-            catch (FileNotFoundException) { }
-            catch (DirectoryNotFoundException) { }
-            catch (UnauthorizedAccessException) { return true; }
-            catch (IOException) { return true; }
-            var parent = Path.GetDirectoryName(current);
-            if (parent is null || parent == current) break;
-        }
-        return false;
     }
 
     private static bool IsTopLevel(string path)

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- service-center 服务网点查询 -->
+  <path fill="none" d="M12 3.5C15.59 3.5 18.5 6.41 18.5 10C18.5 14.6 12 20.5 12 20.5C12 20.5 5.5 14.6 5.5 10C5.5 6.41 8.41 3.5 12 3.5Z" stroke="#5C6670" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9.9 10A2.1 2.1 0 1 1 14.1 10A2.1 2.1 0 1 1 9.9 10Z" fill="#A0A9B2"/>
+</svg>

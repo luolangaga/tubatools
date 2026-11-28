@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- ai-playground AI 试炼场 -->
+  <path fill="none" d="M9 3.5H15M10.5 3.5V9.2L5.8 17.2C5.1 18.3 5.9 19.8 7.2 19.8H16.8C18.1 19.8 18.9 18.3 18.2 17.2L13.5 9.2V3.5" stroke="#5C2E91" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M7.6 15.5H16.4M10 18H14" stroke="#8E92E0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M4.2 7.2L4.8 9L6.6 9.6L4.8 10.2L4.2 12L3.6 10.2L1.8 9.6L3.6 9L4.2 7.2Z" stroke="#C239B3" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

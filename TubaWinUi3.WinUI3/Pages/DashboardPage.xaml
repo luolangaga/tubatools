@@ -8,21 +8,21 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
-                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.png"/>
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.jpg"/>
                     <SolidColorBrush x:Key="DashboardHeroBackground" Color="#263E45"/>
                     <Color x:Key="DashboardHeroBlendColor">#263E45</Color>
                     <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="#F5F9FA"/>
                     <x:Double x:Key="DashboardHeroImageOpacity">1</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Light">
-                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-light.png"/>
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-light.jpg"/>
                     <SolidColorBrush x:Key="DashboardHeroBackground" Color="#88DEE2"/>
                     <Color x:Key="DashboardHeroBlendColor">#88DEE2</Color>
                     <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="#133B42"/>
                     <x:Double x:Key="DashboardHeroImageOpacity">1</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
-                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.png"/>
+                    <BitmapImage x:Key="DashboardHeroImage" UriSource="ms-appx:///Assets/HomeHero/hero-dark.jpg"/>
                     <SolidColorBrush x:Key="DashboardHeroBackground" Color="{ThemeResource SystemColorWindowColor}"/>
                     <Color x:Key="DashboardHeroBlendColor">{ThemeResource SystemColorWindowColor}</Color>
                     <SolidColorBrush x:Key="DashboardHeroTextBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
@@ -68,13 +68,47 @@
                                 <GradientStop Color="#00000000" Offset="0.35"/><GradientStop Color="{ThemeResource SolidBackgroundFillColorBase}" Offset="1"/>
                             </LinearGradientBrush></Rectangle.Fill>
                         </Rectangle>
+                        <Rectangle x:Name="FestivalHeroTint" Visibility="Collapsed" IsHitTestVisible="False" Opacity="0.18">
+                            <Rectangle.Fill><SolidColorBrush x:Name="FestivalHeroTintBrush" Color="Transparent"/></Rectangle.Fill>
+                        </Rectangle>
+                        <TextBlock x:Name="FestivalHeroEmblem" Visibility="Collapsed" IsHitTestVisible="False"
+                                   FontFamily="Segoe UI Emoji" FontSize="100" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Margin="0,34,40,0" AutomationProperties.AccessibilityView="Raw"/>
+                        <!-- 春节专属：立体的实体红包，点一下弹出领红包彩蛋。 -->
+                        <Button x:Name="FestivalEnvelopeButton" Visibility="Collapsed" Click="FestivalEnvelope_Click"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,252,0"
+                                Padding="0" CornerRadius="18" BorderThickness="0" Background="#01000000"
+                                AutomationProperties.Name="春节红包" ToolTipService.ToolTip="点一下领红包">
+                            <!-- 透明 Grid 覆盖整块红包：只让图片响应命中会让中间点不到，必须整块都可点。 -->
+                            <Grid Width="136" Height="136" Background="Transparent">
+                                <Image Source="ms-appx:///Assets/Festival/redenvelope-prop.png" Width="122" Height="122" Stretch="Uniform"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       AutomationProperties.AccessibilityView="Raw"/>
+                            </Grid>
+                        </Button>
                         <Grid x:Name="HeaderPanel" Margin="36,28,36,24" ColumnSpacing="16" VerticalAlignment="Top">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <StackPanel Spacing="6">
+                                <!-- 元旦前一天：大字倒数占问候语这一行，避免和下方卡片挤在一起。 -->
+                                <TextBlock x:Name="FestivalCountdownText" Visibility="Collapsed"
+                                           FontSize="26" FontWeight="SemiBold" FontFamily="Consolas"
+                                           Foreground="{ThemeResource DashboardHeroTextBrush}" TextWrapping="NoWrap"/>
                                 <TextBlock x:Name="GreetingText" Style="{StaticResource BodyLargeTextBlockStyle}" Foreground="{ThemeResource DashboardHeroTextBrush}" TextWrapping="Wrap"/>
                                 <TextBlock x:Name="TitleText" Text="图吧工具箱" l:Uids.Uid="Dashboard_GalleryTitle" Style="{StaticResource TitleLargeTextBlockStyle}" Foreground="{ThemeResource DashboardHeroTextBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
-                            <Button x:Name="ManageButton" Grid.Column="1" VerticalAlignment="Top" Content="编辑大卡片" Click="ManageButton_Click" AutomationProperties.AutomationId="DashboardManageContent"/>
+                            <StackPanel Grid.Column="1" Spacing="8" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Button x:Name="FestivalBadge" Visibility="Collapsed" Click="FestivalBadge_Click"
+                                        HorizontalAlignment="Right" Padding="10,4" CornerRadius="14"
+                                        BorderThickness="1" BorderBrush="#55FFFFFF" Background="#33FFFFFF"
+                                        Foreground="{ThemeResource DashboardHeroTextBrush}"
+                                        AutomationProperties.Name="节日彩蛋" ToolTipService.ToolTip="打开节日彩蛋">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock x:Name="FestivalBadgeEmoji" FontFamily="Segoe UI Emoji" FontSize="14" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="FestivalBadgeText" FontSize="12" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="ManageButton" HorizontalAlignment="Right" Content="编辑大卡片" Click="ManageButton_Click" AutomationProperties.AutomationId="DashboardManageContent"/>
+                            </StackPanel>
                         </Grid>
                     </Grid>
                     <Grid x:Name="FeatureStrip" Margin="0,-112,0,0" Canvas.ZIndex="1">

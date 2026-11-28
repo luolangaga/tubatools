@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -272,12 +273,24 @@ public static class HardwareInfoService
 
     public static Task<IReadOnlyList<HardwareInfoSection>> LoadAsync(bool forceRefresh = false)
     {
-        return Task.Run(() => BuildSections(forceRefresh));
+        return LoadAsync(forceRefresh, null);
     }
 
-    public static async Task<IReadOnlyList<HardwareInfoSection>> LoadForDisplayAsync(bool forceRefresh = false)
+    /// <summary>
+    /// 盘点硬件信息。<paramref name="onPartial"/> 非空时，型号 / 系统分区一就绪就回调一次，
+    /// 之后每完成一个详情项再回调一次（已完成的按规范顺序在前，未完成的占位行排在末尾），
+    /// 让界面不必等慢项（接口 / 硬盘温度 / 电池）一起返回。回调来自后台线程。
+    /// </summary>
+    private static Task<IReadOnlyList<HardwareInfoSection>> LoadAsync(
+        bool forceRefresh, Action<IReadOnlyList<HardwareInfoSection>>? onPartial)
     {
-        var sections = await LoadAsync(forceRefresh).ConfigureAwait(false);
+        return Task.Run(() => BuildSections(forceRefresh, onPartial));
+    }
+
+    public static async Task<IReadOnlyList<HardwareInfoSection>> LoadForDisplayAsync(
+        bool forceRefresh = false, Action<IReadOnlyList<HardwareInfoSection>>? onPartial = null)
+    {
+        var sections = await LoadAsync(forceRefresh, onPartial).ConfigureAwait(false);
         var cpuz = await LoadConfiguredCpuzAsync().ConfigureAwait(false);
         return cpuz is null ? sections : ApplyCpuzOverride(sections, cpuz);
     }
@@ -308,7 +321,8 @@ public static class HardwareInfoService
 
     public static DateTimeOffset? LastCapturedAt { get; private set; }
 
-    private static IReadOnlyList<HardwareInfoSection> BuildSections(bool forceRefresh)
+    private static IReadOnlyList<HardwareInfoSection> BuildSections(
+        bool forceRefresh, Action<IReadOnlyList<HardwareInfoSection>>? onPartial = null)
     {
         lock (_lock)
         {
@@ -329,13 +343,44 @@ public static class HardwareInfoService
                 generation = _cacheGeneration;
             }
 
+            // 整次盘点共享一份 WMI 查询缓存：重复的类查询只执行一次（见 QueryScope）。
+            using var queryScope = BeginQueryScope();
             var sections = CreateEmptySections();
 
+            // 进度快照：详情项每完成一个就复制一份当前状态交给界面。
+            // 型号 / 系统没跑完之前先不回调——快照要读它们的 Items，避免与后台 Add 并发。
+            var rowsGate = new object();
+            var fastSectionsReady = false;
+            var latestRows = ComposeDetailRows(new HardwareInfoItem?[DetailRowLabels.Length], new bool[DetailRowLabels.Length]);
+
+            void ReportDetailRows(IReadOnlyList<HardwareInfoItem> rows)
+            {
+                IReadOnlyList<HardwareInfoItem>? rowsToPublish;
+                lock (rowsGate)
+                {
+                    latestRows = rows;
+                    rowsToPublish = fastSectionsReady ? rows : null;
+                }
+                if (rowsToPublish is not null && onPartial is not null)
+                    onPartial(ComposeSnapshot(sections, rowsToPublish));
+            }
+
+            var detailsTask = Task.Run(() => FillDetails(sections[2], ReportDetailRows));
             var summaryTask = Task.Run(() => FillSummary(sections[0]));
             var systemTask = Task.Run(() => FillSystem(sections[1]));
-            var detailsTask = Task.Run(() => FillDetails(sections[2]));
 
-            Task.WaitAll(summaryTask, systemTask, detailsTask);
+            // 型号 / 系统只查少量 WMI 类，通常几十毫秒内完成：先把它和详情占位行交给界面，
+            // 之后的慢项（接口 / 硬盘温度 / 电池…）逐项补齐。
+            Task.WaitAll(summaryTask, systemTask);
+            IReadOnlyList<HardwareInfoItem> firstRows;
+            lock (rowsGate)
+            {
+                fastSectionsReady = true;
+                firstRows = latestRows;
+            }
+            onPartial?.Invoke(ComposeSnapshot(sections, firstRows));
+
+            Task.WaitAll(detailsTask);
 
             lock (_lock)
             {
@@ -352,6 +397,26 @@ public static class HardwareInfoService
         {
             _buildGate.Release();
         }
+    }
+
+    /// <summary>把当前分区状态复制成一份独立快照（Items 是不可跨线程共享的 ObservableCollection）。</summary>
+    private static IReadOnlyList<HardwareInfoSection> ComposeSnapshot(
+        List<HardwareInfoSection> sections, IReadOnlyList<HardwareInfoItem> detailRows)
+    {
+        return
+        [
+            CopySection(sections[0], sections[0].Items),
+            CopySection(sections[1], sections[1].Items),
+            CopySection(sections[2], detailRows)
+        ];
+    }
+
+    private static HardwareInfoSection CopySection(HardwareInfoSection source, IReadOnlyList<HardwareInfoItem> items)
+    {
+        var copy = new HardwareInfoSection { Title = source.Title, Glyph = source.Glyph };
+        foreach (var item in items)
+            copy.Items.Add(item);
+        return copy;
     }
 
     public static IReadOnlyList<HardwareInfoSection> ApplyCpuzOverride(IReadOnlyList<HardwareInfoSection> wmiSections, CpuzInfo cpuz)
@@ -513,7 +578,8 @@ public static class HardwareInfoService
                     IsVerified = item.IsVerified,
                     SupplementalValue = item.SupplementalValue,
                     DeviceValues = item.DeviceValues.ToArray(),
-                    PortCapabilities = item.PortCapabilities?.ToArray()
+                    PortCapabilities = item.PortCapabilities?.ToArray(),
+                    IsPending = item.IsPending
                 });
             }
             result.Add(newSection);
@@ -613,6 +679,30 @@ public static class HardwareInfoService
         ];
     }
 
+    /// <summary>
+    /// 首帧骨架：三个分区与全部详情行一次性摆在最终位置，只是还没有值。
+    /// 界面先铺这份骨架再往里填数据，加载过程中版面不会从「空」长到「满」，也不会反复伸缩。
+    /// </summary>
+    public static IReadOnlyList<HardwareInfoSection> BuildSkeletonSections()
+    {
+        var sections = CreateEmptySections();
+        foreach (var label in SummaryRowLabels)
+            sections[0].Items.Add(new HardwareInfoItem { Label = label, Value = "", IsPending = true });
+        foreach (var label in SystemRowLabels)
+            sections[1].Items.Add(new HardwareInfoItem { Label = label, Value = "", IsPending = true });
+
+        var placeholderRows = ComposeDetailRows(
+            new HardwareInfoItem?[DetailRowLabels.Length],
+            new bool[DetailRowLabels.Length]);
+        foreach (var row in placeholderRows)
+            sections[2].Items.Add(row);
+
+        return sections;
+    }
+
+    private static readonly string[] SummaryRowLabels = ["设备型号", "主板", "BIOS"];
+    private static readonly string[] SystemRowLabels = ["系统", "版本", "运行时间"];
+
     private static void FillSummary(HardwareInfoSection section)
     {
         var computer = First("Win32_ComputerSystem");
@@ -635,50 +725,158 @@ public static class HardwareInfoService
         section.Items.Add(Item("运行时间", FormatUptime()));
     }
 
-    private static void FillDetails(HardwareInfoSection section)
+    /// <summary>详情行的规范顺序。快照里已完成的项按它排列，最终列表也按它落盘。</summary>
+    private static readonly string[] DetailRowLabels =
+        ["主板", "处理器", "内存", "显卡", "NPU", "显示器", "硬盘", "电池", "声卡", "网卡", "接口支持"];
+
+    /// <summary>可能不存在的行（NPU / 电池）：没有结果时直接不展示，因此也不生成占位行。</summary>
+    private static readonly bool[] DetailRowOptional =
+        [false, false, false, false, true, false, false, true, false, false, false];
+
+    /// <summary>
+    /// 生成一帧详情行：已完成的按规范顺序排在前面，未完成的（仅必备项）以占位行排在末尾。
+    /// 占位行的 Value 由界面填「正在读取…」，服务层不承担文案。
+    /// </summary>
+    internal static IReadOnlyList<HardwareInfoItem> ComposeDetailRows(
+        IReadOnlyList<HardwareInfoItem?> items, IReadOnlyList<bool> completed)
     {
-        var boardTask = Task.Run(() => BoardModel());
-        var cpuTask = Task.Run(BuildCpuSummary);
-        var memTask = Task.Run(BuildMemorySummary);
-        var gpuTask = Task.Run(BuildGpuDeviceValues);
-        var npuTask = Task.Run(() => DetectNpuName());
-        var displayTask = Task.Run(BuildDisplayDeviceValues);
-        var diskTask = Task.Run(() => BuildDiskDeviceValues(ReadDisksWithTemperatures()));
-        var batteryTask = Task.Run(() => Safe(BuildBatteryDetail, null));
-        var portsTask = Task.Run(HardwarePortService.Read);
-        var soundTask = Task.Run(() => DeviceNames("Win32_SoundDevice", item =>
+        var rows = new List<HardwareInfoItem>(DetailRowLabels.Length);
+        for (var i = 0; i < DetailRowLabels.Length; i++)
         {
-            var name = Get(item, "Name");
-            return !ContainsAny(name, "Virtual", "虚拟", "Software", "Remote Audio", "Stereo Mix", "Wave", "VB-Audio", "VBAN", "Voicemeeter", "CABLE", "VAC", "Senary Audio", "Nahimic Easy Surround", "Nahimic mirroring", "USB 音频", "蓝牙音频", "蓝牙");
-        }));
-        var netTask = Task.Run(() => DeviceNames("Win32_NetworkAdapter", item =>
-            IsTrue(item, "PhysicalAdapter") &&
-            !ContainsAny(Get(item, "Name"), "Virtual", "Bluetooth", "WAN Miniport")));
-
-        Task.WaitAll(boardTask, cpuTask, memTask, gpuTask, npuTask, displayTask, diskTask, soundTask, netTask, batteryTask, portsTask);
-
-        section.Items.Add(Item("主板", boardTask.Result));
-        var cpuItem = cpuTask.Result;
-        var cpuName = cpuItem.Value;
-        cpuItem.BrandKey = DetectCpuBrand(cpuName);
-        section.Items.Add(cpuItem);
-        section.Items.Add(memTask.Result);
-        var gpuItem = DeviceItem("显卡", gpuTask.Result);
-        gpuItem.BrandKey = DetectGpuBrand(gpuItem.Value);
-        section.Items.Add(gpuItem);
-        var npuName = npuTask.Result;
-        if (npuName != null)
-        {
-            var tops = NpuCatalog.LookupTops(npuName, cpuName);
-            section.Items.Add(Item("NPU", tops != null ? $"{npuName}（{tops}）" : npuName));
+            if (completed[i] && items[i] is { } item)
+                rows.Add(item);
         }
-        section.Items.Add(DeviceItem("显示器", displayTask.Result));
-        section.Items.Add(DeviceItem("硬盘", diskTask.Result));
-        if (batteryTask.Result is { } battery)
-            section.Items.Add(Item("电池", FormatBatterySummary(battery)));
-        section.Items.Add(DeviceItem("声卡", soundTask.Result));
-        section.Items.Add(DeviceItem("网卡", netTask.Result));
-        section.Items.Add(new HardwareInfoItem { Label = "接口支持", Value = HardwarePortService.BuildSummary(portsTask.Result), PortCapabilities = portsTask.Result });
+        for (var i = 0; i < DetailRowLabels.Length; i++)
+        {
+            if (completed[i] || DetailRowOptional[i]) continue;
+            rows.Add(new HardwareInfoItem { Label = DetailRowLabels[i], Value = "", IsPending = true });
+        }
+        return rows;
+    }
+
+    /// <summary>详情行的逐项收集器：每项完成立即产出一帧（弱项不再拖住快项），全部完成后再按规范顺序返回。</summary>
+    private sealed class DetailCollector
+    {
+        private readonly object _gate = new();
+        private readonly HardwareInfoItem?[] _items = new HardwareInfoItem?[DetailRowLabels.Length];
+        private readonly bool[] _completed = new bool[DetailRowLabels.Length];
+        private readonly Action<IReadOnlyList<HardwareInfoItem>>? _onSnapshot;
+
+        public DetailCollector(Action<IReadOnlyList<HardwareInfoItem>>? onSnapshot)
+        {
+            _onSnapshot = onSnapshot;
+        }
+
+        /// <summary>必出结果的行（多数详情项）；结果为 null 时这一行不上报。</summary>
+        public Task Track(int index, Task<HardwareInfoItem> task) => TrackAsync(index, AsNullable(task));
+
+        /// <summary>可选行（NPU、电池）：采集任务本身可能返回 null，null 即该行不存在。</summary>
+        public Task TrackOptional(int index, Task<HardwareInfoItem?> task) => TrackAsync(index, task);
+
+        private static async Task<HardwareInfoItem?> AsNullable(Task<HardwareInfoItem> task) =>
+            await task.ConfigureAwait(false);
+
+        private async Task TrackAsync(int index, Task<HardwareInfoItem?> task)
+        {
+            HardwareInfoItem? item = null;
+            try
+            {
+                item = await task.ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // 单项失败只让这一行缺失，不拖垮整份硬件信息。
+                Debug.WriteLine($"[HardwareInfo] 详情项「{DetailRowLabels[index]}」采集失败: {ex.Message}");
+            }
+            Complete(index, item);
+        }
+
+        private void Complete(int index, HardwareInfoItem? item)
+        {
+            IReadOnlyList<HardwareInfoItem>? snapshot = null;
+            lock (_gate)
+            {
+                _items[index] = item;
+                _completed[index] = true;
+                if (_onSnapshot is not null)
+                    snapshot = ComposeDetailRows(_items, _completed);
+            }
+            if (snapshot is not null)
+                _onSnapshot!(snapshot);
+        }
+
+        public IReadOnlyList<HardwareInfoItem> BuildFinal()
+        {
+            lock (_gate)
+                return ComposeDetailRows(_items, _completed).Where(row => !row.IsPending).ToArray();
+        }
+    }
+
+    private static void FillDetails(HardwareInfoSection section, Action<IReadOnlyList<HardwareInfoItem>>? onPartial = null)
+    {
+        var collector = new DetailCollector(onPartial);
+
+        // CPU 结果被 NPU 行复用，缓存信息与品牌标识都在采集任务里一次算完。
+        var cpuTask = Task.Run(() =>
+        {
+            var item = BuildCpuSummary();
+            item.BrandKey = DetectCpuBrand(item.Value);
+            return item;
+        });
+
+        var tracked = new[]
+        {
+            collector.Track(0, Task.Run(() => Item("主板", BoardModel()))),
+            collector.Track(1, cpuTask),
+            collector.Track(2, Task.Run(BuildMemorySummary)),
+            collector.Track(3, Task.Run(() =>
+            {
+                var item = DeviceItem("显卡", BuildGpuDeviceValues());
+                item.BrandKey = DetectGpuBrand(item.Value);
+                return item;
+            })),
+            collector.TrackOptional(4, Task.Run(() => BuildNpuItem(cpuTask))),
+            collector.Track(5, Task.Run(() => DeviceItem("显示器", BuildDisplayDeviceValues()))),
+            collector.Track(6, Task.Run(() => DeviceItem("硬盘", BuildDiskDeviceValues(ReadDisksWithTemperatures())))),
+
+            // 电池只在笔记本上存在，且读取 SMBIOS 电池数据较慢。
+            collector.TrackOptional(7, Task.Run(() => Safe(BuildBatteryDetail, null) is { } battery
+                ? Item("电池", FormatBatterySummary(battery))
+                : null)),
+            collector.Track(8, Task.Run(() => DeviceItem("声卡", DeviceNames("Win32_SoundDevice", item =>
+            {
+                var name = Get(item, "Name");
+                return !ContainsAny(name, "Virtual", "虚拟", "Software", "Remote Audio", "Stereo Mix", "Wave", "VB-Audio", "VBAN", "Voicemeeter", "CABLE", "VAC", "Senary Audio", "Nahimic Easy Surround", "Nahimic mirroring", "USB 音频", "蓝牙音频", "蓝牙");
+            })))),
+            // 物理网卡过滤下推到 WQL：全量 Win32_NetworkAdapter 枚举（含大量虚拟适配器）是慢查询，
+            // 服务端过滤后只 marshaling 物理网卡这几行。客户端谓词保留作双重校验。
+            collector.Track(9, Task.Run(() => DeviceItem("网卡", DeviceNames("Win32_NetworkAdapter WHERE PhysicalAdapter = TRUE", item =>
+                IsTrue(item, "PhysicalAdapter") &&
+                !ContainsAny(Get(item, "Name"), "Virtual", "Bluetooth", "WAN Miniport"))))),
+            collector.Track(10, Task.Run(BuildPortsItem)),
+        };
+
+        Task.WaitAll(tracked);
+
+        foreach (var row in collector.BuildFinal())
+            section.Items.Add(row);
+    }
+
+    private static HardwareInfoItem BuildPortsItem()
+    {
+        var ports = HardwarePortService.Read();
+        var item = Item("接口支持", HardwarePortService.BuildSummary(ports));
+        item.PortCapabilities = ports;
+        return item;
+    }
+
+    private static HardwareInfoItem? BuildNpuItem(Task<HardwareInfoItem> cpuTask)
+    {
+        var npuName = DetectNpuName();
+        if (npuName is null) return null;
+        var cpuName = Safe(() => cpuTask.GetAwaiter().GetResult().Value, "");
+        var tops = NpuCatalog.LookupTops(npuName, cpuName);
+        return Item("NPU", tops != null ? $"{npuName}（{tops}）" : npuName);
     }
 
     private static HardwareInfoItem BuildCpuSummary()
@@ -1171,7 +1369,8 @@ public static class HardwareInfoService
 
         if (monitorInfos.Count == 0)
         {
-            var pnpNames = Query("Win32_PnPEntity")
+            // PNPClass 过滤下推到 WQL：避免为找显示器全量枚举数百个 PnP 设备。
+            var pnpNames = Query("Win32_PnPEntity WHERE PNPClass = 'Monitor'")
                 .Where(item =>
                 {
                     var pnpClass = Get(item, "PNPClass");
@@ -1708,18 +1907,65 @@ public static class HardwareInfoService
         return Query(className).FirstOrDefault();
     }
 
-    private static IEnumerable<ManagementBaseObject> Query(string className)
+    /// <summary>
+    /// 单次盘点内的 WMI 查询缓存。同一次 BuildSections / BuildDetailData 里，
+    /// Win32_ComputerSystem / Win32_Processor / Win32_BaseBoard / Win32_PnPEntity 等
+    /// 会被多个并行分区重复查询（全量 PnP 枚举一次要 marshaling 数百个 COM 对象、耗时数秒）。
+    /// 按查询串去重后整次盘点只查一遍，结果物化为列表供各分区只读共享
+    /// （WMI 客户端对象是自由线程的，跨线程读属性安全）。
+    /// AsyncLocal 让 Task.Run 子任务继承同一份缓存；盘点结束统一 Dispose 释放 COM 对象，
+    /// 不跨刷新复用——硬件变化后 forceRefresh 重新查询。
+    /// </summary>
+    private static readonly AsyncLocal<ConcurrentDictionary<string, Lazy<IReadOnlyList<ManagementBaseObject>>>?> _queryScope = new();
+
+    private static QueryScope BeginQueryScope() => new();
+
+    private sealed class QueryScope : IDisposable
     {
-        try
+        private readonly ConcurrentDictionary<string, Lazy<IReadOnlyList<ManagementBaseObject>>>? _previous;
+
+        public QueryScope()
         {
-            using var searcher = new ManagementObjectSearcher($"SELECT * FROM {className}");
-            foreach (ManagementBaseObject item in searcher.Get())
+            _previous = _queryScope.Value;
+            _queryScope.Value = new ConcurrentDictionary<string, Lazy<IReadOnlyList<ManagementBaseObject>>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public void Dispose()
+        {
+            var scope = _queryScope.Value;
+            _queryScope.Value = _previous;
+            if (scope is null) return;
+            // 盘点已结束（Task.WaitAll 之后），各分区只把字符串/模型写进缓存，
+            // 不再持有 ManagementBaseObject；这里确定性释放 COM 对象，
+            // 避免 WMI 客户端原生内存等到 gen2 GC 才回收。
+            foreach (var entry in scope.Values)
             {
-                yield return item;
+                if (!entry.IsValueCreated) continue;
+                try
+                {
+                    foreach (var item in entry.Value)
+                        item.Dispose();
+                }
+                catch { }
             }
         }
-        finally
+    }
+
+    private static IEnumerable<ManagementBaseObject> Query(string className)
+    {
+        var scope = _queryScope.Value;
+        if (scope is null)
+            return QueryUncached(className);
+        return scope.GetOrAdd(className,
+            key => new Lazy<IReadOnlyList<ManagementBaseObject>>(() => QueryUncached(key).ToList())).Value;
+    }
+
+    private static IEnumerable<ManagementBaseObject> QueryUncached(string className)
+    {
+        using var searcher = new ManagementObjectSearcher($"SELECT * FROM {className}");
+        foreach (ManagementBaseObject item in searcher.Get())
         {
+            yield return item;
         }
     }
 
@@ -1852,6 +2098,8 @@ public static class HardwareInfoService
 
         // 各分区互相独立：并行采集，总耗时取最慢的一组。
         // 授权 / TPM 这类慢查询各自带超时（见 BuildWindowsDetail / BuildSecurityDetail）。
+        // 整次详情采集共享一份 WMI 查询缓存：CPU/主板/内存/PnP 等重复类查询只执行一次。
+        using var queryScope = BeginQueryScope();
         var windowsTask = Task.Run(() => Safe(BuildWindowsDetail, null));
         var computerTask = Task.Run(() => Safe(BuildComputerDetail, null));
         var cpuTask = Task.Run(() => Safe(BuildCpuDetail, new CpuDetail()));
@@ -2349,7 +2597,9 @@ public static class HardwareInfoService
             disks.Add(disk);
         }
 
-        foreach (var item in Query("Win32_PnPEntity"))
+        // 磁盘类 PnP 过滤下推到 WQL：全量 Win32_PnPEntity 枚举一次要数秒，
+        // 这里只需要 DiskDrive 几行（客户端判断保留作双重校验）。
+        foreach (var item in Query("Win32_PnPEntity WHERE PNPClass = 'DiskDrive'"))
         {
             if (Get(item, "PNPClass") != "DiskDrive") continue;
             var name = Get(item, "Name");
@@ -2635,7 +2885,7 @@ public static class HardwareInfoService
         var adapters = new List<NetworkDetail>();
         var addresses = ReadNetworkAddresses();
 
-        foreach (var item in Query("Win32_NetworkAdapter"))
+        foreach (var item in Query("Win32_NetworkAdapter WHERE PhysicalAdapter = TRUE"))
         {
             if (!IsTrue(item, "PhysicalAdapter")) continue;
             var name = Get(item, "Name");
@@ -2929,7 +3179,8 @@ public static class HardwareInfoService
         }
 
         var devices = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var item in Query("Win32_PnPEntity"))
+        // USB 类过滤下推到 WQL，避免全量 PnP 枚举（客户端判断保留作双重校验）。
+        foreach (var item in Query("Win32_PnPEntity WHERE PNPClass = 'USB'"))
         {
             if (!string.Equals(Get(item, "PNPClass"), "USB", StringComparison.OrdinalIgnoreCase)) continue;
             var name = Get(item, "Name");
@@ -2952,7 +3203,9 @@ public static class HardwareInfoService
     {
         var issues = new List<DeviceIssueDetail>();
 
-        foreach (var item in Query("Win32_PnPEntity"))
+        // 只取有故障码的设备：正常设备（code=0）占绝大多数，下推到 WQL 后
+        // 不再为找几个异常设备全量枚举数百个 PnP 对象。45（未连接）仍在客户端排除。
+        foreach (var item in Query("Win32_PnPEntity WHERE ConfigManagerErrorCode != 0"))
         {
             var code = ToInt(Get(item, "ConfigManagerErrorCode"));
             if (code is 0 or 45) continue; // 0 = 正常；45 = 当前未连接（蓝牙配对等），不是故障

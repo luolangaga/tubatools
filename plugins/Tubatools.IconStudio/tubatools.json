@@ -1,0 +1,12 @@
+{
+  "apiVersion": 2,
+  "fullTrust": true,
+  "permissions": ["icons", "files"],
+  "assembly": "plugin/Tubatools.IconStudio.dll",
+  "entryType": "Tubatools.IconStudio.IconStudioPlugin",
+  "name": "图标工坊",
+  "description": "自定义内置工具卡片、侧栏菜单与消息弹窗的图标；支持导入本地图片，并内置远古彩色与 Fluent 字形两套预设。",
+  "author": "图吧工具箱",
+  "website": "https://github.com/luolangaga/tubawinui3",
+  "icon": "assets/icon.svg"
+}

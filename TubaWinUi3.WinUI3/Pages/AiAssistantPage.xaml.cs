@@ -20,13 +20,14 @@ public sealed partial class AiAssistantPage : Page
         public int CanvasSent;
         public string CanvasTitle = "";
         public string? ModelKey;
-        public bool Error, Attention, Loaded, CustomTitle;
+        public bool Error, Attention, CanLogin, Loaded, CustomTitle;
         public int VisibleMessages = 150;
         public CancellationTokenSource? Run;
         public Task? Work;
         public AgentRunProgress? Progress;
         public DateTimeOffset PhaseStarted;
         public IReadOnlyList<AgentMessage> Messages = [];
+        public DateTimeOffset LastTouchedUtc;
         public List<AgentOperation> Operations { get; } = [];
         public List<(string Id, string AfterMessageId, AgentQuestionCard View)> Questions { get; } = [];
         public List<AgentAttachment> Attachments { get; } = [];
@@ -58,6 +59,7 @@ public sealed partial class AiAssistantPage : Page
         AiBrowserControl.StopRequested += OnBrowserStopRequested;
         _cutIn = AppSettings.Get("AgentQueueMode") == "cutin";
         ToolTipService.SetToolTip(QueueModeButton, L("QueueModeTip", "排队：当前任务结束后发送；插队：中断当前任务并优先发送。点击切换。"));
+        ToolTipService.SetToolTip(LoginButton, L("ZenLoginTip", "登录 OpenCode Zen：免费模型额度更高。密钥只保存在本机 AI 组件的数据目录。"));
         ConfigureComposerMenu();
         BuildStarterPrompts();
         HistoryList.ItemsSource = _historyRows;
@@ -100,6 +102,8 @@ public sealed partial class AiAssistantPage : Page
     private void Page_Loaded(object sender, RoutedEventArgs e)
     {
         _visible = true;
+        // 回到 AI 页时才重建画布 WebView2（离开时已释放，见 Page_Unloaded）。
+        foreach (var bubble in _canvasBubbles.Values) bubble.Resume();
         var owner = BuiltinToolWindow.FindHostingWindow(this) ?? App.MainWindow;
         if (_owner != owner) { if (_owner is not null) _owner.Closed -= Owner_Closed; _owner = owner; if (_owner is not null) _owner.Closed += Owner_Closed; }
         AttachDropHandler();
@@ -112,7 +116,13 @@ public sealed partial class AiAssistantPage : Page
         if (_active.Run is not null) _progressTimer.Start();
         RefreshHistoryView(); UpdateButtons();
     }
-    private void Page_Unloaded(object sender, RoutedEventArgs e) { _visible = false; DetachDropHandler(); _progressTimer.Stop(); _draftHistoryTimer.Stop(); }
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        _visible = false; DetachDropHandler(); _progressTimer.Stop(); _draftHistoryTimer.Stop();
+        // 每个画布气泡各占一个 WebView2 渲染进程；离开页面就把它们关掉，回来再按需重建。
+        foreach (var bubble in _canvasBubbles.Values)
+            try { bubble.Suspend(); } catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException) { }
+    }
     private void Owner_Closed(object sender, WindowEventArgs e)
     {
         if (e.Handled) return;
@@ -172,9 +182,9 @@ public sealed partial class AiAssistantPage : Page
         RunSpinner.IsActive = (running && _active.Progress?.Phase is not ("question" or "permission")) || _preparing;
         RenderNotice(); UpdateAttachments(); UpdateRunStatus();
     }
-    private void SetNotice(SessionState state, string text, bool error = false, bool attention = false, string retry = "")
+    private void SetNotice(SessionState state, string text, bool error = false, bool attention = false, string retry = "", bool login = false)
     {
-        state.Notice = text; state.Error = error; state.Attention = attention; state.RetryKind = retry;
+        state.Notice = text; state.Error = error; state.Attention = attention; state.RetryKind = retry; state.CanLogin = login;
         if (ReferenceEquals(state, _active)) RenderNotice();
     }
     private void RenderNotice()
@@ -184,6 +194,10 @@ public sealed partial class AiAssistantPage : Page
         NoticeBar.IsOpen = (_active.Error || _active.Attention) && _active.Notice.Length > 0;
         RetryButton.Visibility = _active.Error && _active.RetryKind.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RetryButton.IsEnabled = Ready && _active.Run is null;
+        LoginButton.Visibility = _active.CanLogin && !_closed ? Visibility.Visible : Visibility.Collapsed;
+        LoginButton.IsEnabled = !_preparing;
+        NoticeActions.Visibility = LoginButton.Visibility == Visibility.Visible || RetryButton.Visibility == Visibility.Visible
+            ? Visibility.Visible : Visibility.Collapsed;
     }
     private async Task PrepareAsync()
     {
@@ -256,13 +270,15 @@ public sealed partial class AiAssistantPage : Page
     {
         if (_syncingUi || _client is null || _lifetime is null || HistoryList.SelectedItem is not AgentSessionRow item) return;
         var version = ++_focusVersion;
-        if (item.Id.StartsWith("draft:", StringComparison.Ordinal) && _sessions.TryGetValue(item.Id, out var draft)) { _active = draft; SyncActive(); return; }
+        if (item.Id.StartsWith("draft:", StringComparison.Ordinal) && _sessions.TryGetValue(item.Id, out var draft)) { draft.LastTouchedUtc = DateTimeOffset.UtcNow; _active = draft; SyncActive(); TrimLoadedSessionMessages(); return; }
         if (!_sessions.TryGetValue(item.Id, out var state))
         {
             state = NewState(); state.Id = item.Id; state.Title = _history.FirstOrDefault(h => h.Id == item.Id)?.Title ?? item.Title;
             state.Operations.AddRange(AgentActivityStore.Read(item.Id)); _sessions.Add(item.Id, state);
         }
+        state.LastTouchedUtc = DateTimeOffset.UtcNow;
         _active = state; SyncActive();
+        TrimLoadedSessionMessages();
         if (state.Loaded || state.Run is not null || state.Draining) return;
         try
         {

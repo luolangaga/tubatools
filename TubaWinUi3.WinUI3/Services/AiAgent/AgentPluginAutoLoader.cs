@@ -83,9 +83,11 @@ internal sealed class AgentPluginAutoLoader
     {
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (!Directory.Exists(root)) return result;
-        // 每级都拒绝联接/符号链接，产物路径必须始终留在原工作区。
-        for (var directory = new DirectoryInfo(root); directory is not null; directory = directory.Parent)
-            if ((directory.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("插件产物目录不能是链接。");
+        // 只拒绝产物目录自身是联接/符号链接：产物必须真实落在工作区内。
+        // 上层目录不参与判断——工作区可由用户选在任意绝对目录，系统盘搬家、用户目录与 AppData
+        // 重定向等工具会把更上层目录做成联接，那是合法环境，不能因此让整轮对话失败。
+        if ((File.GetAttributes(root) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException("插件产物目录不能是链接：" + root);
         foreach (var path in Directory.GetFiles(root, "*.nupkg"))
         {
             ct.ThrowIfCancellationRequested();

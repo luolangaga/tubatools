@@ -27,7 +27,7 @@
     <CETCompat>false</CETCompat>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.9.1</Version>
+    <Version>1.9.2</Version>
     <SatelliteResourceLanguages>zh-Hans;zh-Hant;en</SatelliteResourceLanguages>
     <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**;artifacts\**;publish*\**;bin-verify\**</DefaultItemExcludes>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -268,7 +268,30 @@
     <PublishTrimmed>false</PublishTrimmed>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <!-- FlaUI.Core 5.0.0 的包元数据声明了 FrameworkReference
+         Microsoft.WindowsDesktop.App.WindowsForms，SelfContained 发布会把整个
+         WindowsDesktop 共享框架（System.Windows.Forms 等，约 30 MB）打进产物。
+         应用自身没有任何 WinForms 代码（computer-use 的 Program.cs 已排除编译），
+         这里在框架引用解析前移除它。需要临时保留时 -p:StripWindowsDesktopFramework=false。 -->
+    <StripWindowsDesktopFramework Condition="'$(StripWindowsDesktopFramework)' == ''">true</StripWindowsDesktopFramework>
   </PropertyGroup>
+
+  <!--
+    包提供的框架引用由 ResolvePackageAssets 输出到 TransitiveFrameworkReference，
+    再由 AddTransitiveFrameworkReferences 并入 FrameworkReference。
+    在 ResolveFrameworkReferences 真正解析运行时包之前移除 WindowsDesktop，
+    否则 runtime pack 仍会把整套 WinForms 程序集复制进发布目录。
+  -->
+  <Target Name="StripWindowsDesktopFrameworkReference"
+          DependsOnTargets="ResolvePackageAssets"
+          BeforeTargets="ResolveFrameworkReferences"
+          Condition="'$(StripWindowsDesktopFramework)' == 'true'">
+    <ItemGroup>
+      <FrameworkReference Remove="Microsoft.WindowsDesktop.App.WindowsForms" />
+      <FrameworkReference Remove="Microsoft.WindowsDesktop.App" />
+    </ItemGroup>
+    <Message Importance="normal" Text="StripWindowsDesktopFrameworkReference: 已移除 WindowsDesktop/WinForms 框架引用。" />
+  </Target>
 
   <!--
     AI 依赖的运行时资产（Windows ML / ORT GenAI 的托管与原生 DLL）
@@ -318,66 +341,22 @@
     <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\build-icon-cache.ps1&quot; -ToolsRoot &quot;$(MSBuildProjectDirectory)\Tools&quot; -OutputDir &quot;$(MSBuildProjectDirectory)\IconCache&quot;" />
     <!-- IconCache/ 为 gitignored，CI 干净 checkout 下评估期 glob 为空；直接登记
          ContentWithTargetPath 才能随产物分发。
+         项目评估期的 IconCache\**\* Content 会捕获“即将被脚本删掉的旧缓存”，
+         必须在脚本跑完后先移除整组 Content / ContentWithTargetPath，再按当前
+         文件重新登记，否则 publish 会复制已被删掉的 stale png（MSB3030）。
          用 AssignTargetPath 任务而非 ItemGroup 内联 TargetPath：内联引用隐含元数据
          （%(RecursiveDir)/%(Filename)）会触发批处理，把 TargetPath 错误套到其他
          Content 项上（Assets/Tools 文件被平铺复制进 IconCache）。 -->
     <ItemGroup>
+      <Content Remove="IconCache\**\*" />
+      <ContentWithTargetPath Remove="IconCache\**\*" />
       <_IconCacheFiles Include="$(MSBuildProjectDirectory)\IconCache\**\*" />
-      <ContentWithTargetPath Remove="@(_IconCacheFiles)" />
+      <Content Include="@(_IconCacheFiles)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </Content>
     </ItemGroup>
     <AssignTargetPath Files="@(_IconCacheFiles)" RootFolder="$(MSBuildProjectDirectory)">
-      <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
-    </AssignTargetPath>
-    <ItemGroup>
-      <ContentWithTargetPath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </ContentWithTargetPath>
-    </ItemGroup>
-  </Target>
-
-  <!--
-    开发运行时后端（Build/Run）：把后端托管版 exe 拷贝到主程序输出目录。
-    Debug 构建主程序是 framework-dependent，后端托管版同样依赖系统 .NET 10，
-    因此 dotnet run 时后端能直接运行。Publish 时才用下面的 PublishBackend 做 AOT。
-    触发时机：Build 阶段（BeforeTargets="AfterTargets=..." 之后的 Build），
-    保证拷到 $(TargetDir)（即 AppContext.BaseDirectory），ActiveInterceptService 能定位。
-  -->
-  <Target Name="CopyBackendForBuild" AfterTargets="Build" Condition="'$(ExcludeToolsFromPublish)' != 'true'">
-    <PropertyGroup>
-      <_BackEndHostDir>$(MSBuildProjectDirectory)\..\TubaWinUI3.BackEnd\bin\$(Configuration)\net10.0-windows\$(RuntimeIdentifier)</_BackEndHostDir>
-      <_BackEndHostExe>$(_BackEndHostDir)\TubaWinUI3.BackEnd.exe</_BackEndHostExe>
-    </PropertyGroup>
-    <!-- 始终以 SelfContained=false 构建后端：后端 csproj 声明了 SelfContained=true（给 AOT 用），
-         但 Debug 阶段只拷 TubaWinUI3.BackEnd.*（不含运行时），必须用 framework-dependent 模式
-         让 runtimeconfig.json 指向系统 .NET 10 运行时。不加 Condition：避免残留的
-         self-contained 产物被复用导致 hostpolicy.dll 找不到。
-         Targets 带 Restore：后端不是主项目的 ProjectReference，dotnet publish 的隐式
-         restore 不会覆盖它；在干净的检出（CI）上必须先 restore 才有 project.assets.json。 -->
-    <MSBuild Projects="$(MSBuildProjectDirectory)\..\TubaWinUI3.BackEnd\TubaWinUi3.BackEnd.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=false" />
-    <!-- apphost exe 只是薄壳，实际代码在同名 .dll，需要把后端产物 TubaWinUI3.BackEnd.* 全部拷贝。
-         ContinueOnError=WarnAndContinue：后端正在运行时文件被锁，跳过拷贝不阻断 build。 -->
-    <ItemGroup>
-      <_BackEndBuildFiles Include="$(_BackEndHostDir)\TubaWinUI3.BackEnd.*" Condition="Exists('$(_BackEndHostExe)')" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_BackEndBuildFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" ContinueOnError="WarnAndContinue" Condition="Exists('$(_BackEndHostExe)')" />
-    <Message Importance="High" Text="已拷贝开发后端: $(TargetDir)TubaWinUI3.BackEnd.exe" Condition="Exists('$(TargetDir)TubaWinUI3.BackEnd.exe')" />
-  </Target>
-
-  <!--
-    主动拦截后端（NativeAOT）发布：把 TubaWinUI3.BackEnd 编译为单文件原生 exe，
-    随主程序一起分发（主程序运行根目录，ActiveInterceptService 直接启动）。
-    NativeAOT 需要 MSVC 链接器。build-backend-aot.ps1 负责定位 vcvars64 并在其
-    环境下以 IlcUseEnvironmentalTools=true 发布，兼容 vswhere 元数据缺失的机器。
-  -->
-  <Target Name="PublishBackend" BeforeTargets="GetCopyToPublishDirectoryItems" Condition="'$(ExcludeToolsFromPublish)' != 'true'">
-    <PropertyGroup>
-      <_BackEndOutDir>$(MSBuildProjectDirectory)\artifacts\backend-aot\$(RuntimeIdentifier)</_BackEndOutDir>
-    </PropertyGroup>
-    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\build-backend-aot.ps1&quot; -Rid $(RuntimeIdentifier) -OutputDir &quot;$(_BackEndOutDir)&quot; -Configuration $(Configuration)" />
-    <ItemGroup>
-      <_BackEndExe Include="$(_BackEndOutDir)\TubaWinUI3.BackEnd.exe" />
-    </ItemGroup>
-    <AssignTargetPath Files="@(_BackEndExe)" RootFolder="$(_BackEndOutDir)">
       <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
     </AssignTargetPath>
     <ItemGroup>

@@ -4,6 +4,8 @@
     xmlns:controls="using:TubaWinUi3.Controls"
     xmlns:services="using:TubaWinUi3.Services">
     <services:DialogTitleGlyphConverter x:Key="DialogTitleGlyphConverter" />
+    <services:DialogTitleImageConverter x:Key="DialogTitleImageConverter" />
+    <services:DialogTitleGlyphOnlyConverter x:Key="DialogTitleGlyphOnlyConverter" />
     <DataTemplate x:Key="FluentDialogTitleTemplate">
         <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
@@ -11,6 +13,8 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <controls:FluentColorIcon Glyph="{Binding Converter={StaticResource DialogTitleGlyphConverter}}"
+                ImagePath="{Binding Converter={StaticResource DialogTitleImageConverter}}"
+                GlyphOnly="{Binding Converter={StaticResource DialogTitleGlyphOnlyConverter}}"
                 FontSize="28" VerticalAlignment="Top" Margin="0,2,0,0" />
             <TextBlock Grid.Column="1" Text="{Binding}" Style="{StaticResource SubtitleTextBlockStyle}"
                 TextWrapping="Wrap" />

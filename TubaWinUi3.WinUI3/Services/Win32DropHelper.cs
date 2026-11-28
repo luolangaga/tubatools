@@ -65,6 +65,12 @@ public static class Win32DropHelper
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr SetWindowLongW(IntPtr hWnd, int nIndex, WndProcDelegate newProc);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "SetWindowLongPtrW")]
+    private static extern IntPtr SetWindowLongPtrRaw(IntPtr hWnd, int nIndex, IntPtr newProc);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "SetWindowLongW")]
+    private static extern IntPtr SetWindowLongRaw(IntPtr hWnd, int nIndex, IntPtr newProc);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr CallWindowProcW(IntPtr lpPrevWndFunc, IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
@@ -93,6 +99,25 @@ public static class Win32DropHelper
         var hook = new WindowHook { Delegate = WndProcSubclass };
         hook.OldWndProc = SetWindowLongPtr(hwnd, GWLP_WNDPROC, hook.Delegate);
         _hooks[hwnd] = hook;
+    }
+
+    /// <summary>
+    /// 卸载窗口钩子并还原原始 WndProc。窗口销毁前应调用：HWND 会被系统复用，
+    /// 残留的死钩子会让后来同句柄的新窗口收不到拖放（子类化指向已释放的委托）。
+    /// </summary>
+    public static void Uninstall(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero || !_hooks.Remove(hwnd, out var hook)) return;
+        try
+        {
+            if (IntPtr.Size == 8) SetWindowLongPtrRaw(hwnd, GWLP_WNDPROC, hook.OldWndProc);
+            else SetWindowLongRaw(hwnd, GWLP_WNDPROC, hook.OldWndProc);
+            DragAcceptFiles(hwnd, false);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine("Drop hook uninstall failed: " + ex.Message);
+        }
     }
 
     private static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, WndProcDelegate newProc)

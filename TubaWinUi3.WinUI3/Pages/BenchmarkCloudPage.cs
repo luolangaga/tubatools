@@ -148,7 +148,7 @@ public sealed partial class BenchmarkCloudPage : Page
 
 		ToolPageHeader header = new()
 		{
-            ToolId = "benchmark-cloud",
+            ToolId = "performance-ranking",
 			HeaderPadding = new Thickness(0.0, 0.0, 0.0, 12.0),
 			Title = "跑分排行",
 			Glyph = "\uE9D5"

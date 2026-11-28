@@ -35,6 +35,48 @@
       <div class="dl-cards">
         <div class="site-card dl-card">
           <div class="dl-card-header">
+            <span class="icon" aria-hidden="true">&#xE7B8;</span>
+            <h3>{{ t('download.setup') }}</h3>
+          </div>
+          <p class="dl-card-desc">{{ t('download.setup-desc') }}</p>
+          <div class="dl-card-section">
+            <h5>{{ t('download.gitcode') }} <span class="dl-badge">{{ t('download.gitcode-badge') }}</span></h5>
+            <div class="dl-btns">
+              <template v-if="gcLoaded">
+                <WinButton
+                  v-for="s in setupSources.filter(x => x.group === 'gc')"
+                  :key="s.id"
+                  Style="AccentButtonStyle"
+                  :Content="s.label"
+                  Height="36"
+                  HorizontalContentAlignment="Stretch"
+                  @Click="handleDownload($event, s)" />
+              </template>
+              <template v-else>
+                <span class="dl-muted">{{ t('download.loading') }}</span>
+              </template>
+            </div>
+          </div>
+          <div class="dl-card-section">
+            <h5>{{ t('download.github') }}</h5>
+            <div class="dl-btns">
+              <template v-if="ghLoaded">
+                <WinButton
+                  v-for="s in setupSources.filter(x => x.group === 'gh')"
+                  :key="s.id"
+                  :Content="s.label"
+                  Height="36"
+                  HorizontalContentAlignment="Stretch"
+                  @Click="handleDownload($event, s)" />
+              </template>
+              <template v-else>
+                <span class="dl-muted">{{ t('download.loading') }}</span>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div class="site-card dl-card">
+          <div class="dl-card-header">
             <span class="icon" aria-hidden="true">&#xE8B7;</span>
             <h3>{{ t('download.portable') }}</h3>
           </div>
@@ -136,48 +178,6 @@
           </div>
         </div>
 
-        <div class="site-card dl-card">
-          <div class="dl-card-header">
-            <span class="icon" aria-hidden="true">&#xE7B8;</span>
-            <h3>{{ t('download.setup') }}</h3>
-          </div>
-          <p class="dl-card-desc">{{ t('download.setup-desc') }}</p>
-          <div class="dl-card-section">
-            <h5>{{ t('download.gitcode') }} <span class="dl-badge">{{ t('download.gitcode-badge') }}</span></h5>
-            <div class="dl-btns">
-              <template v-if="gcLoaded">
-                <WinButton
-                  v-for="s in setupSources.filter(x => x.group === 'gc')"
-                  :key="s.id"
-                  Style="AccentButtonStyle"
-                  :Content="s.label"
-                  Height="36"
-                  HorizontalContentAlignment="Stretch"
-                  @Click="handleDownload($event, s)" />
-              </template>
-              <template v-else>
-                <span class="dl-muted">{{ t('download.loading') }}</span>
-              </template>
-            </div>
-          </div>
-          <div class="dl-card-section">
-            <h5>{{ t('download.github') }}</h5>
-            <div class="dl-btns">
-              <template v-if="ghLoaded">
-                <WinButton
-                  v-for="s in setupSources.filter(x => x.group === 'gh')"
-                  :key="s.id"
-                  :Content="s.label"
-                  Height="36"
-                  HorizontalContentAlignment="Stretch"
-                  @Click="handleDownload($event, s)" />
-              </template>
-              <template v-else>
-                <span class="dl-muted">{{ t('download.loading') }}</span>
-              </template>
-            </div>
-          </div>
-        </div>
 
         <div class="site-card dl-card">
           <div class="dl-card-header">

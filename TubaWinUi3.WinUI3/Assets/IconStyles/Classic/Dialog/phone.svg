@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- phone-link 手机连接 -->
+  <path fill="none" d="M8 4.5H15C15.6 4.5 16 4.9 16 5.5V16.5C16 17.1 15.6 17.5 15 17.5H8C7.4 17.5 7 17.1 7 16.5V5.5C7 4.9 7.4 4.5 8 4.5Z" stroke="#038387" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="none" d="M9.5 7H13.5M10 15.5H13" stroke="#4DBFC4" stroke-width="1.5" stroke-linecap="round"/>
+  <path fill="none" d="M17.5 13.5A2 2 0 1 1 17.5 17.5A2 2 0 1 1 17.5 13.5ZM20.5 15.5H22M22 15.5L20.5 17M22 15.5L20.5 14" stroke="#6BB700" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

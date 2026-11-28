@@ -47,7 +47,7 @@
   <a href="https://tubawinui3.cn/features"><img src="images/screenshots/home.png" width="880" alt="图吧工具箱 CE 主界面，按分类浏览工具并全局搜索"></a>
 </p>
 
-**89 款经典工具与 47 款原生工具**，共用卡片、收藏、排序和桌面快捷方式。按分类浏览，搜索直达，常用的工具点一下星标就能收好。
+**89 款经典工具与 43 款原生工具**，共用卡片、收藏、排序和桌面快捷方式。按分类浏览，搜索直达，常用的工具点一下星标就能收好。
 
 <p align="center">
   <picture>
@@ -88,7 +88,7 @@
 | 文档 | 内容 |
 |:-----|:-----|
 | [功能详解](guide/features.md) | AI 助手、硬件检测与性能、游戏、系统优化、网络、格式转换、实用工具 |
-| [内置工具（47 款）](guide/builtin-tools.md) | 原生 Fluent 工具完整清单 |
+| [内置工具（43 款）](guide/builtin-tools.md) | 原生 Fluent 工具完整清单 |
 | [收录工具（89 款）](guide/bundled-tools.md) | 随包第三方工具分类清单 |
 | [快速开始](guide/getting-started.md) | 系统要求、安装方式（Releases / Winget / Scoop / Store）、从源码构建 |
 | [架构](guide/architecture.md) | 目录结构、模块说明与实现细节 |
